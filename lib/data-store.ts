@@ -2,11 +2,15 @@ import { randomUUID } from "crypto";
 
 import type { Document } from "mongodb";
 
+import { getPublicInstituteData as getTemplatePublicInstituteData } from "@/lib/mock-data";
 import { getMongoDatabase } from "@/lib/mongodb";
 import {
+  DEFAULT_COURSE_TEMPLATE_KEY,
   getCourseTemplateByKey,
   getCourseTemplateOptions,
+  getCourseTemplateOrder,
   inferCourseTemplateKey,
+  courseLibrary,
 } from "@/lib/course-library";
 import type {
   CourseItem,
@@ -62,6 +66,7 @@ const COLLECTIONS = {
 } as const;
 
 let userIndexesPromise: Promise<void> | null = null;
+let standardCoursesBackfillPromise: Promise<void> | null = null;
 
 function toPlainData<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -185,9 +190,9 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
   const templateKey =
     document.standardKey ??
     inferCourseTemplateKey(document.title) ??
-    "placement-accelerator";
+    DEFAULT_COURSE_TEMPLATE_KEY;
   const template =
-    getCourseTemplateByKey(templateKey) ?? getCourseTemplateByKey("placement-accelerator");
+    getCourseTemplateByKey(templateKey) ?? getCourseTemplateByKey(DEFAULT_COURSE_TEMPLATE_KEY);
 
   if (!template) {
     throw new Error("Default course template could not be resolved.");
@@ -204,9 +209,105 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
     duration: document.duration ?? template.duration,
     mode: document.mode ?? template.mode,
     audienceLabel: document.audienceLabel ?? template.audienceLabel,
+    courseNamesIncluded:
+      document.courseNamesIncluded?.length ? document.courseNamesIncluded : template.courseNamesIncluded,
+    branchesIncluded:
+      document.branchesIncluded?.length ? document.branchesIncluded : template.branchesIncluded,
+    subjectsCovered:
+      document.subjectsCovered?.length ? document.subjectsCovered : template.subjectsCovered,
     points: document.points?.length ? document.points : template.points,
     audience: document.audience?.length ? document.audience : template.audience,
   } satisfies CourseItem;
+}
+
+function createStandardCourseDocument(template: Omit<CourseItem, "id">) {
+  return {
+    id: `standard-course-${template.standardKey}`,
+    ...template,
+    createdAt: new Date().toISOString(),
+    createdBy: "system-backfill",
+  };
+}
+
+function dedupeAndSortCourses(courses: CourseItem[]) {
+  const byStandardKey = new Map<string, CourseItem>();
+
+  for (const course of courses) {
+    if (!byStandardKey.has(course.standardKey)) {
+      byStandardKey.set(course.standardKey, course);
+    }
+  }
+
+  return [...byStandardKey.values()].sort((left, right) => {
+    const orderDifference =
+      getCourseTemplateOrder(left.standardKey) - getCourseTemplateOrder(right.standardKey);
+
+    if (orderDifference !== 0) {
+      return orderDifference;
+    }
+
+    return left.title.localeCompare(right.title);
+  });
+}
+
+async function ensureStandardCoursesBackfilled() {
+  if (!standardCoursesBackfillPromise) {
+    standardCoursesBackfillPromise = (async () => {
+      const collection = await getCollection<CourseItem & { createdAt?: string; createdBy?: string }>(
+        COLLECTIONS.courses,
+      );
+      const existingCourses = stripMongoIds(await collection.find({}).toArray());
+
+      for (const course of existingCourses) {
+        if (course.standardKey) {
+          continue;
+        }
+
+        const inferredKey = inferCourseTemplateKey(course.title);
+        if (!inferredKey) {
+          continue;
+        }
+
+        await collection.updateOne(
+          { id: course.id },
+          {
+            $set: {
+              standardKey: inferredKey,
+              title: getCourseTemplateByKey(inferredKey)?.title ?? course.title,
+            },
+          },
+        );
+      }
+
+      const normalizedCourses = stripMongoIds(await collection.find({}).toArray());
+      const existingKeys = new Set(
+        normalizedCourses
+          .map((course) => course.standardKey ?? inferCourseTemplateKey(course.title))
+          .filter((key): key is string => Boolean(key)),
+      );
+
+      const missingTemplates = courseLibrary.filter((template) => !existingKeys.has(template.standardKey));
+
+      if (!missingTemplates.length) {
+        return;
+      }
+
+      await Promise.all(
+        missingTemplates.map((template) =>
+          collection.updateOne(
+            { standardKey: template.standardKey },
+            { $setOnInsert: createStandardCourseDocument(template) },
+            { upsert: true },
+          ),
+        ),
+      );
+    })().catch((error) => {
+      standardCoursesBackfillPromise = null;
+      throw error;
+    });
+  }
+
+  return standardCoursesBackfillPromise;
 }
 
 function normalizeStringArray(value: string[] | string | null | undefined) {
@@ -265,8 +366,30 @@ function isMessageVisibleToUser(message: MessageItem, role: Role, userId?: strin
   return userId ? message.userIds.includes(userId) : false;
 }
 
+function normalizePublicInstituteData(document: PublicInstituteData): PublicInstituteData {
+  const template = getTemplatePublicInstituteData();
+
+  return {
+    ...document,
+    profile: {
+      ...template.profile,
+      ...document.profile,
+      name: template.profile.name,
+      phone: template.profile.phone,
+      directorName: template.profile.directorName,
+      directorTitle: template.profile.directorTitle,
+      affiliatedInstitutes: template.profile.affiliatedInstitutes,
+    },
+    socialLinks: template.socialLinks,
+    contactMethods: template.contactMethods,
+    contactActions: template.contactActions,
+    whatsappHref: template.whatsappHref,
+  };
+}
+
 export async function getPublicInstituteData() {
-  return getContentDocument<PublicInstituteData>("public-site");
+  const document = await getContentDocument<PublicInstituteData>("public-site");
+  return normalizePublicInstituteData(document);
 }
 
 export async function getMockQuizQuestions() {
@@ -334,10 +457,12 @@ export async function findUserById(id: string) {
 }
 
 export async function getCoursesForRole(role: Role) {
+  await ensureStandardCoursesBackfilled();
   const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
-  return stripMongoIds(await collection.find({ audience: role }).toArray()).map((course) =>
+  const hydrated = stripMongoIds(await collection.find({ audience: role }).toArray()).map((course) =>
     hydrateCourse(course),
   );
+  return dedupeAndSortCourses(hydrated);
 }
 
 export async function createCourse(input: {
@@ -349,6 +474,9 @@ export async function createCourse(input: {
   duration: string;
   mode: string;
   audienceLabel: string;
+  courseNamesIncluded: string[];
+  branchesIncluded: string[];
+  subjectsCovered: string[];
   points: string[];
   createdBy: string;
 }) {
@@ -356,6 +484,17 @@ export async function createCourse(input: {
 
   if (!template) {
     throw new Error("Choose a valid standardized course name.");
+  }
+
+  await ensureStandardCoursesBackfilled();
+
+  const collection = await getCollection<CourseItem & { createdAt?: string; createdBy?: string }>(
+    COLLECTIONS.courses,
+  );
+  const existing = await collection.findOne({ standardKey: input.standardKey });
+
+  if (existing) {
+    throw new Error("This standardized course already exists. Edit the existing course instead.");
   }
 
   const course: CourseItem & { createdAt: string; createdBy: string } = {
@@ -369,13 +508,21 @@ export async function createCourse(input: {
     duration: input.duration || template.duration,
     mode: input.mode || template.mode,
     audienceLabel: input.audienceLabel || template.audienceLabel,
+    courseNamesIncluded: input.courseNamesIncluded.length
+      ? input.courseNamesIncluded
+      : template.courseNamesIncluded,
+    branchesIncluded: input.branchesIncluded.length
+      ? input.branchesIncluded
+      : template.branchesIncluded,
+    subjectsCovered: input.subjectsCovered.length
+      ? input.subjectsCovered
+      : template.subjectsCovered,
     points: input.points.length ? input.points : template.points,
     audience: template.audience,
     createdAt: new Date().toISOString(),
     createdBy: input.createdBy,
   };
 
-  const collection = await getCollection<typeof course>(COLLECTIONS.courses);
   await collection.insertOne(course);
   return course;
 }
@@ -390,6 +537,9 @@ export async function updateCourse(input: {
   duration: string;
   mode: string;
   audienceLabel: string;
+  courseNamesIncluded: string[];
+  branchesIncluded: string[];
+  subjectsCovered: string[];
   points: string[];
 }) {
   const template = getCourseTemplateByKey(input.standardKey);
@@ -398,7 +548,18 @@ export async function updateCourse(input: {
     throw new Error("Choose a valid standardized course name.");
   }
 
+  await ensureStandardCoursesBackfilled();
+
   const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
+  const conflictingCourse = await collection.findOne({
+    standardKey: input.standardKey,
+    id: { $ne: input.id } as any,
+  });
+
+  if (conflictingCourse) {
+    throw new Error("This standardized course already exists. Edit the existing course instead.");
+  }
+
   await collection.updateOne(
     { id: input.id },
     {
@@ -412,6 +573,15 @@ export async function updateCourse(input: {
         duration: input.duration || template.duration,
         mode: input.mode || template.mode,
         audienceLabel: input.audienceLabel || template.audienceLabel,
+        courseNamesIncluded: input.courseNamesIncluded.length
+          ? input.courseNamesIncluded
+          : template.courseNamesIncluded,
+        branchesIncluded: input.branchesIncluded.length
+          ? input.branchesIncluded
+          : template.branchesIncluded,
+        subjectsCovered: input.subjectsCovered.length
+          ? input.subjectsCovered
+          : template.subjectsCovered,
         points: input.points.length ? input.points : template.points,
         audience: template.audience,
         updatedAt: new Date().toISOString(),
@@ -428,10 +598,12 @@ export async function updateCourse(input: {
 }
 
 export async function getAllDetailedCourses() {
+  await ensureStandardCoursesBackfilled();
   const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
-  return stripMongoIds(await collection.find({}).sort({ title: 1 }).toArray()).map((course) =>
+  const hydrated = stripMongoIds(await collection.find({}).toArray()).map((course) =>
     hydrateCourse(course),
   );
+  return dedupeAndSortCourses(hydrated);
 }
 
 export function getStandardizedCourseOptions() {

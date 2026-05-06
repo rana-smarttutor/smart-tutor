@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { CourseCatalog } from "@/components/course-catalog";
 import type { CourseItem } from "@/lib/types";
 
-const COURSE_CACHE_KEY = "smart-tutor-course-cache-v1";
+const COURSE_CACHE_KEY = "smart-tutor-course-cache-v2";
 
 type CourseCatalogClientProps = {
   initialCourses: CourseItem[];
@@ -67,10 +67,13 @@ export function CourseCatalogClient({ initialCourses }: CourseCatalogClientProps
 
   return (
     <div className="mt-8">
-      <div className="mb-4 flex justify-end">
-        <p className="text-xs font-semibold text-[var(--color-muted)]">
-          {isRefreshing ? "Refreshing courses..." : "Live course catalog"}
-        </p>
+      <div className="mb-5 flex justify-start">
+        <div className="surface-soft inline-flex items-center gap-3 rounded-full px-4 py-2.5">
+          <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[var(--color-accent)]" />
+          <p className="text-xs font-semibold tracking-[0.04em] text-[var(--color-heading)]">
+            {isRefreshing ? "Refreshing courses..." : "Live course catalog"}
+          </p>
+        </div>
       </div>
       <CourseCatalog courses={courses} />
     </div>

@@ -69,25 +69,25 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
 
-        <RevealOnScroll className="grid gap-4" delayMs={90}>
+        <RevealOnScroll className="grid min-w-0 gap-4" delayMs={90}>
           <div className="surface graph-paper rounded-[2rem] p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="section-label">Campus Highlights</p>
                 <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                  Brand strength and visible results
+                  Visible trust, visible outcomes
                 </h2>
               </div>
               <LiveClock label="Campus Time" className="sm:min-w-[220px]" />
             </div>
 
-            <div className="mt-6 grid gap-4 px-2 sm:px-0 md:grid-cols-2">
+            <div className="mt-6 grid min-w-0 gap-4 px-2 sm:px-0 md:grid-cols-2">
               <div className="media-slot rounded-[1.75rem] p-5 sm:p-6">
                 <p className="keyword-line">Institute identity</p>
                 <div className="media-frame relative mt-4 aspect-square overflow-hidden rounded-[1.5rem] sm:h-52 sm:aspect-auto md:h-44">
                   <Image
                     src="/image1.png"
-                    alt="SmartIQ Academy logo and institute identity"
+                    alt="Smart Tutor academy identity"
                     fill
                     className="object-cover object-center"
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -100,7 +100,7 @@ export default async function Home() {
                 <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] sm:h-52 sm:aspect-auto md:h-44">
                   <Image
                     src="/image.png"
-                    alt="SmartIQ Academy toppers and result showcase"
+                    alt="Smart Tutor topper and result showcase"
                     fill
                     className="object-cover object-center"
                     sizes="(max-width: 768px) 100vw, 50vw"
@@ -130,9 +130,9 @@ export default async function Home() {
       <RevealOnScroll className="section-shell py-14">
         <div className="mb-9 text-center lg:text-left">
           <p className="section-label">Programs</p>
-          <h2 className="section-title">Programs built to produce results</h2>
+          <h2 className="section-title">Programs mapped to every stage of growth</h2>
           <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-[var(--color-muted)] lg:mx-0">
-            Choose the track that matches your target and move with a clear plan.
+            Choose the pathway that matches your class, target exam, or long-term academic goal.
           </p>
         </div>
 
@@ -140,8 +140,7 @@ export default async function Home() {
           {data.programs.map((program, index) => (
             <article
               key={program.title}
-              className="surface animate-appear rounded-[2rem] p-7"
-              style={{ animationDelay: `${index * 90}ms` }}
+              className="surface rounded-[2rem] p-7"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -173,15 +172,14 @@ export default async function Home() {
       <RevealOnScroll className="section-shell py-14" delayMs={40}>
         <div className="mb-9 text-center lg:text-left">
           <p className="section-label">Roles</p>
-          <h2 className="section-title">One system. Every role aligned.</h2>
+          <h2 className="section-title">One system for students, teachers, and institute operations.</h2>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-4">
           {data.roles.map((role, index) => (
             <article
               key={role.role}
-              className={`surface animate-appear rounded-[2rem] bg-gradient-to-br ${roleAccentMap[role.role]} p-6 text-center lg:text-left`}
-              style={{ animationDelay: `${index * 90}ms` }}
+              className={`surface rounded-[2rem] bg-gradient-to-br ${roleAccentMap[role.role]} p-6 text-center lg:text-left`}
             >
               <p className="keyword-line">{role.role}</p>
               <h3 className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-[var(--color-heading)]">
@@ -205,7 +203,7 @@ export default async function Home() {
           <article className="surface rounded-[2rem] p-7 text-center lg:text-left">
             <p className="section-label">Campus Experience</p>
             <h2 className="section-title max-w-2xl">
-              Built to earn trust from the first scroll
+              Built to reassure parents and motivate aspirants
             </h2>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               {data.mediaFeatures.map((item) => (
@@ -224,7 +222,7 @@ export default async function Home() {
           <article className="surface rounded-[2rem] p-7 text-center lg:text-left">
             <p className="section-label">Experience</p>
             <h2 className="section-title">
-              Sharp presentation. Clear structure. Serious intent.
+              Serious content, clean presentation, and clear academic intent.
             </h2>
             <div className="mt-8 grid gap-4">
               {data.designPrinciples.map((principle) => (

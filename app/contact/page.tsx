@@ -31,6 +31,19 @@ export default async function ContactPage() {
               </p>
             </div>
 
+            <div className="surface-soft mt-4 rounded-[1.6rem] p-5 text-left">
+              <p className="keyword-line">Leadership desk</p>
+              <p className="mt-3 text-base font-semibold text-[var(--color-heading)]">
+                {data.profile.directorName}
+              </p>
+              <p className="mt-1 text-sm font-medium text-[var(--color-accent-strong)]">
+                {data.profile.directorTitle}
+              </p>
+              <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                {data.profile.affiliatedInstitutes.join(" | ")}
+              </p>
+            </div>
+
             <div className="mt-8 flex flex-wrap gap-3 justify-center lg:justify-start">
               {data.contactActions.map((action) => (
                 <a
@@ -56,10 +69,10 @@ export default async function ContactPage() {
                   href={item.href}
                   target={item.href.startsWith("http") ? "_blank" : undefined}
                   rel={item.href.startsWith("http") ? "noreferrer" : undefined}
-                  className="surface-soft rounded-3xl p-5 shine-hover"
+                  className="surface-soft rounded-3xl p-5"
                 >
                   <p className="keyword-line">{item.label}</p>
-                  <p className="shine-child mt-3 text-lg font-semibold text-[var(--color-heading)]">
+                  <p className="mt-3 text-lg font-semibold text-[var(--color-heading)]">
                     {item.value}
                   </p>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
@@ -88,13 +101,13 @@ export default async function ContactPage() {
                     href={item.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="social-tile surface-soft rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--color-heading)] shine-hover"
+                    className="social-tile surface-soft rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--color-heading)]"
                     style={{
                       ["--social-color" as string]: item.color,
                       ["--social-glow" as string]: item.glow,
                     }}
                   >
-                    <span className="shine-child">{item.label}</span>
+                    <span>{item.label}</span>
                   </a>
                 ))}
               </div>
@@ -117,6 +130,14 @@ export default async function ContactPage() {
                   </p>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
                     Main admissions mailbox.
+                  </p>
+                </div>
+                <div className="surface rounded-3xl p-5">
+                  <p className="text-sm font-semibold text-[var(--color-heading)]">
+                    {data.profile.directorName}
+                  </p>
+                  <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                    {data.profile.directorTitle} | {data.profile.affiliatedInstitutes.join(" | ")}
                   </p>
                 </div>
               </div>

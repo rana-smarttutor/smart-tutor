@@ -14,10 +14,10 @@ export default async function CoursesPage() {
         <div className="max-w-4xl text-center lg:text-left">
           <p className="section-label">Courses Offered</p>
           <h1 className="section-title">
-            Smart Tutor courses at a glance
+            Smart Tutor pathways from class 6 to diploma, graduation, and government exam preparation
           </h1>
           <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
-            Compare programs quickly. Open any card for details.
+            The catalog now groups every major stage clearly: class 6 to 8, class 9 and 10, class 11 and 12, diploma and graduation support, and a complete government exam preparation track.
           </p>
         </div>
       </section>

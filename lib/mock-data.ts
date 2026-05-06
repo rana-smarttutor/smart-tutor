@@ -47,7 +47,7 @@ const demoUsers: DemoUserRecord[] = [
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
-    program: "Placement Accelerator",
+    program: "Class 10 Board Preparation",
   },
   {
     id: "student-2",
@@ -56,7 +56,7 @@ const demoUsers: DemoUserRecord[] = [
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
-    program: "Government Exams Coaching",
+    program: "Civil Services Foundation",
   },
   {
     id: "student-3",
@@ -65,7 +65,7 @@ const demoUsers: DemoUserRecord[] = [
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
-    program: "College Performance Support",
+    program: "Class 12 Commerce and Science",
   },
   {
     id: "educator-1",
@@ -74,7 +74,7 @@ const demoUsers: DemoUserRecord[] = [
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
-    program: "Government Exams Faculty",
+    program: "Competitive Exams Faculty",
   },
   {
     id: "educator-2",
@@ -83,7 +83,7 @@ const demoUsers: DemoUserRecord[] = [
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
-    program: "Placement Faculty",
+    program: "School and Board Faculty",
   },
   {
     id: "admin-1",
@@ -169,21 +169,21 @@ const polityMcq: TestQuestion[] = [
 const tests: TestItem[] = [
   {
     id: "test-1",
-    title: "Quantitative Aptitude Mock 08",
+    title: "Class 10 Maths Precision Test",
     status: "Scheduled",
     summary:
-      "Timed aptitude assessment with review notes.",
+      "Board-style chapter test with speed and accuracy review.",
     audience: ["student", "educator", "admin"],
     assignedUserIds: ["student-1", "student-3"],
-    createdBy: "Amit Deshmukh",
+    createdBy: "Neha Joshi",
     questions: placementMcq,
   },
   {
     id: "test-2",
-    title: "SSC Revision Sprint Evaluation",
+    title: "Civil Services Polity Evaluation",
     status: "Ready To Issue",
     summary:
-      "Revision paper covering reasoning, awareness, and scoring.",
+      "Polity-focused revision paper with concept and current-affairs recall.",
     audience: ["educator", "admin"],
     assignedUserIds: ["student-2"],
     createdBy: "Amit Deshmukh",
@@ -191,12 +191,12 @@ const tests: TestItem[] = [
   },
   {
     id: "test-3",
-    title: "Weekly Concept Check",
+    title: "Senior Secondary Weekly Concept Check",
     status: "Result Published",
     summary:
-      "Concept check with review and follow-up prompts.",
+      "Weekly learning review with corrective mentoring notes.",
     audience: ["student", "educator", "admin"],
-    assignedUserIds: ["student-1"],
+    assignedUserIds: ["student-3"],
     createdBy: "Neha Joshi",
     questions: placementMcq,
   },
@@ -205,45 +205,45 @@ const tests: TestItem[] = [
 const messages: MessageItem[] = [
   {
     id: "message-1",
-    title: "Placement batch mentor update",
+    title: "Class 10 revision plan update",
     body:
-      "Resume workshop moves to 5:30 PM. Bring updated portfolio links.",
+      "Science and maths revision worksheets will be discussed in the 6:00 PM batch today.",
     channel: "Batch Board",
     audience: ["student", "educator", "admin"],
-    userIds: ["student-1", "educator-1", "admin-1"],
+    userIds: ["student-1", "educator-2", "admin-1"],
   },
   {
     id: "message-2",
-    title: "Faculty grading reminder",
+    title: "Civil services faculty planning note",
     body:
-      "Please close the pending evaluation queue tonight.",
+      "Sunday answer-writing review must include ethics and polity copy checks.",
     channel: "Faculty Desk",
     audience: ["educator", "admin"],
   },
   {
     id: "message-3",
-    title: "Admissions guidance call",
+    title: "Admissions counselling window open",
     body:
-      "New visitors can request a counselling callback.",
+      "Parents for class 6 to 10 enquiries can request a call-back for batch guidance this week.",
     channel: "Admissions",
     audience: ["student", "admin"],
   },
   {
     id: "message-4",
-    title: "Access approval request",
+    title: "Batch capacity review",
     body:
-      "Two educator accounts are waiting for admin approval.",
+      "Two evening school batches are nearing full capacity and need schedule confirmation.",
     channel: "Admin",
     audience: ["admin"],
   },
   {
     id: "message-5",
-    title: "Weekly concept check result published",
+    title: "Senior secondary concept check result published",
     body:
-      "Weekly Concept Check is now on the student board.",
+      "The weekly concept check is now available with faculty remarks for the batch.",
     channel: "Results",
     audience: ["student", "educator", "admin"],
-    userIds: ["student-1", "educator-2", "admin-1"],
+    userIds: ["student-3", "educator-2", "admin-1"],
     author: "Neha Joshi",
   },
 ];
@@ -252,15 +252,15 @@ const testSubmissions: TestSubmission[] = [
   {
     id: "submission-1",
     testId: "test-3",
-    studentId: "student-1",
-    studentName: "Riya Sharma",
+    studentId: "student-3",
+    studentName: "Sneha Kulkarni",
     answers: [1, 1],
     score: 2,
     total: 2,
     status: "published",
     submittedAt: "2026-03-22T08:30:00.000Z",
-    publishedMessageTitle: "Weekly Concept Check result published",
-    feedback: "Strong attempt. Keep the same pace in the next revision round.",
+    publishedMessageTitle: "Senior secondary concept check result published",
+    feedback: "Strong conceptual clarity. Continue daily answer practice for consistent board scores.",
     gradedBy: "Neha Joshi",
   },
 ];
@@ -268,68 +268,68 @@ const testSubmissions: TestSubmission[] = [
 const dashboardStats: Record<Role, DashboardMetric[]> = {
   student: [
     {
-      label: "Upcoming tests",
+      label: "Active subjects",
+      value: "04",
+      detail: "Track core subjects, revision, and assigned learning goals.",
+    },
+    {
+      label: "Tests this week",
       value: "03",
-      detail: "Scheduled mocks, results, and review status.",
+      detail: "Scheduled unit tests, mock papers, and review checkpoints.",
     },
     {
-      label: "Message threads",
-      value: "11",
-      detail: "Notices, replies, and batch updates.",
-    },
-    {
-      label: "Attendance",
-      value: "92%",
-      detail: "Ready for live attendance data.",
+      label: "Mentor notices",
+      value: "08",
+      detail: "Batch updates, reminders, and study follow-ups in one place.",
     },
     {
       label: "Study materials",
-      value: "18",
-      detail: "PDFs, notes, recordings, and revision packs.",
+      value: "26",
+      detail: "Notes, practice sheets, recorded revision, and doubt support.",
     },
   ],
   educator: [
     {
       label: "Active batches",
-      value: "06",
-      detail: "Track multiple cohorts in one place.",
+      value: "12",
+      detail: "School, college, and competitive cohorts in one teaching console.",
     },
     {
       label: "Tests to grade",
-      value: "14",
-      detail: "Urgent grading and pending reviews.",
+      value: "18",
+      detail: "Pending checking across boards, aptitude, and competitive programs.",
     },
     {
-      label: "Course updates",
-      value: "05",
-      detail: "Schedule and delivery updates.",
+      label: "Parent updates",
+      value: "09",
+      detail: "Performance reporting and counselling follow-ups to review.",
     },
     {
       label: "Mentoring load",
-      value: "28",
-      detail: "Follow-ups for doubts and improvement plans.",
+      value: "34",
+      detail: "Doubt solving, answer review, and improvement planning in progress.",
     },
   ],
   admin: [
     {
       label: "Managed accounts",
-      value: "148",
-      detail: "Account provisioning and deployment.",
+      value: "286",
+      detail: "Student, parent-facing support, and staff account oversight.",
     },
     {
-      label: "Pending approvals",
-      value: "07",
-      detail: "New access changes waiting for review.",
+      label: "Open enquiries",
+      value: "42",
+      detail: "New admissions, counselling requests, and programme follow-ups.",
     },
     {
-      label: "Institute alerts",
-      value: "04",
-      detail: "Operational blockers across the institute.",
+      label: "Institute batches",
+      value: "24",
+      detail: "Academic and competitive batch planning across the week.",
     },
     {
-      label: "Access roles",
-      value: "04",
-      detail: "Clear role model for the platform.",
+      label: "Faculty teams",
+      value: "09",
+      detail: "School, board, and exam-specialist faculty coordination.",
     },
   ],
 };
@@ -337,72 +337,42 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
 const socialLinks: SocialLink[] = [
   {
     label: "WhatsApp",
-    href: "https://wa.me/919876543210?text=Hello%20Smart%20Tutor",
+    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
     color: "#25D366",
     glow: "rgba(37, 211, 102, 0.32)",
   },
   {
     label: "Instagram",
-    href: "https://instagram.com/smarttutor",
+    href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
     color: "#E4405F",
     glow: "rgba(228, 64, 95, 0.28)",
-  },
-  {
-    label: "Facebook",
-    href: "https://facebook.com/smarttutor",
-    color: "#1877F2",
-    glow: "rgba(24, 119, 242, 0.28)",
-  },
-  {
-    label: "LinkedIn",
-    href: "https://linkedin.com/company/smarttutor",
-    color: "#0A66C2",
-    glow: "rgba(10, 102, 194, 0.28)",
-  },
-  {
-    label: "YouTube",
-    href: "https://youtube.com/@smarttutor",
-    color: "#FF0000",
-    glow: "rgba(255, 0, 0, 0.24)",
-  },
-  {
-    label: "X / Twitter",
-    href: "https://x.com/smarttutor",
-    color: "#111827",
-    glow: "rgba(17, 24, 39, 0.22)",
   },
 ];
 
 const contactMethods: ContactMethod[] = [
   {
     label: "Admissions Hotline",
-    value: "+91 98765 43210",
-    href: "tel:+919876543210",
-    description: "Counselling and admissions support.",
+    value: "+91 88504 47887",
+    href: "tel:+918850447887",
+    description: "Primary counselling, admissions, and student support line.",
   },
   {
-    label: "Student Support Desk",
-    value: "+91 98190 11223",
-    href: "tel:+919819011223",
-    description: "Schedule, test, and batch support.",
+    label: "WhatsApp Support",
+    value: "+91 88504 47887",
+    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
+    description: "Chat directly for quick counselling and batch guidance.",
   },
   {
-    label: "Faculty Coordination",
-    value: "+91 98204 55667",
-    href: "tel:+919820455667",
-    description: "Educator operations and batch planning.",
+    label: "Instagram",
+    value: "@smart_tutor_no1",
+    href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
+    description: "Official Smart Tutor announcements and updates.",
   },
   {
-    label: "Admissions Mail",
-    value: "admissions@smarttutor.local",
-    href: "mailto:admissions@smarttutor.local",
-    description: "Brochures, fees, and program questions.",
-  },
-  {
-    label: "Student Mail",
-    value: "support@smarttutor.local",
-    href: "mailto:support@smarttutor.local",
-    description: "Access help, results, and materials.",
+    label: "Director & Founder",
+    value: "Prof. Ravi Rana",
+    href: "tel:+918850447887",
+    description: "Leadership contact for SmartIQ Academy, Smart Tutor, and Prime Digital School.",
   },
   {
     label: "Visit The Academy",
@@ -415,22 +385,22 @@ const contactMethods: ContactMethod[] = [
 const contactActions: ContactAction[] = [
   {
     label: "Call Admissions",
-    href: "tel:+919876543210",
+    href: "tel:+918850447887",
     style: "primary",
   },
   {
     label: "WhatsApp Counselling",
-    href: "https://wa.me/919876543210?text=Hello%20Smart%20Tutor",
+    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
     style: "primary",
   },
   {
-    label: "Email Smart Tutor",
-    href: "mailto:admissions@smarttutor.local",
+    label: "Open Instagram",
+    href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
     style: "secondary",
   },
   {
     label: "Campus Visit Request",
-    href: "mailto:hello@smarttutor.local?subject=Campus%20Visit%20Request",
+    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor%2C%20I%20want%20to%20visit%20the%20campus.",
     style: "secondary",
   },
 ];
@@ -536,80 +506,99 @@ export function getPublicInstituteData() {
       name: "Smart Tutor",
       city: "Vashi",
       address: "Sector 17, Vashi, Navi Mumbai",
-      phone: "+91 98765 43210",
-      email: "hello@smarttutor.local",
-      hours: "Mon - Sat | 08:00 AM - 08:00 PM",
-      specialties: ["College", "Government Exams", "Placement"],
+      phone: "+91 88504 47887",
+      email: "admissions@smarttutoracademy.in",
+      hours: "Mon - Sat | 08:00 AM - 08:30 PM",
+      specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
+      directorName: "Prof. Ravi Rana",
+      directorTitle: "Director & Founder",
+      affiliatedInstitutes: ["SmartIQ Academy", "Smart Tutor", "Prime Digital School"],
     },
     socialLinks,
     contactMethods,
     contactActions,
     whatsappHref:
-      "https://wa.me/919876543210?text=Hello%20Smart%20Tutor",
+      "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
     headlineLines: [
-      "Result-first coaching for serious aspirants.",
-      "Competitive exams, placements, and academics under one roof.",
-      "Disciplined batches. Sharp mentoring. Visible progress.",
-      "A Vashi institute built for performance.",
+      "From primary classrooms to civil services preparation, every learner follows a clear academic plan.",
+      "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",
+      "Board performance, junior college support, entrance readiness, government exams, and spoken English live under one reliable academy roof.",
+      "Vashi families choose Smart Tutor for consistency, attention, and visible academic growth.",
     ],
     metrics: [
-      { label: "Focused program tracks", value: "18+" },
-      { label: "Role-based experience", value: "4" },
-      { label: "Core institute workflows", value: "8" },
-      { label: "Desktop-ready delivery", value: "100%" },
+      { label: "Learner pathways", value: "08+" },
+      { label: "Classes served", value: "1 to UPSC" },
+      { label: "Testing rhythm", value: "Weekly" },
+      { label: "Counselling support", value: "Year-round" },
     ],
     operationsHighlights: [
       {
-        title: "Student-facing learning center",
+        title: "Foundation to advanced continuity",
         description:
-          "Tests, messages, progress, and materials in one place.",
-        tag: "Student",
+          "Students can begin with school support and continue into competitive and career-focused programs.",
+        tag: "Academics",
       },
       {
-        title: "Educator command layer",
+        title: "Mentor-led review system",
         description:
-          "Issue tests, manage batches, and track grading.",
-        tag: "Educator",
+          "Regular testing, doubt support, and feedback cycles keep progress measurable.",
+        tag: "Delivery",
       },
       {
-        title: "Admin governance tools",
+        title: "Parent and admissions guidance",
         description:
-          "Keep roles and permissions clear.",
-        tag: "Admin",
+          "New enquiries receive counselling, pathway planning, and batch matching support.",
+        tag: "Admissions",
       },
     ],
     programs: [
       {
-        category: "Placement",
-        title: "Placement Accelerator",
-        duration: "12 Weeks",
+        category: "Primary School",
+        title: "Class 1 to 5 Foundation",
+        duration: "Academic Year",
         description:
-          "Placement training with aptitude, GDPI, resumes, and interview rounds.",
-        focus: ["Mock Interviews", "Aptitude", "Resume Review", "Soft Skills"],
+          "Build reading, numeracy, study habits, and confidence early with close mentoring and guided practice.",
+        focus: ["Maths", "English", "EVS", "Homework Support"],
       },
       {
-        category: "Government Exams",
-        title: "Government Exams Mastery",
-        duration: "Ongoing",
+        category: "School Foundation",
+        title: "Class 6 to 8 Foundation",
+        duration: "Academic Year",
         description:
-          "Exam preparation with revision cycles, timed tests, and mentor-led review.",
-        focus: ["Reasoning", "Quant", "General Awareness", "Revision Sprints"],
+          "Build subject clarity, stronger habits, and exam confidence early with close mentoring and worksheet practice.",
+        focus: ["Maths", "Science", "English", "Study Skills"],
       },
       {
-        category: "College",
-        title: "Academic Support Program",
-        duration: "Semester Based",
+        category: "Boards",
+        title: "Class 9 to Junior College Success",
+        duration: "Year-round",
         description:
-          "Concept support, assignment guidance, and steady academic improvement.",
-        focus: ["Mentoring", "Assignments", "Revision", "Confidence Building"],
+          "Academic coaching for secondary, senior secondary, and junior college learners with paper practice, revision, and milestone reviews.",
+        focus: ["Board Revision", "Concept Clarity", "Weekly Tests", "Stream Guidance"],
       },
       {
-        category: "Institute",
-        title: "Faculty Delivery System",
-        duration: "Continuous",
+        category: "College Support",
+        title: "Diploma and Graduation Guidance",
+        duration: "Semester-based",
         description:
-          "Structured support for batch delivery, assessments, and institute coordination.",
-        focus: ["Course Ops", "Evaluations", "Announcements", "Faculty Planning"],
+          "Structured academic support for diploma, polytechnic, and degree-college students who need stronger semester execution and career readiness.",
+        focus: ["Semester Support", "Aptitude", "Communication", "Placement Readiness"],
+      },
+      {
+        category: "Entrance Exams",
+        title: "JEE, NEET, CET, and CUET",
+        duration: "Batch-based",
+        description:
+          "Targeted entrance programs for engineering, medical, and university aspirants with disciplined mock-test review.",
+        focus: ["Physics", "Chemistry", "Biology", "Mathematics"],
+      },
+      {
+        category: "Civil Services",
+        title: "UPSC and State PSC Foundation",
+        duration: "Long-term",
+        description:
+          "Integrated civil services preparation with core subjects, current affairs, answer writing, and mentor review.",
+        focus: ["Polity", "History", "Economy", "Answer Writing"],
       },
     ],
     roles: [
@@ -617,75 +606,75 @@ export function getPublicInstituteData() {
         role: "student" as const,
         title: "Learner workspace",
         summary:
-          "Students get tests, materials, messages, and a clear academic dashboard.",
+          "Students track classes, materials, tests, notices, and their day-to-day study priorities from one workspace.",
         features: [
-          "Dashboard and study status",
-          "Messages and notices",
-          "Tests and learning resources",
+          "Revision schedule and study status",
+          "Batch notices and faculty messages",
+          "Tests, results, and learning resources",
         ],
       },
       {
         role: "educator" as const,
         title: "Faculty operations",
         summary:
-          "Educators manage delivery, grading, schedules, and student communication.",
+          "Educators manage batches across school, competitive, and civil services preparation with clear operational visibility.",
         features: [
-          "Create and grade tests",
-          "Manage courses and schedules",
-          "Coordinate cohort communications",
+          "Create tests and publish review notes",
+          "Manage course delivery and batch updates",
+          "Coordinate student and parent communication",
         ],
       },
       {
         role: "admin" as const,
         title: "Institute control",
         summary:
-          "Admins manage users, permissions, and institute-wide control.",
+          "Admins oversee admissions flow, access control, course structure, and institute-wide coordination.",
         features: [
-          "Create and manage accounts",
-          "Adjust access levels",
-          "Oversee institution-wide activity",
+          "Create and manage user records",
+          "Track programme and access structure",
+          "Oversee institute-wide activity",
         ],
       },
     ],
     mediaFeatures: [
       {
-        title: "Video-ready storytelling",
+        title: "Toppers and result storytelling",
         description:
-          "Show faculty, toppers, events, and classroom moments with confidence.",
+          "Highlight toppers, board achievers, and selection stories in a credible, parent-friendly format.",
       },
       {
-        title: "Document and notes support",
+        title: "Notes and worksheet delivery",
         description:
-          "Support notes, practice sheets, and program resources at scale.",
+          "Support class notes, revision sheets, answer-writing work, and practice resources across batches.",
       },
       {
-        title: "Gallery and event timelines",
+        title: "Counselling and parent confidence",
         description:
-          "Turn achievements, events, and institute milestones into visible proof.",
+          "Make admissions, mentoring process, and batch discipline visible to families before enrolment.",
       },
       {
-        title: "Future CMS flexibility",
+        title: "Production-ready academy content",
         description:
-          "Keep content flexible for future admin-led updates.",
+          "Keep the institute website ready for future updates without falling back to placeholder copy.",
       },
     ],
     designPrinciples: [
       {
-        title: "Professional visual hierarchy",
+        title: "Trust-first presentation",
         description:
-          "Strong hierarchy and spacing make the institute feel credible at a glance.",
+          "Parents and aspirants should understand the academy's seriousness within the first few seconds.",
         metric: "01",
       },
       {
-        title: "Contained overflow and mobile safety",
+        title: "Mobile-safe clarity",
         description:
-          "Every section stays clean across desktop and mobile screens.",
+          "Each section stays readable across desktop and mobile without visual clutter or overflow.",
         metric: "02",
       },
       {
-        title: "Colorful, not noisy",
+        title: "Professional energy",
         description:
-          "Violet accents keep the interface energetic without losing seriousness.",
+          "Color supports confidence and warmth, but the academy still reads as disciplined and credible.",
         metric: "03",
       },
     ],

@@ -48,6 +48,9 @@ export type CourseItem = {
   duration: string;
   mode: string;
   audienceLabel: string;
+  courseNamesIncluded: string[];
+  branchesIncluded: string[];
+  subjectsCovered: string[];
   points: string[];
   audience: Role[];
 };
@@ -105,6 +108,9 @@ export type InstituteProfile = {
   email: string;
   hours: string;
   specialties: string[];
+  directorName: string;
+  directorTitle: string;
+  affiliatedInstitutes: string[];
 };
 
 export type PublicMetric = {

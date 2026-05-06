@@ -11,6 +11,7 @@
 - MongoDB now acts as the runtime source of truth through `MONGODB_URI` and `MONGODB_DB`.
 - Public course catalog reads live detailed course data from Mongo and also keeps a browser-side local cache copy.
 - Admin can manage standardized courses through the dashboard using a select-only course name list with editable duration, mode, summary, description, and key points.
+- The standardized course library now covers primary, middle school, secondary, senior secondary, junior college, diploma, graduation, entrance exams, government exams, and counselling tracks.
 - User integrity now requires one unique person id and one unique email per user, with no guest accounts stored in the user system.
 
 ## Demo credentials
@@ -62,7 +63,9 @@
   2. one unique normalized email per person
   3. no duplicate user across multiple categories
 - Use the standardized course templates in `lib/course-library.ts` when creating or editing courses. Admin can edit course details, but not invent arbitrary new course-name variants.
+- Keep school-stage coverage explicit in course templates. If Smart Tutor adds a new academic branch, extend `lib/course-library.ts` first and then update public-facing summary copy in `lib/mock-data.ts`.
 - Interactive public modules like course popups and mock tests should read from Mongo-backed routes or repository functions, not from page-local arrays.
+- Keep public institute identity details such as primary phone, WhatsApp, Instagram, and leadership info centralized in `lib/mock-data.ts` so the Mongo bootstrap content and UI stay aligned.
 
 ## Suggested next milestones
 

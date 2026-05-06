@@ -23,6 +23,9 @@ type CourseForm = {
   mode: string;
   audienceLabel: string;
   tagline: string;
+  courseNamesIncludedText: string;
+  branchesIncludedText: string;
+  subjectsCoveredText: string;
   pointsText: string;
 };
 
@@ -36,6 +39,9 @@ function toForm(course: CourseItem): CourseForm {
     mode: course.mode,
     audienceLabel: course.audienceLabel,
     tagline: course.tagline,
+    courseNamesIncludedText: course.courseNamesIncluded.join("\n"),
+    branchesIncludedText: course.branchesIncluded.join("\n"),
+    subjectsCoveredText: course.subjectsCovered.join("\n"),
     pointsText: course.points.join("\n"),
   };
 }
@@ -57,6 +63,9 @@ export function DashboardCourseManager({
     mode: "",
     audienceLabel: "",
     tagline: "",
+    courseNamesIncludedText: "",
+    branchesIncludedText: "",
+    subjectsCoveredText: "",
     pointsText: "",
   });
 
@@ -72,6 +81,9 @@ export function DashboardCourseManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...createForm,
+        courseNamesIncluded: createForm.courseNamesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
+        branchesIncluded: createForm.branchesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
+        subjectsCovered: createForm.subjectsCoveredText.split("\n").map((item) => item.trim()).filter(Boolean),
         points: createForm.pointsText.split("\n").map((item) => item.trim()).filter(Boolean),
       }),
     });
@@ -101,6 +113,9 @@ export function DashboardCourseManager({
       body: JSON.stringify({
         id: courseId,
         ...draft,
+        courseNamesIncluded: draft.courseNamesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
+        branchesIncluded: draft.branchesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
+        subjectsCovered: draft.subjectsCoveredText.split("\n").map((item) => item.trim()).filter(Boolean),
         points: draft.pointsText.split("\n").map((item) => item.trim()).filter(Boolean),
       }),
     });
@@ -176,6 +191,27 @@ export function DashboardCourseManager({
               value={createForm.description}
               onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))}
               placeholder="Detailed description"
+              rows={4}
+              className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+            />
+            <textarea
+              value={createForm.courseNamesIncludedText}
+              onChange={(event) => setCreateForm((current) => ({ ...current, courseNamesIncludedText: event.target.value }))}
+              placeholder="Included course names, one per line"
+              rows={4}
+              className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+            />
+            <textarea
+              value={createForm.branchesIncludedText}
+              onChange={(event) => setCreateForm((current) => ({ ...current, branchesIncludedText: event.target.value }))}
+              placeholder="Included branches, one per line"
+              rows={4}
+              className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+            />
+            <textarea
+              value={createForm.subjectsCoveredText}
+              onChange={(event) => setCreateForm((current) => ({ ...current, subjectsCoveredText: event.target.value }))}
+              placeholder="Subjects covered, one per line"
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
@@ -260,6 +296,42 @@ export function DashboardCourseManager({
                       className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
                     />
                     <textarea
+                      value={draft.courseNamesIncludedText}
+                      onChange={(event) =>
+                        setDrafts((current) => ({
+                          ...current,
+                          [course.id]: { ...draft, courseNamesIncludedText: event.target.value },
+                        }))
+                      }
+                      rows={4}
+                      placeholder="Included course names"
+                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                    />
+                    <textarea
+                      value={draft.branchesIncludedText}
+                      onChange={(event) =>
+                        setDrafts((current) => ({
+                          ...current,
+                          [course.id]: { ...draft, branchesIncludedText: event.target.value },
+                        }))
+                      }
+                      rows={4}
+                      placeholder="Included branches"
+                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                    />
+                    <textarea
+                      value={draft.subjectsCoveredText}
+                      onChange={(event) =>
+                        setDrafts((current) => ({
+                          ...current,
+                          [course.id]: { ...draft, subjectsCoveredText: event.target.value },
+                        }))
+                      }
+                      rows={4}
+                      placeholder="Subjects covered"
+                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                    />
+                    <textarea
                       value={draft.pointsText}
                       onChange={(event) =>
                         setDrafts((current) => ({
@@ -303,6 +375,20 @@ export function DashboardCourseManager({
                       <div className="surface rounded-3xl p-4">
                         <p className="text-xs font-semibold text-[var(--color-muted)]">Audience</p>
                         <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">{course.audienceLabel}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      <div className="surface rounded-3xl p-4">
+                        <p className="text-xs font-semibold text-[var(--color-muted)]">Course names included</p>
+                        <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
+                          {course.courseNamesIncluded.join(", ")}
+                        </p>
+                      </div>
+                      <div className="surface rounded-3xl p-4">
+                        <p className="text-xs font-semibold text-[var(--color-muted)]">Branches included</p>
+                        <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
+                          {course.branchesIncluded.join(", ")}
+                        </p>
                       </div>
                     </div>
                     <button

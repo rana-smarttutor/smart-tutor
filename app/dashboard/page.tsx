@@ -27,12 +27,12 @@ export default async function DashboardPage() {
 
   const supportContact =
     role === "student"
-      ? "Faculty Desk | mentor@smarttutor.local"
+      ? "Faculty Desk | +91 88504 47887 | WhatsApp support available"
       : role === "educator"
-        ? "Admin Desk | admin@smarttutor.local"
+        ? "Admin Desk | admissions@smarttutoracademy.in"
         : role === "admin"
-          ? "Operations Line | director@smarttutor.local"
-          : "Admissions Desk | hello@smarttutor.local";
+          ? "Operations Line | Prof. Ravi Rana | +91 88504 47887"
+          : "Admissions Desk | admissions@smarttutoracademy.in";
 
   return (
     <DashboardShell

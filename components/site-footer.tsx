@@ -21,10 +21,14 @@ export async function SiteFooter() {
               Admissions, learning, and institute operations in one workspace.
             </p>
             <div className="mt-5 space-y-3 text-sm text-[var(--color-muted)]">
+              <p className="font-semibold text-[var(--color-heading)]">
+                {data.profile.directorName} | {data.profile.directorTitle}
+              </p>
               <p className="font-semibold text-[var(--color-heading)]">{data.profile.address}</p>
               <p>{data.profile.phone}</p>
               <p>{data.profile.email}</p>
               <p>{data.profile.hours}</p>
+              <p>{data.profile.affiliatedInstitutes.join(" | ")}</p>
             </div>
           </div>
 
@@ -37,13 +41,13 @@ export async function SiteFooter() {
                   href={item.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="social-tile surface-soft rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--color-heading)] shine-hover"
+                  className="social-tile surface-soft rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--color-heading)]"
                   style={{
                     ["--social-color" as string]: item.color,
                     ["--social-glow" as string]: item.glow,
                   }}
                 >
-                  <span className="shine-child">{item.label}</span>
+                  <span>{item.label}</span>
                 </a>
               ))}
             </div>

@@ -69,6 +69,31 @@ const sidebarByRole = {
   ],
 } as const;
 
+function getRoleFocus(role: Role) {
+  if (role === "admin") {
+    return "Access control, institute governance, and approvals.";
+  }
+
+  if (role === "educator") {
+    return "Batch delivery, assessment review, and learner coordination.";
+  }
+
+  return "Study progress, notices, assessments, and learning support.";
+}
+
+function getInitials(name?: string) {
+  if (!name) {
+    return "ST";
+  }
+
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
 export function DashboardShell({
   session,
   role,
@@ -90,6 +115,17 @@ export function DashboardShell({
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
   const showAccounts = activeSection === "accounts";
+  const profileHighlights = [
+    { label: "Role", value: dashboard.roleLabel },
+    { label: "Messages", value: `${messages.length}` },
+    { label: "Tests", value: `${dashboard.tests.length}` },
+    { label: "Results", value: `${submissions.length}` },
+  ];
+  const workspaceChecklist = [
+    "Profile identity and current access level",
+    "Live notices from the message center",
+    "Current tests, results, and role-specific workflow status",
+  ];
 
   useEffect(() => {
     let isMounted = true;
@@ -238,7 +274,7 @@ export function DashboardShell({
                 ))}
               </section>
 
-              <section className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
+              <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -264,50 +300,95 @@ export function DashboardShell({
                   </div>
                 </article>
 
-                <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-                  <p className="section-label">User + Support</p>
-                  <div className="mt-5 grid gap-4">
-                    <div className="surface-soft rounded-3xl p-5">
-                      <p className="truncate text-lg font-semibold text-[var(--color-heading)]" title={session?.name}>
-                        {session ? session.name : "Smart Tutor User"}
-                      </p>
-                      <p className="mt-2 truncate text-sm leading-6 text-[var(--color-muted)]" title={session?.email}>
+                <div className="grid gap-6">
+                  <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.4rem] bg-[var(--color-highlight)] text-xl font-semibold text-[var(--color-accent)]">
+                        {getInitials(session?.name)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="section-label">Profile</p>
+                        <p className="mt-3 break-words text-xl font-semibold text-[var(--color-heading)]">
+                          {session ? session.name : "Smart Tutor User"}
+                        </p>
+                        <p className="mt-2 break-all text-sm leading-6 text-[var(--color-muted)]">
                           {session ? session.email : "Login required"}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                        Access: {dashboard.roleLabel}
-                      </p>
-                    </div>
-                    <div className="surface-soft rounded-3xl p-5">
-                      <p className="text-lg font-semibold text-[var(--color-heading)]">Permissions</p>
-                      <div className="mt-4 space-y-3">
-                        {dashboard.permissions.map((group) => (
-                          <div key={group.title}>
-                            <p className="text-sm font-semibold text-[var(--color-heading)]">{group.title}</p>
-                            <p className="mt-1 text-sm leading-7 text-[var(--color-muted)]">{group.description}</p>
-                          </div>
-                        ))}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                          {getRoleFocus(role)}
+                        </p>
                       </div>
                     </div>
-                    {messages.length ? (
+
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      {profileHighlights.map((item) => (
+                        <div key={item.label} className="surface-soft rounded-3xl p-4">
+                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                            {item.label}
+                          </p>
+                          <p className="mt-2 break-words text-base font-semibold text-[var(--color-heading)]">
+                            {item.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 grid gap-3">
                       <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-lg font-semibold text-[var(--color-heading)]">Recent notices</p>
-                        <div className="mt-4 space-y-3">
-                          {messages.slice(0, 3).map((message) => (
-                            <div key={message.id}>
-                              <p className="text-sm font-semibold text-[var(--color-heading)]">
-                                {message.title}
-                              </p>
-                              <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
-                                {message.body}
-                              </p>
+                        <p className="text-sm font-semibold text-[var(--color-heading)]">Workspace checklist</p>
+                        <div className="mt-4 grid gap-3">
+                          {workspaceChecklist.map((item) => (
+                            <div key={item} className="flex items-start gap-3">
+                              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--color-accent)]" />
+                              <p className="min-w-0 text-sm leading-6 text-[var(--color-muted)]">{item}</p>
                             </div>
                           ))}
                         </div>
                       </div>
-                    ) : null}
-                  </div>
-                </article>
+
+                      <div className="surface-soft rounded-3xl p-5">
+                        <p className="text-sm font-semibold text-[var(--color-heading)]">Support contact</p>
+                        <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">
+                          {supportContact}
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                    <p className="section-label">Permissions + Notices</p>
+                    <div className="mt-5 grid gap-4">
+                      <div className="surface-soft rounded-3xl p-5">
+                        <p className="text-lg font-semibold text-[var(--color-heading)]">Permissions</p>
+                        <div className="mt-4 space-y-3">
+                          {dashboard.permissions.map((group) => (
+                            <div key={group.title}>
+                              <p className="text-sm font-semibold text-[var(--color-heading)]">{group.title}</p>
+                              <p className="mt-1 text-sm leading-7 text-[var(--color-muted)]">{group.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {messages.length ? (
+                        <div className="surface-soft rounded-3xl p-5">
+                          <p className="text-lg font-semibold text-[var(--color-heading)]">Recent notices</p>
+                          <div className="mt-4 space-y-3">
+                            {messages.slice(0, 3).map((message) => (
+                              <div key={message.id}>
+                                <p className="text-sm font-semibold text-[var(--color-heading)]">
+                                  {message.title}
+                                </p>
+                                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                                  {message.body}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </article>
+                </div>
               </section>
             </>
           ) : null}

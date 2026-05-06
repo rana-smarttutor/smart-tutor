@@ -39,6 +39,9 @@ export async function POST(request: Request) {
     duration?: string;
     mode?: string;
     audienceLabel?: string;
+    courseNamesIncluded?: string[];
+    branchesIncluded?: string[];
+    subjectsCovered?: string[];
     points?: string[];
   };
 
@@ -50,6 +53,18 @@ export async function POST(request: Request) {
   const duration = sanitizeTextInput(body.duration, 80);
   const mode = sanitizeTextInput(body.mode, 80);
   const audienceLabel = sanitizeTextInput(body.audienceLabel, 120);
+  const courseNamesIncluded = (body.courseNamesIncluded ?? [])
+    .map((item) => sanitizeTextInput(item, 120))
+    .filter(Boolean)
+    .slice(0, 8);
+  const branchesIncluded = (body.branchesIncluded ?? [])
+    .map((item) => sanitizeTextInput(item, 120))
+    .filter(Boolean)
+    .slice(0, 8);
+  const subjectsCovered = (body.subjectsCovered ?? [])
+    .map((item) => sanitizeTextInput(item, 120))
+    .filter(Boolean)
+    .slice(0, 10);
   const points = (body.points ?? [])
     .map((item) => sanitizeTextInput(item, 120))
     .filter(Boolean)
@@ -62,20 +77,29 @@ export async function POST(request: Request) {
     );
   }
 
-  const draft = await createCourse({
-    standardKey,
-    tagline,
-    schedule,
-    summary,
-    description,
-    duration,
-    mode,
-    audienceLabel,
-    points,
-    createdBy: session.name,
-  });
+  try {
+    const draft = await createCourse({
+      standardKey,
+      tagline,
+      schedule,
+      summary,
+      description,
+      duration,
+      mode,
+      audienceLabel,
+      courseNamesIncluded,
+      branchesIncluded,
+      subjectsCovered,
+      points,
+      createdBy: session.name,
+    });
 
-  return NextResponse.json({ course: draft }, { status: 201 });
+    return NextResponse.json({ course: draft }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Course could not be created.";
+    const status = message.includes("already exists") ? 409 : 400;
+    return NextResponse.json({ error: message }, { status });
+  }
 }
 
 export async function PATCH(request: Request) {
@@ -95,6 +119,9 @@ export async function PATCH(request: Request) {
     duration?: string;
     mode?: string;
     audienceLabel?: string;
+    courseNamesIncluded?: string[];
+    branchesIncluded?: string[];
+    subjectsCovered?: string[];
     points?: string[];
   };
 
@@ -108,21 +135,39 @@ export async function PATCH(request: Request) {
     );
   }
 
-  const course = await updateCourse({
-    id,
-    standardKey,
-    tagline: sanitizeTextInput(body.tagline, 60),
-    schedule: sanitizeTextInput(body.schedule, 50),
-    summary: sanitizeTextareaInput(body.summary, 220),
-    description: sanitizeTextareaInput(body.description, 520),
-    duration: sanitizeTextInput(body.duration, 80),
-    mode: sanitizeTextInput(body.mode, 80),
-    audienceLabel: sanitizeTextInput(body.audienceLabel, 120),
-    points: (body.points ?? [])
-      .map((item) => sanitizeTextInput(item, 120))
-      .filter(Boolean)
-      .slice(0, 6),
-  });
+  try {
+    const course = await updateCourse({
+      id,
+      standardKey,
+      tagline: sanitizeTextInput(body.tagline, 60),
+      schedule: sanitizeTextInput(body.schedule, 50),
+      summary: sanitizeTextareaInput(body.summary, 220),
+      description: sanitizeTextareaInput(body.description, 520),
+      duration: sanitizeTextInput(body.duration, 80),
+      mode: sanitizeTextInput(body.mode, 80),
+      audienceLabel: sanitizeTextInput(body.audienceLabel, 120),
+      courseNamesIncluded: (body.courseNamesIncluded ?? [])
+        .map((item) => sanitizeTextInput(item, 120))
+        .filter(Boolean)
+        .slice(0, 8),
+      branchesIncluded: (body.branchesIncluded ?? [])
+        .map((item) => sanitizeTextInput(item, 120))
+        .filter(Boolean)
+        .slice(0, 8),
+      subjectsCovered: (body.subjectsCovered ?? [])
+        .map((item) => sanitizeTextInput(item, 120))
+        .filter(Boolean)
+        .slice(0, 10),
+      points: (body.points ?? [])
+        .map((item) => sanitizeTextInput(item, 120))
+        .filter(Boolean)
+        .slice(0, 6),
+    });
 
-  return NextResponse.json({ course });
+    return NextResponse.json({ course });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Course could not be updated.";
+    const status = message.includes("already exists") ? 409 : 400;
+    return NextResponse.json({ error: message }, { status });
+  }
 }
