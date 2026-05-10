@@ -40,7 +40,7 @@ export function MockLoginForm({ credentials, compact = false, onSuccess }: MockL
     setError("");
 
     if (!selectedCredential.email || !selectedCredential.password) {
-      setError("This demo role is not ready yet.");
+      setError("This portal role is not ready yet.");
       setIsPending(false);
       return;
     }
@@ -77,16 +77,16 @@ export function MockLoginForm({ credentials, compact = false, onSuccess }: MockL
   return (
     <div className={compact ? "space-y-5" : "space-y-7"}>
       <div className={compact ? "space-y-3" : "space-y-4"}>
-        <p className="section-label">Direct Demo Access</p>
+        <p className="section-label">Quick Portal Access</p>
         <h2
           className={`font-semibold tracking-[-0.05em] text-[var(--color-heading)] ${
             compact ? "text-2xl leading-tight sm:text-3xl" : "text-4xl"
           }`}
         >
-          Continue with a demo role
+          Select Your Academy Role
         </h2>
         <p className={`max-w-2xl text-sm text-[var(--color-muted)] ${compact ? "leading-6" : "leading-7"}`}>
-          Choose a role. Credentials fill automatically.
+          Choose a role to access the corresponding dashboard. Credentials will be applied automatically for quick entry.
         </p>
       </div>
 

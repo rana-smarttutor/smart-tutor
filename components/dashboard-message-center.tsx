@@ -185,8 +185,8 @@ export function DashboardMessageCenter({
                   </div>
                 </div>
               ) : null}
-              <button type="button" onClick={handlePublish} className="action-button px-6 py-4">
-                Publish Message
+              <button type="button" onClick={handlePublish} className="btn-action btn-md w-full font-bold">
+                Publish Message to Board
               </button>
               {status ? (
                 <p className="text-sm font-semibold text-[var(--color-heading)]">{status}</p>

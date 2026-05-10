@@ -17,24 +17,25 @@ import type {
   TestItem,
 } from "@/lib/types";
 import { courseLibrary } from "@/lib/course-library";
+import { generatedPlacedStudents } from "./placed-students-data";
 
 export const demoCredentials = [
   {
     role: "student" as const,
     label: "Student Workspace",
-    email: "riya@smarttutor.demo",
+    email: "riya@smarttutor.in",
     password: "Student@123",
   },
   {
     role: "educator" as const,
     label: "Educator Desk",
-    email: "amit@smarttutor.demo",
+    email: "amit@smarttutor.in",
     password: "Educator@123",
   },
   {
     role: "admin" as const,
     label: "Admin Console",
-    email: "admin@smarttutor.demo",
+    email: "admin@smarttutor.in",
     password: "Admin@123",
   },
 ];
@@ -43,7 +44,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-1",
     name: "Riya Sharma",
-    email: "riya@smarttutor.demo",
+    email: "riya@smarttutor.in",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -52,7 +53,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-2",
     name: "Aarav Patil",
-    email: "aarav@smarttutor.demo",
+    email: "aarav@smarttutor.in",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -61,7 +62,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-3",
     name: "Sneha Kulkarni",
-    email: "sneha@smarttutor.demo",
+    email: "sneha@smarttutor.in",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -70,7 +71,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "educator-1",
     name: "Amit Deshmukh",
-    email: "amit@smarttutor.demo",
+    email: "amit@smarttutor.in",
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
@@ -79,7 +80,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "educator-2",
     name: "Neha Joshi",
-    email: "neha@smarttutor.demo",
+    email: "neha@smarttutor.in",
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
@@ -88,7 +89,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "admin-1",
     name: "Ankit Mali",
-    email: "admin@smarttutor.demo",
+    email: "admin@smarttutor.in",
     password: "Admin@123",
     role: "admin",
     label: "Admin Console",
@@ -355,30 +356,48 @@ const contactMethods: ContactMethod[] = [
     value: "+91 88504 47887",
     href: "tel:+918850447887",
     description: "Primary counselling, admissions, and student support line.",
+    color: "#3b82f6",
+    icon: "Phone",
   },
   {
     label: "WhatsApp Support",
     value: "+91 88504 47887",
     href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
     description: "Chat directly for quick counselling and batch guidance.",
+    color: "#25D366",
+    icon: "WhatsApp",
   },
   {
     label: "Instagram",
     value: "@smart_tutor_no1",
     href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
     description: "Official Smart Tutor announcements and updates.",
+    color: "#E4405F",
+    icon: "Instagram",
+  },
+  {
+    label: "Email Admissions",
+    value: "admissions@smarttutor.in",
+    href: "mailto:admissions@smarttutor.in",
+    description: "Send your documents and official queries here.",
+    color: "#ea4335",
+    icon: "Email",
   },
   {
     label: "Director & Founder",
     value: "Prof. Ravi Rana",
     href: "tel:+918850447887",
     description: "Leadership contact for SmartIQ Academy, Smart Tutor, and Prime Digital School.",
+    color: "#1e293b",
+    icon: "User",
   },
   {
     label: "Visit The Academy",
     value: "Sector 17, Vashi, Navi Mumbai",
     href: "https://maps.google.com/?q=Vashi+Navi+Mumbai",
     description: "Visit for counselling and admissions guidance.",
+    color: "#0f172a",
+    icon: "Map",
   },
 ];
 
@@ -523,13 +542,14 @@ export function getPublicInstituteData() {
       "From primary classrooms to civil services preparation, every learner follows a clear academic plan.",
       "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",
       "Board performance, junior college support, entrance readiness, government exams, and spoken English live under one reliable academy roof.",
+      "While we primarily serve the Vashi, Navi Mumbai, and Thane regions, we are actively preparing to bring our specialized mentoring to more cities across India soon.",
       "Vashi families choose Smart Tutor for consistency, attention, and visible academic growth.",
     ],
     metrics: [
-      { label: "Learner pathways", value: "08+" },
-      { label: "Classes served", value: "1 to UPSC" },
-      { label: "Testing rhythm", value: "Weekly" },
-      { label: "Counselling support", value: "Year-round" },
+      { label: "Success Rate", value: "94%" },
+      { label: "App Support", value: "Android & Desktop" },
+      { label: "Active Students", value: "500+" },
+      { label: "Expert Mentors", value: "25+" },
     ],
     operationsHighlights: [
       {
@@ -679,6 +699,7 @@ export function getPublicInstituteData() {
       },
     ],
     detailedCourses,
+    placedStudents: generatedPlacedStudents,
   };
 }
 
@@ -987,7 +1008,7 @@ export function createUserDraft(input: {
   return {
     id: `user-draft-${Date.now()}`,
     name: input.name?.trim() || "New Smart Tutor User",
-    email: input.email?.trim().toLowerCase() || "new-user@smarttutor.demo",
+    email: input.email?.trim().toLowerCase() || "new-user@smarttutor.in",
     role,
     label:
       role === "admin"

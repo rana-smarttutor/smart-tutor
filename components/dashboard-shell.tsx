@@ -183,35 +183,35 @@ export function DashboardShell({
           </div>
 
           <div className="surface-soft mt-8 rounded-[1.75rem] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-strong)]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-primary)]">
               Active Session
             </p>
-            <p className="mt-3 truncate text-lg font-semibold text-[var(--color-heading)] sm:text-xl" title={session?.name}>
+            <p className="mt-3 truncate text-lg font-bold text-[var(--color-heading)] sm:text-xl" title={session?.name}>
               {session ? session.name : "Smart Tutor"}
             </p>
-            <p className="mt-1 truncate text-sm text-[var(--color-muted)]" title={session?.email}>
+            <p className="mt-1 truncate text-sm font-medium text-[var(--color-muted)]" title={session?.email}>
               {session ? session.email : "Login required"}
             </p>
-            <span className="mt-4 inline-flex max-w-full truncate rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-heading)]">
+            <span className="mt-4 inline-flex max-w-full truncate rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-heading)]">
               {dashboard.roleLabel}
             </span>
             {session ? (
-              <div className="mt-4">
+              <div className="mt-5">
                 <LogoutButton />
               </div>
             ) : null}
           </div>
 
-          <nav className="mt-8 grid gap-3">
+          <nav className="mt-8 grid gap-2.5">
             {sidebarByRole[role].map((item) => (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => setActiveSection(item.id)}
-                className={`rounded-[1.25rem] px-4 py-3 text-left text-sm font-semibold ${
+                className={`rounded-[1.25rem] px-4 py-3 text-left text-sm font-bold transition-all ${
                   activeSection === item.id
-                    ? "bg-[var(--color-highlight)] text-[var(--color-accent)]"
-                    : "border border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-heading)]"
+                    ? "bg-[var(--color-primary)] text-white shadow-md shadow-blue-500/20"
+                    : "border border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-heading)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                 }`}
               >
                 {item.label}

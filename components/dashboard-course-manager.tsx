@@ -222,8 +222,8 @@ export function DashboardCourseManager({
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
-            <button type="button" onClick={handleCreate} className="action-button px-6 py-4">
-              Save Course
+            <button type="button" onClick={handleCreate} className="btn-action btn-md w-full font-bold">
+              Add New Course
             </button>
           </div>
         </div>
@@ -234,9 +234,10 @@ export function DashboardCourseManager({
             const isEditing = editingId === course.id;
 
             return (
-              <div key={course.id} className="surface-soft rounded-[1.75rem] p-5">
+              <div key={course.id} className="surface-soft rounded-[1.75rem] p-5 border border-transparent hover:border-[var(--color-primary)] transition-all">
                 {isEditing ? (
                   <div className="grid gap-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] mb-1">Editing Course</p>
                     <select
                       value={draft.standardKey}
                       onChange={(event) =>
@@ -245,7 +246,7 @@ export function DashboardCourseManager({
                           [course.id]: { ...draft, standardKey: event.target.value },
                         }))
                       }
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     >
                       {courseOptions.map((option) => (
                         <option key={option.standardKey} value={option.standardKey}>
@@ -270,7 +271,7 @@ export function DashboardCourseManager({
                           }))
                         }
                         placeholder={label}
-                        className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                        className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                       />
                     ))}
                     <textarea
@@ -282,7 +283,7 @@ export function DashboardCourseManager({
                         }))
                       }
                       rows={3}
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
                     <textarea
                       value={draft.description}
@@ -293,7 +294,7 @@ export function DashboardCourseManager({
                         }))
                       }
                       rows={4}
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
                     <textarea
                       value={draft.courseNamesIncludedText}
@@ -305,7 +306,7 @@ export function DashboardCourseManager({
                       }
                       rows={4}
                       placeholder="Included course names"
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
                     <textarea
                       value={draft.branchesIncludedText}
@@ -317,7 +318,7 @@ export function DashboardCourseManager({
                       }
                       rows={4}
                       placeholder="Included branches"
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
                     <textarea
                       value={draft.subjectsCoveredText}
@@ -329,7 +330,7 @@ export function DashboardCourseManager({
                       }
                       rows={4}
                       placeholder="Subjects covered"
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
                     <textarea
                       value={draft.pointsText}
@@ -340,16 +341,16 @@ export function DashboardCourseManager({
                         }))
                       }
                       rows={4}
-                      className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
-                    <div className="flex flex-wrap gap-3">
-                      <button type="button" onClick={() => handleSave(course.id)} className="action-button px-5 py-3">
-                        Save Course
+                    <div className="flex flex-wrap gap-3 mt-2">
+                      <button type="button" onClick={() => handleSave(course.id)} className="btn-action btn-sm">
+                        Update Course
                       </button>
                       <button
                         type="button"
                         onClick={() => setEditingId(null)}
-                        className="surface rounded-full px-5 py-3 text-sm font-semibold text-[var(--color-heading)]"
+                        className="btn-surface btn-sm"
                       >
                         Cancel
                       </button>
@@ -359,35 +360,29 @@ export function DashboardCourseManager({
                   <div>
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="keyword-line">{course.tagline}</p>
-                        <p className="mt-2 text-lg font-semibold text-[var(--color-heading)]">
+                        <p className="keyword-line text-[var(--color-secondary)]">{course.tagline}</p>
+                        <p className="mt-2 text-xl font-bold text-[var(--color-heading)]">
                           {course.title}
                         </p>
                       </div>
-                      <span className="pill">{course.duration}</span>
+                      <span className="pill bg-[var(--color-secondary-soft)] text-[var(--color-secondary-strong)] border-[var(--color-secondary)]/20">{course.duration}</span>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">{course.summary}</p>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      <div className="surface rounded-3xl p-4">
-                        <p className="text-xs font-semibold text-[var(--color-muted)]">Mode</p>
-                        <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">{course.mode}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)] font-medium">{course.summary}</p>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      <div className="surface rounded-2xl p-4 border border-[var(--color-border)] bg-white/40">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Delivery Mode</p>
+                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">{course.mode}</p>
                       </div>
-                      <div className="surface rounded-3xl p-4">
-                        <p className="text-xs font-semibold text-[var(--color-muted)]">Audience</p>
-                        <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">{course.audienceLabel}</p>
+                      <div className="surface rounded-2xl p-4 border border-[var(--color-border)] bg-white/40">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Target Audience</p>
+                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">{course.audienceLabel}</p>
                       </div>
                     </div>
-                    <div className="mt-4 grid gap-3">
-                      <div className="surface rounded-3xl p-4">
-                        <p className="text-xs font-semibold text-[var(--color-muted)]">Course names included</p>
-                        <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
+                    <div className="mt-3 grid gap-3">
+                      <div className="surface rounded-2xl p-4 border border-[var(--color-border)] bg-white/40">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Course Portfolio</p>
+                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">
                           {course.courseNamesIncluded.join(", ")}
-                        </p>
-                      </div>
-                      <div className="surface rounded-3xl p-4">
-                        <p className="text-xs font-semibold text-[var(--color-muted)]">Branches included</p>
-                        <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
-                          {course.branchesIncluded.join(", ")}
                         </p>
                       </div>
                     </div>
@@ -397,9 +392,9 @@ export function DashboardCourseManager({
                         setEditingId(course.id);
                         setDrafts((current) => ({ ...current, [course.id]: toForm(course) }));
                       }}
-                      className="action-button mt-4 px-5 py-3"
+                      className="btn-action btn-sm mt-6 w-full sm:w-auto"
                     >
-                      Edit Course
+                      Edit Course Details
                     </button>
                   </div>
                 )}

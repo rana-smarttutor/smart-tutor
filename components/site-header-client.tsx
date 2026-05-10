@@ -97,15 +97,22 @@ export function SiteHeaderClient({
 
                 <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 lg:flex">
                   <nav className="flex min-w-0 flex-wrap items-center justify-center gap-2">
-                    {links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="nav-link rounded-full px-4 py-2 text-sm font-semibold text-[var(--color-muted)]"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
+                    {links.map((link) => {
+                      const isActive = pathname === link.href;
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          className={`nav-link rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                            isActive
+                              ? "text-[var(--color-heading)] bg-[var(--color-primary-soft)] shadow-[inset_0_0_0_1px_var(--color-primary)]"
+                              : "text-[var(--color-muted)] hover:text-[var(--color-heading)] hover:bg-[var(--color-primary-soft)]"
+                          }`}
+                        >
+                          {link.label}
+                        </Link>
+                      );
+                    })}
                   </nav>
                 </div>
 
@@ -126,13 +133,13 @@ export function SiteHeaderClient({
                   <ThemeToggle />
                   {session ? (
                     <>
-                      <Link href="/dashboard" className="action-button px-5 py-3">
+                      <Link href="/dashboard" className="btn-action btn-sm">
                         Dashboard
                       </Link>
                       <LogoutButton />
                     </>
                   ) : (
-                    <Link href="/login" className="action-button px-5 py-3">
+                    <Link href="/login" className="btn-action btn-sm">
                       Login
                     </Link>
                   )}
@@ -146,7 +153,7 @@ export function SiteHeaderClient({
                         setIsQuickLoginOpen(true);
                         setIsMobileMenuOpen(false);
                       }}
-                      className="action-button min-h-11 px-4 py-2.5 text-sm"
+                      className="btn-action btn-sm"
                     >
                       Login
                     </button>
@@ -191,16 +198,23 @@ export function SiteHeaderClient({
               >
                 <div className="mt-4 grid gap-3 border-t border-[var(--color-border)] pt-4">
                   <nav className="grid gap-2">
-                    {links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={closeMenu}
-                        className="nav-link rounded-[1.1rem] px-4 py-3 text-sm font-semibold text-[var(--color-heading)]"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
+                    {links.map((link) => {
+                      const isActive = pathname === link.href;
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          onClick={closeMenu}
+                          className={`nav-link rounded-[1.1rem] px-4 py-3 text-sm font-semibold transition-all ${
+                            isActive
+                              ? "text-[var(--color-primary)] bg-[var(--color-primary-soft)] shadow-[inset_0_0_0_1px_var(--color-primary)]"
+                              : "text-[var(--color-heading)]"
+                          }`}
+                        >
+                          {link.label}
+                        </Link>
+                      );
+                    })}
                   </nav>
 
                   <div className="surface-soft rounded-[1.4rem] p-4">

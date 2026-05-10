@@ -182,7 +182,7 @@ export function DashboardTestStudio({
                     setActiveTestId(test.id);
                     setAnswers(new Array(test.questions?.length ?? 0).fill(-1));
                   }}
-                  className="action-button mt-4 px-5 py-3"
+                  className="btn-action btn-sm mt-4"
                 >
                   Start Test
                 </button>
@@ -193,10 +193,10 @@ export function DashboardTestStudio({
           <div className="surface-soft rounded-[1.75rem] p-5">
             {activeTest ? (
               <div className="grid gap-4">
-                <p className="text-lg font-semibold text-[var(--color-heading)]">{activeTest.title}</p>
+                <p className="text-lg font-bold text-[var(--color-heading)]">{activeTest.title}</p>
                 {activeTest.questions?.map((question, questionIndex) => (
-                  <div key={question.id} className="surface rounded-3xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-heading)]">{question.prompt}</p>
+                  <div key={question.id} className="surface rounded-3xl p-4 bg-white/40">
+                    <p className="text-sm font-bold text-[var(--color-heading)]">{question.prompt}</p>
                     <div className="mt-3 grid gap-3">
                       {question.options.map((option, optionIndex) => (
                         <button
@@ -207,10 +207,10 @@ export function DashboardTestStudio({
                               current.map((item, index) => (index === questionIndex ? optionIndex : item)),
                             )
                           }
-                          className={`rounded-2xl border px-4 py-3 text-left text-sm font-semibold ${
+                          className={`rounded-2xl border px-4 py-3 text-left text-sm font-bold transition-all ${
                             answers[questionIndex] === optionIndex
-                              ? "border-[var(--color-accent)] bg-[var(--color-highlight)] text-[var(--color-heading)]"
-                              : "border-[var(--color-border)] bg-white/60 text-[var(--color-muted)]"
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)] shadow-sm"
+                              : "border-[var(--color-border)] bg-white/60 text-[var(--color-muted)] hover:border-[var(--color-primary)]"
                           }`}
                         >
                           {option}
@@ -219,14 +219,14 @@ export function DashboardTestStudio({
                     </div>
                   </div>
                 ))}
-                <div className="flex flex-wrap gap-3">
-                  <button type="button" onClick={handleSubmitTest} className="action-button px-6 py-4">
-                    Submit Test
+                <div className="flex flex-wrap gap-3 mt-4">
+                  <button type="button" onClick={handleSubmitTest} className="btn-action btn-md w-full sm:w-auto font-bold">
+                    Submit Test for Review
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveTestId(null)}
-                    className="surface rounded-full px-5 py-3 text-sm font-semibold text-[var(--color-heading)]"
+                    className="btn-surface btn-md w-full sm:w-auto font-bold"
                   >
                     Cancel
                   </button>
@@ -359,30 +359,34 @@ export function DashboardTestStudio({
               <button
                 type="button"
                 onClick={() => setQuestions((current) => [...current, createQuestion(current.length, 4)])}
-                className="surface rounded-full px-5 py-3 text-sm font-semibold text-[var(--color-heading)]"
+                className="btn-surface btn-sm text-[var(--color-primary)] font-bold"
               >
-                Add Question
+                + Add Next Question
               </button>
-              <button type="button" onClick={handleCreateTest} className="action-button px-6 py-4">
+              <button type="button" onClick={handleCreateTest} className="btn-action btn-md w-full sm:w-auto font-bold">
                 Create Targeted Test
               </button>
             </div>
-            {status ? <p className="text-sm font-semibold text-[var(--color-heading)]">{status}</p> : null}
+            {status ? <p className="text-sm font-bold text-[var(--color-primary)]">{status}</p> : null}
           </div>
         </div>
 
         <div className="grid gap-4">
           <div className="surface-soft rounded-[1.75rem] p-5">
-            <p className="text-sm font-semibold text-[var(--color-heading)]">Pending manual grading</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] mb-3">Pending manual grading</p>
             <div className="mt-4 grid gap-3">
               {pendingSubmissions.map((submission) => (
                 <button
                   key={submission.id}
                   type="button"
                   onClick={() => setGradingSubmissionId(submission.id)}
-                  className="surface rounded-3xl p-4 text-left"
+                  className={`surface rounded-3xl p-4 text-left transition-all ${
+                    gradingSubmissionId === submission.id 
+                      ? "border-[var(--color-secondary)] bg-[var(--color-secondary-soft)]" 
+                      : "hover:border-[var(--color-secondary)]"
+                  }`}
                 >
-                  <p className="text-sm font-semibold text-[var(--color-heading)]">{submission.studentName}</p>
+                  <p className="text-sm font-bold text-[var(--color-heading)]">{submission.studentName}</p>
                   <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
                     Awaiting faculty review and result publication.
                   </p>
@@ -392,23 +396,25 @@ export function DashboardTestStudio({
           </div>
 
           <div className="surface-soft rounded-[1.75rem] p-5">
-            <p className="text-sm font-semibold text-[var(--color-heading)]">Grading window</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-secondary)] mb-3">Grading window</p>
             {gradingSubmission ? (
               <div className="mt-4 grid gap-3">
-                <p className="text-sm font-semibold text-[var(--color-heading)]">
+                <p className="text-sm font-bold text-[var(--color-heading)]">
                   {gradingSubmission.studentName}
                 </p>
                 {gradingTest ? (
                   <div className="grid gap-3">
                     {gradingTest.questions?.map((question, index) => (
-                      <div key={question.id} className="surface rounded-3xl p-4">
-                        <p className="text-sm font-semibold text-[var(--color-heading)]">{question.prompt}</p>
+                      <div key={question.id} className="surface rounded-3xl p-4 bg-white/40">
+                        <p className="text-sm font-bold text-[var(--color-heading)]">{question.prompt}</p>
                         <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
                           Selected answer:{" "}
-                          {typeof gradingSubmission.answers[index] === "number" &&
-                          gradingSubmission.answers[index] >= 0
-                            ? question.options[gradingSubmission.answers[index]]
-                            : "No answer submitted"}
+                          <span className="font-bold text-[var(--color-secondary)]">
+                            {typeof gradingSubmission.answers[index] === "number" &&
+                            gradingSubmission.answers[index] >= 0
+                              ? question.options[gradingSubmission.answers[index]]
+                              : "No answer submitted"}
+                          </span>
                         </p>
                       </div>
                     ))}
@@ -418,16 +424,16 @@ export function DashboardTestStudio({
                   value={gradeScore}
                   onChange={(event) => setGradeScore(event.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
                   placeholder={`Score out of ${gradingSubmission.total}`}
-                  className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-secondary)]"
                 />
                 <textarea
                   value={gradeFeedback}
                   onChange={(event) => setGradeFeedback(event.target.value.slice(0, 200))}
                   placeholder="Feedback for the student board"
                   rows={4}
-                  className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-secondary)]"
                 />
-                <button type="button" onClick={handleGradeSubmission} className="action-button px-6 py-4">
+                <button type="button" onClick={handleGradeSubmission} className="btn-action btn-secondary btn-md w-full font-bold">
                   Grade And Publish Result
                 </button>
               </div>

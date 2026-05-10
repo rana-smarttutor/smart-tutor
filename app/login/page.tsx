@@ -47,10 +47,10 @@ export default async function LoginPage() {
                 Smart Tutor Access
               </p>
               <h1 className="text-4xl font-semibold leading-[1.08] tracking-[-0.025em] text-[var(--color-heading)] sm:text-5xl">
-                Real sign-in first. Demo access below.
+                Secure access to your academy workspace.
               </h1>
               <p className="text-sm leading-7 text-[var(--color-muted)]">
-                Sign in with your account email and password, or use the direct demo role login when you want a fast preview.
+                Sign in with your registered email and password to access your personalized learning or teaching dashboard.
               </p>
             </div>
 
@@ -64,7 +64,7 @@ export default async function LoginPage() {
                   Account login is now live
                 </p>
                 <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
-                  The main sign-in flow uses email and password, with direct demo access still available below.
+                  Access your courses, materials, and batch updates from any device. Select your role below for direct portal entry.
                 </p>
               </div>
             </div>

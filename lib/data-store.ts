@@ -384,6 +384,7 @@ function normalizePublicInstituteData(document: PublicInstituteData): PublicInst
     contactMethods: template.contactMethods,
     contactActions: template.contactActions,
     whatsappHref: template.whatsappHref,
+    placedStudents: document.placedStudents || template.placedStudents,
   };
 }
 

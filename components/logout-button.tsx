@@ -25,7 +25,7 @@ export function LogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={isPending}
-      className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-5 py-3 text-center text-sm font-semibold text-[var(--color-heading)] lg:w-auto"
+      className="btn-surface btn-sm w-full font-bold"
     >
       {isPending ? "Signing out..." : "Logout"}
     </button>

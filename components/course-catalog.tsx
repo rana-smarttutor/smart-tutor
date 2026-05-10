@@ -43,7 +43,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
             <p className="mt-2 text-sm font-semibold text-[var(--color-accent)]">
               {course.audienceLabel}
             </p>
-            <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
+            <p className="mt-6 text-sm leading-7 text-[var(--color-muted)]">
               {course.description}
             </p>
 

@@ -90,6 +90,8 @@ export type ContactMethod = {
   value: string;
   href: string;
   description: string;
+  color?: string;
+  icon?: string;
 };
 
 export type ContactAction = {
@@ -150,6 +152,17 @@ export type DesignPrinciple = {
   metric: string;
 };
 
+export type PlacedStudent = {
+  id: string;
+  name: string;
+  location: string;
+  course: string;
+  company?: string;
+  role?: string;
+  salary?: string;
+  image?: string;
+};
+
 export type PublicInstituteData = {
   profile: InstituteProfile;
   socialLinks: SocialLink[];
@@ -164,6 +177,7 @@ export type PublicInstituteData = {
   mediaFeatures: MediaFeature[];
   designPrinciples: DesignPrinciple[];
   detailedCourses: DetailedCourse[];
+  placedStudents: PlacedStudent[];
 };
 
 export type QuizQuestion = {
