@@ -19,6 +19,12 @@ import type {
 import { courseLibrary } from "@/lib/course-library";
 import { generatedPlacedStudents } from "./placed-students-data";
 
+const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "admissions@smarttutor.in";
+const CONTACT_ADDRESS = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
+const WHATSAPP_LINK = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://wa.me/918850447887?text=Hello%20Smart%20Tutor";
+const INSTAGRAM_LINK = process.env.NEXT_PUBLIC_INSTAGRAM_LINK || "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
+
 export const demoCredentials = [
   {
     role: "student" as const,
@@ -338,13 +344,13 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
 const socialLinks: SocialLink[] = [
   {
     label: "WhatsApp",
-    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
+    href: WHATSAPP_LINK,
     color: "#25D366",
     glow: "rgba(37, 211, 102, 0.32)",
   },
   {
     label: "Instagram",
-    href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
+    href: INSTAGRAM_LINK,
     color: "#E4405F",
     glow: "rgba(228, 64, 95, 0.28)",
   },
@@ -353,16 +359,16 @@ const socialLinks: SocialLink[] = [
 const contactMethods: ContactMethod[] = [
   {
     label: "Admissions Hotline",
-    value: "+91 88504 47887",
-    href: "tel:+918850447887",
+    value: CONTACT_PHONE,
+    href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
     description: "Primary counselling, admissions, and student support line.",
     color: "#3b82f6",
     icon: "Phone",
   },
   {
     label: "WhatsApp Support",
-    value: "+91 88504 47887",
-    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
+    value: CONTACT_PHONE,
+    href: WHATSAPP_LINK,
     description: "Chat directly for quick counselling and batch guidance.",
     color: "#25D366",
     icon: "WhatsApp",
@@ -370,15 +376,15 @@ const contactMethods: ContactMethod[] = [
   {
     label: "Instagram",
     value: "@smart_tutor_no1",
-    href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
+    href: INSTAGRAM_LINK,
     description: "Official Smart Tutor announcements and updates.",
     color: "#E4405F",
     icon: "Instagram",
   },
   {
     label: "Email Admissions",
-    value: "admissions@smarttutor.in",
-    href: "mailto:admissions@smarttutor.in",
+    value: CONTACT_EMAIL,
+    href: `mailto:${CONTACT_EMAIL}`,
     description: "Send your documents and official queries here.",
     color: "#ea4335",
     icon: "Email",
@@ -386,14 +392,14 @@ const contactMethods: ContactMethod[] = [
   {
     label: "Director & Founder",
     value: "Prof. Ravi Rana",
-    href: "tel:+918850447887",
+    href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
     description: "Leadership contact for SmartIQ Academy, Smart Tutor, and Prime Digital School.",
     color: "#1e293b",
     icon: "User",
   },
   {
     label: "Visit The Academy",
-    value: "Sector 17, Vashi, Navi Mumbai",
+    value: CONTACT_ADDRESS,
     href: "https://maps.google.com/?q=Vashi+Navi+Mumbai",
     description: "Visit for counselling and admissions guidance.",
     color: "#0f172a",
@@ -404,22 +410,22 @@ const contactMethods: ContactMethod[] = [
 const contactActions: ContactAction[] = [
   {
     label: "Call Admissions",
-    href: "tel:+918850447887",
+    href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
     style: "primary",
   },
   {
     label: "WhatsApp Counselling",
-    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
+    href: WHATSAPP_LINK,
     style: "primary",
   },
   {
     label: "Open Instagram",
-    href: "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr",
+    href: INSTAGRAM_LINK,
     style: "secondary",
   },
   {
     label: "Campus Visit Request",
-    href: "https://wa.me/918850447887?text=Hello%20Smart%20Tutor%2C%20I%20want%20to%20visit%20the%20campus.",
+    href: `${WHATSAPP_LINK}&text=Hello%20Smart%20Tutor%2C%20I%20want%20to%20visit%20the%20campus.`,
     style: "secondary",
   },
 ];

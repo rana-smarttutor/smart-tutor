@@ -15,7 +15,6 @@ export default async function ContactPage() {
       <section className="mb-20 text-center lg:text-left relative">
         <div className="absolute top-0 left-0 -z-10 h-64 w-64 bg-blue-400/10 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2" />
         <div className="max-w-4xl">
-          <p className="section-label mb-6">Connect with Us</p>
           <h1 className="text-5xl md:text-8xl font-black tracking-tight text-[var(--color-heading)] leading-[1] mb-8">
             Get in <span className="text-blue-600">Touch.</span>
           </h1>

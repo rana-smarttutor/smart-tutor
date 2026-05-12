@@ -79,7 +79,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                   {student.image ? (
                     <Image
                       src={student.image}
-                      alt={student.name}
+                      alt="Success Story"
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-700"
                     />
@@ -94,7 +94,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                       </svg>
                     </div>
                   )}
-                  {student.company && (
+                  {student.image && student.company && (
                     <div className="absolute top-5 right-5 bg-blue-600 text-white text-xs font-bold px-5 py-2 rounded-full shadow-2xl z-10 animate-bounce">
                       Placed
                     </div>
@@ -103,39 +103,37 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                     <p className="text-white font-bold text-sm">Success Story <span>→</span></p>
                   </div>
                 </div>
-                <div className="p-8">
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
-                    {student.name}
-                  </h3>
-                  <p className="text-sm text-blue-700 dark:text-blue-400 font-extrabold mb-5 uppercase tracking-widest">
-                    {student.course}
-                  </p>
-                  <div className="space-y-4 text-sm">
-                    <div className="flex items-center text-slate-600 dark:text-slate-400 font-medium">
-                      <div className="h-8 w-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mr-3">
-                        <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                      </div>
-                      {student.location}
-                    </div>
-                    {student.company && (
-                      <div className="flex items-center text-slate-800 dark:text-slate-200 font-bold">
-                        <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mr-3">
-                          <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                          </svg>
+                <div className="p-6">
+                  {student.image ? (
+                    /* Image available: show company/salary, hide name/course */
+                    <div className="space-y-3">
+                      {student.company && (
+                        <div className="flex items-center text-slate-800 dark:text-slate-200 font-bold text-xs">
+                          <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mr-2">
+                            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          {student.company}
                         </div>
-                        {student.company}
-                      </div>
-                    )}
-                    {student.salary && (
-                      <div className="text-sm text-emerald-700 dark:text-emerald-400 font-black bg-emerald-100 dark:bg-emerald-900/40 px-4 py-2 rounded-xl inline-block shadow-sm">
-                        {student.salary} Package
-                      </div>
-                    )}
-                  </div>
+                      )}
+                      {student.salary && (
+                        <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-black bg-emerald-100 dark:bg-emerald-900/40 px-3 py-1.5 rounded-lg inline-block shadow-sm">
+                          {student.salary} Package
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* No image: show name/course, hide company/salary */
+                    <>
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black mb-2 uppercase tracking-[0.2em] bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full inline-block border border-blue-100 dark:border-blue-800">
+                        {student.course}
+                      </p>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-blue-600 transition-colors">
+                        {student.name}
+                      </h3>
+                    </>
+                  )}
                 </div>
               </div>
             </RevealOnScroll>

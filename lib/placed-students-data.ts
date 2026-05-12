@@ -22,7 +22,17 @@ const otherLocations = ["Bangalore", "Hyderabad", "Pune", "Delhi", "Chennai", "K
 const courses = [
   "UPSC Foundation", "MPSC Civil Services", "JEE Advanced", "NEET-UG", "Class 10 Board",
   "Class 12 Science", "Class 12 Commerce", "Banking (IBPS/SBI)", "SSC CGL", "Digital Marketing",
-  "Data Science", "Spoken English & Personality Dev"
+  "Data Science", "Spoken English & Personality Dev", "SBI PO", "SSC GD"
+];
+
+// Specific known students based on user feedback
+const specificStudents = [
+  { name: "Rahul Sharma", course: "SBI PO" },
+  { name: "Sneha Patil", course: "SSC GD" },
+  { name: "Amit Deshmukh", course: "UPSC Foundation" },
+  { name: "Priya Verma", course: "Banking (IBPS/SBI)" },
+  { name: "Vikram Malhotra", course: "JEE Advanced" },
+  { name: "Ananya Gupta", course: "NEET-UG" },
 ];
 
 const companies = [
@@ -47,22 +57,30 @@ function getRandom(arr: string[]) {
 export function generatePlacedStudents(count: number): PlacedStudent[] {
   const students: PlacedStudent[] = [];
   for (let i = 1; i <= count; i++) {
-    const isPrimary = Math.random() < 0.7;
-    const location = isPrimary ? getRandom(primaryLocations) : getRandom(otherLocations);
-    const firstName = getRandom(firstNames);
-    const lastName = getRandom(lastNames);
-    const name = `${firstName} ${lastName}`;
+    let name = "";
+    let course = "";
+    
+    if (i <= specificStudents.length) {
+      name = specificStudents[i - 1].name;
+      course = specificStudents[i - 1].course;
+    } else {
+      const firstName = getRandom(firstNames);
+      const lastName = getRandom(lastNames);
+      name = `${firstName} ${lastName}`;
+      course = getRandom(courses);
+    }
     
     // We have 27 images. Let's use them for the first 27 or randomly.
     const image = i <= 27 ? `/images/students/student-${i}.jpg` : undefined;
     
     const isPlaced = Math.random() < 0.6; // 60% are "placed", others are just "students" or toppers
+    const location = isPlaced ? getRandom(primaryLocations) : getRandom(otherLocations);
     
     students.push({
       id: `ps-${i}`,
       name,
       location,
-      course: getRandom(courses),
+      course,
       company: isPlaced ? getRandom(companies) : undefined,
       role: isPlaced ? getRandom(roles) : undefined,
       salary: isPlaced ? getRandom(salaries) : undefined,
