@@ -38,8 +38,19 @@ The old `guest` role has been removed from the account model. Public visitors ca
 - Admin account control with role sorting
 - Admin course control with standardized course-name selection and editable course details
 - Public course catalog backed by MongoDB, refreshed from the database and cached in browser local storage
+- **SmartTutor AI Assistant**: Integrated chatbot providing expert study guidance, course recommendations, and file-based tutoring
 - Mongo bootstrap and health-check routes for initial setup and runtime verification
 - User integrity rules with unique person `id` and unique normalized email
+
+## AI Integration
+
+Smart Tutor features a custom AI assistant designed to support student learning and institutional efficiency.
+
+- **Expert Tutoring**: Specialized logic for education-related queries including study plans, subject-specific doubts, and exam preparation (UPSC, MPSC, Boards, etc.)
+- **Context Awareness**: Remembers student details like name, class, and target exams during the session for personalized advice.
+- **Material Analysis**: Students can upload PDFs, Word docs, and images for the AI to analyze and provide tutoring on specific study materials.
+- **Quick Actions**: Streamlined navigation for common institute information like location, contact details, and course catalogs.
+- **Vercel-Ready Backend**: API routes designed for high-performance AI interactions and secure material handling.
 
 ## API Routes
 
@@ -55,6 +66,8 @@ The old `guest` role has been removed from the account model. Public visitors ca
 - `GET, POST, PATCH /api/users`
 - `GET, POST /api/admin/bootstrap`
 - `GET /api/admin/mongo-status`
+- `POST /api/smarttutor-chat`: AI assistant core logic and memory processing
+- `POST /api/upload-material`: File processing for AI tutoring context
 
 ## Environment
 

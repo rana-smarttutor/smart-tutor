@@ -83,14 +83,13 @@ export default async function Home() {
           </div>
 
           <div className="pt-10 border-t border-[var(--color-border)] mt-10">
-            <div className="relative isolate overflow-hidden rounded-[2rem] p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group">
-              {/* Animated Background Accents */}
-              <div className="absolute inset-0 -z-10 bg-white dark:bg-slate-950 transition-colors duration-500" />
-              <div className="absolute top-0 right-0 -z-10 h-[400px] w-[400px] bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700" />
-              <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700" />
+            <div className="relative isolate overflow-hidden rounded-[2rem] p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
+              {/* Animated Background Accents - Ensure they don't cause overflow */}
+              <div className="absolute top-0 right-0 -z-10 h-[400px] w-[400px] bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
               
-              <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center">
-                <div className="max-w-2xl">
+              <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center text-center lg:text-left">
+                <div className="max-w-2xl mx-auto lg:mx-0">
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-black uppercase tracking-widest mb-6">
                     <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
                     Limited Slots for 2026-27
@@ -103,7 +102,7 @@ export default async function Home() {
                   </p>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row lg:flex-col gap-4 min-w-[240px]">
+                <div className="flex flex-col sm:flex-row lg:flex-col gap-4 min-w-[240px] justify-center lg:justify-start">
                   <Link 
                     href="/login" 
                     className="group/btn relative inline-flex h-14 items-center justify-center gap-3 bg-blue-600 text-white px-8 rounded-xl font-black text-base transition-all hover:bg-blue-700 hover:scale-[1.02] shadow-xl shadow-blue-500/25 active:scale-95 overflow-hidden"
@@ -388,3 +387,4 @@ export default async function Home() {
     </main>
   );
 }
+
