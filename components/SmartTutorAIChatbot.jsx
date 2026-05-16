@@ -4,11 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const quickActions = [
-  { label: "Location", type: "answer", content: "Smart Tutor is located in Sector 17, Vashi, Navi Mumbai. Visit us for expert coaching!", path: "/contact" },
-  { label: "Contact", type: "answer", content: "You can reach us at +91 88504 47887 or email admissions@smarttutor.in.", path: "/contact" },
-  { label: "Timings", type: "answer", content: "We are open Monday to Saturday, from 8:00 AM to 8:30 PM.", path: "/contact" },
-  { label: "Courses", type: "link", content: "/courses", path: "/courses" },
-  { label: "Consult", type: "link", content: "/contact", path: "/contact" },
+  { label: "Location", content: "Smart Tutor is located in Sector 17, Vashi, Navi Mumbai. Visit us for expert coaching!", path: "/contact" },
+  { label: "Contact", content: "You can reach us at +91 88504 47887 or email admissions@smarttutor.in.", path: "/contact" },
+  { label: "Timings", content: "We are open Monday to Saturday, from 8:00 AM to 8:30 PM.", path: "/contact" },
+  { label: "Courses", content: "Explore our wide range of school coaching, entrance exam prep, and competitive exam courses.", path: "/courses" },
+  { label: "Consult", content: "Book a free counseling session with Prof. Ravi Rana to discuss your academic goals.", path: "/contact" },
 ];
 
 const initialMessage = {
@@ -368,13 +368,15 @@ export default function SmartTutorAIChatbot() {
   }, [messages, typing, displayedText]);
 
   const typeEffect = (text) => {
+    if (!text) return;
     setIsTypingAnimation(true);
-    let i = 0;
-    setDisplayedText("");
+    setDisplayedText(text.charAt(0));
+    let i = 1;
     const interval = setInterval(() => {
-      setDisplayedText((prev) => prev + text.charAt(i));
-      i++;
-      if (i >= text.length) {
+      if (i < text.length) {
+        setDisplayedText((prev) => prev + text.charAt(i));
+        i++;
+      } else {
         clearInterval(interval);
         setIsTypingAnimation(false);
       }
@@ -482,24 +484,20 @@ export default function SmartTutorAIChatbot() {
   }
 
   function handleQuickAction(action) {
-    if (action.type === "link") {
-      router.push(action.content);
-      return;
-    }
-    
-    if (action.type === "answer") {
-      const userMsg = { role: "user", content: action.label };
-      const botMsg = { role: "assistant", content: action.content };
-      setMessages((prev) => [...prev, userMsg, botMsg]);
-      typeEffect(action.content);
-      return;
-    }
+    const userMsg = { role: "user", content: action.label };
+    const botMsg = { role: "assistant", content: action.content };
+    setMessages((prev) => [...prev, userMsg, botMsg]);
+    typeEffect(action.content);
 
-    sendMessage(action.label || action);
+    if (action.path) {
+      setTimeout(() => {
+        router.push(action.path);
+      }, 1500); // Small delay to let user read the text reply
+    }
   }
 
-  function handleVisit(path) {
-    if (path) router.push(path);
+  function handleVisit(action) {
+    handleQuickAction(action);
   }
 
   return (
@@ -567,7 +565,7 @@ export default function SmartTutorAIChatbot() {
                     {action.label}
                   </button>
                   <button
-                    onClick={() => handleVisit(action.path)}
+                    onClick={() => handleVisit(action)}
                     style={styles.visitButton}
                     title="Visit page"
                   >

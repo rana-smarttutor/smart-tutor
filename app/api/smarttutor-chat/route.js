@@ -115,24 +115,15 @@ Smart Tutor Features:
 - 1-on-1 mentoring and parent-teacher communication
 - Success rate: 94% with 500+ active students
 
-Your role is to help students, parents, and educators with:
-- Accurate study questions using educational concepts
-- Personalized course recommendations based on our specific offerings
-- Detailed exam preparation and study timetables
-- Admission guidance and batch selection
-- Explaining Smart Tutor services and philosophy
-- Analysis of uploaded study materials
+Your role is to help students, parents, and educators with study questions, course recommendations, exam preparation, and Smart Tutor services.
 
 Rules:
 - Always reply only in simple clear English.
-- CONCISENESS IS MANDATORY: For all initial queries, provide extremely short and direct answers (maximum 2-3 sentences).
-- AVOID PARAGRAPHS: Do not provide long explanations or multiple paragraphs for initial queries.
-- PROACTIVE EXPANSION: At the end of every short response, always ask: "Would you like a more detailed explanation or step-by-step guidance?"
+- EXTREME CONCISENESS IS MANDATORY: Provide very short and direct answers (maximum 1-2 sentences).
 - Even if the user writes in Hinglish, Hindi, or mixed language, reply in English only.
 - Be friendly, practical, student-focused, and action-oriented.
-- NEVER promise guaranteed marks, rank, admission, job, or selection.
 - If a question is outside education or Smart Tutor services, politely redirect the user.
-- Keep answers clear and practical.
+- Always offer to help more at the end of your response.
 `;
 
 export async function POST(req) {
@@ -185,11 +176,10 @@ ${projectContext}
 ${memoryText}
 
 Uploaded Smart Tutor material:
-${
-  relevantMaterial
-    ? relevantMaterial
-    : "No relevant uploaded material found for this question."
-}
+${relevantMaterial
+        ? relevantMaterial
+        : "No relevant uploaded material found for this question."
+      }
 
 Previous conversation:
 ${recentHistory}
@@ -197,18 +187,33 @@ ${recentHistory}
 Student's latest message:
 ${message}
 
-Now reply as SmartTutor AI Assistant. REMEMBER: Keep it extremely short (max 2 sentences) unless the user explicitly asks for detail.
+Now reply as SmartTutor AI Assistant. REMEMBER: Keep it extremely short (max 1-2 sentences).
 `;
 
-    const response = await ai.models.generateContent({
-      model: "models/gemini-1.5-flash",
-      contents: prompt,
+    const result = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
+
+    let replyText = "";
+
+    // Check if result has the expected text property (Direct text extraction)
+    if (result && typeof result.text === "string") {
+      replyText = result.text;
+    }
+    // Check if it's the standard SDK structure (candidates -> content -> parts -> text)
+    else if (result && result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
+      replyText = result.candidates[0].content.parts[0].text;
+    }
+    // Fallback if structure is slightly different
+    else if (result && result.response && typeof result.response.text === "function") {
+      replyText = result.response.text();
+    }
 
     return Response.json({
       reply:
-        response.text ||
-        "I can help with study doubts, courses, exams, mock tests, and Smart Tutor services.",
+        replyText.trim() ||
+        "I can help with study doubts, courses, exams, mock tests, and Smart Tutor services. Could you please rephrase your question?",
     });
   } catch (error) {
     console.error("SmartTutor Gemini API error:", error);
