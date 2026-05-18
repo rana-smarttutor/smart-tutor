@@ -1,18 +1,5 @@
 "use server"
 import { MongoClient } from "mongodb";
-import dns from "node:dns";
-
-// Prefer IPv4 for resolution stability on Windows/Node.js
-try {
-  dns.setDefaultResultOrder("ipv4first");
-  // Only set custom servers if explicitly requested or if we're debugging DNS issues.
-  // Forcing 8.8.8.8 can fail on some networks (e.g. corporate or restricted ISPs).
-  if (process.env.FORCE_GOOGLE_DNS === "true") {
-    dns.setServers(["8.8.8.8", "1.1.1.1"]);
-  }
-} catch (e) {
-  // Ignore if not supported or fails
-}
 
 declare global {
   var __smartTutorMongoClientPromise: Promise<MongoClient> | undefined;
