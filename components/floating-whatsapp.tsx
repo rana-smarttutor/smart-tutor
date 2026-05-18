@@ -9,7 +9,7 @@ export async function FloatingWhatsApp() {
       target="_blank"
       rel="noreferrer"
       aria-label="Chat with Smart Tutor on WhatsApp"
-      className="fixed bottom-[24px] right-[24px] z-[99999] flex h-[56px] w-[56px] items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_18px_40px_rgba(37,211,102,0.28)] transition-transform hover:scale-110 active:scale-95"
+      className="fixed bottom-[24px] right-[100px] z-[99999] flex h-[60px] w-[60px] items-center justify-center rounded-full border border-white/20 bg-[#25D366] text-white shadow-[0_18px_40px_rgba(37,211,102,0.28)] transition-transform hover:scale-110 active:scale-95"
       title="Chat on WhatsApp"
     >
       <svg

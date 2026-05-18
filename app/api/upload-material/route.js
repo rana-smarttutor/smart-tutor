@@ -1,19 +1,16 @@
 import mammoth from "mammoth";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getSessionUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-if (!global.smartTutorMaterials) {
-  global.smartTutorMaterials = [];
-}
+global.smartTutorMaterials = global.smartTutorMaterials || [];
 
 const MAX_TOTAL_FILES = 10;
-const MAX_FILE_SIZE_MB = 4; // Lowered to stay safely within Vercel's 4.5MB limit
+const MAX_FILE_SIZE_MB = 15;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const CHUNK_SIZE = 1600;
 const MAX_CHUNKS_PER_FILE = 80;
@@ -45,19 +42,18 @@ function cleanErrorMessage(error) {
 
 async function extractPdfText(buffer) {
   try {
-    console.log("Extracting PDF text with PDFParse...");
-    const { PDFParse } = await import("pdf-parse");
-    
-    const parser = new PDFParse({ 
-      data: buffer,
-      disableWorker: true, // Fix "fake worker" initialization error in server-side env
-    });
-    const result = await parser.getText();
-    
-    console.log("PDF extraction successful, length:", result.text?.length || 0);
-    return result.text || "";
+    /*
+      Important:
+      Do NOT import pdf-parse at the top.
+      In Next.js/Turbopack, top-level import may cause:
+      test/data/05-versions-space.pdf missing error.
+    */
+    const pdfModule = await import("pdf-parse/lib/pdf-parse.js");
+    const pdf = pdfModule.default || pdfModule;
+
+    const data = await pdf(buffer);
+    return data.text || "";
   } catch (error) {
-    console.error("PDF extraction error:", error);
     throw new Error(`PDF extraction failed: ${error.message}`);
   }
 }
@@ -220,11 +216,10 @@ ${validImageFiles.map((file, index) => `${index + 1}. ${file.name}`).join("\n")}
   }
 
   try {
-    const response = await ai.models.generateContent({
-      model: "models/gemini-1.5-flash",
-      contents: [{ role: "user", parts }],
-    });
-    const batchAnalysis = response.text || "";
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const result = await model.generateContent(parts);
+    const response = await result.response;
+    const batchAnalysis = response.text() || "";
 
     if (!batchAnalysis.trim()) {
       return imageFiles.map((file) => ({
@@ -286,6 +281,11 @@ ${batchAnalysis}
 
 export async function POST(req) {
   try {
+    const session = await getSessionUser();
+    if (!session) {
+      return Response.json({ success: false, message: "Login required." }, { status: 401 });
+    }
+
     const formData = await req.formData();
 
     let files = formData.getAll("files");
@@ -361,6 +361,7 @@ export async function POST(req) {
 
     const results = [];
 
+    // PDF / DOCX / TXT: local extraction, no Gemini quota used.
     for (const file of documentFiles) {
       try {
         const result = await extractTextFromDocumentFile(file);
@@ -374,6 +375,7 @@ export async function POST(req) {
       }
     }
 
+    // Images/screenshots/diagrams: Gemini Vision, quota required.
     const imageResults = await analyzeImagesInOneGeminiCall(imageFiles);
     results.push(...imageResults);
 
@@ -399,7 +401,7 @@ export async function POST(req) {
       remainingSlots: MAX_TOTAL_FILES - global.smartTutorMaterials.length,
       maxFiles: MAX_TOTAL_FILES,
       note:
-        "PDF, DOCX, and TXT are analyzed locally. Images, screenshots, and diagrams require Gemini Vision quota.",
+        "PDF, DOCX, and TXT are analyzed locally. Images/screenshots/diagrams need Gemini Vision quota.",
     });
   } catch (error) {
     console.error("Material upload error:", error);
@@ -417,6 +419,11 @@ export async function POST(req) {
 }
 
 export async function DELETE() {
+  const session = await getSessionUser();
+  if (!session) {
+    return Response.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  }
+
   global.smartTutorMaterials = [];
 
   return Response.json({
@@ -428,6 +435,11 @@ export async function DELETE() {
 }
 
 export async function GET() {
+  const session = await getSessionUser();
+  if (!session) {
+    return Response.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  }
+
   const materials = global.smartTutorMaterials || [];
 
   return Response.json({

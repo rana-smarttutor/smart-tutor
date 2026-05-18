@@ -211,6 +211,20 @@ export type TestSubmission = {
   gradedBy?: string;
 };
 
+export type LibraryBook = {
+  id: string;
+  title: string;
+  author: string;
+  category: string;
+  description: string;
+  megaFileId: string;
+  megaFileName: string;
+  megaFileUrl?: string;
+  audience: Role[];
+  createdAt: string;
+  createdBy: string;
+};
+
 export type DashboardPrimaryPanel = {
   title: string;
   badge: string;

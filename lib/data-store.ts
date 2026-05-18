@@ -27,6 +27,7 @@ import type {
   TestItem,
   TestQuestion,
   TestSubmission,
+  LibraryBook,
 } from "@/lib/types";
 
 type DashboardTemplate = {
@@ -63,6 +64,7 @@ const COLLECTIONS = {
   messages: "messages",
   submissions: "test_submissions",
   quizzes: "quiz_questions",
+  library: "digital_library",
 } as const;
 
 let userIndexesPromise: Promise<void> | null = null;
@@ -877,3 +879,36 @@ export async function getDashboardBundle(role: Role, userId?: string): Promise<D
     submissions: submissions.slice(0, 6),
   };
 }
+
+export async function getLibraryBooksForRole(role: Role) {
+  const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
+  return stripMongoIds(
+    await collection
+      .find({ audience: role })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createLibraryBook(input: Omit<LibraryBook, "id" | "createdAt">) {
+  const book: LibraryBook = {
+    id: randomUUID(),
+    ...input,
+    createdAt: new Date().toISOString(),
+  };
+
+  const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
+  await collection.insertOne(book);
+  return book;
+}
+
+export async function deleteLibraryBook(id: string) {
+  const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
+  const book = await collection.findOne({ id });
+  
+  if (!book) return null;
+
+  await collection.deleteOne({ id });
+  return book;
+}
+

@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 const quickActions = [
-  { label: "Location", content: "Smart Tutor is located in Sector 17, Vashi, Navi Mumbai. Visit us for expert coaching!", path: "/contact" },
-  { label: "Contact", content: "You can reach us at +91 88504 47887 or email admissions@smarttutor.in.", path: "/contact" },
-  { label: "Timings", content: "We are open Monday to Saturday, from 8:00 AM to 8:30 PM.", path: "/contact" },
-  { label: "Courses", content: "Explore our wide range of school coaching, entrance exam prep, and competitive exam courses.", path: "/courses" },
-  { label: "Consult", content: "Book a free counseling session with Prof. Ravi Rana to discuss your academic goals.", path: "/contact" },
+  "Ask Study Question",
+  "Recommend Course",
+  "Make Study Plan",
+  "Mock Test Help",
+  "Contact Admissions",
 ];
 
 const initialMessage = {
   role: "assistant",
   content:
-    "Hi! I’m SmartTutor AI Assistant 👋\nI can help with study doubts, course guidance, and exams.\n\nTell me your class or goal, and I'll help you. Would you like a detailed study guide?",
+    "Hi! I’m SmartTutor AI Assistant 👋\nI can help you with study doubts, exam preparation, course guidance, mock tests, study plans, and Smart Tutor services.\n\nTell me your class, subject, or exam goal, and I will guide you.",
 };
 
 const educationKeywords = [
@@ -73,16 +72,6 @@ const educationKeywords = [
   "mcq",
   "neet",
   "jee",
-  "mht-cet",
-  "cuet",
-  "upsc",
-  "mpsc",
-  "banking",
-  "ssc",
-  "vashi",
-  "navi mumbai",
-  "prof. ravi rana",
-  "smartiq",
   "photosynthesis",
   "newton",
   "algebra",
@@ -221,105 +210,80 @@ function getCourseRecommendation(memory, text) {
     lower.includes("resume") ||
     lower.includes("interview") ||
     lower.includes("job") ||
-    lower.includes("gdpi") ||
-    lower.includes("career")
+    lower.includes("gdpi")
   ) {
-    return "Career Launch Studio / Placement Readiness";
+    return "Career Launch Studio";
   }
 
   if (
     lower.includes("upsc") ||
     lower.includes("mpsc") ||
-    lower.includes("civil service")
-  ) {
-    return "UPSC / MPSC Foundation Program";
-  }
-
-  if (
     lower.includes("banking") ||
     lower.includes("ssc") ||
     lower.includes("railway") ||
     lower.includes("government")
   ) {
-    return "Government Exam Preparation (Banking/SSC/Railway)";
+    return "Competitive Exam Plan";
   }
 
-  if (
-    lower.includes("jee") ||
-    lower.includes("neet") ||
-    lower.includes("cet") ||
-    lower.includes("entrance")
-  ) {
-    return "Entrance Exam Preparation (JEE/NEET/CET)";
-  }
-
-  if (classNumber >= 1 && classNumber <= 5) {
-    return "Primary School Foundation (Class 1-5)";
-  }
-
-  if (classNumber >= 6 && classNumber <= 8) {
-    return "Middle School Foundation (Class 6-8)";
-  }
-
-  if (
-    classNumber === 9 ||
-    classNumber === 10 ||
-    lower.includes("board") ||
-    lower.includes("ssc") ||
-    lower.includes("hsc")
-  ) {
-    return "Class 9 & 10 Board Preparation";
+  if (classNumber >= 6 && classNumber <= 10) {
+    return "School Student Plan";
   }
 
   if (
     classNumber === 11 ||
     classNumber === 12 ||
-    lower.includes("junior college") ||
-    lower.includes("jc")
+    lower.includes("hsc") ||
+    lower.includes("junior college")
   ) {
-    return "Class 11, 12 & Junior College Support";
+    return "HSC / Junior College Plan";
   }
 
   if (
     lower.includes("college") ||
-    lower.includes("degree") ||
-    lower.includes("graduation") ||
-    lower.includes("diploma") ||
-    lower.includes("polytechnic")
+    lower.includes("semester") ||
+    lower.includes("assignment")
   ) {
-    return "Diploma & Graduation Support Program";
+    return "Academic Excellence Program";
   }
 
-  return "Smart Tutor General Academic Mentoring";
+  return "Smart Tutor Course Guidance Plan";
 }
 
 function fallbackReply(text, memory) {
   const lower = text.toLowerCase();
-  const expandPrompt = "\n\nWould you like a more detailed explanation or step-by-step guidance?";
 
-  if (!isEducationRelated(text)) {
-    return "I help with school coaching, competitive exams (UPSC/MPSC), and study plans. How can I assist with your learning today?" + expandPrompt;
-  }
+ if (!isEducationRelated(text)) {
+  return `Hi! I can help you with Smart Tutor education support.
+
+You can ask me about:
+• Study doubts
+• School or college subjects
+• Exam preparation
+• Study timetable
+• Mock test strategy
+• Course recommendations
+• Admission guidance
+
+Please tell me your class, subject, or exam goal, and I will guide you in English.`;
+}
 
   if (
     lower.includes("course") ||
     lower.includes("recommend") ||
-    lower.includes("admission") ||
-    lower.includes("join")
+    lower.includes("admission")
   ) {
     const plan = getCourseRecommendation(memory, text);
-    return `I recommend our ${plan}. We offer expert mentoring and weekly testing in Vashi.` + expandPrompt;
-  }
 
-  if (
-    lower.includes("contact") ||
-    lower.includes("phone") ||
-    lower.includes("call") ||
-    lower.includes("address") ||
-    lower.includes("location") ||
-    lower.includes("vashi")
-  ) {
-    return "Reach us at +91 88504 47887 or visit Sector 17, Vashi. Prof. Ravi Rana is available for counselling." + expandPrompt;
+    return `Based on your details, the best Smart Tutor option is: ${plan}.
+
+To guide you better, please share:
+• Your class or grade
+• Target exam
+• Weak subject
+• Daily available study time
+
+Smart Tutor can help with structured preparation, mock tests, mentoring, and progress tracking.`;
   }
 
   if (
@@ -327,64 +291,145 @@ function fallbackReply(text, memory) {
     lower.includes("timetable") ||
     lower.includes("schedule")
   ) {
-    return "I can create a 2-3 hour daily study plan with revision and mock tests focused on your goals." + expandPrompt;
+    const subject = memory.weakSubject || "your main subject";
+    const exam = memory.targetExam || "your exam";
+
+    return `Here is a simple study plan:
+
+• Daily study: 2–3 hours
+• 45 minutes: Revise concepts of ${subject}
+• 45 minutes: Solve practice questions
+• 30 minutes: Review mistakes
+• 20 minutes: Make quick notes
+• Every 2 days: Take a short mock test
+• Sunday: Full weekly revision
+
+Goal: Build consistent preparation for ${exam}.
+
+Smart Tutor can help with weekly assessments, mock tests, doubt solving, and mentoring.`;
   }
 
   if (lower.includes("mock") || lower.includes("test") || lower.includes("mcq")) {
-    return "We provide chapter-wise precision tests and full-length mock papers with detailed mentoring." + expandPrompt;
+    return `Best mock test method:
+
+• Start with chapter-wise tests
+• Then take mixed-subject tests
+• Practice with a timer
+• Maintain a mistake notebook
+• Revise every wrong answer
+• Take one full mock test every week
+
+Smart Tutor can help with mock tests, weekly assessments, and progress tracking.`;
   }
 
-  return "I can help you with your Class, specific subjects, or exam goals (Board, JEE, NEET, UPSC)." + expandPrompt;
+  if (lower.includes("photosynthesis")) {
+    return `Photosynthesis is the process by which green plants make their own food using sunlight.
+
+Simple explanation:
+• Plants take carbon dioxide from the air.
+• Roots absorb water from the soil.
+• Leaves contain chlorophyll, which captures sunlight.
+• Using sunlight, plants convert carbon dioxide and water into glucose.
+• Oxygen is released as a by-product.
+
+Formula:
+Carbon dioxide + Water + Sunlight → Glucose + Oxygen`;
+  }
+
+  if (lower.includes("newton")) {
+    return `Newton's laws of motion explain how objects move.
+
+1. First Law:
+An object stays at rest or keeps moving unless an external force acts on it.
+
+2. Second Law:
+Force = Mass × Acceleration.
+
+3. Third Law:
+For every action, there is an equal and opposite reaction.`;
+  }
+
+  if (lower.includes("math") || lower.includes("maths")) {
+    return `For Maths, follow this method:
+
+• First understand the formula
+• Solve 5 easy examples
+• Then solve 10 medium questions
+• Mark your mistakes
+• Revise the same topic next day
+• Take a short weekly test
+
+Tell me the exact Maths topic and I will explain it step by step.`;
+  }
+
+  return `I can answer this as your SmartTutor AI Assistant.
+
+Please ask your question more clearly, for example:
+• Explain photosynthesis
+• Make a Class 10 Maths plan
+• Recommend a course for UPSC
+• Give me a mock test strategy
+• Help me prepare for board exams`;
 }
 
 export default function SmartTutorAIChatbot() {
-  const router = useRouter();
   const [theme, setTheme] = useState("light");
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([initialMessage]);
-  const [memory, setMemory] = useState({});
   const [typing, setTyping] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [displayedText, setDisplayedText] = useState("");
-  const [isTypingAnimation, setIsTypingAnimation] = useState(false);
+
+  const [memory, setMemory] = useState({
+    name: "",
+    classGrade: "",
+    targetExam: "",
+    weakSubject: "",
+    preferredLanguage: "english",
+    studyGoal: "",
+    courseInterest: "",
+  });
 
   const bottomRef = useRef(null);
-  const fileInputRef = useRef(null);
   const styles = getStyles(theme);
 
   useEffect(() => {
     const updateTheme = () => setTheme(getCurrentTheme());
+
     updateTheme();
-    
+
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    mediaQuery.addEventListener("change", updateTheme);
+
     const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
-    return () => observer.disconnect();
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
+    if (document.body) {
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["class", "data-theme"],
+      });
+    }
+
+    const interval = setInterval(updateTheme, 800);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateTheme);
+      observer.disconnect();
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, typing, displayedText]);
-
-  const typeEffect = (text) => {
-    if (!text) return;
-    setIsTypingAnimation(true);
-    setDisplayedText(text.charAt(0));
-    let i = 1;
-    const interval = setInterval(() => {
-      if (i < text.length) {
-        setDisplayedText((prev) => prev + text.charAt(i));
-        i++;
-      } else {
-        clearInterval(interval);
-        setIsTypingAnimation(false);
-      }
-    }, 20);
-  };
+  }, [messages, typing]);
 
   async function sendMessage(text = input) {
     const cleanText = text.trim();
+
     if (!cleanText) return;
 
     const updatedMemory = extractMemory(cleanText, memory);
@@ -394,389 +439,376 @@ export default function SmartTutorAIChatbot() {
     setMessages(updatedMessages);
     setInput("");
     setTyping(true);
-    setDisplayedText("");
 
     try {
       const response = await fetch("/api/smarttutor-chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           message: cleanText,
           memory: updatedMemory,
           history: updatedMessages.slice(-10),
-          isExpanded,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
       }
-
-      let data = await response.json();
-      const reply = data?.reply || fallbackReply(cleanText, updatedMemory);
-      
-      setTyping(false);
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-      typeEffect(reply);
-    } catch (error) {
-      console.error("Chat error:", error);
-      setTyping(false);
-      const reply = fallbackReply(cleanText, updatedMemory);
-      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
-      typeEffect(reply);
-    }
-  }
-
-  async function handleFileUpload(e) {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
-
-    setUploading(true);
-    setTyping(true);
-
-    const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
-
-    try {
-      const response = await fetch("/api/upload-material", {
-        method: "POST",
-        body: formData,
-      });
 
       if (!response.ok) {
-        let errorText = `Upload failed (${response.status})`;
-        try {
-          const errorData = await response.json();
-          errorText = errorData.message || errorText;
-        } catch (e) {
-          // not json
-        }
-        throw new Error(errorText);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: fallbackReply(cleanText, updatedMemory),
+          },
+        ]);
+        setTyping(false);
+        return;
       }
 
-      const data = await response.json();
-      setUploading(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: data?.reply || fallbackReply(cleanText, updatedMemory),
+        },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: fallbackReply(cleanText, updatedMemory),
+        },
+      ]);
+    } finally {
       setTyping(false);
-
-      if (data.success) {
-        const fileNames = data.uploaded.map((f) => f.fileName).join(", ");
-        const msg = `Successfully uploaded: ${fileNames}. You can now ask questions about these materials!`;
-        setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
-        typeEffect(msg);
-      } else {
-        const errorMsg = data.message || "Failed to upload files.";
-        setMessages((prev) => [...prev, { role: "assistant", content: `Error: ${errorMsg}` }]);
-        typeEffect(`Error: ${errorMsg}`);
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      setUploading(false);
-      setTyping(false);
-      const displayError = error.message?.includes("fetch") 
-        ? "Network error: Connection lost or file too large for server limits." 
-        : `Upload error: ${error.message}`;
-      
-      setMessages((prev) => [...prev, { role: "assistant", content: displayError }]);
-      typeEffect(displayError);
     }
-    
-    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function handleQuickAction(action) {
-    const userMsg = { role: "user", content: action.label };
-    const botMsg = { role: "assistant", content: action.content };
-    setMessages((prev) => [...prev, userMsg, botMsg]);
-    typeEffect(action.content);
+    const prompts = {
+      "Ask Study Question": "I want to ask a study question",
+      "Recommend Course": "Please recommend the best Smart Tutor course for me",
+      "Make Study Plan": "Please make a study plan for me",
+      "Mock Test Help": "I need help with mock test preparation",
+      "Contact Admissions": "I want to contact admissions",
+    };
 
-    if (action.path) {
-      setTimeout(() => {
-        router.push(action.path);
-      }, 1500); // Small delay to let user read the text reply
-    }
-  }
-
-  function handleVisit(action) {
-    handleQuickAction(action);
+    sendMessage(prompts[action] || action);
   }
 
   return (
     <div style={styles.wrapper}>
-      <input
-        type="file"
-        multiple
-        ref={fileInputRef}
-        onChange={handleFileUpload}
-        style={{ display: "none" }}
-        accept=".pdf,.docx,.txt,image/*"
-      />
-      {open ? (
+      {open && (
         <div style={styles.chatBox}>
           <div style={styles.header}>
-            <div style={{ flex: 1 }}>
+            <div>
               <div style={styles.title}>SmartTutor AI</div>
-              <div style={styles.subtitle}>Vashi's Expert Study Guide</div>
+              <div style={styles.subtitle}>
+                Study Assistant & Course Guide
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)} 
-                style={styles.expandedButton}
-              >
-                {isExpanded ? "🚀 Full" : "⚡ Lite"}
-              </button>
-              <button onClick={() => setOpen(false)} style={styles.closeButton}>×</button>
-            </div>
+
+            <button onClick={() => setOpen(false)} style={styles.closeButton}>
+              ×
+            </button>
           </div>
 
           <div style={styles.messages}>
-            {messages.map((message, index) => {
-              const isLast = index === messages.length - 1;
-              const isBot = message.role === "assistant";
-              const showText = (isBot && isLast && (isTypingAnimation || displayedText)) ? displayedText : message.content;
-
-              return (
-                <div key={index} style={{ ...styles.messageRow, justifyContent: isBot ? "flex-start" : "flex-end" }}>
-                  <div style={{ ...styles.messageBubble, ...(isBot ? styles.botBubble : styles.userBubble) }}>
-                    {showText}
-                  </div>
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                style={{
+                  ...styles.messageRow,
+                  justifyContent:
+                    message.role === "user" ? "flex-end" : "flex-start",
+                }}
+              >
+                <div
+                  style={{
+                    ...styles.messageBubble,
+                    ...(message.role === "user"
+                      ? styles.userBubble
+                      : styles.botBubble),
+                  }}
+                >
+                  {message.content}
                 </div>
-              );
-            })}
+              </div>
+            ))}
 
             {typing && (
               <div style={styles.messageRow}>
-                <div style={{ ...styles.botBubble, padding: "8px 12px" }}>
-                  <span className="animate-pulse" style={{ fontSize: "10px", letterSpacing: "2px" }}>● ● ●</span>
-                </div>
+                <div style={styles.botBubble}>SmartTutor AI is typing...</div>
               </div>
             )}
-            
+
+            {messages.length === 1 && (
+              <div style={styles.quickGrid}>
+                {quickActions.map((action) => (
+                  <button
+                    key={action}
+                    onClick={() => handleQuickAction(action)}
+                    style={styles.quickButton}
+                  >
+                    {action}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div ref={bottomRef} />
           </div>
 
           <div style={styles.footer}>
-            <div style={styles.quickActionsRow}>
-              {quickActions.map((action, idx) => (
-                <div key={idx} style={styles.quickActionGroup}>
-                  <button
-                    onClick={() => handleQuickAction(action)}
-                    style={styles.quickActionButton}
-                  >
-                    {action.label}
-                  </button>
-                  <button
-                    onClick={() => handleVisit(action)}
-                    style={styles.visitButton}
-                    title="Visit page"
-                  >
-                    ↗
-                  </button>
-                </div>
-              ))}
+            <div style={styles.note}>
+              SmartTutor can help with study doubts, course guidance, mock tests,
+              study plans, and admissions.
             </div>
+
             <div style={styles.inputRow}>
-              <button onClick={() => fileInputRef.current?.click()} style={styles.attachButton}>📎</button>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                placeholder="Ask me anything..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") sendMessage();
+                }}
+                placeholder="Ask your study question..."
                 style={styles.input}
               />
-              <button onClick={() => sendMessage()} style={styles.sendButton}>➤</button>
+
+              <button onClick={() => sendMessage()} style={styles.sendButton}>
+                Send
+              </button>
             </div>
           </div>
         </div>
-      ) : (
-        <button onClick={() => setOpen(true)} style={styles.floatingButton}>AI</button>
       )}
+
+      <button onClick={() => setOpen(!open)} style={styles.floatingButton}>
+        {open ? "×" : "AI"}
+      </button>
     </div>
   );
 }
 
 function getStyles(theme) {
   const isDark = theme === "dark";
-  const violetPrimary = "#7c3aed"; // Violet-600
-  const violetSoft = "#ddd6fe"; // Violet-200
+
+  const colors = {
+    pageGradient: isDark
+      ? "linear-gradient(180deg, #020617 0%, #0f172a 50%, #111827 100%)"
+      : "linear-gradient(180deg, #eef7ff 0%, #f8fbff 45%, #ffffff 100%)",
+
+    cardBg: isDark ? "rgba(15, 23, 42, 0.96)" : "rgba(255, 255, 255, 0.96)",
+    headerBg: isDark
+      ? "linear-gradient(135deg, #0f172a, #1e3a8a)"
+      : "linear-gradient(135deg, #2563eb, #1d4ed8)",
+
+    floatingBg: isDark
+      ? "linear-gradient(135deg, #1e40af, #38bdf8)"
+      : "linear-gradient(135deg, #2563eb, #00b4ff)",
+
+    botBg: isDark ? "rgba(30, 41, 59, 0.95)" : "white",
+    botText: isDark ? "#e5e7eb" : "#0f172a",
+    userBg: isDark
+      ? "linear-gradient(135deg, #2563eb, #38bdf8)"
+      : "linear-gradient(135deg, #2563eb, #0ea5e9)",
+
+    border: isDark ? "rgba(96, 165, 250, 0.18)" : "rgba(37, 99, 235, 0.18)",
+    softBorder: isDark ? "rgba(96, 165, 250, 0.18)" : "rgba(37, 99, 235, 0.12)",
+    footerBg: isDark ? "#0f172a" : "white",
+    noteBg: isDark ? "rgba(30, 64, 175, 0.22)" : "#eff6ff",
+    noteText: isDark ? "#bfdbfe" : "#1e40af",
+    inputBg: isDark ? "#111827" : "#f8fbff",
+    inputText: isDark ? "#f8fafc" : "#0f172a",
+    quickBg: isDark ? "rgba(30,41,59,0.95)" : "rgba(255,255,255,0.92)",
+    quickText: isDark ? "#dbeafe" : "#1e3a8a",
+    mutedText: isDark ? "#cbd5e1" : "#475569",
+    shadow: isDark
+      ? "0 24px 70px rgba(0, 0, 0, 0.55)"
+      : "0 24px 70px rgba(15, 23, 42, 0.22)",
+  };
 
   return {
     wrapper: {
       position: "fixed",
-      right: "24px",
-      bottom: "24px",
-      zIndex: 100000,
-      fontFamily: "Inter, sans-serif",
-      pointerEvents: "none", // Allow clicks to pass through wrapper to items below if needed
+      right: "20px",
+      bottom: "20px",
+      zIndex: 99999,
+      fontFamily: "Inter, Arial, Helvetica, sans-serif",
     },
+
     floatingButton: {
-      width: "56px",
-      height: "56px",
-      position: "absolute",
-      bottom: "68px", // Stacked above WhatsApp (which is at bottom 24, gap of 12px)
-      right: "0", 
+      width: "60px",
+      height: "60px",
       borderRadius: "50%",
       border: "none",
-      background: `linear-gradient(135deg, ${violetPrimary}, #4f46e5)`,
+      background: colors.floatingBg,
       color: "white",
-      fontWeight: "bold",
-      boxShadow: "0 4px 12px rgba(124, 58, 237, 0.3)",
+      fontSize: "18px",
+      fontWeight: "800",
       cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "16px",
-      pointerEvents: "auto", // Re-enable pointer events for the button
+      boxShadow: isDark
+        ? "0 18px 40px rgba(56, 189, 248, 0.22)"
+        : "0 18px 40px rgba(37, 99, 235, 0.35)",
     },
+
     chatBox: {
-      width: "320px",
-      height: "460px",
-      position: "absolute",
-      bottom: "0",
-      right: "0",
-      background: isDark ? "#0f172a" : "#ffffff",
-      borderRadius: "16px",
+      width: "400px",
+      maxWidth: "92vw",
+      height: "590px",
+      maxHeight: "84vh",
+      background: colors.cardBg,
+      borderRadius: "26px",
+      overflow: "hidden",
+      marginBottom: "16px",
+      border: `1px solid ${colors.border}`,
+      boxShadow: colors.shadow,
       display: "flex",
       flexDirection: "column",
-      boxShadow: "0 10px 40px rgba(0,0,0,0.15)",
-      border: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
-      overflow: "hidden",
-      pointerEvents: "auto", // Re-enable pointer events for the chatbox
+      backdropFilter: "blur(14px)",
     },
+
     header: {
-      background: `linear-gradient(135deg, ${violetPrimary}, #4f46e5)`,
+      background: colors.headerBg,
       color: "white",
-      padding: "12px 16px",
+      padding: "18px",
       display: "flex",
       alignItems: "center",
+      justifyContent: "space-between",
     },
-    title: { fontSize: "14px", fontWeight: "700" },
-    subtitle: { fontSize: "10px", opacity: 0.9 },
+
+    title: {
+      fontSize: "18px",
+      fontWeight: "800",
+      letterSpacing: "-0.3px",
+    },
+
+    subtitle: {
+      fontSize: "12px",
+      opacity: 0.9,
+      marginTop: "4px",
+    },
+
     closeButton: {
-      background: "rgba(255,255,255,0.2)",
-      border: "none",
-      color: "white",
-      width: "20px",
-      height: "20px",
+      width: "36px",
+      height: "36px",
       borderRadius: "50%",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "14px",
-    },
-    expandedButton: {
-      fontSize: "9px",
+      border: "1px solid rgba(255,255,255,0.25)",
+      background: "rgba(255,255,255,0.16)",
       color: "white",
-      border: "1px solid rgba(255,255,255,0.3)",
-      padding: "2px 6px",
-      borderRadius: "6px",
-      background: "transparent",
+      fontSize: "24px",
       cursor: "pointer",
     },
+
     messages: {
       flex: 1,
-      padding: "12px",
+      padding: "15px",
+      background: colors.pageGradient,
       overflowY: "auto",
-      display: "flex",
-      flexDirection: "column",
-      gap: "12px",
-      background: isDark ? "#020617" : "#f8fafc",
     },
+
     messageRow: {
       display: "flex",
-      width: "100%",
+      marginBottom: "10px",
     },
+
     messageBubble: {
-      maxWidth: "80%",
-      padding: "10px 14px",
-      fontSize: "13px",
-      lineHeight: "1.5",
-      position: "relative",
+      maxWidth: "82%",
+      padding: "12px 14px",
+      borderRadius: "18px",
+      whiteSpace: "pre-line",
+      fontSize: "14px",
+      lineHeight: "1.45",
     },
+
     botBubble: {
-      background: isDark ? "#1e293b" : "#ffffff",
-      color: isDark ? "#f1f5f9" : "#1e293b",
-      border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-      borderRadius: "16px 16px 16px 4px",
-      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+      background: colors.botBg,
+      color: colors.botText,
+      border: `1px solid ${colors.softBorder}`,
+      boxShadow: isDark
+        ? "0 6px 16px rgba(0,0,0,0.24)"
+        : "0 6px 16px rgba(15,23,42,0.06)",
     },
+
     userBubble: {
-      background: `linear-gradient(135deg, ${violetPrimary}, #6d28d9)`,
+      background: colors.userBg,
       color: "white",
-      borderRadius: "16px 16px 4px 16px",
-      boxShadow: `0 4px 10px ${violetPrimary}20`,
+      boxShadow: "0 8px 18px rgba(37, 99, 235, 0.22)",
     },
+
+    quickGrid: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "9px",
+      marginTop: "12px",
+    },
+
+    quickButton: {
+      padding: "11px",
+      borderRadius: "14px",
+      border: `1px solid ${colors.border}`,
+      background: colors.quickBg,
+      color: colors.quickText,
+      fontSize: "12px",
+      fontWeight: "700",
+      cursor: "pointer",
+      textAlign: "left",
+      boxShadow: isDark
+        ? "0 4px 12px rgba(0,0,0,0.25)"
+        : "0 4px 12px rgba(15,23,42,0.05)",
+    },
+
     footer: {
-      padding: "10px",
-      background: isDark ? "#0f172a" : "#ffffff",
-      borderTop: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
+      borderTop: `1px solid ${colors.softBorder}`,
+      padding: "12px",
+      background: colors.footerBg,
     },
-    quickActionsRow: {
+
+    note: {
+      background: colors.noteBg,
+      color: colors.noteText,
+      padding: "9px",
+      borderRadius: "12px",
+      fontSize: "11px",
+      marginBottom: "10px",
+      border: `1px solid ${colors.softBorder}`,
+    },
+
+    inputRow: {
       display: "flex",
-      flexWrap: "wrap",
-      gap: "6px",
-      paddingBottom: "10px",
+      gap: "8px",
     },
-    quickActionGroup: {
-      display: "flex",
-      alignItems: "center",
-      background: isDark ? "#1e293b" : "#f1f5f9",
-      borderRadius: "20px",
-      border: `1px solid ${isDark ? "#334155" : "#e2e8f0"}`,
-      overflow: "hidden",
-    },
-    quickActionButton: {
-      padding: "5px 8px 5px 10px",
-      background: "none",
-      border: "none",
-      color: isDark ? "#f1f5f9" : "#475569",
-      fontSize: "10px",
-      cursor: "pointer",
-      whiteSpace: "nowrap",
-      transition: "all 0.2s",
-    },
-    visitButton: {
-      padding: "5px 8px",
-      background: isDark ? "#334155" : "#e2e8f0",
-      border: "none",
-      color: isDark ? "#94a3b8" : "#64748b",
-      fontSize: "10px",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      borderLeft: `1px solid ${isDark ? "#475569" : "#cbd5e1"}`,
-      transition: "all 0.2s",
-    },
-    inputRow: { display: "flex", gap: "8px", alignItems: "center" },
+
     input: {
       flex: 1,
-      padding: "8px 12px",
-      borderRadius: "8px",
-      border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}`,
-      fontSize: "13px",
+      padding: "12px",
+      borderRadius: "14px",
+      border: isDark ? "1px solid #334155" : "1px solid #bfdbfe",
       outline: "none",
-      background: isDark ? "#1e293b" : "#ffffff",
-      color: isDark ? "white" : "black",
+      fontSize: "14px",
+      background: colors.inputBg,
+      color: colors.inputText,
     },
-    attachButton: {
-      background: "none",
-      border: "none",
-      fontSize: "16px",
-      cursor: "pointer",
-      color: "#64748b",
-    },
+
     sendButton: {
-      background: violetPrimary,
+      padding: "0 16px",
+      borderRadius: "14px",
       border: "none",
+      background: colors.userBg,
       color: "white",
-      width: "32px",
-      height: "32px",
-      borderRadius: "8px",
+      fontWeight: "800",
       cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      boxShadow: "0 8px 18px rgba(37, 99, 235, 0.22)",
     },
   };
 }

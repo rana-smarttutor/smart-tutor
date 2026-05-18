@@ -22,7 +22,7 @@ export default async function Home() {
   return (
     <main className="relative overflow-hidden pb-16 pt-8">
       <section className="section-shell grid gap-8 pt-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-        <RevealOnScroll className="space-y-7 text-center lg:text-left"> 
+        <RevealOnScroll className="space-y-7 text-center lg:text-left w-full max-w-full"> 
           <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
             <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
               <span className="h-2.5 w-2.5 rounded-full bg-info animate-pulse" />
@@ -37,55 +37,55 @@ export default async function Home() {
 
           <div className="space-y-5">
             <p className="keyword-line uppercase tracking-widest text-blue-600 font-bold">
-              Academic Excellence
+              Total Student Empowerment
             </p>
-            <h1 className="mx-auto max-w-5xl text-5xl font-bold leading-[1.06] tracking-[-0.035em] text-[var(--color-heading)] sm:text-6xl xl:mx-0 xl:text-7xl">
-              Building Careers <br className="hidden xl:block" /> with Discipline.
+            <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-(--color-heading) sm:text-6xl xl:mx-0 xl:text-7xl">
+              Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
-            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-[var(--color-muted)] xl:mx-0">
+            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-(--color-muted) xl:mx-0">
               Smart Tutor brings disciplined preparation, sharp mentoring, and real academic momentum into one focused institute experience. From school boards to civil services.
             </p>
           </div>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:items-start lg:justify-start">
-            <Link href="/login" className="action-button inline-flex items-center justify-center px-10 py-5 text-base shadow-xl glow-primary min-h-[64px]">
+            <Link href="/login" className="action-button inline-flex items-center justify-center px-8 sm:px-10 py-4 sm:py-5 text-base shadow-xl glow-primary min-h-15 sm:min-h-16 w-full sm:w-auto">
               Start Your Journey
             </Link>
             <Link
               href="/contact"
-              className="surface inline-flex items-center justify-center rounded-full px-10 py-5 text-base font-bold text-[var(--color-heading)] border-blue-200 hover:border-blue-400 transition-colors min-h-[64px]"
+              className="surface inline-flex items-center justify-center rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-(--color-heading) border-blue-200 hover:border-blue-400 transition-colors min-h-15 sm:min-h-16 w-full sm:w-auto"
             >
               Contact Admissions
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 pt-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-4">
             {data.metrics.map((metric, index) => (
-              <article key={metric.label} className="surface rounded-[1.5rem] p-6 text-center lg:text-left border-b-4 border-blue-600 hover:translate-y-[-4px] transition-all">
+              <article key={metric.label} className="surface rounded-[1.25rem] p-4 sm:p-5 text-center lg:text-left border-b-4 border-blue-600 hover:-translate-y-1 transition-all">
                 <div className="flex flex-col">
                   <CountUpValue
                     value={metric.value}
-                    className="text-4xl font-bold tracking-tight text-blue-700"
+                    className="text-2xl sm:text-xl lg:text-2xl font-bold tracking-tight text-blue-700"
                   />
-                  <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">{metric.label}</p>
+                  <p className="mt-1 text-xs sm:text-sm font-bold text-(--color-heading)">{metric.label}</p>
                 </div>
               </article>
             ))}
           </div>
 
-          <div className="pt-6 flex items-center gap-6 opacity-70 grayscale hover:grayscale-0 transition-all justify-center lg:justify-start">
-            <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-muted)]">Recognized By</p>
-            <div className="flex gap-8 items-center">
-              <span className="font-bold text-lg">ISO 9001:2015</span>
-              <span className="font-bold text-lg">MSME Certified</span>
-              <span className="font-bold text-lg">Digital India</span>
+          <div className="pt-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 opacity-80 grayscale hover:grayscale-0 transition-all justify-center lg:justify-start">
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-(--color-muted)">Recognized By</p>
+            <div className="flex flex-wrap gap-4 sm:gap-8 items-center justify-center">
+              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">ISO 9001:2015</span>
+              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">MSME Certified</span>
+              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">Digital India</span>
             </div>
           </div>
 
-          <div className="pt-10 border-t border-[var(--color-border)] mt-10">
-            <div className="relative isolate overflow-hidden rounded-[2rem] p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
+          <div className="pt-10 border-t border-(--color-border) mt-10">
+            <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
               {/* Animated Background Accents - Ensure they don't cause overflow */}
-              <div className="absolute top-0 right-0 -z-10 h-[400px] w-[400px] bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
+              <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
               <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
               
               <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center text-center lg:text-left">
@@ -97,7 +97,7 @@ export default async function Home() {
                   <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 leading-[1.1] tracking-tight">
                     Ready to Start Your <span className="text-blue-600 dark:text-blue-400">Journey?</span>
                   </h3>
-                  <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
+                  <p className="text-lg text-(--color-muted) mb-0 leading-relaxed font-medium">
                     Join 500+ students already excelling with Smart Tutor. Get access to expert mentoring and disciplined preparation.
                   </p>
                 </div>

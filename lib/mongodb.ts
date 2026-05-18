@@ -1,5 +1,14 @@
 "use server"
 import { MongoClient } from "mongodb";
+import dns from "node:dns";
+
+// Prefer IPv4 and use reliable DNS servers to avoid SRV resolution issues on Windows/Node.js
+try {
+  dns.setDefaultResultOrder("ipv4first");
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (e) {
+  // Ignore if not supported or fails
+}
 
 declare global {
   var __smartTutorMongoClientPromise: Promise<MongoClient> | undefined;

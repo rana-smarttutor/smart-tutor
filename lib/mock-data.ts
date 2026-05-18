@@ -290,9 +290,9 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
       detail: "Batch updates, reminders, and study follow-ups in one place.",
     },
     {
-      label: "Study materials",
-      value: "26",
-      detail: "Notes, practice sheets, recorded revision, and doubt support.",
+      label: "Book downloads",
+      value: "1.2k+",
+      detail: "Total resources accessed by students across the platform.",
     },
   ],
   educator: [
@@ -307,14 +307,14 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
       detail: "Pending checking across boards, aptitude, and competitive programs.",
     },
     {
-      label: "Parent updates",
-      value: "09",
-      detail: "Performance reporting and counselling follow-ups to review.",
-    },
-    {
       label: "Mentoring load",
       value: "34",
       detail: "Doubt solving, answer review, and improvement planning in progress.",
+    },
+    {
+      label: "Resource reach",
+      value: "1.2k+",
+      detail: "Total downloads of textbooks and revision guides.",
     },
   ],
   admin: [
@@ -334,9 +334,9 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
       detail: "Academic and competitive batch planning across the week.",
     },
     {
-      label: "Faculty teams",
-      value: "09",
-      detail: "School, board, and exam-specialist faculty coordination.",
+      label: "Total visitors",
+      value: "5.5k+",
+      detail: "Total unique visitors across Smart Tutor digital channels.",
     },
   ],
 };
@@ -556,6 +556,8 @@ export function getPublicInstituteData() {
       { label: "App Support", value: "Android & Desktop" },
       { label: "Active Students", value: "500+" },
       { label: "Expert Mentors", value: "25+" },
+      { label: "Book Downloads", value: "1.2k+" },
+      { label: "People Visited", value: "5.5k+" },
     ],
     operationsHighlights: [
       {

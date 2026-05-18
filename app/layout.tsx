@@ -19,9 +19,50 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Smart Tutor",
+  title: {
+    default: "Smart Tutor | Academic Empowerment in Vashi",
+    template: "%s | Smart Tutor",
+  },
   description:
-    "Professional institute platform for Smart Tutor with role-based dashboards, local APIs, and a polished learning experience.",
+    "Smart Tutor is Vashi's leading educational institute for school boards, civil services foundation, and competitive exams. Beyond coaching—total student empowerment.",
+  keywords: [
+    "Smart Tutor",
+    "Vashi Coaching",
+    "Navi Mumbai Institute",
+    "Class 10 Board Prep",
+    "UPSC Foundation Mumbai",
+    "JEE NEET Preparation Vashi",
+    "Academic Mentoring",
+  ],
+  authors: [{ name: "Smart Tutor Academy" }],
+  creator: "Smart Tutor Academy",
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://smarttutor.in",
+    siteName: "Smart Tutor",
+    title: "Smart Tutor | Professional Academic Mentoring in Vashi",
+    description:
+      "Disciplined preparation, expert mentoring, and visible academic growth for school, college, and competitive exams.",
+    images: [
+      {
+        url: "/image1.png",
+        width: 1200,
+        height: 630,
+        alt: "Smart Tutor Academy",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Smart Tutor | Leading Institute in Navi Mumbai",
+    description: "Empowering students through disciplined learning and expert faculty support.",
+    images: ["/image1.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

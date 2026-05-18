@@ -1,8 +1,0 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "/^cmd /c \"cd /d c:\\\\Users\\\\ANKIT\\\\Desktop\\\\work projects\\\\smartiq && npm run build\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
-}

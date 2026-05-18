@@ -2,9 +2,18 @@ import { NextResponse } from "next/server";
 
 import { seedMongoTemplateCollections } from "@/lib/seed-database";
 import { getMongoDatabase } from "@/lib/mongodb";
+import { getSessionUser } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const secretFromHeader = request.headers.get("x-bootstrap-key");
+    const session = await getSessionUser();
+    const isAdmin = session && session.role === "admin";
+
+    if (!isAdmin && (!secretFromHeader || secretFromHeader !== process.env.MONGODB_BOOTSTRAP_KEY)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const db = await getMongoDatabase();
     const content = db.collection("content");
     const ids = ["public-site", "dashboard-config"];

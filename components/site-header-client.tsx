@@ -5,13 +5,11 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { LogoutButton } from "@/components/logout-button";
-import { MockLoginForm } from "@/components/mock-login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
-import type { DemoCredential, SessionUser } from "@/lib/types";
+import type { SessionUser } from "@/lib/types";
 
 type SiteHeaderClientProps = {
   session: SessionUser | null;
-  credentials: DemoCredential[];
 };
 
 function shortenSessionName(name: string) {
@@ -22,16 +20,15 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/courses", label: "Courses" },
   { href: "/mock-test", label: "Mock Test" },
+  { href: "/digital-library", label: "Library" },
   { href: "/contact", label: "Contact" },
 ];
 
 export function SiteHeaderClient({
   session,
-  credentials,
 }: SiteHeaderClientProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isQuickLoginOpen, setIsQuickLoginOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -147,16 +144,12 @@ export function SiteHeaderClient({
 
                 <div className="flex items-center gap-2 lg:hidden">
                   {!session ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsQuickLoginOpen(true);
-                        setIsMobileMenuOpen(false);
-                      }}
+                    <Link
+                      href="/login"
                       className="btn-action btn-sm"
                     >
                       Login
-                    </button>
+                    </Link>
                   ) : null}
                   <button
                     type="button"
@@ -259,42 +252,6 @@ export function SiteHeaderClient({
       </header>
 
       <div aria-hidden="true" className="h-[5.25rem] sm:h-[5.75rem] lg:h-[6.25rem]" />
-
-      {!session ? (
-        <div
-          className={`mobile-login-overlay lg:hidden ${
-            isQuickLoginOpen
-              ? "mobile-login-overlay-open"
-              : "mobile-login-overlay-closed"
-          }`}
-        >
-          <div className="mobile-login-sheet surface rounded-[2rem] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="section-label">Quick Login</p>
-                <p className="mt-2 text-lg font-semibold text-[var(--color-heading)]">
-                  Mobile access
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsQuickLoginOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] text-lg font-semibold leading-none text-[var(--color-heading)]"
-                aria-label="Close login"
-              >
-                x
-              </button>
-            </div>
-            <div className="mt-5 max-h-[72dvh] overflow-y-auto pr-1">
-              <MockLoginForm
-                credentials={credentials}
-                compact
-                onSuccess={() => setIsQuickLoginOpen(false)}
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }

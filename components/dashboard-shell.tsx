@@ -7,11 +7,13 @@ import { DashboardAccountDirectory } from "@/components/dashboard-account-direct
 import { DashboardCourseManager } from "@/components/dashboard-course-manager";
 import { DashboardMessageCenter } from "@/components/dashboard-message-center";
 import { DashboardTestStudio } from "@/components/dashboard-test-studio";
+import { DigitalLibraryClient } from "@/components/digital-library-client";
 import { LiveClock } from "@/components/live-clock";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type {
   CourseItem,
+  LibraryBook,
   ManagedUser,
   MessageItem,
   Role,
@@ -53,12 +55,14 @@ const sidebarByRole = {
     { id: "messages", label: "Messages" },
     { id: "tests", label: "Tests" },
     { id: "results", label: "Results" },
+    { id: "library", label: "Library" },
   ],
   educator: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
     { id: "tests", label: "Test Studio" },
     { id: "results", label: "Results" },
+    { id: "library", label: "Library" },
   ],
   admin: [
     { id: "overview", label: "Overview" },
@@ -66,6 +70,7 @@ const sidebarByRole = {
     { id: "tests", label: "Test Studio" },
     { id: "courses", label: "Courses" },
     { id: "accounts", label: "Accounts" },
+    { id: "library", label: "Library" },
   ],
 } as const;
 
@@ -108,6 +113,8 @@ export function DashboardShell({
   );
   const [messages, setMessages] = useState<MessageItem[]>(dashboard.messages);
   const [submissions, setSubmissions] = useState<TestSubmission[]>(dashboard.submissions);
+  const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
+  const [isLibraryLoading, setIsLibraryLoading] = useState(false);
 
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
@@ -115,12 +122,42 @@ export function DashboardShell({
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
   const showAccounts = activeSection === "accounts";
+  const showLibrary = activeSection === "library";
+
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
     { label: "Messages", value: `${messages.length}` },
     { label: "Tests", value: `${dashboard.tests.length}` },
     { label: "Results", value: `${submissions.length}` },
   ];
+
+  useEffect(() => {
+    if (showLibrary && libraryBooks.length === 0 && !isLibraryLoading) {
+      void refreshLibrary();
+    }
+  }, [showLibrary]);
+
+  async function refreshLibrary() {
+    setIsLibraryLoading(true);
+    try {
+      const response = await fetch("/api/digital-library", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+
+      if (response.ok) {
+        const payload = (await response.json()) as { books?: LibraryBook[] };
+        if (payload.books) {
+          setLibraryBooks(payload.books);
+        }
+      }
+    } catch {
+      // Keep existing library state if refresh fails.
+    } finally {
+      setIsLibraryLoading(false);
+    }
+  }
   const workspaceChecklist = [
     "Profile identity and current access level",
     "Live notices from the message center",
@@ -137,6 +174,10 @@ export function DashboardShell({
           credentials: "same-origin",
           cache: "no-store",
         });
+
+        if (response.status === 401) {
+          return;
+        }
 
         const payload = (await response.json()) as { messages?: MessageItem[] };
 
@@ -258,16 +299,16 @@ export function DashboardShell({
 
           {showOverview ? (
             <>
-              <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {dashboard.stats.map((item) => (
-                  <article key={item.label} className="surface overflow-hidden rounded-[1.75rem] p-5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  <article key={item.label} className="surface overflow-hidden rounded-[1.25rem] p-4 sm:p-5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                       {item.label}
                     </p>
-                    <p className="mt-4 break-words text-3xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-4xl">
+                    <p className="mt-3 break-words text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)] sm:text-3xl">
                       {item.value}
                     </p>
-                    <p className="mt-3 text-sm leading-6 text-[var(--color-muted)]">
+                    <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
                       {item.detail}
                     </p>
                   </article>
@@ -484,6 +525,31 @@ export function DashboardShell({
                   </div>
                 ))}
               </div>
+            </article>
+          ) : null}
+
+          {showLibrary ? (
+            <article className="surface rounded-[2rem] p-5 sm:p-6">
+              <div className="mb-8">
+                <p className="section-label">Resource Center</p>
+                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--color-heading)]">
+                  Digital Library
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
+                  Access and manage curated study materials and revision guides.
+                </p>
+              </div>
+
+              {isLibraryLoading ? (
+                <div className="flex h-64 items-center justify-center">
+                  <span className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-primary)] border-t-transparent" />
+                </div>
+              ) : (
+                <DigitalLibraryClient
+                  initialBooks={libraryBooks}
+                  canManage={role === "admin" || role === "educator"}
+                />
+              )}
             </article>
           ) : null}
         </section>

@@ -47,20 +47,20 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="space-y-2">
         <p className="section-label">Sign in</p>
-        <h2 className="text-3xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-4xl">
+        <h2 className="text-2xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-3xl">
           Login with your account
         </h2>
-        <p className="max-w-2xl text-sm leading-7 text-[var(--color-muted)]">
+        <p className="max-w-2xl text-xs leading-6 text-[var(--color-muted)]">
           Use your Smart Tutor email and password.
         </p>
       </div>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-3" onSubmit={handleSubmit}>
         <label className="block">
-          <span className="mb-2 block text-sm font-semibold text-[var(--color-heading)]">
+          <span className="mb-1.5 block text-xs font-semibold text-[var(--color-heading)]">
             Email address
           </span>
           <input
@@ -68,13 +68,13 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             autoComplete="email"
-            className="w-full rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-base text-[var(--color-heading)] outline-none"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-2.5 text-sm text-[var(--color-heading)] outline-none focus:ring-2 ring-blue-500/10"
             placeholder="Enter email address"
           />
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-semibold text-[var(--color-heading)]">
+          <span className="mb-1.5 block text-xs font-semibold text-[var(--color-heading)]">
             Password
           </span>
           <input
@@ -82,13 +82,13 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
-            className="w-full rounded-[1.2rem] border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-base text-[var(--color-heading)] outline-none"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-2.5 text-sm text-[var(--color-heading)] outline-none focus:ring-2 ring-blue-500/10"
             placeholder="Enter password"
           />
         </label>
 
         {error ? (
-          <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-200">
+          <p className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-2.5 text-xs text-rose-700 dark:text-rose-200">
             {error}
           </p>
         ) : null}
@@ -96,7 +96,7 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
         <button
           type="submit"
           disabled={isPending}
-          className="action-button w-full justify-center px-6 py-4 text-base disabled:cursor-not-allowed disabled:opacity-75"
+          className="btn-action btn-lg w-full justify-center mt-2 disabled:cursor-not-allowed disabled:opacity-75"
         >
           {isPending ? "Signing in..." : "Sign in"}
         </button>

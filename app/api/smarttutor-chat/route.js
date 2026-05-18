@@ -1,17 +1,16 @@
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
+const openaiClient = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Using global to persist material in-memory across requests in dev
-// In production, consider a more robust store if needed
-if (!global.smartTutorMaterials) {
-  global.smartTutorMaterials = [];
-}
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+global.smartTutorMaterials = global.smartTutorMaterials || [];
 
 const MAX_RELEVANT_CHUNKS = 8;
 const MAX_CONTEXT_CHARACTERS = 12000;
@@ -55,7 +54,10 @@ function findRelevantMaterial(question) {
         }
       }
 
-      if (lowerQuestion.includes(material.fileName?.toLowerCase?.() || "")) {
+      if (
+        material.fileName &&
+        lowerQuestion.includes(material.fileName.toLowerCase())
+      ) {
         score += 5;
       }
 
@@ -63,7 +65,7 @@ function findRelevantMaterial(question) {
         scoredChunks.push({
           score,
           fileName: material.fileName,
-          sourceType: material.sourceType || "unknown",
+          sourceType: material.sourceType || "uploaded-material",
           text: chunk,
         });
       }
@@ -88,65 +90,73 @@ function findRelevantMaterial(question) {
 }
 
 const systemPrompt = `
-You are SmartTutor AI Assistant, the official AI education assistant for Smart Tutor. Make no spelling mistakes.Be short.
+You are SmartTutor AI Assistant, the official AI education assistant for Smart Tutor. Be short and to the point.
 
-Smart Tutor Institute Details:
-- Name: Smart Tutor (part of SmartIQ Academy & Prime Digital School)
-- Director & Founder: Prof. Ravi Rana
-- Location: Sector 17, Vashi, Navi Mumbai (primarily serves Vashi, Navi Mumbai, and Thane)
-- Hours: Mon - Sat | 08:00 AM - 08:30 PM
-- Contact: +91 88504 47887 | admissions@smarttutor.in
-- Specialties: School Coaching, Competitive Exams, Civil Services
+Your role is to help students, parents, and educators with:
+- Study questions
+- Course recommendations
+- Exam preparation
+- Study timetables
+- Mock test guidance
+- Smart Tutor services
+- Admission and course guidance
 
-Our Programs & Courses:
-1. Primary School Foundation (Class 1-5): Concept clarity, reading, numeracy, and homework support.
-2. Middle School Foundation (Class 6-8): Subject clarity, strong habits, and worksheet practice.
-3. Board Preparation (Class 9-10): Chapter-wise completion, prelim paper solving, and answer-writing guidance.
-4. Senior Secondary/Junior College (Class 11-12 & JC): Stream-wise (Commerce, Science, Arts) board preparation and mentoring.
-5. Diploma, Polytechnic & Graduation Support: Semester preparation, aptitude, communication, and placement readiness.
-6. Entrance Exams: JEE (Foundation/Advanced), NEET-UG, MHT-CET, CUET.
-7. Government & Competitive Exams: UPSC Foundation, State PSC (MPSC), Banking (IBPS/SBI), SSC CGL/GD, Railway Recruitment.
-8. Skill Development: Spoken English & Personality Development, Career Launch Studio.
-
-Smart Tutor Features:
-- Small-batch mentoring (max 25+ expert mentors)
-- Disciplined weekly testing and mock paper analysis
-- Digital study library and recorded revision
-- 1-on-1 mentoring and parent-teacher communication
-- Success rate: 94% with 500+ active students
-Your role is to help students, parents, and educators with study questions, course recommendations, exam preparation, and Smart Tutor services.
+Smart Tutor services:
+- School board preparation
+- Junior college / HSC support
+- College academic support
+- Government exam preparation
+- MPSC / UPSC foundation guidance
+- Banking, SSC, railway, and aptitude preparation
+- Career Launch Studio for placement preparation
+- Mock tests
+- Digital study library
+- Weekly assessments
+- 1-on-1 mentoring
+- Parent progress communication
+- Resume, GDPI, aptitude, and interview preparation
 
 Rules:
 - Always reply only in simple clear English.
-- EXTREME CONCISENESS IS MANDATORY: Provide very short and direct answers (maximum 1-2 sentences).
 - Even if the user writes in Hinglish, Hindi, or mixed language, reply in English only.
+- Do not use Hinglish or Hindi words like "aap", "mujhe", "batao", "padhai", "karna", "hai", "kya".
 - Be friendly, practical, student-focused, and action-oriented.
-- If a question is outside education or Smart Tutor services, politely redirect the user.
-- Always offer to help more at the end of your response.
+- Do not sound robotic.
+- Do not be too pushy while recommending Smart Tutor services.
+- Never promise guaranteed marks, rank, admission, job, or selection.
+- Do not say "100% result", "guaranteed selection", or "sure success".
+- If uploaded material is relevant, answer using it first.
+- If uploaded material is relevant, start with: "According to the uploaded Smart Tutor material..."
+- If uploaded material is not relevant, answer using general educational knowledge.
+- Keep answers short, clear, and practical.
 `;
+
+async function tryOpenAI(input) {
+  if (!process.env.OPENAI_API_KEY) throw new Error("Missing OpenAI API Key");
+  
+  const response = await openaiClient.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: input }],
+    temperature: 0.5,
+  });
+
+  return response.choices[0].message.content;
+}
+
+async function tryGemini(input) {
+  if (!process.env.GEMINI_API_KEY) throw new Error("Missing Gemini API Key");
+  
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const result = await model.generateContent(input);
+  const response = await result.response;
+  return response.text();
+}
 
 export async function POST(req) {
   try {
-    if (!process.env.GEMINI_API_KEY) {
-      return Response.json({
-        reply:
-          "Gemini API key is missing. Please add GEMINI_API_KEY in .env.local and restart the server.",
-      });
-    }
-
-    const { message, memory, history, isExpanded } = await req.json();
+    const { message, memory, history } = await req.json();
 
     const relevantMaterial = findRelevantMaterial(message);
-
-    const projectContext = isExpanded ? `
-PROJECT INFO (Expanded Context):
-- App: Smart Tutor (Vashi-based institute)
-- Tech: Next.js 16 (App Router), React 19, MongoDB.
-- Roles: Student, Educator, Admin.
-- Founder: Prof. Ravi Rana.
-- Features: Dashboard, course catalog, mock tests, parent comms.
-- Goal: Concept clarity & career readiness.
-` : "";
 
     const memoryText = `
 Session memory:
@@ -154,7 +164,7 @@ Student name: ${memory?.name || "Not provided"}
 Student class: ${memory?.classGrade || "Not provided"}
 Target exam: ${memory?.targetExam || "Not provided"}
 Weak subject: ${memory?.weakSubject || "Not provided"}
-Preferred language: ${memory?.preferredLanguage || "Not provided"}
+Preferred language: English only
 Study goal: ${memory?.studyGoal || "Not provided"}
 Course interest: ${memory?.courseInterest || "Not provided"}
 `;
@@ -167,10 +177,8 @@ Course interest: ${memory?.courseInterest || "Not provided"}
       })
       .join("\n");
 
-    const prompt = `
+    const input = `
 ${systemPrompt}
-
-${projectContext}
 
 ${memoryText}
 
@@ -186,54 +194,38 @@ ${recentHistory}
 Student's latest message:
 ${message}
 
-Now reply as SmartTutor AI Assistant. REMEMBER: Keep it extremely short (max 1-2 sentences).
+Now reply as SmartTutor AI Assistant.
 `;
 
-    const result = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-    });
+    let reply = "";
+    let method = "openai";
 
-    let replyText = "";
-
-    // Check if result has the expected text property (Direct text extraction)
-    if (result && typeof result.text === "string") {
-      replyText = result.text;
-    }
-    // Check if it's the standard SDK structure (candidates -> content -> parts -> text)
-    else if (result && result.candidates && result.candidates[0]?.content?.parts?.[0]?.text) {
-      replyText = result.candidates[0].content.parts[0].text;
-    }
-    // Fallback if structure is slightly different
-    else if (result && result.response && typeof result.response.text === "function") {
-      replyText = result.response.text();
+    try {
+      reply = await tryOpenAI(input);
+    } catch (error) {
+      console.error("OpenAI failed, falling back to Gemini:", error.message);
+      try {
+        reply = await tryGemini(input);
+        method = "gemini";
+      } catch (geminiError) {
+        console.error("Gemini also failed:", geminiError.message);
+        throw new Error("Both AI services are currently unavailable.");
+      }
     }
 
     return Response.json({
-      reply:
-        replyText.trim() ||
-        "I can help with study doubts, courses, exams, mock tests, and Smart Tutor services. Could you please rephrase your question?",
+      reply: reply || "I can help with study doubts, courses, exams, mock tests, and Smart Tutor services.",
+      method
     });
   } catch (error) {
-    console.error("SmartTutor Gemini API error:", error);
+    console.error("SmartTutor Chat API error:", error);
 
-    const message = error?.message || "";
-
-    let reply =
-      "I'm here to guide you with Smart Tutor's services. Please feel free to ask about our classes, subjects, exam goals, study plans, mock tests, uploaded materials, or course recommendations.";
-
-    if (
-      message.includes("429") ||
-      message.includes("RESOURCE_EXHAUSTED") ||
-      message.toLowerCase().includes("quota")
-    ) {
-      reply =
-        "Gemini quota is currently exhausted. Uploaded PDF/DOCX/TXT extraction can still work locally, but AI answering and image understanding need Gemini quota. Please wait and try again, or add billing/increase quota in Google AI Studio.";
-    }
-
-    return Response.json({
-      reply,
-      error: message,
-    });
+    return Response.json(
+      {
+        reply: "I'm having trouble connecting to my brain right now. Please try again in a moment.",
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
