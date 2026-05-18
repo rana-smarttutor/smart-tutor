@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
+import { LegalModals } from "@/components/legal-modals";
 import { getPublicInstituteData } from "@/lib/data-store";
 
 export async function SiteFooter() {
@@ -79,32 +80,12 @@ export async function SiteFooter() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-[var(--color-border)]">
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 text-[9px] leading-relaxed text-[var(--color-muted)] uppercase tracking-wider">
-            <div>
-              <p className="font-bold text-[var(--color-heading)] mb-2">Basic Terms</p>
-              <p>
-                By using Smart Tutor, you agree to our general use terms. We provide educational tools "as-is" without warranties. 
-                Individual learning results and platform performance may differ between users. 
-                Certain promotional claims or feature descriptions may be exaggerated for marketing purposes. 
-                All resources are for assistance only and do not constitute professional advice or guarantee outcomes.
-              </p>
-            </div>
-            <div>
-              <p className="font-bold text-[var(--color-heading)] mb-2">Privacy Policy</p>
-              <p>
-                Your privacy is important to us. Data collected is used primarily for academic coordination and service 
-                optimization. We do not sell user data to third-party advertisers. 
-                Third-party integrations (e.g., Mega.nz) are subject to their own privacy standards. 
-                Usage of this workspace implies acceptance of our data handling and security protocols.
-              </p>
-            </div>
-            <div className="sm:text-right flex flex-col justify-end">
-              <p className="font-bold text-[var(--color-heading)] uppercase">Smart Tutor Academy</p>
-              <p className="mt-1">
-                © {new Date().getFullYear()} Smart Tutor. All rights reserved. 
-                All trademarks and copyrights belong to their respective owners.
-              </p>
-            </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)]">
+            <LegalModals />
+            <p className="max-w-2xl leading-relaxed sm:text-right">
+              © {new Date().getFullYear()} Smart Tutor Academy. All rights reserved. 
+              Results may differ between users. Promotional claims may be stylized.
+            </p>
           </div>
         </div>
       </RevealOnScroll>

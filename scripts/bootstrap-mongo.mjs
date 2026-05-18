@@ -59,7 +59,12 @@ try {
 
   while (true) {
     try {
-      const status = await fetch(statusUrl, { method: "GET" });
+      const status = await fetch(statusUrl, { 
+        method: "GET",
+        headers: {
+          "x-bootstrap-key": bootstrapKey,
+        },
+      });
       const statusPayload = await status.json().catch(() => ({}));
       lastStatusPayload = statusPayload;
 
