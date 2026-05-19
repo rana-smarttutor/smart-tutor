@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/components/theme-provider";
 import type { SessionUser } from "@/lib/types";
 
 type SiteHeaderClientProps = {
@@ -29,10 +30,13 @@ export function SiteHeaderClient({
   session,
 }: SiteHeaderClientProps) {
   const pathname = usePathname();
+  const { theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
+    setMounted(true);
     let frame = 0;
 
     const updateScrollProgress = () => {
@@ -71,6 +75,9 @@ export function SiteHeaderClient({
     setIsMobileMenuOpen(false);
   }
 
+  // Explicitly determine logo based on theme to avoid CSS-only issues
+  const isDark = mounted && theme === "dark";
+
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-40 w-full">
@@ -91,7 +98,7 @@ export function SiteHeaderClient({
                   onClick={closeMenu}
                 >
                   <Image
-                    src="/image1.png"
+                    src={isDark ? "/image2.png" : "/image1.png"}
                     alt="Smart Tutors Logo"
                     width={150}
                     height={40}

@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     "JEE NEET Preparation Vashi",
     "Competitive Exam Coaching Mumbai",
     "Academic Mentoring Vashi",
-    "Digital Learning Platform India",
+    "Digital Learning Platform India","coaching","classes in navi mumbai"
   ],
   authors: [{ name: "Smart Tutors Academy" }],
   creator: "Smart Tutors Academy",
@@ -99,7 +99,7 @@ export const metadata: Metadata = {
   },
   manifest: '/site.webmanifest',
   appleWebApp: {
-    title: 'smart tutor',
+    title: 'Smart Tutors',
     statusBarStyle: 'default',
     capable: true,
   },

@@ -22,7 +22,7 @@ import { generatedPlacedStudents } from "./placed-students-data";
 const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
 const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smarttutors.co.in";
 const CONTACT_ADDRESS = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
-const WHATSAPP_LINK = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://wa.me/918850447887?text=Hello%20Smart%20Tutor";
+const WHATSAPP_LINK = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://wa.me/918850447887?text=Hello%20Smart%20Tutors";
 const INSTAGRAM_LINK = process.env.NEXT_PUBLIC_INSTAGRAM_LINK || "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
 
 export const demoCredentials = [
@@ -425,7 +425,7 @@ const contactActions: ContactAction[] = [
   },
   {
     label: "Campus Visit Request",
-    href: `${WHATSAPP_LINK}&text=Hello%20Smart%20Tutor%2C%20I%20want%20to%20visit%20the%20campus.`,
+    href: `${WHATSAPP_LINK}&text=Hello%20Smart%20Tutors%2C%20I%20want%20to%20visit%20the%20campus.`,
     style: "secondary",
   },
 ];
@@ -543,7 +543,7 @@ export function getPublicInstituteData() {
     contactMethods,
     contactActions,
     whatsappHref:
-      "https://wa.me/918850447887?text=Hello%20Smart%20Tutor",
+      "https://wa.me/918850447887?text=Hello%20Smart%20Tutors",
     headlineLines: [
       "From primary classrooms to civil services preparation, every learner follows a clear academic plan.",
       "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",

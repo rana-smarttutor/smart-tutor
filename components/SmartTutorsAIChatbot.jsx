@@ -362,7 +362,7 @@ For every action, there is an equal and opposite reaction.`;
 Tell me the exact Maths topic and I will explain it step by step.`;
   }
 
-  return `I can answer this as your SmartTutors AI Assistant.
+  return `I can answer this as your Smart Tutors AI Assistant.
 
 Please ask your question more clearly, for example:
 • Explain photosynthesis
@@ -511,7 +511,7 @@ export default function SmartTutorsAIChatbot() {
         <div style={styles.chatBox}>
           <div style={styles.header}>
             <div>
-              <div style={styles.title}>SmartTutors AI</div>
+              <div style={styles.title}>Smart Tutors AI</div>
               <div style={styles.subtitle}>
                 Study Assistant & Course Guide
               </div>
@@ -547,7 +547,7 @@ export default function SmartTutorsAIChatbot() {
 
             {typing && (
               <div style={styles.messageRow}>
-                <div style={styles.botBubble}>SmartTutors AI is typing...</div>
+                <div style={styles.botBubble}>Smart Tutors AI is typing...</div>
               </div>
             )}
 
@@ -570,7 +570,7 @@ export default function SmartTutorsAIChatbot() {
 
           <div style={styles.footer}>
             <div style={styles.note}>
-              SmartTutors can help with study doubts, course guidance, mock tests,
+              Smart Tutors can help with study doubts, course guidance, mock tests,
               study plans, and admissions.
             </div>
 

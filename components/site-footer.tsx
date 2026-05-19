@@ -16,17 +16,7 @@ export async function SiteFooter() {
       <RevealOnScroll className="surface graph-paper rounded-[2rem] p-6 sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[0.95fr_0.9fr_1.1fr]">
           <div>
-            <Link href="/" className="inline-flex items-center">
-              <Image
-                src="/image1.png"
-                alt="Smart Tutors Logo"
-                width={130}
-                height={34}
-                className="h-8 w-auto object-contain"
-                loading="lazy"
-              />
-            </Link>
-            <p className="mt-4 max-w-md text-sm leading-7 text-[var(--color-muted)]">
+            <p className="max-w-md text-sm leading-7 text-[var(--color-muted)]">
               Admissions, learning, and institute operations in one workspace.
             </p>
             <div className="mt-5 space-y-3 text-sm text-[var(--color-muted)]">

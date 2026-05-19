@@ -90,7 +90,7 @@ function findRelevantMaterial(question) {
 }
 
 const systemPrompt = `
-You are SmartTutors AI Assistant, the official AI education assistant for Smart Tutors. Be short and to the point.
+You are Smart Tutors AI Assistant, the official AI education assistant for Smart Tutors. Be short and to the point.
 
 Your role is to help students, parents, and educators with:
 - Study questions
@@ -194,7 +194,7 @@ ${recentHistory}
 Student's latest message:
 ${message}
 
-Now reply as SmartTutors AI Assistant.
+Now reply as Smart Tutors AI Assistant.
 `;
 
     let reply = "";
