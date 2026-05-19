@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
@@ -86,10 +87,17 @@ export function SiteHeaderClient({
               <div className="flex min-h-[3.5rem] items-center justify-between gap-3">
                 <Link
                   href="/"
-                  className="brand-mark max-w-[10rem] truncate sm:max-w-none"
+                  className="brand-mark relative flex items-center"
                   onClick={closeMenu}
                 >
-                  Smart Tutors
+                  <Image
+                    src="/image1.png"
+                    alt="Smart Tutors Logo"
+                    width={150}
+                    height={40}
+                    className="h-7 w-auto object-contain sm:h-8 lg:h-9"
+                    priority
+                  />
                 </Link>
 
                 <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 lg:flex">

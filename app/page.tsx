@@ -146,11 +146,11 @@ export default async function Home() {
                 <p className="keyword-line">Institute identity</p>
                 <div className="media-frame relative mt-4 aspect-square overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group">
                   <Image
-                    src="/image1.png"
+                    src="/image3.png"
                     alt="Smart Tutors academy identity"
                     fill
                     priority
-                    className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                    className="object-contain object-center group-hover:scale-110 transition-transform duration-700"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                   />
                 </div>
@@ -259,22 +259,27 @@ export default async function Home() {
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 items-start">
           {data.programs.map((program, index) => (
             <article
               key={program.title}
-              className="surface rounded-xl p-7 hover:shadow-2xl hover:translate-y-[-4px] transition-all cursor-default"
+              className="surface rounded-xl p-7 hover:shadow-2xl hover:translate-y-[-4px] transition-all cursor-default flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="keyword-line">{program.category}</p>
-                  <h3 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-[var(--color-heading)]">
+                <div className="min-w-0 flex-grow">
+                  <div className="flex items-center gap-2">
+                    <p className="keyword-line">{program.category}</p>
+                    {program.title.includes("Entrance") && (
+                      <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold uppercase animate-pulse">Updated</span>
+                    )}
+                  </div>
+                  <h3 className="mt-3 min-h-[4.5rem] flex items-center text-xl sm:text-2xl font-bold leading-normal tracking-[-0.03em] text-[var(--color-heading)] py-2 overflow-visible">
                     {program.title}
                   </h3>
                 </div>
-                <span className="pill bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800 font-bold">{program.duration}</span>
+                <span className="pill shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800 font-bold">{program.duration}</span>
               </div>
-              <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] font-medium">
+              <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] font-medium flex-grow">
                 {program.description}
               </p>
               <div className="mt-6 flex flex-wrap gap-2">

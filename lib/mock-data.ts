@@ -20,7 +20,7 @@ import { courseLibrary } from "@/lib/course-library";
 import { generatedPlacedStudents } from "./placed-students-data";
 
 const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
-const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "admissions@smarttutors.co.in";
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smarttutors.co.in";
 const CONTACT_ADDRESS = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
 const WHATSAPP_LINK = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://wa.me/918850447887?text=Hello%20Smart%20Tutor";
 const INSTAGRAM_LINK = process.env.NEXT_PUBLIC_INSTAGRAM_LINK || "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
@@ -532,7 +532,7 @@ export function getPublicInstituteData() {
       city: "Vashi",
       address: "Sector 17, Vashi, Navi Mumbai",
       phone: "+91 88504 47887",
-      email: "admissions@smarttutors.co.in",
+      email: "info@smarttutors.co.in",
       hours: "Mon - Sat | 08:00 AM - 08:30 PM",
       specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
       directorName: "Prof. Ravi Rana",

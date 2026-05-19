@@ -4,6 +4,7 @@
   --font-sans: var(--font-geist-sans), sans-serif;
   --font-headline: var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
+  --font-fancy: var(--font-playfair), serif;
   
   /* Primary Palette - Indigo/Blue */
   --color-background: #f8fafc;
@@ -352,10 +353,10 @@ body {
 }
 
 .brand-mark {
-  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
-  font-family: var(--font-mono);
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-size: clamp(1.4rem, 2.8vw, 2.2rem);
+  font-family: var(--font-fancy);
+  font-weight: 800;
+  letter-spacing: -0.01em;
   color: var(--color-heading);
   text-transform: none;
 }
@@ -665,7 +666,7 @@ body {
   }
 
   .brand-mark {
-    font-size: 1.45rem;
+    font-size: 1.6rem;
   }
 
   .action-button {
@@ -693,8 +694,8 @@ body {
   }
 
   .brand-mark {
-    max-width: 9rem;
-    font-size: 1.55rem;
+    max-width: none;
+    font-size: 1.6rem;
   }
 
   .pill {
@@ -707,3 +708,4 @@ body {
   }
 
 }
+

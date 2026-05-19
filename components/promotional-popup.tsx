@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function PromotionalPopup() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,7 +45,15 @@ export function PromotionalPopup() {
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="brand-mark mb-6">Smart Tutors</div>
+          <div className="mb-6 flex justify-center">
+            <Image
+              src="/image2.png"
+              alt="Smart Tutors Logo"
+              width={160}
+              height={42}
+              className="h-10 w-auto object-contain"
+            />
+          </div>
           
           <div className="surface-soft rounded-3xl p-6 mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 w-full">
             <div className="flex justify-center mb-4">

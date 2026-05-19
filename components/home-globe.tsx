@@ -92,6 +92,7 @@ export function HomeGlobe() {
                   src="/image.png"
                   alt="Smart Tutors topper showcase"
                   fill
+                  loading="lazy"
                   className="object-cover object-center"
                   sizes="(max-width: 1024px) 100vw, 40vw"
                 />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 
 import type { CourseItem } from "@/lib/types";
 
@@ -148,7 +149,7 @@ export function DashboardCourseManager({
 
       {status ? <p className="mt-4 text-sm font-semibold text-[var(--color-heading)]">{status}</p> : null}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[0.94fr_1.06fr]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[0.94fr_1.06fr] items-start">
         <div className="surface-soft rounded-[1.75rem] p-5">
           <p className="text-sm font-semibold text-[var(--color-heading)]">Create course from standard list</p>
           <div className="mt-4 grid gap-3">
@@ -228,7 +229,7 @@ export function DashboardCourseManager({
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 items-start">
           {courses.map((course) => {
             const draft = drafts[course.id] ?? toForm(course);
             const isEditing = editingId === course.id;
@@ -359,13 +360,24 @@ export function DashboardCourseManager({
                 ) : (
                   <div>
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="min-w-0">
                         <p className="keyword-line text-[var(--color-secondary)]">{course.tagline}</p>
-                        <p className="mt-2 text-xl font-bold text-[var(--color-heading)]">
+                        <p className="mt-2 text-xl font-bold leading-[1.4] text-[var(--color-heading)] py-1 min-h-[3rem]">
                           {course.title}
                         </p>
                       </div>
-                      <span className="pill bg-[var(--color-secondary-soft)] text-[var(--color-secondary-strong)] border-[var(--color-secondary)]/20">{course.duration}</span>
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="pill bg-[var(--color-secondary-soft)] text-[var(--color-secondary-strong)] border-[var(--color-secondary)]/20">{course.duration}</span>
+                        <div className="relative h-8 w-8 overflow-hidden rounded-md opacity-80">
+                          <Image
+                            src="/image3.png"
+                            alt="Identity"
+                            fill
+                            sizes="32px"
+                            className="object-contain"
+                          />
+                        </div>
+                      </div>
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)] font-medium">{course.summary}</p>
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">

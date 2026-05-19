@@ -87,7 +87,7 @@ npm run dev
 **Smart Tutors Academy**
 - **Location**: Sector 17, Vashi, Navi Mumbai
 - **Phone**: +91 88504 47887
-- **Email**: admissions@smarttutors.co.in
+- **Email**: info@smarttutors.co.in
 - **Website**: [smarttutors.co.in](https://smarttutors.co.in)
 
 ---

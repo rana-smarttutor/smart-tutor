@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 import type { CourseItem } from "@/lib/types";
 
@@ -28,22 +29,38 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
 
   return (
     <>
-      <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4 items-start">
         {courses.map((course) => (
           <button
             key={course.id}
             type="button"
             onClick={() => setSelectedCourse(course)}
-            className="surface rounded-[1.8rem] p-6 text-left"
+            className="surface rounded-[1.8rem] p-6 text-left flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
           >
-            <p className="keyword-line">{course.tagline}</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-              {course.title}
-            </h2>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-grow">
+                <div className="flex items-center gap-2">
+                  <p className="keyword-line">{course.tagline}</p>
+                  <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">Live</span>
+                </div>
+                <h2 className="mt-3 min-h-[4.5rem] flex items-center text-2xl font-semibold leading-normal tracking-[-0.04em] text-[var(--color-heading)] py-2 overflow-visible">
+                  {course.title}
+                </h2>
+              </div>
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg">
+                <Image
+                  src="/image3.png"
+                  alt="Smart Tutors identity"
+                  fill
+                  sizes="40px"
+                  className="object-contain"
+                />
+              </div>
+            </div>
             <p className="mt-2 text-sm font-semibold text-[var(--color-accent)]">
               {course.audienceLabel}
             </p>
-            <p className="mt-6 text-sm leading-7 text-[var(--color-muted)]">
+            <p className="mt-6 text-sm leading-7 text-[var(--color-muted)] flex-grow">
               {course.description}
             </p>
 
@@ -94,9 +111,9 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="surface-soft flex items-start justify-between gap-4 border-b border-[var(--color-border)] px-4 py-4 sm:px-6 sm:py-5">
-              <div className="min-w-0">
+              <div className="min-w-0 h-72 lg:h-32">{/* couse clipping issue*/ }
                 <p className="keyword-line">{selectedCourse.tagline}</p>
-                <h3 className="mt-3 text-2xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-3xl">
+                <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.05em] text-[var(--color-heading)] sm:text-3xl">
                   {selectedCourse.title}
                 </h3>
               </div>

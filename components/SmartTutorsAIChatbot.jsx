@@ -641,8 +641,8 @@ function getStyles(theme) {
   return {
     wrapper: {
       position: "fixed",
-      right: "20px",
-      bottom: "20px",
+      right: "24px",
+      bottom: "100px",
       zIndex: 99999,
       fontFamily: "Inter, Arial, Helvetica, sans-serif",
     },
