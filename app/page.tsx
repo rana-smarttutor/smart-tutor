@@ -134,7 +134,7 @@ export default async function Home() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
               <div>
                 <p className="section-label">Campus Highlights</p>
-                <h2 className="section-title text-2xl sm:text-3xl mt-2 text-left">
+                <h2 className="section-title text-xl sm:text-xl mt-2 text-left">
                   Visible trust, visible outcomes
                 </h2>
               </div>

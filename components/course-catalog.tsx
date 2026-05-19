@@ -29,71 +29,67 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
 
   return (
     <>
-      <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4 items-start">
+      <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4 items-stretch">
         {courses.map((course) => (
           <button
             key={course.id}
             type="button"
             onClick={() => setSelectedCourse(course)}
-            className="surface rounded-[1.8rem] p-6 text-left flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
+            className="surface group rounded-[2rem] p-5 text-left flex flex-col h-full border-2 border-transparent hover:border-blue-500/40 hover:scale-[1.02] hover:shadow-2xl transition-all duration-300"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-grow">
                 <div className="flex items-center gap-2">
-                  <p className="keyword-line">{course.tagline}</p>
-                  <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold uppercase">Live</span>
+                  <p className="keyword-line text-[10px]">{course.tagline}</p>
+                  <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Live</span>
                 </div>
-                <h2 className="mt-3 min-h-[4.5rem] flex items-center text-2xl font-semibold leading-normal tracking-[-0.04em] text-[var(--color-heading)] py-2 overflow-visible">
+                <h2 className="mt-2 text-xl font-bold leading-tight tracking-tight text-[var(--color-heading)] py-1 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3rem]">
                   {course.title}
                 </h2>
               </div>
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg">
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-blue-50 p-1 dark:bg-blue-900/20">
                 <Image
                   src="/image3.png"
                   alt="Smart Tutors identity"
                   fill
                   sizes="40px"
-                  className="object-contain"
+                  className="object-contain p-1"
                 />
               </div>
             </div>
-            <p className="mt-2 text-sm font-semibold text-[var(--color-accent)]">
+            
+            <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-blue-500/80">
               {course.audienceLabel}
             </p>
-            <p className="mt-6 text-sm leading-7 text-[var(--color-muted)] flex-grow">
+
+            <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)] flex-grow line-clamp-3">
               {course.description}
             </p>
 
-            <div className="mt-5 grid gap-3">
-              <div className="surface-soft rounded-3xl p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <div className="surface-soft rounded-2xl p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
                   Duration
                 </p>
-                <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
+                <p className="mt-1 text-xs font-bold text-[var(--color-heading)] truncate">
                   {course.duration}
                 </p>
               </div>
-              <div className="surface-soft rounded-3xl p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+              <div className="surface-soft rounded-2xl p-3">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
                   Mode
                 </p>
-                <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
+                <p className="mt-1 text-xs font-bold text-[var(--color-heading)] truncate">
                   {course.mode}
-                </p>
-              </div>
-              <div className="surface-soft rounded-3xl p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  Included branches
-                </p>
-                <p className="mt-2 text-sm font-semibold text-[var(--color-heading)]">
-                  {course.branchesIncluded.join(", ")}
                 </p>
               </div>
             </div>
 
-            <span className="mt-5 inline-flex text-sm font-semibold text-[var(--color-accent)]">
-              View full details
-            </span>
+            <div className="mt-5 flex items-center justify-between">
+              <span className="text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                View Full Program <span>→</span>
+              </span>
+            </div>
           </button>
         ))}
       </section>
@@ -107,23 +103,23 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
           onClick={() => setSelectedCourse(null)}
         >
           <div
-            className="surface flex max-h-[calc(100dvh-5.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[1.75rem] sm:max-h-[90vh] sm:rounded-[2rem]"
+            className="surface flex max-h-[calc(100dvh-5.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-[2rem] sm:max-h-[90vh] shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="surface-soft flex items-start justify-between gap-4 border-b border-[var(--color-border)] px-4 py-4 sm:px-6 sm:py-5">
-              <div className="min-w-0 h-72 lg:h-32">{/* couse clipping issue*/ }
-                <p className="keyword-line">{selectedCourse.tagline}</p>
-                <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-[-0.05em] text-[var(--color-heading)] sm:text-3xl">
+            <div className="surface-soft flex items-start justify-between gap-4 border-b border-[var(--color-border)] px-6 py-6 sm:px-8">
+              <div className="min-w-0">
+                <p className="keyword-line text-xs">{selectedCourse.tagline}</p>
+                <h3 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-[var(--color-heading)] sm:text-3xl">
                   {selectedCourse.title}
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedCourse(null)}
-                className="surface flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-semibold text-[var(--color-heading)]"
+                className="surface flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg font-bold text-[var(--color-heading)] hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all"
                 aria-label="Close course details"
               >
-                x
+                ✕
               </button>
             </div>
 
