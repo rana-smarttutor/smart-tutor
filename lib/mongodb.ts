@@ -2,7 +2,7 @@
 import { MongoClient } from "mongodb";
 
 declare global {
-  var __smartTutorMongoClientPromise: Promise<MongoClient> | undefined;
+  var __smartTutorsMongoClientPromise: Promise<MongoClient> | undefined;
 }
 
 export function isMongoConfigured() {
@@ -39,15 +39,15 @@ export function getMongoClient() {
     throw new Error("MONGODB_URI is not set. Add it to your local environment.");
   }
 
-  if (!global.__smartTutorMongoClientPromise) {
+  if (!global.__smartTutorsMongoClientPromise) {
     if (uri.includes("@cluster.mongodb.net")) {
       throw new Error(buildMongoConfigHelp(uri));
     }
 
     const client = new MongoClient(uri);
-    global.__smartTutorMongoClientPromise = client.connect().catch((error) => {
+    global.__smartTutorsMongoClientPromise = client.connect().catch((error) => {
       // Allow a later retry after a transient DNS / network issue.
-      global.__smartTutorMongoClientPromise = undefined;
+      global.__smartTutorsMongoClientPromise = undefined;
 
       const details =
         error && typeof error === "object"
@@ -58,7 +58,7 @@ export function getMongoClient() {
     });
   }
 
-  return global.__smartTutorMongoClientPromise;
+  return global.__smartTutorsMongoClientPromise;
 }
 
 function getMongoDatabaseName() {

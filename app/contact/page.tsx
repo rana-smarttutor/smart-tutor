@@ -139,7 +139,7 @@ export default async function ContactPage() {
             <div className="media-frame map-frame h-[400px] overflow-hidden rounded-2xl border-none shadow-inner">
               <div className="map-frame-inner h-full">
                 <iframe
-                  title="Smart Tutor campus location"
+                  title="Smart Tutors campus location"
                   src={mapSrc}
                   allowFullScreen
                   loading="lazy"

@@ -18,7 +18,7 @@ export default async function CoursesPage() {
           </h1>
           <div className="surface-soft rounded-[2.5rem] p-8 sm:p-10 border-blue-100 dark:border-blue-900/30">
             <p className="text-xl leading-relaxed text-[var(--color-body)] font-semibold">
-              Smart Tutor pathways from class 6 to diploma, graduation, and government exam preparation. 
+              Smart Tutors pathways from class 6 to diploma, graduation, and government exam preparation. 
             </p>
             <p className="mt-4 text-lg leading-relaxed text-[var(--color-muted)] font-medium">
               Our structured catalog groups every major stage clearly, providing a complete educational roadmap designed to build strength, discipline, and success.

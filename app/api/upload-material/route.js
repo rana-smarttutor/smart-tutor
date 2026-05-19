@@ -7,7 +7,7 @@ export const maxDuration = 60;
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-global.smartTutorMaterials = global.smartTutorMaterials || [];
+global.smartTutorsMaterials = global.smartTutorsMaterials || [];
 
 const MAX_TOTAL_FILES = 10;
 const MAX_FILE_SIZE_MB = 15;
@@ -125,7 +125,7 @@ async function extractTextFromDocumentFile(file) {
 
   const chunks = splitIntoChunks(extractedText);
 
-  global.smartTutorMaterials.push({
+  global.smartTutorsMaterials.push({
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     fileName,
     uploadedAt: new Date().toISOString(),
@@ -175,7 +175,7 @@ async function analyzeImagesInOneGeminiCall(imageFiles) {
 
   parts.push({
     text: `
-You are SmartTutor AI Assistant analyzing uploaded study-material images.
+You are SmartTutors AI Assistant analyzing uploaded study-material images.
 
 The user uploaded ${validImageFiles.length} image(s).
 
@@ -243,7 +243,7 @@ ${batchAnalysis}
 
       const chunks = splitIntoChunks(extractedText);
 
-      global.smartTutorMaterials.push({
+      global.smartTutorsMaterials.push({
         id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
         fileName,
         uploadedAt: new Date().toISOString(),
@@ -303,8 +303,8 @@ export async function POST(req) {
         message: "No files received by server.",
         uploaded: [],
         failed: [],
-        totalStoredFiles: global.smartTutorMaterials.length,
-        remainingSlots: MAX_TOTAL_FILES - global.smartTutorMaterials.length,
+        totalStoredFiles: global.smartTutorsMaterials.length,
+        remainingSlots: MAX_TOTAL_FILES - global.smartTutorsMaterials.length,
       });
     }
 
@@ -318,12 +318,12 @@ export async function POST(req) {
           fileName: file.name || "unknown-file",
           message: "Maximum 10 files allowed at once.",
         })),
-        totalStoredFiles: global.smartTutorMaterials.length,
-        remainingSlots: MAX_TOTAL_FILES - global.smartTutorMaterials.length,
+        totalStoredFiles: global.smartTutorsMaterials.length,
+        remainingSlots: MAX_TOTAL_FILES - global.smartTutorsMaterials.length,
       });
     }
 
-    const currentCount = global.smartTutorMaterials.length;
+    const currentCount = global.smartTutorsMaterials.length;
     const remainingSlots = MAX_TOTAL_FILES - currentCount;
 
     if (remainingSlots <= 0) {
@@ -397,8 +397,8 @@ export async function POST(req) {
           : "No files could be uploaded.",
       uploaded,
       failed,
-      totalStoredFiles: global.smartTutorMaterials.length,
-      remainingSlots: MAX_TOTAL_FILES - global.smartTutorMaterials.length,
+      totalStoredFiles: global.smartTutorsMaterials.length,
+      remainingSlots: MAX_TOTAL_FILES - global.smartTutorsMaterials.length,
       maxFiles: MAX_TOTAL_FILES,
       note:
         "PDF, DOCX, and TXT are analyzed locally. Images/screenshots/diagrams need Gemini Vision quota.",
@@ -412,8 +412,8 @@ export async function POST(req) {
       error: cleanErrorMessage(error),
       uploaded: [],
       failed: [],
-      totalStoredFiles: global.smartTutorMaterials.length,
-      remainingSlots: MAX_TOTAL_FILES - global.smartTutorMaterials.length,
+      totalStoredFiles: global.smartTutorsMaterials.length,
+      remainingSlots: MAX_TOTAL_FILES - global.smartTutorsMaterials.length,
     });
   }
 }
@@ -424,7 +424,7 @@ export async function DELETE() {
     return Response.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
 
-  global.smartTutorMaterials = [];
+  global.smartTutorsMaterials = [];
 
   return Response.json({
     success: true,
@@ -440,7 +440,7 @@ export async function GET() {
     return Response.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
 
-  const materials = global.smartTutorMaterials || [];
+  const materials = global.smartTutorsMaterials || [];
 
   return Response.json({
     success: true,

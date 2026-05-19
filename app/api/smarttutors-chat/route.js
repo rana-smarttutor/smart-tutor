@@ -10,13 +10,13 @@ const openaiClient = new OpenAI({
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-global.smartTutorMaterials = global.smartTutorMaterials || [];
+global.smartTutorsMaterials = global.smartTutorsMaterials || [];
 
 const MAX_RELEVANT_CHUNKS = 8;
 const MAX_CONTEXT_CHARACTERS = 12000;
 
 function findRelevantMaterial(question) {
-  const materials = global.smartTutorMaterials || [];
+  const materials = global.smartTutorsMaterials || [];
 
   if (!materials.length) {
     return "";
@@ -90,7 +90,7 @@ function findRelevantMaterial(question) {
 }
 
 const systemPrompt = `
-You are SmartTutor AI Assistant, the official AI education assistant for Smart Tutor. Be short and to the point.
+You are SmartTutors AI Assistant, the official AI education assistant for Smart Tutors. Be short and to the point.
 
 Your role is to help students, parents, and educators with:
 - Study questions
@@ -98,10 +98,10 @@ Your role is to help students, parents, and educators with:
 - Exam preparation
 - Study timetables
 - Mock test guidance
-- Smart Tutor services
+- Smart Tutors services
 - Admission and course guidance
 
-Smart Tutor services:
+Smart Tutors services:
 - School board preparation
 - Junior college / HSC support
 - College academic support
@@ -122,11 +122,11 @@ Rules:
 - Do not use Hinglish or Hindi words like "aap", "mujhe", "batao", "padhai", "karna", "hai", "kya".
 - Be friendly, practical, student-focused, and action-oriented.
 - Do not sound robotic.
-- Do not be too pushy while recommending Smart Tutor services.
+- Do not be too pushy while recommending Smart Tutors services.
 - Never promise guaranteed marks, rank, admission, job, or selection.
 - Do not say "100% result", "guaranteed selection", or "sure success".
 - If uploaded material is relevant, answer using it first.
-- If uploaded material is relevant, start with: "According to the uploaded Smart Tutor material..."
+- If uploaded material is relevant, start with: "According to the uploaded Smart Tutors material..."
 - If uploaded material is not relevant, answer using general educational knowledge.
 - Keep answers short, clear, and practical.
 `;
@@ -182,7 +182,7 @@ ${systemPrompt}
 
 ${memoryText}
 
-Uploaded Smart Tutor material:
+Uploaded Smart Tutors material:
 ${relevantMaterial
         ? relevantMaterial
         : "No relevant uploaded material found for this question."
@@ -194,7 +194,7 @@ ${recentHistory}
 Student's latest message:
 ${message}
 
-Now reply as SmartTutor AI Assistant.
+Now reply as SmartTutors AI Assistant.
 `;
 
     let reply = "";
@@ -214,11 +214,11 @@ Now reply as SmartTutor AI Assistant.
     }
 
     return Response.json({
-      reply: reply || "I can help with study doubts, courses, exams, mock tests, and Smart Tutor services.",
+      reply: reply || "I can help with study doubts, courses, exams, mock tests, and Smart Tutors services.",
       method
     });
   } catch (error) {
-    console.error("SmartTutor Chat API error:", error);
+    console.error("SmartTutors Chat API error:", error);
 
     return Response.json(
       {

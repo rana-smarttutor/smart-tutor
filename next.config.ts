@@ -9,7 +9,12 @@ const localNetworkOrigins = Object.values(networkInterfaces())
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  poweredByHeader: false,
+  compress: true,
   allowedDevOrigins: ["localhost", "127.0.0.1", ...localNetworkOrigins],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion"], // Common heavy packages
+  },
   async headers() {
     return [
       {

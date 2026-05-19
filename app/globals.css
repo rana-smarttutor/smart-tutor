@@ -352,10 +352,10 @@ body {
 }
 
 .brand-mark {
-  font-size: clamp(1.7rem, 3vw, 2.2rem);
-  font-family: var(--font-sans);
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  font-family: var(--font-mono);
   font-weight: 700;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.04em;
   color: var(--color-heading);
   text-transform: none;
 }
@@ -607,10 +607,15 @@ body {
     opacity 180ms ease;
 }
 
+/* Performance & UX Optimizations */
+@layer base {
+  img {
+    content-visibility: auto;
+  }
+}
+
 .reveal-on-scroll {
-  opacity: 1;
-  transform: none;
-  transition: none;
+  will-change: transform, opacity;
 }
 
 .reveal-on-scroll-visible {

@@ -20,7 +20,7 @@ import { courseLibrary } from "@/lib/course-library";
 import { generatedPlacedStudents } from "./placed-students-data";
 
 const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
-const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "admissions@smarttutor.in";
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "admissions@smarttutors.co.in";
 const CONTACT_ADDRESS = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
 const WHATSAPP_LINK = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://wa.me/918850447887?text=Hello%20Smart%20Tutor";
 const INSTAGRAM_LINK = process.env.NEXT_PUBLIC_INSTAGRAM_LINK || "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
@@ -29,19 +29,19 @@ export const demoCredentials = [
   {
     role: "student" as const,
     label: "Student Workspace",
-    email: "riya@smarttutor.in",
+    email: "riya@smarttutors.co.in",
     password: "Student@123",
   },
   {
     role: "educator" as const,
     label: "Educator Desk",
-    email: "amit@smarttutor.in",
+    email: "amit@smarttutors.co.in",
     password: "Educator@123",
   },
   {
     role: "admin" as const,
     label: "Admin Console",
-    email: "admin@smarttutor.in",
+    email: "admin@smarttutors.co.in",
     password: "Admin@123",
   },
 ];
@@ -50,7 +50,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-1",
     name: "Riya Sharma",
-    email: "riya@smarttutor.in",
+    email: "riya@smarttutors.co.in",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -59,7 +59,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-2",
     name: "Aarav Patil",
-    email: "aarav@smarttutor.in",
+    email: "aarav@smarttutors.co.in",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -68,7 +68,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-3",
     name: "Sneha Kulkarni",
-    email: "sneha@smarttutor.in",
+    email: "sneha@smarttutors.co.in",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -77,7 +77,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "educator-1",
     name: "Amit Deshmukh",
-    email: "amit@smarttutor.in",
+    email: "amit@smarttutors.co.in",
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
@@ -86,7 +86,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "educator-2",
     name: "Neha Joshi",
-    email: "neha@smarttutor.in",
+    email: "neha@smarttutors.co.in",
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
@@ -95,7 +95,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "admin-1",
     name: "Ankit Mali",
-    email: "admin@smarttutor.in",
+    email: "admin@smarttutors.co.in",
     password: "Admin@123",
     role: "admin",
     label: "Admin Console",
@@ -336,7 +336,7 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
     {
       label: "Total visitors",
       value: "5.5k+",
-      detail: "Total unique visitors across Smart Tutor digital channels.",
+      detail: "Total unique visitors across Smart Tutors digital channels.",
     },
   ],
 };
@@ -377,7 +377,7 @@ const contactMethods: ContactMethod[] = [
     label: "Instagram",
     value: "@smart_tutor_no1",
     href: INSTAGRAM_LINK,
-    description: "Official Smart Tutor announcements and updates.",
+    description: "Official Smart Tutors announcements and updates.",
     color: "#E4405F",
     icon: "Instagram",
   },
@@ -393,7 +393,7 @@ const contactMethods: ContactMethod[] = [
     label: "Director & Founder",
     value: "Prof. Ravi Rana",
     href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
-    description: "Leadership contact for SmartIQ Academy, Smart Tutor, and Prime Digital School.",
+    description: "Leadership contact for SmartIQ Academy, Smart Tutors, and Prime Digital School.",
     color: "#1e293b",
     icon: "User",
   },
@@ -528,16 +528,16 @@ const mockQuizQuestions: QuizQuestion[] = [
 export function getPublicInstituteData() {
   return {
     profile: {
-      name: "Smart Tutor",
+      name: "Smart Tutors",
       city: "Vashi",
       address: "Sector 17, Vashi, Navi Mumbai",
       phone: "+91 88504 47887",
-      email: "admissions@smarttutoracademy.in",
+      email: "admissions@smarttutors.co.in",
       hours: "Mon - Sat | 08:00 AM - 08:30 PM",
       specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
       directorName: "Prof. Ravi Rana",
       directorTitle: "Director & Founder",
-      affiliatedInstitutes: ["SmartIQ Academy", "Smart Tutor", "Prime Digital School"],
+      affiliatedInstitutes: ["SmartIQ Academy", "Smart Tutors", "Prime Digital School"],
     },
     socialLinks,
     contactMethods,
@@ -549,7 +549,7 @@ export function getPublicInstituteData() {
       "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",
       "Board performance, junior college support, entrance readiness, government exams, and spoken English live under one reliable academy roof.",
       "While we primarily serve the Vashi, Navi Mumbai, and Thane regions, we are actively preparing to bring our specialized mentoring to more cities across India soon.",
-      "Vashi families choose Smart Tutor for consistency, attention, and visible academic growth.",
+      "Vashi families choose Smart Tutors for consistency, attention, and visible academic growth.",
     ],
     metrics: [
       { label: "Success Rate", value: "94%" },
@@ -1015,8 +1015,8 @@ export function createUserDraft(input: {
 
   return {
     id: `user-draft-${Date.now()}`,
-    name: input.name?.trim() || "New Smart Tutor User",
-    email: input.email?.trim().toLowerCase() || "new-user@smarttutor.in",
+    name: input.name?.trim() || "New Smart Tutors User",
+    email: input.email?.trim().toLowerCase() || "new-user@smarttutors.co.in",
     role,
     label:
       role === "admin"

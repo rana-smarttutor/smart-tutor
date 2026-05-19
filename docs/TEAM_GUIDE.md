@@ -1,4 +1,4 @@
-# Smart Tutor Team Guide
+# Smart Tutors Team Guide
 
 ## What exists now
 
@@ -16,9 +16,9 @@
 
 ## Demo credentials
 
-- Student: `riya@smarttutor.demo` / `Student@123`
-- Educator: `amit@smarttutor.demo` / `Educator@123`
-- Admin: `admin@smarttutor.demo` / `Admin@123`
+- Student: `riya@smarttutors.demo` / `Student@123`
+- Educator: `amit@smarttutors.demo` / `Educator@123`
+- Admin: `admin@smarttutors.demo` / `Admin@123`
 
 ## Core files
 
@@ -63,7 +63,7 @@
   2. one unique normalized email per person
   3. no duplicate user across multiple categories
 - Use the standardized course templates in `lib/course-library.ts` when creating or editing courses. Admin can edit course details, but not invent arbitrary new course-name variants.
-- Keep school-stage coverage explicit in course templates. If Smart Tutor adds a new academic branch, extend `lib/course-library.ts` first and then update public-facing summary copy in `lib/mock-data.ts`.
+- Keep school-stage coverage explicit in course templates. If Smart Tutors adds a new academic branch, extend `lib/course-library.ts` first and then update public-facing summary copy in `lib/mock-data.ts`.
 - Interactive public modules like course popups and mock tests should read from Mongo-backed routes or repository functions, not from page-local arrays.
 - Keep public institute identity details such as primary phone, WhatsApp, Instagram, and leadership info centralized in `lib/mock-data.ts` so the Mongo bootstrap content and UI stay aligned.
 

@@ -16,7 +16,7 @@ export async function SiteFooter() {
         <div className="grid gap-6 lg:grid-cols-[0.95fr_0.9fr_1.1fr]">
           <div>
             <Link href="/" className="text-2xl font-semibold tracking-[-0.05em] text-[var(--color-heading)]">
-              Smart Tutor
+              Smart Tutors
             </Link>
             <p className="mt-4 max-w-md text-sm leading-7 text-[var(--color-muted)]">
               Admissions, learning, and institute operations in one workspace.
@@ -59,7 +59,7 @@ export async function SiteFooter() {
             <div className="media-frame map-frame mt-4 overflow-hidden rounded-[1.6rem]">
               <div className="map-frame-inner">
                 <iframe
-                  title="Smart Tutor footer campus map"
+                  title="Smart Tutors footer campus map"
                   src={mapSrc}
                   allowFullScreen
                   loading="lazy"
@@ -83,7 +83,7 @@ export async function SiteFooter() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)]">
             <LegalModals />
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} Smart Tutor Academy. All rights reserved. 
+              © {new Date().getFullYear()} Smart Tutors Academy. All rights reserved. 
               Results may differ between users. Promotional claims may be stylized.
             </p>
           </div>

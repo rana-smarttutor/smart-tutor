@@ -1,6 +1,6 @@
-# Smart Tutor: The Complete Academic Empowerment Platform
+# Smart Tutors: The Complete Academic Empowerment Platform
 
-Smart Tutor is a production-grade educational ecosystem designed for a Vashi-based institute. It bridges the gap between traditional coaching and digital-first learning through a sophisticated Next.js architecture, MongoDB persistence, and an integrated AI mentoring system.
+Smart Tutors is a production-grade educational ecosystem designed for a Vashi-based institute. It bridges the gap between traditional coaching and digital-first learning through a sophisticated Next.js architecture, MongoDB persistence, and an integrated AI mentoring system.
 
 ---
 
@@ -17,7 +17,7 @@ Smart Tutor is a production-grade educational ecosystem designed for a Vashi-bas
 - **Educator Desk**: High-visibility console for managing batches, issuing assessments, and coordinating learner feedback.
 - **Admin Command Center**: Total oversight of institute operations, including user account management and standardized curriculum control.
 
-### 🤖 SmartTutor AI Assistant
+### 🤖 SmartTutors AI Assistant
 - **24/7 Mentoring**: Expert guidance on study plans and exam preparation (UPSC, Boards, JEE/NEET).
 - **Document Analysis**: Students can upload study materials for the AI to analyze and provide contextual tutoring.
 - **Context-Aware Sessions**: The AI remembers student profiles to provide personalized academic advice.
@@ -84,11 +84,11 @@ npm run dev
 
 ## 📞 Contact & Support
 
-**Smart Tutor Academy**
+**Smart Tutors Academy**
 - **Location**: Sector 17, Vashi, Navi Mumbai
 - **Phone**: +91 88504 47887
-- **Email**: admissions@smarttutor.in
-- **Website**: [smarttutor.in](https://smarttutor.in)
+- **Email**: admissions@smarttutors.co.in
+- **Website**: [smarttutors.co.in](https://smarttutors.co.in)
 
 ---
 *Built with passion for academic excellence and student empowerment.*

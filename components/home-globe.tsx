@@ -50,7 +50,7 @@ export function HomeGlobe() {
             <p className="section-label">Results Showcase</p>
             <h2 className="section-title mt-0">Toppers and achievers across every stage</h2>
             <p className="max-w-3xl text-sm leading-7 text-[var(--color-muted)]">
-              Smart Tutor works with school students, higher secondary learners, and serious aspirants. This section brings that range together with visible outcomes that parents and students can trust.
+              Smart Tutors works with school students, higher secondary learners, and serious aspirants. This section brings that range together with visible outcomes that parents and students can trust.
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -90,7 +90,7 @@ export function HomeGlobe() {
               <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-[1.5rem]">
                 <Image
                   src="/image.png"
-                  alt="Smart Tutor topper showcase"
+                  alt="Smart Tutors topper showcase"
                   fill
                   className="object-cover object-center"
                   sizes="(max-width: 1024px) 100vw, 40vw"

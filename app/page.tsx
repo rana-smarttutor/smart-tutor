@@ -39,11 +39,11 @@ export default async function Home() {
             <p className="keyword-line uppercase tracking-widest text-blue-600 font-bold">
               Total Student Empowerment
             </p>
-            <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-(--color-heading) sm:text-6xl xl:mx-0 xl:text-7xl">
+            <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-(--color-heading) sm:text-5xl xl:mx-0 xl:text-6xl">
               Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
             <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-(--color-muted) xl:mx-0">
-              Smart Tutor brings disciplined preparation, sharp mentoring, and real academic momentum into one focused institute experience. From school boards to civil services.
+              Smart Tutors brings disciplined preparation, sharp mentoring, and real academic momentum into one focused institute experience. From school boards to civil services.
             </p>
           </div>
 
@@ -98,7 +98,7 @@ export default async function Home() {
                     Ready to Start Your <span className="text-blue-600 dark:text-blue-400">Journey?</span>
                   </h3>
                   <p className="text-lg text-(--color-muted) mb-0 leading-relaxed font-medium">
-                    Join 500+ students already excelling with Smart Tutor. Get access to expert mentoring and disciplined preparation.
+                    Join 500+ students already excelling with Smart Tutors. Get access to expert mentoring and disciplined preparation.
                   </p>
                 </div>
                 
@@ -147,10 +147,11 @@ export default async function Home() {
                 <div className="media-frame relative mt-4 aspect-square overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group">
                   <Image
                     src="/image1.png"
-                    alt="Smart Tutor academy identity"
+                    alt="Smart Tutors academy identity"
                     fill
+                    priority
                     className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 50vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                   />
                 </div>
               </div>
@@ -160,10 +161,11 @@ export default async function Home() {
                 <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group">
                   <Image
                     src="/image.png"
-                    alt="Smart Tutor topper and result showcase"
+                    alt="Smart Tutors topper and result showcase"
                     fill
+                    priority
                     className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, 50vw"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                   />
                 </div>
               </div>
@@ -172,7 +174,7 @@ export default async function Home() {
 
           <div className="surface rounded-xl p-6 hover:shadow-xl transition-all">
             <div className="mb-8">
-              <p className="section-label">Why Smart Tutor</p>
+              <p className="section-label">Why Smart Tutors</p>
               <h2 className="section-title text-2xl sm:text-3xl mt-2 text-left">
                 A legacy of academic growth
               </h2>
@@ -361,7 +363,7 @@ export default async function Home() {
             <article className="relative overflow-hidden rounded-[1.5rem] p-10 bg-gradient-to-br from-[#1e40af] via-[#3730a3] to-[#4338ca] text-white shadow-2xl hover:scale-[1.02] transition-all group">
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl group-hover:bg-white/20 transition-all"></div>
               <p className="text-blue-200 text-sm font-black uppercase tracking-[0.2em] mb-3 relative z-10">Promotional Offer</p>
-              <h2 className="text-4xl font-black leading-tight mb-4 drop-shadow-md relative z-10">Advance Your Career with Smart Tutor</h2>
+              <h2 className="text-4xl font-black leading-tight mb-4 drop-shadow-md relative z-10">Advance Your Career with Smart Tutors</h2>
               <p className="text-blue-50 text-lg leading-relaxed mb-8 font-medium relative z-10">
                 Join our specialized coaching programs and get access to exclusive mock tests, personal mentoring, and board-certified study materials.
               </p>

@@ -89,7 +89,7 @@ export function SiteHeaderClient({
                   className="brand-mark max-w-[10rem] truncate sm:max-w-none"
                   onClick={closeMenu}
                 >
-                  Smart Tutor
+                  Smart Tutors
                 </Link>
 
                 <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 lg:flex">

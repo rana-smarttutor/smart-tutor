@@ -29,10 +29,10 @@ export default async function DashboardPage() {
     role === "student"
       ? "Faculty Desk | +91 88504 47887 | WhatsApp support available"
       : role === "educator"
-        ? "Admin Desk | admissions@smarttutoracademy.in"
+        ? "Admin Desk | admissions@smarttutors.co.in"
         : role === "admin"
           ? "Operations Line | Prof. Ravi Rana | +91 88504 47887"
-          : "Admissions Desk | admissions@smarttutoracademy.in";
+          : "Admissions Desk | admissions@smarttutors.co.in";
 
   return (
     <DashboardShell

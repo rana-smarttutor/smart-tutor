@@ -4,11 +4,11 @@
 This version has breaking changes. APIs, conventions, and file structure may all differ from training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing code and heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Smart Tutor Project Rules
+# Smart Tutors Project Rules
 
 ## Product scope
 
-- Build for Smart Tutor, a Vashi-based educational institute.
+- Build for Smart Tutors, a Vashi-based educational institute.
 - Keep the visual design professional, colorful, and consistent.
 - Light theme is the default. Dark theme must remain polished and fully usable.
 - Desktop is the primary target, but every screen must remain mobile friendly.
@@ -39,7 +39,7 @@ This version has breaking changes. APIs, conventions, and file structure may all
 ## Team consistency
 
 - Extend existing design tokens in `app/globals.css` rather than introducing isolated color systems.
-- Keep new pages on the same Figma-inspired Smart Tutor theme: white shells, soft gray spacing, violet accents, rounded product panels, Inter typography, and consistent spacing across desktop and mobile.
+- Keep new pages on the same Figma-inspired Smart Tutors theme: white shells, soft gray spacing, violet accents, rounded product panels, Inter typography, and consistent spacing across desktop and mobile.
 - Reuse the same surface, section, pill, and action button styles where possible.
 - Keep copy professional and institute-appropriate.
 - When adding new role features, update both UI and API authorization together.

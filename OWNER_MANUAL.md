@@ -1,6 +1,6 @@
-# Smart Tutor: Owner & Administrator Manual
+# Smart Tutors: Owner & Administrator Manual
 
-Welcome to the Smart Tutor management platform. This manual provides a comprehensive guide for institute owners and administrators to effectively manage the Smart Tutor ecosystem, from student admissions to course delivery and AI-powered mentoring.
+Welcome to the Smart Tutors management platform. This manual provides a comprehensive guide for institute owners and administrators to effectively manage the Smart Tutors ecosystem, from student admissions to course delivery and AI-powered mentoring.
 
 ---
 
@@ -12,7 +12,7 @@ Welcome to the Smart Tutor management platform. This manual provides a comprehen
 4. [Digital Library Operations](#4-digital-library-operations)
 5. [Communication & Notice Board](#5-communication--notice-board)
 6. [Assessments & Results](#6-assessments--results)
-7. [SmartTutor AI Assistant](#7-smarttutor-ai-assistant)
+7. [SmartTutors AI Assistant](#7-smarttutors-ai-assistant)
 8. [System Health & Maintenance](#8-system-health--maintenance)
 
 ---
@@ -47,7 +47,7 @@ Admins can monitor account status (Active/Pending) and update user details or re
 
 ## 3. Course & Curriculum Management
 
-Smart Tutor uses a **Standardized Course Library** to ensure consistency across the institute's branches.
+Smart Tutors uses a **Standardized Course Library** to ensure consistency across the institute's branches.
 
 ### Adding/Editing Courses
 1.  Navigate to **Courses** in the Admin dashboard.
@@ -99,7 +99,7 @@ Keep students and staff informed through the centralized Message Center.
 
 ---
 
-## 7. SmartTutor AI Assistant
+## 7. SmartTutors AI Assistant
 
 The AI Assistant is a key differentiator for your institute, providing 24/7 academic support.
 
@@ -118,4 +118,4 @@ The AI Assistant is a key differentiator for your institute, providing 24/7 acad
 ---
 
 **Support Contact:**
-For technical issues or advanced configuration, please contact your technical lead or the Smart Tutor support team at `ankitmali50@gmail.com`.
+For technical issues or advanced configuration, please contact your technical lead or the Smart Tutors support team at `ankitmali50@gmail.com`.

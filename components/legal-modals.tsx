@@ -52,13 +52,13 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">1. Agreement to Terms</h3>
                     <p>
-                      By accessing and using the Smart Tutor workspace, you agree to be bound by these Terms and Conditions. If you do not agree, you must immediately cease all usage of the platform.
+                      By accessing and using the Smart Tutors workspace, you agree to be bound by these Terms and Conditions. If you do not agree, you must immediately cease all usage of the platform.
                     </p>
                   </section>
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">2. Nature of Service</h3>
                     <p>
-                      Smart Tutor is an educational assistance platform providing coaching, resources, and administrative tools. While we strive for accuracy, features and educational results may differ between users based on effort and prior knowledge.
+                      Smart Tutors is an educational assistance platform providing coaching, resources, and administrative tools. While we strive for accuracy, features and educational results may differ between users based on effort and prior knowledge.
                     </p>
                   </section>
                   <section>
@@ -76,7 +76,7 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Limitation of Liability</h3>
                     <p>
-                      Smart Tutor and its directors shall not be liable for any academic failures, data loss, or indirect damages resulting from the use or inability to use the platform. All materials are provided "as-is" without express warranties.
+                      Smart Tutors and its directors shall not be liable for any academic failures, data loss, or indirect damages resulting from the use or inability to use the platform. All materials are provided "as-is" without express warranties.
                     </p>
                   </section>
                 </div>

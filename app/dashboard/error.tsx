@@ -8,7 +8,7 @@ export default function DashboardError({ error }: { error: Error & { digest?: st
       <section className="surface rounded-[2rem] p-6 sm:p-10">
         <p className="section-label">Dashboard Error</p>
         <h1 className="mt-4 text-3xl font-semibold tracking-[-0.05em] text-[var(--color-heading)]">
-          Smart Tutor could not reach MongoDB
+          Smart Tutors could not reach MongoDB
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--color-muted)]">
           The dashboard reads live data from MongoDB now. Fix the connection details or DNS/network access,

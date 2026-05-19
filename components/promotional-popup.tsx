@@ -44,7 +44,7 @@ export function PromotionalPopup() {
         </button>
 
         <div className="flex flex-col items-center text-center">
-          <div className="brand-mark mb-6">Smart Tutor</div>
+          <div className="brand-mark mb-6">Smart Tutors</div>
           
           <div className="surface-soft rounded-3xl p-6 mb-8 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800 w-full">
             <div className="flex justify-center mb-4">

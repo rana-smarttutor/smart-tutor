@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/dashboard/'],
     },
-    sitemap: 'https://smarttutor.in/sitemap.xml',
+    sitemap: 'https://smarttutors.co.in/sitemap.xml',
   };
 }

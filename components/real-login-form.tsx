@@ -54,7 +54,7 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
           Login with your account
         </h2>
         <p className="max-w-2xl text-xs leading-6 text-[var(--color-muted)]">
-          Use your Smart Tutor email and password.
+          Use your Smart Tutors email and password.
         </p>
       </div>
 

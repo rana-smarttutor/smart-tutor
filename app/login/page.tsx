@@ -29,7 +29,7 @@ export default async function LoginPage() {
           <div className="mx-auto w-full max-w-md">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <Link href="/" className="text-3xl font-semibold tracking-[-0.06em] text-[var(--color-heading)]">
-                Smart Tutor
+                Smart Tutors
               </Link>
               <Link
                 href="/courses"
@@ -41,7 +41,7 @@ export default async function LoginPage() {
 
             <div className="mt-10 space-y-4">
               <p className="text-sm font-semibold tracking-[0.04em] text-[var(--color-accent)]">
-                Smart Tutor Access
+                Smart Tutors Access
               </p>
               <h1 className="text-4xl font-semibold leading-[1.08] tracking-[-0.025em] text-[var(--color-heading)] sm:text-5xl">
                 Secure access to your academy workspace.

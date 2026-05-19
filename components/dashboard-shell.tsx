@@ -218,7 +218,7 @@ export function DashboardShell({
         <aside className="dashboard-sidebar overflow-hidden rounded-[2rem] p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <Link href="/" className="truncate text-3xl font-semibold tracking-[-0.06em] text-[var(--color-heading)]">
-              Smart Tutor
+              Smart Tutors
             </Link>
             <ThemeToggle />
           </div>
@@ -228,7 +228,7 @@ export function DashboardShell({
               Active Session
             </p>
             <p className="mt-3 truncate text-lg font-bold text-[var(--color-heading)] sm:text-xl" title={session?.name}>
-              {session ? session.name : "Smart Tutor"}
+              {session ? session.name : "Smart Tutors"}
             </p>
             <p className="mt-1 truncate text-sm font-medium text-[var(--color-muted)]" title={session?.email}>
               {session ? session.email : "Login required"}
@@ -350,7 +350,7 @@ export function DashboardShell({
                       <div className="min-w-0 flex-1">
                         <p className="section-label">Profile</p>
                         <p className="mt-3 break-words text-xl font-semibold text-[var(--color-heading)]">
-                          {session ? session.name : "Smart Tutor User"}
+                          {session ? session.name : "Smart Tutors User"}
                         </p>
                         <p className="mt-2 break-all text-sm leading-6 text-[var(--color-muted)]">
                           {session ? session.email : "Login required"}

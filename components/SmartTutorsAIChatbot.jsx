@@ -13,7 +13,7 @@ const quickActions = [
 const initialMessage = {
   role: "assistant",
   content:
-    "Hi! I’m SmartTutor AI Assistant 👋\nI can help you with study doubts, exam preparation, course guidance, mock tests, study plans, and Smart Tutor services.\n\nTell me your class, subject, or exam goal, and I will guide you.",
+    "Hi! I’m SmartTutors AI Assistant 👋\nI can help you with study doubts, exam preparation, course guidance, mock tests, study plans, and Smart Tutors services.\n\nTell me your class, subject, or exam goal, and I will guide you.",
 };
 
 const educationKeywords = [
@@ -247,14 +247,14 @@ function getCourseRecommendation(memory, text) {
     return "Academic Excellence Program";
   }
 
-  return "Smart Tutor Course Guidance Plan";
+  return "Smart Tutors Course Guidance Plan";
 }
 
 function fallbackReply(text, memory) {
   const lower = text.toLowerCase();
 
  if (!isEducationRelated(text)) {
-  return `Hi! I can help you with Smart Tutor education support.
+  return `Hi! I can help you with Smart Tutors education support.
 
 You can ask me about:
 • Study doubts
@@ -275,7 +275,7 @@ Please tell me your class, subject, or exam goal, and I will guide you in Englis
   ) {
     const plan = getCourseRecommendation(memory, text);
 
-    return `Based on your details, the best Smart Tutor option is: ${plan}.
+    return `Based on your details, the best Smart Tutors option is: ${plan}.
 
 To guide you better, please share:
 • Your class or grade
@@ -283,7 +283,7 @@ To guide you better, please share:
 • Weak subject
 • Daily available study time
 
-Smart Tutor can help with structured preparation, mock tests, mentoring, and progress tracking.`;
+Smart Tutors can help with structured preparation, mock tests, mentoring, and progress tracking.`;
   }
 
   if (
@@ -306,7 +306,7 @@ Smart Tutor can help with structured preparation, mock tests, mentoring, and pro
 
 Goal: Build consistent preparation for ${exam}.
 
-Smart Tutor can help with weekly assessments, mock tests, doubt solving, and mentoring.`;
+Smart Tutors can help with weekly assessments, mock tests, doubt solving, and mentoring.`;
   }
 
   if (lower.includes("mock") || lower.includes("test") || lower.includes("mcq")) {
@@ -319,7 +319,7 @@ Smart Tutor can help with weekly assessments, mock tests, doubt solving, and men
 • Revise every wrong answer
 • Take one full mock test every week
 
-Smart Tutor can help with mock tests, weekly assessments, and progress tracking.`;
+Smart Tutors can help with mock tests, weekly assessments, and progress tracking.`;
   }
 
   if (lower.includes("photosynthesis")) {
@@ -362,7 +362,7 @@ For every action, there is an equal and opposite reaction.`;
 Tell me the exact Maths topic and I will explain it step by step.`;
   }
 
-  return `I can answer this as your SmartTutor AI Assistant.
+  return `I can answer this as your SmartTutors AI Assistant.
 
 Please ask your question more clearly, for example:
 • Explain photosynthesis
@@ -372,7 +372,7 @@ Please ask your question more clearly, for example:
 • Help me prepare for board exams`;
 }
 
-export default function SmartTutorAIChatbot() {
+export default function SmartTutorsAIChatbot() {
   const [theme, setTheme] = useState("light");
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -441,7 +441,7 @@ export default function SmartTutorAIChatbot() {
     setTyping(true);
 
     try {
-      const response = await fetch("/api/smarttutor-chat", {
+      const response = await fetch("/api/smarttutors-chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -496,7 +496,7 @@ export default function SmartTutorAIChatbot() {
   function handleQuickAction(action) {
     const prompts = {
       "Ask Study Question": "I want to ask a study question",
-      "Recommend Course": "Please recommend the best Smart Tutor course for me",
+      "Recommend Course": "Please recommend the best Smart Tutors course for me",
       "Make Study Plan": "Please make a study plan for me",
       "Mock Test Help": "I need help with mock test preparation",
       "Contact Admissions": "I want to contact admissions",
@@ -511,7 +511,7 @@ export default function SmartTutorAIChatbot() {
         <div style={styles.chatBox}>
           <div style={styles.header}>
             <div>
-              <div style={styles.title}>SmartTutor AI</div>
+              <div style={styles.title}>SmartTutors AI</div>
               <div style={styles.subtitle}>
                 Study Assistant & Course Guide
               </div>
@@ -547,7 +547,7 @@ export default function SmartTutorAIChatbot() {
 
             {typing && (
               <div style={styles.messageRow}>
-                <div style={styles.botBubble}>SmartTutor AI is typing...</div>
+                <div style={styles.botBubble}>SmartTutors AI is typing...</div>
               </div>
             )}
 
@@ -570,7 +570,7 @@ export default function SmartTutorAIChatbot() {
 
           <div style={styles.footer}>
             <div style={styles.note}>
-              SmartTutor can help with study doubts, course guidance, mock tests,
+              SmartTutors can help with study doubts, course guidance, mock tests,
               study plans, and admissions.
             </div>
 
