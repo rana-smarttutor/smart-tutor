@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { FloatingWhatsApp } from "@/components/floating-whatsapp";
+import { PWAInstallButton } from "@/components/pwa-install-button";
 import SmartTutorsAIChatbot from "@/components/SmartTutorsAIChatbot";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -153,6 +154,7 @@ export default function RootLayout({
               {children}
               <SiteFooter />
               <FloatingWhatsApp />
+              <PWAInstallButton />
               <SmartTutorsAIChatbot />
             </div>
           </div>

@@ -1,7 +1,18 @@
 {
-  "name": "Smart Tutors",
+  "name": "Smart Tutors Academy",
   "short_name": "Smart Tutors",
+  "description": "Smart Tutors Academy - Professional Academic Mentoring & Coaching in Vashi, Navi Mumbai.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
   "icons": [
+    {
+      "src": "/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
@@ -15,7 +26,14 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "orientation": "portrait",
+  "categories": ["education", "productivity"],
+  "screenshots": [
+    {
+      "src": "/image1.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "label": "Smart Tutors Academy Home"
+    }
+  ]
 }
