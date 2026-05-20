@@ -29,11 +29,11 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   metadataBase: new URL("https://smarttutors.co.in"),
   title: {
-    default: "Smart Tutors | Leading Educational Institute in Vashi, Navi Mumbai",
+    default: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
     template: "%s | Smart Tutors",
   },
   description:
-    "Smart Tutors is Navi Mumbai's premier coaching institute for school boards (CBSE/ICSE/SSC), UPSC foundation, JEE, NEET, and competitive exams. Expert mentoring and disciplined preparation in Vashi.",
+    "Find the best Home & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
   keywords: [
     "Smart Tutors",
     "Smart Tutors Vashi",
@@ -55,9 +55,9 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: "https://smarttutors.co.in",
     siteName: "Smart Tutors",
-    title: "Smart Tutors | Professional Academic Mentoring & Coaching in Vashi",
+    title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
     description:
-      "Transform your academic journey with Smart Tutors. Expert faculty, AI-powered analytics, and personalized mentoring for school and competitive exams.",
+      "Find the best Home & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
     images: [
       {
         url: "/image1.png",
@@ -69,8 +69,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Smart Tutors | Top-Rated Coaching Institute in Navi Mumbai",
-    description: "Empowering students through disciplined learning, expert faculty, and modern digital tools.",
+    title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
+    description: "Find the best Home & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform.",
     images: ["/image1.png"],
   },
   robots: {
@@ -117,7 +117,7 @@ export default function RootLayout({
     "name": "Smart Tutors Academy",
     "url": "https://smarttutors.co.in",
     "logo": "https://smarttutors.co.in/image1.png",
-    "description": "Leading coaching institute in Vashi, Navi Mumbai for CBSE, ICSE, SSC, UPSC, and competitive exams.",
+    "description": "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform. Find the best Home & Online Tutors for School, College, Government & Competitive Exams.",
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Vashi",

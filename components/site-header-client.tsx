@@ -78,6 +78,11 @@ export function SiteHeaderClient({
   // Explicitly determine logo based on theme to avoid CSS-only issues
   const isDark = mounted && theme === "dark";
 
+  const filteredLinks = links.filter((link) => {
+    if (session && link.label === "Mock Test") return false;
+    return true;
+  });
+
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-40 w-full">
@@ -109,7 +114,7 @@ export function SiteHeaderClient({
 
                 <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 lg:flex">
                   <nav className="flex min-w-0 flex-wrap items-center justify-center gap-2">
-                    {links.map((link) => {
+                    {filteredLinks.map((link) => {
                       const isActive = pathname === link.href;
                       return (
                         <Link
@@ -206,7 +211,7 @@ export function SiteHeaderClient({
               >
                 <div className="mt-4 grid gap-3 border-t border-[var(--color-border)] pt-4">
                   <nav className="grid gap-2">
-                    {links.map((link) => {
+                    {filteredLinks.map((link) => {
                       const isActive = pathname === link.href;
                       return (
                         <Link

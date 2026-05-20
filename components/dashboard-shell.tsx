@@ -8,6 +8,8 @@ import { DashboardCourseManager } from "@/components/dashboard-course-manager";
 import { DashboardMessageCenter } from "@/components/dashboard-message-center";
 import { DashboardTestStudio } from "@/components/dashboard-test-studio";
 import { DigitalLibraryClient } from "@/components/digital-library-client";
+import { PerformanceReportCreator } from "@/components/performance-report-creator";
+import { PerformanceDashboard } from "@/components/performance-dashboard";
 import { LiveClock } from "@/components/live-clock";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -16,11 +18,14 @@ import type {
   LibraryBook,
   ManagedUser,
   MessageItem,
+  PerformanceHeuristics,
+  PerformanceReport,
   Role,
   SessionUser,
   TestItem,
   TestSubmission,
 } from "@/lib/types";
+import { DEFAULT_HEURISTICS } from "@/lib/data-store";
 
 type DashboardBundle = {
   roleLabel: string;
@@ -54,6 +59,7 @@ const sidebarByRole = {
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
     { id: "tests", label: "Tests" },
+    { id: "performance", label: "Performance" },
     { id: "results", label: "Results" },
     { id: "library", label: "Library" },
   ],
@@ -61,6 +67,7 @@ const sidebarByRole = {
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
     { id: "tests", label: "Test Studio" },
+    { id: "performance", label: "Analytics Hub" },
     { id: "results", label: "Results" },
     { id: "library", label: "Library" },
   ],
@@ -68,6 +75,7 @@ const sidebarByRole = {
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
     { id: "tests", label: "Test Studio" },
+    { id: "performance", label: "Analytics Hub" },
     { id: "courses", label: "Courses" },
     { id: "accounts", label: "Accounts" },
     { id: "library", label: "Library" },
@@ -115,6 +123,9 @@ export function DashboardShell({
   const [submissions, setSubmissions] = useState<TestSubmission[]>(dashboard.submissions);
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
+  const [performanceReports, setPerformanceReports] = useState<PerformanceReport[]>([]);
+  const [heuristics, setHeuristics] = useState<PerformanceHeuristics>(DEFAULT_HEURISTICS);
+  const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
@@ -123,6 +134,7 @@ export function DashboardShell({
   const showCourses = activeSection === "courses";
   const showAccounts = activeSection === "accounts";
   const showLibrary = activeSection === "library";
+  const showPerformance = activeSection === "performance";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
@@ -130,6 +142,44 @@ export function DashboardShell({
     { label: "Tests", value: `${dashboard.tests.length}` },
     { label: "Results", value: `${submissions.length}` },
   ];
+
+  useEffect(() => {
+    if (showPerformance && performanceReports.length === 0 && !isPerformanceLoading) {
+      void refreshPerformance();
+    }
+  }, [showPerformance]);
+
+  async function refreshPerformance() {
+    setIsPerformanceLoading(true);
+    try {
+      // Fetch Reports
+      const reportRes = await fetch("/api/performance", {
+        method: "GET",
+        credentials: "same-origin",
+      });
+      if (reportRes.ok) {
+        const payload = await reportRes.json();
+        if (payload.reports) setPerformanceReports(payload.reports);
+      }
+
+      // Fetch Heuristics (Always fetch for educator to allow editing, or default for student)
+      const educatorId = role === "student" ? performanceReports[0]?.createdBy : session?.id;
+      if (educatorId) {
+        const heuristicsRes = await fetch(`/api/performance?educatorId=${educatorId}`, {
+          method: "GET",
+          credentials: "same-origin",
+        });
+        if (heuristicsRes.ok) {
+          const payload = await heuristicsRes.json();
+          if (payload.heuristics) setHeuristics(payload.heuristics);
+        }
+      }
+    } catch {
+      // Keep existing state
+    } finally {
+      setIsPerformanceLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (showLibrary && libraryBooks.length === 0 && !isLibraryLoading) {
@@ -549,6 +599,57 @@ export function DashboardShell({
                   initialBooks={libraryBooks}
                   canManage={role === "admin" || role === "educator"}
                 />
+              )}
+            </article>
+          ) : null}
+
+          {showPerformance ? (
+            <article className="surface rounded-[2rem] p-5 sm:p-6">
+              <div className="mb-8">
+                <p className="section-label">Analytics Hub</p>
+                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--color-heading)]">
+                  {role === "student" ? "Your Performance" : "Student Analytics"}
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
+                  {role === "student" 
+                    ? "Track your academic progress, strengths, and areas for improvement."
+                    : "Manage and create detailed performance reports for your students."}
+                </p>
+              </div>
+
+              {isPerformanceLoading ? (
+                <div className="flex h-64 items-center justify-center">
+                  <span className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-primary)] border-t-transparent" />
+                </div>
+              ) : (
+                <div className="space-y-12">
+                  {role !== "student" && (
+                    <PerformanceReportCreator
+                      session={session}
+                      studentDirectory={studentDirectory}
+                      onReportCreated={(newReport) => {
+                        setPerformanceReports([newReport, ...performanceReports]);
+                        // Optionally switch to a view mode or show success
+                      }}
+                    />
+                  )}
+                  
+                  {(performanceReports.length > 0) && (
+                    <div className={role !== "student" ? "pt-12 border-t border-[var(--color-border)]" : ""}>
+                      <PerformanceDashboard
+                        reports={performanceReports}
+                        heuristics={heuristics}
+                        studentName={session?.name}
+                      />
+                    </div>
+                  )}
+
+                  {performanceReports.length === 0 && role === "student" && (
+                    <div className="text-center py-12">
+                      <p className="text-[var(--color-muted)]">No performance reports have been published for you yet.</p>
+                    </div>
+                  )}
+                </div>
               )}
             </article>
           ) : null}

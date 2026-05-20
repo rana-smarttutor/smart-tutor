@@ -55,11 +55,11 @@ export function PWAInstallButton() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-24 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="fixed bottom-[176px] right-6 z-[99999] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="relative group">
         <button
           onClick={handleInstallClick}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm"
+          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm border border-white/20"
         >
           <Download className="w-4 h-4" />
           Install App

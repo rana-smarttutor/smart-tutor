@@ -231,6 +231,63 @@ export type DashboardPrimaryPanel = {
   items: { title: string; description: string; meta: string }[];
 };
 
+export type PerformanceHeuristics = {
+  outstanding: number;
+  excellent: number;
+  good: number;
+  average: number;
+  weak: number;
+};
+
+export type PerformanceReport = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  batchName: string;
+  courseType: "JEE" | "NEET" | "Foundation";
+  parentContact: string;
+  reportType: "weekly" | "monthly";
+  period: string; // e.g., "Week 1, May 2026" or "May 2026"
+  
+  // Core Metrics
+  averageScore: number;
+  batchRank: number;
+  attendancePercentage: number;
+  homeworkCompletionPercentage: number;
+  improvementPercentage: number;
+  
+  // Weekly Specific
+  weeklyMarksTrend?: { day: string; marks: number }[];
+  subjectWiseMarks: { subject: string; marks: number }[];
+  accuracyAnalysis: { category: string; value: number }[]; // Pie chart data
+  attendanceData: { label: string; value: number }[]; // Bar chart data
+  
+  // Monthly Specific
+  examReadinessScore?: number;
+  consistencyScore?: number;
+  monthlyGrowthTrend?: { month: string; percentage: number }[];
+  rankProgress?: { test: string; rank: number }[];
+  chapterAccuracyHeatmap?: { chapter: string; accuracy: number }[];
+  
+  // Qualitative Analysis
+  strongSubjects: string[];
+  weakSubjects: string[];
+  weakChapters: string[];
+  strongAreas: string[];
+  weakAreas: string[];
+  
+  // AI/Smart Features (Can be manually entered or suggested)
+  accuracyPercentage: number;
+  timeManagementAnalysis: string;
+  teacherRemark: string;
+  improvementSuggestion: string;
+  studyRecommendation: string;
+  performancePrediction?: string;
+  
+  createdAt: string;
+  createdBy: string;
+};
+
 export type DashboardBundle = {
   roleLabel: string;
   heroTitle: string;

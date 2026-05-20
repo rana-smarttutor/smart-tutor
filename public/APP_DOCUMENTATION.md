@@ -31,10 +31,11 @@ Smart Tutors Academy is a comprehensive educational platform designed to provide
     -   `GET /api/courses/details`: Specific course information.
     -   `GET /api/digital-library`: Retrieve library items.
     -   `POST /api/upload-material`: Endpoint for educators to upload educational resources.
--   **Academics & Testing**:
+-   **Academics & Analytics**:
     -   `GET /api/tests`: List available tests.
     -   `GET/POST /api/mock-test`: Manage mock test sessions.
     -   `POST /api/test-submissions`: Handle student test answers.
+    -   `GET/POST/PATCH /api/performance`: Manage student performance reports and faculty heuristics.
 -   **Communication**:
     -   `GET/POST /api/messages`: Internal messaging system.
     -   `POST /api/smarttutors-chat`: AI-powered chatbot (integrates with Gemini/OpenAI).
@@ -46,24 +47,31 @@ Smart Tutors Academy is a comprehensive educational platform designed to provide
 
 ## Key Capabilities
 
-### 1. AI-Powered Mentoring
+### 1. Student Performance Analytics
+- **Data Visualization:** Interactive line, bar, and pie charts using `Recharts` for cross-device consistency.
+- **Faculty Control:** Manual entry for weekly/monthly reports with custom teacher remarks.
+- **Custom Heuristics:** Educators can define performance cutoffs (e.g., Outstanding, Weak) to drive dashboard alerts.
+- **Professional Reports:** High-fidelity PDF generation with institution branding for parent sharing.
+- **WhatsApp Integration:** Instant sharing of performance summaries.
+
+### 2. AI-Powered Mentoring
 - Integrated AI chatbot (`SmartTutorsAIChatbot`) providing 24/7 academic support.
 - Powered by advanced LLMs to answer student queries and provide guidance.
 
-### 2. Mock Test Engine
+### 3. Mock Test Engine
 - Dynamic test generation and submission.
 - Real-time performance tracking and feedback.
 - Interactive "Mock Test Game" for engaging learning.
 
-### 3. Digital Resource Management
+### 4. Digital Resource Management
 - Centralized library for PDFs and study materials.
 - Support for various file formats (PDF, Word) with parsing capabilities.
 
-### 4. Results-Driven Analytics
+### 5. Results-Driven Analytics
 - Real-time metrics tracking (Students mentored, Satisfaction rate, etc.).
 - Placed students wall to showcase success stories.
 
-### 5. Multi-Role Dashboard
+### 6. Multi-Role Dashboard
 - Tailored interfaces for Students, Educators, and Admins.
 - Secure session management using custom auth logic.
 

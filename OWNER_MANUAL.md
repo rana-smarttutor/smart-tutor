@@ -12,8 +12,10 @@ Welcome to the Smart Tutors management platform. This manual provides a comprehe
 4. [Digital Library Operations](#4-digital-library-operations)
 5. [Communication & Notice Board](#5-communication--notice-board)
 6. [Assessments & Results](#6-assessments--results)
-7. [SmartTutors AI Assistant](#7-smarttutors-ai-assistant)
-8. [System Health & Maintenance](#8-system-health--maintenance)
+7. [Student Performance Analytics](#7-student-performance-analytics)
+8. [SmartTutors AI Assistant](#8-smarttutors-ai-assistant)
+9. [System Health & Maintenance](#9-system-health--maintenance)
+10. [Testing & Verification Accounts](#10-testing--verification-accounts)
 
 ---
 
@@ -99,7 +101,30 @@ Keep students and staff informed through the centralized Message Center.
 
 ---
 
-## 7. SmartTutors AI Assistant
+## 7. Student Performance Analytics
+
+The Performance Analytics system allows faculty to provide data-driven feedback and track student progress over time.
+
+### Creating Performance Reports
+1.  Navigate to the **Analytics Hub** in the sidebar (available for Educators and Admins).
+2.  **Report Creator:** Use the form to enter:
+    *   **Core Metrics:** Average Score, Batch Rank, Attendance, and Accuracy.
+    *   **Feedback:** Strong/Weak subjects, Chapters needing focus.
+    *   **Recommendations:** Personalized study advice and improvement plans.
+3.  **Heuristics (Custom Cutoffs):**
+    *   Click **"Configure Heuristics"** to set your own performance levels.
+    *   Define thresholds for "Outstanding", "Excellent", "Good", etc.
+    *   These settings dynamically update the colors and "Smart Badges" on the student's dashboard.
+
+### Student Experience
+*   Students see their reports under the **Performance** tab.
+*   **Visualizations:** Interactive charts show marks trends, subject comparisons, and accuracy analysis.
+*   **Downloads:** Students can click **"Download PDF"** to get a professional, institution-branded report for their parents.
+*   **WhatsApp Sharing:** A quick share button allows sending a summary of the report to parent WhatsApp numbers.
+
+---
+
+## 8. SmartTutors AI Assistant
 
 The AI Assistant is a key differentiator for your institute, providing 24/7 academic support.
 
@@ -109,11 +134,27 @@ The AI Assistant is a key differentiator for your institute, providing 24/7 acad
 
 ---
 
-## 8. System Health & Maintenance
+## 9. System Health & Maintenance
 
 ### Monitoring Connectivity
 *   Admins can check the **API Scope** and **Mongo Status** indicators on their dashboard to ensure all systems (Database, Auth, AI) are operational.
 *   The "Live Clock" ensures all campus activities are synchronized with the server time.
+
+---
+
+## 10. Testing & Verification Accounts
+
+For testing the platform features, use the following bootstrapped demo accounts. **Note:** These are for development/staging environments.
+
+| Role | Email | Password | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@smarttutors.co.in` | `admin123` | Full control, user management, and global settings. |
+| **Educator**| `faculty@smarttutors.co.in`| `faculty123` | Create tests, manage library, and generate performance reports. |
+| **Student** | `student@smarttutors.co.in`| `student123` | View courses, take tests, and analyze performance reports. |
+
+### Verification Steps:
+1.  **Faculty:** Log in with `faculty@smarttutors.co.in`, go to "Analytics Hub", and create a report for "Student Workspace".
+2.  **Student:** Log in with `student@smarttutors.co.in`, go to "Performance", and verify the charts and PDF download functionality.
 
 ---
 

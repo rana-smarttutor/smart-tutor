@@ -28,6 +28,8 @@ import type {
   TestQuestion,
   TestSubmission,
   LibraryBook,
+  PerformanceHeuristics,
+  PerformanceReport,
 } from "@/lib/types";
 
 type DashboardTemplate = {
@@ -65,7 +67,17 @@ const COLLECTIONS = {
   submissions: "test_submissions",
   quizzes: "quiz_questions",
   library: "digital_library",
+  performance: "performance_reports",
+  heuristics: "performance_heuristics",
 } as const;
+
+export const DEFAULT_HEURISTICS: PerformanceHeuristics = {
+  outstanding: 95,
+  excellent: 85,
+  good: 70,
+  average: 50,
+  weak: 40,
+};
 
 let userIndexesPromise: Promise<void> | null = null;
 let standardCoursesBackfillPromise: Promise<void> | null = null;
@@ -910,5 +922,48 @@ export async function deleteLibraryBook(id: string) {
 
   await collection.deleteOne({ id });
   return book;
+}
+
+export async function getPerformanceReports(filter: { studentId?: string; batchName?: string } = {}) {
+  const collection = await getCollection<PerformanceReport>(COLLECTIONS.performance);
+  const query: any = {};
+  if (filter.studentId) query.studentId = filter.studentId;
+  if (filter.batchName) query.batchName = filter.batchName;
+  
+  return stripMongoIds(
+    await collection.find(query).sort({ createdAt: -1 }).toArray()
+  );
+}
+
+export async function createPerformanceReport(input: Omit<PerformanceReport, "id" | "createdAt">) {
+  const report: PerformanceReport = {
+    id: randomUUID(),
+    ...input,
+    createdAt: new Date().toISOString(),
+  };
+
+  const collection = await getCollection<PerformanceReport>(COLLECTIONS.performance);
+  await collection.insertOne(report);
+  return report;
+}
+
+export async function getPerformanceHeuristics(educatorId: string) {
+  const collection = await getCollection<{ educatorId: string; heuristics: PerformanceHeuristics }>(
+    COLLECTIONS.heuristics
+  );
+  const document = await collection.findOne({ educatorId });
+  return document ? document.heuristics : DEFAULT_HEURISTICS;
+}
+
+export async function savePerformanceHeuristics(educatorId: string, heuristics: PerformanceHeuristics) {
+  const collection = await getCollection<{ educatorId: string; heuristics: PerformanceHeuristics }>(
+    COLLECTIONS.heuristics
+  );
+  await collection.updateOne(
+    { educatorId },
+    { $set: { heuristics } },
+    { upsert: true }
+  );
+  return heuristics;
 }
 
