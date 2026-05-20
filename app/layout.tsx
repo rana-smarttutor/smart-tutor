@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -147,6 +148,19 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
+      <Script
+      src="https://www.googletagmanager.com/gtag/js?id=G-9P82PKFSD9"
+      strategy="afterInteractive"
+    />
+
+    <Script id="google-analytics" strategy="afterInteractive">
+     {`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-9P82PKFSD9');
+      `}
+    </Script>
         <ThemeProvider>
           <div className="relative min-h-screen isolate">
             <div className="relative z-10">
