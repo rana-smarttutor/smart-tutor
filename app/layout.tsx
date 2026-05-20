@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: "%s | Smart Tutors",
   },
   description:
-    "Find the best personal & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
+    "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
   keywords: [
     "Smart Tutors",
     "Smart Tutors Vashi",
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
     siteName: "Smart Tutors",
     title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
     description:
-      "Find the best Personal & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
+      "Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
     images: [
       {
         url: "/image4.jpeg",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
-    description: "Find the best Personal & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform.",
+    description: "Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform.",
     images: ["/image4.jpeg"],
   },
   robots: {
@@ -117,7 +117,7 @@ export default function RootLayout({
     "name": "Smart Tutors Academy",
     "url": "https://smarttutors.co.in",
     "logo": "https://smarttutors.co.in/image4.jpeg",
-    "description": "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform. Find the best Personal & Online Tutors for School, College, Government & Competitive Exams.",
+    "description": "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform. Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams.",
     "address": {
       "@type": "PostalAddress",
       "addressLocality": "Vashi",
