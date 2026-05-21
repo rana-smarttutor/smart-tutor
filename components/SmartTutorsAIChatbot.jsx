@@ -594,7 +594,7 @@ export default function SmartTutorsAIChatbot() {
       )}
 
       <button onClick={() => setOpen(!open)} style={styles.floatingButton}>
-        {open ? "×" : "AI"}
+        {open ? "×" : "🤖"}
       </button>
     </div>
   );

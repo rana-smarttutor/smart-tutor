@@ -7,6 +7,8 @@ import { LiveClock } from "@/components/live-clock";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { getPublicInstituteData } from "@/lib/data-store";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
+import { StudentCarousel } from "@/components/student-carousel";
+import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +30,11 @@ export default async function Home() {
               <span className="h-2.5 w-2.5 rounded-full bg-info animate-pulse" />
               Admissions | Exams | Placement
             </div>
+
+            <div className="surface-soft border-success inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-success">
+              <span className="h-2.5 w-2.5 rounded-full bg-success" />
+              Offline Campus
+            </div> 
 
             <div className="surface-soft border-success inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-success">
               <span className="h-2.5 w-2.5 rounded-full bg-success" />
@@ -143,28 +150,28 @@ export default async function Home() {
 
             <div className="mt-6 grid min-w-0 gap-4 px-2 sm:px-0 md:grid-cols-2">
               <div className="media-slot rounded-xl p-5 sm:p-6 hover:border-blue-400 transition-colors">
-                <p className="keyword-line">Institute identity</p>
-                <div className="media-frame relative mt-4 aspect-square overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group">
+                <p className="keyword-line">Academic Excellence</p>
+                <div className="media-frame relative mt-4 aspect-square overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group bg-slate-50 dark:bg-slate-900/50">
                   <Image
-                    src="/image3.png"
-                    alt="Smart Tutors academy identity"
+                    src="/result-5.jpeg"
+                    alt="Smart Tutors student success"
                     fill
                     priority
-                    className="object-contain object-center group-hover:scale-110 transition-transform duration-700"
+                    className="object-contain object-center group-hover:scale-105 transition-transform duration-700"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                   />
                 </div>
               </div>
 
               <div className="media-slot rounded-xl p-5 sm:p-6 hover:border-blue-400 transition-colors">
-                <p className="keyword-line">Result showcase</p>
-                <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group">
+                <p className="keyword-line">Result Showcase</p>
+                <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group bg-slate-50 dark:bg-slate-900/50">
                   <Image
-                    src="/image.png"
-                    alt="Smart Tutors topper and result showcase"
+                    src="/result-2.jpeg"
+                    alt="Smart Tutors grand results"
                     fill
                     priority
-                    className="object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                    className="object-contain object-center group-hover:scale-105 transition-transform duration-700"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
                   />
                 </div>
@@ -246,9 +253,15 @@ export default async function Home() {
         </div>
       </RevealOnScroll>
 
+      <div className="section-shell py-10">
+        <StudentCarousel />
+      </div>
+
       <HomeGlobe />
 
-      <PlacedStudentsWall students={data.placedStudents} />
+      <GrandSuccessCarousel />
+
+      <PlacedStudentsWall students={data.placedStudents.slice(0, 4)} />
 
       <RevealOnScroll className="section-shell py-14">
         <div className="mb-9 text-center lg:text-left">
@@ -394,4 +407,3 @@ export default async function Home() {
     </main>
   );
 }
-

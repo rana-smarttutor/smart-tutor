@@ -23,7 +23,7 @@ const links = [
   { href: "/courses", label: "Courses" },
   { href: "/mock-test", label: "Mock Test" },
   { href: "/digital-library", label: "Library" },
-  { href: "/contact", label: "Contact" },
+  { href: "/placements", label: "Placements" },
 ];
 
 export function SiteHeaderClient({

@@ -214,6 +214,7 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
 
   return {
     id: document.id,
+    category: document.category ?? template.category,
     standardKey: templateKey,
     tagline: document.tagline ?? template.tagline,
     title: template.title,
@@ -514,6 +515,7 @@ export async function createCourse(input: {
 
   const course: CourseItem & { createdAt: string; createdBy: string } = {
     id: randomUUID(),
+    category: template.category,
     standardKey: input.standardKey,
     tagline: input.tagline || template.tagline,
     title: template.title,
@@ -580,6 +582,7 @@ export async function updateCourse(input: {
     {
       $set: {
         standardKey: input.standardKey,
+        category: template.category,
         tagline: input.tagline || template.tagline,
         title: template.title,
         schedule: input.schedule || template.schedule,
