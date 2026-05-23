@@ -29,23 +29,26 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
   return (
     <>
       <section className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4 items-stretch">
-        {courses.map((course) => (
+        {courses.map((course, courseIndex) => (
           <div
-            key={course.id}
+            key={`course-${course.id || course.title || "item"}-${courseIndex}`}
             className="surface group rounded-[2rem] p-5 text-left flex flex-col h-full border-2 border-transparent hover:border-blue-500/40 hover:scale-[1.02] hover:shadow-2xl transition-all duration-300"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-grow">
                 <div className="flex items-center gap-2">
                   <p className="keyword-line text-[10px]">{course.tagline}</p>
-                  <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Live</span>
+                  <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                    Live
+                  </span>
                 </div>
+
                 <h2 className="mt-2 text-xl font-bold leading-tight tracking-tight text-[var(--color-heading)] py-1 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3rem]">
                   {course.title}
                 </h2>
               </div>
             </div>
-            
+
             <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-blue-500/80">
               {course.audienceLabel}
             </p>
@@ -73,7 +76,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
               >
                 View Full Program <span>→</span>
               </button>
-              
+
               <div className="grid grid-cols-2 gap-2">
                 <a
                   href="/contact"
@@ -81,6 +84,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                 >
                   Hire Home Tutor
                 </a>
+
                 <a
                   href="/contact"
                   className="flex items-center justify-center rounded-xl border-2 border-blue-600 px-3 py-2.5 text-[10px] font-bold text-blue-600 transition-all hover:bg-blue-50 active:scale-95"
@@ -96,12 +100,19 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
       <div className="mt-12 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white shadow-2xl">
         <div className="flex flex-col items-center gap-6 text-center lg:flex-row lg:text-left">
           <div className="flex-grow">
-            <h3 className="text-2xl font-bold">Personalized Tutoring Solutions</h3>
+            <h3 className="text-2xl font-bold">
+              Personalized Tutoring Solutions
+            </h3>
+
             <p className="mt-2 text-blue-100">
-              Smart Tutors specializes in <strong>Personal Home Tutoring</strong> and <strong>Interactive Online Tutoring</strong>. 
-              Our mentors visit your home or connect digitally to ensure you get 1-on-1 focus and academic excellence across all academic and digital streams.
+              Smart Tutors specializes in{" "}
+              <strong>Personal Home Tutoring</strong> and{" "}
+              <strong>Interactive Online Tutoring</strong>. Our mentors visit
+              your home or connect digitally to ensure you get 1-on-1 focus and
+              academic excellence across all academic and digital streams.
             </p>
           </div>
+
           <a
             href="/contact"
             className="shrink-0 rounded-full bg-white px-8 py-4 font-bold text-blue-700 shadow-xl transition-all hover:scale-105 active:scale-95"
@@ -125,11 +136,15 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
           >
             <div className="surface-soft flex items-start justify-between gap-4 border-b border-[var(--color-border)] px-6 py-6 sm:px-8">
               <div className="min-w-0">
-                <p className="keyword-line text-xs">{selectedCourse.tagline}</p>
+                <p className="keyword-line text-xs">
+                  {selectedCourse.tagline}
+                </p>
+
                 <h3 className="mt-2 text-2xl font-bold leading-tight tracking-tight text-[var(--color-heading)] sm:text-3xl">
                   {selectedCourse.title}
                 </h3>
               </div>
+
               <button
                 type="button"
                 onClick={() => setSelectedCourse(null)}
@@ -154,6 +169,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                     {selectedCourse.duration}
                   </p>
                 </div>
+
                 <div className="surface-soft rounded-3xl p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                     Mode
@@ -162,6 +178,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                     {selectedCourse.mode}
                   </p>
                 </div>
+
                 <div className="surface-soft rounded-3xl p-5">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                     Audience
@@ -174,11 +191,14 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
 
               <div className="mt-6 grid gap-4 lg:grid-cols-3">
                 <div className="surface-soft rounded-3xl p-5 lg:col-span-2">
-                  <p className="text-sm font-semibold text-[var(--color-heading)]">Course names included</p>
+                  <p className="text-sm font-semibold text-[var(--color-heading)]">
+                    Course names included
+                  </p>
+
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {selectedCourse.courseNamesIncluded.map((item) => (
+                    {selectedCourse.courseNamesIncluded.map((item, index) => (
                       <span
-                        key={item}
+                        key={`course-name-${item}-${index}`}
                         className="surface rounded-full px-3 py-2 text-xs font-semibold text-[var(--color-heading)]"
                       >
                         {item}
@@ -186,11 +206,18 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                     ))}
                   </div>
                 </div>
+
                 <div className="surface-soft rounded-3xl p-5">
-                  <p className="text-sm font-semibold text-[var(--color-heading)]">Branches included</p>
+                  <p className="text-sm font-semibold text-[var(--color-heading)]">
+                    Branches included
+                  </p>
+
                   <div className="mt-4 grid gap-2">
-                    {selectedCourse.branchesIncluded.map((item) => (
-                      <p key={item} className="text-sm leading-6 text-[var(--color-muted)]">
+                    {selectedCourse.branchesIncluded.map((item, index) => (
+                      <p
+                        key={`branch-${item}-${index}`}
+                        className="text-sm leading-6 text-[var(--color-muted)]"
+                      >
                         {item}
                       </p>
                     ))}
@@ -200,11 +227,14 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
 
               <div className="mt-6 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
                 <div className="surface-soft rounded-3xl p-5">
-                  <p className="text-sm font-semibold text-[var(--color-heading)]">Subjects covered</p>
+                  <p className="text-sm font-semibold text-[var(--color-heading)]">
+                    Subjects covered
+                  </p>
+
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {selectedCourse.subjectsCovered.map((item) => (
+                    {selectedCourse.subjectsCovered.map((item, index) => (
                       <span
-                        key={item}
+                        key={`subject-${item}-${index}`}
                         className="surface rounded-full px-3 py-2 text-xs font-semibold text-[var(--color-heading)]"
                       >
                         {item}
@@ -214,9 +244,14 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
-                  {selectedCourse.points.map((point) => (
-                    <div key={point} className="surface-soft rounded-3xl p-5">
-                      <p className="text-sm leading-7 text-[var(--color-heading)]">{point}</p>
+                  {selectedCourse.points.map((point, index) => (
+                    <div
+                      key={`point-${index}-${point}`}
+                      className="surface-soft rounded-3xl p-5"
+                    >
+                      <p className="text-sm leading-7 text-[var(--color-heading)]">
+                        {point}
+                      </p>
                     </div>
                   ))}
                 </div>
