@@ -161,20 +161,22 @@ export default function RootLayout({
         gtag('config', 'G-9P82PKFSD9');
       `}
     </Script>
-        <ThemeProvider>
-          <div className="relative min-h-screen isolate">
-            <div className="relative z-10">
-              <SiteHeader />
-              {children}
-              <SiteFooter />
-              <FloatingWhatsApp />
-              <PWAInstallButton />
-              <SmartTutorsAIChatbot />
-            </div>
-          </div>
-        </ThemeProvider>
-        <Analytics />
-        <SpeedInsights />
+<ThemeProvider>
+  <div className="relative min-h-screen isolate">
+    <div className="relative z-10">
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </div>
+  </div>
+
+  <FloatingWhatsApp />
+  <PWAInstallButton />
+  <SmartTutorsAIChatbot />
+</ThemeProvider>
+
+<Analytics />
+<SpeedInsights />
       </body>
     </html>
   );

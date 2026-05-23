@@ -119,10 +119,6 @@ function getCurrentTheme() {
     : "light";
 }
 
-function detectLanguage() {
-  return "english";
-}
-
 function isEducationRelated(text) {
   const lower = text.toLowerCase();
   return educationKeywords.some((keyword) => lower.includes(keyword));
@@ -253,8 +249,8 @@ function getCourseRecommendation(memory, text) {
 function fallbackReply(text, memory) {
   const lower = text.toLowerCase();
 
- if (!isEducationRelated(text)) {
-  return `Hi! I can help you with Smart Tutors education support.
+  if (!isEducationRelated(text)) {
+    return `Hi! I can help you with Smart Tutors education support.
 
 You can ask me about:
 • Study doubts
@@ -266,7 +262,7 @@ You can ask me about:
 • Admission guidance
 
 Please tell me your class, subject, or exam goal, and I will guide you in English.`;
-}
+  }
 
   if (
     lower.includes("course") ||
@@ -373,6 +369,7 @@ Please ask your question more clearly, for example:
 }
 
 export default function SmartTutorsAIChatbot() {
+  const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState("light");
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -393,12 +390,21 @@ export default function SmartTutorsAIChatbot() {
   const styles = getStyles(theme);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     const updateTheme = () => setTheme(getCurrentTheme());
 
     updateTheme();
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQuery.addEventListener("change", updateTheme);
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener("change", updateTheme);
+    } else {
+      mediaQuery.addListener(updateTheme);
+    }
 
     const observer = new MutationObserver(updateTheme);
 
@@ -417,7 +423,12 @@ export default function SmartTutorsAIChatbot() {
     const interval = setInterval(updateTheme, 800);
 
     return () => {
-      mediaQuery.removeEventListener("change", updateTheme);
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener("change", updateTheme);
+      } else {
+        mediaQuery.removeListener(updateTheme);
+      }
+
       observer.disconnect();
       clearInterval(interval);
     };
@@ -505,98 +516,165 @@ export default function SmartTutorsAIChatbot() {
     sendMessage(prompts[action] || action);
   }
 
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    <div style={styles.wrapper}>
-      {open && (
-        <div style={styles.chatBox}>
-          <div style={styles.header}>
-            <div>
-              <div style={styles.title}>Smart Tutors AI</div>
-              <div style={styles.subtitle}>
-                Study Assistant & Course Guide
-              </div>
-            </div>
+    <>
+      <style>{`
+        @keyframes ai-float {
+          0%, 100% {
+            transform: translateY(0px) scale(1);
+          }
+          50% {
+            transform: translateY(-6px) scale(1.04);
+          }
+        }
 
-            <button onClick={() => setOpen(false)} style={styles.closeButton}>
-              ×
-            </button>
-          </div>
+        @keyframes popup-hi {
+          0%, 40% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          45%, 100% {
+            opacity: 0;
+            transform: translateY(-8px);
+          }
+        }
 
-          <div style={styles.messages}>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  ...styles.messageRow,
-                  justifyContent:
-                    message.role === "user" ? "flex-end" : "flex-start",
-                }}
-              >
-                <div
-                  style={{
-                    ...styles.messageBubble,
-                    ...(message.role === "user"
-                      ? styles.userBubble
-                      : styles.botBubble),
-                  }}
-                >
-                  {message.content}
+        @keyframes popup-assist {
+          0%, 45% {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          55%, 100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+
+      <div style={styles.wrapper}>
+        {open && (
+          <div style={styles.chatBox}>
+            <div style={styles.header}>
+              <div>
+                <div style={styles.title}>Smart Tutors AI</div>
+                <div style={styles.subtitle}>
+                  Study Assistant & Course Guide
                 </div>
               </div>
-            ))}
 
-            {typing && (
-              <div style={styles.messageRow}>
-                <div style={styles.botBubble}>Smart Tutors AI is typing...</div>
-              </div>
-            )}
-
-            {messages.length === 1 && (
-              <div style={styles.quickGrid}>
-                {quickActions.map((action) => (
-                  <button
-                    key={action}
-                    onClick={() => handleQuickAction(action)}
-                    style={styles.quickButton}
-                  >
-                    {action}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div ref={bottomRef} />
-          </div>
-
-          <div style={styles.footer}>
-            <div style={styles.note}>
-              Smart Tutors can help with study doubts, course guidance, mock tests,
-              study plans, and admissions.
-            </div>
-
-            <div style={styles.inputRow}>
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") sendMessage();
-                }}
-                placeholder="Ask your study question..."
-                style={styles.input}
-              />
-
-              <button onClick={() => sendMessage()} style={styles.sendButton}>
-                Send
+              <button
+                onClick={() => setOpen(false)}
+                style={styles.closeButton}
+                type="button"
+              >
+                ×
               </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      <button onClick={() => setOpen(!open)} style={styles.floatingButton}>
-        {open ? "×" : "🤖"}
-      </button>
-    </div>
+            <div style={styles.messages}>
+              {messages.map((message, index) => (
+                <div
+                  key={`${message.role}-${index}`}
+                  style={{
+                    ...styles.messageRow,
+                    justifyContent:
+                      message.role === "user" ? "flex-end" : "flex-start",
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.messageBubble,
+                      ...(message.role === "user"
+                        ? styles.userBubble
+                        : styles.botBubble),
+                    }}
+                  >
+                    {message.content}
+                  </div>
+                </div>
+              ))}
+
+              {typing && (
+                <div style={styles.messageRow}>
+                  <div style={styles.botBubble}>Smart Tutors AI is typing...</div>
+                </div>
+              )}
+
+              {messages.length === 1 && (
+                <div style={styles.quickGrid}>
+                  {quickActions.map((action) => (
+                    <button
+                      key={action}
+                      onClick={() => handleQuickAction(action)}
+                      style={styles.quickButton}
+                      type="button"
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div ref={bottomRef} />
+            </div>
+
+            <div style={styles.footer}>
+              <div style={styles.note}>
+                Smart Tutors can help with study doubts, course guidance, mock
+                tests, study plans, and admissions.
+              </div>
+
+              <div style={styles.inputRow}>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") sendMessage();
+                  }}
+                  placeholder="Ask your study question..."
+                  style={styles.input}
+                />
+
+                <button
+                  onClick={() => sendMessage()}
+                  style={styles.sendButton}
+                  type="button"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div style={styles.floatingButtonWrap}>
+          {!open && (
+            <div style={styles.aiPopup}>
+              <span style={styles.popupHi}>Hi!</span>
+              <span style={styles.popupAssist}>How may I assist you?</span>
+            </div>
+          )}
+
+          <button
+            onClick={() => setOpen(!open)}
+            style={styles.floatingButton}
+            aria-label="Open Smart Tutors AI"
+            title="Open Smart Tutors AI"
+            type="button"
+          >
+            <img
+              src="/image3.png"
+              alt="Smart Tutors AI"
+              style={styles.aiPhotoIcon}
+            />
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -613,10 +691,6 @@ function getStyles(theme) {
       ? "linear-gradient(135deg, #0f172a, #1e3a8a)"
       : "linear-gradient(135deg, #2563eb, #1d4ed8)",
 
-    floatingBg: isDark
-      ? "linear-gradient(135deg, #1e40af, #38bdf8)"
-      : "linear-gradient(135deg, #2563eb, #00b4ff)",
-
     botBg: isDark ? "rgba(30, 41, 59, 0.95)" : "white",
     botText: isDark ? "#e5e7eb" : "#0f172a",
     userBg: isDark
@@ -632,7 +706,6 @@ function getStyles(theme) {
     inputText: isDark ? "#f8fafc" : "#0f172a",
     quickBg: isDark ? "rgba(30,41,59,0.95)" : "rgba(255,255,255,0.92)",
     quickText: isDark ? "#dbeafe" : "#1e3a8a",
-    mutedText: isDark ? "#cbd5e1" : "#475569",
     shadow: isDark
       ? "0 24px 70px rgba(0, 0, 0, 0.55)"
       : "0 24px 70px rgba(15, 23, 42, 0.22)",
@@ -647,19 +720,75 @@ function getStyles(theme) {
       fontFamily: "Inter, Arial, Helvetica, sans-serif",
     },
 
+    floatingButtonWrap: {
+      position: "relative",
+      width: "78px",
+      height: "78px",
+      overflow: "visible",
+    },
+
     floatingButton: {
-      width: "60px",
-      height: "60px",
+      width: "78px",
+      height: "78px",
       borderRadius: "50%",
-      border: "none",
-      background: colors.floatingBg,
-      color: "white",
-      fontSize: "18px",
-      fontWeight: "800",
+      border: "3px solid #ffffff",
+      background: "#ffffff",
       cursor: "pointer",
       boxShadow: isDark
-        ? "0 18px 40px rgba(56, 189, 248, 0.22)"
-        : "0 18px 40px rgba(37, 99, 235, 0.35)",
+        ? "0 18px 40px rgba(56, 189, 248, 0.25)"
+        : "0 18px 40px rgba(37, 99, 235, 0.28)",
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "0",
+      overflow: "hidden",
+      animation: "ai-float 3s ease-in-out infinite",
+    },
+
+    aiPhotoIcon: {
+      width: "100%",
+      height: "100%",
+      borderRadius: "50%",
+      objectFit: "cover",
+      objectPosition: "center",
+      display: "block",
+    },
+
+    aiPopup: {
+      position: "absolute",
+      right: "82px",
+      top: "-6px",
+      width: "145px",
+      height: "30px",
+      borderRadius: "999px",
+      background: isDark ? "#eff6ff" : "#ffffff",
+      color: "#1d4ed8",
+      fontSize: "10px",
+      fontWeight: "800",
+      lineHeight: "1",
+      boxShadow: "0 10px 24px rgba(15, 23, 42, 0.18)",
+      zIndex: 999999,
+      overflow: "hidden",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "0 8px",
+      whiteSpace: "nowrap",
+      pointerEvents: "none",
+    },
+
+    popupHi: {
+      position: "absolute",
+      animation: "popup-hi 4s ease-in-out infinite",
+      whiteSpace: "nowrap",
+    },
+
+    popupAssist: {
+      position: "absolute",
+      animation: "popup-assist 4s ease-in-out infinite",
+      whiteSpace: "nowrap",
+      fontSize: "10px",
     },
 
     chatBox: {
