@@ -667,7 +667,7 @@ export default function SmartTutorsAIChatbot() {
             type="button"
           >
             <img
-              src="/image3.png"
+              src="/image5.png"
               alt="Smart Tutors AI"
               style={styles.aiPhotoIcon}
             />
@@ -715,7 +715,7 @@ function getStyles(theme) {
     wrapper: {
       position: "fixed",
       right: "24px",
-      bottom: "100px",
+      bottom: "105px",
       zIndex: 99999,
       fontFamily: "Inter, Arial, Helvetica, sans-serif",
     },

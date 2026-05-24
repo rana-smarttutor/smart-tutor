@@ -26,9 +26,11 @@ const links = [
   { href: "/placements", label: "Placements" },
 ];
 
-export function SiteHeaderClient({
-  session,
-}: SiteHeaderClientProps) {
+const staffOnlyLinks = [
+  { href: "/student-performance", label: "Performance" },
+];
+
+export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -75,13 +77,21 @@ export function SiteHeaderClient({
     setIsMobileMenuOpen(false);
   }
 
-  // Explicitly determine logo based on theme to avoid CSS-only issues
   const isDark = mounted && theme === "dark";
+
+  const userRole = String((session as any)?.role || "").toLowerCase();
+
+const canSeeStudentPerformance =
+  userRole === "admin" || userRole === "educator";
 
   const filteredLinks = links.filter((link) => {
     if (session && link.label === "Mock Test") return false;
     return true;
   });
+
+  const visibleLinks = canSeeStudentPerformance
+    ? [...filteredLinks, ...staffOnlyLinks]
+    : filteredLinks;
 
   return (
     <>
@@ -112,15 +122,18 @@ export function SiteHeaderClient({
                   />
                 </Link>
 
-                <div className="hidden min-w-0 flex-1 items-center justify-center gap-2 lg:flex">
-                  <nav className="flex min-w-0 flex-wrap items-center justify-center gap-2">
-                    {filteredLinks.map((link) => {
-                      const isActive = pathname === link.href;
+               <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+                 <nav className="flex min-w-0 flex-nowrap items-center justify-center gap-1">
+                    {visibleLinks.map((link) => {
+                      const isActive =
+                        pathname === link.href ||
+                        pathname.startsWith(`${link.href}/`);
+
                       return (
                         <Link
                           key={link.href}
                           href={link.href}
-                          className={`nav-link rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                          className={`nav-link whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition-all xl:px-4 xl:text-sm ${
                             isActive
                               ? "text-[var(--color-heading)] bg-[var(--color-primary-soft)] shadow-[inset_0_0_0_1px_var(--color-primary)]"
                               : "text-[var(--color-muted)] hover:text-[var(--color-heading)] hover:bg-[var(--color-primary-soft)]"
@@ -147,7 +160,9 @@ export function SiteHeaderClient({
                       </p>
                     </div>
                   ) : null}
+
                   <ThemeToggle />
+
                   {session ? (
                     <>
                       <Link href="/dashboard" className="btn-action btn-sm">
@@ -164,13 +179,11 @@ export function SiteHeaderClient({
 
                 <div className="flex items-center gap-2 lg:hidden">
                   {!session ? (
-                    <Link
-                      href="/login"
-                      className="btn-action btn-sm"
-                    >
+                    <Link href="/login" className="btn-action btn-sm">
                       Login
                     </Link>
                   ) : null}
+
                   <button
                     type="button"
                     onClick={() => setIsMobileMenuOpen((current) => !current)}
@@ -181,6 +194,7 @@ export function SiteHeaderClient({
                     <span className="sr-only">
                       {isMobileMenuOpen ? "Close menu" : "Open menu"}
                     </span>
+
                     <span className="flex flex-col items-center justify-center gap-1.5">
                       <span
                         className={`block h-0.5 w-5 rounded-full bg-current transition-transform duration-300 ${
@@ -211,8 +225,11 @@ export function SiteHeaderClient({
               >
                 <div className="mt-4 grid gap-3 border-t border-[var(--color-border)] pt-4">
                   <nav className="grid gap-2">
-                    {filteredLinks.map((link) => {
-                      const isActive = pathname === link.href;
+                    {visibleLinks.map((link) => {
+                      const isActive =
+                        pathname === link.href ||
+                        pathname.startsWith(`${link.href}/`);
+
                       return (
                         <Link
                           key={link.href}
@@ -252,6 +269,7 @@ export function SiteHeaderClient({
                           {shortenSessionName(session.name)}
                         </p>
                       </div>
+
                       <div className="grid gap-2">
                         <Link
                           href="/dashboard"
@@ -271,7 +289,10 @@ export function SiteHeaderClient({
         </div>
       </header>
 
-      <div aria-hidden="true" className="h-[5.25rem] sm:h-[5.75rem] lg:h-[6.25rem]" />
+      <div
+        aria-hidden="true"
+        className="h-[5.25rem] sm:h-[5.75rem] lg:h-[6.25rem]"
+      />
     </>
   );
 }
