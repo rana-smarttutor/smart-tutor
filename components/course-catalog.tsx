@@ -77,8 +77,8 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-grow">
                 <div className="flex items-center gap-2">
-                  <p className="keyword-line text-[10px]">{course.tagline}</p>
-                  <span className={`text-[9px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusStyles(course.statusLabel)} shadow-sm`}>
+                  <p className="keyword-line text-[8px]">{course.tagline}</p>
+                  <span className={`text-[7px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusStyles(course.statusLabel)} shadow-sm`}>
                     {course.statusLabel}
                   </span>
                 </div>
@@ -97,7 +97,7 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
               {course.title.includes("IB") && <span className="bg-rose-100 text-rose-700 text-[8px] font-black px-1.5 py-0.5 rounded">IB</span>}
             </div>
 
-            <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-blue-500/80">
+            <p className="mt-3 text-[9px] font-bold uppercase tracking-widest text-blue-500/80">
               {course.audienceLabel}
             </p>
 

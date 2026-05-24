@@ -26,7 +26,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Class 6-8"],
-    statusLabel: "Starting in 2 Days",
+    statusLabel: "In 2 Days",
     standardKey: "class-6-8-premium-igcse-ib",
     title: "Class 6th-8th Premium Academic (ICSE/IGCSE/IB)",
     tagline: "International Standard Excellence",
@@ -45,7 +45,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 6-8", "Skills"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "junior-coding-robotics",
     title: "Basic Coding & Robotics (Junior)",
     tagline: "Future Tech for Kids",
@@ -64,7 +64,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 6-8", "Skills"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "public-speaking-comm",
     title: "Public Speaking & Communication",
     tagline: "Speak with Confidence",
@@ -102,7 +102,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Class 6-8"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "time-mgmt-study-skills",
     title: "Time Management & Study Skills",
     tagline: "Learn How to Learn",
@@ -142,7 +142,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Class 9-10"],
-    statusLabel: "Starting in 3 Days",
+    statusLabel: "In 3 Days",
     standardKey: "class-9-10-premium-igcse-ib",
     title: "Class 9th-10th Premium Academic (ICSE/IGCSE/IB)",
     tagline: "Global Academic Track",
@@ -161,7 +161,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 9-10", "Skills"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "advanced-coding-app-dev",
     title: "Advanced Coding & App Development",
     tagline: "Build Your Own Apps",
@@ -199,7 +199,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 9-10", "Skills"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "financial-literacy-budgeting",
     title: "Financial Literacy & Budgeting",
     tagline: "Money Management for Teens",
@@ -218,7 +218,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 9-10", "Skills"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "personality-dev-life-skills",
     title: "Life Skills & Personality Development",
     tagline: "Grooming for Success",
@@ -258,7 +258,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Class 11-12"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "class-11-12-commerce-arts",
     title: "11th-12th Commerce & Arts Boards",
     tagline: "Professional & Humanities Track",
@@ -277,7 +277,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Competitive Exams",
     sections: ["Class 11-12"],
-    statusLabel: "Starting in 5 Days",
+    statusLabel: "In 5 Days",
     standardKey: "jee-main-adv-intensive",
     title: "JEE Main & Advanced Preparation",
     tagline: "Target IIT/NIT",
@@ -296,7 +296,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Competitive Exams",
     sections: ["Class 11-12"],
-    statusLabel: "Starting in 2 Days",
+    statusLabel: "In 2 Days",
     standardKey: "neet-ug-intensive",
     title: "NEET-UG Medical Entrance",
     tagline: "Aim for Top Medical Colleges",
@@ -315,7 +315,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 11-12", "Skills"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "ai-ml-basics-teens",
     title: "AI & Machine Learning Basics",
     tagline: "Future-proof Your Career",
@@ -355,7 +355,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Graduation", "Diploma", "Skills"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "diploma-comp-hw-networking",
     title: "Computer Hardware & Networking",
     tagline: "Build IT Infrastructure",
@@ -374,7 +374,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Graduation", "Skills", "Post Grad"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "full-stack-mern",
     title: "Full Stack Web Dev (MERN Stack)",
     tagline: "React, Node.js, Express, MongoDB",
@@ -393,7 +393,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Graduation", "Skills", "Post Grad"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "full-stack-mean-java",
     title: "Enterprise Full Stack (Java/MEAN)",
     tagline: "Angular, Spring Boot, MySQL",
@@ -431,7 +431,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Graduation", "Skills", "Post Grad"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "sap-erp-essentials",
     title: "SAP ERP Essentials (FICO/MM)",
     tagline: "Enterprise Resource Planning",
@@ -471,7 +471,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Graduation"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "undergrad-research-methodologies",
     title: "Research Methodologies (Undergraduate)",
     tagline: "Scientific Inquiry Skills",
@@ -490,7 +490,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Graduation", "Skills"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "data-analysis-statistics-grad",
     title: "Data Analysis & Statistics",
     tagline: "Power Your Decisions",
@@ -509,7 +509,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Graduation", "Skills"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "cloud-computing-data-science-grad",
     title: "Cloud Computing & Data Science",
     tagline: "Future Tech Leadership",
@@ -549,7 +549,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Post Grad"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "pg-advanced-research-techniques",
     title: "Advanced Research Techniques",
     tagline: "Master Your Thesis",
@@ -568,7 +568,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Post Grad", "Skills"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "big-data-analytics-pg",
     title: "Big Data & Advanced Analytics",
     tagline: "Handle Scale",
@@ -587,7 +587,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Post Grad", "Skills"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "digital-transformation-ind-4",
     title: "Digital Transformation & Industry 4.0",
     tagline: "Lead the Future",
@@ -627,7 +627,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Post Grad"],
-    statusLabel: "Starting in 1 Month",
+    statusLabel: "In 1 Month",
     standardKey: "phd-academic-publishing-peer-review",
     title: "Academic Publishing & Peer Review",
     tagline: "Get Published",
@@ -646,7 +646,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Post Grad"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "phd-patent-filing-ipr",
     title: "Patent Filing & Intellectual Property",
     tagline: "Protect Your Innovation",
@@ -665,7 +665,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "School & Junior College",
     sections: ["Post Grad"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "phd-grant-writing-funding",
     title: "Grant Writing & Funding Acquisition",
     tagline: "Fund Your Research",
@@ -703,7 +703,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Government Exams",
     sections: ["Govt Exams"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "banking-exams-ibps-sbi-po",
     title: "Banking Exams (PO & Clerk)",
     tagline: "Secure Bank Career",
@@ -722,7 +722,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Primary School", "Class 6-8", "Skills"],
-    statusLabel: "Starting in 2 Weeks",
+    statusLabel: "In 2 Weeks",
     standardKey: "mindfulness-stress-mgmt",
     title: "Mindfulness & Stress Management",
     tagline: "Focus & Emotional Balance",
@@ -741,7 +741,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   {
     category: "Top Digital & Future Skills",
     sections: ["Class 6-8", "Class 9-10", "Skills"],
-    statusLabel: "Starting in 1 Week",
+    statusLabel: "In 1 Week",
     standardKey: "env-conservation-sustainability",
     title: "Environmental Conservation",
     tagline: "Be a Green Leader",
