@@ -16,9 +16,9 @@ export default async function CoursesPage() {
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-[var(--color-heading)] leading-tight mb-6">
             Courses Offered
           </h1>
-          <div className="surface-soft rounded-[2rem] p-6 sm:p-8 border-blue-100 dark:border-blue-900/30">
+          <div className="py-2">
             <p className="text-lg leading-snug text-[var(--color-body)] font-bold">
-              Smart Tutors pathways from class 6 to diploma, graduation, and government exam preparation. 
+              Smart Tutors pathways from primary school to professional and government exam preparation. 
             </p>
             <p className="mt-3 text-base leading-relaxed text-[var(--color-muted)] font-medium">
               A structured roadmap designed to build strength, discipline, and success at every major academic stage.

@@ -11,6 +11,46 @@ type CourseCatalogProps = {
 export function CourseCatalog({ courses }: CourseCatalogProps) {
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
 
+  const getStatusStyles = (status: string) => {
+    const s = status.toLowerCase();
+    if (s.includes("live")) {
+      return "bg-emerald-500 text-white shadow-emerald-100";
+    }
+    if (s.includes("2 days") || s.includes("3 days")) {
+      return "bg-rose-500 text-white shadow-rose-100";
+    }
+    if (s.includes("1 week") || s.includes("5 days")) {
+      return "bg-orange-500 text-white shadow-orange-100";
+    }
+    if (s.includes("2 weeks")) {
+      return "bg-amber-500 text-white shadow-amber-100";
+    }
+    if (s.includes("1 month")) {
+      return "bg-blue-500 text-white shadow-blue-100";
+    }
+    return "bg-slate-500 text-white shadow-slate-100";
+  };
+
+  const getCategoryStyles = (course: CourseItem) => {
+    const title = course.title.toLowerCase();
+    if (title.includes("icse") || title.includes("igcse") || title.includes("ib")) {
+      return "border-purple-500/30 hover:border-purple-500 shadow-purple-50 bg-purple-50/5";
+    }
+    if (title.includes("state") || title.includes("cbse")) {
+      return "border-blue-500/30 hover:border-blue-500 shadow-blue-50 bg-blue-50/5";
+    }
+    if (course.category.includes("Digital") || course.sections.includes("Skills")) {
+      return "border-emerald-500/30 hover:border-emerald-500 shadow-emerald-50 bg-emerald-50/5";
+    }
+    if (course.category.includes("Competitive")) {
+      return "border-orange-500/30 hover:border-orange-500 shadow-orange-50 bg-orange-50/5";
+    }
+    if (course.category.includes("Government")) {
+      return "border-rose-500/30 hover:border-rose-500 shadow-rose-50 bg-rose-50/5";
+    }
+    return "border-blue-500/30 hover:border-blue-500 shadow-blue-50 bg-blue-50/5";
+  };
+
   useEffect(() => {
     if (!selectedCourse) {
       return;
@@ -32,14 +72,14 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
         {courses.map((course, courseIndex) => (
           <div
             key={`course-${course.id || course.title || "item"}-${courseIndex}`}
-            className="surface group rounded-[2rem] p-5 text-left flex flex-col h-full border-2 border-transparent hover:border-blue-500/40 hover:scale-[1.02] hover:shadow-2xl transition-all duration-300"
+            className={`surface group rounded-[2rem] p-5 text-left flex flex-col h-full border-2 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl ${getCategoryStyles(course)}`}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-grow">
                 <div className="flex items-center gap-2">
                   <p className="keyword-line text-[10px]">{course.tagline}</p>
-                  <span className="text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                    Live
+                  <span className={`text-[9px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusStyles(course.statusLabel)} shadow-sm`}>
+                    {course.statusLabel}
                   </span>
                 </div>
 
@@ -49,7 +89,15 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
               </div>
             </div>
 
-            <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-blue-500/80">
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {course.title.includes("State") && <span className="bg-blue-100 text-blue-700 text-[8px] font-black px-1.5 py-0.5 rounded">STATE</span>}
+              {course.title.includes("CBSE") && <span className="bg-orange-100 text-orange-700 text-[8px] font-black px-1.5 py-0.5 rounded">CBSE</span>}
+              {course.title.includes("ICSE") && <span className="bg-purple-100 text-purple-700 text-[8px] font-black px-1.5 py-0.5 rounded">ICSE</span>}
+              {course.title.includes("IGCSE") && <span className="bg-indigo-100 text-indigo-700 text-[8px] font-black px-1.5 py-0.5 rounded">IGCSE</span>}
+              {course.title.includes("IB") && <span className="bg-rose-100 text-rose-700 text-[8px] font-black px-1.5 py-0.5 rounded">IB</span>}
+            </div>
+
+            <p className="mt-3 text-[11px] font-bold uppercase tracking-widest text-blue-500/80">
               {course.audienceLabel}
             </p>
 

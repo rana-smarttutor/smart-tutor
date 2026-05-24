@@ -9,17 +9,48 @@ import { getPublicInstituteData } from "@/lib/data-store";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { StudentCarousel } from "@/components/student-carousel";
 import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
+import { courseLibrary } from "@/lib/course-library";
+import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
 
 export const dynamic = "force-dynamic";
 
 const roleAccentMap = {
   student: "from-blue-50 to-white",
-  educator: "from-blue-50 to-white",
-  admin: "from-blue-50 to-white",
+  educator: "from-purple-50 to-white",
+  admin: "from-emerald-50 to-white",
+  parent: "from-orange-50 to-white",
 } as const;
 
 export default async function Home() {
   const data = await getPublicInstituteData();
+
+  // Manually defined roles to ensure 4 cards
+  const homeRoles = [
+    {
+      role: "student",
+      title: "Learning Portal",
+      summary: "Access 1-on-1 tutoring, mock tests, and digital resources to accelerate your growth.",
+      features: ["Live Classes", "Personalized Dashboard", "Instant Doubt Solving"]
+    },
+    {
+      role: "educator",
+      title: "Mentor Studio",
+      summary: "Manage your teaching schedule, track student performance, and deliver high-impact lectures.",
+      features: ["Resource Manager", "Performance Tracking", "Student Communication"]
+    },
+    {
+      role: "parent",
+      title: "Parent Connect",
+      summary: "Stay updated with your child's academic progress through real-time reports and attendance tracking.",
+      features: ["Progress Reports", "Direct Mentor Chat", "Attendance Logs"]
+    },
+    {
+      role: "admin",
+      title: "Operations Hub",
+      summary: "Full control over institute management, course scheduling, and campus operations.",
+      features: ["Admissions Manager", "Fee Tracking", "System Analytics"]
+    }
+  ];
 
   return (
     <main className="relative overflow-hidden pb-16 pt-8">
@@ -50,7 +81,10 @@ export default async function Home() {
               Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
             <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-(--color-muted) xl:mx-0">
-              Smart Tutors brings disciplined preparation, sharp mentoring, and real academic momentum into one focused institute experience. From school boards to civil services.
+              Smart Tutors provides <strong>Programs mapped to every stage of growth</strong>. 
+              We bring disciplined preparation, sharp mentoring, and real academic 
+              momentum into one focused institute experience. From school boards to 
+              civil services and digital future skills.
             </p>
           </div>
 
@@ -91,7 +125,6 @@ export default async function Home() {
 
           <div className="pt-10 border-t border-(--color-border) mt-10">
             <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
-              {/* Animated Background Accents - Ensure they don't cause overflow */}
               <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
               <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
               
@@ -114,10 +147,7 @@ export default async function Home() {
                     href="/login" 
                     className="group/btn relative inline-flex h-14 items-center justify-center gap-3 bg-blue-600 text-white px-8 rounded-xl font-black text-base transition-all hover:bg-blue-700 hover:scale-[1.02] shadow-xl shadow-blue-500/25 active:scale-95 overflow-hidden"
                   >
-                    <span className="relative z-10">Enroll Now</span>
-                    <svg className="w-5 h-5 relative z-10 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
+                    Enroll Now
                   </Link>
                   
                   <a 
@@ -126,8 +156,6 @@ export default async function Home() {
                     rel="noopener noreferrer" 
                     className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-8 rounded-xl font-black text-base border-2 border-emerald-100 dark:border-emerald-800/50 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-[1.02] active:scale-95"
                   >
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.067 2.877 1.215 3.076.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.335-1.662c1.72.937 3.672 1.433 5.661 1.433h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
                     WhatsApp
                   </a>
                 </div>
@@ -148,35 +176,7 @@ export default async function Home() {
               <LiveClock label="Campus Time" className="sm:min-w-[220px]" />
             </div>
 
-            <div className="mt-6 grid min-w-0 gap-4 px-2 sm:px-0 md:grid-cols-2">
-              <div className="media-slot rounded-xl p-5 sm:p-6 hover:border-blue-400 transition-colors">
-                <p className="keyword-line">Academic Excellence</p>
-                <div className="media-frame relative mt-4 aspect-square overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group bg-slate-50 dark:bg-slate-900/50">
-                  <Image
-                    src="/result-5.jpeg"
-                    alt="Smart Tutors student success"
-                    fill
-                    priority
-                    className="object-contain object-center group-hover:scale-105 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                  />
-                </div>
-              </div>
-
-              <div className="media-slot rounded-xl p-5 sm:p-6 hover:border-blue-400 transition-colors">
-                <p className="keyword-line">Result Showcase</p>
-                <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-xl sm:h-52 sm:aspect-auto md:h-44 group bg-slate-50 dark:bg-slate-900/50">
-                  <Image
-                    src="/result-2.jpeg"
-                    alt="Smart Tutors grand results"
-                    fill
-                    priority
-                    className="object-contain object-center group-hover:scale-105 transition-transform duration-700"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 400px"
-                  />
-                </div>
-              </div>
-            </div>
+            <CampusHighlightsCarousel />
           </div>
 
           <div className="surface rounded-xl p-6 hover:shadow-xl transition-all">
@@ -198,6 +198,130 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
       </section>
+
+      <RevealOnScroll className="section-shell py-20 lg:py-32" delayMs={100}>
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
+              Our Methodology
+            </span>
+            <h2 className="text-4xl font-black tracking-tight text-[var(--color-heading)] sm:text-5xl mb-6">
+              Programs Mapped to Every Stage of Growth
+            </h2>
+            <p className="text-[var(--color-muted)] text-lg font-medium">
+              We provide a complete educational pathway from school foundation to high-level government service and future digital skills.
+            </p>
+          </div>
+
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-24">
+            {[
+              { 
+                stage: "Early Foundation", 
+                title: "Primary School", 
+                desc: "Class 1-5 Foundation. Build reading, numeracy, study habits, and confidence early with close mentoring and guided practice.",
+                subjects: ["Maths", "English", "EVS", "Homework Support"],
+                color: "bg-blue-600",
+                badge: "Academic Year"
+              },
+              { 
+                stage: "Middle Years", 
+                title: "Class 6-8", 
+                desc: "Conceptual mastery in State/CBSE and Premium tracks for ICSE/IB, plus IoT & Robotics.",
+                subjects: ["Maths", "Science", "Social Studies", "Robotics"],
+                color: "bg-indigo-600",
+                badge: "Board Base"
+              },
+              { 
+                stage: "Board Prep", 
+                title: "Class 9-12", 
+                desc: "Integrated board excellence with JEE, NEET, and NTSE scholarship tracks.",
+                subjects: ["Physics", "Chemistry", "Maths/Bio", "Entrance"],
+                color: "bg-violet-600",
+                badge: "Competitive"
+              },
+              { 
+                stage: "Career Ready", 
+                title: "Graduation", 
+                desc: "University subject support, Full Stack Dev, Data Science, and UI/UX design.",
+                subjects: ["Engg Support", "Web Dev", "Data Science", "SAP"],
+                color: "bg-emerald-600",
+                badge: "Professional"
+              },
+              { 
+                stage: "Leadership", 
+                title: "Professional", 
+                desc: "UPSC, MPSC, Banking, Defense, and Advanced AI/Research certifications.",
+                subjects: ["UPSC/MPSC", "Banking", "Defense", "Research"],
+                color: "bg-purple-700",
+                badge: "Govt & R&D"
+              }
+            ].map((item, i) => (
+              <div key={i} className="surface group rounded-[2.5rem] p-8 border-2 border-white shadow-xl hover:scale-[1.05] transition-all duration-500 flex flex-col h-full bg-white dark:bg-slate-950">
+                <div className="flex justify-between items-start mb-6">
+                  <div className={`${item.color} text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shadow-lg`}>
+                    0{i+1}
+                  </div>
+                  <span className={`${item.color} text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider`}>
+                    {item.badge}
+                  </span>
+                </div>
+                <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-2">{item.stage}</p>
+                <h3 className="text-2xl font-bold text-[var(--color-heading)] mb-4">{item.title}</h3>
+                <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium mb-6">
+                  {item.desc}
+                </p>
+                <div className="mt-auto pt-6 border-t border-blue-50 dark:border-slate-800 flex flex-wrap gap-2">
+                  {item.subjects.map(s => (
+                    <span key={s} className="bg-slate-50 dark:bg-slate-900 text-[10px] font-bold text-[var(--color-heading)] px-2 py-1 rounded-md border border-slate-100 dark:border-slate-800">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2 items-start opacity-90">
+            {data.programs.map((program) => (
+              <article
+                key={program.title}
+                className="surface rounded-xl p-7 hover:shadow-2xl hover:translate-y-[-4px] transition-all cursor-default flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
+              >
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0 flex-grow">
+                    <div className="flex items-center gap-2">
+                      <p className="keyword-line">{program.category}</p>
+                    </div>
+                    <h3 className="mt-3 min-h-[4.5rem] flex items-center text-xl sm:text-2xl font-bold leading-normal tracking-[-0.03em] text-[var(--color-heading)] py-2">
+                      {program.title}
+                    </h3>
+                  </div>
+                  <span className="pill shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800 font-bold">{program.duration}</span>
+                </div>
+                <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] font-medium flex-grow">
+                  {program.description}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {program.focus.map((tag) => (
+                    <span
+                      key={tag}
+                      className="surface-soft border-white dark:border-slate-700 rounded-full px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 shadow-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+          
+          <div className="mt-16 text-center">
+            <Link href="/courses" className="action-button px-10 py-5 text-lg shadow-2xl">
+              Explore All {courseLibrary.length}+ Programs
+            </Link>
+          </div>
+        </div>
+      </RevealOnScroll>
 
       <RevealOnScroll className="section-shell py-14" delayMs={60}>
         <div className="mb-9 text-center lg:text-left">
@@ -263,53 +387,6 @@ export default async function Home() {
 
       <PlacedStudentsWall students={data.placedStudents.slice(0, 4)} />
 
-      <RevealOnScroll className="section-shell py-14">
-        <div className="mb-9 text-center lg:text-left">
-          <p className="section-label">Programs</p>
-          <h2 className="section-title">Programs mapped to every stage of growth</h2>
-          <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-[var(--color-muted)] lg:mx-0 font-medium">
-            Choose the pathway that matches your class, target exam, or long-term academic goal.
-          </p>
-        </div>
-
-        <div className="grid gap-6 lg:grid-cols-2 items-start">
-          {data.programs.map((program, index) => (
-            <article
-              key={program.title}
-              className="surface rounded-xl p-7 hover:shadow-2xl hover:translate-y-[-4px] transition-all cursor-default flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 flex-grow">
-                  <div className="flex items-center gap-2">
-                    <p className="keyword-line">{program.category}</p>
-                    {program.title.includes("Entrance") && (
-                      <span className="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold uppercase animate-pulse">Updated</span>
-                    )}
-                  </div>
-                  <h3 className="mt-3 min-h-[4.5rem] flex items-center text-xl sm:text-2xl font-bold leading-normal tracking-[-0.03em] text-[var(--color-heading)] py-2 overflow-visible">
-                    {program.title}
-                  </h3>
-                </div>
-                <span className="pill shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800 font-bold">{program.duration}</span>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] font-medium flex-grow">
-                {program.description}
-              </p>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {program.focus.map((tag) => (
-                  <span
-                    key={tag}
-                    className="surface-soft border-white dark:border-slate-700 rounded-full px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 shadow-sm"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-      </RevealOnScroll>
-
       <RevealOnScroll className="section-shell py-14" delayMs={40}>
         <div className="mb-9 text-center lg:text-left">
           <p className="section-label">Roles</p>
@@ -317,16 +394,16 @@ export default async function Home() {
         </div>
 
         <div className="grid gap-5 lg:grid-cols-4">
-          {data.roles.map((role, index) => (
+          {homeRoles.map((role) => (
             <article
               key={role.role}
-              className={`surface rounded-xl bg-gradient-to-br ${roleAccentMap[role.role]} p-6 text-center lg:text-left hover:shadow-2xl hover:translate-y-[-4px] transition-all border-blue-100/50`}
+              className={`surface rounded-xl bg-gradient-to-br ${roleAccentMap[role.role as keyof typeof roleAccentMap]} p-6 text-center lg:text-left hover:shadow-2xl hover:translate-y-[-4px] transition-all border-blue-100/50 flex flex-col h-full`}
             >
-              <p className="keyword-line">{role.role}</p>
+              <p className="keyword-line uppercase tracking-widest text-[10px] font-black">{role.role}</p>
               <h3 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-[var(--color-heading)]">
                 {role.title}
               </h3>
-              <p className="mt-3 text-sm leading-7 text-[var(--color-muted)] font-medium">
+              <p className="mt-3 text-sm leading-7 text-[var(--color-muted)] font-medium flex-grow">
                 {role.summary}
               </p>
               <ul className="mt-5 space-y-3 text-sm text-[var(--color-heading)] font-bold">

@@ -2,13 +2,33 @@ import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const openaiClient = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient = null;
+let genAI = null;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+function getOpenAIClient() {
+  if (!openaiClient) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("Missing OPENAI_API_KEY environment variable.");
+    }
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
+
+function getGeminiClient() {
+  if (!genAI) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Missing GEMINI_API_KEY environment variable.");
+    }
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return genAI;
+}
 
 global.smartTutorsMaterials = global.smartTutorsMaterials || [];
 
@@ -132,9 +152,9 @@ Rules:
 `;
 
 async function tryOpenAI(input) {
-  if (!process.env.OPENAI_API_KEY) throw new Error("Missing OpenAI API Key");
+  const client = getOpenAIClient();
   
-  const response = await openaiClient.chat.completions.create({
+  const response = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: input }],
     temperature: 0.5,
@@ -144,9 +164,9 @@ async function tryOpenAI(input) {
 }
 
 async function tryGemini(input) {
-  if (!process.env.GEMINI_API_KEY) throw new Error("Missing Gemini API Key");
+  const client = getGeminiClient();
   
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const model = client.getGenerativeModel({ model: "gemini-2.5-flash" });
   const result = await model.generateContent(input);
   const response = await result.response;
   return response.text();
