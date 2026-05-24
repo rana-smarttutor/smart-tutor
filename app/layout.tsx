@@ -162,17 +162,23 @@ export default function RootLayout({
       `}
     </Script>
 <ThemeProvider>
-  <div className="relative min-h-screen isolate">
-    <div className="relative z-10">
-      <SiteHeader />
-      {children}
-      <SiteFooter />
-    </div>
+  <div className="relative z-10">
+  <div className="no-report-chrome">
+    <SiteHeader />
   </div>
 
-  <FloatingWhatsApp />
-  <PWAInstallButton />
-  <SmartTutorsAIChatbot />
+  {children}
+
+  <div className="no-report-chrome">
+    <SiteFooter />
+  </div>
+
+  <div className="no-report-chrome">
+    <FloatingWhatsApp />
+    <PWAInstallButton />
+    <SmartTutorsAIChatbot />
+  </div>
+</div>
 </ThemeProvider>
 
 <Analytics />
