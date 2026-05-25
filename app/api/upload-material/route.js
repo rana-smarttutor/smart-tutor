@@ -3,9 +3,20 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { getSessionUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+let genAI = null;
+
+function getGeminiClient() {
+  if (!genAI) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Missing GEMINI_API_KEY environment variable.");
+    }
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  }
+  return genAI;
+}
 
 global.smartTutorsMaterials = global.smartTutorsMaterials || [];
 
@@ -216,7 +227,8 @@ ${validImageFiles.map((file, index) => `${index + 1}. ${file.name}`).join("\n")}
   }
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const client = getGeminiClient();
+    const model = client.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(parts);
     const response = await result.response;
     const batchAnalysis = response.text() || "";

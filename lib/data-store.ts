@@ -215,6 +215,8 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
   return {
     id: document.id,
     category: document.category ?? template.category,
+    sections: document.sections?.length ? document.sections : template.sections,
+    statusLabel: document.statusLabel ?? template.statusLabel,
     standardKey: templateKey,
     tagline: document.tagline ?? template.tagline,
     title: template.title,
@@ -483,6 +485,7 @@ export async function getCoursesForRole(role: Role) {
 
 export async function createCourse(input: {
   standardKey: string;
+  sections?: string[];
   tagline: string;
   schedule: string;
   summary: string;
@@ -516,6 +519,8 @@ export async function createCourse(input: {
   const course: CourseItem & { createdAt: string; createdBy: string } = {
     id: randomUUID(),
     category: template.category,
+    sections: input.sections?.length ? input.sections : template.sections,
+    statusLabel: template.statusLabel,
     standardKey: input.standardKey,
     tagline: input.tagline || template.tagline,
     title: template.title,
@@ -547,6 +552,7 @@ export async function createCourse(input: {
 export async function updateCourse(input: {
   id: string;
   standardKey: string;
+  sections?: string[];
   tagline: string;
   schedule: string;
   summary: string;
@@ -583,6 +589,8 @@ export async function updateCourse(input: {
       $set: {
         standardKey: input.standardKey,
         category: template.category,
+        sections: input.sections?.length ? input.sections : template.sections,
+        statusLabel: template.statusLabel,
         tagline: input.tagline || template.tagline,
         title: template.title,
         schedule: input.schedule || template.schedule,
@@ -903,6 +911,12 @@ export async function getLibraryBooksForRole(role: Role) {
       .sort({ createdAt: -1 })
       .toArray(),
   );
+}
+
+export async function getLibraryBookById(id: string) {
+  const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
+  const book = await collection.findOne({ id });
+  return book ? stripMongoId(book) : null;
 }
 
 export async function createLibraryBook(input: Omit<LibraryBook, "id" | "createdAt">) {

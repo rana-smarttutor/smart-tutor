@@ -40,6 +40,8 @@ export type PermissionItem = {
 export type CourseItem = {
   id: string;
   category: string;
+  sections: string[];
+  statusLabel: string;
   standardKey: string;
   tagline: string;
   title: string;
