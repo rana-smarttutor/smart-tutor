@@ -74,20 +74,29 @@ function getSubjectStatus(value: number) {
 }
 
 function StudentAvatar({ report }: { report: Report }) {
-  const initials = report.student.name
-    .split(" ")
-    .map((item) => item[0])
-    .join("")
-    .slice(0, 2);
+  const initials =
+    report.student.name
+      ?.split(" ")
+      .map((item) => item[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() || "ST";
+
+  const hasPhoto = Boolean(report.student.photo);
 
   return (
     <div className="t5-avatar">
-      {report.student.photo ? (
-        <img src={report.student.photo} alt="" onError={(event) => {
-          event.currentTarget.style.display = "none";
-        }} />
-      ) : null}
-      <span>{initials}</span>
+      {hasPhoto ? (
+        <img
+          src={report.student.photo}
+          alt={report.student.name || "Student"}
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
     </div>
   );
 }
@@ -121,7 +130,6 @@ function LineChart({ data }: { data: Report["marksTrend"] }) {
   const width = 760;
   const height = 220;
   const pad = 34;
-
   const points = data || [];
 
   const coords = points.map((item, index) => {
@@ -130,7 +138,8 @@ function LineChart({ data }: { data: Report["marksTrend"] }) {
         ? width / 2
         : pad + (index * (width - pad * 2)) / (points.length - 1);
 
-    const y = height - pad - (Number(item.score || 0) / 100) * (height - pad * 2);
+    const y =
+      height - pad - (Number(item.score || 0) / 100) * (height - pad * 2);
 
     return { x, y, item };
   });
@@ -139,18 +148,36 @@ function LineChart({ data }: { data: Report["marksTrend"] }) {
 
   return (
     <div className="t5-card t5-chart-card">
-      <h3>Weekly Marks Trend</h3>
+      <h3>Marks Trend</h3>
 
       <svg viewBox={`0 0 ${width} ${height}`} className="t5-line-chart">
-        <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} className="t5-axis" />
-        <line x1={pad} y1={pad} x2={pad} y2={height - pad} className="t5-axis" />
+        <line
+          x1={pad}
+          y1={height - pad}
+          x2={width - pad}
+          y2={height - pad}
+          className="t5-axis"
+        />
+        <line
+          x1={pad}
+          y1={pad}
+          x2={pad}
+          y2={height - pad}
+          className="t5-axis"
+        />
 
         {[25, 50, 75, 100].map((tick) => {
           const y = height - pad - (tick / 100) * (height - pad * 2);
 
           return (
             <g key={tick}>
-              <line x1={pad} y1={y} x2={width - pad} y2={y} className="t5-grid" />
+              <line
+                x1={pad}
+                y1={y}
+                x2={width - pad}
+                y2={y}
+                className="t5-grid"
+              />
               <text x={8} y={y + 4} className="t5-tick">
                 {tick}%
               </text>
@@ -166,7 +193,9 @@ function LineChart({ data }: { data: Report["marksTrend"] }) {
             cx={point.x}
             cy={point.y}
             r="5"
-            className={`t5-chart-dot ${statusClass(Number(point.item.score || 0))}`}
+            className={`t5-chart-dot ${statusClass(
+              Number(point.item.score || 0)
+            )}`}
           />
         ))}
 
@@ -192,16 +221,18 @@ function SubjectBars({ subjects }: { subjects: Report["subjectWiseMarks"] }) {
       <h3>Subject-wise Marks</h3>
 
       <div className="t5-bars">
-        {subjects.map((item) => (
-          <div className="t5-bar-row" key={item.subject}>
-            <span>{item.subject}</span>
+        {(subjects || []).map((item, index) => (
+          <div className="t5-bar-row" key={`${item.subject}-${index}`}>
+            <span>{item.subject || "Subject"}</span>
+
             <div className="t5-bar-track">
               <div
                 className={`t5-bar-fill ${statusClass(Number(item.score || 0))}`}
                 style={{ width: `${Math.max(0, Math.min(100, item.score))}%` }}
               />
             </div>
-            <strong>{item.score}%</strong>
+
+            <strong>{item.score || 0}%</strong>
           </div>
         ))}
       </div>
@@ -256,12 +287,14 @@ function AttendanceGraph({ items }: { items: Report["attendanceGraph"] }) {
       <h3>Attendance Graph</h3>
 
       <div className="t5-attendance-grid">
-        {items.map((item, index) => (
+        {(items || []).map((item, index) => (
           <div
             key={`${item.date}-${index}`}
-            className={`t5-attendance-day ${item.present ? "present" : "absent"}`}
+            className={`t5-attendance-day ${
+              item.present ? "present" : "absent"
+            }`}
           >
-            <span>{item.date}</span>
+            <span>{item.date || "-"}</span>
             <strong>{item.present ? "P" : "A"}</strong>
           </div>
         ))}
@@ -278,24 +311,26 @@ function StrongWeakAreas({ report }: { report: Report }) {
       <div className="t5-area-grid">
         <div className="t5-area good">
           <span>Strong Subject</span>
-          <strong>{report.strengthsWeaknesses.strongSubject}</strong>
+          <strong>{report.strengthsWeaknesses.strongSubject || "Not added"}</strong>
         </div>
 
         <div className="t5-area bad">
           <span>Weak Subject</span>
-          <strong>{report.strengthsWeaknesses.weakSubject}</strong>
+          <strong>{report.strengthsWeaknesses.weakSubject || "Not added"}</strong>
         </div>
 
         <div className="t5-area average full">
           <span>Time Management</span>
-          <strong>{report.strengthsWeaknesses.timeManagement}</strong>
+          <strong>{report.strengthsWeaknesses.timeManagement || "Not added"}</strong>
         </div>
       </div>
 
       <div className="t5-chips">
-        {report.strengthsWeaknesses.weakChapters.map((chapter) => (
-          <span key={chapter}>{chapter}</span>
-        ))}
+        {(report.strengthsWeaknesses.weakChapters || []).map(
+          (chapter, index) => (
+            <span key={`${chapter}-${index}`}>{chapter}</span>
+          )
+        )}
       </div>
     </div>
   );
@@ -307,15 +342,15 @@ function TeacherFeedback({ subjects }: { subjects: Report["subjectWiseMarks"] })
       <h3>Subject-wise Teacher Feedback</h3>
 
       <div className="t5-feedback-grid">
-        {subjects.map((item) => (
+        {(subjects || []).map((item, index) => (
           <div
             className={`t5-feedback-card ${statusClass(Number(item.score || 0))}`}
-            key={item.subject}
+            key={`${item.subject}-${index}`}
           >
-            <p>{item.subject}</p>
-            <strong>{item.score}%</strong>
+            <p>{item.subject || "Subject"}</p>
+            <strong>{item.score || 0}%</strong>
             <span>{getSubjectStatus(Number(item.score || 0))}</span>
-            <small>{item.feedback}</small>
+            <small>{item.feedback || "No feedback added."}</small>
           </div>
         ))}
       </div>
@@ -331,22 +366,22 @@ function SmartRecommendations({ report }: { report: Report }) {
       <div className="t5-recommendations">
         <div>
           <b>Teacher Remark</b>
-          <p>{report.suggestions.teacherRemark}</p>
+          <p>{report.suggestions.teacherRemark || "Not added"}</p>
         </div>
 
         <div>
           <b>Improvement Suggestion</b>
-          <p>{report.suggestions.improvementSuggestion}</p>
+          <p>{report.suggestions.improvementSuggestion || "Not added"}</p>
         </div>
 
         <div>
           <b>Study Recommendation</b>
-          <p>{report.suggestions.studyRecommendation}</p>
+          <p>{report.suggestions.studyRecommendation || "Not added"}</p>
         </div>
 
         <div>
           <b>AI Smart Recommendation</b>
-          <p>{report.suggestions.smartRecommendation}</p>
+          <p>{report.suggestions.smartRecommendation || "Not added"}</p>
         </div>
       </div>
     </div>
@@ -374,7 +409,7 @@ export default function StudentPerformanceReport({ report }: { report: Report })
 
   function shareWhatsApp() {
     const message = encodeURIComponent(
-      `Student Performance Report\nName: ${report.student.name}\nPeriod: ${report.period}\nAverage Score: ${report.metrics.averageScore}%\nAccuracy: ${report.metrics.accuracyPercentage}%\nStatus: ${report.status}`
+      `Student Performance Report\nName: ${report.student.name}\nPeriod: ${report.period}\nAverage Score: ${report.metrics.averageScore}%\nAttendance: ${report.metrics.attendancePercentage}%\nStatus: ${report.status}`
     );
 
     window.open(`https://wa.me/?text=${message}`, "_blank");
@@ -388,97 +423,143 @@ export default function StudentPerformanceReport({ report }: { report: Report })
       </div>
 
       <section className="t5-report">
-  <div className="t5-new-header">
-    <div className="t5-new-logo-box">
-      <img
-        src="/smart-tutors-logo.png"
-        alt="Smart Tutors"
-        className="t5-new-logo"
-      />
-    </div>
+        <div className="t5-dashboard-header t5-dashboard-header-wide">
+          <div className="t5-dashboard-top-row">
+            <div className="t5-dashboard-logo-box">
+              <img
+                src="/smart-tutors-logo.png"
+                alt="Smart Tutors"
+                className="t5-dashboard-logo"
+              />
+            </div>
 
-    <div>
-      <p>Smart Tutors</p>
-      <h1>{reportTitle}</h1>
-      <span>
-        Analytics report with graphs, charts, AI insights and teacher feedback
-      </span>
-    </div>
+            <div className="t5-dashboard-divider" />
+
+            <div className="t5-dashboard-title-area">
+              <h1>{reportTitle}</h1>
+             
+            </div>
+
+            <div className="t5-dashboard-kpis">
+              <div>
+                <span>Average Score</span>
+                <strong>{report.metrics.averageScore || 0}%</strong>
+              </div>
+
+              <div>
+                <span>Attendance</span>
+                <strong>{report.metrics.attendancePercentage || 0}%</strong>
+              </div>
+
+              <div className="t5-dashboard-status">
+                <span>Status</span>
+                <strong>{report.status || "Status"}</strong>
+              </div>
+            </div>
+          </div>
+
+        <div className="t5-dashboard-bottom-strip t5-dashboard-bottom-center-only">
+  <span>SmartIQ Academy</span>
+</div>
+</div>
+
+<section className="t5-student-card-fixed">
+  <div className="t5-student-photo-box">
+    <StudentAvatar report={report} />
   </div>
 
-  <section className="t5-student-card">
-          <StudentAvatar report={report} />
+  <div className="t5-student-info-boxes">
+    <div className="t5-student-info-item">
+      <span>STUDENT NAME</span>
+      <strong>{report.student.name || "Student Name"}</strong>
+    </div>
 
-          <div className="t5-student-main">
-            <h2>{report.student.name}</h2>
-            <p>
-              {report.student.classLevel} • {report.student.school}
-            </p>
-            <p>
-              {report.student.city}, {report.student.state}
-            </p>
-          </div>
+    <div className="t5-student-info-item">
+      <span>BATCH</span>
+      <strong>{report.student.batch || "Not added"}</strong>
+    </div>
 
-          <div className="t5-student-info">
-            <div>
-              <span>BATCH</span>
-              <strong>{report.student.batch}</strong>
-            </div>
-            <div>
-              <span>COURSE</span>
-              <strong>{report.student.course}</strong>
-            </div>
-            <div>
-              <span>PARENT</span>
-              <strong>
-                {report.student.parentName} ({report.student.parentRelation})
-              </strong>
-            </div>
-            <div>
-              <span>CONTACT</span>
-              <strong>{report.student.parentContact}</strong>
-            </div>
-          </div>
+    <div className="t5-student-info-item">
+      <span>COURSE</span>
+      <strong>{report.student.course || "Not added"}</strong>
+    </div>
 
-          <div className="t5-status">{report.status}</div>
-        </section>
+    <div className="t5-student-info-item">
+      <span>PARENT</span>
+      <strong>
+        {report.student.parentName || "Not added"}
+        {report.student.parentRelation
+          ? ` (${report.student.parentRelation})`
+          : ""}
+      </strong>
+    </div>
+
+    <div className="t5-student-info-item">
+      <span>CONTACT</span>
+      <strong>{report.student.parentContact || "Not added"}</strong>
+    </div>
+
+    <div className="t5-student-info-item">
+      <span>LOCATION</span>
+      <strong>
+        {[report.student.city, report.student.state].filter(Boolean).join(", ") ||
+          "Not added"}
+      </strong>
+    </div>
+  </div>
+</section>
 
         <h2 className="t5-section-heading">
-          {report.reportType === "monthly" ? "Monthly Performance" : "Weekly Performance"}
+          {report.reportType === "monthly"
+            ? "Monthly Performance"
+            : "Weekly Performance"}
         </h2>
 
         <section className="t5-metrics-grid">
           <MetricCard
-            label={report.reportType === "monthly" ? "Monthly Average Score" : "Weekly Average Score"}
+            label={
+              report.reportType === "monthly"
+                ? "Monthly Average Score"
+                : "Weekly Average Score"
+            }
             value={report.metrics.averageScore}
             suffix="%"
             helper="Last tests average"
             tone="good"
           />
+
           <MetricCard
             label="Batch Rank"
             value={report.metrics.batchRank}
             helper="Latest test rank"
             tone="good"
           />
+
           <MetricCard
             label="Attendance"
             value={report.metrics.attendancePercentage}
             suffix="%"
             tone="good"
           />
+
           <MetricCard
             label="Homework Completion"
             value={report.metrics.homeworkCompletionPercentage}
             suffix="%"
             tone="average"
           />
+
           <MetricCard
             label="Improvement"
-            value={report.metrics.improvementPercentage > 0 ? `+${report.metrics.improvementPercentage}` : report.metrics.improvementPercentage}
+            value={
+              report.metrics.improvementPercentage > 0
+                ? `+${report.metrics.improvementPercentage}`
+                : report.metrics.improvementPercentage
+            }
             suffix="%"
             tone={report.metrics.improvementPercentage >= 0 ? "good" : "bad"}
           />
+
           <MetricCard
             label="Accuracy"
             value={report.metrics.accuracyPercentage}

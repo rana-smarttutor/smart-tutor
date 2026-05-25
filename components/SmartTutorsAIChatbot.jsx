@@ -224,7 +224,7 @@ export default function SmartTutorsAIChatbot() {
           {open ? (
             <span style={styles.closeIcon}>×</span>
           ) : (
-            <img src="/image3.png" alt="AI" style={styles.logoIcon} />
+            <img src="/image5.png" alt="AI" style={styles.logoIcon} />
           )}
         </button>
       </div>
