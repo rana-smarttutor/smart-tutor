@@ -62,7 +62,6 @@ export default function ReportCreatorForm() {
 
     studentName: "",
     classLevel: "",
-    school: "",
     city: "",
     state: "",
     batch: "",
@@ -336,7 +335,6 @@ export default function ReportCreatorForm() {
       student: {
         name: form.studentName,
         classLevel: form.classLevel,
-        school: form.school,
         city: form.city,
         state: form.state,
         batch: form.batch,
@@ -585,12 +583,7 @@ export default function ReportCreatorForm() {
               onChange={updateForm}
             />
 
-            <Field
-              label="School"
-              name="school"
-              value={form.school}
-              onChange={updateForm}
-            />
+          
 
             <Field
               label="City"

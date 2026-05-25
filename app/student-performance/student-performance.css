@@ -97,6 +97,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.spr-grid.five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .spr-field {
   display: grid;
   gap: 9px;
@@ -230,39 +234,132 @@
   transform: none;
 }
 
-@media (max-width: 1000px) {
-  .spr-grid.three,
-  .spr-grid.two,
-  .spr-row-card,
-  .spr-row-card.compact,
-  .spr-attendance-editor {
-    grid-template-columns: 1fr;
-  }
+/* Report creator header */
 
-  .spr-top {
-    flex-direction: column;
-  }
-
-  .spr-primary-btn {
-    width: 100%;
-  }
+.spr-report-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: #020617;
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
 }
 
-@media (max-width: 640px) {
-  .spr-page {
-    padding: 20px 12px;
-  }
-
-  .spr-top,
-  .spr-section {
-    border-radius: 22px;
-    padding: 18px;
-  }
-
-  .spr-top h1 {
-    font-size: 30px;
-  }
+.spr-report-logo-wrap {
+  width: 250px;
+  min-width: 250px;
+  height: 72px;
+  border-radius: 999px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
 }
+
+.spr-report-logo {
+  max-width: 100%;
+  max-height: 52px;
+  object-fit: contain;
+}
+
+.spr-report-kicker {
+  margin: 0 0 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.spr-report-header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.08;
+  font-weight: 950;
+}
+
+.spr-report-header p:not(.spr-report-kicker) {
+  margin: 12px 0 0;
+  color: #cbd5e1;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.spr-section-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.spr-section-title-row h2 {
+  margin-bottom: 10px;
+}
+
+.spr-section-title-row p {
+  margin: 0;
+  color: #94a3b8;
+  font-weight: 650;
+}
+
+.spr-small-toggle-btn {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(30, 41, 59, 0.95);
+  color: #e5e7eb;
+  border-radius: 14px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.spr-small-toggle-btn:hover {
+  background: rgba(51, 65, 85, 0.95);
+}
+
+.spr-muted-line {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.spr-photo-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.35);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.spr-photo-preview img {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 2px solid rgba(96, 165, 250, 0.35);
+}
+
+.spr-photo-preview p {
+  margin: 0;
+  color: #bfdbfe;
+  font-size: 12px;
+  font-weight: 800;
+  word-break: break-all;
+}
+
+.spr-feedback-grid {
+  margin-top: 16px;
+}
+
 /* =========================
    T5 REPORT VIEWER DESIGN
 ========================= */
@@ -314,39 +411,8 @@
   box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
 }
 
-.t5-header {
-  background: linear-gradient(135deg, #020617, #0f172a 45%, #2563eb);
-  color: #ffffff;
-  border-radius: 24px;
-  padding: 28px;
-  margin-bottom: 18px;
-}
-
-.t5-header p {
-  margin: 0 0 10px;
-  font-size: 13px;
-  letter-spacing: 0.35em;
-  font-weight: 950;
-}
-
-.t5-header h1 {
-  margin: 0;
-  font-size: 34px;
-  line-height: 1.1;
-  font-weight: 950;
-}
-
-.t5-header span {
-  display: block;
-  margin-top: 10px;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 14px;
-  font-weight: 650;
-}
-
 .t5-student-card {
   display: grid;
-  grid-template-columns: auto 1fr auto;
   gap: 18px;
   align-items: center;
   border: 1px solid #dbeafe;
@@ -381,57 +447,6 @@
 .t5-avatar span {
   position: relative;
   z-index: 1;
-}
-
-.t5-student-main h2 {
-  margin: 0 0 6px;
-  font-size: 28px;
-  font-weight: 950;
-}
-
-.t5-student-main p {
-  margin: 2px 0;
-  color: #64748b;
-  font-weight: 700;
-}
-
-.t5-student-info {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.t5-student-info div {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 12px;
-}
-
-.t5-student-info span {
-  display: block;
-  font-size: 11px;
-  color: #64748b;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  margin-bottom: 5px;
-}
-
-.t5-student-info strong {
-  font-size: 13px;
-  color: #0f172a;
-  font-weight: 900;
-}
-
-.t5-status {
-  padding: 10px 14px;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 13px;
-  font-weight: 950;
-  white-space: nowrap;
 }
 
 .t5-section-heading {
@@ -855,96 +870,205 @@
   font-weight: 750;
 }
 
-@media (max-width: 900px) {
-  .t5-report {
-    padding: 16px;
-  }
+/* =========================
+   WIDE DASHBOARD HEADER
+========================= */
 
-  .t5-chart-grid,
-  .t5-metrics-grid,
-  .t5-student-info,
-  .t5-feedback-grid,
-  .t5-recommendations {
-    grid-template-columns: 1fr;
-  }
-
-  .t5-student-card {
-    grid-template-columns: 1fr;
-  }
-
-  .t5-status {
-    width: fit-content;
-  }
+.t5-dashboard-header-wide {
+  padding: 0 !important;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.22), transparent 28%),
+    linear-gradient(135deg, #020617 0%, #071124 52%, #0f3b8f 100%) !important;
+  border-radius: 22px !important;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  color: #ffffff;
+  margin-bottom: 20px;
 }
 
-@media print {
-  body {
-    background: #ffffff !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .t5-page {
-    background: #ffffff !important;
-    padding: 0 !important;
-  }
-
-  .t5-report {
-    max-width: 780px !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    padding: 14px !important;
-  }
-
-  .t5-header {
-    padding: 22px !important;
-  }
-
-  .t5-header h1 {
-    font-size: 28px !important;
-  }
-
-  .t5-card,
-  .t5-student-card {
-    box-shadow: none !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .t5-metrics-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
-  }
-
-  .t5-chart-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .t5-student-info {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .t5-feedback-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .t5-recommendations {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
-  .t5-line-chart {
-    height: 220px !important;
-  }
-
-  @page {
-    size: A4 portrait;
-    margin: 8mm;
-  }
+.t5-dashboard-top-row {
+  display: grid;
+  grid-template-columns: 190px 1px 1fr 330px;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 22px;
 }
+
+.t5-dashboard-divider {
+  height: 92px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.t5-dashboard-title-area h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1.15;
+  font-weight: 950;
+  letter-spacing: -0.03em;
+}
+
+.t5-dashboard-title-area p {
+  margin: 8px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  line-height: 1.45;
+  font-weight: 650;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-logo-box {
+  min-height: 74px;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-logo {
+  max-width: 160px;
+  max-height: 48px;
+  object-fit: contain;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 0;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-kpis div {
+  min-height: 72px;
+  border-radius: 14px;
+  padding: 11px 12px;
+  background: rgba(37, 99, 235, 0.22);
+  border: 1px solid rgba(96, 165, 250, 0.22);
+}
+
+.t5-dashboard-header-wide .t5-dashboard-kpis span {
+  display: block;
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  color: #bfdbfe;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-kpis strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 18px;
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-status {
+  background: rgba(22, 163, 74, 0.22) !important;
+  border-color: rgba(74, 222, 128, 0.24) !important;
+}
+
+.t5-dashboard-header-wide .t5-dashboard-status strong {
+  color: #bbf7d0 !important;
+}
+
+.t5-dashboard-bottom-strip {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 16px;
+  align-items: center;
+  background: rgba(37, 99, 235, 0.55);
+  padding: 9px 22px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.t5-dashboard-bottom-strip span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =========================
+   FINAL FIX: STUDENT PROFILE + INFO GRID
+========================= */
+
+.t5-student-card-profile-fixed {
+  display: grid !important;
+  grid-template-columns: 170px 1fr !important;
+  align-items: stretch !important;
+  gap: 18px !important;
+  padding: 22px !important;
+}
+
+.t5-student-profile-box-fixed {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  background: #ffffff !important;
+  border-radius: 22px !important;
+  padding: 14px !important;
+}
+
+.t5-student-profile-box-fixed .t5-avatar {
+  width: 96px !important;
+  height: 96px !important;
+  min-width: 96px !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+
+.t5-student-profile-box-fixed .t5-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.t5-student-info-fixed {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(220px, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.t5-student-info-fixed div {
+  min-width: 0 !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  background: #ffffff !important;
+  border-radius: 18px !important;
+  padding: 16px !important;
+}
+
+.t5-student-info-fixed span {
+  display: block !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  white-space: normal !important;
+}
+
+.t5-student-info-fixed strong {
+  display: block !important;
+  margin-top: 10px !important;
+  color: #020617 !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  font-weight: 950 !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
 /* Hide global website header/footer/chatbot/WhatsApp on report viewer */
+
 body.report-only-mode .no-report-chrome {
   display: none !important;
 }
@@ -953,7 +1077,100 @@ body.report-only-mode {
   background: #eef4ff !important;
 }
 
-/* Print only the report */
+@media (max-width: 1000px) {
+  .spr-grid.three,
+  .spr-grid.two,
+  .spr-grid.five,
+  .spr-row-card,
+  .spr-row-card.compact,
+  .spr-attendance-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .spr-top {
+    flex-direction: column;
+  }
+
+  .spr-primary-btn {
+    width: 100%;
+  }
+
+  .spr-report-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .spr-report-logo-wrap {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .spr-section-title-row {
+    flex-direction: column;
+  }
+
+  .spr-small-toggle-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .t5-report {
+    padding: 16px;
+  }
+
+  .t5-dashboard-top-row {
+    grid-template-columns: 1fr;
+  }
+
+  .t5-dashboard-divider {
+    display: none;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .t5-dashboard-bottom-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .t5-chart-grid,
+  .t5-metrics-grid,
+  .t5-feedback-grid,
+  .t5-recommendations {
+    grid-template-columns: 1fr;
+  }
+
+  .t5-student-card-profile-fixed {
+    grid-template-columns: 1fr !important;
+  }
+
+  .t5-student-info-fixed {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .spr-page {
+    padding: 20px 12px;
+  }
+
+  .spr-top,
+  .spr-section {
+    border-radius: 22px;
+    padding: 18px;
+  }
+
+  .spr-top h1 {
+    font-size: 30px;
+  }
+}
+
+/* =========================
+   PRINT / PDF
+========================= */
+
 @media print {
   .no-report-chrome,
   .no-print,
@@ -1003,8 +1220,8 @@ body.report-only-mode {
   }
 
   .t5-card,
-  .t5-student-card,
-  .t5-header {
+  .t5-student-card {
+    box-shadow: none !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
@@ -1024,10 +1241,6 @@ body.report-only-mode {
     grid-template-columns: 1fr !important;
   }
 
-  .t5-student-info {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
-
   .t5-feedback-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
@@ -1036,165 +1249,1053 @@ body.report-only-mode {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
+  .t5-line-chart {
+    height: 220px !important;
+  }
+
+  .t5-dashboard-header-wide {
+    border-radius: 16px !important;
+    background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.22), transparent 28%),
+      linear-gradient(135deg, #020617 0%, #071124 52%, #0f3b8f 100%) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-dashboard-top-row {
+    grid-template-columns: 150px 1px 1fr 250px !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .t5-dashboard-divider {
+    height: 70px !important;
+  }
+
+  .t5-dashboard-title-area h1 {
+    font-size: 18px !important;
+  }
+
+  .t5-dashboard-title-area p {
+    font-size: 9px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo-box {
+    min-height: 58px !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo {
+    max-width: 125px !important;
+    max-height: 38px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis div {
+    min-height: 54px !important;
+    padding: 7px !important;
+    border-radius: 10px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis span {
+    font-size: 6px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis strong {
+    font-size: 12px !important;
+  }
+
+  .t5-dashboard-bottom-strip {
+    grid-template-columns: 1fr 1fr 1fr !important;
+    padding: 6px 14px !important;
+    font-size: 8px !important;
+  }
+
+  .t5-student-card-profile-fixed {
+    grid-template-columns: 125px 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .t5-student-profile-box-fixed {
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .t5-student-profile-box-fixed .t5-avatar {
+    width: 72px !important;
+    height: 72px !important;
+    min-width: 72px !important;
+    border-radius: 16px !important;
+  }
+
+  .t5-student-info-fixed {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .t5-student-info-fixed div {
+    padding: 9px !important;
+    border-radius: 12px !important;
+  }
+
+  .t5-student-info-fixed span {
+    font-size: 7px !important;
+  }
+
+  .t5-student-info-fixed strong {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
   @page {
     size: A4 portrait;
     margin: 8mm;
   }
 }
 /* =========================
-   REPORT CREATOR HEADER + HEURISTICS
+   FINAL STUDENT CARD FIX
 ========================= */
 
-.spr-report-header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: #020617;
-  border-radius: 28px;
-  padding: 28px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+.t5-student-card-fixed {
+  display: grid !important;
+  grid-template-columns: 145px 1fr !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+  background: #f8fbff !important;
+  border: 1px solid #dbeafe !important;
+  border-radius: 24px !important;
+  padding: 20px !important;
+  margin-bottom: 22px !important;
 }
 
-.spr-report-logo-wrap {
-  width: 250px;
-  min-width: 250px;
-  height: 72px;
-  border-radius: 999px;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 24px;
+.t5-student-photo-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: 20px !important;
+  padding: 12px !important;
+  min-width: 0 !important;
 }
 
-.spr-report-logo {
-  max-width: 100%;
-  max-height: 52px;
-  object-fit: contain;
+.t5-student-photo-box .t5-avatar {
+  width: 92px !important;
+  height: 92px !important;
+  min-width: 92px !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
 }
 
-.spr-report-kicker {
-  margin: 0 0 8px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+.t5-student-photo-box .t5-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }
 
-.spr-report-header h1 {
-  margin: 0;
-  color: #ffffff;
-  font-size: clamp(28px, 4vw, 44px);
-  line-height: 1.08;
-  font-weight: 950;
+.t5-student-info-boxes {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
-.spr-report-header p:not(.spr-report-kicker) {
-  margin: 12px 0 0;
-  color: #cbd5e1;
-  font-size: 15px;
-  font-weight: 650;
+.t5-student-info-boxes > div {
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: 18px !important;
+  padding: 16px !important;
+  min-width: 0 !important;
 }
 
-.spr-section-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 24px;
+.t5-student-info-boxes span {
+  display: block !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 9px !important;
 }
 
-.spr-section-title-row h2 {
-  margin-bottom: 10px;
+.t5-student-info-boxes strong {
+  display: block !important;
+  color: #020617 !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  font-weight: 950 !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
 }
 
-.spr-section-title-row p {
-  margin: 0;
-  color: #94a3b8;
-  font-weight: 650;
-}
-
-.spr-small-toggle-btn {
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  background: rgba(30, 41, 59, 0.95);
-  color: #e5e7eb;
-  border-radius: 14px;
-  padding: 10px 14px;
-  font-size: 14px;
-  font-weight: 900;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.spr-small-toggle-btn:hover {
-  background: rgba(51, 65, 85, 0.95);
-}
-
-.spr-grid.five {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
-.spr-muted-line {
-  margin: 0;
-  color: #94a3b8;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-@media (max-width: 1000px) {
-  .spr-report-header {
-    flex-direction: column;
-    align-items: flex-start;
+@media print {
+  .t5-student-card-fixed {
+    grid-template-columns: 110px 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
   }
 
-  .spr-report-logo-wrap {
-    width: 100%;
-    min-width: 0;
+  .t5-student-photo-box {
+    padding: 8px !important;
+    border-radius: 14px !important;
   }
 
-  .spr-grid.five {
-    grid-template-columns: 1fr;
+  .t5-student-photo-box .t5-avatar {
+    width: 68px !important;
+    height: 68px !important;
+    min-width: 68px !important;
+    border-radius: 14px !important;
   }
 
-  .spr-section-title-row {
-    flex-direction: column;
+  .t5-student-info-boxes {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
   }
 
-  .spr-small-toggle-btn {
-    width: 100%;
+  .t5-student-info-boxes > div {
+    padding: 9px !important;
+    border-radius: 12px !important;
+  }
+
+  .t5-student-info-boxes span {
+    font-size: 7px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .t5-student-info-boxes strong {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .t5-student-card-fixed {
+    grid-template-columns: 1fr !important;
+  }
+
+  .t5-student-info-boxes {
+    grid-template-columns: 1fr !important;
   }
 }
 /* =========================
-   STUDENT PHOTO UPLOAD
+   FINAL STUDENT DETAILS CARD
 ========================= */
 
-.spr-photo-preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  background: rgba(2, 6, 23, 0.35);
-  border-radius: 16px;
-  padding: 12px;
+.t5-student-card-fixed {
+  display: grid !important;
+  grid-template-columns: 150px 1fr !important;
+  gap: 18px !important;
+  align-items: stretch !important;
+  background: #f8fbff !important;
+  border: 1px solid #dbeafe !important;
+  border-radius: 24px !important;
+  padding: 20px !important;
+  margin-bottom: 22px !important;
 }
 
-.spr-photo-preview img {
-  width: 58px;
-  height: 58px;
-  border-radius: 16px;
-  object-fit: cover;
-  border: 2px solid rgba(96, 165, 250, 0.35);
+.t5-student-photo-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: 20px !important;
+  padding: 12px !important;
 }
 
-.spr-photo-preview p {
-  margin: 0;
-  color: #bfdbfe;
-  font-size: 12px;
-  font-weight: 800;
-  word-break: break-all;
+.t5-student-photo-box .t5-avatar {
+  width: 96px !important;
+  height: 96px !important;
+  min-width: 96px !important;
+  border-radius: 20px !important;
 }
-.spr-feedback-grid {
-  margin-top: 16px;
+
+.t5-student-photo-box .t5-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.t5-student-info-boxes {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.t5-student-info-item {
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: 18px !important;
+  padding: 16px !important;
+  min-width: 0 !important;
+}
+
+.t5-student-info-item span {
+  display: block !important;
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  margin-bottom: 9px !important;
+}
+
+.t5-student-info-item strong {
+  display: block !important;
+  color: #020617 !important;
+  font-size: 15px !important;
+  line-height: 1.35 !important;
+  font-weight: 950 !important;
+  word-break: normal !important;
+  overflow-wrap: break-word !important;
+}
+
+@media print {
+  .t5-student-card-fixed {
+    grid-template-columns: 110px 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .t5-student-photo-box {
+    padding: 8px !important;
+    border-radius: 14px !important;
+  }
+
+  .t5-student-photo-box .t5-avatar {
+    width: 68px !important;
+    height: 68px !important;
+    min-width: 68px !important;
+    border-radius: 14px !important;
+  }
+
+  .t5-student-info-boxes {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .t5-student-info-item {
+    padding: 9px !important;
+    border-radius: 12px !important;
+  }
+
+  .t5-student-info-item span {
+    font-size: 7px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .t5-student-info-item strong {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .t5-student-card-fixed {
+    grid-template-columns: 1fr !important;
+  }
+
+  .t5-student-info-boxes {
+    grid-template-columns: 1fr !important;
+  }
+}
+/* Student photo clean square card */
+
+.t5-student-photo-box {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(148, 163, 184, 0.22) !important;
+  border-radius: 24px !important;
+  padding: 18px !important;
+  min-height: 170px !important;
+}
+
+.t5-student-photo-box .t5-avatar {
+  width: 120px !important;
+  height: 120px !important;
+  min-width: 120px !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.t5-student-photo-box .t5-avatar img {
+  position: static !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+.t5-student-photo-box .t5-avatar span {
+  position: static !important;
+}
+/* =========================
+   PDF HEADER FIX - NO OVERLAP
+========================= */
+
+@media print {
+  .t5-dashboard-header-wide {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.22), transparent 28%),
+      linear-gradient(135deg, #020617 0%, #071124 52%, #0f3b8f 100%) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-dashboard-top-row {
+    display: grid !important;
+    grid-template-columns: 125px 1px minmax(210px, 1fr) 230px !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo-box {
+    width: 125px !important;
+    min-height: 58px !important;
+    padding: 8px !important;
+    border-radius: 12px !important;
+    background: #ffffff !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo {
+    max-width: 105px !important;
+    max-height: 36px !important;
+    object-fit: contain !important;
+  }
+
+  .t5-dashboard-divider {
+    height: 62px !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  .t5-dashboard-title-area {
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .t5-dashboard-title-area h1 {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 17px !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.03em !important;
+    max-width: 100% !important;
+  }
+
+  .t5-dashboard-title-area p {
+    display: none !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    min-width: 0 !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis div {
+    min-width: 0 !important;
+    min-height: 52px !important;
+    padding: 7px !important;
+    border-radius: 10px !important;
+    background: rgba(37, 99, 235, 0.22) !important;
+    border: 1px solid rgba(96, 165, 250, 0.22) !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis span {
+    display: block !important;
+    font-size: 5.8px !important;
+    line-height: 1.1 !important;
+    letter-spacing: 0.08em !important;
+    color: #bfdbfe !important;
+    font-weight: 950 !important;
+    text-transform: uppercase !important;
+    white-space: normal !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis strong {
+    display: block !important;
+    margin-top: 6px !important;
+    font-size: 12px !important;
+    line-height: 1.1 !important;
+    color: #ffffff !important;
+    font-weight: 950 !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status {
+    background: rgba(22, 163, 74, 0.22) !important;
+    border-color: rgba(74, 222, 128, 0.24) !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status strong {
+    color: #bbf7d0 !important;
+  }
+
+  .t5-dashboard-bottom-strip {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    background: rgba(37, 99, 235, 0.55) !important;
+    color: #ffffff !important;
+    font-size: 8px !important;
+    font-weight: 850 !important;
+  }
+
+  .t5-dashboard-bottom-strip span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+}
+/* =========================
+   FINAL PDF HEADER SIZE FIX
+   Makes PDF header match browser header
+========================= */
+
+@media print {
+  .t5-report {
+    max-width: 1000px !important;
+    width: 1000px !important;
+    padding: 14px !important;
+    margin: 0 auto !important;
+  }
+
+  .t5-dashboard-header-wide {
+    width: 100% !important;
+    min-height: 150px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.22), transparent 28%),
+      linear-gradient(135deg, #020617 0%, #071124 52%, #0f3b8f 100%) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-dashboard-top-row {
+    display: grid !important;
+    grid-template-columns: 230px 1px 1fr 390px !important;
+    align-items: center !important;
+    gap: 22px !important;
+    padding: 22px 26px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo-box {
+    width: 220px !important;
+    min-height: 86px !important;
+    border-radius: 18px !important;
+    background: #ffffff !important;
+    padding: 14px 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo {
+    max-width: 175px !important;
+    max-height: 54px !important;
+    object-fit: contain !important;
+  }
+
+  .t5-dashboard-divider {
+    height: 105px !important;
+    background: rgba(255, 255, 255, 0.22) !important;
+  }
+
+  .t5-dashboard-title-area {
+    min-width: 0 !important;
+  }
+
+  .t5-dashboard-title-area h1 {
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 30px !important;
+    line-height: 1.12 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  .t5-dashboard-title-area p {
+    display: none !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 14px !important;
+    margin: 0 !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis div {
+    min-height: 86px !important;
+    border-radius: 16px !important;
+    padding: 14px 16px !important;
+    background: rgba(37, 99, 235, 0.26) !important;
+    border: 1px solid rgba(96, 165, 250, 0.28) !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis span {
+    display: block !important;
+    color: #bfdbfe !important;
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis strong {
+    display: block !important;
+    margin-top: 12px !important;
+    color: #ffffff !important;
+    font-size: 24px !important;
+    line-height: 1.1 !important;
+    font-weight: 950 !important;
+    white-space: nowrap !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status {
+    background: rgba(22, 163, 74, 0.25) !important;
+    border-color: rgba(74, 222, 128, 0.3) !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status strong {
+    color: #bbf7d0 !important;
+  }
+
+  .t5-dashboard-bottom-strip {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    align-items: center !important;
+    gap: 20px !important;
+    background: rgba(37, 99, 235, 0.72) !important;
+    color: #ffffff !important;
+    padding: 10px 26px !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+
+  .t5-dashboard-bottom-strip span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .t5-dashboard-bottom-strip span:nth-child(2) {
+    display: none !important;
+  }
+}
+
+/* =====================================================
+   FINAL PDF OVERRIDE - HEADER + STUDENT INFO FIX
+   Paste this at the VERY BOTTOM of student-performance.css
+===================================================== */
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 6mm;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-page {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .t5-report {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 10px !important;
+    margin: 0 auto !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* PDF HEADER FIX */
+  .t5-dashboard-header-wide {
+    width: 100% !important;
+    min-height: 150px !important;
+    border-radius: 18px !important;
+    overflow: hidden !important;
+    margin-bottom: 14px !important;
+    background:
+      radial-gradient(circle at top right, rgba(96, 165, 250, 0.24), transparent 30%),
+      linear-gradient(135deg, #020617 0%, #071124 52%, #0f3b8f 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-dashboard-top-row {
+    display: grid !important;
+    grid-template-columns: 155px 1px minmax(210px, 1fr) 260px !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 18px 18px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo-box {
+    width: 150px !important;
+    min-height: 72px !important;
+    border-radius: 15px !important;
+    background: #ffffff !important;
+    padding: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-logo {
+    max-width: 128px !important;
+    max-height: 44px !important;
+    object-fit: contain !important;
+  }
+
+  .t5-dashboard-divider {
+    display: block !important;
+    height: 92px !important;
+    width: 1px !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+  }
+
+  .t5-dashboard-title-area {
+    display: block !important;
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .t5-dashboard-title-area h1 {
+    display: block !important;
+    margin: 0 !important;
+    color: #ffffff !important;
+    font-size: 25px !important;
+    line-height: 1.15 !important;
+    font-weight: 950 !important;
+    letter-spacing: -0.04em !important;
+    white-space: normal !important;
+    overflow: visible !important;
+  }
+
+  .t5-dashboard-title-area p {
+    display: none !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 260px !important;
+    margin: 0 !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis div {
+    min-width: 0 !important;
+    min-height: 70px !important;
+    border-radius: 14px !important;
+    padding: 10px !important;
+    background: rgba(37, 99, 235, 0.26) !important;
+    border: 1px solid rgba(96, 165, 250, 0.28) !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis span {
+    display: block !important;
+    color: #bfdbfe !important;
+    font-size: 7px !important;
+    line-height: 1.15 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    white-space: normal !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis strong {
+    display: block !important;
+    margin-top: 8px !important;
+    color: #ffffff !important;
+    font-size: 17px !important;
+    line-height: 1.1 !important;
+    font-weight: 950 !important;
+    white-space: normal !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status {
+    background: rgba(22, 163, 74, 0.26) !important;
+    border-color: rgba(74, 222, 128, 0.3) !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status strong {
+    color: #bbf7d0 !important;
+  }
+
+  .t5-dashboard-bottom-strip {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    align-items: center !important;
+    gap: 12px !important;
+    background: rgba(37, 99, 235, 0.76) !important;
+    color: #ffffff !important;
+    padding: 8px 18px !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+  }
+
+  .t5-dashboard-bottom-strip span {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .t5-dashboard-bottom-strip span:nth-child(2) {
+    display: none !important;
+  }
+
+  /* STUDENT INFO BLOCKS BIGGER IN PDF */
+  .t5-student-card-fixed {
+    display: grid !important;
+    grid-template-columns: 115px 1fr !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+    background: #f8fbff !important;
+    border: 1px solid #dbeafe !important;
+    border-radius: 18px !important;
+    padding: 12px !important;
+    margin-bottom: 18px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .t5-student-photo-box {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    border-radius: 16px !important;
+    padding: 8px !important;
+    min-height: 112px !important;
+  }
+
+  .t5-student-photo-box .t5-avatar {
+    width: 82px !important;
+    height: 82px !important;
+    min-width: 82px !important;
+    border-radius: 18px !important;
+    background: transparent !important;
+    overflow: hidden !important;
+  }
+
+  .t5-student-photo-box .t5-avatar img {
+    position: static !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  .t5-student-photo-box .t5-avatar span {
+    position: static !important;
+  }
+
+  .t5-student-info-boxes {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .t5-student-info-item {
+    display: block !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(148, 163, 184, 0.22) !important;
+    border-radius: 14px !important;
+    padding: 11px !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+  }
+
+  .t5-student-info-item span {
+    display: block !important;
+    color: #64748b !important;
+    font-size: 7.5px !important;
+    line-height: 1.2 !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    margin-bottom: 6px !important;
+    white-space: normal !important;
+  }
+
+  .t5-student-info-item strong {
+    display: block !important;
+    color: #020617 !important;
+    font-size: 11px !important;
+    line-height: 1.28 !important;
+    font-weight: 950 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Make performance blocks slightly bigger too */
+  .t5-metrics-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .t5-metric {
+    min-height: 95px !important;
+    padding: 13px !important;
+    border-radius: 16px !important;
+  }
+
+  .t5-metric p {
+    font-size: 9px !important;
+  }
+
+  .t5-metric strong {
+    font-size: 24px !important;
+  }
+
+  .t5-metric span {
+    font-size: 8px !important;
+  }
+}
+
+/* Fix status text wrapping in PDF header */
+
+@media print {
+  .t5-dashboard-header-wide .t5-dashboard-kpis {
+    grid-template-columns: 0.9fr 0.9fr 1.25fr !important;
+    width: 280px !important;
+    gap: 7px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis div {
+    padding: 8px !important;
+    min-height: 66px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis span {
+    font-size: 6.5px !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-kpis strong {
+    font-size: 15px !important;
+    white-space: nowrap !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  .t5-dashboard-header-wide .t5-dashboard-status strong {
+    font-size: 14px !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* Bottom strip only SmartIQ Academy centered */
+
+.t5-dashboard-bottom-center-only {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  grid-template-columns: none !important;
+  text-align: center !important;
+}
+
+.t5-dashboard-bottom-center-only span {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+}
+
+@media print {
+  .t5-dashboard-bottom-center-only {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    grid-template-columns: none !important;
+    text-align: center !important;
+  }
+
+  .t5-dashboard-bottom-center-only span {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* SmartIQ Academy center strip text */
+.t5-dashboard-bottom-center-only span {
+  font-size: 17px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.02em !important;
+}
+
+@media print {
+  .t5-dashboard-bottom-center-only span {
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    letter-spacing: 0.02em !important;
+  }
+}
+/* Underline SmartIQ Academy center strip text */
+.t5-dashboard-bottom-center-only span {
+  font-size: 15px !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.02em !important;
+  text-decoration: underline !important;
+  text-decoration-thickness: 2px !important;
+  text-underline-offset: 4px !important;
+}
+
+@media print {
+  .t5-dashboard-bottom-center-only span {
+    font-size: 12px !important;
+    font-weight: 950 !important;
+    text-decoration: underline !important;
+    text-decoration-thickness: 1.5px !important;
+    text-underline-offset: 3px !important;
+  }
 }
