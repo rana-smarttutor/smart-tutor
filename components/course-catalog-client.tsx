@@ -6,6 +6,7 @@ import { CourseCatalog } from "@/components/course-catalog";
 import type { CourseItem } from "@/lib/types";
 
 const COURSE_CACHE_KEY = "smart-tutor-course-cache-v4";
+const CLASS_6_8_REGULAR_TITLE = "Class 6th-8th Regular Academic (State/CBSE)";
 
 const TABS = [
   "Class 6-8",
@@ -89,6 +90,9 @@ export function CourseCatalogClient({ initialCourses }: CourseCatalogClientProps
       );
 
       if (searchQuery) return matchesSearch;
+      if (course.title === CLASS_6_8_REGULAR_TITLE) {
+        return activeTab === "Class 6-8";
+      }
       return course.sections && course.sections.includes(activeTab);
     });
   }, [courses, activeTab, searchQuery]);

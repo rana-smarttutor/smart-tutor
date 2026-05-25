@@ -913,6 +913,12 @@ export async function getLibraryBooksForRole(role: Role) {
   );
 }
 
+export async function getLibraryBookById(id: string) {
+  const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
+  const book = await collection.findOne({ id });
+  return book ? stripMongoId(book) : null;
+}
+
 export async function createLibraryBook(input: Omit<LibraryBook, "id" | "createdAt">) {
   const book: LibraryBook = {
     id: randomUUID(),

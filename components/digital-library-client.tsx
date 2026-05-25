@@ -160,16 +160,14 @@ export function DigitalLibraryClient({
                   <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-muted)]">
                     {new Date(book.createdAt).toLocaleDateString()}
                   </span>
-                  {book.megaFileUrl && (
-                    <a 
-                      href={book.megaFileUrl} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="btn-action btn-sm px-6"
-                    >
-                      Download PDF
-                    </a>
-                  )}
+                  <a
+                    href={`/api/digital-library/${book.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn-action btn-sm px-6"
+                  >
+                    Open PDF
+                  </a>
                 </div>
               </div>
             </article>
