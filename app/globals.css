@@ -114,57 +114,35 @@
 @theme inline {
   --color-background: var(--color-background);
   --color-foreground: var(--color-body);
+  --color-primary: var(--color-primary);
+  --color-primary-strong: var(--color-primary-strong);
+  --color-primary-soft: var(--color-primary-soft);
+  --color-secondary: var(--color-secondary);
+  --color-heading: var(--color-heading);
+  --color-muted: var(--color-muted);
+  --color-border: var(--color-border);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-danger: var(--color-danger);
+  --color-info: var(--color-info);
+  --color-highlight: var(--color-highlight);
+  --color-accent: var(--color-primary);
+  --color-accent-strong: var(--color-primary-strong);
   --font-sans: var(--font-sans);
   --font-headline: var(--font-headline);
   --font-mono: var(--font-mono);
+  --font-fancy: var(--font-playfair);
 }
 
-/* Mobile Responsiveness & Overflow Fixes */
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-  position: relative;
-  scroll-behavior: smooth;
-}
-
-/* Ensure all main containers are centered and don't overflow */
-main,
-section,
-header,
-footer {
-  width: 100%;
-  max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-}
-
-/* Fix for common horizontal overflow sources */
-img,
-video,
-canvas,
-svg {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Chatbot Typing Animation Helper */
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .5; }
-}
-
+/* Base Styles & Overflow Fixes */
 * {
   box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
+  /* Use clip where supported, fallback to hidden */
+  overflow-x: hidden;
   overflow-x: clip;
 }
 
@@ -179,6 +157,20 @@ body {
   font-family: var(--font-sans);
   cursor: default;
   position: relative;
+  margin: 0;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Ensure all main containers are centered and don't overflow */
+main,
+section,
+header,
+footer {
+  width: 100%;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Base UI Components */

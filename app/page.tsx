@@ -77,10 +77,10 @@ export default async function Home() {
             <p className="keyword-line uppercase tracking-widest text-blue-600 font-bold">
               Total Student Empowerment
             </p>
-            <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-(--color-heading) sm:text-5xl xl:mx-0 xl:text-6xl">
+            <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
               Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
-            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-(--color-muted) xl:mx-0">
+            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-[var(--color-muted)] xl:mx-0">
               Smart Tutors provides <strong>Programs mapped to every stage of growth</strong>. 
               We bring disciplined preparation, sharp mentoring, and real academic 
               momentum into one focused institute experience. From school boards to 
@@ -94,7 +94,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/contact"
-              className="surface inline-flex items-center justify-center rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-(--color-heading) border-blue-200 hover:border-blue-400 transition-colors min-h-15 sm:min-h-16 w-full sm:w-auto"
+              className="surface inline-flex items-center justify-center rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-blue-200 hover:border-blue-400 transition-colors min-h-15 sm:min-h-16 w-full sm:w-auto"
             >
               Contact Admissions
             </Link>
@@ -108,14 +108,14 @@ export default async function Home() {
                     value={metric.value}
                     className="text-2xl sm:text-xl lg:text-2xl font-bold tracking-tight text-blue-700"
                   />
-                  <p className="mt-1 text-xs sm:text-sm font-bold text-(--color-heading)">{metric.label}</p>
+                  <p className="mt-1 text-xs sm:text-sm font-bold text-[var(--color-heading)]">{metric.label}</p>
                 </div>
               </article>
             ))}
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 opacity-80 grayscale hover:grayscale-0 transition-all justify-center lg:justify-start">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-(--color-muted)">Recognized By</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">Recognized By</p>
             <div className="flex flex-wrap gap-4 sm:gap-8 items-center justify-center">
               <span className="font-bold text-sm sm:text-lg whitespace-nowrap">ISO 9001:2015</span>
               <span className="font-bold text-sm sm:text-lg whitespace-nowrap">MSME Certified</span>
@@ -123,7 +123,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="pt-10 border-t border-(--color-border) mt-10">
+          <div className="pt-10 border-t border-[var(--color-border)] mt-10">
             <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
               <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
               <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
@@ -137,7 +137,7 @@ export default async function Home() {
                   <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 leading-[1.1] tracking-tight">
                     Ready to Start Your <span className="text-blue-600 dark:text-blue-400">Journey?</span>
                   </h3>
-                  <p className="text-lg text-(--color-muted) mb-0 leading-relaxed font-medium">
+                  <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
                     Join 500+ students already excelling with Smart Tutors. Get access to expert mentoring and disciplined preparation.
                   </p>
                 </div>
