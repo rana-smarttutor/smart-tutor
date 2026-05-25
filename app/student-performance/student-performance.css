@@ -2268,7 +2268,7 @@ body.report-only-mode {
 
 /* SmartIQ Academy center strip text */
 .t5-dashboard-bottom-center-only span {
-  font-size: 17px !important;
+  font-size: 20px !important;
   font-weight: 950 !important;
   letter-spacing: 0.02em !important;
 }
@@ -2297,5 +2297,495 @@ body.report-only-mode {
     text-decoration: underline !important;
     text-decoration-thickness: 1.5px !important;
     text-underline-offset: 3px !important;
+  }
+}
+/* =========================
+   COLORFUL SMART RECOMMENDATIONS
+========================= */
+
+.t5-recommendations {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.t5-recommendations div {
+  border-radius: 18px !important;
+  padding: 16px !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06) !important;
+}
+
+.t5-recommendations div:nth-child(1) {
+  background: linear-gradient(180deg, #eff6ff, #dbeafe) !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+.t5-recommendations div:nth-child(2) {
+  background: linear-gradient(180deg, #fff7ed, #ffedd5) !important;
+  border-color: #fed7aa !important;
+  color: #c2410c !important;
+}
+
+.t5-recommendations div:nth-child(3) {
+  background: linear-gradient(180deg, #f0fdf4, #dcfce7) !important;
+  border-color: #bbf7d0 !important;
+  color: #15803d !important;
+}
+
+.t5-recommendations div:nth-child(4) {
+  background: linear-gradient(180deg, #f5f3ff, #ede9fe) !important;
+  border-color: #ddd6fe !important;
+  color: #6d28d9 !important;
+}
+
+.t5-recommendations b {
+  display: inline-flex !important;
+  align-items: center !important;
+  width: fit-content !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  padding: 7px 12px !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  margin-bottom: 10px !important;
+  color: inherit !important;
+}
+
+.t5-recommendations p {
+  margin: 0 !important;
+  color: inherit !important;
+  opacity: 0.9 !important;
+  line-height: 1.65 !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+}
+
+/* PDF version */
+@media print {
+  .t5-recommendations {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .t5-recommendations div {
+    padding: 12px !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-recommendations b {
+    font-size: 9px !important;
+    padding: 5px 9px !important;
+    margin-bottom: 7px !important;
+  }
+
+  .t5-recommendations p {
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+  }
+}
+/* Allow Smart Recommendations to start on previous PDF page if space exists */
+@media print {
+  .t5-bottom-grid {
+    display: block !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-bottom-grid > .t5-card {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    margin-bottom: 12px !important;
+  }
+
+  .t5-card:has(.t5-recommendations) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-recommendations {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-recommendations div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+  /* =========================
+   FINAL SMART RECOMMENDATIONS FIX
+   Colourful + can split across PDF pages
+========================= */
+
+.t5-smart-section {
+  border: 1px solid #dbeafe !important;
+  background: #ffffff !important;
+  border-radius: 22px !important;
+  padding: 18px !important;
+  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.06) !important;
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+}
+
+.t5-smart-section h3 {
+  margin: 0 0 16px !important;
+  font-size: 18px !important;
+  font-weight: 950 !important;
+  color: #0f172a !important;
+}
+
+.t5-smart-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  break-inside: auto !important;
+  page-break-inside: auto !important;
+}
+
+.t5-smart-card {
+  border-radius: 18px !important;
+  padding: 16px !important;
+  border: 1px solid transparent !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+.t5-smart-card-blue {
+  background: linear-gradient(180deg, #eff6ff, #dbeafe) !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+.t5-smart-card-orange {
+  background: linear-gradient(180deg, #fff7ed, #ffedd5) !important;
+  border-color: #fed7aa !important;
+  color: #c2410c !important;
+}
+
+.t5-smart-card-green {
+  background: linear-gradient(180deg, #f0fdf4, #dcfce7) !important;
+  border-color: #bbf7d0 !important;
+  color: #15803d !important;
+}
+
+.t5-smart-card-purple {
+  background: linear-gradient(180deg, #f5f3ff, #ede9fe) !important;
+  border-color: #ddd6fe !important;
+  color: #6d28d9 !important;
+}
+
+.t5-smart-card b {
+  display: inline-flex !important;
+  width: fit-content !important;
+  border-radius: 999px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  padding: 7px 12px !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  margin-bottom: 10px !important;
+  color: inherit !important;
+}
+
+.t5-smart-card p {
+  margin: 0 !important;
+  color: inherit !important;
+  opacity: 0.92 !important;
+  line-height: 1.65 !important;
+  font-size: 13px !important;
+  font-weight: 750 !important;
+}
+
+/* PDF flow fix */
+@media print {
+  .t5-bottom-grid {
+    display: block !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-bottom-grid > * {
+    margin-bottom: 10px !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-smart-section {
+    padding: 12px !important;
+    border-radius: 16px !important;
+    box-shadow: none !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-smart-section h3 {
+    font-size: 15px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .t5-smart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-smart-card {
+    padding: 10px !important;
+    border-radius: 12px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .t5-smart-card b {
+    font-size: 8px !important;
+    padding: 4px 8px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .t5-smart-card p {
+    font-size: 9px !important;
+    line-height: 1.35 !important;
+  }
+}
+/* =========================
+   FIX SUBJECT FEEDBACK PAGE OVERLAP IN PDF
+========================= */
+
+@media print {
+  .t5-feedback-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .t5-feedback-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    min-height: auto !important;
+    padding: 11px !important;
+    border-radius: 12px !important;
+  }
+
+  .t5-feedback-card p {
+    font-size: 10px !important;
+    margin-bottom: 5px !important;
+  }
+
+  .t5-feedback-card strong {
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+  }
+
+  .t5-feedback-card span {
+    font-size: 7px !important;
+    padding: 4px 8px !important;
+    margin-top: 4px !important;
+  }
+
+  .t5-feedback-card small {
+    display: block !important;
+    font-size: 8px !important;
+    line-height: 1.35 !important;
+    margin-top: 6px !important;
+  }
+
+  .t5-card:has(.t5-feedback-grid) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    padding: 12px !important;
+  }
+
+  .t5-card:has(.t5-feedback-grid) h3 {
+    font-size: 14px !important;
+    margin-bottom: 10px !important;
+  }
+}
+/* =========================
+   KEEP SUBJECT FEEDBACK SECTION TOGETHER IN PDF
+========================= */
+@media print {
+  .t5-feedback-card {
+    min-height: 120px !important;
+    padding: 10px !important;
+  }
+
+  .t5-feedback-card strong {
+    font-size: 18px !important;
+  }
+
+  .t5-feedback-card small {
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+  }
+}
+/* =========================
+   FINAL PDF FIX: TEACHER FEEDBACK NO OVERLAP
+========================= */
+
+@media print {
+  .t5-teacher-feedback-section {
+    break-before: page !important;
+    page-break-before: always !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .t5-teacher-feedback-section h3 {
+    font-size: 14px !important;
+    margin: 0 0 10px !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card {
+    min-height: 125px !important;
+    padding: 10px !important;
+    border-radius: 12px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card p {
+    font-size: 9px !important;
+    margin: 0 0 5px !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card strong {
+    font-size: 18px !important;
+    line-height: 1.1 !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card span {
+    font-size: 7px !important;
+    padding: 4px 8px !important;
+    margin-top: 4px !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card small {
+    display: block !important;
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+    margin-top: 6px !important;
+  }
+}
+/* =========================
+   FINAL PAGE BREAK FIX
+========================= */
+
+.t5-bottom-flow {
+  display: block !important;
+}
+
+.t5-bottom-flow > * {
+  margin-bottom: 16px !important;
+}
+
+.t5-pdf-page-break {
+  display: none;
+}
+
+@media print {
+  .t5-bottom-grid {
+    display: block !important;
+  }
+
+  .t5-bottom-flow {
+    display: block !important;
+  }
+
+  .t5-pdf-page-break {
+    display: block !important;
+    break-before: page !important;
+    page-break-before: always !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .t5-teacher-feedback-section {
+    display: block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-top: 0 !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
+  }
+
+  .t5-teacher-feedback-section h3 {
+    font-size: 14px !important;
+    margin: 0 0 10px !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card {
+    min-height: 125px !important;
+    padding: 10px !important;
+    border-radius: 12px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card p {
+    font-size: 9px !important;
+    margin: 0 0 5px !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card strong {
+    font-size: 18px !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card span {
+    font-size: 7px !important;
+    padding: 4px 8px !important;
+  }
+
+  .t5-teacher-feedback-section .t5-feedback-card small {
+    display: block !important;
+    font-size: 8px !important;
+    line-height: 1.3 !important;
+    margin-top: 6px !important;
+  }
+}
+/* Remove forced blank page before teacher feedback */
+@media print {
+  .t5-pdf-page-break {
+    display: none !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .t5-teacher-feedback-section {
+    break-before: auto !important;
+    page-break-before: auto !important;
   }
 }
