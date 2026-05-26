@@ -12,11 +12,18 @@ interface PlacedStudentsWallProps {
 export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
   const [filter, setFilter] = useState<string>("all");
 
+  const categories = [
+    { label: "All Results", value: "all" },
+    { label: "MBA Entrance", value: "MAH MBA CET" },
+    { label: "Banking & PO", value: "SBI PO|NABARD" },
+    { label: "Govt & SSC", value: "SSC GD" },
+    { label: "Law Entrance", value: "CLAT" },
+  ];
+
   const filteredStudents = students.filter((s) => {
     if (filter === "all") return true;
-    if (filter === "placed") return !!s.company;
-    if (filter === "toppers") return !s.company;
-    return true;
+    const filterRegex = new RegExp(filter, "i");
+    return filterRegex.test(s.examName || "");
   });
 
   // Limit display to a reasonable number for the initial view, maybe with a "Load More"
@@ -33,53 +40,36 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
               Our Wall of Success
             </h2>
             <p className="text-lg text-slate-700 dark:text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed">
-              Celebrating the hard work and achievements of our students. From board toppers to successful career placements, our learners continue to excel across the globe.
+              Celebrating the exceptional performance of our students in competitive examinations. Their success is a testament to our focused mentoring and their dedication.
             </p>
           </div>
         </RevealOnScroll>
 
         <div className="flex justify-center gap-4 mb-14 flex-wrap">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-10 py-4 rounded-full font-bold transition-all shadow-md hover:scale-105 ${
-              filter === "all"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400"
-            }`}
-          >
-            All Achievements
-          </button>
-          <button
-            onClick={() => setFilter("placed")}
-            className={`px-10 py-4 rounded-full font-bold transition-all shadow-md hover:scale-105 ${
-              filter === "placed"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400"
-            }`}
-          >
-            Career Placements
-          </button>
-          <button
-            onClick={() => setFilter("toppers")}
-            className={`px-10 py-4 rounded-full font-bold transition-all shadow-md hover:scale-105 ${
-              filter === "toppers"
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400"
-            }`}
-          >
-            Academic Toppers
-          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.value}
+              onClick={() => setFilter(cat.value)}
+              className={`px-8 py-3 rounded-full font-bold transition-all shadow-md hover:scale-105 ${
+                filter === cat.value
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400"
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
           {visibleStudents.map((student, index) => (
             <RevealOnScroll key={student.id} delayMs={index % 4 * 100}>
-              <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl hover:translate-y-[-12px] transition-all duration-500 border border-slate-100 dark:border-slate-700 group">
+              <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl hover:translate-y-[-12px] transition-all duration-500 border border-slate-100 dark:border-slate-700 group relative">
                 <div className="aspect-[4/5] relative overflow-hidden bg-slate-100 dark:bg-slate-900">
                   {student.image ? (
                     <Image
                       src={student.image}
-                      alt="Success Story"
+                      alt={student.name}
                       fill
                       loading="lazy"
                       className="object-cover group-hover:scale-110 transition-transform duration-700"
@@ -95,46 +85,75 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                       </svg>
                     </div>
                   )}
-                  {student.image && student.company && (
-                    <div className="absolute top-5 right-5 bg-blue-600 text-white text-xs font-bold px-5 py-2 rounded-full shadow-2xl z-10 animate-bounce">
-                      Placed
+                  
+                  {/* Separate Result Badges - Always Visible */}
+                  <div className="absolute top-5 left-5 flex flex-col gap-2 z-10 pointer-events-none">
+                    {student.rank && (
+                      <div className="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl uppercase tracking-widest border border-blue-400/50">
+                        Rank: {student.rank}
+                      </div>
+                    )}
+                    {student.marks && (
+                      <div className="bg-emerald-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl uppercase tracking-widest border border-emerald-400/50">
+                        Score: {student.marks}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Achievement Overlay - Visible on Hover */}
+                  <div className="absolute inset-0 bg-blue-900/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-8 text-center text-white z-20 backdrop-blur-md">
+                    <p className="text-blue-200 text-[10px] font-black uppercase tracking-[0.3em] mb-4">Official Result</p>
+                    <h4 className="text-2xl font-black mb-1 leading-tight">{student.name}</h4>
+                    <div className="h-1 w-12 bg-white/20 my-4 rounded-full"></div>
+                    
+                    <div className="space-y-3 w-full">
+                       <div className="flex flex-col items-center">
+                          <span className="text-[8px] font-black text-blue-300 uppercase tracking-widest mb-1">Examination</span>
+                          <span className="text-sm font-bold">{student.examName}</span>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-4 border-t border-white/10 pt-3 mt-3">
+                          {student.marks && (
+                            <div className="flex flex-col items-center">
+                               <span className="text-[8px] font-black text-emerald-300 uppercase tracking-widest mb-1">Marks/Percentile</span>
+                               <span className="text-base font-black text-emerald-100">{student.marks}</span>
+                            </div>
+                          )}
+                          {student.rank && (
+                            <div className="flex flex-col items-center">
+                               <span className="text-[8px] font-black text-blue-300 uppercase tracking-widest mb-1">Final Rank</span>
+                               <span className="text-base font-black text-blue-100">{student.rank}</span>
+                            </div>
+                          )}
+                       </div>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                    <p className="text-white font-bold text-sm">Success Story <span>→</span></p>
+
+                    <div className="mt-8 inline-flex items-center gap-2 text-[10px] font-black bg-white text-blue-900 px-6 py-3 rounded-2xl shadow-2xl hover:scale-105 transition-transform">
+                      VIEW SUCCESS STORY <span>→</span>
+                    </div>
                   </div>
                 </div>
-                <div className="p-6">
-                  {student.image ? (
-                    /* Image available: show company/salary, hide name/course */
-                    <div className="space-y-3">
-                      {student.company && (
-                        <div className="flex items-center text-slate-800 dark:text-slate-200 font-bold text-xs">
-                          <div className="h-7 w-7 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center mr-2">
-                            <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                          {student.company}
+                <div className="p-8 text-center border-t border-slate-50 dark:border-slate-800">
+                   <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black mb-2 uppercase tracking-[0.25em]">
+                    {student.examName}
+                  </p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                    {student.name}
+                  </h3>
+                  <div className="mt-4 flex justify-center gap-4">
+                     {student.rank && (
+                        <div className="flex flex-col">
+                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Rank</span>
+                           <span className="text-xs font-black text-blue-600">{student.rank}</span>
                         </div>
-                      )}
-                      {student.salary && (
-                        <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-black bg-emerald-100 dark:bg-emerald-900/40 px-3 py-1.5 rounded-lg inline-block shadow-sm">
-                          {student.salary} Package
+                     )}
+                     {student.marks && (
+                        <div className="flex flex-col">
+                           <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Result</span>
+                           <span className="text-xs font-black text-emerald-600">{student.marks}</span>
                         </div>
-                      )}
-                    </div>
-                  ) : (
-                    /* No image: show name/course, hide company/salary */
-                    <>
-                      <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black mb-2 uppercase tracking-[0.2em] bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full inline-block border border-blue-100 dark:border-blue-800">
-                        {student.course}
-                      </p>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4 group-hover:text-blue-600 transition-colors">
-                        {student.name}
-                      </h3>
-                    </>
-                  )}
+                     )}
+                  </div>
                 </div>
               </div>
             </RevealOnScroll>

@@ -90,7 +90,7 @@ export default function ReportCreatorForm() {
     teacherRemark: "",
     improvementSuggestion: "",
     studyRecommendation: "",
-    smartRecommendation: "",
+    smartStrategy: "",
   });
 
   const reportTitle =
@@ -212,7 +212,7 @@ export default function ReportCreatorForm() {
 
     const studyRecommendation = `${studentName} should revise ${weakSubject} regularly, especially ${weakChapters}. A weekly plan should include concept revision, chapter-wise practice, timed tests, and mistake review. ${strongSubject} should be maintained through regular practice so the existing strength is not lost.`;
 
-    const smartRecommendation = `Based on the report data, ${studentName} should follow a personalized improvement plan. Priority should be given to ${weakSubject} and topics like ${weakChapters}. The student should complete daily practice, attend classes regularly, and attempt short mock tests every week. Performance should be reviewed using accuracy, homework completion, attendance, improvement percentage, and marks trend. If this routine is followed consistently, the student can improve steadily in the next report cycle.`;
+    const smartStrategy = `Based on the report data, ${studentName} should follow a personalized improvement plan. Priority should be given to ${weakSubject} and topics like ${weakChapters}. The student should complete daily practice, attend classes regularly, and attempt short mock tests every week. Performance should be reviewed using accuracy, homework completion, attendance, improvement percentage, and marks trend. If this routine is followed consistently, the student can improve steadily in the next report cycle.`;
 
     const updatedSubjects = subjects.map((item) => {
       const score = Number(item.score) || 0;
@@ -246,7 +246,7 @@ export default function ReportCreatorForm() {
       teacherRemark,
       improvementSuggestion,
       studyRecommendation,
-      smartRecommendation,
+      smartStrategy,
     }));
   }
 
@@ -397,8 +397,8 @@ export default function ReportCreatorForm() {
         studyRecommendation:
           form.studyRecommendation ||
           "The student should follow a structured study plan with revision, practice, and weekly assessments.",
-        smartRecommendation:
-          form.smartRecommendation ||
+        smartStrategy:
+          form.smartStrategy ||
           "Based on the student's performance data, focused revision, regular practice, and mock test analysis are recommended for improvement.",
       },
     };
@@ -964,8 +964,8 @@ export default function ReportCreatorForm() {
 
             <Field
               label="Smart Recommendation"
-              name="smartRecommendation"
-              value={form.smartRecommendation}
+              name="smartStrategy"
+              value={form.smartStrategy}
               onChange={updateForm}
               textarea
             />

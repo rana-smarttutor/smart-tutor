@@ -177,6 +177,7 @@ function getRoleLabel(role: Role) {
   if (role === "admin") return "Admin Console";
   if (role === "educator") return "Educator Desk";
   if (role === "student") return "Student Workspace";
+  if (role === "parent") return "Parent Connect";
   return "Student Workspace";
 }
 
@@ -187,6 +188,10 @@ function buildHeroTitle(role: Role, template: DashboardTemplate, user: SessionUs
 
   if (role === "student") {
     return `Welcome back, ${user.name.split(" ")[0]}`;
+  }
+
+  if (role === "parent") {
+    return `Parent Connect | ${user.name.split(" ")[0]}`;
   }
 
   if (role === "educator") {
@@ -441,13 +446,14 @@ export async function getDemoCredentials() {
     ) as DemoCredential[];
 }
 
-export async function findUserByCredentials(login: string, password: string) {
+export async function findUserByCredentials(login: string, password: string, role?: Role) {
   const collection = await getUsersCollection();
   const normalizedLogin = login.toLowerCase();
   const emailLocalPart = normalizedLogin.includes("@")
     ? normalizedLogin.split("@")[0]
     : normalizedLogin;
-  const user = await collection.findOne({
+  
+  const query: any = {
     password,
     $or: [
       { email: normalizedLogin },
@@ -464,7 +470,13 @@ export async function findUserByCredentials(login: string, password: string) {
         },
       },
     ],
-  });
+  };
+
+  if (role) {
+    query.role = role;
+  }
+
+  const user = await collection.findOne(query);
   return user ? toSessionUser(user) : null;
 }
 

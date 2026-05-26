@@ -3,18 +3,21 @@ import { NextResponse } from "next/server";
 import { createSessionResponse } from "@/lib/auth";
 import { findUserByCredentials } from "@/lib/data-store";
 import { sanitizePasswordInput, sanitizeTextInput } from "@/lib/validation";
+import { Role } from "@/lib/types";
 
 export async function POST(request: Request) {
   let body: {
     login?: string;
     email?: string;
     password?: string;
+    role?: Role;
   };
 
   try {
     body = (await request.json()) as {
       email?: string;
       password?: string;
+      role?: Role;
     };
   } catch {
     return NextResponse.json({ error: "Invalid login payload." }, { status: 400 });
@@ -22,6 +25,7 @@ export async function POST(request: Request) {
 
   const login = sanitizeTextInput(body.login ?? body.email, 120).toLowerCase();
   const password = sanitizePasswordInput(body.password);
+  const role = body.role;
 
   if (!login || !password) {
     return NextResponse.json(
@@ -30,7 +34,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await findUserByCredentials(login, password);
+  const user = await findUserByCredentials(login, password, role);
 
   if (!user) {
     return NextResponse.json(

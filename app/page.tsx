@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { CountUpValue } from "@/components/count-up-value";
-import { HomeGlobe } from "@/components/home-globe";
 import { LiveClock } from "@/components/live-clock";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { getPublicInstituteData } from "@/lib/data-store";
@@ -11,6 +10,7 @@ import { StudentCarousel } from "@/components/student-carousel";
 import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
 import { courseLibrary } from "@/lib/course-library";
 import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
+import { ProgramCarousel } from "@/components/program-carousel";
 
 export const dynamic = "force-dynamic";
 
@@ -73,10 +73,11 @@ export default async function Home() {
             </div> 
           </div>
 
+          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-blue-600">
+            India’s No.1 Trusted Smart Learning Platform
+          </p>
+
           <div className="space-y-5">
-            <p className="keyword-line uppercase tracking-widest text-blue-600 font-bold">
-              Total Student Empowerment
-            </p>
             <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
               Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
@@ -213,107 +214,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-24">
-            {[
-              { 
-                stage: "Early Foundation", 
-                title: "Primary School", 
-                desc: "Class 1-5 Foundation. Build reading, numeracy, study habits, and confidence early with close mentoring and guided practice.",
-                subjects: ["Maths", "English", "EVS", "Homework Support"],
-                color: "bg-blue-600",
-                badge: "Academic Year"
-              },
-              { 
-                stage: "Middle Years", 
-                title: "Class 6-8", 
-                desc: "Conceptual mastery in State/CBSE and Premium tracks for ICSE/IB, plus IoT & Robotics.",
-                subjects: ["Maths", "Science", "Social Studies", "Robotics"],
-                color: "bg-indigo-600",
-                badge: "Board Base"
-              },
-              { 
-                stage: "Board Prep", 
-                title: "Class 9-12", 
-                desc: "Integrated board excellence with JEE, NEET, and NTSE scholarship tracks.",
-                subjects: ["Physics", "Chemistry", "Maths/Bio", "Entrance"],
-                color: "bg-violet-600",
-                badge: "Competitive"
-              },
-              { 
-                stage: "Career Ready", 
-                title: "Graduation", 
-                desc: "University subject support, Full Stack Dev, Data Science, and UI/UX design.",
-                subjects: ["Engg Support", "Web Dev", "Data Science", "SAP"],
-                color: "bg-emerald-600",
-                badge: "Professional"
-              },
-              { 
-                stage: "Leadership", 
-                title: "Professional", 
-                desc: "UPSC, MPSC, Banking, Defense, and Advanced AI/Research certifications.",
-                subjects: ["UPSC/MPSC", "Banking", "Defense", "Research"],
-                color: "bg-purple-700",
-                badge: "Govt & R&D"
-              }
-            ].map((item, i) => (
-              <div key={i} className="surface group rounded-[2.5rem] p-8 border-2 border-white shadow-xl hover:scale-[1.05] transition-all duration-500 flex flex-col h-full bg-white dark:bg-slate-950">
-                <div className="flex justify-between items-start mb-6">
-                  <div className={`${item.color} text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shadow-lg`}>
-                    0{i+1}
-                  </div>
-                  <span className={`${item.color} text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider`}>
-                    {item.badge}
-                  </span>
-                </div>
-                <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-2">{item.stage}</p>
-                <h3 className="text-2xl font-bold text-[var(--color-heading)] mb-4">{item.title}</h3>
-                <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium mb-6">
-                  {item.desc}
-                </p>
-                <div className="mt-auto pt-6 border-t border-blue-50 dark:border-slate-800 flex flex-wrap gap-2">
-                  {item.subjects.map(s => (
-                    <span key={s} className="bg-slate-50 dark:bg-slate-900 text-[10px] font-bold text-[var(--color-heading)] px-2 py-1 rounded-md border border-slate-100 dark:border-slate-800">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2 items-start opacity-90">
-            {data.programs.map((program) => (
-              <article
-                key={program.title}
-                className="surface rounded-xl p-7 hover:shadow-2xl hover:translate-y-[-4px] transition-all cursor-default flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-grow">
-                    <div className="flex items-center gap-2">
-                      <p className="keyword-line">{program.category}</p>
-                    </div>
-                    <h3 className="mt-3 min-h-[4.5rem] flex items-center text-xl sm:text-2xl font-bold leading-normal tracking-[-0.03em] text-[var(--color-heading)] py-2">
-                      {program.title}
-                    </h3>
-                  </div>
-                  <span className="pill shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800 font-bold">{program.duration}</span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] font-medium flex-grow">
-                  {program.description}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {program.focus.map((tag) => (
-                    <span
-                      key={tag}
-                      className="surface-soft border-white dark:border-slate-700 rounded-full px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 shadow-sm"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
+          <ProgramCarousel programs={data.programs} />
           
           <div className="mt-16 text-center">
             <Link href="/courses" className="action-button px-10 py-5 text-lg shadow-2xl">
@@ -381,11 +282,23 @@ export default async function Home() {
         <StudentCarousel />
       </div>
 
-      <HomeGlobe />
+      <section className="py-20 bg-slate-50 dark:bg-slate-950/50 border-y border-slate-200 dark:border-slate-800">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
+              Academic Excellence
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-[var(--color-heading)] mb-6">
+              Recent Results
+            </h2>
+            <p className="text-[var(--color-muted)] text-lg font-medium max-w-2xl mx-auto">
+              Smart Tutors honors the dedication and remarkable achievements of our students. Our proven track record defines our commitment to academic brilliance.
+            </p>
+          </div>
 
-      <GrandSuccessCarousel />
-
-      <PlacedStudentsWall students={data.placedStudents.slice(0, 4)} />
+          <GrandSuccessCarousel />
+        </div>
+      </section>
 
       <RevealOnScroll className="section-shell py-14" delayMs={40}>
         <div className="mb-9 text-center lg:text-left">

@@ -376,7 +376,7 @@ function SmartStrategy({ report }: { report: Report }) {
     },
     {
       title: "AI Smart Recommendation",
-      text: report.suggestions.smartRecommendation || "Not added",
+      text: report.suggestions.smartStrategy || "Not added",
       tone: "purple",
     },
   ];
