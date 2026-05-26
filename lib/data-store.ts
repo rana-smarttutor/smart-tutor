@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { randomUUID } from "crypto";
 
 import type { Document } from "mongodb";
@@ -410,10 +411,10 @@ function normalizePublicInstituteData(document: PublicInstituteData): PublicInst
   };
 }
 
-export async function getPublicInstituteData() {
+export const getPublicInstituteData = cache(async function getPublicInstituteData() {
   const document = await getContentDocument<PublicInstituteData>("public-site");
   return normalizePublicInstituteData(document);
-}
+});
 
 export async function getMockQuizQuestions() {
   const collection = await getCollection<QuizQuestion>(COLLECTIONS.quizzes);
