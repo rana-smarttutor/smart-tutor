@@ -57,7 +57,6 @@ export default function ReportCreatorForm() {
 
   const [form, setForm] = useState({
     reportType: "weekly",
-    period: "",
     status: "",
 
     studentName: "",
@@ -69,7 +68,6 @@ export default function ReportCreatorForm() {
     parentName: "",
     parentRelation: "",
     parentContact: "",
-    photo: "",
 
     averageScore: "",
     batchRank: "",
@@ -321,7 +319,7 @@ export default function ReportCreatorForm() {
 
     const reportPayload = {
       reportType: form.reportType,
-      period: form.period,
+      
       status: form.status,
 
       heuristics: {
@@ -342,7 +340,7 @@ export default function ReportCreatorForm() {
         parentName: form.parentName,
         parentRelation: form.parentRelation,
         parentContact: form.parentContact,
-        photo: form.photo,
+
       },
 
       metrics: {
@@ -404,28 +402,37 @@ export default function ReportCreatorForm() {
     };
 
     try {
-      const response = await fetch("/api/student-performance/reports", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(reportPayload),
-      });
+  const response = await fetch("/api/student-performance/reports", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(reportPayload),
+  });
 
-      const result = await response.json();
+  const contentType = response.headers.get("content-type") || "";
 
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Failed to create report.");
-      }
-
-      router.push(`/student-performance/report/${result.reportId}`);
-    } catch (error) {
-      console.error(error);
-      alert("Failed to create performance report. Check console/server logs.");
-    } finally {
-      setIsSubmitting(false);
-    }
+  if (!contentType.includes("application/json")) {
+    const text = await response.text();
+    console.error("API did not return JSON:", text.slice(0, 500));
+    throw new Error(
+      "API returned HTML instead of JSON. Check /api/student-performance/reports route."
+    );
   }
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to create report.");
+  }
+
+  router.push(`/student-performance/report/${result.reportId}`);
+} catch (error) {
+  console.error(error);
+  alert("Failed to create performance report. Check console/server logs.");
+} finally {
+  setIsSubmitting(false);
+}
 
   return (
     <main className="spr-page">
@@ -555,12 +562,7 @@ export default function ReportCreatorForm() {
               ]}
             />
 
-            <Field
-              label="Period"
-              name="period"
-              value={form.period}
-              onChange={updateForm}
-            />
+            
 
             <Field
               label="Status"
@@ -599,53 +601,6 @@ export default function ReportCreatorForm() {
               onChange={updateForm}
             />
 
-            <div className="spr-field">
-              <span>Upload Student Picture</span>
-
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-
-                  if (!file) return;
-
-                  const formData = new FormData();
-                  formData.append("file", file);
-
-                  try {
-                    const response = await fetch(
-                      "/api/student-performance/upload-photo",
-                      {
-                        method: "POST",
-                        body: formData,
-                      }
-                    );
-
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                      alert(result.message || "Failed to upload photo.");
-                      return;
-                    }
-
-                    updateForm("photo", result.url);
-                  } catch (error) {
-                    console.error(error);
-                    alert("Photo upload failed.");
-                  }
-                }}
-              />
-
-              {form.photo ? (
-                <div className="spr-photo-preview">
-                  <img src={form.photo} alt="Student preview" />
-                  <p>{form.photo}</p>
-                </div>
-              ) : (
-                <p className="spr-muted-line">No student photo uploaded.</p>
-              )}
-            </div>
 
             <Field
               label="Batch"
@@ -1026,4 +981,5 @@ function Field({
       )}
     </label>
   );
+}
 }

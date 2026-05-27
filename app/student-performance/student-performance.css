@@ -2789,3 +2789,26 @@ body.report-only-mode {
     page-break-before: auto !important;
   }
 }
+
+/* Student initials avatar only */
+
+.t5-student-photo-box .t5-avatar {
+  background: linear-gradient(135deg, #2563eb, #60a5fa) !important;
+  color: #ffffff !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.t5-student-photo-box .t5-avatar span {
+  display: block !important;
+  position: static !important;
+  z-index: 1 !important;
+  color: #ffffff !important;
+  font-size: 30px !important;
+  font-weight: 950 !important;
+}
+@media print {
+  .t5-student-photo-box .t5-avatar span {
+    font-size: 24px !important;
+  }
+}

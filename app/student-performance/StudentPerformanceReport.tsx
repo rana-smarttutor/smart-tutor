@@ -82,21 +82,9 @@ function StudentAvatar({ report }: { report: Report }) {
       .slice(0, 2)
       .toUpperCase() || "ST";
 
-  const hasPhoto = Boolean(report.student.photo);
-
   return (
     <div className="t5-avatar">
-      {hasPhoto ? (
-        <img
-          src={report.student.photo}
-          alt={report.student.name || "Student"}
-          onError={(event) => {
-            event.currentTarget.style.display = "none";
-          }}
-        />
-      ) : (
-        <span>{initials}</span>
-      )}
+      <span>{initials}</span>
     </div>
   );
 }
@@ -375,8 +363,8 @@ function SmartStrategy({ report }: { report: Report }) {
       tone: "green",
     },
     {
-      title: "AI Smart Recommendation",
-      text: report.suggestions.smartRecommendation || "Not added",
+      title: "AI Smart Strategy",
+      text: report.suggestions.smartStrategy || "Not added",
       tone: "purple",
     },
   ];
