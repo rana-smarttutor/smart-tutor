@@ -69,7 +69,6 @@ export default function ReportCreatorForm() {
     parentName: "",
     parentRelation: "",
     parentContact: "",
-    photo: "",
 
     averageScore: "",
     batchRank: "",
@@ -342,8 +341,7 @@ export default function ReportCreatorForm() {
         parentName: form.parentName,
         parentRelation: form.parentRelation,
         parentContact: form.parentContact,
-        photo: form.photo,
-      },
+        },
 
       metrics: {
         averageScore: Number(form.averageScore) || 0,
@@ -599,53 +597,6 @@ export default function ReportCreatorForm() {
               onChange={updateForm}
             />
 
-            <div className="spr-field">
-              <span>Upload Student Picture</span>
-
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                onChange={async (event) => {
-                  const file = event.target.files?.[0];
-
-                  if (!file) return;
-
-                  const formData = new FormData();
-                  formData.append("file", file);
-
-                  try {
-                    const response = await fetch(
-                      "/api/student-performance/upload-photo",
-                      {
-                        method: "POST",
-                        body: formData,
-                      }
-                    );
-
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                      alert(result.message || "Failed to upload photo.");
-                      return;
-                    }
-
-                    updateForm("photo", result.url);
-                  } catch (error) {
-                    console.error(error);
-                    alert("Photo upload failed.");
-                  }
-                }}
-              />
-
-              {form.photo ? (
-                <div className="spr-photo-preview">
-                  <img src={form.photo} alt="Student preview" />
-                  <p>{form.photo}</p>
-                </div>
-              ) : (
-                <p className="spr-muted-line">No student photo uploaded.</p>
-              )}
-            </div>
 
             <Field
               label="Batch"
@@ -963,7 +914,7 @@ export default function ReportCreatorForm() {
             />
 
             <Field
-              label="Smart Recommendation"
+              label="Smart Strategy"
               name="smartStrategy"
               value={form.smartStrategy}
               onChange={updateForm}

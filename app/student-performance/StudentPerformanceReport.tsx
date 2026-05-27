@@ -19,7 +19,6 @@ type Report = {
     parentName: string;
     parentRelation: string;
     parentContact: string;
-    photo?: string;
   };
   metrics: {
     averageScore: number;
@@ -53,12 +52,13 @@ type Report = {
     timeManagement: string;
     weakChapters: string[];
   };
-  suggestions: {
-    teacherRemark: string;
-    improvementSuggestion: string;
-    studyRecommendation: string;
-    smartStrategy: string;
-  };
+ suggestions: {
+  teacherRemark?: string;
+  improvementSuggestion?: string;
+  studyRecommendation?: string;
+  smartStrategy?: string;
+  smartRecommendation?: string;
+};
 };
 
 function statusClass(value: number) {
@@ -82,21 +82,9 @@ function StudentAvatar({ report }: { report: Report }) {
       .slice(0, 2)
       .toUpperCase() || "ST";
 
-  const hasPhoto = Boolean(report.student.photo);
-
   return (
     <div className="t5-avatar">
-      {hasPhoto ? (
-        <img
-          src={report.student.photo}
-          alt={report.student.name || "Student"}
-          onError={(event) => {
-            event.currentTarget.style.display = "none";
-          }}
-        />
-      ) : (
-        <span>{initials}</span>
-      )}
+      <span>{initials}</span>
     </div>
   );
 }
@@ -337,7 +325,7 @@ function StrongWeakAreas({ report }: { report: Report }) {
 }
 
 function TeacherFeedback({ subjects }: { subjects: Report["subjectWiseMarks"] }) {
-  return (
+ return (
   <div className="t5-card t5-teacher-feedback-section">
     <h3>Subject-wise Teacher Feedback</h3>
       <div className="t5-feedback-grid">
@@ -356,8 +344,18 @@ function TeacherFeedback({ subjects }: { subjects: Report["subjectWiseMarks"] })
     </div>
   );
 }
-
 function SmartStrategy({ report }: { report: Report }) {
+  const studentName = report.student.name || "The student";
+  const weakSubject =
+    report.strengthsWeaknesses.weakSubject || "weaker subjects";
+  const strongSubject =
+    report.strengthsWeaknesses.strongSubject || "strong subjects";
+  const weakChapters =
+    report.strengthsWeaknesses.weakChapters?.join(", ") ||
+    "important weak chapters";
+
+  const fallbackStudyRecommendation = `${studentName} should revise ${weakSubject} regularly, especially ${weakChapters}. A weekly plan should include concept revision, chapter-wise practice, timed tests, and mistake review. ${strongSubject} should be maintained through regular practice so the existing strength is not lost.`;
+
   const recommendations = [
     {
       title: "Teacher Remark",
@@ -371,12 +369,17 @@ function SmartStrategy({ report }: { report: Report }) {
     },
     {
       title: "Study Recommendation",
-      text: report.suggestions.studyRecommendation || "Not added",
+      text:
+        report.suggestions.smartRecommendation ||
+        fallbackStudyRecommendation,
       tone: "green",
     },
     {
-      title: "AI Smart Recommendation",
-      text: report.suggestions.smartStrategy || "Not added",
+      title: "AI Smart Strategy",
+      text:
+        report.suggestions.smartStrategy ||
+        report.suggestions.smartRecommendation ||
+        "Not added",
       tone: "purple",
     },
   ];
@@ -399,7 +402,6 @@ function SmartStrategy({ report }: { report: Report }) {
     </section>
   );
 }
-
 export default function StudentPerformanceReport({ report }: { report: Report }) {
   useEffect(() => {
     document.body.classList.add("report-only-mode");
