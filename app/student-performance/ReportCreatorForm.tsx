@@ -57,6 +57,7 @@ export default function ReportCreatorForm() {
 
   const [form, setForm] = useState({
     reportType: "weekly",
+    period: "",
     status: "",
 
     studentName: "",
@@ -88,7 +89,7 @@ export default function ReportCreatorForm() {
     teacherRemark: "",
     improvementSuggestion: "",
     studyRecommendation: "",
-    smartRecommendation: "",
+    smartStrategy: "",
   });
 
   const reportTitle =
@@ -210,7 +211,7 @@ export default function ReportCreatorForm() {
 
     const studyRecommendation = `${studentName} should revise ${weakSubject} regularly, especially ${weakChapters}. A weekly plan should include concept revision, chapter-wise practice, timed tests, and mistake review. ${strongSubject} should be maintained through regular practice so the existing strength is not lost.`;
 
-    const smartRecommendation = `Based on the report data, ${studentName} should follow a personalized improvement plan. Priority should be given to ${weakSubject} and topics like ${weakChapters}. The student should complete daily practice, attend classes regularly, and attempt short mock tests every week. Performance should be reviewed using accuracy, homework completion, attendance, improvement percentage, and marks trend. If this routine is followed consistently, the student can improve steadily in the next report cycle.`;
+    const smartStrategy = `Based on the report data, ${studentName} should follow a personalized improvement plan. Priority should be given to ${weakSubject} and topics like ${weakChapters}. The student should complete daily practice, attend classes regularly, and attempt short mock tests every week. Performance should be reviewed using accuracy, homework completion, attendance, improvement percentage, and marks trend. If this routine is followed consistently, the student can improve steadily in the next report cycle.`;
 
     const updatedSubjects = subjects.map((item) => {
       const score = Number(item.score) || 0;
@@ -244,7 +245,7 @@ export default function ReportCreatorForm() {
       teacherRemark,
       improvementSuggestion,
       studyRecommendation,
-      smartRecommendation,
+      smartStrategy,
     }));
   }
 
@@ -319,7 +320,7 @@ export default function ReportCreatorForm() {
 
     const reportPayload = {
       reportType: form.reportType,
-      
+      period: form.period,
       status: form.status,
 
       heuristics: {
@@ -340,8 +341,7 @@ export default function ReportCreatorForm() {
         parentName: form.parentName,
         parentRelation: form.parentRelation,
         parentContact: form.parentContact,
-
-      },
+        },
 
       metrics: {
         averageScore: Number(form.averageScore) || 0,
@@ -395,44 +395,35 @@ export default function ReportCreatorForm() {
         studyRecommendation:
           form.studyRecommendation ||
           "The student should follow a structured study plan with revision, practice, and weekly assessments.",
-        smartRecommendation:
-          form.smartRecommendation ||
+        smartStrategy:
+          form.smartStrategy ||
           "Based on the student's performance data, focused revision, regular practice, and mock test analysis are recommended for improvement.",
       },
     };
 
     try {
-  const response = await fetch("/api/student-performance/reports", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(reportPayload),
-  });
+      const response = await fetch("/api/student-performance/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportPayload),
+      });
 
-  const contentType = response.headers.get("content-type") || "";
+      const result = await response.json();
 
-  if (!contentType.includes("application/json")) {
-    const text = await response.text();
-    console.error("API did not return JSON:", text.slice(0, 500));
-    throw new Error(
-      "API returned HTML instead of JSON. Check /api/student-performance/reports route."
-    );
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to create report.");
+      }
+
+      router.push(`/student-performance/report/${result.reportId}`);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to create performance report. Check console/server logs.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
-
-  const result = await response.json();
-
-  if (!response.ok || !result.success) {
-    throw new Error(result.message || "Failed to create report.");
-  }
-
-  router.push(`/student-performance/report/${result.reportId}`);
-} catch (error) {
-  console.error(error);
-  alert("Failed to create performance report. Check console/server logs.");
-} finally {
-  setIsSubmitting(false);
-}
 
   return (
     <main className="spr-page">
@@ -562,7 +553,12 @@ export default function ReportCreatorForm() {
               ]}
             />
 
-            
+            <Field
+              label="Period"
+              name="period"
+              value={form.period}
+              onChange={updateForm}
+            />
 
             <Field
               label="Status"
@@ -918,9 +914,9 @@ export default function ReportCreatorForm() {
             />
 
             <Field
-              label="Smart Recommendation"
-              name="smartRecommendation"
-              value={form.smartRecommendation}
+              label="Smart Strategy"
+              name="smartStrategy"
+              value={form.smartStrategy}
               onChange={updateForm}
               textarea
             />
@@ -981,5 +977,4 @@ function Field({
       )}
     </label>
   );
-}
 }
