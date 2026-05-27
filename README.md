@@ -23,7 +23,7 @@ Smart Tutors is a production-grade educational ecosystem designed for a Vashi-ba
 - **Context-Aware Sessions**: The AI remembers student profiles to provide personalized academic advice.
 
 ### 📚 Digital Resource Center
-- **Cloud-Backed Library**: Integrated Mega.nz storage for textbooks and revision guides.
+- **Cloud-Backed Library**: Integrated Vercel Blob storage for textbooks and revision guides.
 - **Seamless Distribution**: Role-based access control for distributing materials to specific batches or individuals.
 
 ---
@@ -34,7 +34,7 @@ Smart Tutors is a production-grade educational ecosystem designed for a Vashi-ba
 - **UI Library**: React 19
 - **Styling**: Tailwind CSS v4 & Vanilla CSS
 - **Database**: MongoDB (Native Node Driver)
-- **Cloud Storage**: Mega.nz Integration
+- **Cloud Storage**: Vercel Blob Integration
 - **State Management**: React Hooks & Context
 - **Deployment**: Vercel-optimized
 
@@ -49,8 +49,7 @@ Copy `example.env` to `.env.local` and provide your credentials:
 MONGODB_URI=your-mongodb-uri
 MONGODB_DB=smart_tutor
 MONGODB_BOOTSTRAP_KEY=your-secure-key
-MEGA_EMAIL=your-mega-email
-MEGA_PASSWORD=your-mega-password
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
 ```
 
 ### 2. Database Initialization

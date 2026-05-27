@@ -1,4 +1,4 @@
-export type Role = "student" | "educator" | "admin";
+export type Role = "student" | "educator" | "admin" | "parent";
 
 export type SessionUser = {
   id: string;
@@ -41,10 +41,11 @@ export type CourseItem = {
   id: string;
   category: string;
   sections: string[];
+  stream?: "Science" | "Commerce" | "Arts" | "General";
   statusLabel: string;
   standardKey: string;
-  tagline: string;
   title: string;
+  tagline: string;
   schedule: string;
   summary: string;
   description: string;
@@ -56,6 +57,12 @@ export type CourseItem = {
   subjectsCovered: string[];
   points: string[];
   audience: Role[];
+  toppers?: {
+    name: string;
+    image: string;
+    result: string;
+    detail?: string;
+  }[];
 };
 
 export type TestItem = {
@@ -164,6 +171,9 @@ export type PlacedStudent = {
   role?: string;
   salary?: string;
   image?: string;
+  examName?: string;
+  marks?: string;
+  rank?: string;
 };
 
 export type PublicInstituteData = {
@@ -220,9 +230,8 @@ export type LibraryBook = {
   author: string;
   category: string;
   description: string;
-  megaFileId: string;
-  megaFileName: string;
-  megaFileUrl?: string;
+  storageUrl: string;
+  fileName: string;
   audience: Role[];
   createdAt: string;
   createdBy: string;

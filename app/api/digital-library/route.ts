@@ -1,25 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Storage } from "megajs";
+import { put, del } from "@vercel/blob";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { 
   getLibraryBooksForRole, 
   createLibraryBook, 
-  deleteLibraryBook 
+  deleteLibraryBook,
+  getLibraryBookById
 } from "@/lib/data-store";
 import { Role } from "@/lib/types";
 
 export const runtime = "nodejs";
-
-async function getMegaStorage() {
-  const email = process.env.MEGA_EMAIL;
-  const password = process.env.MEGA_PASSWORD;
-
-  if (!email || !password) {
-    throw new Error("Mega.nz credentials missing in environment variables.");
-  }
-
-  return new Storage({ email, password }).ready;
-}
 
 export async function GET() {
   const session = await getSessionUser();
@@ -56,27 +46,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "File and title are required." }, { status: 400 });
     }
 
-    const storage = await getMegaStorage();
-    const buffer = Buffer.from(await file.arrayBuffer());
-    
-    const megaFile = await storage.upload(file.name, buffer).complete;
-    const link = await megaFile.link({});
+    // Upload to Vercel Blob
+    const blob = await put(`library/${Date.now()}-${file.name}`, file, {
+      access: "public", // Note: access control is handled by our API proxy
+    });
 
     const book = await createLibraryBook({
       title,
       author: author || "Unknown",
       category: category || "General",
       description: description || "",
-      megaFileId: megaFile.nodeId || "",
-      megaFileName: file.name,
-      megaFileUrl: link,
+      storageUrl: blob.url,
+      fileName: file.name,
       audience,
       createdBy: session.name,
     });
 
     return NextResponse.json({ book }, { status: 201 });
   } catch (error: any) {
-    console.error("Mega.nz upload error:", error);
+    console.error("Vercel Blob upload error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -90,16 +78,18 @@ export async function DELETE(req: NextRequest) {
 
   try {
     const { id } = await req.json();
-    const book = await deleteLibraryBook(id);
-
+    const book = await getLibraryBookById(id);
+    
     if (!book) {
       return NextResponse.json({ error: "Book not found." }, { status: 404 });
     }
 
-    // Optionally delete from Mega.nz as well
-    // const storage = await getMegaStorage();
-    // const file = storage.at(book.megaFileId);
-    // if (file) await file.delete();
+    // Delete from Vercel Blob
+    if (book.storageUrl) {
+      await del(book.storageUrl);
+    }
+
+    await deleteLibraryBook(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

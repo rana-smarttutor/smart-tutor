@@ -37,10 +37,14 @@ export const metadata: Metadata = {
     "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — Smart Tutors helps students Learn, Grow, Earn & Get Placed for a brighter future.",
   keywords: [
     "Smart Tutors",
+    "smart tutor","home schooling in navi mumbai","personal coaching","cet exam prepration","best coaching in mumbai",
+    "smart tutors",
     "Smart Tutors Vashi",
+    "coaching classes",
     "Best Coaching Institute Navi Mumbai",
     "CBSE ICSE SSC Coaching Vashi",
     "UPSC Foundation Mumbai",
+    "classes near me",
     "JEE NEET Preparation Vashi",
     "Competitive Exam Coaching Mumbai",
     "Academic Mentoring Vashi",
@@ -137,11 +141,14 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
+      data-theme="light"
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}
+      className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}
     >
       <head>
         <meta name="theme-color" content="#2563eb" />
+        <meta name="color-scheme" content="light" />
+        <meta name="supported-color-schemes" content="light" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

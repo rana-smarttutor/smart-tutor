@@ -8,6 +8,7 @@ const roleDescriptions = {
   student: "Go straight to tests, notices, and materials.",
   educator: "Open batches, grading, and teaching tools.",
   admin: "Manage accounts, roles, and access.",
+  parent: "Monitor progress, attendance, and feedback.",
 } as const;
 
 type MockLoginFormProps = {
@@ -91,7 +92,7 @@ export function MockLoginForm({ credentials, compact = false, onSuccess }: MockL
       </div>
 
       <div className={`surface-soft rounded-[2rem] ${compact ? "p-3" : "p-4"}`}>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {credentials.map((credential) => {
             const isSelected = credential.role === selectedRole;
 

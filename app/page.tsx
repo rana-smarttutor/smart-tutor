@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { CountUpValue } from "@/components/count-up-value";
-import { HomeGlobe } from "@/components/home-globe";
 import { LiveClock } from "@/components/live-clock";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { getPublicInstituteData } from "@/lib/data-store";
@@ -11,6 +10,7 @@ import { StudentCarousel } from "@/components/student-carousel";
 import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
 import { courseLibrary } from "@/lib/course-library";
 import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
+import { ProgramCarousel } from "@/components/program-carousel";
 
 export const dynamic = "force-dynamic";
 
@@ -73,10 +73,11 @@ export default async function Home() {
             </div> 
           </div>
 
+          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-blue-600">
+            India’s No.1 Trusted Smart Learning Platform
+          </p>
+
           <div className="space-y-5">
-            <p className="keyword-line uppercase tracking-widest text-blue-600 font-bold">
-              Total Student Empowerment
-            </p>
             <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
               Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
@@ -92,12 +93,17 @@ export default async function Home() {
             <Link href="/login" className="action-button inline-flex items-center justify-center px-8 sm:px-10 py-4 sm:py-5 text-base shadow-xl glow-primary min-h-15 sm:min-h-16 w-full sm:w-auto">
               Start Your Journey
             </Link>
-            <Link
-              href="/contact"
-              className="surface inline-flex items-center justify-center rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-blue-200 hover:border-blue-400 transition-colors min-h-15 sm:min-h-16 w-full sm:w-auto"
+            <a
+              href="https://s4hwk9dbjuligkqz.public.blob.vercel-storage.com/smart%20tutors.apk"
+              download
+              className="surface inline-flex items-center justify-center gap-3 rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-2 border-emerald-100 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-15 sm:min-h-16 w-full sm:w-auto group"
             >
-              Contact Admissions
-            </Link>
+              <svg className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.523 15.3414C17.068 15.3414 16.699 15.7114 16.699 16.1654V18.1564C16.699 18.3304 16.558 18.4714 16.384 18.4714H7.616C7.442 18.4714 7.301 18.3304 7.301 18.1564V16.1654C7.301 15.7104 6.932 15.3414 6.477 15.3414C6.022 15.3414 5.653 15.7114 5.653 16.1654V18.1564C5.653 19.2384 6.534 20.1194 7.616 20.1194H16.384C17.466 20.1194 18.347 19.2384 18.347 18.1564V16.1654C18.347 15.7114 17.978 15.3414 17.523 15.3414Z" />
+                <path d="M11.364 15.1194C11.538 15.2934 11.765 15.3744 12 15.3744C12.235 15.3744 12.462 15.2934 12.636 15.1194L15.753 12.0024C16.089 11.6664 16.089 11.1214 15.753 10.7854C15.417 10.4494 14.872 10.4494 14.536 10.7854L12.824 12.4974V4.70642C12.824 4.23042 12.438 3.84442 11.962 3.84442C11.486 3.84442 11.1 4.23042 11.1 4.70642V12.4974L9.388 10.7854C9.052 10.4494 8.507 10.4494 8.171 10.7854C7.835 11.1214 7.835 11.6664 8.171 12.0024L11.364 15.1194Z" />
+              </svg>
+              Download Android App
+            </a>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-4">
@@ -124,18 +130,18 @@ export default async function Home() {
           </div>
 
           <div className="pt-10 border-t border-[var(--color-border)] mt-10">
-            <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
+            <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 group bg-white">
               <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
               <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
               
               <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center text-center lg:text-left">
                 <div className="max-w-2xl mx-auto lg:mx-0">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-black uppercase tracking-widest mb-6">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-6">
                     <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
                     Limited Slots for 2026-27
                   </div>
-                  <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 leading-[1.1] tracking-tight">
-                    Ready to Start Your <span className="text-blue-600 dark:text-blue-400">Journey?</span>
+                  <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-[1.1] tracking-tight">
+                    Ready to Start Your <span className="text-blue-600">Journey?</span>
                   </h3>
                   <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
                     Join 500+ students already excelling with Smart Tutors. Get access to expert mentoring and disciplined preparation.
@@ -154,7 +160,7 @@ export default async function Home() {
                     href="https://wa.me/918850447887" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-8 rounded-xl font-black text-base border-2 border-emerald-100 dark:border-emerald-800/50 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-[1.02] active:scale-95"
+                    className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 text-emerald-700 px-8 rounded-xl font-black text-base border-2 border-emerald-100 transition-all hover:bg-emerald-100 hover:scale-[1.02] active:scale-95"
                   >
                     WhatsApp
                   </a>
@@ -213,107 +219,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 mb-24">
-            {[
-              { 
-                stage: "Early Foundation", 
-                title: "Primary School", 
-                desc: "Class 1-5 Foundation. Build reading, numeracy, study habits, and confidence early with close mentoring and guided practice.",
-                subjects: ["Maths", "English", "EVS", "Homework Support"],
-                color: "bg-blue-600",
-                badge: "Academic Year"
-              },
-              { 
-                stage: "Middle Years", 
-                title: "Class 6-8", 
-                desc: "Conceptual mastery in State/CBSE and Premium tracks for ICSE/IB, plus IoT & Robotics.",
-                subjects: ["Maths", "Science", "Social Studies", "Robotics"],
-                color: "bg-indigo-600",
-                badge: "Board Base"
-              },
-              { 
-                stage: "Board Prep", 
-                title: "Class 9-12", 
-                desc: "Integrated board excellence with JEE, NEET, and NTSE scholarship tracks.",
-                subjects: ["Physics", "Chemistry", "Maths/Bio", "Entrance"],
-                color: "bg-violet-600",
-                badge: "Competitive"
-              },
-              { 
-                stage: "Career Ready", 
-                title: "Graduation", 
-                desc: "University subject support, Full Stack Dev, Data Science, and UI/UX design.",
-                subjects: ["Engg Support", "Web Dev", "Data Science", "SAP"],
-                color: "bg-emerald-600",
-                badge: "Professional"
-              },
-              { 
-                stage: "Leadership", 
-                title: "Professional", 
-                desc: "UPSC, MPSC, Banking, Defense, and Advanced AI/Research certifications.",
-                subjects: ["UPSC/MPSC", "Banking", "Defense", "Research"],
-                color: "bg-purple-700",
-                badge: "Govt & R&D"
-              }
-            ].map((item, i) => (
-              <div key={i} className="surface group rounded-[2.5rem] p-8 border-2 border-white shadow-xl hover:scale-[1.05] transition-all duration-500 flex flex-col h-full bg-white dark:bg-slate-950">
-                <div className="flex justify-between items-start mb-6">
-                  <div className={`${item.color} text-white w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold shadow-lg`}>
-                    0{i+1}
-                  </div>
-                  <span className={`${item.color} text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider`}>
-                    {item.badge}
-                  </span>
-                </div>
-                <p className="text-xs font-black text-blue-600 uppercase tracking-widest mb-2">{item.stage}</p>
-                <h3 className="text-2xl font-bold text-[var(--color-heading)] mb-4">{item.title}</h3>
-                <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium mb-6">
-                  {item.desc}
-                </p>
-                <div className="mt-auto pt-6 border-t border-blue-50 dark:border-slate-800 flex flex-wrap gap-2">
-                  {item.subjects.map(s => (
-                    <span key={s} className="bg-slate-50 dark:bg-slate-900 text-[10px] font-bold text-[var(--color-heading)] px-2 py-1 rounded-md border border-slate-100 dark:border-slate-800">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2 items-start opacity-90">
-            {data.programs.map((program) => (
-              <article
-                key={program.title}
-                className="surface rounded-xl p-7 hover:shadow-2xl hover:translate-y-[-4px] transition-all cursor-default flex flex-col h-full border-2 border-transparent hover:border-blue-500/30"
-              >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-grow">
-                    <div className="flex items-center gap-2">
-                      <p className="keyword-line">{program.category}</p>
-                    </div>
-                    <h3 className="mt-3 min-h-[4.5rem] flex items-center text-xl sm:text-2xl font-bold leading-normal tracking-[-0.03em] text-[var(--color-heading)] py-2">
-                      {program.title}
-                    </h3>
-                  </div>
-                  <span className="pill shrink-0 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800 font-bold">{program.duration}</span>
-                </div>
-                <p className="mt-4 text-sm leading-7 text-[var(--color-muted)] font-medium flex-grow">
-                  {program.description}
-                </p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  {program.focus.map((tag) => (
-                    <span
-                      key={tag}
-                      className="surface-soft border-white dark:border-slate-700 rounded-full px-3 py-2 text-xs font-bold text-blue-700 dark:text-blue-300 shadow-sm"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
+          <ProgramCarousel programs={data.programs} />
           
           <div className="mt-16 text-center">
             <Link href="/courses" className="action-button px-10 py-5 text-lg shadow-2xl">
@@ -381,11 +287,23 @@ export default async function Home() {
         <StudentCarousel />
       </div>
 
-      <HomeGlobe />
+      <section className="py-14 sm:py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10 sm:mb-16">
+            <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
+              Academic Excellence
+            </span>
+            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-[var(--color-heading)] mb-6">
+              Recent Results
+            </h2>
+            <p className="text-[var(--color-muted)] text-base sm:text-lg font-medium max-w-2xl mx-auto">
+              Smart Tutors honors the dedication and remarkable achievements of our students. Our proven track record defines our commitment to academic brilliance.
+            </p>
+          </div>
 
-      <GrandSuccessCarousel />
-
-      <PlacedStudentsWall students={data.placedStudents.slice(0, 4)} />
+          <GrandSuccessCarousel />
+        </div>
+      </section>
 
       <RevealOnScroll className="section-shell py-14" delayMs={40}>
         <div className="mb-9 text-center lg:text-left">

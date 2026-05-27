@@ -140,6 +140,18 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
         "Monitor operations, admissions, and alerts.",
     },
   ],
+  parent: [
+    {
+      title: "Progress tracking",
+      description:
+        "View child's grades, attendance, and mentor feedback.",
+    },
+    {
+      title: "Institute updates",
+      description:
+        "Receive notices and announcements for your child's batch.",
+    },
+  ],
 };
 
 const courses: CourseItem[] = courseLibrary.map((course, index) => ({
@@ -337,6 +349,28 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
       label: "Total visitors",
       value: "5.5k+",
       detail: "Total unique visitors across Smart Tutors digital channels.",
+    },
+  ],
+  parent: [
+    {
+      label: "Child's progress",
+      value: "88%",
+      detail: "Overall academic performance across core subjects.",
+    },
+    {
+      label: "Attendance",
+      value: "95%",
+      detail: "Daily session attendance and batch discipline.",
+    },
+    {
+      label: "Mentor remarks",
+      value: "03",
+      detail: "Recent feedback from subject mentors and faculty.",
+    },
+    {
+      label: "Upcoming tests",
+      value: "02",
+      detail: "Next week's scheduled evaluations for your child.",
     },
   ],
 };
@@ -628,6 +662,14 @@ export function getPublicInstituteData() {
           "Integrated civil services preparation with core subjects, current affairs, answer writing, and mentor review.",
         focus: ["Polity", "History", "Economy", "Answer Writing"],
       },
+      {
+        category: "Maharashtra CETs",
+        title: "MAH CET & MHT CET Success",
+        duration: "Integrated",
+        description:
+          "Comprehensive preparation for Maharashtra State CETs including Engineering, Management, Law, and Education.",
+        focus: ["MHT-CET (PCM/PCB)", "MBA/MCA CET", "LLB 3/5 Yr CET", "B.Ed/Nursing CET"],
+      },
     ],
     roles: [
       {
@@ -796,6 +838,11 @@ export function getDashboardBundle(role: Role, userId?: string) {
       title: `Welcome back${user ? `, ${user.name.split(" ")[0]}` : ""}`,
       description:
         "Tests, materials, and messages in one place.",
+    },
+    parent: {
+      title: `Parent Connect${user ? ` | ${user.name.split(" ")[0]}` : ""}`,
+      description:
+        "Monitor your child's progress and stay connected.",
     },
     educator: {
       title: `Educator Console${user ? ` | ${user.name}` : ""}`,
@@ -1095,6 +1142,15 @@ export function getTemplateSeedData() {
             stats: dashboardStats.admin,
             primaryPanel: getDashboardBundle("admin").primaryPanel,
             permissions: rolePermissions.admin,
+          },
+          parent: {
+            roleLabel: "Parent Connect",
+            heroTitle: "Parent Connect",
+            heroDescription:
+              "Monitor your child's progress and stay connected.",
+            stats: dashboardStats.parent,
+            primaryPanel: getDashboardBundle("parent").primaryPanel,
+            permissions: rolePermissions.parent,
           },
         },
       },

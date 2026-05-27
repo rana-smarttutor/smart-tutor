@@ -40,6 +40,7 @@ export function DashboardAccountDirectory({
       students: users.filter((item) => item.role === "student").length,
       educators: users.filter((item) => item.role === "educator").length,
       admins: users.filter((item) => item.role === "admin").length,
+      parents: users.filter((item) => item.role === "parent").length,
     }),
     [users],
   );
@@ -49,6 +50,7 @@ export function DashboardAccountDirectory({
       admin: 0,
       educator: 1,
       student: 2,
+      parent: 3,
     };
 
     return [...users].sort((left, right) => {
@@ -200,13 +202,16 @@ export function DashboardAccountDirectory({
                           ? "Admin@123"
                           : event.target.value === "educator"
                             ? "Educator@123"
-                            : "Student@123",
+                            : event.target.value === "parent"
+                              ? "Parent@123"
+                              : "Student@123",
                     }))
                   }
                   className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
                 >
                   <option value="student">Student</option>
                   <option value="educator">Faculty</option>
+                  <option value="parent">Parent</option>
                   <option value="admin">Admin</option>
                 </select>
                 <input
@@ -246,7 +251,7 @@ export function DashboardAccountDirectory({
               <div className="grid gap-4">
               <div className="surface-soft rounded-[1.75rem] p-5 border border-blue-100/50">
               <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4">Current Registered Mix</p>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-cols-4">
                 <div className="surface rounded-2xl p-4 text-center border border-[var(--color-border)]">
                   <p className="text-2xl font-bold text-[var(--color-heading)]">{accountCounts.students}</p>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Students</p>
@@ -254,6 +259,10 @@ export function DashboardAccountDirectory({
                 <div className="surface rounded-2xl p-4 text-center border border-[var(--color-border)]">
                   <p className="text-2xl font-bold text-[var(--color-heading)]">{accountCounts.educators}</p>
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Faculty</p>
+                </div>
+                <div className="surface rounded-2xl p-4 text-center border border-[var(--color-border)]">
+                  <p className="text-2xl font-bold text-[var(--color-heading)]">{accountCounts.parents}</p>
+                  <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Parents</p>
                 </div>
                 <div className="surface rounded-2xl p-4 text-center border border-[var(--color-border)]">
                   <p className="text-2xl font-bold text-[var(--color-heading)]">{accountCounts.admins}</p>
@@ -342,7 +351,8 @@ export function DashboardAccountDirectory({
                         className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
                       >
                         <option value="student">Student</option>
-                        <option value="educator">Educator</option>
+                        <option value="educator">Faculty</option>
+                        <option value="parent">Parent</option>
                         <option value="admin">Admin</option>
                       </select>
                       <input

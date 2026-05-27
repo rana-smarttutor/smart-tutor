@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 
 import type { CourseItem } from "@/lib/types";
 
@@ -318,6 +319,16 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                 <div className="min-w-0 flex-grow">
                   <div className="flex items-center gap-2">
                     <p className="keyword-line text-[8px]">{leadCourse.tagline}</p>
+                    {leadCourse.stream && (
+                      <span className={`text-[7px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm ${
+                        leadCourse.stream === "Science" ? "bg-blue-600 text-white" :
+                        leadCourse.stream === "Commerce" ? "bg-emerald-600 text-white" :
+                        leadCourse.stream === "Arts" ? "bg-purple-600 text-white" :
+                        "bg-slate-600 text-white"
+                      }`}>
+                        {leadCourse.stream}
+                      </span>
+                    )}
                     <span
                       className={`text-[7px] text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getStatusStyles(leadCourse.statusLabel)} shadow-sm`}
                     >
@@ -690,6 +701,35 @@ export function CourseCatalog({ courses }: CourseCatalogProps) {
                   ))}
                 </div>
               </div>
+
+              {/* Toppers Section */}
+              {selectedCourse.toppers && selectedCourse.toppers.length > 0 && (
+                <div className="mt-8">
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-blue-600 mb-6 flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-blue-600"></span>
+                    Our Top Achievers
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {selectedCourse.toppers.map((topper, idx) => (
+                      <div key={idx} className="surface flex items-center gap-4 p-4 rounded-3xl border border-blue-50 hover:border-blue-200 transition-all group">
+                        <div className="relative h-14 w-14 rounded-2xl overflow-hidden shrink-0 shadow-md">
+                          <Image
+                            src={topper.image}
+                            alt={topper.name}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs font-black text-slate-900 leading-tight mb-1">{topper.name}</p>
+                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-wider">{topper.result}</p>
+                          {topper.detail && <p className="text-[9px] text-slate-500 font-medium mt-0.5">{topper.detail}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

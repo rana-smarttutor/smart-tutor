@@ -1,64 +1,104 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 
-const successImages = [
-  "/result-1.jpeg",
-  "/result-2.jpeg",
-  "/result-3.jpeg",
-  "/result-4.jpeg",
-  "/result-5.jpeg",
+const RESULT_CATEGORIES = [
+  {
+    id: "all",
+    label: "All Results",
+    image: "/hof/result-1.jpeg",
+    title: "Celebrating Excellence",
+    subtitle: "Our Proven Track Record",
+    description: "Witness the achievements of our dedicated students across all categories."
+  },
+  {
+    id: "mba",
+    label: "MBA CET",
+    image: "/result-4.jpeg",
+    title: "MBA Entrance Mastery",
+    subtitle: "Top Percentiles in CET",
+    description: "Our students consistently secure 99+ percentiles in MAH MBA CET exams."
+  },
+  {
+    id: "banking",
+    label: "Banking & PO",
+    image: "/result-5.jpeg",
+    title: "Banking Success",
+    subtitle: "SBI & IBPS Achievers",
+    description: "Exceptional results in SBI PO, IBPS, and other major banking recruitment exams."
+  },
+  {
+    id: "civil",
+    label: "Civil Services",
+    image: "/hof/student-15.jpg",
+    title: "Civil Services",
+    subtitle: "UPSC & MPSC Journey",
+    description: "Dedicated preparation and guidance for future administrative leaders."
+  }
 ];
 
 export function GrandSuccessCarousel() {
-  const [activeIndex, setActiveState] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveState((prev) => (prev + 1) % successImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
+  const [activeCategory, setActiveCategory] = useState(RESULT_CATEGORIES[0]);
 
   return (
-    <RevealOnScroll className="section-shell py-14">
-      <div className="relative aspect-[16/10] sm:aspect-[21/9] w-full overflow-hidden rounded-[3rem] shadow-2xl border-4 border-blue-50/50 bg-slate-50 dark:bg-slate-900/50 group">
-        {successImages.map((src, index) => (
-          <div
-            key={src}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === activeIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+    <RevealOnScroll className="section-shell py-8 sm:py-14">
+      {/* Category Selector */}
+      <div className="flex flex-wrap justify-center gap-2 mb-8 sm:mb-10">
+        {RESULT_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setActiveCategory(cat)}
+            className={`px-6 py-2.5 rounded-full text-xs sm:text-sm font-black uppercase tracking-widest transition-all duration-300 border-2 ${
+              activeCategory.id === cat.id
+                ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200"
+                : "bg-white border-slate-100 text-slate-500 hover:border-blue-200 hover:text-blue-600"
             }`}
           >
-            <Image
-              src={src}
-              alt={`Smart Tutors Success Highlight ${index + 1}`}
-              fill
-              className="object-contain object-center"
-              priority={index === 0}
-            />
-          </div>
+            {cat.label}
+          </button>
         ))}
-        
-        {/* Navigation Dots */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-          {successImages.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setActiveState(index)}
-              className={`h-2 w-2 rounded-full transition-all ${
-                index === activeIndex ? "bg-blue-600 w-6" : "bg-blue-200/50"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
+      </div>
+
+      {/* Main Display Area */}
+      <div className="flex flex-col gap-6 lg:gap-8">
+        {/* Image Container */}
+        <div className="relative aspect-[4/3] sm:aspect-[21/9] w-full overflow-hidden rounded-[2rem] sm:rounded-[3rem] shadow-2xl border-4 sm:border-8 border-white bg-slate-100 group transition-all duration-500">
+          <Image
+            src={activeCategory.image}
+            alt={activeCategory.title}
+            fill
+            className="object-contain object-center transition-all duration-700 ease-in-out"
+            priority
+            key={activeCategory.image}
+          />
+          
+          {/* Subtle Desktop-only Gradient Overlay for depth, reduced opacity */}
+          <div className="hidden sm:block absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
         </div>
 
-        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent pointer-events-none z-10" />
-        <div className="absolute bottom-8 left-8 text-white z-20">
-          <p className="text-sm font-bold uppercase tracking-widest bg-blue-600 px-4 py-1.5 rounded-full inline-block">Grand Success 2026</p>
+        {/* Content Area - Positioned below image on all screens, but styled for clarity */}
+        <div className="w-full bg-white rounded-[2rem] p-6 sm:p-10 border border-slate-100 shadow-xl sm:shadow-none sm:border-none sm:bg-transparent text-center sm:text-left">
+          <div className="max-w-3xl">
+            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-blue-600 mb-2">
+              Success Highlight
+            </p>
+            <h3 className="text-2xl sm:text-4xl font-black text-slate-900 mb-3 leading-tight tracking-tight">
+              {activeCategory.title}, <br className="hidden sm:block" />
+              <span className="text-blue-600">{activeCategory.subtitle}</span>
+            </h3>
+            <p className="text-sm sm:text-lg font-medium text-slate-600 leading-relaxed">
+              {activeCategory.description}
+            </p>
+            
+            {/* Action link for desktop */}
+            <div className="mt-6 hidden sm:block">
+               <span className="inline-flex items-center gap-2 text-blue-600 font-black text-sm uppercase tracking-widest group cursor-pointer">
+                 View Full Gallery <span className="group-hover:translate-x-1 transition-transform">→</span>
+               </span>
+            </div>
+          </div>
         </div>
       </div>
     </RevealOnScroll>

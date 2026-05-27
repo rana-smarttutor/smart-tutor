@@ -2,7 +2,7 @@ import { LiveClock } from "@/components/live-clock";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { getPublicInstituteData } from "@/lib/data-store";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600; // Cache for 1 hour
 
 export default async function ContactPage() {
   const data = await getPublicInstituteData();

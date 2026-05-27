@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { randomUUID } from "crypto";
 
 import type { Document } from "mongodb";
@@ -177,6 +178,7 @@ function getRoleLabel(role: Role) {
   if (role === "admin") return "Admin Console";
   if (role === "educator") return "Educator Desk";
   if (role === "student") return "Student Workspace";
+  if (role === "parent") return "Parent Connect";
   return "Student Workspace";
 }
 
@@ -187,6 +189,10 @@ function buildHeroTitle(role: Role, template: DashboardTemplate, user: SessionUs
 
   if (role === "student") {
     return `Welcome back, ${user.name.split(" ")[0]}`;
+  }
+
+  if (role === "parent") {
+    return `Parent Connect | ${user.name.split(" ")[0]}`;
   }
 
   if (role === "educator") {
@@ -405,10 +411,10 @@ function normalizePublicInstituteData(document: PublicInstituteData): PublicInst
   };
 }
 
-export async function getPublicInstituteData() {
+export const getPublicInstituteData = cache(async function getPublicInstituteData() {
   const document = await getContentDocument<PublicInstituteData>("public-site");
   return normalizePublicInstituteData(document);
-}
+});
 
 export async function getMockQuizQuestions() {
   const collection = await getCollection<QuizQuestion>(COLLECTIONS.quizzes);
@@ -447,7 +453,8 @@ export async function findUserByCredentials(login: string, password: string) {
   const emailLocalPart = normalizedLogin.includes("@")
     ? normalizedLogin.split("@")[0]
     : normalizedLogin;
-  const user = await collection.findOne({
+  
+  const query: any = {
     password,
     $or: [
       { email: normalizedLogin },
@@ -464,7 +471,9 @@ export async function findUserByCredentials(login: string, password: string) {
         },
       },
     ],
-  });
+  };
+
+  const user = await collection.findOne(query);
   return user ? toSessionUser(user) : null;
 }
 

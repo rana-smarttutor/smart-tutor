@@ -80,6 +80,11 @@ const sidebarByRole = {
     { id: "accounts", label: "Accounts" },
     { id: "library", label: "Library" },
   ],
+  parent: [
+    { id: "overview", label: "Overview" },
+    { id: "messages", label: "Messages" },
+    { id: "performance", label: "Performance" },
+  ],
 } as const;
 
 function getRoleFocus(role: Role) {
@@ -89,6 +94,10 @@ function getRoleFocus(role: Role) {
 
   if (role === "educator") {
     return "Batch delivery, assessment review, and learner coordination.";
+  }
+
+  if (role === "parent") {
+    return "Monitor academic progress, attendance, and mentor feedback.";
   }
 
   return "Study progress, notices, assessments, and learning support.";
