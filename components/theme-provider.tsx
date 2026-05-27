@@ -70,7 +70,7 @@ export function useTheme() {
 
 function applyTheme(theme: Theme) {
   document.documentElement.dataset.theme = theme;
-  document.documentElement.style.colorScheme = theme;
+  document.documentElement.style.colorScheme = theme === "light" ? "only light" : "dark";
   
   if (theme === "dark") {
     document.documentElement.classList.add("dark");

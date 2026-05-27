@@ -125,18 +125,18 @@ export default async function Home() {
           </div>
 
           <div className="pt-10 border-t border-[var(--color-border)] mt-10">
-            <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 dark:border-blue-900/30 group bg-white dark:bg-slate-950">
+            <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 group bg-white">
               <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
               <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
               
               <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center text-center lg:text-left">
                 <div className="max-w-2xl mx-auto lg:mx-0">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-black uppercase tracking-widest mb-6">
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-6">
                     <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
                     Limited Slots for 2026-27
                   </div>
-                  <h3 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mb-6 leading-[1.1] tracking-tight">
-                    Ready to Start Your <span className="text-blue-600 dark:text-blue-400">Journey?</span>
+                  <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-[1.1] tracking-tight">
+                    Ready to Start Your <span className="text-blue-600">Journey?</span>
                   </h3>
                   <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
                     Join 500+ students already excelling with Smart Tutors. Get access to expert mentoring and disciplined preparation.
@@ -155,7 +155,7 @@ export default async function Home() {
                     href="https://wa.me/918850447887" 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-8 rounded-xl font-black text-base border-2 border-emerald-100 dark:border-emerald-800/50 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-[1.02] active:scale-95"
+                    className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 text-emerald-700 px-8 rounded-xl font-black text-base border-2 border-emerald-100 transition-all hover:bg-emerald-100 hover:scale-[1.02] active:scale-95"
                   >
                     WhatsApp
                   </a>
@@ -282,16 +282,16 @@ export default async function Home() {
         <StudentCarousel />
       </div>
 
-      <section className="py-20 bg-slate-50 dark:bg-slate-950/50 border-y border-slate-200 dark:border-slate-800">
+      <section className="py-14 sm:py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
               Academic Excellence
             </span>
             <h2 className="text-4xl md:text-6xl font-black tracking-tight text-[var(--color-heading)] mb-6">
               Recent Results
             </h2>
-            <p className="text-[var(--color-muted)] text-lg font-medium max-w-2xl mx-auto">
+            <p className="text-[var(--color-muted)] text-base sm:text-lg font-medium max-w-2xl mx-auto">
               Smart Tutors honors the dedication and remarkable achievements of our students. Our proven track record defines our commitment to academic brilliance.
             </p>
           </div>

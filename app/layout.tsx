@@ -141,11 +141,14 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
+      data-theme="light"
       data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}
+      className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}
     >
       <head>
         <meta name="theme-color" content="#2563eb" />
+        <meta name="color-scheme" content="light" />
+        <meta name="supported-color-schemes" content="light" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

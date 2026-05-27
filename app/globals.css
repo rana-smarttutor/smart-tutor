@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --font-sans: var(--font-geist-sans), sans-serif;
   --font-headline: var(--font-geist-sans), sans-serif;
@@ -69,7 +71,7 @@
   --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   
-  color-scheme: light;
+  color-scheme: only light;
 }
 
 [data-theme="dark"] {
@@ -95,14 +97,14 @@
   --color-highlight: var(--color-primary-soft);
   
   --scroll-layer-a:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.12) 0%, rgba(30, 64, 175, 0.12) 100%),
-    linear-gradient(125deg, rgba(59, 130, 246, 0.1) 0%, transparent 54%);
+    linear-gradient(180deg, rgba(37, 99, 235, 0.12) 0%, rgba(30, 64, 175, 0.05) 100%),
+    linear-gradient(125deg, rgba(37, 99, 235, 0.08) 0%, transparent 54%);
   --scroll-layer-b:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%),
-    linear-gradient(145deg, rgba(59, 130, 246, 0.12) 0%, transparent 60%);
+    linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(37, 99, 235, 0.06) 100%),
+    linear-gradient(145deg, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
   --scroll-layer-c:
-    linear-gradient(180deg, rgba(30, 64, 175, 0.08) 0%, rgba(37, 99, 235, 0.15) 100%),
-    linear-gradient(110deg, rgba(59, 130, 246, 0.12) 0%, transparent 58%);
+    linear-gradient(180deg, rgba(30, 64, 175, 0.04) 0%, rgba(37, 99, 235, 0.06) 100%),
+    linear-gradient(110deg, rgba(37, 99, 235, 0.1) 0%, transparent 58%);
   
   --shadow-soft: 0 24px 64px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 14px 28px rgba(0, 0, 0, 0.5);
@@ -160,6 +162,7 @@ body {
   margin: 0;
   width: 100%;
   max-width: 100vw;
+  color-scheme: only light;
 }
 
 /* Ensure all main containers are centered and don't overflow */

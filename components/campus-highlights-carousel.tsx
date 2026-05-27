@@ -2,19 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-
-const HIGHLIGHTS = [
-  { name: "Smart Tutors", result: "", exam: "", image: "/image4.jpeg" },
-  { name: "Mr. Kanade", result: "99.37 Percentile", exam: "MAH MBA CET 2024", image: "/student-photos/Mr.Kanade.png", type: "percentile" },
-  { name: "Mr. Ranjeet", result: "Rank 1st", exam: "NABARD", image: "/student-photos/Mr. Ranjeet.png", type: "rank" },
-  { name: "Ms. Ritamvara", result: "Rank 1st", exam: "SBI PO", image: "/student-photos/Ms.  Ritamvara.png", type: "rank" },
-  { name: "Mr. Vaibhava", result: "Rank 1st", exam: "CLAT (NLU)", image: "/student-photos/Mr.Vaibhava.png", type: "rank" },
-  { name: "Mr. Vishal", result: "Rank 1st", exam: "SSC GD", image: "/student-photos/Mr.Vishal.png", type: "rank" },
-  { name: "Mr. Aadesh", result: "99+ Percentile", exam: "MAH MBA CET", image: "/student-photos/Mr.AadeshGaigawali.png", type: "percentile" },
-];
+import { generatedPlacedStudents } from "@/lib/placed-students-data";
 
 export function CampusHighlightsCarousel() {
   const [index, setIndex] = useState(0);
+
+  // Map centralized data + Add branding slide
+  const HIGHLIGHTS = [
+    { name: "Smart Tutors", result: "", exam: "", image: "/image4.jpeg", type: "branding" },
+    ...generatedPlacedStudents.map(s => ({
+      name: s.name,
+      result: s.rank ? `Rank ${s.rank}` : (s.marks ? `${s.marks} Percentile` : ""),
+      exam: s.examName,
+      image: s.image,
+      type: s.rank ? "rank" : "percentile"
+    }))
+  ];
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -44,9 +47,9 @@ export function CampusHighlightsCarousel() {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="relative w-full max-w-2xl mx-auto flex flex-col items-center bg-white dark:bg-slate-900/40 rounded-[3.5rem] p-6 md:p-8 shadow-xl border border-slate-100 dark:border-slate-800">
+      <div className="relative w-full max-w-2xl mx-auto flex flex-col items-center bg-white rounded-[3.5rem] p-6 md:p-8 shadow-xl border border-slate-100">
         {/* Smaller Image Container - Fully Visible */}
-        <div className="relative w-[260px] h-[260px] sm:w-[300px] sm:h-[300px] shrink-0 overflow-hidden rounded-[2.5rem] shadow-2xl bg-white dark:bg-slate-950 border-[6px] border-white dark:border-slate-800 mb-4">
+        <div className="relative w-[260px] h-[260px] sm:w-[300px] sm:h-[300px] shrink-0 overflow-hidden rounded-[2.5rem] shadow-2xl bg-white border-[6px] border-white mb-4">
           {HIGHLIGHTS.map((h, i) => (
             <div
               key={i}
@@ -55,7 +58,7 @@ export function CampusHighlightsCarousel() {
               }`}
             >
               <Image
-                src={h.image}
+                src={h.image || "/image4.jpeg"}
                 alt={h.name}
                 fill
                 className="object-cover transition-transform duration-[8000ms] ease-linear"
@@ -78,7 +81,7 @@ export function CampusHighlightsCarousel() {
                {h.exam && (
                  <div className="flex flex-wrap justify-center gap-3 mb-3">
                     <div className="flex flex-col gap-1">
-                       <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Examination</span>
+                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Examination</span>
                        <span className="bg-blue-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-blue-400/30">
                         {h.exam}
                        </span>
@@ -95,11 +98,11 @@ export function CampusHighlightsCarousel() {
                )}
               
               <div className="flex flex-col gap-1">
-                <h3 className={`${h.name === "Smart Tutors" ? "text-5xl md:text-6xl" : "text-3xl md:text-5xl"} font-black text-slate-900 dark:text-white leading-tight tracking-tight`}>
+                <h3 className={`${h.name === "Smart Tutors" ? "text-5xl md:text-6xl" : "text-3xl md:text-5xl"} font-black text-slate-900 leading-tight tracking-tight`}>
                   {h.name}
                 </h3>
                 {h.name !== "Smart Tutors" && (
-                   <p className="text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-[0.4em] mt-2">
+                   <p className="text-blue-600 text-xs font-black uppercase tracking-[0.4em] mt-2">
                      Verified Success
                    </p>
                 )}
@@ -113,7 +116,7 @@ export function CampusHighlightsCarousel() {
               <button 
                 key={i} 
                 onClick={() => setIndex(i)}
-                className={`h-1.5 rounded-full transition-all duration-500 ${i === index ? "bg-blue-600 w-10" : "bg-slate-200 dark:bg-slate-700 w-1.5 hover:bg-blue-300"}`}
+                className={`h-1.5 rounded-full transition-all duration-500 ${i === index ? "bg-blue-600 w-10" : "bg-slate-200 w-1.5 hover:bg-blue-300"}`}
                 aria-label={`Go to slide ${i + 1}`}
               />
             ))}
