@@ -67,7 +67,7 @@ The Digital Library is your repository for textbooks, faculty notes, and mock pa
 1.  Go to the **Library** section.
 2.  Click **"Upload New Book"**.
 3.  Upload the PDF file and provide a title, author/faculty name, and category.
-4.  **Storage:** Files are securely stored on Mega.nz via an integrated connection, ensuring your server remains fast and lightweight.
+4.  **Storage:** Files are securely stored on Vercel Blob via an integrated connection, ensuring your server remains fast and lightweight.
 5.  **Access Control:** You can specify which roles (Students, Educators) can see specific resources.
 
 ---

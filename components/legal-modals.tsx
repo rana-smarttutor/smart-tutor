@@ -97,7 +97,7 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">3. Third-Party Integrations</h3>
                     <p>
-                      We utilize secure third-party services like MongoDB Atlas for data storage and Mega.nz for digital library hosting. Usage of these features implies acceptance of their respective privacy standards.
+                      We utilize secure third-party services like MongoDB Atlas for data storage and Vercel Blob for digital library hosting. Usage of these features implies acceptance of their respective privacy standards.
                     </p>
                   </section>
                   <section>

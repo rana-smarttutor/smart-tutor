@@ -230,9 +230,8 @@ export type LibraryBook = {
   author: string;
   category: string;
   description: string;
-  megaFileId: string;
-  megaFileName: string;
-  megaFileUrl?: string;
+  storageUrl: string;
+  fileName: string;
   audience: Role[];
   createdAt: string;
   createdBy: string;

@@ -447,7 +447,7 @@ export async function getDemoCredentials() {
     ) as DemoCredential[];
 }
 
-export async function findUserByCredentials(login: string, password: string, role?: Role) {
+export async function findUserByCredentials(login: string, password: string) {
   const collection = await getUsersCollection();
   const normalizedLogin = login.toLowerCase();
   const emailLocalPart = normalizedLogin.includes("@")
@@ -472,10 +472,6 @@ export async function findUserByCredentials(login: string, password: string, rol
       },
     ],
   };
-
-  if (role) {
-    query.role = role;
-  }
 
   const user = await collection.findOne(query);
   return user ? toSessionUser(user) : null;

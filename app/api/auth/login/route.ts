@@ -25,7 +25,6 @@ export async function POST(request: Request) {
 
   const login = sanitizeTextInput(body.login ?? body.email, 120).toLowerCase();
   const password = sanitizePasswordInput(body.password);
-  const role = body.role;
 
   if (!login || !password) {
     return NextResponse.json(
@@ -34,7 +33,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await findUserByCredentials(login, password, role);
+  const user = await findUserByCredentials(login, password);
 
   if (!user) {
     return NextResponse.json(

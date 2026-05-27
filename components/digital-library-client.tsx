@@ -20,7 +20,7 @@ export function DigitalLibraryClient({
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsUploading(true);
-    setStatus("Uploading to Mega.nz...");
+    setStatus("Uploading to Vercel Blob...");
 
     const formData = new FormData(e.currentTarget);
     const audience = ["student", "educator", "admin"];
@@ -119,7 +119,7 @@ export function DigitalLibraryClient({
                   disabled={isUploading}
                   className="btn-action btn-lg w-full mt-4 disabled:opacity-50"
                 >
-                  {isUploading ? "Uploading..." : "Finalize and Upload to Mega.nz"}
+                  {isUploading ? "Uploading..." : "Finalize and Upload to Vercel Blob"}
                 </button>
               </div>
             </form>

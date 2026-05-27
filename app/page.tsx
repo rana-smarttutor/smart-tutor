@@ -93,12 +93,17 @@ export default async function Home() {
             <Link href="/login" className="action-button inline-flex items-center justify-center px-8 sm:px-10 py-4 sm:py-5 text-base shadow-xl glow-primary min-h-15 sm:min-h-16 w-full sm:w-auto">
               Start Your Journey
             </Link>
-            <Link
-              href="/contact"
-              className="surface inline-flex items-center justify-center rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-blue-200 hover:border-blue-400 transition-colors min-h-15 sm:min-h-16 w-full sm:w-auto"
+            <a
+              href="https://s4hwk9dbjuligkqz.public.blob.vercel-storage.com/smart%20tutors.apk"
+              download
+              className="surface inline-flex items-center justify-center gap-3 rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-2 border-emerald-100 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-15 sm:min-h-16 w-full sm:w-auto group"
             >
-              Contact Admissions
-            </Link>
+              <svg className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.523 15.3414C17.068 15.3414 16.699 15.7114 16.699 16.1654V18.1564C16.699 18.3304 16.558 18.4714 16.384 18.4714H7.616C7.442 18.4714 7.301 18.3304 7.301 18.1564V16.1654C7.301 15.7104 6.932 15.3414 6.477 15.3414C6.022 15.3414 5.653 15.7114 5.653 16.1654V18.1564C5.653 19.2384 6.534 20.1194 7.616 20.1194H16.384C17.466 20.1194 18.347 19.2384 18.347 18.1564V16.1654C18.347 15.7114 17.978 15.3414 17.523 15.3414Z" />
+                <path d="M11.364 15.1194C11.538 15.2934 11.765 15.3744 12 15.3744C12.235 15.3744 12.462 15.2934 12.636 15.1194L15.753 12.0024C16.089 11.6664 16.089 11.1214 15.753 10.7854C15.417 10.4494 14.872 10.4494 14.536 10.7854L12.824 12.4974V4.70642C12.824 4.23042 12.438 3.84442 11.962 3.84442C11.486 3.84442 11.1 4.23042 11.1 4.70642V12.4974L9.388 10.7854C9.052 10.4494 8.507 10.4494 8.171 10.7854C7.835 11.1214 7.835 11.6664 8.171 12.0024L11.364 15.1194Z" />
+              </svg>
+              Download Android App
+            </a>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-4">
