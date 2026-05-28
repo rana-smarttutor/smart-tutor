@@ -1,56 +1,92 @@
-import { getSessionUser } from "@/lib/auth";
-import { getLibraryBookById } from "@/lib/data-store";
+import { del } from "@vercel/blob";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-function buildContentDisposition(filename: string) {
-  const encoded = encodeURIComponent(filename);
-  return `inline; filename="${filename.replace(/"/g, "")}"; filename*=UTF-8''${encoded}`;
+type RouteContext = {
+  params: Promise<{
+    bookId: string;
+  }>;
+};
+
+async function getCurrentRole() {
+  const cookieStore = await cookies();
+
+  const role =
+    cookieStore.get("role")?.value ||
+    cookieStore.get("userRole")?.value ||
+    cookieStore.get("smart_tutors_role")?.value ||
+    cookieStore.get("smart-tutors-role")?.value ||
+    cookieStore.get("accountRole")?.value ||
+    "student";
+
+  return role.toLowerCase();
 }
 
-export async function GET(
-  _request: Request,
-  context: { params: Promise<{ bookId: string }> },
-) {
-  const session = await getSessionUser();
+function canManageLibrary(role: string) {
+  return ["admin", "educator"].includes(role);
+}
 
-  if (!session) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const { bookId } = await context.params;
-  const book = await getLibraryBookById(bookId);
-
-  if (!book || !book.audience.includes(session.role)) {
-    return new Response("Not found", { status: 404 });
-  }
-
-  if (!book.storageUrl) {
-    return new Response("Library file is missing its storage URL.", { status: 500 });
-  }
-
+export async function DELETE(_request: Request, context: RouteContext) {
   try {
-    const response = await fetch(book.storageUrl);
+    const role = await getCurrentRole();
 
-    if (!response.ok) {
-      return new Response("Failed to fetch file from storage.", { status: response.status });
+    if (!canManageLibrary(role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only admins and educators can delete library materials.",
+        },
+        { status: 403 }
+      );
     }
 
-    const buffer = await response.arrayBuffer();
-    const fileName = book.fileName || `${book.title}.pdf`;
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-    return new Response(new Uint8Array(buffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": buildContentDisposition(fileName),
-        "Cache-Control": "private, no-store, max-age=0",
-        "Content-Length": String(buffer.byteLength),
-        "X-Content-Type-Options": "nosniff",
-      },
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "BLOB_READ_WRITE_TOKEN is missing. Add it in .env.local and restart npm run dev.",
+        },
+        { status: 500 }
+      );
+    }
+
+    const params = await context.params;
+    const pathname = decodeURIComponent(params.bookId);
+
+    if (!pathname.startsWith("digital-library/")) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid library file.",
+        },
+        { status: 400 }
+      );
+    }
+
+    await del(pathname, {
+      token,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "File deleted successfully.",
     });
   } catch (error) {
-    console.error("Digital library proxy error:", error);
-    return new Response("Failed to load the library PDF.", { status: 500 });
+    console.error("Digital library delete error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to delete file.",
+      },
+      { status: 500 }
+    );
   }
 }
