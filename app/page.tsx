@@ -205,89 +205,7 @@ export default async function Home() {
         </RevealOnScroll>
       </section>
 
-      <RevealOnScroll className="section-shell py-20 lg:py-32" delayMs={100}>
-        <div className="container mx-auto px-6">
-          <div className="text-center max-w-3xl mx-auto mb-20">
-            <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
-              Our Methodology
-            </span>
-            <h2 className="text-4xl font-black tracking-tight text-[var(--color-heading)] sm:text-5xl mb-6">
-              Programs Mapped to Every Stage of Growth
-            </h2>
-            <p className="text-[var(--color-muted)] text-lg font-medium">
-              We provide a complete educational pathway from school foundation to high-level government service and future digital skills.
-            </p>
-          </div>
-
-          <ProgramCarousel programs={data.programs} />
-          
-          <div className="mt-16 text-center">
-            <Link href="/courses" className="action-button px-10 py-5 text-lg shadow-2xl">
-              Explore All {courseLibrary.length}+ Programs
-            </Link>
-          </div>
-        </div>
-      </RevealOnScroll>
-
-      <RevealOnScroll className="section-shell py-14" delayMs={60}>
-        <div className="mb-9 text-center lg:text-left">
-          <p className="section-label">Exclusive Features</p>
-          <h2 className="section-title">Beyond coaching: Total student empowerment.</h2>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="surface rounded-xl p-8 border-t-8 border-[var(--color-purple)] hover:translate-y-[-8px] hover:shadow-2xl transition-all group">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-purple)] text-white shadow-lg shadow-purple-200 group-hover:scale-110 transition-transform">
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-[var(--color-heading)] mb-3">AI Powered Analytics</h3>
-            <p className="text-sm leading-7 text-[var(--color-muted)] font-medium">
-              Track your progress with machine learning insights. We identify your weak areas before you even notice them.
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-[var(--color-purple)] font-bold text-sm group-hover:translate-x-2 transition-transform">
-              Learn More <span>→</span>
-            </div>
-          </div>
-
-          <div className="surface rounded-xl p-8 border-t-8 border-[var(--color-amber)] hover:translate-y-[-8px] hover:shadow-2xl transition-all group">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-amber)] text-white shadow-lg shadow-amber-200 group-hover:scale-110 transition-transform">
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-[var(--color-heading)] mb-3">Digital Library</h3>
-            <p className="text-sm leading-7 text-[var(--color-muted)] font-medium">
-              Access 5000+ curated resources, video lectures, and previous year papers anywhere, anytime.
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-[var(--color-amber)] font-bold text-sm group-hover:translate-x-2 transition-transform">
-              Explore Library <span>→</span>
-            </div>
-          </div>
-
-          <div className="surface rounded-xl p-8 border-t-8 border-[var(--color-rose)] hover:translate-y-[-8px] hover:shadow-2xl transition-all group">
-            <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-rose)] text-white shadow-lg shadow-rose-200 group-hover:scale-110 transition-transform">
-              <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-bold text-[var(--color-heading)] mb-3">1-on-1 Mentoring</h3>
-            <p className="text-sm leading-7 text-[var(--color-muted)] font-medium">
-              Connect with alumni and industry experts for personalized guidance on your career path.
-            </p>
-            <div className="mt-6 flex items-center gap-2 text-[var(--color-rose)] font-bold text-sm group-hover:translate-x-2 transition-transform">
-              Meet Mentors <span>→</span>
-            </div>
-          </div>
-        </div>
-      </RevealOnScroll>
-
-      <div className="section-shell py-10">
-        <StudentCarousel />
-      </div>
-
-      <section className="py-14 sm:py-20">
+      <section className="pt-14 sm:pt-20 pb-0">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10 sm:mb-16">
             <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
@@ -304,6 +222,30 @@ export default async function Home() {
           <GrandSuccessCarousel />
         </div>
       </section>
+
+      <RevealOnScroll className="section-shell py-10 lg:py-16" delayMs={100}>
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-16">
+            <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
+              Our Methodology
+            </span>
+            <h2 className="text-4xl font-black tracking-tight text-[var(--color-heading)] sm:text-5xl mb-6">
+              Programs Mapped to Every Stage of Growth
+            </h2>
+            <p className="text-[var(--color-muted)] text-lg font-medium">
+              We provide a complete educational pathway from school foundation to high-level government service and future digital skills.
+            </p>
+          </div>
+
+          <ProgramCarousel programs={data.programs} />
+          
+          <div className="mt-10 sm:mt-16 text-center">
+            <Link href="/courses" className="action-button px-10 py-5 text-lg shadow-2xl">
+              Explore All {courseLibrary.length}+ Programs
+            </Link>
+          </div>
+        </div>
+      </RevealOnScroll>
 
       <RevealOnScroll className="section-shell py-14" delayMs={40}>
         <div className="mb-9 text-center lg:text-left">

@@ -61,7 +61,9 @@ export function StudentCarousel() {
                 alt={student.name}
                 width={176}
                 height={176}
+                loading="lazy"
                 className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
+                sizes="176px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>

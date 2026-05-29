@@ -62,8 +62,9 @@ export function CampusHighlightsCarousel() {
                 alt={h.name}
                 fill
                 className="object-cover transition-transform duration-[8000ms] ease-linear"
-                sizes="300px"
-                priority={i === 0}
+                sizes="(max-width: 640px) 260px, 300px"
+                priority={i === index}
+                loading={i === index ? "eager" : "lazy"}
               />
             </div>
           ))}

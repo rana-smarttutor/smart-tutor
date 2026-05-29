@@ -29,37 +29,135 @@
   },
   {
     "STUDENT NAME": "Ms. Darshit",
-    "PHOTO  NAME": "Ms.Darshit",
+    "PHOTO  NAME": "Ms.Darshit.png",
     "EXAM NAME": "SBI PO",
     "MARKS": "_",
     "Rank": "1st"
   },
   {
     "STUDENT NAME": "Mr. Vishal",
-    "PHOTO  NAME": "Mr.Vishal",
+    "PHOTO  NAME": "Mr.Vishal.png",
     "EXAM NAME": "SSC GD",
     "MARKS": "_",
     "Rank": "1st"
   },
   {
     "STUDENT NAME": "Mr. Kanade",
-    "PHOTO  NAME": "Mr.Kanade",
+    "PHOTO  NAME": "Mr.Kanade.png",
     "EXAM NAME": "MAH MBA CET 2024",
-    "MARKS": "99.37",
+    "MARKS": "99.37%",
     "Rank": "_"
   },
   {
     "STUDENT NAME": "Mr. Vaibhava",
-    "PHOTO  NAME": "Mr.Vaibhava",
+    "PHOTO  NAME": "Mr.Vaibhava.png",
     "EXAM NAME": "CLAT(NLU KOLKATA)",
     "MARKS": "_",
     "Rank": "1st"
   },
   {
     "STUDENT NAME": "Mr. Aadesh Gaigawali",
-    "PHOTO  NAME": "Mr.AadeshGaigawali",
+    "PHOTO  NAME": "Mr.AadeshGaigawali.png",
     "EXAM NAME": "MAH MBA CET 2024",
     "MARKS": "99+",
+    "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Mr.Akash",
+    "PHOTO  NAME": "Mr.Akash.png",
+    "EXAM NAME": "MAHARASHTRA REVENUE OFFICER",
+    "MARKS": "_",
+    "Rank": "1st"
+  },
+  {
+    "STUDENT NAME": "Ms.Prajakta Jadhav",
+    "PHOTO  NAME": "Ms.Prajakta Jadhav.png",
+    "EXAM NAME": "COMMERCE",
+    "MARKS": "97.36%",
+    "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Ms.Shivani Chaudhari",
+    "PHOTO  NAME": "Ms.Shivani Chaudhari.png",
+    "EXAM NAME": "SCIENCE",
+    "MARKS": "85%",
+    "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Ms.Shruti Kamble",
+    "PHOTO  NAME": "Ms.Shruti Kamble.png",
+    "EXAM NAME": "SCIENCE",
+    "MARKS": "87.33%",
+    "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Mr.Arpit Gupta",
+    "PHOTO  NAME": "Mr.Arpit Gupta.png",
+    "EXAM NAME": "COMMERCE",
+    "MARKS": "79.43%",
+    "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Mr.Raj Singh",
+    "PHOTO  NAME": "Mr.Raj Singh.png",
+    "EXAM NAME": "RBI GRADE B",
+    "MARKS": "_",
+    "Rank": "1st"
+  },
+  {
+    "STUDENT NAME": "Ms.Riya Kamble",
+    "PHOTO  NAME": "Ms.Riya Kamble.png",
+    "EXAM NAME": "RBI GRADE B",
+    "MARKS": "_",
+    "Rank": "1st"
+  },
+  {
+    "STUDENT NAME": "Mr.Rupesh Katker",
+    "PHOTO  NAME": "Mr.Rupesh Katker.png",
+    "EXAM NAME": "INDIAN NAVY",
+    "MARKS": "_",
+    "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Mr.Akshay Patil",
+    "PHOTO  NAME": "Mr.Akshay Patil.png",
+    "EXAM NAME": "SCIENCE",
+    "MARKS": "93.67%",
+    "Rank": "_"
+  }, 
+  {
+    "STUDENT NAME": "Mr.Aman",
+    "PHOTO  NAME": "Mr.Aman.png",
+    "EXAM NAME": "SSC CGL(INCOME TAX OFFICER)",
+    "MARKS": "_",
+    "Rank": "1st"
+  },
+  {
+    "STUDENT NAME": "Mr.Aditya Agarwal",
+    "PHOTO  NAME": "Mr.Adity Agarwal.png",
+    "EXAM NAME": "IMU CET(MERCHANTNAVY)",
+    "MARKS": "_",
+    "Rank": "499"
+  },
+  {
+    "STUDENT NAME": "Mr.Alok Singh",
+    "PHOTO  NAME": "Mr.Alok Singh.png",
+    "EXAM NAME": "IMU CET(MERCHANTNAVY)",
+    "MARKS": "_",
+    "Rank": "394"
+  },
+  {
+    "STUDENT NAME": "Ms.Aditi Sharma",
+    "PHOTO  NAME": "Ms.Aditi Sharma.png",
+    "EXAM NAME": "IMU CET(MERCHANTNAVY)",
+    "MARKS": "_",
+    "Rank": "771"
+  },
+  {
+    "STUDENT NAME": "Ms.Harshita More",
+    "PHOTO  NAME": "Ms.Harshita More.png",
+    "EXAM NAME": "COMMERCE",
+    "MARKS": "84.57%",
     "Rank": "_"
   }
 ]
