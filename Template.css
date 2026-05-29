@@ -1,0 +1,197 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f5f7fb;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:20px;
+}
+
+.course-card{
+    width:750px;
+    background:#fff;
+    border-radius:18px;
+    padding:18px;
+    display:flex;
+    gap:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+    border:1px solid #ececec;
+}
+
+.course-image{
+    width:180px;
+    min-width:180px;
+    background:#eef5ff;
+    border-radius:14px;
+    padding:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.banner-content{
+    text-align:left;
+}
+
+.banner-content .brand{
+    color:#2855a7;
+    font-size:18px;
+    font-weight:600;
+}
+
+.banner-content h2{
+    color:#1747a7;
+    font-size:42px;
+    line-height:1;
+    margin:8px 0;
+    font-weight:800;
+}
+
+.banner-content p{
+    color:#23406f;
+    font-weight:600;
+    margin-bottom:20px;
+}
+
+.chart{
+    position:relative;
+    height:80px;
+}
+
+.bar{
+    position:absolute;
+    bottom:0;
+    width:22px;
+    background:#3b82f6;
+    border-radius:4px 4px 0 0;
+}
+
+.bar1{
+    left:10px;
+    height:25px;
+}
+
+.bar2{
+    left:42px;
+    height:40px;
+    background:#d8e6ff;
+}
+
+.bar3{
+    left:74px;
+    height:55px;
+}
+
+.chart svg{
+    position:absolute;
+    width:100px;
+    height:50px;
+    left:0;
+    top:0;
+}
+
+.course-content{
+    flex:1;
+}
+
+.top-row{
+    display:flex;
+    justify-content:flex-end;
+}
+
+.badge{
+    background:#22c55e;
+    color:#fff;
+    padding:6px 14px;
+    border-radius:30px;
+    font-size:12px;
+    font-weight:700;
+}
+
+.course-content h3{
+    margin-top:12px;
+    color:#111827;
+    font-size:30px;
+    line-height:1.3;
+    font-weight:700;
+}
+
+.description{
+    color:#6b7280;
+    margin:18px 0;
+    line-height:1.7;
+    font-size:16px;
+}
+
+.details{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    color:#6b7280;
+    font-size:15px;
+}
+
+.details i{
+    width:20px;
+    color:#64748b;
+}
+
+.card-footer{
+    margin-top:28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.rating{
+    color:#444;
+    font-weight:600;
+}
+
+.rating span{
+    color:#7c7c7c;
+}
+
+.download-btn{
+    background:#fff;
+    color:#2563eb;
+    border:2px solid #2563eb;
+    padding:12px 24px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    transition:.3s;
+}
+
+.download-btn:hover{
+    background:#2563eb;
+    color:#fff;
+}
+
+@media(max-width:768px){
+
+    .course-card{
+        flex-direction:column;
+        width:100%;
+    }
+
+    .course-image{
+        width:100%;
+    }
+
+    .card-footer{
+        flex-direction:column;
+        gap:15px;
+    }
+
+    .download-btn{
+        width:100%;
+    }
+}
