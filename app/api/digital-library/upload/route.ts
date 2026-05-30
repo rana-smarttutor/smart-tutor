@@ -1,59 +1,42 @@
 import { put } from "@vercel/blob";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function safeFileName(name: string) {
+function safeBookName(name: string) {
   return name
     .trim()
     .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9.\-_]/g, "")
-    .toLowerCase();
+    .replace(/[^a-zA-Z0-9\-_]/g, "");
 }
 
-function getExtension(fileName: string) {
-  const lastDot = fileName.lastIndexOf(".");
-  if (lastDot === -1) return "";
-  return fileName.slice(lastDot).toLowerCase();
+function getExtension(name: string) {
+  const dotIndex = name.lastIndexOf(".");
+
+  if (dotIndex === -1) return "";
+
+  return name.slice(dotIndex).toLowerCase();
 }
 
-function removeExtension(fileName: string) {
-  const lastDot = fileName.lastIndexOf(".");
-  if (lastDot === -1) return fileName;
-  return fileName.slice(0, lastDot);
-}
-
-function normalizePriceForStorage(value: string) {
+function normalizeStoredPrice(value: string) {
   const digits = value.replace(/[^\d]/g, "");
-  if (!digits || Number(digits) <= 0) return "free";
+
+  if (!digits || Number(digits) <= 0) {
+    return "free";
+  }
+
   return String(Number(digits));
-}
-
-async function getCurrentRole() {
-  const cookieStore = await cookies();
-
-  const role =
-    cookieStore.get("role")?.value ||
-    cookieStore.get("userRole")?.value ||
-    cookieStore.get("smart_tutors_role")?.value ||
-    cookieStore.get("smart-tutors-role")?.value ||
-    cookieStore.get("accountRole")?.value ||
-    "student";
-
-  return role.toLowerCase();
-}
-
-function canManageLibrary(role: string) {
-  return ["admin", "educator"].includes(role);
 }
 
 export async function POST(request: Request) {
   try {
-    const role = await getCurrentRole();
+    const session = await getSessionUser();
 
-    if (!canManageLibrary(role)) {
+    const role = String(session?.role || "student").toLowerCase();
+
+    if (role !== "admin" && role !== "educator") {
       return NextResponse.json(
         {
           success: false,
@@ -69,8 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "BLOB_READ_WRITE_TOKEN is missing. Add it in .env.local and restart npm run dev.",
+          message: "BLOB_READ_WRITE_TOKEN is missing.",
         },
         { status: 500 }
       );
@@ -78,71 +60,102 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
 
-    const file = formData.get("file") as File | null;
     const title = String(formData.get("title") || "").trim();
     const price = String(formData.get("price") || "").trim();
+    const file = formData.get("file") as File | null;
+    const thumbnail = formData.get("thumbnail") as File | null;
 
-    if (!file) {
+    if (!title || !file || !thumbnail || price === "") {
       return NextResponse.json(
         {
           success: false,
-          message: "No file uploaded.",
+          message:
+            "Book name, PDF upload, thumbnail upload and price are required.",
         },
         { status: 400 }
       );
     }
 
-    const isPdf =
-      file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    const validPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
 
-    if (!isPdf) {
+    if (!validPdf) {
       return NextResponse.json(
         {
           success: false,
-          message: "Only PDF files are allowed in the digital library.",
+          message: "Book upload must be a PDF file.",
         },
         { status: 400 }
       );
     }
 
-    const originalExtension = getExtension(file.name) || ".pdf";
-    const originalNameWithoutExtension = removeExtension(file.name);
-    const baseName = safeFileName(title || originalNameWithoutExtension);
+    const thumbnailExtension = getExtension(thumbnail.name);
 
-    if (!baseName) {
+    const validThumbnail =
+      [".png", ".jpg", ".jpeg", ".webp"].includes(thumbnailExtension) &&
+      (/^image\/(png|jpeg|webp)$/.test(thumbnail.type) ||
+        thumbnail.type === "");
+
+    if (!validThumbnail) {
       return NextResponse.json(
         {
           success: false,
-          message: "Invalid file name.",
+          message: "Thumbnail must be PNG, JPG or WEBP.",
         },
         { status: 400 }
       );
     }
 
-    const priceForStorage = normalizePriceForStorage(price);
-    const finalFileName = `${baseName}${originalExtension}`;
-    const pathname = `digital-library/${Date.now()}-${priceForStorage}-${finalFileName}`;
+    const safeTitle = safeBookName(title);
 
-    const blob = await put(pathname, file, {
-      access: "public",
-      addRandomSuffix: false,
-      token,
-    });
+    if (!safeTitle) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid book name.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const id = Date.now().toString();
+    const storedPrice = normalizeStoredPrice(price);
+    const assetKey = `${id}__${storedPrice}__${safeTitle}`;
+
+    const bookBlob = await put(
+      `digital-library/books/${assetKey}.pdf`,
+      file,
+      {
+        access: "public",
+        addRandomSuffix: false,
+        token,
+      }
+    );
+
+    const thumbnailBlob = await put(
+      `digital-library/thumbnails/${assetKey}${thumbnailExtension}`,
+      thumbnail,
+      {
+        access: "public",
+        addRandomSuffix: false,
+        token,
+      }
+    );
 
     return NextResponse.json({
       success: true,
       book: {
-        title: title || originalNameWithoutExtension,
+        title,
         price:
-          priceForStorage === "free"
+          storedPrice === "free"
             ? "Free"
-            : `₹${Number(priceForStorage).toLocaleString("en-IN")}`,
-        fileName: finalFileName,
-        originalFileName: file.name,
-        pathname: blob.pathname,
-        url: blob.url,
-        downloadUrl: blob.downloadUrl || blob.url,
-        contentType: file.type,
+            : `₹${Number(storedPrice).toLocaleString("en-IN")}`,
+        fileName: `${safeTitle}.pdf`,
+        pathname: bookBlob.pathname,
+        url: bookBlob.url,
+        downloadUrl: bookBlob.downloadUrl || bookBlob.url,
+        thumbnailUrl: thumbnailBlob.url,
       },
     });
   } catch (error) {
@@ -152,7 +165,9 @@ export async function POST(request: Request) {
       {
         success: false,
         message:
-          error instanceof Error ? error.message : "Failed to upload file.",
+          error instanceof Error
+            ? error.message
+            : "Failed to upload material.",
       },
       { status: 500 }
     );

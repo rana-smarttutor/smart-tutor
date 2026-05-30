@@ -1,62 +1,57 @@
 import { list } from "@vercel/blob";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function getCurrentRole() {
-  const cookieStore = await cookies();
+function displayPrice(rawPrice: string) {
+  if (rawPrice === "free" || Number(rawPrice) <= 0) {
+    return "Free";
+  }
 
-  const role =
-    cookieStore.get("role")?.value ||
-    cookieStore.get("userRole")?.value ||
-    cookieStore.get("smart_tutors_role")?.value ||
-    cookieStore.get("smart-tutors-role")?.value ||
-    cookieStore.get("accountRole")?.value ||
-    "student";
-
-  return role.toLowerCase();
+  return `₹${Number(rawPrice).toLocaleString("en-IN")}`;
 }
 
-async function isUserLoggedIn() {
-  const cookieStore = await cookies();
+function parseNewBookPath(pathname: string) {
+  const value = pathname
+    .replace("digital-library/books/", "")
+    .replace(/\.pdf$/i, "");
 
-  return Boolean(
-    cookieStore.get("session")?.value ||
-      cookieStore.get("auth_token")?.value ||
-      cookieStore.get("token")?.value ||
-      cookieStore.get("smart_tutors_session")?.value ||
-      cookieStore.get("smart-tutors-session")?.value ||
-      cookieStore.get("userRole")?.value ||
-      cookieStore.get("role")?.value
-  );
+  const [id, rawPrice = "free", ...titleParts] = value.split("__");
+  const storedTitle = titleParts.join("__");
+
+  return {
+    thumbnailKey: `${id}__${rawPrice}__${storedTitle}`,
+    title: storedTitle.replace(/-/g, " "),
+    fileName: `${storedTitle}.pdf`,
+    price: displayPrice(rawPrice),
+  };
 }
 
-function canManageLibrary(role: string) {
-  return ["admin", "educator"].includes(role);
-}
-
-function parseBlobName(pathname: string) {
+function parseOldBookPath(pathname: string) {
   const rawName = pathname.replace("digital-library/", "");
   const parts = rawName.split("-");
 
-  const maybePrice = parts[1] || "free";
-  const hasPricePart = maybePrice === "free" || /^\d+$/.test(maybePrice);
+  const possibleTimestamp = parts[0] || "";
+  const hasTimestamp = /^\d{10,}$/.test(possibleTimestamp);
 
-  const rawPrice = hasPricePart ? maybePrice : "free";
-  const fileName = hasPricePart
-    ? parts.slice(2).join("-") || rawName
-    : parts.slice(1).join("-") || rawName;
+  const possiblePrice = hasTimestamp ? parts[1] || "free" : "free";
+  const hasPrice =
+    possiblePrice === "free" || /^\d+$/.test(possiblePrice);
 
-  const price =
-    rawPrice === "free" || Number(rawPrice) <= 0
-      ? "Free"
-      : `₹${Number(rawPrice).toLocaleString("en-IN")}`;
+  const fileName =
+    hasTimestamp && hasPrice
+      ? parts.slice(2).join("-") || rawName
+      : hasTimestamp
+      ? parts.slice(1).join("-") || rawName
+      : rawName;
 
-  const title = fileName.replace(/\.[^/.]+$/, "").replace(/-/g, " ");
-
-  return { fileName, title, price };
+  return {
+    title: fileName.replace(/\.[^/.]+$/, "").replace(/-/g, " "),
+    fileName,
+    price: hasTimestamp && hasPrice ? displayPrice(possiblePrice) : "Free",
+  };
 }
 
 export async function GET() {
@@ -67,27 +62,47 @@ export async function GET() {
       return NextResponse.json(
         {
           success: false,
-          message:
-            "BLOB_READ_WRITE_TOKEN is missing. Add it in .env.local and restart npm run dev.",
+          message: "BLOB_READ_WRITE_TOKEN is missing.",
           books: [],
         },
         { status: 500 }
       );
     }
 
-    const role = await getCurrentRole();
-    const canManage = canManageLibrary(role);
-    const loggedIn = await isUserLoggedIn();
+    const session = await getSessionUser();
+
+    const role = String(session?.role || "student").toLowerCase();
+    const canManage = role === "admin" || role === "educator";
+    const isLoggedIn = Boolean(session);
+    const canAccessPdf = canManage || isLoggedIn;
 
     const { blobs } = await list({
       prefix: "digital-library/",
       token,
     });
 
-    const books = blobs
-      .filter((blob) => blob.pathname.toLowerCase().endsWith(".pdf"))
+    const thumbnailMap = new Map(
+      blobs
+        .filter((blob) =>
+          blob.pathname.startsWith("digital-library/thumbnails/")
+        )
+        .map((blob) => {
+          const thumbnailKey = blob.pathname
+            .replace("digital-library/thumbnails/", "")
+            .replace(/\.(png|jpg|jpeg|webp)$/i, "");
+
+          return [thumbnailKey, blob.url];
+        })
+    );
+
+    const newBooks = blobs
+      .filter(
+        (blob) =>
+          blob.pathname.startsWith("digital-library/books/") &&
+          blob.pathname.toLowerCase().endsWith(".pdf")
+      )
       .map((blob) => {
-        const parsed = parseBlobName(blob.pathname);
+        const parsed = parseNewBookPath(blob.pathname);
 
         return {
           id: encodeURIComponent(blob.pathname),
@@ -95,17 +110,45 @@ export async function GET() {
           price: parsed.price,
           fileName: parsed.fileName,
           pathname: blob.pathname,
-          url: blob.url,
-          downloadUrl: blob.downloadUrl || blob.url,
-          size: blob.size,
+          url: canAccessPdf ? blob.url : undefined,
+          downloadUrl: canAccessPdf
+            ? blob.downloadUrl || blob.url
+            : undefined,
+          thumbnailUrl: thumbnailMap.get(parsed.thumbnailKey),
           uploadedAt: blob.uploadedAt,
         };
       });
 
+    const oldBooks = blobs
+      .filter((blob) => /^digital-library\/[^/]+\.pdf$/i.test(blob.pathname))
+      .map((blob) => {
+        const parsed = parseOldBookPath(blob.pathname);
+
+        return {
+          id: encodeURIComponent(blob.pathname),
+          title: parsed.title,
+          price: parsed.price,
+          fileName: parsed.fileName,
+          pathname: blob.pathname,
+          url: canAccessPdf ? blob.url : undefined,
+          downloadUrl: canAccessPdf
+            ? blob.downloadUrl || blob.url
+            : undefined,
+          thumbnailUrl: undefined,
+          uploadedAt: blob.uploadedAt,
+        };
+      });
+
+    const books = [...newBooks, ...oldBooks].sort(
+      (a, b) =>
+        new Date(b.uploadedAt).getTime() -
+        new Date(a.uploadedAt).getTime()
+    );
+
     return NextResponse.json({
       success: true,
       canManage,
-      isLoggedIn: loggedIn,
+      isLoggedIn,
       role,
       books,
     });
