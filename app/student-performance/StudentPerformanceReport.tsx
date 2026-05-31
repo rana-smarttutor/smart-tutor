@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./student-performance.css";
 
 type Report = {
@@ -11,7 +11,7 @@ type Report = {
   student: {
     name: string;
     classLevel: string;
-    school: string;
+    school?: string;
     city: string;
     state: string;
     batch: string;
@@ -19,6 +19,7 @@ type Report = {
     parentName: string;
     parentRelation: string;
     parentContact: string;
+    photo?: string;
   };
   metrics: {
     averageScore: number;
@@ -74,17 +75,32 @@ function getSubjectStatus(value: number) {
 }
 
 function StudentAvatar({ report }: { report: Report }) {
+  const [photoFailed, setPhotoFailed] = useState(false);
+
   const initials =
     report.student.name
       ?.split(" ")
-      .map((item) => item[0])
+      .map((item) => item.charAt(0))
       .join("")
       .slice(0, 2)
       .toUpperCase() || "ST";
 
+  const showPhoto = Boolean(report.student.photo) && !photoFailed;
+
   return (
-    <div className="t5-avatar">
-      <span>{initials}</span>
+    <div
+      className="t5-avatar"
+      aria-label={`${report.student.name || "Student"} avatar`}
+    >
+      {showPhoto ? (
+        <img
+          src={report.student.photo}
+          alt={report.student.name || "Student"}
+          onError={() => setPhotoFailed(true)}
+        />
+      ) : (
+        <span>{initials}</span>
+      )}
     </div>
   );
 }
@@ -345,17 +361,6 @@ function TeacherFeedback({ subjects }: { subjects: Report["subjectWiseMarks"] })
   );
 }
 function SmartStrategy({ report }: { report: Report }) {
-  const studentName = report.student.name || "The student";
-  const weakSubject =
-    report.strengthsWeaknesses.weakSubject || "weaker subjects";
-  const strongSubject =
-    report.strengthsWeaknesses.strongSubject || "strong subjects";
-  const weakChapters =
-    report.strengthsWeaknesses.weakChapters?.join(", ") ||
-    "important weak chapters";
-
-  const fallbackStudyRecommendation = `${studentName} should revise ${weakSubject} regularly, especially ${weakChapters}. A weekly plan should include concept revision, chapter-wise practice, timed tests, and mistake review. ${strongSubject} should be maintained through regular practice so the existing strength is not lost.`;
-
   const recommendations = [
     {
       title: "Teacher Remark",
@@ -369,17 +374,12 @@ function SmartStrategy({ report }: { report: Report }) {
     },
     {
       title: "Study Recommendation",
-      text:
-        report.suggestions.smartRecommendation ||
-        fallbackStudyRecommendation,
+      text: report.suggestions.studyRecommendation || "Not added",
       tone: "green",
     },
     {
       title: "AI Smart Strategy",
-      text:
-        report.suggestions.smartStrategy ||
-        report.suggestions.smartRecommendation ||
-        "Not added",
+      text: report.suggestions.smartStrategy || "Not added",
       tone: "purple",
     },
   ];
@@ -391,10 +391,10 @@ function SmartStrategy({ report }: { report: Report }) {
       <div className="t5-smart-grid">
         {recommendations.map((item) => (
           <div
-            className={`t5-smart-card t5-smart-card-${item.tone}`}
             key={item.title}
+            className={`t5-smart-card t5-smart-card-${item.tone}`}
           >
-            <b>{item.title}</b>
+            <span className="t5-smart-label">{item.title}</span>
             <p>{item.text}</p>
           </div>
         ))}
@@ -402,6 +402,7 @@ function SmartStrategy({ report }: { report: Report }) {
     </section>
   );
 }
+
 export default function StudentPerformanceReport({ report }: { report: Report }) {
   useEffect(() => {
     document.body.classList.add("report-only-mode");

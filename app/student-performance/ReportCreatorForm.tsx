@@ -46,6 +46,7 @@ export default function ReportCreatorForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHeuristics, setShowHeuristics] = useState(false);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 
   const [heuristics, setHeuristics] = useState({
     outstanding: "95",
@@ -69,6 +70,7 @@ export default function ReportCreatorForm() {
     parentName: "",
     parentRelation: "",
     parentContact: "",
+    photo: "",
 
     averageScore: "",
     batchRank: "",
@@ -108,7 +110,59 @@ export default function ReportCreatorForm() {
       [name]: value,
     }));
   }
+async function handleStudentPhotoUpload(
+  event: React.ChangeEvent<HTMLInputElement>
+) {
+  const file = event.target.files?.[0];
 
+  if (!file) return;
+
+  const validType =
+    ["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
+    /\.(png|jpg|jpeg|webp)$/i.test(file.name);
+
+  if (!validType) {
+    alert("Only PNG, JPG and WEBP images are allowed.");
+    event.target.value = "";
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Student photo must be smaller than 2 MB.");
+    event.target.value = "";
+    return;
+  }
+
+  setIsPhotoUploading(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch("/api/student-performance/upload-photo", {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Failed to upload student photo.");
+    }
+
+    updateForm("photo", result.url);
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error instanceof Error
+        ? error.message
+        : "Failed to upload student photo."
+    );
+  } finally {
+    setIsPhotoUploading(false);
+  }
+}
   function updateHeuristic(name: string, value: string) {
     setHeuristics((current) => ({
       ...current,
@@ -341,6 +395,7 @@ export default function ReportCreatorForm() {
         parentName: form.parentName,
         parentRelation: form.parentRelation,
         parentContact: form.parentContact,
+        photo: form.photo,
         },
 
       metrics: {
@@ -596,6 +651,41 @@ export default function ReportCreatorForm() {
               value={form.state}
               onChange={updateForm}
             />
+            
+            <div className="spr-field spr-photo-upload-field">
+  <span>Student Photo</span>
+
+  <label className="spr-photo-upload-button">
+    <input
+      type="file"
+      accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+      onChange={handleStudentPhotoUpload}
+      disabled={isPhotoUploading}
+    />
+
+    {isPhotoUploading ? "Uploading Photo..." : "Upload Student Photo"}
+  </label>
+
+  <p className="spr-muted-line">
+    PNG, JPG or WEBP only. Maximum size: 2 MB.
+  </p>
+
+  {form.photo ? (
+    <div className="spr-photo-preview">
+      <img src={form.photo} alt="Student preview" />
+
+      <button
+        type="button"
+        className="spr-remove-photo-btn"
+        onClick={() => updateForm("photo", "")}
+      >
+        Remove Photo
+      </button>
+    </div>
+  ) : (
+    <p className="spr-muted-line">No student photo uploaded.</p>
+  )}
+</div>
 
 
             <Field
@@ -904,7 +994,6 @@ export default function ReportCreatorForm() {
               onChange={updateForm}
               textarea
             />
-
             <Field
               label="Study Recommendation"
               name="studyRecommendation"
