@@ -1,5 +1,5 @@
 import QuizArenaClient from '@/components/quiz-arena-client';
 
-export default function MockTestPage() {
+export default function QuizArenaPage() {
   return <QuizArenaClient />;
 }

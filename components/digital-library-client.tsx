@@ -12,7 +12,6 @@ type Book = {
   downloadUrl?: string;
   thumbnailUrl?: string;
   pathname?: string;
-  uploadedAt?: string;
 };
 
 type DigitalLibraryClientProps = {
@@ -20,7 +19,6 @@ type DigitalLibraryClientProps = {
   canManage?: boolean;
   isLoggedIn?: boolean;
 };
-
 
 function displayPrice(value?: string) {
   if (!value || value.toLowerCase() === "free") {
@@ -51,7 +49,6 @@ function detectBackgroundDarkMode(element: HTMLElement | null) {
 
   while (currentElement) {
     const background = window.getComputedStyle(currentElement).backgroundColor;
-
     const match = background.match(
       /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/
     );
@@ -64,7 +61,6 @@ function detectBackgroundDarkMode(element: HTMLElement | null) {
 
       if (alpha > 0.05) {
         const brightness = red * 0.299 + green * 0.587 + blue * 0.114;
-
         return brightness < 150;
       }
     }
@@ -194,7 +190,6 @@ export function DigitalLibraryClient({
 
     window.addEventListener("storage", syncTheme);
     window.addEventListener("resize", syncTheme);
-
     const interval = window.setInterval(syncTheme, 300);
 
     return () => {
@@ -207,45 +202,33 @@ export function DigitalLibraryClient({
 
   const theme = {
     text: isDark ? "text-white" : "text-slate-950",
-
     subtext: isDark ? "text-slate-300" : "text-slate-600",
-
     eyebrow: isDark ? "text-blue-400" : "text-blue-600",
-
     pill: isDark
       ? "border-sky-400 bg-white/10 text-sky-300"
       : "border-sky-400 bg-white/70 text-sky-600",
-
     heroBox: isDark
       ? "border-white/10 bg-[#101a2e]"
       : "border-slate-200 bg-white",
-
     contentBox: isDark
       ? "border-white/10 bg-[#101a2e]"
       : "border-slate-200 bg-white",
-
     statCard: isDark
       ? "border-white/10 bg-[#071124]"
       : "border-slate-100 bg-white",
-
     card: isDark
       ? "border-white/10 bg-[#101a2e]"
       : "border-slate-200 bg-white",
-
     input: isDark
       ? "border-white/10 bg-[#111c31] text-white placeholder:text-slate-500"
       : "border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400",
-
     outline: isDark
       ? "border-white/15 bg-transparent text-white hover:bg-white/5"
       : "border-slate-200 bg-white text-slate-950 hover:bg-slate-50",
-
     divider: isDark ? "border-white/10" : "border-slate-100",
-
     empty: isDark
       ? "border-white/10 bg-[#111c31] text-slate-300"
       : "border-slate-200 bg-slate-50 text-slate-500",
-
     modal: isDark
       ? "border-white/10 bg-[#101a2e]"
       : "border-slate-200 bg-white",
@@ -298,12 +281,17 @@ export function DigitalLibraryClient({
     void loadBooks();
   }, []);
 
-  function openUpload() {
+  function resetModal() {
+    setIsModalOpen(false);
     setEditingBook(null);
     setBookName("");
     setPrice("0");
     setPdfFile(null);
     setThumbnailFile(null);
+  }
+
+  function openUpload() {
+    resetModal();
     setIsModalOpen(true);
   }
 
@@ -317,14 +305,9 @@ export function DigitalLibraryClient({
   }
 
   function closeModal() {
-    if (isSaving) return;
-
-    setIsModalOpen(false);
-    setEditingBook(null);
-    setBookName("");
-    setPrice("0");
-    setPdfFile(null);
-    setThumbnailFile(null);
+    if (!isSaving) {
+      resetModal();
+    }
   }
 
   async function submitMaterial(event: React.FormEvent<HTMLFormElement>) {
@@ -370,17 +353,17 @@ export function DigitalLibraryClient({
     setIsSaving(true);
 
     try {
-      const data = new FormData();
+      const formData = new FormData();
 
-      data.append("title", bookName.trim());
-      data.append("price", price);
+      formData.append("title", bookName.trim());
+      formData.append("price", price);
 
       if (pdfFile) {
-        data.append("file", pdfFile);
+        formData.append("file", pdfFile);
       }
 
       if (thumbnailFile) {
-        data.append("thumbnail", thumbnailFile);
+        formData.append("thumbnail", thumbnailFile);
       }
 
       const id =
@@ -389,13 +372,13 @@ export function DigitalLibraryClient({
           ? encodeURIComponent(editingBook.pathname)
           : "");
 
-      const url = editingBook
+      const endpoint = editingBook
         ? `/api/digital-library/${id}`
         : "/api/digital-library/upload";
 
-      const response = await fetch(url, {
+      const response = await fetch(endpoint, {
         method: editingBook ? "PATCH" : "POST",
-        body: data,
+        body: formData,
       });
 
       const result = await response.json();
@@ -404,11 +387,10 @@ export function DigitalLibraryClient({
         throw new Error(result.message || "Unable to save material.");
       }
 
-      closeModal();
+      resetModal();
       await loadBooks();
     } catch (error) {
       console.error(error);
-
       alert(
         error instanceof Error ? error.message : "Unable to save material."
       );
@@ -420,9 +402,9 @@ export function DigitalLibraryClient({
   async function deleteBook(book: Book) {
     if (!allowedToManage) return;
 
-    const confirmed = window.confirm(`Delete ${book.title}?`);
-
-    if (!confirmed) return;
+    if (!window.confirm(`Delete ${book.title}?`)) {
+      return;
+    }
 
     const id = book.id || encodeURIComponent(book.pathname || "");
 
@@ -445,7 +427,6 @@ export function DigitalLibraryClient({
       await loadBooks();
     } catch (error) {
       console.error(error);
-
       alert(error instanceof Error ? error.message : "Delete failed.");
     }
   }
@@ -559,7 +540,6 @@ export function DigitalLibraryClient({
                 <p className={`text-sm font-black ${theme.subtext}`}>
                   Total PDFs
                 </p>
-
                 <strong className="mt-2 block text-4xl font-black text-blue-600">
                   {books.length}
                 </strong>
@@ -581,7 +561,6 @@ export function DigitalLibraryClient({
               >
                 Library Collection
               </p>
-
               <h2
                 className={`mt-2 break-words text-2xl font-black sm:text-3xl ${theme.text}`}
               >
@@ -628,11 +607,9 @@ export function DigitalLibraryClient({
                       <span className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-extrabold text-white">
                         PDF
                       </span>
-
                       <span className="rounded-lg bg-amber-300 px-3 py-1.5 text-xs font-extrabold text-slate-950">
                         Study Material
                       </span>
-
                       <span
                         className={`rounded-lg px-3 py-1.5 text-xs font-extrabold text-white ${
                           isFree ? "bg-emerald-500" : "bg-blue-600"
@@ -649,9 +626,12 @@ export function DigitalLibraryClient({
                       {book.title}
                     </h3>
 
-                   
-
-                    
+                    <p
+                      className={`mt-2 line-clamp-2 min-h-[48px] text-sm font-medium leading-6 ${theme.subtext}`}
+                    >
+                      Access this PDF study material for focused learning and
+                      revision.
+                    </p>
 
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <button
@@ -680,7 +660,6 @@ export function DigitalLibraryClient({
                         >
                           Edit
                         </button>
-
                         <button
                           type="button"
                           onClick={() => deleteBook(book)}
@@ -715,7 +694,6 @@ export function DigitalLibraryClient({
                 >
                   {editingBook ? "Edit Center" : "Upload Center"}
                 </p>
-
                 <h2 className={`mt-2 text-2xl font-black ${theme.text}`}>
                   {editingBook ? "Edit Material" : "Upload New Material"}
                 </h2>
@@ -736,7 +714,6 @@ export function DigitalLibraryClient({
                 <span className={`text-sm font-bold ${theme.subtext}`}>
                   Name of the book
                 </span>
-
                 <input
                   required
                   value={bookName}
@@ -750,7 +727,6 @@ export function DigitalLibraryClient({
                 <span className={`text-sm font-bold ${theme.subtext}`}>
                   Book upload (PDF only)
                 </span>
-
                 <input
                   required={!editingBook}
                   type="file"
@@ -760,7 +736,6 @@ export function DigitalLibraryClient({
                   }
                   className={`rounded-2xl border px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white ${theme.input}`}
                 />
-
                 {editingBook ? (
                   <span className="text-xs font-bold text-slate-500">
                     Leave blank to keep the current PDF.
@@ -772,7 +747,6 @@ export function DigitalLibraryClient({
                 <span className={`text-sm font-bold ${theme.subtext}`}>
                   Thumbnail upload
                 </span>
-
                 <input
                   required={!editingBook}
                   type="file"
@@ -782,7 +756,6 @@ export function DigitalLibraryClient({
                   }
                   className={`rounded-2xl border px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white ${theme.input}`}
                 />
-
                 {editingBook ? (
                   <span className="text-xs font-bold text-slate-500">
                     Leave blank to keep the current thumbnail.
@@ -794,7 +767,6 @@ export function DigitalLibraryClient({
                 <span className={`text-sm font-bold ${theme.subtext}`}>
                   Price in INR
                 </span>
-
                 <input
                   required
                   min="0"
@@ -805,7 +777,6 @@ export function DigitalLibraryClient({
                   placeholder="Enter 0 for Free"
                   className={`rounded-2xl border px-5 py-4 font-bold outline-none focus:border-blue-500 ${theme.input}`}
                 />
-
                 <span className="text-xs font-bold text-slate-500">
                   Display price: {displayPrice(price)}
                 </span>
@@ -821,7 +792,6 @@ export function DigitalLibraryClient({
               >
                 Cancel
               </button>
-
               <button
                 type="submit"
                 disabled={isSaving}
