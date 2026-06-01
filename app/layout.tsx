@@ -52,9 +52,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Smart Tutors Academy" }],
   creator: "Smart Tutors Academy",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "en_IN",

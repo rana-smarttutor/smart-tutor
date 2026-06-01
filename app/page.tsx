@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -11,6 +12,14 @@ import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
 import { courseLibrary } from "@/lib/course-library";
 import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
 import { ProgramCarousel } from "@/components/program-carousel";
+
+export const metadata: Metadata = {
+  title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
+  description: "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance.",
+  alternates: {
+    canonical: "https://smarttutors.co.in",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

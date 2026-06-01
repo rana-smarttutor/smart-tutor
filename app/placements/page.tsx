@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { generatedPlacedStudents } from "@/lib/placed-students-data";
 import { SiteHeader } from "@/components/site-header";
@@ -5,6 +6,14 @@ import { SiteFooter } from "@/components/site-footer";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { CountUpValue } from "@/components/count-up-value";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Placements & Results | Smart Tutors",
+  description: "Celebrate the success of our students who achieved exceptional results in competitive exams and professional career breakthroughs.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/placements",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

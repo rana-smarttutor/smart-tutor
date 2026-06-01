@@ -36,16 +36,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/digital-library`,
-      lastModified: lastMod,
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
       url: `${baseUrl}/contact`,
       lastModified: lastMod,
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/library`,
+      lastModified: lastMod,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/login`,
@@ -55,14 +55,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  // 2. Dynamic Course Pages (if they exist as separate routes)
-  // Currently /courses is a single catalog, but we can prepare for deep links
-  const coursePages: MetadataRoute.Sitemap = courseLibrary.map((course) => ({
-    url: `${baseUrl}/courses#${course.standardKey}`,
-    lastModified: lastMod,
-    changeFrequency: 'monthly',
-    priority: 0.7,
-  }));
-
-  return [...staticPages, ...coursePages];
+  return [...staticPages];
 }

@@ -1,6 +1,15 @@
+import { Metadata } from "next";
 import { LiveClock } from "@/components/live-clock";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { getPublicInstituteData } from "@/lib/data-store";
+
+export const metadata: Metadata = {
+  title: "Contact Us | Smart Tutors",
+  description: "Get in touch with Smart Tutors for admissions, career guidance, or any other inquiries. Visit our Vashi campus or connect via WhatsApp and Email.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/contact",
+  },
+};
 
 export const revalidate = 3600; // Cache for 1 hour
 

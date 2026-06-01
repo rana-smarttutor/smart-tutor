@@ -1,7 +1,16 @@
+import { Metadata } from "next";
 import Link from "next/link";
 
 import { CourseCatalogClient } from "@/components/course-catalog-client";
 import { getAllDetailedCourses } from "@/lib/data-store";
+
+export const metadata: Metadata = {
+  title: "Our Courses | Smart Tutors",
+  description: "Explore our wide range of courses from primary school foundation to professional and government exam preparation. Structured roadmaps designed for success.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/courses",
+  },
+};
 
 export const dynamic = "force-dynamic";
 

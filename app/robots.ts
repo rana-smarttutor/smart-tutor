@@ -11,8 +11,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/courses', '/placements', '/mock-test', '/digital-library', '/contact'],
-        disallow: ['/api/', '/dashboard/', '/admin/', '/login', '/logout', '/*.json$'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        disallow: ['/api/', '/dashboard/', '/admin/', '/student-performance/', '/login', '/logout', '/*.json$'],
       },
       {
         userAgent: 'GPTBot',
