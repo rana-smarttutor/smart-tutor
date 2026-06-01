@@ -71,56 +71,56 @@
   },
   {
     "STUDENT NAME": "Ms.Prajakta Jadhav",
-    "PHOTO  NAME": "Ms.Prajakta Jadhav.png",
+    "PHOTO  NAME": "PrajaktaJadhav.png",
     "EXAM NAME": "COMMERCE",
     "MARKS": "97.36%",
     "Rank": "_"
   },
   {
     "STUDENT NAME": "Ms.Shivani Chaudhari",
-    "PHOTO  NAME": "Ms.Shivani Chaudhari.png",
+    "PHOTO  NAME": "shivaniChaudhari.png",
     "EXAM NAME": "SCIENCE",
     "MARKS": "85%",
     "Rank": "_"
   },
   {
     "STUDENT NAME": "Ms.Shruti Kamble",
-    "PHOTO  NAME": "Ms.Shruti Kamble.png",
+    "PHOTO  NAME": "ShrutiKamble.png",
     "EXAM NAME": "SCIENCE",
     "MARKS": "87.33%",
     "Rank": "_"
   },
   {
     "STUDENT NAME": "Mr.Arpit Gupta",
-    "PHOTO  NAME": "Mr.Arpit Gupta.png",
+    "PHOTO  NAME": "ArpitGupta.png",
     "EXAM NAME": "COMMERCE",
     "MARKS": "79.43%",
     "Rank": "_"
   },
   {
     "STUDENT NAME": "Mr.Raj Singh",
-    "PHOTO  NAME": "Mr.Raj Singh.png",
+    "PHOTO  NAME": "RajSingh.png",
     "EXAM NAME": "RBI GRADE B",
     "MARKS": "_",
     "Rank": "1st"
   },
   {
     "STUDENT NAME": "Ms.Riya Kamble",
-    "PHOTO  NAME": "Ms.Riya Kamble.png",
+    "PHOTO  NAME": "RiyaKamble.png",
     "EXAM NAME": "RBI GRADE B",
     "MARKS": "_",
     "Rank": "1st"
   },
   {
     "STUDENT NAME": "Mr.Rupesh Katker",
-    "PHOTO  NAME": "Mr.Rupesh Katker.png",
+    "PHOTO  NAME": "RupeshKatkar.png",
     "EXAM NAME": "INDIAN NAVY",
     "MARKS": "_",
     "Rank": "_"
   },
   {
     "STUDENT NAME": "Mr.Akshay Patil",
-    "PHOTO  NAME": "Mr.Akshay Patil.png",
+    "PHOTO  NAME": "AkshayPatil.png",
     "EXAM NAME": "SCIENCE",
     "MARKS": "93.67%",
     "Rank": "_"
@@ -134,30 +134,90 @@
   },
   {
     "STUDENT NAME": "Mr.Aditya Agarwal",
-    "PHOTO  NAME": "Mr.Adity Agarwal.png",
+    "PHOTO  NAME": "AdityaAgarwal.png",
     "EXAM NAME": "IMU CET(MERCHANTNAVY)",
     "MARKS": "_",
     "Rank": "499"
   },
   {
     "STUDENT NAME": "Mr.Alok Singh",
-    "PHOTO  NAME": "Mr.Alok Singh.png",
+    "PHOTO  NAME": "AlokSingh.png",
     "EXAM NAME": "IMU CET(MERCHANTNAVY)",
     "MARKS": "_",
     "Rank": "394"
   },
   {
     "STUDENT NAME": "Ms.Aditi Sharma",
-    "PHOTO  NAME": "Ms.Aditi Sharma.png",
+    "PHOTO  NAME": "AditiSharma.png",
     "EXAM NAME": "IMU CET(MERCHANTNAVY)",
     "MARKS": "_",
     "Rank": "771"
   },
   {
     "STUDENT NAME": "Ms.Harshita More",
-    "PHOTO  NAME": "Ms.Harshita More.png",
+    "PHOTO  NAME": "HarshitaMore.png",
     "EXAM NAME": "COMMERCE",
     "MARKS": "84.57%",
     "Rank": "_"
+  },
+  {
+    "STUDENT NAME": "Rohan Patel",
+    "PHOTO  NAME": "Rohan Patel.png",
+    "EXAM NAME": "Amazon Future Engineers",
+    "MARKS": "87.2%",
+    "Rank": "Rank 25",
+    "COMPANY NAME": "Amazon",
+    "DESIGNATION": "Software Development Engineer-I",
+    "PACKAGE": "₹22.0 LPA"
+  },
+  {
+    "STUDENT NAME": "Sneha Kulkarni",
+    "PHOTO  NAME": "Sneha Kulkarni.png",
+    "EXAM NAME": "Infosys InfyTQ Certification",
+    "MARKS": "93.1%",
+    "Rank": "Rank 8",
+    "COMPANY NAME": "Infosys",
+    "DESIGNATION": "Systems Engineer",
+    "PACKAGE": "₹8.5 LPA"
+  },
+  {
+    "STUDENT NAME": "Aditya Verma",
+    "PHOTO  NAME": "Aditya Verma.png",
+    "EXAM NAME": "TCS National Qualifier Test",
+    "MARKS": "85.7%",
+    "Rank": "Rank 34",
+    "COMPANY NAME": "Tata Consultancy Services",
+    "DESIGNATION": "Assistant System Engineer",
+    "PACKAGE": "₹7.8 LPA"
+  },
+  {
+    "STUDENT NAME": "Neha Singh",
+    "PHOTO  NAME": "Neha Singh.png",
+    "EXAM NAME": "Accenture Placement Assessment",
+    "MARKS": "90.3%",
+    "Rank": "Rank 15",
+    "COMPANY NAME": "Accenture",
+    "DESIGNATION": "Application Development Associate",
+    "PACKAGE": "₹10.2 LPA"
+  },
+  {
+    "STUDENT NAME": "Karan Deshmukh",
+    "PHOTO  NAME": "Karan Deshmukh.png",
+    "EXAM NAME": "Wipro Elite National Talent Hunt",
+    "MARKS": "88.6%",
+    "Rank": "Rank 27",
+    "COMPANY NAME": "Wipro",
+    "DESIGNATION": "Project Engineer",
+    "PACKAGE": "₹7.2 LPA"
+  },
+  {
+    "STUDENT NAME": "Ananya Joshi",
+    "PHOTO  NAME": "Ananya Joshi.png",
+    "EXAM NAME": "Deloitte Graduate Recruitment",
+    "MARKS": "94.5%",
+    "Rank": "Rank 5",
+    "COMPANY NAME": "Deloitte",
+    "DESIGNATION": "Business Technology Analyst",
+    "PACKAGE": "₹12.8 LPA"
   }
 ]

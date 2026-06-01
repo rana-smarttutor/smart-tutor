@@ -49,6 +49,11 @@ const RESULT_CATEGORIES = [
     id: "ssc-cgl",
     label: "SSC CGL",
     image: "/hof/SSC CGL.png"
+  },
+  {
+    id: "corporate",
+    label: "Corporate Placements",
+    image: "/image5.png"
   }
 ];
 
@@ -87,15 +92,15 @@ export function GrandSuccessCarousel() {
       </div>
 
       {/* Main Display Area */}
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-full">
         {/* Image Container - Adjusted to fit images naturally with smooth transition */}
-        <div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border-2 sm:border-4 border-white bg-slate-50 transition-all duration-500">
-           <div className="aspect-[16/10] sm:aspect-[16/9] relative">
+        <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem] shadow-2xl border-2 sm:border-4 border-white bg-slate-50 transition-all duration-500">
+           <div className="aspect-[16/10] sm:aspect-[21/10] relative w-full">
             <Image
                 src={activeCategory.image}
                 alt={activeCategory.label}
                 fill
-                className="object-contain object-center transition-opacity duration-500 ease-in-out"
+                className="object-cover object-center transition-opacity duration-500 ease-in-out"
                 priority
                 key={activeCategory.image}
               />
@@ -103,11 +108,11 @@ export function GrandSuccessCarousel() {
         </div>
         
         {/* Minimal Label below image */}
-        <div className="mt-6 text-center">
-           <p className="text-sm sm:text-lg font-black text-slate-900 uppercase tracking-widest">
+        <div className="mt-8 text-center">
+           <p className="text-xs sm:text-lg font-black text-slate-900 uppercase tracking-[0.3em]">
              {activeCategory.label} Results
            </p>
-           <div className="h-1 w-12 bg-blue-600 mx-auto mt-2 rounded-full" />
+           <div className="h-1.5 w-16 bg-blue-600 mx-auto mt-3 rounded-full shadow-sm" />
         </div>
       </div>
     </RevealOnScroll>

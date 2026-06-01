@@ -78,10 +78,10 @@ export default async function Home() {
           </p>
 
           <div className="space-y-5">
-            <h1 className="mx-auto max-w-5xl text-4xl font-bold leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
+            <h1 className="mx-auto max-w-5xl text-3xl font-black leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
               Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
             </h1>
-            <p className="mx-auto max-w-2xl text-base sm:text-lg leading-relaxed text-[var(--color-muted)] xl:mx-0">
+            <p className="mx-auto max-w-2xl text-sm sm:text-lg leading-relaxed text-[var(--color-muted)] xl:mx-0 font-medium">
               Smart Tutors provides <strong>Programs mapped to every stage of growth</strong>. 
               We bring disciplined preparation, sharp mentoring, and real academic 
               momentum into one focused institute experience. From school boards to 
@@ -211,10 +211,10 @@ export default async function Home() {
             <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
               Academic Excellence
             </span>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tight text-[var(--color-heading)] mb-6">
+            <h2 className="text-3xl md:text-6xl font-black tracking-tight text-[var(--color-heading)] mb-6">
               Recent Results
             </h2>
-            <p className="text-[var(--color-muted)] text-base sm:text-lg font-medium max-w-2xl mx-auto">
+            <p className="text-[var(--color-muted)] text-sm sm:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
               Smart Tutors honors the dedication and remarkable achievements of our students. Our proven track record defines our commitment to academic brilliance.
             </p>
           </div>
@@ -229,10 +229,10 @@ export default async function Home() {
             <span className="inline-block px-4 py-2 rounded-full bg-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-4">
               Our Methodology
             </span>
-            <h2 className="text-4xl font-black tracking-tight text-[var(--color-heading)] sm:text-5xl mb-6">
+            <h2 className="text-3xl font-black tracking-tight text-[var(--color-heading)] sm:text-5xl mb-6">
               Programs Mapped to Every Stage of Growth
             </h2>
-            <p className="text-[var(--color-muted)] text-lg font-medium">
+            <p className="text-[var(--color-muted)] text-base sm:text-lg font-medium">
               We provide a complete educational pathway from school foundation to high-level government service and future digital skills.
             </p>
           </div>

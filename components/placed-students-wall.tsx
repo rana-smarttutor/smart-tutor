@@ -14,6 +14,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
 
   const categories = [
     { label: "All Results", value: "all" },
+    { label: "Corporate", value: "Amazon|Infosys|TCS|Accenture|Wipro|Deloitte" },
     { label: "MBA Entrance", value: "MAH MBA CET" },
     { label: "Banking & PO", value: "SBI PO|NABARD" },
     { label: "Govt & SSC", value: "SSC GD" },
@@ -23,7 +24,10 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
   const filteredStudents = students.filter((s) => {
     if (filter === "all") return true;
     const filterRegex = new RegExp(filter, "i");
-    return filterRegex.test(s.examName || "");
+    return (
+      filterRegex.test(s.examName || "") || 
+      filterRegex.test(s.company || "")
+    );
   });
 
   // Display all students
@@ -71,7 +75,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                       alt={student.name}
                       fill
                       loading="lazy"
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                     />
                   ) : (
@@ -85,42 +89,27 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                       </svg>
                     </div>
                   )}
-                  
-                  {/* Separate Result Badges - Always Visible, slightly smaller */}
-                  <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10 pointer-events-none">
+                </div>
+                <div className="p-4 text-center border-t border-slate-50 dark:border-slate-800">
+                   <div className="flex flex-wrap justify-center gap-1 mb-2">
                     {student.rank && (
-                      <div className="bg-blue-600 text-white text-[7px] sm:text-[8px] font-black px-2 py-0.5 rounded-md shadow-lg uppercase tracking-widest border border-blue-400/50">
-                        Rank: {student.rank}
+                      <div className="bg-blue-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase tracking-widest">
+                        {student.rank}
                       </div>
                     )}
                     {student.marks && (
-                      <div className="bg-emerald-600 text-white text-[7px] sm:text-[8px] font-black px-2 py-0.5 rounded-md shadow-lg uppercase tracking-widest border border-emerald-400/50">
+                      <div className="bg-emerald-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase tracking-widest">
                         {student.marks}
                       </div>
                     )}
+                    {student.salary && (
+                      <div className="bg-amber-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-md uppercase tracking-widest">
+                        {student.salary}
+                      </div>
+                    )}
                   </div>
-
-                  {/* Achievement Overlay - Smaller text */}
-                  <div className="absolute inset-0 bg-blue-900/90 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-4 text-center text-white z-20 backdrop-blur-sm">
-                    <p className="text-blue-200 text-[8px] font-black uppercase tracking-[0.2em] mb-2">Official Result</p>
-                    <h4 className="text-lg font-black mb-1 leading-tight">{student.name}</h4>
-                    <div className="h-0.5 w-8 bg-white/20 my-2 rounded-full"></div>
-                    
-                    <div className="space-y-2 w-full">
-                       <div className="flex flex-col items-center">
-                          <span className="text-[7px] font-black text-blue-300 uppercase tracking-widest mb-0.5">Examination</span>
-                          <span className="text-xs font-bold">{student.examName}</span>
-                       </div>
-                    </div>
-
-                    <div className="mt-4 inline-flex items-center gap-1.5 text-[8px] font-black bg-white text-blue-900 px-4 py-2 rounded-xl shadow-xl hover:scale-105 transition-transform">
-                      SUCCESS STORY <span>→</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-4 text-center border-t border-slate-50 dark:border-slate-800">
-                   <p className="text-[8px] text-blue-600 dark:text-blue-400 font-black mb-1 uppercase tracking-[0.2em] truncate">
-                    {student.examName}
+                   <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black mb-1 uppercase tracking-[0.2em] truncate">
+                    {student.company || student.examName}
                   </p>
                   <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">
                     {student.name}

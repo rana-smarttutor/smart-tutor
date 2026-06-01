@@ -9,11 +9,14 @@ export function CampusHighlightsCarousel() {
 
   // Map centralized data + Add branding slide
   const HIGHLIGHTS = [
-    { name: "Smart Tutors", result: "", exam: "", image: "/image4.jpeg", type: "branding" },
+    { name: "Smart Tutors", result: "", exam: "", company: undefined, role: undefined, salary: undefined, image: "/image4.jpeg", type: "branding" },
     ...generatedPlacedStudents.map(s => ({
       name: s.name,
       result: s.rank ? `Rank ${s.rank}` : (s.marks ? `${s.marks} Percentile` : ""),
       exam: s.examName,
+      company: s.company,
+      role: s.role,
+      salary: s.salary,
       image: s.image,
       type: s.rank ? "rank" : "percentile"
     }))
@@ -79,14 +82,32 @@ export function CampusHighlightsCarousel() {
                 i === index ? "translate-y-0 opacity-100 relative" : "translate-y-4 opacity-0 absolute pointer-events-none"
               }`}
             >
-               {h.exam && (
+               {(h.exam || h.company) && (
                  <div className="flex flex-wrap justify-center gap-3 mb-3">
-                    <div className="flex flex-col gap-1">
-                       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Examination</span>
-                       <span className="bg-blue-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-blue-400/30">
-                        {h.exam}
-                       </span>
-                    </div>
+                    {h.exam && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Examination</span>
+                        <span className="bg-blue-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-blue-400/30">
+                          {h.exam}
+                        </span>
+                      </div>
+                    )}
+                    {h.company && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Company</span>
+                        <span className="bg-indigo-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-indigo-400/30">
+                          {h.company}
+                        </span>
+                      </div>
+                    )}
+                    {h.salary && (
+                       <div className="flex flex-col gap-1">
+                          <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Package</span>
+                          <span className="bg-amber-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-amber-400/30">
+                            {h.salary}
+                          </span>
+                       </div>
+                    )}
                     {h.result && (
                        <div className="flex flex-col gap-1">
                           <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{h.type === "rank" ? "Official Rank" : "Score Achieved"}</span>
@@ -99,11 +120,11 @@ export function CampusHighlightsCarousel() {
                )}
               
               <div className="flex flex-col gap-1">
-                <h3 className={`${h.name === "Smart Tutors" ? "text-5xl md:text-6xl" : "text-3xl md:text-5xl"} font-black text-slate-900 leading-tight tracking-tight`}>
+                <h3 className={`${h.name === "Smart Tutors" ? "text-3xl md:text-6xl" : "text-xl md:text-5xl"} font-black text-slate-900 leading-tight tracking-tight`}>
                   {h.name}
                 </h3>
                 {h.name !== "Smart Tutors" && (
-                   <p className="text-blue-600 text-xs font-black uppercase tracking-[0.4em] mt-2">
+                   <p className="text-blue-600 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mt-2">
                      Verified Success
                    </p>
                 )}

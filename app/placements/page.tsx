@@ -19,7 +19,7 @@ export default async function PlacementsPage() {
       <SiteHeader />
       
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
+      <section className="relative pt-1 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-blue-600/5 -z-10" />
         <div className="container mx-auto px-4">
           <RevealOnScroll className="text-center max-w-4xl mx-auto mb-16">
@@ -59,33 +59,37 @@ export default async function PlacementsPage() {
                       src={topper.image || ""}
                       alt={topper.name}
                       fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-transparent to-transparent opacity-60" />
-                  </div>
-                  
-                  <div className="absolute top-6 left-6 flex flex-col gap-2">
-                    <span className="bg-white/90 backdrop-blur text-blue-600 text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest">
-                      {topper.examName}
-                    </span>
-                    {topper.marks && (
-                      <span className="bg-emerald-600 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-lg uppercase tracking-widest">
-                         Score: {topper.marks}
-                      </span>
-                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent opacity-30" />
                   </div>
 
                   <div className="p-8 text-center bg-white relative">
                      <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center border-8 border-white shadow-xl">
-                        <span className="text-white text-2xl font-black">{topper.rank === "1st" ? "🏆" : "⭐"}</span>
+                        <span className="text-white text-2xl font-black">{topper.rank === "1st" || (topper.salary && parseFloat(topper.salary.replace(/[^0-9.]/g, '')) >= 10) ? "🏆" : "⭐"}</span>
                      </div>
                      <div className="pt-8">
+                        <div className="flex flex-wrap justify-center gap-2 mb-4">
+                           <span className="bg-blue-50 text-blue-600 text-[12px] font-black px-4 py-1.5 rounded-full border border-blue-100 uppercase tracking-widest">
+                             {topper.company || topper.examName}
+                           </span>
+                           {topper.marks && !topper.salary && (
+                             <span className="bg-emerald-50 text-emerald-600 text-[12px] font-black px-4 py-1.5 rounded-full border border-emerald-100 uppercase tracking-widest">
+                                {topper.marks}
+                             </span>
+                           )}
+                           {topper.salary && (
+                             <span className="bg-amber-100 text-amber-700 text-[14px] font-black px-5 py-2 rounded-full border border-amber-200 uppercase tracking-widest shadow-sm">
+                                {topper.salary}
+                             </span>
+                           )}
+                        </div>
                         <h3 className="text-2xl font-black text-slate-900 mb-1">{topper.name}</h3>
                         <p className="text-blue-600 font-bold text-sm mb-4">
-                          {topper.rank === "1st" ? "All India Rank 1" : "Top Performer"}
+                          {topper.rank === "1st" ? "All India Rank 1" : (topper.salary ? "High Value Placement" : "Top Performer")}
                         </p>
                         <p className="text-slate-500 text-xs italic">
-                          "Smart Tutors' mentoring was the key to my success in {topper.examName}."
+                          "{topper.quote}"
                         </p>
                      </div>
                   </div>
