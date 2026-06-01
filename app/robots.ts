@@ -16,23 +16,23 @@ export default function robots(): MetadataRoute.Robots {
       },
       {
         userAgent: 'GPTBot',
-        allow: ['/', '/courses', '/placements'],
-        disallow: ['/dashboard/', '/api/'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       },
       {
         userAgent: 'ChatGPT-User',
-        allow: ['/', '/courses', '/placements'],
-        disallow: ['/dashboard/', '/api/'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       },
       {
         userAgent: 'Claude-Web',
-        allow: ['/', '/courses', '/placements'],
-        disallow: ['/dashboard/', '/api/'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       },
       {
         userAgent: 'Google-Extended',
-        allow: ['/', '/courses', '/placements'],
-        disallow: ['/dashboard/', '/api/'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       }
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

@@ -23,8 +23,31 @@ export default async function PlacementsPage() {
   // Featured Toppers (top 3)
   const toppers = allStudents.slice(0, 3);
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://smarttutors.co.in"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Placements",
+        "item": "https://smarttutors.co.in/placements"
+      }
+    ]
+  };
+
   return (
     <main className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <SiteHeader />
       
       {/* Hero Section */}
