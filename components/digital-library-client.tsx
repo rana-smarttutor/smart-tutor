@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { upload } from "@vercel/blob/client";
+import { useEffect, useMemo, useState } from "react";
 
 type Book = {
   _id?: string;
@@ -14,11 +15,42 @@ type Book = {
   pathname?: string;
 };
 
+type UploadedBlobInfo = {
+  pathname: string;
+  url: string;
+  downloadUrl?: string;
+};
+
 type DigitalLibraryClientProps = {
   initialBooks?: Book[];
   canManage?: boolean;
   isLoggedIn?: boolean;
 };
+
+function safeBookName(name: string) {
+  return name
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-zA-Z0-9\-_]/g, "");
+}
+
+function getExtension(name: string) {
+  const dotIndex = name.lastIndexOf(".");
+
+  if (dotIndex === -1) return "";
+
+  return name.slice(dotIndex).toLowerCase();
+}
+
+function normalizeStoredPrice(value: string) {
+  const digits = value.replace(/[^\d]/g, "");
+
+  if (!digits || Number(digits) <= 0) {
+    return "free";
+  }
+
+  return String(Number(digits));
+}
 
 function displayPrice(value?: string) {
   if (!value || value.toLowerCase() === "free") {
@@ -42,71 +74,20 @@ function editPriceValue(value?: string) {
   return String(value).replace(/[^\d]/g, "") || "0";
 }
 
-function detectBackgroundDarkMode(element: HTMLElement | null) {
-  if (typeof window === "undefined") return false;
+async function readJsonResponse(response: Response) {
+  const text = await response.text();
 
-  let currentElement: HTMLElement | null = element?.parentElement || null;
-
-  while (currentElement) {
-    const background = window.getComputedStyle(currentElement).backgroundColor;
-    const match = background.match(
-      /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\s*\)/
-    );
-
-    if (match) {
-      const red = Number(match[1]);
-      const green = Number(match[2]);
-      const blue = Number(match[3]);
-      const alpha = match[4] === undefined ? 1 : Number(match[4]);
-
-      if (alpha > 0.05) {
-        const brightness = red * 0.299 + green * 0.587 + blue * 0.114;
-        return brightness < 150;
-      }
-    }
-
-    currentElement = currentElement.parentElement;
+  try {
+    return JSON.parse(text) as {
+      success?: boolean;
+      message?: string;
+      books?: Book[];
+      canManage?: boolean;
+      isLoggedIn?: boolean;
+    };
+  } catch {
+    throw new Error(text || "The server returned an invalid response.");
   }
-
-  return false;
-}
-
-function readDarkMode(element: HTMLElement | null) {
-  if (typeof window === "undefined") return false;
-
-  const root = document.documentElement;
-  const body = document.body;
-
-  const storedTheme =
-    localStorage.getItem("theme") ||
-    localStorage.getItem("smart-tutors-theme") ||
-    localStorage.getItem("color-theme") ||
-    localStorage.getItem("mode") ||
-    "";
-
-  const dataTheme =
-    root.getAttribute("data-theme") ||
-    body.getAttribute("data-theme") ||
-    root.getAttribute("data-mode") ||
-    body.getAttribute("data-mode") ||
-    "";
-
-  const classTheme = `${root.className} ${body.className}`.toLowerCase();
-  const explicitTheme = `${storedTheme} ${dataTheme}`.toLowerCase();
-
-  if (explicitTheme.includes("dark") || classTheme.includes("dark")) {
-    return true;
-  }
-
-  if (explicitTheme.includes("light") || classTheme.includes("light")) {
-    return false;
-  }
-
-  if (detectBackgroundDarkMode(element)) {
-    return true;
-  }
-
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
 function BookThumbnail({ book }: { book: Book }) {
@@ -120,18 +101,8 @@ function BookThumbnail({ book }: { book: Book }) {
     );
   }
 
-  if (book.url) {
-    return (
-      <iframe
-        src={`${book.url}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-        title={`${book.title} preview`}
-        className="pointer-events-none h-full w-full border-0 bg-white"
-      />
-    );
-  }
-
   return (
-    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#0b2f5f] via-[#143d73] to-[#0a284d]">
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#102d5b] via-[#164477] to-[#081e3c]">
       <div className="text-center text-white">
         <p className="text-4xl">📘</p>
         <p className="mt-2 text-xl font-black">PDF</p>
@@ -145,14 +116,11 @@ export function DigitalLibraryClient({
   canManage = false,
   isLoggedIn = false,
 }: DigitalLibraryClientProps) {
-  const libraryPageRef = useRef<HTMLElement | null>(null);
-
   const [books, setBooks] = useState<Book[]>(initialBooks);
   const [allowedToManage, setAllowedToManage] = useState(canManage);
   const [loggedIn, setLoggedIn] = useState(isLoggedIn);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isDark, setIsDark] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
@@ -161,83 +129,18 @@ export function DigitalLibraryClient({
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  useEffect(() => {
-    const syncTheme = () => {
-      setIsDark(readDarkMode(libraryPageRef.current));
-    };
-
-    syncTheme();
-
-    const observer = new MutationObserver(syncTheme);
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme", "data-mode", "style"],
-    });
-
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["class", "data-theme", "data-mode", "style"],
-    });
-
-    if (libraryPageRef.current?.parentElement) {
-      observer.observe(libraryPageRef.current.parentElement, {
-        attributes: true,
-        attributeFilter: ["class", "data-theme", "data-mode", "style"],
-      });
-    }
-
-    window.addEventListener("storage", syncTheme);
-    window.addEventListener("resize", syncTheme);
-    const interval = window.setInterval(syncTheme, 300);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("storage", syncTheme);
-      window.removeEventListener("resize", syncTheme);
-      window.clearInterval(interval);
-    };
-  }, []);
-
-  const theme = {
-    text: isDark ? "text-white" : "text-slate-950",
-    subtext: isDark ? "text-slate-300" : "text-slate-600",
-    eyebrow: isDark ? "text-blue-400" : "text-blue-600",
-    pill: isDark
-      ? "border-sky-400 bg-white/10 text-sky-300"
-      : "border-sky-400 bg-white/70 text-sky-600",
-    heroBox: isDark
-      ? "border-white/10 bg-[#101a2e]"
-      : "border-slate-200 bg-white",
-    contentBox: isDark
-      ? "border-white/10 bg-[#101a2e]"
-      : "border-slate-200 bg-white",
-    statCard: isDark
-      ? "border-white/10 bg-[#071124]"
-      : "border-slate-100 bg-white",
-    card: isDark
-      ? "border-white/10 bg-[#101a2e]"
-      : "border-slate-200 bg-white",
-    input: isDark
-      ? "border-white/10 bg-[#111c31] text-white placeholder:text-slate-500"
-      : "border-slate-200 bg-slate-50 text-slate-950 placeholder:text-slate-400",
-    outline: isDark
-      ? "border-white/15 bg-transparent text-white hover:bg-white/5"
-      : "border-slate-200 bg-white text-slate-950 hover:bg-slate-50",
-    divider: isDark ? "border-white/10" : "border-slate-100",
-    empty: isDark
-      ? "border-white/10 bg-[#111c31] text-slate-300"
-      : "border-slate-200 bg-slate-50 text-slate-500",
-    modal: isDark
-      ? "border-white/10 bg-[#101a2e]"
-      : "border-slate-200 bg-white",
-  };
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const filteredBooks = useMemo(() => {
     const value = query.trim().toLowerCase();
 
-    if (!value) return books;
+    if (!value) {
+      return books;
+    }
 
     return books.filter((book) =>
       `${book.title} ${book.fileName || ""} ${book.price || ""}`
@@ -254,7 +157,7 @@ export function DigitalLibraryClient({
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse(response);
 
       if (!response.ok || !data.success) {
         throw new Error(data.message || "Failed to load library.");
@@ -270,8 +173,12 @@ export function DigitalLibraryClient({
         setLoggedIn(data.isLoggedIn);
       }
     } catch (error) {
-      console.error(error);
-      alert("Failed to load digital library.");
+      console.error("Library loading error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to load digital library."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -288,6 +195,8 @@ export function DigitalLibraryClient({
     setPrice("0");
     setPdfFile(null);
     setThumbnailFile(null);
+    setUploadStatus("");
+    setUploadProgress(0);
   }
 
   function openUpload() {
@@ -301,6 +210,8 @@ export function DigitalLibraryClient({
     setPrice(editPriceValue(book.price));
     setPdfFile(null);
     setThumbnailFile(null);
+    setUploadStatus("");
+    setUploadProgress(0);
     setIsModalOpen(true);
   }
 
@@ -308,6 +219,53 @@ export function DigitalLibraryClient({
     if (!isSaving) {
       resetModal();
     }
+  }
+
+  async function uploadPdf(
+    pathname: string,
+    file: File
+  ): Promise<UploadedBlobInfo> {
+    const blob = await upload(pathname, file, {
+      access: "public",
+      contentType: "application/pdf",
+      handleUploadUrl: "/api/digital-library/upload",
+      clientPayload: JSON.stringify({
+        assetType: "book",
+      }),
+      multipart: true,
+      onUploadProgress: ({ percentage }) => {
+        setUploadProgress(Math.round(percentage));
+      },
+    });
+
+    return {
+      pathname: blob.pathname,
+      url: blob.url,
+      downloadUrl: blob.downloadUrl || blob.url,
+    };
+  }
+
+  async function uploadThumbnail(
+    pathname: string,
+    file: File
+  ): Promise<UploadedBlobInfo> {
+    const blob = await upload(pathname, file, {
+      access: "public",
+      contentType: file.type || undefined,
+      handleUploadUrl: "/api/digital-library/upload",
+      clientPayload: JSON.stringify({
+        assetType: "thumbnail",
+      }),
+      onUploadProgress: ({ percentage }) => {
+        setUploadProgress(Math.round(percentage));
+      },
+    });
+
+    return {
+      pathname: blob.pathname,
+      url: blob.url,
+      downloadUrl: blob.downloadUrl || blob.url,
+    };
   }
 
   async function submitMaterial(event: React.FormEvent<HTMLFormElement>) {
@@ -318,13 +276,20 @@ export function DigitalLibraryClient({
       return;
     }
 
-    if (!bookName.trim()) {
+    const title = bookName.trim();
+
+    if (!title) {
       alert("Please enter the name of the book.");
       return;
     }
 
     if (!editingBook && !pdfFile) {
       alert("Please select a PDF file.");
+      return;
+    }
+
+    if (!editingBook && !thumbnailFile) {
+      alert("Please select a thumbnail image.");
       return;
     }
 
@@ -337,11 +302,6 @@ export function DigitalLibraryClient({
       return;
     }
 
-    if (!editingBook && !thumbnailFile) {
-      alert("Please select a thumbnail image.");
-      return;
-    }
-
     if (
       thumbnailFile &&
       !/\.(png|jpg|jpeg|webp)$/i.test(thumbnailFile.name)
@@ -350,38 +310,75 @@ export function DigitalLibraryClient({
       return;
     }
 
+    const safeTitle = safeBookName(title);
+
+    if (!safeTitle) {
+      alert("Invalid book name.");
+      return;
+    }
+
+    const storedPrice = normalizeStoredPrice(price);
+    const assetKey = `${Date.now()}__${storedPrice}__${safeTitle}`;
+
     setIsSaving(true);
+    setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-
-      formData.append("title", bookName.trim());
-      formData.append("price", price);
+      let uploadedPdf: UploadedBlobInfo | null = null;
+      let uploadedThumbnail: UploadedBlobInfo | null = null;
 
       if (pdfFile) {
-        formData.append("file", pdfFile);
+        setUploadStatus("Uploading PDF...");
+
+        uploadedPdf = await uploadPdf(
+          `digital-library/books/${assetKey}.pdf`,
+          pdfFile
+        );
       }
 
       if (thumbnailFile) {
-        formData.append("thumbnail", thumbnailFile);
+        setUploadStatus("Uploading thumbnail...");
+
+        const thumbnailExtension = getExtension(thumbnailFile.name);
+
+        uploadedThumbnail = await uploadThumbnail(
+          `digital-library/thumbnails/${assetKey}${thumbnailExtension}`,
+          thumbnailFile
+        );
       }
 
-      const id =
-        editingBook?.id ||
-        (editingBook?.pathname
-          ? encodeURIComponent(editingBook.pathname)
-          : "");
+      if (!editingBook) {
+        setUploadStatus("Upload completed.");
 
-      const endpoint = editingBook
-        ? `/api/digital-library/${id}`
-        : "/api/digital-library/upload";
+        resetModal();
+        await loadBooks();
+        return;
+      }
 
-      const response = await fetch(endpoint, {
-        method: editingBook ? "PATCH" : "POST",
-        body: formData,
-      });
+      if (!editingBook.pathname) {
+        throw new Error("Unable to identify the material being edited.");
+      }
 
-      const result = await response.json();
+      setUploadStatus("Saving material changes...");
+
+      const response = await fetch(
+        `/api/digital-library/${encodeURIComponent(editingBook.pathname)}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            price,
+            assetKey,
+            uploadedPdf,
+            uploadedThumbnail,
+          }),
+        }
+      );
+
+      const result = await readJsonResponse(response);
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Unable to save material.");
@@ -390,46 +387,75 @@ export function DigitalLibraryClient({
       resetModal();
       await loadBooks();
     } catch (error) {
-      console.error(error);
+      console.error("Material save error:", error);
+
       alert(
         error instanceof Error ? error.message : "Unable to save material."
       );
     } finally {
       setIsSaving(false);
+      setUploadStatus("");
+      setUploadProgress(0);
     }
   }
 
-  async function deleteBook(book: Book) {
-    if (!allowedToManage) return;
+function requestDeleteBook(book: Book) {
+  if (!allowedToManage) {
+    return;
+  }
 
-    if (!window.confirm(`Delete ${book.title}?`)) {
-      return;
-    }
+  setDeleteError("");
+  setBookToDelete(book);
+}
 
-    const id = book.id || encodeURIComponent(book.pathname || "");
+function cancelDeleteBook() {
+  if (isDeleting) {
+    return;
+  }
 
-    if (!id) {
-      alert("Unable to delete this material.");
-      return;
-    }
+  setDeleteError("");
+  setBookToDelete(null);
+}
 
-    try {
-      const response = await fetch(`/api/digital-library/${id}`, {
+async function confirmDeleteBook() {
+  if (!allowedToManage || !bookToDelete) {
+    return;
+  }
+
+  if (!bookToDelete.pathname) {
+    setDeleteError("Unable to identify this material.");
+    return;
+  }
+
+  setIsDeleting(true);
+  setDeleteError("");
+
+  try {
+    const response = await fetch(
+      `/api/digital-library/${encodeURIComponent(bookToDelete.pathname)}`,
+      {
         method: "DELETE",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.message || "Delete failed.");
       }
+    );
 
-      await loadBooks();
-    } catch (error) {
-      console.error(error);
-      alert(error instanceof Error ? error.message : "Delete failed.");
+    const result = await readJsonResponse(response);
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Delete failed.");
     }
+
+    setBookToDelete(null);
+    await loadBooks();
+  } catch (error) {
+    console.error("Delete material error:", error);
+
+    setDeleteError(
+      error instanceof Error ? error.message : "Delete failed."
+    );
+  } finally {
+    setIsDeleting(false);
   }
+}
 
   function downloadBook(book: Book) {
     if (!loggedIn && !allowedToManage) {
@@ -461,37 +487,26 @@ export function DigitalLibraryClient({
   }
 
   return (
-    <main
-      ref={libraryPageRef}
-      className={`w-full min-w-0 overflow-x-hidden bg-transparent px-3 py-6 transition-colors duration-300 sm:px-4 sm:py-10 ${theme.text}`}
-    >
-      <section className="mx-auto w-full min-w-0 max-w-7xl">
-        <section className="grid min-w-0 items-center gap-8 py-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
-          <div className="min-w-0">
-            <span
-              className={`inline-flex items-center gap-2 rounded-full border px-5 py-3 text-sm font-black ${theme.pill}`}
-            >
+    <main className="min-h-screen bg-transparent px-4 py-8 text-slate-950 dark:text-white sm:px-6">
+      <section className="mx-auto max-w-7xl">
+        <section className="grid items-center gap-8 py-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-600 dark:border-sky-400/40 dark:bg-white/10 dark:text-sky-300">
               <span className="h-3 w-3 rounded-full bg-sky-400" />
               Smart Tutors Library
             </span>
 
-            <p
-              className={`mt-8 text-xs font-black uppercase tracking-[0.3em] sm:mt-10 sm:text-sm sm:tracking-[0.45em] ${theme.eyebrow}`}
-            >
-              India’s Trusted Smart Learning Platform
+            <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400 sm:text-sm">
+              India&apos;s Trusted Smart Learning Platform
             </p>
 
-            <h1
-              className={`mt-6 max-w-full break-words text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl xl:text-6xl ${theme.text}`}
-            >
+            <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight sm:text-6xl">
               Digital Library.
               <br />
               Smarter Study Access.
             </h1>
 
-            <p
-              className={`mt-6 max-w-3xl break-words text-base font-semibold leading-7 sm:text-lg sm:leading-8 ${theme.subtext}`}
-            >
+            <p className="mt-6 max-w-3xl text-base font-semibold leading-8 text-slate-600 dark:text-slate-300 sm:text-lg">
               Explore PDF notes and learning materials with clear prices,
               attractive previews and secure download access.
             </p>
@@ -499,71 +514,55 @@ export function DigitalLibraryClient({
             <div className="mt-8 flex flex-wrap gap-4">
               <a
                 href="#library-files"
-                className="rounded-full bg-blue-600 px-7 py-3.5 text-sm font-black text-white shadow-xl shadow-blue-500/25 transition hover:-translate-y-1 hover:bg-blue-500 sm:px-8 sm:py-4 sm:text-base"
+                className="rounded-full bg-blue-600 px-8 py-4 font-black text-white shadow-xl shadow-blue-500/20 transition hover:-translate-y-1 hover:bg-blue-500"
               >
                 View Library
               </a>
 
-              {allowedToManage ? (
+              {allowedToManage && (
                 <button
                   type="button"
                   onClick={openUpload}
-                  className="rounded-full bg-blue-600 px-7 py-3.5 text-sm font-black text-white shadow-xl shadow-blue-500/25 transition hover:-translate-y-1 hover:bg-blue-500 sm:px-8 sm:py-4 sm:text-base"
+                  className="rounded-full bg-blue-600 px-8 py-4 font-black text-white shadow-xl shadow-blue-500/20 transition hover:-translate-y-1 hover:bg-blue-500"
                 >
                   Upload Material
                 </button>
-              ) : null}
+              )}
             </div>
           </div>
 
-          <div
-            className={`min-w-0 overflow-hidden rounded-[2rem] border p-5 shadow-xl sm:p-8 ${theme.heroBox}`}
-          >
-            <p
-              className={`text-xs font-black uppercase tracking-[0.28em] sm:text-sm sm:tracking-[0.35em] ${theme.eyebrow}`}
-            >
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-[#101a2e] sm:p-8">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400">
               Library Highlights
             </p>
 
-            <h2
-              className={`mt-4 text-3xl font-black leading-tight sm:text-4xl ${theme.text}`}
-            >
+            <h2 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
               PDF materials,
               <br />
               clear pricing
             </h2>
 
-            <div className="mt-8">
-              <div
-                className={`rounded-3xl border p-5 shadow-lg ${theme.statCard}`}
-              >
-                <p className={`text-sm font-black ${theme.subtext}`}>
-                  Total PDFs
-                </p>
-                <strong className="mt-2 block text-4xl font-black text-blue-600">
-                  {books.length}
-                </strong>
-              </div>
+            <div className="mt-8 rounded-3xl border border-slate-100 bg-slate-50 p-5 dark:border-white/10 dark:bg-[#071124]">
+              <p className="text-sm font-black text-slate-600 dark:text-slate-300">
+                Total PDFs
+              </p>
+              <strong className="mt-2 block text-4xl font-black text-blue-600">
+                {books.length}
+              </strong>
             </div>
           </div>
         </section>
 
         <section
           id="library-files"
-          className={`mt-8 min-w-0 overflow-hidden rounded-[2rem] border p-4 shadow-xl sm:p-6 ${theme.contentBox}`}
+          className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#101a2e] sm:p-6"
         >
-          <div
-            className={`flex min-w-0 flex-col gap-5 border-b pb-6 md:flex-row md:items-center md:justify-between ${theme.divider}`}
-          >
-            <div className="min-w-0">
-              <p
-                className={`text-xs font-black uppercase tracking-[0.2em] sm:text-sm sm:tracking-[0.25em] ${theme.eyebrow}`}
-              >
+          <div className="flex flex-col gap-5 border-b border-slate-100 pb-6 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">
                 Library Collection
               </p>
-              <h2
-                className={`mt-2 break-words text-2xl font-black sm:text-3xl ${theme.text}`}
-              >
+              <h2 className="mt-2 text-2xl font-black sm:text-3xl">
                 PDF Study Materials
               </h2>
             </div>
@@ -572,24 +571,20 @@ export function DigitalLibraryClient({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search PDFs..."
-              className={`w-full min-w-0 rounded-2xl border px-5 py-4 font-bold outline-none focus:border-blue-500 md:max-w-sm ${theme.input}`}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white md:max-w-sm"
             />
           </div>
 
           {isLoading ? (
-            <p
-              className={`mt-8 rounded-3xl border p-8 text-center font-bold ${theme.empty}`}
-            >
+            <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300">
               Loading library...
             </p>
           ) : filteredBooks.length === 0 ? (
-            <p
-              className={`mt-8 rounded-3xl border p-8 text-center font-bold ${theme.empty}`}
-            >
+            <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300">
               No PDFs found.
             </p>
           ) : (
-            <div className="mt-8 grid min-w-0 gap-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))]">
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredBooks.map((book) => {
                 const priceText = displayPrice(book.price);
                 const isFree = priceText === "Free";
@@ -597,7 +592,7 @@ export function DigitalLibraryClient({
                 return (
                   <article
                     key={book.pathname || book.id || book._id || book.title}
-                    className={`mx-auto w-full min-w-0 max-w-[350px] overflow-hidden rounded-[24px] border p-4 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl ${theme.card}`}
+                    className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl dark:border-white/10 dark:bg-[#101a2e]"
                   >
                     <div className="h-[180px] overflow-hidden rounded-[18px] bg-slate-100">
                       <BookThumbnail book={book} />
@@ -607,9 +602,7 @@ export function DigitalLibraryClient({
                       <span className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-extrabold text-white">
                         PDF
                       </span>
-                      <span className="rounded-lg bg-amber-300 px-3 py-1.5 text-xs font-extrabold text-slate-950">
-                        Study Material
-                      </span>
+
                       <span
                         className={`rounded-lg px-3 py-1.5 text-xs font-extrabold text-white ${
                           isFree ? "bg-emerald-500" : "bg-blue-600"
@@ -619,16 +612,11 @@ export function DigitalLibraryClient({
                       </span>
                     </div>
 
-                    <h3
-                      title={book.title}
-                      className={`mt-5 line-clamp-2 min-h-[50px] break-words text-lg font-extrabold leading-[1.35] ${theme.text}`}
-                    >
+                    <h3 className="mt-5 line-clamp-2 min-h-[50px] break-words text-lg font-extrabold leading-[1.35]">
                       {book.title}
                     </h3>
 
-                    <p
-                      className={`mt-2 line-clamp-2 min-h-[48px] text-sm font-medium leading-6 ${theme.subtext}`}
-                    >
+                    <p className="mt-2 line-clamp-2 min-h-[48px] text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">
                       Access this PDF study material for focused learning and
                       revision.
                     </p>
@@ -637,7 +625,7 @@ export function DigitalLibraryClient({
                       <button
                         type="button"
                         onClick={() => downloadBook(book)}
-                        className="w-full rounded-[14px] bg-blue-600 px-2 py-3 text-xs font-extrabold text-white transition hover:bg-blue-500 sm:text-sm"
+                        className="rounded-[14px] bg-blue-600 px-2 py-3 text-xs font-extrabold text-white transition hover:bg-blue-500 sm:text-sm"
                       >
                         {isFree ? "Download ↓" : "Buy & Download"}
                       </button>
@@ -645,30 +633,31 @@ export function DigitalLibraryClient({
                       <button
                         type="button"
                         onClick={() => previewBook(book)}
-                        className={`w-full rounded-[14px] border px-2 py-3 text-xs font-extrabold transition sm:text-sm ${theme.outline}`}
+                        className="rounded-[14px] border border-slate-200 px-2 py-3 text-xs font-extrabold transition hover:bg-slate-50 dark:border-white/15 dark:hover:bg-white/5 sm:text-sm"
                       >
                         Preview 👁
                       </button>
                     </div>
 
-                    {allowedToManage ? (
+                    {allowedToManage && (
                       <div className="mt-4 grid grid-cols-2 gap-3">
                         <button
                           type="button"
                           onClick={() => openEdit(book)}
-                          className="w-full rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50 dark:border-blue-400/40 dark:text-blue-300 dark:hover:bg-blue-500/10 sm:text-sm"
+                          className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10 sm:text-sm"
                         >
                           Edit
                         </button>
+
                         <button
-                          type="button"
-                          onClick={() => deleteBook(book)}
-                          className="w-full rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 dark:border-red-400/40 dark:text-red-300 dark:hover:bg-red-500/10 sm:text-sm"
+                        type="button"
+                        onClick={() => requestDeleteBook(book)}
+                        className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10 sm:text-sm"
                         >
-                          Delete
-                        </button>
+                       Delete
+                       </button>
                       </div>
-                    ) : null}
+                    )}
                   </article>
                 );
               })}
@@ -676,25 +665,86 @@ export function DigitalLibraryClient({
           )}
         </section>
       </section>
+{allowedToManage && bookToDelete && (
+  <div
+    className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-[2px]"
+    onMouseDown={cancelDeleteBook}
+  >
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-material-title"
+      aria-describedby="delete-material-description"
+      onMouseDown={(event) => event.stopPropagation()}
+      className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-8"
+    >
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl dark:bg-red-500/15">
+        🗑️
+      </div>
 
-      {allowedToManage && isModalOpen ? (
+      <h2
+        id="delete-material-title"
+        className="mt-5 text-2xl font-black text-slate-950 dark:text-white"
+      >
+        Delete PDF?
+      </h2>
+
+      <p
+        id="delete-material-description"
+        className="mt-3 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300"
+      >
+        Are you sure you want to delete{" "}
+        <span className="font-black text-slate-950 dark:text-white">
+          “{bookToDelete.title}”
+        </span>
+        ? This action cannot be undone.
+      </p>
+
+      {deleteError && (
+        <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+          {deleteError}
+        </div>
+      )}
+
+      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={cancelDeleteBook}
+          disabled={isDeleting}
+          className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void confirmDeleteBook()}
+          disabled={isDeleting}
+          className="flex-1 rounded-xl bg-red-500 px-5 py-3 font-black text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isDeleting ? "Deleting..." : "Delete PDF"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+      {allowedToManage && isModalOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
           onMouseDown={closeModal}
         >
           <form
-            onSubmit={submitMaterial}
+            onSubmit={(event) => void submitMaterial(event)}
             onMouseDown={(event) => event.stopPropagation()}
-            className={`max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[28px] border p-6 shadow-2xl sm:p-7 ${theme.modal}`}
+            className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-7"
           >
             <div className="flex items-start justify-between gap-5">
               <div>
-                <p
-                  className={`text-xs font-black uppercase tracking-[0.28em] ${theme.eyebrow}`}
-                >
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-600 dark:text-blue-400">
                   {editingBook ? "Edit Center" : "Upload Center"}
                 </p>
-                <h2 className={`mt-2 text-2xl font-black ${theme.text}`}>
+
+                <h2 className="mt-2 text-2xl font-black">
                   {editingBook ? "Edit Material" : "Upload New Material"}
                 </h2>
               </div>
@@ -703,7 +753,7 @@ export function DigitalLibraryClient({
                 type="button"
                 onClick={closeModal}
                 disabled={isSaving}
-                className={`rounded-full border px-3 py-2 text-sm font-black ${theme.outline}`}
+                className="rounded-full border border-slate-200 px-3 py-2 text-sm font-black dark:border-white/15"
               >
                 ✕
               </button>
@@ -711,22 +761,24 @@ export function DigitalLibraryClient({
 
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2">
-                <span className={`text-sm font-bold ${theme.subtext}`}>
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
                   Name of the book
                 </span>
+
                 <input
                   required
                   value={bookName}
                   onChange={(event) => setBookName(event.target.value)}
                   placeholder="Enter book name"
-                  className={`rounded-2xl border px-5 py-4 font-bold outline-none focus:border-blue-500 ${theme.input}`}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
                 />
               </label>
 
               <label className="grid gap-2">
-                <span className={`text-sm font-bold ${theme.subtext}`}>
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
                   Book upload (PDF only)
                 </span>
+
                 <input
                   required={!editingBook}
                   type="file"
@@ -734,19 +786,21 @@ export function DigitalLibraryClient({
                   onChange={(event) =>
                     setPdfFile(event.target.files?.[0] || null)
                   }
-                  className={`rounded-2xl border px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white ${theme.input}`}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white dark:border-white/10 dark:bg-[#111c31] dark:text-white"
                 />
-                {editingBook ? (
+
+                {editingBook && (
                   <span className="text-xs font-bold text-slate-500">
                     Leave blank to keep the current PDF.
                   </span>
-                ) : null}
+                )}
               </label>
 
               <label className="grid gap-2">
-                <span className={`text-sm font-bold ${theme.subtext}`}>
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
                   Thumbnail upload
                 </span>
+
                 <input
                   required={!editingBook}
                   type="file"
@@ -754,19 +808,21 @@ export function DigitalLibraryClient({
                   onChange={(event) =>
                     setThumbnailFile(event.target.files?.[0] || null)
                   }
-                  className={`rounded-2xl border px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white ${theme.input}`}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white dark:border-white/10 dark:bg-[#111c31] dark:text-white"
                 />
-                {editingBook ? (
+
+                {editingBook && (
                   <span className="text-xs font-bold text-slate-500">
                     Leave blank to keep the current thumbnail.
                   </span>
-                ) : null}
+                )}
               </label>
 
               <label className="grid gap-2">
-                <span className={`text-sm font-bold ${theme.subtext}`}>
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
                   Price in INR
                 </span>
+
                 <input
                   required
                   min="0"
@@ -775,12 +831,31 @@ export function DigitalLibraryClient({
                   value={price}
                   onChange={(event) => setPrice(event.target.value)}
                   placeholder="Enter 0 for Free"
-                  className={`rounded-2xl border px-5 py-4 font-bold outline-none focus:border-blue-500 ${theme.input}`}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
                 />
+
                 <span className="text-xs font-bold text-slate-500">
                   Display price: {displayPrice(price)}
                 </span>
               </label>
+
+              {isSaving && (
+                <div className="rounded-2xl bg-blue-50 p-4 dark:bg-blue-500/10">
+                  <div className="flex items-center justify-between gap-4 text-sm font-bold text-blue-600 dark:text-blue-300">
+                    <span>{uploadStatus || "Saving material..."}</span>
+                    {uploadProgress > 0 && <span>{uploadProgress}%</span>}
+                  </div>
+
+                  {uploadProgress > 0 && (
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-blue-600 transition-all"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="mt-7 flex justify-end gap-3">
@@ -788,10 +863,11 @@ export function DigitalLibraryClient({
                 type="button"
                 onClick={closeModal}
                 disabled={isSaving}
-                className={`rounded-xl border px-5 py-3 text-sm font-black ${theme.outline}`}
+                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black dark:border-white/15"
               >
                 Cancel
               </button>
+
               <button
                 type="submit"
                 disabled={isSaving}
@@ -802,13 +878,13 @@ export function DigitalLibraryClient({
                     ? "Saving..."
                     : "Uploading..."
                   : editingBook
-                  ? "Save Changes"
-                  : "Upload Material"}
+                    ? "Save Changes"
+                    : "Upload Material"}
               </button>
             </div>
           </form>
         </div>
-      ) : null}
+      )}
     </main>
   );
 }
