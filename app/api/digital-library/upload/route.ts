@@ -1,165 +1,102 @@
-import { put } from "@vercel/blob";
-import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import {
+  handleUpload,
+  type HandleUploadBody,
+} from '@vercel/blob/client';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { getSessionUser } from '@/lib/auth';
 
-function safeBookName(name: string) {
-  return name
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-zA-Z0-9\-_]/g, "");
-}
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-function getExtension(name: string) {
-  const dotIndex = name.lastIndexOf(".");
+type UploadPayload = {
+  assetType?: 'book' | 'thumbnail';
+};
 
-  if (dotIndex === -1) return "";
-
-  return name.slice(dotIndex).toLowerCase();
-}
-
-function normalizeStoredPrice(value: string) {
-  const digits = value.replace(/[^\d]/g, "");
-
-  if (!digits || Number(digits) <= 0) {
-    return "free";
-  }
-
-  return String(Number(digits));
-}
-
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   try {
     const session = await getSessionUser();
+    const role = String(session?.role || 'student').toLowerCase();
 
-    const role = String(session?.role || "student").toLowerCase();
-
-    if (role !== "admin" && role !== "educator") {
+    if (role !== 'admin' && role !== 'educator') {
       return NextResponse.json(
         {
           success: false,
-          message: "Only admins and educators can upload library materials.",
+          message: 'Only admins and educators can upload library materials.',
         },
         { status: 403 }
       );
     }
 
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-
-    if (!token) {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
       return NextResponse.json(
         {
           success: false,
-          message: "BLOB_READ_WRITE_TOKEN is missing.",
+          message: 'BLOB_READ_WRITE_TOKEN is missing.',
         },
         { status: 500 }
       );
     }
 
-    const formData = await request.formData();
+    const body = (await request.json()) as HandleUploadBody;
 
-    const title = String(formData.get("title") || "").trim();
-    const price = String(formData.get("price") || "").trim();
-    const file = formData.get("file") as File | null;
-    const thumbnail = formData.get("thumbnail") as File | null;
+    const jsonResponse = await handleUpload({
+      request,
+      body,
 
-    if (!title || !file || !thumbnail || price === "") {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Book name, PDF upload, thumbnail upload and price are required.",
-        },
-        { status: 400 }
-      );
-    }
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        let payload: UploadPayload = {};
 
-    const validPdf =
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf");
+        try {
+          payload = clientPayload
+            ? (JSON.parse(clientPayload) as UploadPayload)
+            : {};
+        } catch {
+          throw new Error('Invalid upload information.');
+        }
 
-    if (!validPdf) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Book upload must be a PDF file.",
-        },
-        { status: 400 }
-      );
-    }
+        const isBookUpload =
+          payload.assetType === 'book' &&
+          pathname.startsWith('digital-library/books/') &&
+          pathname.toLowerCase().endsWith('.pdf');
 
-    const thumbnailExtension = getExtension(thumbnail.name);
+        const isThumbnailUpload =
+          payload.assetType === 'thumbnail' &&
+          pathname.startsWith('digital-library/thumbnails/') &&
+          /\.(png|jpg|jpeg|webp)$/i.test(pathname);
 
-    const validThumbnail =
-      [".png", ".jpg", ".jpeg", ".webp"].includes(thumbnailExtension) &&
-      (/^image\/(png|jpeg|webp)$/.test(thumbnail.type) ||
-        thumbnail.type === "");
+        if (!isBookUpload && !isThumbnailUpload) {
+          throw new Error('Invalid digital library file type.');
+        }
 
-    if (!validThumbnail) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Thumbnail must be PNG, JPG or WEBP.",
-        },
-        { status: 400 }
-      );
-    }
+        return {
+          access: 'public',
+          addRandomSuffix: false,
+          allowedContentTypes: isBookUpload
+            ? ['application/pdf']
+            : ['image/png', 'image/jpeg', 'image/webp'],
+          maximumSizeInBytes: isBookUpload
+            ? 200 * 1024 * 1024
+            : 5 * 1024 * 1024,
+          tokenPayload: JSON.stringify({
+            assetType: payload.assetType,
+            pathname,
+          }),
+        };
+      },
 
-    const safeTitle = safeBookName(title);
-
-    if (!safeTitle) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid book name.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const id = Date.now().toString();
-    const storedPrice = normalizeStoredPrice(price);
-    const assetKey = `${id}__${storedPrice}__${safeTitle}`;
-
-    const bookBlob = await put(
-      `digital-library/books/${assetKey}.pdf`,
-      file,
-      {
-        access: "public",
-        addRandomSuffix: false,
-        token,
-      }
-    );
-
-    const thumbnailBlob = await put(
-      `digital-library/thumbnails/${assetKey}${thumbnailExtension}`,
-      thumbnail,
-      {
-        access: "public",
-        addRandomSuffix: false,
-        token,
-      }
-    );
-
-    return NextResponse.json({
-      success: true,
-      book: {
-        title,
-        price:
-          storedPrice === "free"
-            ? "Free"
-            : `₹${Number(storedPrice).toLocaleString("en-IN")}`,
-        fileName: `${safeTitle}.pdf`,
-        pathname: bookBlob.pathname,
-        url: bookBlob.url,
-        downloadUrl: bookBlob.downloadUrl || bookBlob.url,
-        thumbnailUrl: thumbnailBlob.url,
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        console.log('Digital library upload completed:', {
+          pathname: blob.pathname,
+          url: blob.url,
+          tokenPayload,
+        });
       },
     });
+
+    return NextResponse.json(jsonResponse);
   } catch (error) {
-    console.error("Digital library upload error:", error);
+    console.error('Digital library client upload error:', error);
 
     return NextResponse.json(
       {
@@ -167,9 +104,9 @@ export async function POST(request: Request) {
         message:
           error instanceof Error
             ? error.message
-            : "Failed to upload material.",
+            : 'Failed to prepare digital library upload.',
       },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

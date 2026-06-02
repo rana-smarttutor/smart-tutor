@@ -1,5 +1,6 @@
-import { del, list, put } from "@vercel/blob";
+import { copy, del, list } from "@vercel/blob";
 import { NextResponse } from "next/server";
+
 import { getSessionUser } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -9,6 +10,20 @@ type RouteContext = {
   params: Promise<{
     bookId: string;
   }>;
+};
+
+type UploadedBlobInfo = {
+  pathname?: string;
+  url?: string;
+  downloadUrl?: string;
+};
+
+type EditMaterialBody = {
+  title?: string;
+  price?: string;
+  assetKey?: string;
+  uploadedPdf?: UploadedBlobInfo | null;
+  uploadedThumbnail?: UploadedBlobInfo | null;
 };
 
 function safeBookName(name: string) {
@@ -32,6 +47,26 @@ function normalizeStoredPrice(value: string) {
     : String(Number(digits));
 }
 
+function formatDisplayPrice(value: string) {
+  return value === "free"
+    ? "Free"
+    : `₹${Number(value).toLocaleString("en-IN")}`;
+}
+
+function isValidBookPath(pathname: string) {
+  return (
+    pathname.startsWith("digital-library/books/") &&
+    pathname.toLowerCase().endsWith(".pdf")
+  );
+}
+
+function isValidThumbnailPath(pathname: string) {
+  return (
+    pathname.startsWith("digital-library/thumbnails/") &&
+    /\.(png|jpg|jpeg|webp)$/i.test(pathname)
+  );
+}
+
 async function authorizeManager() {
   const session = await getSessionUser();
   const role = String(session?.role || "student").toLowerCase();
@@ -49,7 +84,7 @@ async function findMaterial(pathname: string, token: string) {
 }
 
 async function findThumbnail(pathname: string, token: string) {
-  if (!pathname.startsWith("digital-library/books/")) {
+  if (!isValidBookPath(pathname)) {
     return undefined;
   }
 
@@ -92,12 +127,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const { bookId } = await context.params;
     const oldPathname = decodeURIComponent(bookId);
 
-    const valid =
-      (oldPathname.startsWith("digital-library/books/") &&
-        oldPathname.toLowerCase().endsWith(".pdf")) ||
-      /^digital-library\/[^/]+\.pdf$/i.test(oldPathname);
-
-    if (!valid) {
+    if (!isValidBookPath(oldPathname)) {
       return NextResponse.json(
         {
           success: false,
@@ -120,26 +150,15 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const currentThumbnail = await findThumbnail(oldPathname, token);
+    const body = (await request.json()) as EditMaterialBody;
 
-    const formData = await request.formData();
+    const title = String(body.title || "").trim();
+    const price = String(body.price || "0").trim();
+    const safeTitle = safeBookName(title);
+    const storedPrice = normalizeStoredPrice(price);
+    const assetKey = String(body.assetKey || "").trim();
 
-    const title = String(formData.get("title") || "").trim();
-    const price = String(formData.get("price") || "0").trim();
-
-    const pdfValue = formData.get("file");
-    const thumbnailValue = formData.get("thumbnail");
-
-    const newPdf =
-      pdfValue instanceof File && pdfValue.size > 0
-        ? pdfValue
-        : null;
-
-    const newThumbnail =
-      thumbnailValue instanceof File && thumbnailValue.size > 0
-        ? thumbnailValue
-        : null;
-
-    if (!title) {
+    if (!title || !safeTitle) {
       return NextResponse.json(
         {
           success: false,
@@ -149,81 +168,87 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
-    if (
-      newPdf &&
-      newPdf.type !== "application/pdf" &&
-      !newPdf.name.toLowerCase().endsWith(".pdf")
-    ) {
+    const expectedEnding = `__${storedPrice}__${safeTitle}`;
+
+    if (!assetKey || !assetKey.endsWith(expectedEnding)) {
       return NextResponse.json(
         {
           success: false,
-          message: "Book upload must be a PDF file.",
+          message: "Invalid material update information.",
         },
         { status: 400 }
       );
     }
 
-    if (newThumbnail) {
-      const ext = getExtension(newThumbnail.name);
+    const targetPdfPath = `digital-library/books/${assetKey}.pdf`;
+    const uploadedPdfPath = body.uploadedPdf?.pathname || "";
 
-      if (![".png", ".jpg", ".jpeg", ".webp"].includes(ext)) {
+    let newBook: {
+      pathname: string;
+      url: string;
+      downloadUrl?: string;
+    };
+
+    if (uploadedPdfPath) {
+      if (
+        !isValidBookPath(uploadedPdfPath) ||
+        uploadedPdfPath !== targetPdfPath ||
+        !body.uploadedPdf?.url
+      ) {
         return NextResponse.json(
           {
             success: false,
-            message: "Thumbnail must be PNG, JPG or WEBP.",
+            message: "Invalid uploaded PDF information.",
           },
           { status: 400 }
         );
       }
-    }
 
-    const safeTitle = safeBookName(title);
-
-    if (!safeTitle) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid book name.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const storedPrice = normalizeStoredPrice(price);
-    const key = `${Date.now()}__${storedPrice}__${safeTitle}`;
-
-    let pdfBody: Blob | File;
-
-    if (newPdf) {
-      pdfBody = newPdf;
+      newBook = {
+        pathname: uploadedPdfPath,
+        url: body.uploadedPdf.url,
+        downloadUrl: body.uploadedPdf.downloadUrl || body.uploadedPdf.url,
+      };
     } else {
-      const pdfResponse = await fetch(currentBook.url);
-
-      if (!pdfResponse.ok) {
-        throw new Error("Unable to retrieve current PDF.");
-      }
-
-      pdfBody = await pdfResponse.blob();
-    }
-
-    const newBook = await put(
-      `digital-library/books/${key}.pdf`,
-      pdfBody,
-      {
+      const copiedBook = await copy(oldPathname, targetPdfPath, {
         access: "public",
         addRandomSuffix: false,
         token,
-      }
-    );
+      });
+
+      newBook = {
+        pathname: copiedBook.pathname,
+        url: copiedBook.url,
+        downloadUrl: copiedBook.downloadUrl || copiedBook.url,
+      };
+    }
 
     let thumbnailUrl: string | undefined;
+    const uploadedThumbnailPath = body.uploadedThumbnail?.pathname || "";
 
-    if (newThumbnail) {
-      const thumb = await put(
-        `digital-library/thumbnails/${key}${getExtension(
-          newThumbnail.name
-        )}`,
-        newThumbnail,
+    if (uploadedThumbnailPath) {
+      if (
+        !isValidThumbnailPath(uploadedThumbnailPath) ||
+        !uploadedThumbnailPath.includes(`/thumbnails/${assetKey}`) ||
+        !body.uploadedThumbnail?.url
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Invalid uploaded thumbnail information.",
+          },
+          { status: 400 }
+        );
+      }
+
+      thumbnailUrl = body.uploadedThumbnail.url;
+    } else if (currentThumbnail) {
+      const currentExtension =
+        getExtension(currentThumbnail.pathname) || ".jpg";
+
+      const copiedThumbnail = await copy(
+        currentThumbnail.pathname,
+        `digital-library/thumbnails/${assetKey}${currentExtension}`,
         {
           access: "public",
           addRandomSuffix: false,
@@ -231,35 +256,16 @@ export async function PATCH(request: Request, context: RouteContext) {
         }
       );
 
-      thumbnailUrl = thumb.url;
-    } else if (currentThumbnail) {
-      const response = await fetch(currentThumbnail.url);
-
-      if (response.ok) {
-        const body = await response.blob();
-        const ext = getExtension(currentThumbnail.pathname) || ".png";
-
-        const thumb = await put(
-          `digital-library/thumbnails/${key}${ext}`,
-          body,
-          {
-            access: "public",
-            addRandomSuffix: false,
-            token,
-          }
-        );
-
-        thumbnailUrl = thumb.url;
-      }
+      thumbnailUrl = copiedThumbnail.url;
     }
 
-    const removeTargets = [oldPathname];
+    const oldFilesToDelete = [oldPathname];
 
     if (currentThumbnail) {
-      removeTargets.push(currentThumbnail.pathname);
+      oldFilesToDelete.push(currentThumbnail.pathname);
     }
 
-    await del(removeTargets, {
+    await del(oldFilesToDelete, {
       token,
     });
 
@@ -267,10 +273,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       success: true,
       book: {
         title,
-        price:
-          storedPrice === "free"
-            ? "Free"
-            : `₹${Number(storedPrice).toLocaleString("en-IN")}`,
+        price: formatDisplayPrice(storedPrice),
         fileName: `${safeTitle}.pdf`,
         pathname: newBook.pathname,
         url: newBook.url,
@@ -321,12 +324,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     const { bookId } = await context.params;
     const pathname = decodeURIComponent(bookId);
 
-    const valid =
-      (pathname.startsWith("digital-library/books/") &&
-        pathname.toLowerCase().endsWith(".pdf")) ||
-      /^digital-library\/[^/]+\.pdf$/i.test(pathname);
-
-    if (!valid) {
+    if (!isValidBookPath(pathname)) {
       return NextResponse.json(
         {
           success: false,
@@ -337,7 +335,6 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     const thumbnail = await findThumbnail(pathname, token);
-
     const targets = [pathname];
 
     if (thumbnail) {
