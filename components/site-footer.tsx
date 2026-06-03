@@ -8,9 +8,7 @@ import { getPublicInstituteData } from "@/lib/data-store";
 export async function SiteFooter() {
   const data = await getPublicInstituteData();
   const mapQuery = encodeURIComponent(data.profile.address);
-  const mapSrc =
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.017136012903!2d72.99560617520503!3d19.062984182138877!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c1c3896c493f%3A0xd9b13c31e18e745e!2sSmartIQ%20Academy!5e0!3m2!1sen!2sin!4v1776943936994!5m2!1sen!2sin";
-
+  const mapSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.012914401644!2d72.99805549999999!3d19.0631698!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c1022ee79847%3A0x11b64532d2636722!2sSmart%20Tutors!5e0!3m2!1sen!2sin!4v1780482645821!5m2!1sen!2sin"  
   return (
     <footer className="section-shell pb-8 pt-6">
       <RevealOnScroll className="surface graph-paper rounded-[2rem] p-6 sm:p-8">
