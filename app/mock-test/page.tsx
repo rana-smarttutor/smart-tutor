@@ -1,5 +1,6 @@
-import { Metadata } from "next";
-import QuizArenaClient from '@/components/quiz-arena-client';
+import QuizArenaClient from "@/components/quiz-arena-client";
+
+export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "Mock Test Arena | Smart Tutors",

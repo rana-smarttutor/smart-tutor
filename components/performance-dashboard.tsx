@@ -262,55 +262,102 @@ export function PerformanceDashboard({ reports, heuristics, studentName }: Props
         {/* Main Analytics */}
         <div className="grid lg:grid-cols-2 gap-8 py-4">
           {/* Marks Trend or Subject Wise */}
-          <article className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm min-h-[400px]">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
-              <span className="h-4 w-1 bg-blue-600 rounded-full" />
-              Subject Performance
-            </h3>
-            <div className="h-[300px] w-full" style={{ minHeight: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
-                <BarChart data={activeReport.subjectWiseMarks}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="subject" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: "#64748b" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 700, fill: "#64748b" }} />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', padding: '12px' }}
-                    itemStyle={{ fontWeight: 800 }}
-                  />
-                  <Bar dataKey="marks" fill="#2563eb" radius={[6, 6, 0, 0]} barSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
+         <article className="min-w-0 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm min-h-[400px]">
+  <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
+    <span className="h-4 w-1 bg-blue-600 rounded-full" />
+    Subject Performance
+  </h3>
+
+  <div className="h-[300px] w-full min-w-0 overflow-hidden">
+    <ResponsiveContainer
+      width="100%"
+      height={300}
+      minHeight={300}
+      initialDimension={{ width: 500, height: 300 }}
+      debounce={100}
+    >
+      <BarChart data={activeReport.subjectWiseMarks}>
+        <CartesianGrid
+          strokeDasharray="3 3"
+          vertical={false}
+          stroke="#f1f5f9"
+        />
+        <XAxis
+          dataKey="subject"
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 12, fontWeight: 700, fill: "#64748b" }}
+        />
+        <YAxis
+          axisLine={false}
+          tickLine={false}
+          tick={{ fontSize: 12, fontWeight: 700, fill: "#64748b" }}
+        />
+        <Tooltip
+          contentStyle={{
+            borderRadius: "16px",
+            border: "none",
+            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+            padding: "12px",
+          }}
+          itemStyle={{ fontWeight: 800 }}
+        />
+        <Bar
+          dataKey="marks"
+          fill="#2563eb"
+          radius={[6, 6, 0, 0]}
+          barSize={40}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  </div>
+</article>
 
           {/* Accuracy Analysis */}
-          <article className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm min-h-[400px]">
-            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
-              <span className="h-4 w-1 bg-indigo-600 rounded-full" />
-              Accuracy Breakdown
-            </h3>
-            <div className="h-[300px] w-full" style={{ minHeight: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%" minWidth={300} minHeight={300}>
-                <PieChart>
-                  <Pie
-                    data={activeReport.accuracyAnalysis}
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={8}
-                    dataKey="value"
-                  >
-                    {activeReport.accuracyAnalysis.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </article>
+         <article className="min-w-0 bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm min-h-[400px]">
+  <h3 className="text-sm font-black uppercase tracking-widest text-slate-400 mb-8 flex items-center gap-2">
+    <span className="h-4 w-1 bg-indigo-600 rounded-full" />
+    Accuracy Breakdown
+  </h3>
+
+  <div className="h-[300px] w-full min-w-0 overflow-hidden">
+    <ResponsiveContainer
+      width="100%"
+      height={300}
+      minHeight={300}
+      initialDimension={{ width: 500, height: 300 }}
+      debounce={100}
+    >
+      <PieChart>
+        <Pie
+          data={activeReport.accuracyAnalysis}
+          innerRadius={60}
+          outerRadius={100}
+          paddingAngle={8}
+          dataKey="value"
+        >
+          {activeReport.accuracyAnalysis.map((entry, index) => (
+            <Cell
+              key={`cell-${index}`}
+              fill={COLORS[index % COLORS.length]}
+              stroke="none"
+            />
+          ))}
+        </Pie>
+
+        <Tooltip
+          contentStyle={{
+            borderRadius: "16px",
+            border: "none",
+            boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+          }}
+        />
+
+        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+</article>
         </div>
 
         {/* Secondary Metrics */}

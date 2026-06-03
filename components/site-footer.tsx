@@ -1,27 +1,38 @@
 import Link from "next/link";
-import Image from "next/image";
 
-import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { LegalModals } from "@/components/legal-modals";
 import { getPublicInstituteData } from "@/lib/data-store";
 
 export async function SiteFooter() {
   const data = await getPublicInstituteData();
   const mapQuery = encodeURIComponent(data.profile.address);
-  const mapSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3771.012914401644!2d72.99805549999999!3d19.0631698!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3be7c1022ee79847%3A0x11b64532d2636722!2sSmart%20Tutors!5e0!3m2!1sen!2sin!4v1780482645821!5m2!1sen!2sin"  
+  const mapLink = `https://maps.google.com/?q=${mapQuery}`;
+
   return (
     <footer className="section-shell pb-8 pt-6">
-      <RevealOnScroll className="surface graph-paper rounded-[2rem] p-6 sm:p-8">
+      <div className="surface graph-paper rounded-[2rem] p-6 sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[0.95fr_0.9fr_1.1fr]">
           <div>
-            <p className="max-w-md text-sm leading-7 text-[var(--color-muted)]">
+            <Link
+              href="/"
+              className="text-xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]"
+            >
+              Smart Tutors
+            </Link>
+
+            <p className="mt-4 max-w-md text-sm leading-7 text-[var(--color-muted)]">
               Admissions, learning, and institute operations in one workspace.
             </p>
+
             <div className="mt-5 space-y-3 text-sm text-[var(--color-muted)]">
               <p className="font-semibold text-[var(--color-heading)]">
                 {data.profile.directorName} | {data.profile.directorTitle}
               </p>
-              <p className="font-semibold text-[var(--color-heading)]">{data.profile.address}</p>
+
+              <p className="font-semibold text-[var(--color-heading)]">
+                {data.profile.address}
+              </p>
+
               <p>{data.profile.phone}</p>
               <p>{data.profile.email}</p>
               <p>{data.profile.hours}</p>
@@ -31,6 +42,7 @@ export async function SiteFooter() {
 
           <div>
             <p className="section-label">Social media</p>
+
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {data.socialLinks.slice(0, 4).map((item) => (
                 <a
@@ -52,39 +64,62 @@ export async function SiteFooter() {
 
           <div>
             <p className="section-label">Campus map</p>
-            <div className="media-frame map-frame mt-4 overflow-hidden rounded-[1.6rem]">
-              <div className="map-frame-inner">
-                <iframe
-                  title="Smart Tutors footer campus map"
-                  src={mapSrc}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  className="absolute inset-0 h-full w-full border-0"
-                />
+
+            <div className="mt-4 flex min-h-[220px] flex-col items-center justify-center rounded-[1.6rem] border border-[var(--color-border)] bg-[var(--color-background-strong)] px-6 py-8 text-center">
+              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md">
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
               </div>
+
+              <p className="text-sm font-semibold text-[var(--color-heading)]">
+                Smart Tutors Campus
+              </p>
+
+              <p className="mt-2 max-w-xs text-xs font-medium leading-6 text-[var(--color-muted)]">
+                Open our campus location directly in Google Maps for directions.
+              </p>
+
+              <a
+                href={mapLink}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-md hover:bg-blue-700"
+              >
+                Open Google Maps
+              </a>
             </div>
-            <a
-              href={`https://maps.google.com/?q=${mapQuery}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex text-sm font-semibold text-[var(--color-accent)]"
-            >
-              Open campus on Google Maps
-            </a>
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-[var(--color-border)]">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)]">
+        <div className="mt-8 border-t border-[var(--color-border)] pt-8">
+          <div className="flex flex-col gap-4 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
             <LegalModals />
+
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} Smart Tutors Academy. All rights reserved. 
-              Results may differ between users. Promotional claims may be stylized.
+              © {new Date().getFullYear()} Smart Tutors Academy. All rights
+              reserved. Results may differ between users. Promotional claims
+              may be stylized.
             </p>
           </div>
         </div>
-      </RevealOnScroll>
+      </div>
     </footer>
   );
 }

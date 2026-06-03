@@ -18,12 +18,21 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const dashboard = await getDashboardBundle(session.role, session.id);
   const role = session.role;
+
+  const [dashboard, educatorStudentDirectory, managedUsers] = await Promise.all([
+    getDashboardBundle(role, session.id),
+    role === "educator" ? getStudentDirectory() : Promise.resolve([]),
+    role === "admin" ? getUsersForAdmin() : Promise.resolve([]),
+  ]);
+
   const studentDirectory =
-    role === "educator" || role === "admin" ? await getStudentDirectory() : [];
-  const managedUsers = role === "admin" ? await getUsersForAdmin() : [];
-  const courseOptions = role === "admin" ? getStandardizedCourseOptions() : [];
+    role === "admin"
+      ? managedUsers.filter((user) => user.role === "student")
+      : educatorStudentDirectory;
+
+  const courseOptions =
+    role === "admin" ? getStandardizedCourseOptions() : [];
 
   const supportContact =
     role === "student"

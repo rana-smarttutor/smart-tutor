@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from "react";
+import Link from "next/link";
 
 import {
   competitiveExams,
@@ -14,18 +15,18 @@ import {
   type Difficulty,
   type EducationLevel,
   type Stream,
-} from '@/lib/quiz-arena-config';
-import type { QuizQuestion } from '@/lib/quiz-arena-questions';
+} from "@/lib/quiz-arena-config";
+import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 
 type Step =
-  | 'welcome'
-  | 'level'
-  | 'stream'
-  | 'exam'
-  | 'subject'
-  | 'difficulty'
-  | 'quiz'
-  | 'result';
+  | "welcome"
+  | "level"
+  | "stream"
+  | "exam"
+  | "subject"
+  | "difficulty"
+  | "quiz"
+  | "result";
 
 type QuizResult = {
   score: number;
@@ -37,20 +38,22 @@ type QuizResult = {
 };
 
 export default function QuizArenaClient() {
-  const [step, setStep] = useState<Step>('welcome');
+  const [step, setStep] = useState<Step>("welcome");
 
-  const [selectedLevel, setSelectedLevel] =
-    useState<EducationLevel | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<EducationLevel | null>(
+    null,
+  );
   const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
-  const [selectedExam, setSelectedExam] =
-    useState<CompetitiveExam | null>(null);
+  const [selectedExam, setSelectedExam] = useState<CompetitiveExam | null>(
+    null,
+  );
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] =
     useState<Difficulty | null>(null);
 
   const [activeQuestions, setActiveQuestions] = useState<QuizQuestion[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
@@ -59,13 +62,14 @@ export default function QuizArenaClient() {
       return [];
     }
 
-    if (selectedLevel === 'class-11-12' && selectedStream) {
+    if (selectedLevel === "class-11-12" && selectedStream) {
       return streamSubjects[selectedStream];
     }
 
-    if (selectedLevel === 'competitive-exam' && selectedExam) {
+    if (selectedLevel === "competitive-exam" && selectedExam) {
       return (
-        competitiveExams.find((exam) => exam.id === selectedExam)?.subjects ?? []
+        competitiveExams.find((exam) => exam.id === selectedExam)?.subjects ??
+        []
       );
     }
 
@@ -73,7 +77,7 @@ export default function QuizArenaClient() {
   }, [selectedExam, selectedLevel, selectedStream]);
 
   const playfulMode =
-    selectedLevel === 'class-1-2' || selectedLevel === 'class-3-5';
+    selectedLevel === "class-1-2" || selectedLevel === "class-3-5";
 
   function selectLevel(level: EducationLevel) {
     setSelectedLevel(level);
@@ -83,20 +87,20 @@ export default function QuizArenaClient() {
     setSelectedDifficulty(null);
     setActiveQuestions([]);
     setResult(null);
-    setMessage('');
+    setMessage("");
     setShowExitModal(false);
 
-    if (level === 'class-11-12') {
-      setStep('stream');
+    if (level === "class-11-12") {
+      setStep("stream");
       return;
     }
 
-    if (level === 'competitive-exam') {
-      setStep('exam');
+    if (level === "competitive-exam") {
+      setStep("exam");
       return;
     }
 
-    setStep('subject');
+    setStep("subject");
   }
 
   function changeLevel() {
@@ -107,61 +111,61 @@ export default function QuizArenaClient() {
     setSelectedDifficulty(null);
     setActiveQuestions([]);
     setResult(null);
-    setMessage('');
+    setMessage("");
     setShowExitModal(false);
-    setStep('level');
+    setStep("level");
   }
 
   function goBack() {
-    setMessage('');
+    setMessage("");
     setShowExitModal(false);
 
-    if (step === 'level') {
-      setStep('welcome');
+    if (step === "level") {
+      setStep("welcome");
       return;
     }
 
-    if (step === 'stream' || step === 'exam') {
+    if (step === "stream" || step === "exam") {
       setSelectedLevel(null);
       setSelectedStream(null);
       setSelectedExam(null);
       setSelectedSubject(null);
       setSelectedDifficulty(null);
-      setStep('level');
+      setStep("level");
       return;
     }
 
-    if (step === 'subject') {
+    if (step === "subject") {
       setSelectedSubject(null);
       setSelectedDifficulty(null);
 
-      if (selectedLevel === 'class-11-12') {
+      if (selectedLevel === "class-11-12") {
         setSelectedStream(null);
-        setStep('stream');
+        setStep("stream");
         return;
       }
 
-      if (selectedLevel === 'competitive-exam') {
+      if (selectedLevel === "competitive-exam") {
         setSelectedExam(null);
-        setStep('exam');
+        setStep("exam");
         return;
       }
 
       setSelectedLevel(null);
-      setStep('level');
+      setStep("level");
       return;
     }
 
-    if (step === 'difficulty') {
+    if (step === "difficulty") {
       setSelectedDifficulty(null);
-      setStep('subject');
+      setStep("subject");
       return;
     }
 
-    if (step === 'result') {
+    if (step === "result") {
       setResult(null);
       setActiveQuestions([]);
-      setStep('difficulty');
+      setStep("difficulty");
     }
   }
 
@@ -177,26 +181,26 @@ export default function QuizArenaClient() {
     setShowExitModal(false);
     setActiveQuestions([]);
     setResult(null);
-    setMessage('');
-    setStep('difficulty');
+    setMessage("");
+    setStep("difficulty");
   }
 
   async function startChallenge() {
     if (!selectedLevel || !selectedSubject || !selectedDifficulty) {
-      setMessage('Please complete your quiz selection first.');
+      setMessage("Please complete your quiz selection first.");
       return;
     }
 
     try {
       setIsGenerating(true);
       setShowExitModal(false);
-      setMessage('');
+      setMessage("");
       setResult(null);
 
-      const response = await fetch('/api/quiz-arena/generate', {
-        method: 'POST',
+      const response = await fetch("/api/quiz-arena/generate", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           level: selectedLevel,
@@ -214,19 +218,19 @@ export default function QuizArenaClient() {
 
       if (!response.ok || !data.questions || data.questions.length === 0) {
         throw new Error(
-          data.error ?? 'Unable to generate your quiz. Please try again.'
+          data.error ?? "Unable to generate your quiz. Please try again.",
         );
       }
 
       setActiveQuestions(data.questions);
-      setStep('quiz');
+      setStep("quiz");
     } catch (error) {
-      console.warn('Quiz generation error:', error);
+      console.warn("Quiz generation error:", error);
 
       setMessage(
         error instanceof Error
           ? error.message
-          : 'Unable to generate your quiz right now. Please try again.'
+          : "Unable to generate your quiz right now. Please try again.",
       );
     } finally {
       setIsGenerating(false);
@@ -236,18 +240,18 @@ export default function QuizArenaClient() {
   function finishQuiz(finalResult: QuizResult) {
     setResult(finalResult);
     setShowExitModal(false);
-    setStep('result');
+    setStep("result");
   }
 
   function playAgain() {
     setResult(null);
-    setMessage('');
+    setMessage("");
     void startChallenge();
   }
 
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white">
-      {step !== 'welcome' && step !== 'quiz' && (
+      {step !== "welcome" && step !== "quiz" && (
         <button
           type="button"
           onClick={goBack}
@@ -258,7 +262,7 @@ export default function QuizArenaClient() {
         </button>
       )}
 
-      {step === 'quiz' && (
+      {step === "quiz" && (
         <button
           type="button"
           onClick={requestExitQuiz}
@@ -269,7 +273,7 @@ export default function QuizArenaClient() {
         </button>
       )}
 
-      {step === 'quiz' && showExitModal && (
+      {step === "quiz" && showExitModal && (
         <div
           className="absolute inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-5 backdrop-blur-[2px]"
           role="presentation"
@@ -325,10 +329,10 @@ export default function QuizArenaClient() {
 
       <div
         className={`mx-auto max-w-6xl ${
-          step === 'welcome' ? '' : 'pt-16 sm:pt-14'
+          step === "welcome" ? "" : "pt-16 sm:pt-14"
         }`}
       >
-        {step === 'welcome' && (
+        {step === "welcome" && (
           <section className="flex min-h-[88vh] items-center justify-center">
             <div className="max-w-3xl text-center">
               <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-cyan-300">
@@ -360,7 +364,7 @@ export default function QuizArenaClient() {
 
               <button
                 type="button"
-                onClick={() => setStep('level')}
+                onClick={() => setStep("level")}
                 className="mt-12 rounded-2xl bg-cyan-400 px-12 py-4 text-lg font-bold text-slate-950 shadow-lg shadow-cyan-400/20 transition hover:-translate-y-1 hover:bg-cyan-300"
               >
                 Start Quiz
@@ -369,7 +373,7 @@ export default function QuizArenaClient() {
           </section>
         )}
 
-        {step === 'level' && (
+        {step === "level" && (
           <section>
             <Header
               title="Which level are you studying at?"
@@ -395,7 +399,7 @@ export default function QuizArenaClient() {
           </section>
         )}
 
-        {step === 'stream' && (
+        {step === "stream" && (
           <section>
             <Header
               title="Choose your stream"
@@ -403,7 +407,7 @@ export default function QuizArenaClient() {
             />
 
             <div className="grid gap-5 md:grid-cols-3">
-              {(['science', 'commerce', 'humanities'] as Stream[]).map(
+              {(["science", "commerce", "humanities"] as Stream[]).map(
                 (stream) => (
                   <button
                     type="button"
@@ -412,16 +416,16 @@ export default function QuizArenaClient() {
                       setSelectedStream(stream);
                       setSelectedSubject(null);
                       setSelectedDifficulty(null);
-                      setStep('subject');
+                      setStep("subject");
                     }}
                     className="rounded-3xl border border-white/10 bg-white/10 p-8 text-left capitalize transition hover:-translate-y-1 hover:border-cyan-300"
                   >
                     <div className="text-4xl">
-                      {stream === 'science'
-                        ? '🔬'
-                        : stream === 'commerce'
-                          ? '📊'
-                          : '🌍'}
+                      {stream === "science"
+                        ? "🔬"
+                        : stream === "commerce"
+                          ? "📊"
+                          : "🌍"}
                     </div>
 
                     <h2 className="mt-5 text-2xl font-bold">{stream}</h2>
@@ -430,13 +434,13 @@ export default function QuizArenaClient() {
                       Continue with {stream} subjects
                     </p>
                   </button>
-                )
+                ),
               )}
             </div>
           </section>
         )}
 
-        {step === 'exam' && (
+        {step === "exam" && (
           <section>
             <Header
               title="Which exam are you preparing for?"
@@ -452,7 +456,7 @@ export default function QuizArenaClient() {
                     setSelectedExam(exam.id);
                     setSelectedSubject(null);
                     setSelectedDifficulty(null);
-                    setStep('subject');
+                    setStep("subject");
                   }}
                   className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                 >
@@ -469,7 +473,7 @@ export default function QuizArenaClient() {
           </section>
         )}
 
-        {step === 'subject' && (
+        {step === "subject" && (
           <section>
             <Header
               title="Choose your subject"
@@ -484,8 +488,8 @@ export default function QuizArenaClient() {
                   onClick={() => {
                     setSelectedSubject(subject);
                     setSelectedDifficulty(null);
-                    setMessage('');
-                    setStep('difficulty');
+                    setMessage("");
+                    setStep("difficulty");
                   }}
                   className="rounded-2xl border border-white/10 bg-white/10 p-6 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                 >
@@ -497,11 +501,11 @@ export default function QuizArenaClient() {
           </section>
         )}
 
-        {step === 'difficulty' && (
+        {step === "difficulty" && (
           <section>
             <Header
               title="Choose your challenge"
-              subtitle={`${selectedSubject ?? ''} • AI will create a fresh quiz for this attempt.`}
+              subtitle={`${selectedSubject ?? ""} • AI will create a fresh quiz for this attempt.`}
             />
 
             <div className="grid gap-6 md:grid-cols-3">
@@ -511,12 +515,12 @@ export default function QuizArenaClient() {
                   key={difficulty.id}
                   onClick={() => {
                     setSelectedDifficulty(difficulty.id);
-                    setMessage('');
+                    setMessage("");
                   }}
                   className={`rounded-3xl border p-8 text-left transition ${
                     selectedDifficulty === difficulty.id
-                      ? 'border-cyan-300 bg-cyan-300/20 shadow-lg shadow-cyan-400/10'
-                      : 'border-white/10 bg-white/10 hover:-translate-y-1 hover:border-cyan-300'
+                      ? "border-cyan-300 bg-cyan-300/20 shadow-lg shadow-cyan-400/10"
+                      : "border-white/10 bg-white/10 hover:-translate-y-1 hover:border-cyan-300"
                   }`}
                 >
                   <span className="text-4xl">{difficulty.icon}</span>
@@ -550,35 +554,31 @@ export default function QuizArenaClient() {
                   disabled={isGenerating}
                   className="rounded-2xl bg-cyan-400 px-12 py-4 text-lg font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isGenerating
-                    ? 'Creating Your Quiz...'
-                    : 'Start Challenge'}
+                  {isGenerating ? "Creating Your Quiz..." : "Start Challenge"}
                 </button>
-
-                
               </div>
             )}
           </section>
         )}
 
-        {step === 'quiz' && activeQuestions.length > 0 && (
+        {step === "quiz" && activeQuestions.length > 0 && (
           <QuizGame
             questions={activeQuestions}
             levelTitle={getLevelTitle(selectedLevel)}
             examTitle={getExamTitle(selectedExam)}
-            subject={selectedSubject ?? ''}
-            difficulty={selectedDifficulty ?? 'easy'}
+            subject={selectedSubject ?? ""}
+            difficulty={selectedDifficulty ?? "easy"}
             playfulMode={playfulMode}
             onComplete={finishQuiz}
           />
         )}
 
-        {step === 'result' && result && (
+        {step === "result" && result && (
           <ResultScreen
             result={result}
             levelTitle={getLevelTitle(selectedLevel)}
             examTitle={getExamTitle(selectedExam)}
-            subject={selectedSubject ?? ''}
+            subject={selectedSubject ?? ""}
             totalQuestions={activeQuestions.length}
             playfulMode={playfulMode}
             isGenerating={isGenerating}
@@ -591,13 +591,7 @@ export default function QuizArenaClient() {
   );
 }
 
-function Header({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle: string;
-}) {
+function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <header className="mb-10 text-center">
       <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-300">
@@ -695,7 +689,7 @@ function QuizGame({
           <div>
             <p className="text-sm text-slate-300">
               {levelTitle}
-              {examTitle ? ` • ${examTitle}` : ''} • {subject} •{' '}
+              {examTitle ? ` • ${examTitle}` : ""} • {subject} •{" "}
               <span className="capitalize">{difficulty}</span>
             </p>
 
@@ -706,7 +700,7 @@ function QuizGame({
 
           <div className="flex flex-wrap gap-3 text-sm font-semibold">
             <span className="rounded-full bg-cyan-400/20 px-4 py-2 text-cyan-200">
-              {playfulMode ? '⭐ Stars' : 'Score'}: {score}
+              {playfulMode ? "⭐ Stars" : "Score"}: {score}
             </span>
 
             {!playfulMode && (
@@ -716,7 +710,7 @@ function QuizGame({
                 </span>
 
                 <span className="rounded-full bg-red-400/20 px-4 py-2 text-red-100">
-                  {hearts > 0 ? '❤️'.repeat(hearts) : 'No Lives Left'}
+                  {hearts > 0 ? "❤️".repeat(hearts) : "No Lives Left"}
                 </span>
               </>
             )}
@@ -755,10 +749,10 @@ function QuizGame({
                 disabled={answered}
                 className={`rounded-2xl border p-5 text-left text-lg font-semibold transition ${
                   correctOption
-                    ? 'border-green-400 bg-green-400/20 text-green-100'
+                    ? "border-green-400 bg-green-400/20 text-green-100"
                     : wrongOption
-                      ? 'border-red-400 bg-red-400/20 text-red-100'
-                      : 'border-white/10 bg-white/5 hover:border-cyan-300 hover:bg-white/10'
+                      ? "border-red-400 bg-red-400/20 text-red-100"
+                      : "border-white/10 bg-white/5 hover:border-cyan-300 hover:bg-white/10"
                 }`}
               >
                 {option}
@@ -771,18 +765,18 @@ function QuizGame({
           <div
             className={`mt-8 rounded-2xl border p-5 ${
               isCorrect
-                ? 'border-green-400/30 bg-green-400/10'
-                : 'border-red-400/30 bg-red-400/10'
+                ? "border-green-400/30 bg-green-400/10"
+                : "border-red-400/30 bg-red-400/10"
             }`}
           >
             <h3 className="text-lg font-bold">
               {isCorrect
                 ? playfulMode
-                  ? 'Amazing! You earned a star ⭐'
-                  : 'Correct! Great job.'
+                  ? "Amazing! You earned a star ⭐"
+                  : "Correct! Great job."
                 : playfulMode
                   ? "Great try! Let's learn this together."
-                  : 'Incorrect answer.'}
+                  : "Incorrect answer."}
             </h3>
 
             {!isCorrect && (
@@ -802,8 +796,8 @@ function QuizGame({
             >
               {questionIndex === questions.length - 1 ||
               (!playfulMode && hearts <= 0)
-                ? 'View Result'
-                : 'Next Question'}
+                ? "View Result"
+                : "Next Question"}
             </button>
           </div>
         )}
@@ -836,30 +830,28 @@ function ResultScreen({
   const accuracy =
     result.attemptedQuestions === 0
       ? 0
-      : Math.round(
-          (result.correctAnswers / result.attemptedQuestions) * 100
-        );
+      : Math.round((result.correctAnswers / result.attemptedQuestions) * 100);
 
   function getPerformanceMessage() {
     if (result.gameOver) {
-      return 'Game Over. Try again and improve your score.';
+      return "Game Over. Try again and improve your score.";
     }
 
     if (accuracy >= 90) {
       return playfulMode
-        ? 'Superstar! You did an amazing job! 🌟'
-        : 'Outstanding! You are a Quiz Champion.';
+        ? "Superstar! You did an amazing job! 🌟"
+        : "Outstanding! You are a Quiz Champion.";
     }
 
     if (accuracy >= 70) {
-      return 'Great job! Keep pushing.';
+      return "Great job! Keep pushing.";
     }
 
     if (accuracy >= 50) {
-      return 'Good attempt. Practice more to level up.';
+      return "Good attempt. Practice more to level up.";
     }
 
-    return 'Keep learning. You can do better next time.';
+    return "Keep learning. You can do better next time.";
   }
 
   return (
@@ -869,7 +861,7 @@ function ResultScreen({
       </p>
 
       <h1 className="mt-4 text-4xl font-black sm:text-6xl">
-        {result.gameOver ? 'Game Over' : 'Challenge Completed!'}
+        {result.gameOver ? "Game Over" : "Challenge Completed!"}
       </h1>
 
       <p className="mx-auto mt-5 max-w-xl text-lg text-slate-300">
@@ -880,7 +872,7 @@ function ResultScreen({
         <div className="mb-8">
           <p className="text-sm text-slate-300">
             {levelTitle}
-            {examTitle ? ` • ${examTitle}` : ''} • {subject}
+            {examTitle ? ` • ${examTitle}` : ""} • {subject}
           </p>
 
           <p className="mt-3 text-6xl font-black text-cyan-300">
@@ -888,7 +880,7 @@ function ResultScreen({
           </p>
 
           <p className="mt-2 text-sm text-slate-300">
-            {playfulMode ? 'Stars Score' : 'Final Score'}
+            {playfulMode ? "Stars Score" : "Final Score"}
           </p>
         </div>
 
@@ -928,7 +920,7 @@ function ResultScreen({
           disabled={isGenerating}
           className="rounded-2xl bg-cyan-400 px-8 py-4 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isGenerating ? 'Creating New Quiz...' : 'Play Again'}
+          {isGenerating ? "Creating New Quiz..." : "Play Again"}
         </button>
 
         <button
@@ -939,12 +931,12 @@ function ResultScreen({
           Change Level
         </button>
 
-        <a
+        <Link
           href="/dashboard"
           className="rounded-2xl border border-white/20 px-8 py-4 font-bold text-white transition hover:bg-white/10"
         >
           Go to Dashboard
-        </a>
+        </Link>
       </div>
 
       <p className="mt-6 text-sm text-slate-400">
@@ -966,7 +958,7 @@ function ResultCard({
   return (
     <div className="rounded-2xl bg-white/5 p-5">
       <p className="text-2xl">{icon}</p>
-      <p className="mt-3 text-2xl font-bold">{value}</p>s
+      <p className="mt-3 text-2xl font-bold">{value}</p>
       <p className="mt-1 text-sm text-slate-300">{title}</p>
     </div>
   );

@@ -93,7 +93,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+     { url: "/favicon-light.svg", type: "image/svg+xml" }
     ],
     shortcut: '/favicon.ico',
     apple: [
@@ -216,19 +216,19 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-      <Script
-      src="https://www.googletagmanager.com/gtag/js?id=G-9P82PKFSD9"
-      strategy="afterInteractive"
-    />
+<Script
+  src="https://www.googletagmanager.com/gtag/js?id=G-9P82PKFSD9"
+  strategy="lazyOnload"
+/>
 
-    <Script id="google-analytics" strategy="afterInteractive">
-     {`
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-9P82PKFSD9');
-      `}
-    </Script>
+<Script id="google-analytics" strategy="lazyOnload">
+  {`
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-9P82PKFSD9');
+  `}
+</Script>
 <ThemeProvider>
   <div className="relative z-10">
   <div className="no-report-chrome">
@@ -242,10 +242,9 @@ export default function RootLayout({
   </div>
 
   <div className="no-report-chrome">
-    <FloatingWhatsApp />
-    <PWAInstallButton />
-    <SmartTutorsAIChatbot />
-  </div>
+  <FloatingWhatsApp />
+  <PWAInstallButton />
+</div>
 </div>
 </ThemeProvider>
 
