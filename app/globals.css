@@ -642,17 +642,18 @@ footer {
   }
 
   .shell-bar {
-    border-radius: 1.5rem;
-    padding-inline: 0.75rem;
+    border-radius: 1.25rem;
+    padding-inline: 0.5rem;
+    padding-block: 0.5rem;
   }
 
   .nav-link {
     min-width: 0;
     width: 100%;
-    min-height: 2.85rem;
+    min-height: 2.75rem;
     justify-content: flex-start;
-    padding-inline: 1rem;
-    font-size: 0.92rem;
+    padding-inline: 0.75rem;
+    font-size: 0.88rem;
   }
 
   .section-title,
@@ -661,13 +662,14 @@ footer {
   }
 
   .brand-mark {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
   }
 
   .action-button {
     justify-content: center;
-    padding-inline: 1rem;
+    padding-inline: 0.75rem;
     text-align: center;
+    font-size: 0.85rem;
   }
 
   .mobile-login-sheet {
@@ -677,29 +679,29 @@ footer {
 
   .surface,
   .surface-soft {
-    max-width: min(100%, calc(100dvw - 0.75rem));
+    max-width: min(100%, calc(100dvw - 0.5rem));
   }
 
 }
 
 @media (max-width: 480px) {
   .shell-bar {
-    padding-inline: 0.75rem;
-    padding-block: 0.75rem;
+    padding-inline: 0.5rem;
+    padding-block: 0.5rem;
   }
 
   .brand-mark {
     max-width: none;
-    font-size: 1.6rem;
+    font-size: 1.3rem;
   }
 
   .pill {
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
   }
 
   .section-title {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
   }
 
 }

@@ -1,6 +1,14 @@
 import { LazyCampusMap } from "@/components/lazy-campus-map";
 import { getPublicInstituteData } from "@/lib/data-store";
 
+export const metadata: Metadata = {
+  title: "Contact Us | Smart Tutors",
+  description: "Get in touch with Smart Tutors for admissions, career guidance, or any other inquiries. Visit our Vashi campus or connect via WhatsApp and Email.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/contact",
+  },
+};
+
 export const revalidate = 3600; // Cache for 1 hour
 
 export default async function ContactPage() {

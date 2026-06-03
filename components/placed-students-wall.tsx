@@ -14,6 +14,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
 
   const categories = [
     { label: "All Results", value: "all" },
+    { label: "Corporate", value: "Amazon|Infosys|TCS|Accenture|Wipro|Deloitte" },
     { label: "MBA Entrance", value: "MAH MBA CET" },
     { label: "Banking & PO", value: "SBI PO|NABARD" },
     { label: "Govt & SSC", value: "SSC GD" },
@@ -23,7 +24,10 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
   const filteredStudents = students.filter((s) => {
     if (filter === "all") return true;
     const filterRegex = new RegExp(filter, "i");
-    return filterRegex.test(s.examName || "");
+    return (
+      filterRegex.test(s.examName || "") || 
+      filterRegex.test(s.company || "")
+    );
   });
 
   // Limit display to a reasonable number for the initial view, maybe with a "Load More"
@@ -66,7 +70,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
           {visibleStudents.map((student, index) => (
             <RevealOnScroll key={student.id} delayMs={(index % 4) * 100}>
               <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl hover:translate-y-[-12px] transition-all duration-500 border border-slate-100 dark:border-slate-700 group relative">
@@ -83,7 +87,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-700">
                       <svg
-                        className="w-20 h-20"
+                        className="w-12 h-12"
                         fill="currentColor"
                         viewBox="0 0 24 24"
                       >
@@ -95,13 +99,18 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                   {/* Separate Result Badges - Always Visible */}
                   <div className="absolute top-5 left-5 flex flex-col gap-2 z-10 pointer-events-none">
                     {student.rank && (
-                      <div className="bg-blue-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl uppercase tracking-widest border border-blue-400/50">
-                        Rank: {student.rank}
+                      <div className="bg-blue-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase tracking-widest">
+                        {student.rank}
                       </div>
                     )}
                     {student.marks && (
-                      <div className="bg-emerald-600 text-white text-[9px] font-black px-3 py-1 rounded-lg shadow-xl uppercase tracking-widest border border-emerald-400/50">
-                        Score: {student.marks}
+                      <div className="bg-emerald-600 text-white text-[7px] font-black px-1.5 py-0.5 rounded shadow-sm uppercase tracking-widest">
+                        {student.marks}
+                      </div>
+                    )}
+                    {student.salary && (
+                      <div className="bg-amber-600 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-md uppercase tracking-widest">
+                        {student.salary}
                       </div>
                     )}
                   </div>
@@ -159,7 +168,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                   <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black mb-2 uppercase tracking-[0.25em]">
                     {student.examName}
                   </p>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                  <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">
                     {student.name}
                   </h3>
                   <div className="mt-4 flex justify-center gap-4">

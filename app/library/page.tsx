@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import DigitalLibraryClient from "@/components/digital-library-client";
 import { getSessionUser } from "@/lib/auth";
 import { getDigitalLibraryBooks } from "@/lib/digital-library-data";

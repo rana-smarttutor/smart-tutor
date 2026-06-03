@@ -174,6 +174,7 @@ export type PlacedStudent = {
   examName?: string;
   marks?: string;
   rank?: string;
+  quote?: string;
 };
 
 export type PublicInstituteData = {

@@ -52,9 +52,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Smart Tutors Academy" }],
   creator: "Smart Tutors Academy",
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -90,7 +87,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "verification_token", // Placeholder
+    google: "verification_token", // PLACEHOLDER: Replace with actual token from Google Search Console
   },
   category: 'education',
   icons: {
@@ -111,22 +108,31 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport = {
+  themeColor: "#2563eb",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const jsonLd = {
+  const organizationJsonLd = {
     "@context": "https://schema.org",
-    "@type": "EducationalOrganization",
+    "@type": "School",
     "name": "Smart Tutors Academy",
     "url": "https://smarttutors.co.in",
     "logo": "https://smarttutors.co.in/image4.jpeg",
     "description": "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform. Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams.",
     "address": {
       "@type": "PostalAddress",
-      "addressLocality": "Vashi",
-      "addressRegion": "Navi Mumbai",
+      "streetAddress": "Vashi",
+      "addressLocality": "Navi Mumbai",
+      "addressRegion": "Maharashtra",
+      "postalCode": "400703",
       "addressCountry": "IN"
     },
     "contactPoint": {
@@ -134,7 +140,54 @@ export default function RootLayout({
       "telephone": "+91-8850447887",
       "contactType": "admissions",
       "email": "info@smarttutors.co.in"
+    },
+    "sameAs": [
+      "https://www.instagram.com/smarttutors_academy/",
+      "https://wa.me/918850447887"
+    ]
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Smart Tutors",
+    "url": "https://smarttutors.co.in",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://smarttutors.co.in/courses?q={search_term_string}",
+      "query-input": "required name=search_term_string"
     }
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Smart Tutors?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Smart Tutors is India's No.1 trusted smart learning platform providing personal home tutors and online tutors for school boards (CBSE, ICSE, SSC), competitive exams (JEE, NEET, UPSC), and digital skill development."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Where is Smart Tutors located?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The main campus is located in Vashi, Navi Mumbai, offering both offline campus learning and online digital programs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What courses does Smart Tutors offer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "We offer a wide range of programs including School Foundation (1st-10th), College Prep (11th-12th), JEE/NEET Coaching, UPSC Foundation, MPSC, Banking, SSC CGL, and Digital Future Skills."
+        }
+      }
+    ]
   };
 
   return (
@@ -151,7 +204,15 @@ export default function RootLayout({
         <meta name="supported-color-schemes" content="light" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
         />
       </head>
       <body suppressHydrationWarning>

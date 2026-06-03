@@ -20,6 +20,10 @@ export default function PlacementsPage() {
 
   return (
     <main className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <SiteHeader />
 
       <section className="relative overflow-hidden pb-20 pt-32">
