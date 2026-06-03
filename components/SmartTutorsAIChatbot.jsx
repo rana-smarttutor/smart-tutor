@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const initialMessage = {
@@ -14,14 +15,39 @@ const STEPS = {
   COURSE: "course",
   TIMING: "timing",
   BATCH: "batch",
-  COMPLETE: "complete"
+  COMPLETE: "complete",
 };
 
 const OPTIONS = {
-  [STEPS.CLASS]: ["Class 1-5", "Class 6-8", "Class 9-10", "Class 11-12", "Graduation", "Post Grad", "Skills Only"],
-  [STEPS.COURSE]: ["Board Prep", "JEE/NEET", "Full Stack Dev", "Govt Exams", "Soft Skills", "Data Science"],
-  [STEPS.TIMING]: ["Morning School", "Afternoon School", "Full-time College", "Working Professional"],
-  [STEPS.BATCH]: ["Morning Batch", "Evening Batch", "Weekend Batch", "Flexible"],
+  [STEPS.CLASS]: [
+    "Class 1-5",
+    "Class 6-8",
+    "Class 9-10",
+    "Class 11-12",
+    "Graduation",
+    "Post Grad",
+    "Skills Only",
+  ],
+  [STEPS.COURSE]: [
+    "Board Prep",
+    "JEE/NEET",
+    "Full Stack Dev",
+    "Govt Exams",
+    "Soft Skills",
+    "Data Science",
+  ],
+  [STEPS.TIMING]: [
+    "Morning School",
+    "Afternoon School",
+    "Full-time College",
+    "Working Professional",
+  ],
+  [STEPS.BATCH]: [
+    "Morning Batch",
+    "Evening Batch",
+    "Weekend Batch",
+    "Flexible",
+  ],
 };
 
 export default function SmartTutorsAIChatbot() {
@@ -50,7 +76,10 @@ export default function SmartTutorsAIChatbot() {
   useEffect(() => {
     const updateTheme = () => {
       const html = document.documentElement;
-      if (html.classList.contains("dark") || html.getAttribute("data-theme") === "dark") {
+      if (
+        html.classList.contains("dark") ||
+        html.getAttribute("data-theme") === "dark"
+      ) {
         setTheme("dark");
       } else {
         setTheme("light");
@@ -58,7 +87,10 @@ export default function SmartTutorsAIChatbot() {
     };
     updateTheme();
     const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
     return () => observer.disconnect();
   }, []);
 
@@ -72,25 +104,25 @@ export default function SmartTutorsAIChatbot() {
 
   const getProgressiveResponse = (userInput, currentStep) => {
     if (currentStep === STEPS.CLASS) {
-      setMemory(prev => ({ ...prev, classLevel: userInput }));
+      setMemory((prev) => ({ ...prev, classLevel: userInput }));
       setStep(STEPS.COURSE);
       return `Nice. Since you are in ${userInput}, which area would you like to focus on for your growth?`;
     }
 
     if (currentStep === STEPS.COURSE) {
-      setMemory(prev => ({ ...prev, courseName: userInput }));
+      setMemory((prev) => ({ ...prev, courseName: userInput }));
       setStep(STEPS.TIMING);
       return "Understood. To plan your sessions better, may I know your current daily schedule or school timing?";
     }
 
     if (currentStep === STEPS.TIMING) {
-      setMemory(prev => ({ ...prev, schoolTiming: userInput }));
+      setMemory((prev) => ({ ...prev, schoolTiming: userInput }));
       setStep(STEPS.BATCH);
       return "Almost there! What is your preferred time for attending our specialized batches?";
     }
 
     if (currentStep === STEPS.BATCH) {
-      setMemory(prev => ({ ...prev, preferredBatch: userInput }));
+      setMemory((prev) => ({ ...prev, preferredBatch: userInput }));
       setStep(STEPS.COMPLETE);
       return `Perfect. I've curated your profile:
       
@@ -117,17 +149,29 @@ export default function SmartTutorsAIChatbot() {
     // Simulate AI thinking
     setTimeout(() => {
       const aiResponse = getProgressiveResponse(text, step);
-      setMessages(prev => [...prev, { role: "assistant", content: aiResponse }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: aiResponse },
+      ]);
       setTyping(false);
     }, 800);
   }
 
   // Format text to handle bold without asterisks
   const formatContent = (content) => {
-    return content.split('\n').map((line, i) => (
-      <div key={i} style={{ marginBottom: i < content.split('\n').length - 1 ? '4px' : 0 }}>
-        {line.split('**').map((part, j) => 
-          j % 2 === 1 ? <strong key={j} style={{ fontWeight: '800', color: '#2563eb' }}>{part}</strong> : part
+    return content.split("\n").map((line, i) => (
+      <div
+        key={i}
+        style={{ marginBottom: i < content.split("\n").length - 1 ? "4px" : 0 }}
+      >
+        {line.split("**").map((part, j) =>
+          j % 2 === 1 ? (
+            <strong key={j} style={{ fontWeight: "800", color: "#2563eb" }}>
+              {part}
+            </strong>
+          ) : (
+            part
+          ),
         )}
       </div>
     ));
@@ -165,18 +209,34 @@ export default function SmartTutorsAIChatbot() {
                 <div style={styles.title}>Smart Tutors AI</div>
                 <div style={styles.subtitle}>Personalized Learning Guide</div>
               </div>
-              <button onClick={() => setOpen(false)} style={styles.closeBtn}>×</button>
+              <button onClick={() => setOpen(false)} style={styles.closeBtn}>
+                ×
+              </button>
             </div>
 
             <div className="no-scrollbar" style={styles.messages}>
               {messages.map((m, i) => (
-                <div key={i} style={{ ...styles.msgRow, justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-                  <div style={{ ...styles.bubble, ...(m.role === "user" ? styles.userBubble : styles.botBubble) }}>
+                <div
+                  key={i}
+                  style={{
+                    ...styles.msgRow,
+                    justifyContent:
+                      m.role === "user" ? "flex-end" : "flex-start",
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.bubble,
+                      ...(m.role === "user"
+                        ? styles.userBubble
+                        : styles.botBubble),
+                    }}
+                  >
                     {formatContent(m.content)}
                   </div>
                 </div>
               ))}
-              
+
               {typing && (
                 <div style={styles.msgRow}>
                   <div style={styles.botBubble}>Thinking...</div>
@@ -197,7 +257,7 @@ export default function SmartTutorsAIChatbot() {
                   ))}
                 </div>
               )}
-              
+
               <div ref={bottomRef} />
             </div>
 
@@ -210,7 +270,9 @@ export default function SmartTutorsAIChatbot() {
                   placeholder="Type your reply..."
                   style={styles.input}
                 />
-                <button onClick={() => sendMessage()} style={styles.sendBtn}>Send</button>
+                <button onClick={() => sendMessage()} style={styles.sendBtn}>
+                  Send
+                </button>
               </div>
             </div>
           </div>
@@ -219,12 +281,23 @@ export default function SmartTutorsAIChatbot() {
         {/* Floating Toggle Button */}
         <button
           onClick={() => setOpen(!open)}
-          style={{ ...styles.toggleBtn, transform: open ? 'rotate(180deg)' : 'none' }}
+          style={{
+            ...styles.toggleBtn,
+            transform: open ? "rotate(180deg)" : "none",
+          }}
         >
           {open ? (
             <span style={styles.closeIcon}>×</span>
           ) : (
-            <img src="/image3.png" alt="AI" style={styles.logoIcon} />
+            <Image
+              src="/image5.png"
+              alt="AI"
+              width={70}
+              height={70}
+              sizes="70px"
+              quality={55}
+              style={styles.avatarImage}
+            />
           )}
         </button>
       </div>
@@ -257,7 +330,8 @@ function getStyles(theme) {
       marginBottom: "12px",
       boxShadow: "0 10px 25px rgba(37, 99, 235, 0.3)",
       position: "relative",
-      animation: "chat-fade-in 0.4s ease-out, hover-float 3s ease-in-out infinite",
+      animation:
+        "chat-fade-in 0.4s ease-out, hover-float 3s ease-in-out infinite",
       whiteSpace: "nowrap",
       marginRight: "4px",
     },
@@ -296,11 +370,35 @@ function getStyles(theme) {
     },
     title: { fontSize: "18px", fontWeight: "800", letterSpacing: "-0.5px" },
     subtitle: { fontSize: "11px", opacity: 0.85, marginTop: "2px" },
-    closeBtn: { background: "none", border: "none", color: "white", fontSize: "28px", cursor: "pointer", opacity: 0.8 },
-    messages: { flex: 1, padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "14px" },
+    closeBtn: {
+      background: "none",
+      border: "none",
+      color: "white",
+      fontSize: "28px",
+      cursor: "pointer",
+      opacity: 0.8,
+    },
+    messages: {
+      flex: 1,
+      padding: "20px",
+      overflowY: "auto",
+      display: "flex",
+      flexDirection: "column",
+      gap: "14px",
+    },
     msgRow: { display: "flex", width: "100%" },
-    bubble: { maxWidth: "85%", padding: "14px 18px", borderRadius: "20px", fontSize: "14px", lineHeight: "1.5" },
-    botBubble: { background: isDark ? "#1e293b" : "#f1f5f9", color: isDark ? "#f8fafc" : "#0f172a", border: isDark ? "1px solid #334155" : "none" },
+    bubble: {
+      maxWidth: "85%",
+      padding: "14px 18px",
+      borderRadius: "20px",
+      fontSize: "14px",
+      lineHeight: "1.5",
+    },
+    botBubble: {
+      background: isDark ? "#1e293b" : "#f1f5f9",
+      color: isDark ? "#f8fafc" : "#0f172a",
+      border: isDark ? "1px solid #334155" : "none",
+    },
     userBubble: { background: "#2563eb", color: "white", fontWeight: "500" },
     optionsContainer: {
       display: "flex",
@@ -319,12 +417,33 @@ function getStyles(theme) {
       fontWeight: "700",
       cursor: "pointer",
       transition: "all 0.2s ease",
-      hover: { background: "#2563eb", color: "white" }
+      hover: { background: "#2563eb", color: "white" },
     },
-    footer: { padding: "18px", borderTop: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`, background: isDark ? "#0f172a" : "white" },
+    footer: {
+      padding: "18px",
+      borderTop: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
+      background: isDark ? "#0f172a" : "white",
+    },
     inputRow: { display: "flex", gap: "10px" },
-    input: { flex: 1, padding: "14px 18px", borderRadius: "14px", border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}`, outline: "none", fontSize: "14px", background: isDark ? "#1e293b" : "white", color: isDark ? "white" : "black" },
-    sendBtn: { background: "#2563eb", color: "white", border: "none", padding: "0 20px", borderRadius: "14px", fontWeight: "700", cursor: "pointer" },
+    input: {
+      flex: 1,
+      padding: "14px 18px",
+      borderRadius: "14px",
+      border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}`,
+      outline: "none",
+      fontSize: "14px",
+      background: isDark ? "#1e293b" : "white",
+      color: isDark ? "white" : "black",
+    },
+    sendBtn: {
+      background: "#2563eb",
+      color: "white",
+      border: "none",
+      padding: "0 20px",
+      borderRadius: "14px",
+      fontWeight: "700",
+      cursor: "pointer",
+    },
     toggleBtn: {
       pointerEvents: "auto",
       width: "64px",

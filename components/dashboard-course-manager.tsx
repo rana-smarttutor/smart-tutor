@@ -82,14 +82,29 @@ export function DashboardCourseManager({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...createForm,
-        courseNamesIncluded: createForm.courseNamesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
-        branchesIncluded: createForm.branchesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
-        subjectsCovered: createForm.subjectsCoveredText.split("\n").map((item) => item.trim()).filter(Boolean),
-        points: createForm.pointsText.split("\n").map((item) => item.trim()).filter(Boolean),
+        courseNamesIncluded: createForm.courseNamesIncludedText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        branchesIncluded: createForm.branchesIncludedText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        subjectsCovered: createForm.subjectsCoveredText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        points: createForm.pointsText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
       }),
     });
 
-    const payload = (await response.json()) as { course?: CourseItem; error?: string };
+    const payload = (await response.json()) as {
+      course?: CourseItem;
+      error?: string;
+    };
 
     if (!response.ok || !payload.course) {
       setStatus(payload.error ?? "Course could not be created.");
@@ -114,14 +129,29 @@ export function DashboardCourseManager({
       body: JSON.stringify({
         id: courseId,
         ...draft,
-        courseNamesIncluded: draft.courseNamesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
-        branchesIncluded: draft.branchesIncludedText.split("\n").map((item) => item.trim()).filter(Boolean),
-        subjectsCovered: draft.subjectsCoveredText.split("\n").map((item) => item.trim()).filter(Boolean),
-        points: draft.pointsText.split("\n").map((item) => item.trim()).filter(Boolean),
+        courseNamesIncluded: draft.courseNamesIncludedText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        branchesIncluded: draft.branchesIncludedText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        subjectsCovered: draft.subjectsCoveredText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
+        points: draft.pointsText
+          .split("\n")
+          .map((item) => item.trim())
+          .filter(Boolean),
       }),
     });
 
-    const payload = (await response.json()) as { course?: CourseItem; error?: string };
+    const payload = (await response.json()) as {
+      course?: CourseItem;
+      error?: string;
+    };
 
     if (!response.ok || !payload.course) {
       setStatus(payload.error ?? "Course could not be updated.");
@@ -129,7 +159,9 @@ export function DashboardCourseManager({
     }
 
     setCourses((current) =>
-      current.map((course) => (course.id === courseId ? (payload.course as CourseItem) : course)),
+      current.map((course) =>
+        course.id === courseId ? (payload.course as CourseItem) : course,
+      ),
     );
     setEditingId(null);
     setStatus("Course changes saved to the database.");
@@ -147,15 +179,26 @@ export function DashboardCourseManager({
         <span className="pill">{standardizedCount} standard tracks</span>
       </div>
 
-      {status ? <p className="mt-4 text-sm font-semibold text-[var(--color-heading)]">{status}</p> : null}
+      {status ? (
+        <p className="mt-4 text-sm font-semibold text-[var(--color-heading)]">
+          {status}
+        </p>
+      ) : null}
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[0.94fr_1.06fr] items-start">
         <div className="surface-soft rounded-[1.75rem] p-5">
-          <p className="text-sm font-semibold text-[var(--color-heading)]">Create course from standard list</p>
+          <p className="text-sm font-semibold text-[var(--color-heading)]">
+            Create course from standard list
+          </p>
           <div className="mt-4 grid gap-3">
             <select
               value={createForm.standardKey}
-              onChange={(event) => setCreateForm((current) => ({ ...current, standardKey: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  standardKey: event.target.value,
+                }))
+              }
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             >
               {courseOptions.map((option) => (
@@ -175,7 +218,10 @@ export function DashboardCourseManager({
                 key={key}
                 value={createForm[key as keyof CourseForm] as string}
                 onChange={(event) =>
-                  setCreateForm((current) => ({ ...current, [key]: event.target.value }))
+                  setCreateForm((current) => ({
+                    ...current,
+                    [key]: event.target.value,
+                  }))
                 }
                 placeholder={label}
                 className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
@@ -183,47 +229,81 @@ export function DashboardCourseManager({
             ))}
             <textarea
               value={createForm.summary}
-              onChange={(event) => setCreateForm((current) => ({ ...current, summary: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  summary: event.target.value,
+                }))
+              }
               placeholder="Summary"
               rows={3}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
             <textarea
               value={createForm.description}
-              onChange={(event) => setCreateForm((current) => ({ ...current, description: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  description: event.target.value,
+                }))
+              }
               placeholder="Detailed description"
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
             <textarea
               value={createForm.courseNamesIncludedText}
-              onChange={(event) => setCreateForm((current) => ({ ...current, courseNamesIncludedText: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  courseNamesIncludedText: event.target.value,
+                }))
+              }
               placeholder="Included course names, one per line"
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
             <textarea
               value={createForm.branchesIncludedText}
-              onChange={(event) => setCreateForm((current) => ({ ...current, branchesIncludedText: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  branchesIncludedText: event.target.value,
+                }))
+              }
               placeholder="Included branches, one per line"
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
             <textarea
               value={createForm.subjectsCoveredText}
-              onChange={(event) => setCreateForm((current) => ({ ...current, subjectsCoveredText: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  subjectsCoveredText: event.target.value,
+                }))
+              }
               placeholder="Subjects covered, one per line"
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
             <textarea
               value={createForm.pointsText}
-              onChange={(event) => setCreateForm((current) => ({ ...current, pointsText: event.target.value }))}
+              onChange={(event) =>
+                setCreateForm((current) => ({
+                  ...current,
+                  pointsText: event.target.value,
+                }))
+              }
               placeholder="One key point per line"
               rows={4}
               className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
             />
-            <button type="button" onClick={handleCreate} className="btn-action btn-md w-full font-bold">
+            <button
+              type="button"
+              onClick={handleCreate}
+              className="btn-action btn-md w-full font-bold"
+            >
               Add New Course
             </button>
           </div>
@@ -235,22 +315,33 @@ export function DashboardCourseManager({
             const isEditing = editingId === course.id;
 
             return (
-              <div key={course.id} className="surface-soft rounded-[1.75rem] p-5 border border-transparent hover:border-[var(--color-primary)] transition-all">
+              <div
+                key={course.id}
+                className="surface-soft rounded-[1.75rem] p-5 border border-transparent hover:border-[var(--color-primary)] transition-all"
+              >
                 {isEditing ? (
                   <div className="grid gap-3">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] mb-1">Editing Course</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] mb-1">
+                      Editing Course
+                    </p>
                     <select
                       value={draft.standardKey}
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, standardKey: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            standardKey: event.target.value,
+                          },
                         }))
                       }
                       className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     >
                       {courseOptions.map((option) => (
-                        <option key={option.standardKey} value={option.standardKey}>
+                        <option
+                          key={option.standardKey}
+                          value={option.standardKey}
+                        >
                           {option.title}
                         </option>
                       ))}
@@ -268,7 +359,10 @@ export function DashboardCourseManager({
                         onChange={(event) =>
                           setDrafts((current) => ({
                             ...current,
-                            [course.id]: { ...draft, [key]: event.target.value },
+                            [course.id]: {
+                              ...draft,
+                              [key]: event.target.value,
+                            },
                           }))
                         }
                         placeholder={label}
@@ -280,7 +374,10 @@ export function DashboardCourseManager({
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, summary: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            summary: event.target.value,
+                          },
                         }))
                       }
                       rows={3}
@@ -291,7 +388,10 @@ export function DashboardCourseManager({
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, description: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            description: event.target.value,
+                          },
                         }))
                       }
                       rows={4}
@@ -302,7 +402,10 @@ export function DashboardCourseManager({
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, courseNamesIncludedText: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            courseNamesIncludedText: event.target.value,
+                          },
                         }))
                       }
                       rows={4}
@@ -314,7 +417,10 @@ export function DashboardCourseManager({
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, branchesIncludedText: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            branchesIncludedText: event.target.value,
+                          },
                         }))
                       }
                       rows={4}
@@ -326,7 +432,10 @@ export function DashboardCourseManager({
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, subjectsCoveredText: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            subjectsCoveredText: event.target.value,
+                          },
                         }))
                       }
                       rows={4}
@@ -338,14 +447,21 @@ export function DashboardCourseManager({
                       onChange={(event) =>
                         setDrafts((current) => ({
                           ...current,
-                          [course.id]: { ...draft, pointsText: event.target.value },
+                          [course.id]: {
+                            ...draft,
+                            pointsText: event.target.value,
+                          },
                         }))
                       }
                       rows={4}
                       className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-[var(--color-primary)]"
                     />
                     <div className="flex flex-wrap gap-3 mt-2">
-                      <button type="button" onClick={() => handleSave(course.id)} className="btn-action btn-sm">
+                      <button
+                        type="button"
+                        onClick={() => handleSave(course.id)}
+                        className="btn-action btn-sm"
+                      >
                         Update Course
                       </button>
                       <button
@@ -361,38 +477,56 @@ export function DashboardCourseManager({
                   <div>
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="keyword-line text-[var(--color-secondary)]">{course.tagline}</p>
+                        <p className="keyword-line text-[var(--color-secondary)]">
+                          {course.tagline}
+                        </p>
                         <p className="mt-2 text-xl font-bold leading-[1.4] text-[var(--color-heading)] py-1 min-h-[3rem]">
                           {course.title}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className="pill bg-[var(--color-secondary-soft)] text-[var(--color-secondary-strong)] border-[var(--color-secondary)]/20">{course.duration}</span>
+                        <span className="pill bg-[var(--color-secondary-soft)] text-[var(--color-secondary-strong)] border-[var(--color-secondary)]/20">
+                          {course.duration}
+                        </span>
                         <div className="relative h-8 w-8 overflow-hidden rounded-md opacity-80">
                           <Image
                             src="/image3.png"
-                            alt="Identity"
-                            fill
-                            sizes="32px"
-                            className="object-contain"
+                            alt="AI"
+                            width={70}
+                            height={70}
+                            sizes="70px"
+                            quality={55}
+                            className="..."
                           />
                         </div>
                       </div>
                     </div>
-                    <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)] font-medium">{course.summary}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)] font-medium">
+                      {course.summary}
+                    </p>
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
                       <div className="surface rounded-2xl p-4 border border-[var(--color-border)] bg-white/40">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Delivery Mode</p>
-                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">{course.mode}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                          Delivery Mode
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">
+                          {course.mode}
+                        </p>
                       </div>
                       <div className="surface rounded-2xl p-4 border border-[var(--color-border)] bg-white/40">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Target Audience</p>
-                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">{course.audienceLabel}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                          Target Audience
+                        </p>
+                        <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">
+                          {course.audienceLabel}
+                        </p>
                       </div>
                     </div>
                     <div className="mt-3 grid gap-3">
                       <div className="surface rounded-2xl p-4 border border-[var(--color-border)] bg-white/40">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Course Portfolio</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                          Course Portfolio
+                        </p>
                         <p className="mt-1 text-sm font-bold text-[var(--color-heading)]">
                           {course.courseNamesIncluded.join(", ")}
                         </p>
@@ -402,7 +536,10 @@ export function DashboardCourseManager({
                       type="button"
                       onClick={() => {
                         setEditingId(course.id);
-                        setDrafts((current) => ({ ...current, [course.id]: toForm(course) }));
+                        setDrafts((current) => ({
+                          ...current,
+                          [course.id]: toForm(course),
+                        }));
                       }}
                       className="btn-action btn-sm mt-6 w-full sm:w-auto"
                     >

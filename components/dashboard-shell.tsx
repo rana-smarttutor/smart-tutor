@@ -1,15 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { DashboardAccountDirectory } from "@/components/dashboard-account-directory";
-import { DashboardCourseManager } from "@/components/dashboard-course-manager";
-import { DashboardMessageCenter } from "@/components/dashboard-message-center";
-import { DashboardTestStudio } from "@/components/dashboard-test-studio";
-import { DigitalLibraryClient } from "@/components/digital-library-client";
-import { PerformanceReportCreator } from "@/components/performance-report-creator";
-import { PerformanceDashboard } from "@/components/performance-dashboard";
 import { LiveClock } from "@/components/live-clock";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -26,6 +20,96 @@ import type {
   TestSubmission,
 } from "@/lib/types";
 import { DEFAULT_HEURISTICS } from "@/lib/data-store";
+function SectionLoading() {
+  return (
+    <div
+      className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-6"
+      aria-label="Loading section"
+    >
+      <div className="mb-4 h-6 w-44 animate-pulse rounded-lg bg-[var(--color-border)]" />
+      <div className="mb-3 h-14 animate-pulse rounded-xl bg-[var(--color-border)]" />
+      <div className="mb-3 h-14 animate-pulse rounded-xl bg-[var(--color-border)]" />
+      <div className="h-14 animate-pulse rounded-xl bg-[var(--color-border)]" />
+    </div>
+  );
+}
+
+const DashboardAccountDirectory = dynamic(
+  () =>
+    import("@/components/dashboard-account-directory").then(
+      (module) => module.DashboardAccountDirectory,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DashboardCourseManager = dynamic(
+  () =>
+    import("@/components/dashboard-course-manager").then(
+      (module) => module.DashboardCourseManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DashboardMessageCenter = dynamic(
+  () =>
+    import("@/components/dashboard-message-center").then(
+      (module) => module.DashboardMessageCenter,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DashboardTestStudio = dynamic(
+  () =>
+    import("@/components/dashboard-test-studio").then(
+      (module) => module.DashboardTestStudio,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DigitalLibraryClient = dynamic(
+  () =>
+    import("@/components/digital-library-client").then(
+      (module) => module.DigitalLibraryClient,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const PerformanceReportCreator = dynamic(
+  () =>
+    import("@/components/performance-report-creator").then(
+      (module) => module.PerformanceReportCreator,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const PerformanceDashboard = dynamic(
+  () =>
+    import("@/components/performance-dashboard").then(
+      (module) => module.PerformanceDashboard,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
 
 type DashboardBundle = {
   roleLabel: string;
@@ -224,6 +308,10 @@ export function DashboardShell({
   ];
 
   useEffect(() => {
+    if (!showMessages) {
+      return;
+    }
+
     let isMounted = true;
 
     async function refreshMessages() {
@@ -257,7 +345,9 @@ export function DashboardShell({
     }, 12000);
 
     const handleFocus = () => {
-      void refreshMessages();
+      if (document.visibilityState === "visible") {
+        void refreshMessages();
+      }
     };
 
     window.addEventListener("focus", handleFocus);
@@ -269,7 +359,7 @@ export function DashboardShell({
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleFocus);
     };
-  }, [session?.id]);
+  }, [showMessages, session?.id]);;
 
   return (
     <main className="section-shell min-h-screen overflow-x-hidden pb-10 pt-8">

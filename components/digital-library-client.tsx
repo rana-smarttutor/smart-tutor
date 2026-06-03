@@ -1,7 +1,7 @@
 "use client";
 
 import { upload } from "@vercel/blob/client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Book = {
   _id?: string;
@@ -96,6 +96,8 @@ function BookThumbnail({ book }: { book: Book }) {
       <img
         src={book.thumbnailUrl}
         alt={`${book.title} thumbnail`}
+        loading="lazy"
+        decoding="async"
         className="h-full w-full object-cover"
       />
     );
@@ -120,7 +122,7 @@ export function DigitalLibraryClient({
   const [allowedToManage, setAllowedToManage] = useState(canManage);
   const [loggedIn, setLoggedIn] = useState(isLoggedIn);
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
@@ -145,7 +147,7 @@ export function DigitalLibraryClient({
     return books.filter((book) =>
       `${book.title} ${book.fileName || ""} ${book.price || ""}`
         .toLowerCase()
-        .includes(value)
+        .includes(value),
     );
   }, [books, query]);
 
@@ -177,16 +179,12 @@ export function DigitalLibraryClient({
       alert(
         error instanceof Error
           ? error.message
-          : "Failed to load digital library."
+          : "Failed to load digital library.",
       );
     } finally {
       setIsLoading(false);
     }
   }
-
-  useEffect(() => {
-    void loadBooks();
-  }, []);
 
   function resetModal() {
     setIsModalOpen(false);
@@ -223,7 +221,7 @@ export function DigitalLibraryClient({
 
   async function uploadPdf(
     pathname: string,
-    file: File
+    file: File,
   ): Promise<UploadedBlobInfo> {
     const blob = await upload(pathname, file, {
       access: "public",
@@ -247,7 +245,7 @@ export function DigitalLibraryClient({
 
   async function uploadThumbnail(
     pathname: string,
-    file: File
+    file: File,
   ): Promise<UploadedBlobInfo> {
     const blob = await upload(pathname, file, {
       access: "public",
@@ -302,10 +300,7 @@ export function DigitalLibraryClient({
       return;
     }
 
-    if (
-      thumbnailFile &&
-      !/\.(png|jpg|jpeg|webp)$/i.test(thumbnailFile.name)
-    ) {
+    if (thumbnailFile && !/\.(png|jpg|jpeg|webp)$/i.test(thumbnailFile.name)) {
       alert("Thumbnail must be PNG, JPG or WEBP.");
       return;
     }
@@ -332,7 +327,7 @@ export function DigitalLibraryClient({
 
         uploadedPdf = await uploadPdf(
           `digital-library/books/${assetKey}.pdf`,
-          pdfFile
+          pdfFile,
         );
       }
 
@@ -343,7 +338,7 @@ export function DigitalLibraryClient({
 
         uploadedThumbnail = await uploadThumbnail(
           `digital-library/thumbnails/${assetKey}${thumbnailExtension}`,
-          thumbnailFile
+          thumbnailFile,
         );
       }
 
@@ -375,7 +370,7 @@ export function DigitalLibraryClient({
             uploadedPdf,
             uploadedThumbnail,
           }),
-        }
+        },
       );
 
       const result = await readJsonResponse(response);
@@ -390,7 +385,7 @@ export function DigitalLibraryClient({
       console.error("Material save error:", error);
 
       alert(
-        error instanceof Error ? error.message : "Unable to save material."
+        error instanceof Error ? error.message : "Unable to save material.",
       );
     } finally {
       setIsSaving(false);
@@ -399,68 +394,66 @@ export function DigitalLibraryClient({
     }
   }
 
-function requestDeleteBook(book: Book) {
-  if (!allowedToManage) {
-    return;
-  }
-
-  setDeleteError("");
-  setBookToDelete(book);
-}
-
-function cancelDeleteBook() {
-  if (isDeleting) {
-    return;
-  }
-
-  setDeleteError("");
-  setBookToDelete(null);
-}
-
-async function confirmDeleteBook() {
-  if (!allowedToManage || !bookToDelete) {
-    return;
-  }
-
-  if (!bookToDelete.pathname) {
-    setDeleteError("Unable to identify this material.");
-    return;
-  }
-
-  setIsDeleting(true);
-  setDeleteError("");
-
-  try {
-    const response = await fetch(
-      `/api/digital-library/${encodeURIComponent(bookToDelete.pathname)}`,
-      {
-        method: "DELETE",
-      }
-    );
-
-    const result = await readJsonResponse(response);
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || "Delete failed.");
+  function requestDeleteBook(book: Book) {
+    if (!allowedToManage) {
+      return;
     }
 
-    setBookToDelete(null);
-    await loadBooks();
-  } catch (error) {
-    console.error("Delete material error:", error);
-
-    setDeleteError(
-      error instanceof Error ? error.message : "Delete failed."
-    );
-  } finally {
-    setIsDeleting(false);
+    setDeleteError("");
+    setBookToDelete(book);
   }
-}
+
+  function cancelDeleteBook() {
+    if (isDeleting) {
+      return;
+    }
+
+    setDeleteError("");
+    setBookToDelete(null);
+  }
+
+  async function confirmDeleteBook() {
+    if (!allowedToManage || !bookToDelete) {
+      return;
+    }
+
+    if (!bookToDelete.pathname) {
+      setDeleteError("Unable to identify this material.");
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError("");
+
+    try {
+      const response = await fetch(
+        `/api/digital-library/${encodeURIComponent(bookToDelete.pathname)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const result = await readJsonResponse(response);
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Delete failed.");
+      }
+
+      setBookToDelete(null);
+      await loadBooks();
+    } catch (error) {
+      console.error("Delete material error:", error);
+
+      setDeleteError(error instanceof Error ? error.message : "Delete failed.");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   function downloadBook(book: Book) {
     if (!loggedIn && !allowedToManage) {
       window.location.href = `/login?callbackUrl=${encodeURIComponent(
-        "/library"
+        "/library",
       )}`;
       return;
     }
@@ -650,12 +643,12 @@ async function confirmDeleteBook() {
                         </button>
 
                         <button
-                        type="button"
-                        onClick={() => requestDeleteBook(book)}
-                        className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10 sm:text-sm"
+                          type="button"
+                          onClick={() => requestDeleteBook(book)}
+                          className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10 sm:text-sm"
                         >
-                       Delete
-                       </button>
+                          Delete
+                        </button>
                       </div>
                     )}
                   </article>
@@ -665,69 +658,69 @@ async function confirmDeleteBook() {
           )}
         </section>
       </section>
-{allowedToManage && bookToDelete && (
-  <div
-    className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-[2px]"
-    onMouseDown={cancelDeleteBook}
-  >
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="delete-material-title"
-      aria-describedby="delete-material-description"
-      onMouseDown={(event) => event.stopPropagation()}
-      className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-8"
-    >
-      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl dark:bg-red-500/15">
-        🗑️
-      </div>
+      {allowedToManage && bookToDelete && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-[2px]"
+          onMouseDown={cancelDeleteBook}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-material-title"
+            aria-describedby="delete-material-description"
+            onMouseDown={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-8"
+          >
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl dark:bg-red-500/15">
+              🗑️
+            </div>
 
-      <h2
-        id="delete-material-title"
-        className="mt-5 text-2xl font-black text-slate-950 dark:text-white"
-      >
-        Delete PDF?
-      </h2>
+            <h2
+              id="delete-material-title"
+              className="mt-5 text-2xl font-black text-slate-950 dark:text-white"
+            >
+              Delete PDF?
+            </h2>
 
-      <p
-        id="delete-material-description"
-        className="mt-3 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300"
-      >
-        Are you sure you want to delete{" "}
-        <span className="font-black text-slate-950 dark:text-white">
-          “{bookToDelete.title}”
-        </span>
-        ? This action cannot be undone.
-      </p>
+            <p
+              id="delete-material-description"
+              className="mt-3 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300"
+            >
+              Are you sure you want to delete{" "}
+              <span className="font-black text-slate-950 dark:text-white">
+                “{bookToDelete.title}”
+              </span>
+              ? This action cannot be undone.
+            </p>
 
-      {deleteError && (
-        <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
-          {deleteError}
+            {deleteError && (
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+                {deleteError}
+              </div>
+            )}
+
+            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={cancelDeleteBook}
+                disabled={isDeleting}
+                className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void confirmDeleteBook()}
+                disabled={isDeleting}
+                className="flex-1 rounded-xl bg-red-500 px-5 py-3 font-black text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting ? "Deleting..." : "Delete PDF"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={cancelDeleteBook}
-          disabled={isDeleting}
-          className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
-        >
-          Cancel
-        </button>
-
-        <button
-          type="button"
-          onClick={() => void confirmDeleteBook()}
-          disabled={isDeleting}
-          className="flex-1 rounded-xl bg-red-500 px-5 py-3 font-black text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isDeleting ? "Deleting..." : "Delete PDF"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
       {allowedToManage && isModalOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"

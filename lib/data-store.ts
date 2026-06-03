@@ -887,16 +887,23 @@ export async function gradeSubmission(input: {
   };
 }
 
-export async function getDashboardBundle(role: Role, userId?: string): Promise<DashboardBundle> {
-  const config = await getContentDocument<{ templates: Record<Role, DashboardTemplate> }>("dashboard-config");
+export async function getDashboardBundle(
+  role: Role,
+  userId?: string,
+): Promise<DashboardBundle> {
+  const [config, user, courses, tests, messages, submissions] =
+    await Promise.all([
+      getContentDocument<{ templates: Record<Role, DashboardTemplate> }>(
+        "dashboard-config",
+      ),
+      userId ? findUserById(userId) : Promise.resolve(null),
+      getCoursesForRole(role),
+      getTestsForRole(role, userId),
+      getMessagesForRole(role, userId),
+      getTestSubmissionsForRole(role, userId),
+    ]);
+
   const template = config.templates[role];
-  const user = userId ? await findUserById(userId) : null;
-  const [courses, tests, messages, submissions] = await Promise.all([
-    getCoursesForRole(role),
-    getTestsForRole(role, userId),
-    getMessagesForRole(role, userId),
-    getTestSubmissionsForRole(role, userId),
-  ]);
 
   return {
     roleLabel: user?.label ?? template.roleLabel,
