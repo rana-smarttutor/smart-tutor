@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+
 import { LazyCampusMap } from "@/components/lazy-campus-map";
 import { getPublicInstituteData } from "@/lib/data-store";
 

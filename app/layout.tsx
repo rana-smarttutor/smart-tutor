@@ -244,6 +244,7 @@ export default function RootLayout({
   <div className="no-report-chrome">
   <FloatingWhatsApp />
   <PWAInstallButton />
+   <SmartTutorsAIChatbot />
 </div>
 </div>
 </ThemeProvider>

@@ -35,8 +35,8 @@ const rawStudentData = [
     "Rank": "1st"
   },
   {
-    "STUDENT NAME": "Ms. Darshit",
-    "PHOTO  NAME": "Ms.Darshit.png",
+    "STUDENT NAME": "Mr. Darshit",
+    "PHOTO  NAME": "Mr.Darshit.png",
     "EXAM NAME": "SBI PO",
     "MARKS": "_",
     "Rank": "1st"

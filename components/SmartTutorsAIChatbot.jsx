@@ -295,7 +295,7 @@ export default function SmartTutorsAIChatbot() {
               width={70}
               height={70}
               sizes="70px"
-              quality={55}
+              quality={75}
               style={styles.avatarImage}
             />
           )}
