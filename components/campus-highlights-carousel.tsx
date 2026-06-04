@@ -1,39 +1,54 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
 import { generatedPlacedStudents } from "@/lib/placed-students-data";
+
+const HIGHLIGHTS = [
+  {
+    name: "Smart Tutors",
+    result: "",
+    exam: "",
+    image: "/image4.jpeg",
+    type: "branding",
+  },
+  ...generatedPlacedStudents.map((student) => ({
+    name: student.name,
+    result: student.rank
+      ? `Rank ${student.rank}`
+      : student.marks
+        ? `${student.marks} Percentile`
+        : "",
+    exam: student.examName,
+    image: student.image,
+    type: student.rank ? "rank" : "percentile",
+  })),
+];
 
 export function CampusHighlightsCarousel() {
   const [index, setIndex] = useState(0);
 
-  // Map centralized data + Add branding slide
-  const HIGHLIGHTS = [
-    { name: "Smart Tutors", result: "", exam: "", company: undefined, role: undefined, salary: undefined, image: "/image4.jpeg", type: "branding" },
-    ...generatedPlacedStudents.map(s => ({
-      name: s.name,
-      result: s.rank ? `Rank ${s.rank}` : (s.marks ? `${s.marks} Percentile` : ""),
-      exam: s.examName,
-      company: s.company,
-      role: s.role,
-      salary: s.salary,
-      image: s.image,
-      type: s.rank ? "rank" : "percentile"
-    }))
-  ];
-
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const stopTimer = () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+
     const startTimer = () => {
+      stopTimer();
+
       timer = setInterval(() => {
-        setIndex((prev) => (prev + 1) % HIGHLIGHTS.length);
-      }, 8000); // 8 seconds rotation
+        setIndex((previousIndex) => (previousIndex + 1) % HIGHLIGHTS.length);
+      }, 8000);
     };
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        clearInterval(timer);
+        stopTimer();
       } else {
         startTimer();
       }
@@ -43,103 +58,109 @@ export function CampusHighlightsCarousel() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      clearInterval(timer);
+      stopTimer();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   return (
-    <div className="w-full flex flex-col">
-      <div className="relative w-full max-w-2xl mx-auto flex flex-col items-center bg-white rounded-[3.5rem] p-6 md:p-8 shadow-xl border border-slate-100">
-        {/* Smaller Image Container - Fully Visible */}
-        <div className="relative w-[260px] h-[260px] sm:w-[300px] sm:h-[300px] shrink-0 overflow-hidden rounded-[2.5rem] shadow-2xl bg-white border-[6px] border-white mb-4">
-          {HIGHLIGHTS.map((h, i) => (
+    <div className="flex w-full flex-col">
+      <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center rounded-[3.5rem] border border-slate-100 bg-white p-6 shadow-xl md:p-8">
+        {/* Student / Branding Image */}
+        <div className="relative mb-4 h-[260px] w-[260px] shrink-0 overflow-hidden rounded-[2.5rem] border-[6px] border-white bg-gradient-to-b from-[#eef0ff] to-white shadow-2xl sm:h-[300px] sm:w-[300px]">
+          {HIGHLIGHTS.map((highlight, slideIndex) => (
             <div
-              key={i}
-              className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-                i === index ? "opacity-100 scale-100 z-10" : "opacity-0 scale-105 z-0 pointer-events-none"
+              key={`${highlight.name}-${slideIndex}`}
+              className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                slideIndex === index
+                  ? "z-10 opacity-100"
+                  : "pointer-events-none z-0 opacity-0"
               }`}
             >
               <Image
-                src={h.image || "/image4.jpeg"}
-                alt={h.name}
+                src={highlight.image || "/image4.jpeg"}
+                alt={highlight.name}
                 fill
-                className="object-cover transition-transform duration-[8000ms] ease-linear"
-                sizes="(max-width: 640px) 260px, 300px"
-                priority={i === index}
-                loading={i === index ? "eager" : "lazy"}
+                sizes="300px"
+                priority={slideIndex === 0}
+                className="object-contain object-bottom"
               />
             </div>
           ))}
         </div>
 
-        {/* Data Box - Tighter Margin Below Image */}
-        <div className="w-full flex flex-col items-center text-center">
-          {HIGHLIGHTS.map((h, i) => (
+        {/* Result Details */}
+        <div className="flex w-full flex-col items-center text-center">
+          {HIGHLIGHTS.map((highlight, slideIndex) => (
             <div
-              key={`data-${i}`}
-              className={`w-full transition-all duration-700 transform ${
-                i === index ? "translate-y-0 opacity-100 relative" : "translate-y-4 opacity-0 absolute pointer-events-none"
+              key={`data-${highlight.name}-${slideIndex}`}
+              className={`w-full transition-opacity duration-500 ${
+                slideIndex === index
+                  ? "relative opacity-100"
+                  : "pointer-events-none absolute opacity-0"
               }`}
             >
-               {(h.exam || h.company) && (
-                 <div className="flex flex-wrap justify-center gap-3 mb-3">
-                    {h.exam && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Examination</span>
-                        <span className="bg-blue-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-blue-400/30">
-                          {h.exam}
-                        </span>
-                      </div>
-                    )}
-                    {h.company && (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Company</span>
-                        <span className="bg-indigo-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-indigo-400/30">
-                          {h.company}
-                        </span>
-                      </div>
-                    )}
-                    {h.salary && (
-                       <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest">Package</span>
-                          <span className="bg-amber-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-amber-400/30">
-                            {h.salary}
-                          </span>
-                       </div>
-                    )}
-                    {h.result && (
-                       <div className="flex flex-col gap-1">
-                          <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{h.type === "rank" ? "Official Rank" : "Score Achieved"}</span>
-                          <span className="bg-emerald-600 text-white text-[11px] font-black px-4 py-1 rounded-lg uppercase tracking-widest shadow-xl border-2 border-emerald-400/30">
-                            {h.result}
-                          </span>
-                       </div>
-                    )}
-                 </div>
-               )}
-              
+              {highlight.exam && (
+                <div className="mb-3 flex flex-wrap justify-center gap-3">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                      Examination
+                    </span>
+
+                    <span className="rounded-lg border-2 border-blue-400/30 bg-blue-600 px-4 py-1 text-[11px] font-black uppercase tracking-widest text-white shadow-xl">
+                      {highlight.exam}
+                    </span>
+                  </div>
+
+                  {highlight.result && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
+                        {highlight.type === "rank"
+                          ? "Official Rank"
+                          : "Score Achieved"}
+                      </span>
+
+                      <span className="rounded-lg border-2 border-emerald-400/30 bg-emerald-600 px-4 py-1 text-[11px] font-black uppercase tracking-widest text-white shadow-xl">
+                        {highlight.result}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-col gap-1">
-                <h3 className={`${h.name === "Smart Tutors" ? "text-3xl md:text-6xl" : "text-xl md:text-5xl"} font-black text-slate-900 leading-tight tracking-tight`}>
-                  {h.name}
+                <h3
+                  className={`${
+                    highlight.name === "Smart Tutors"
+                      ? "text-5xl md:text-6xl"
+                      : "text-3xl md:text-5xl"
+                  } font-black leading-tight tracking-tight text-slate-900`}
+                >
+                  {highlight.name}
                 </h3>
-                {h.name !== "Smart Tutors" && (
-                   <p className="text-blue-600 text-[10px] md:text-xs font-black uppercase tracking-[0.4em] mt-2">
-                     Verified Success
-                   </p>
+
+                {highlight.name !== "Smart Tutors" && (
+                  <p className="mt-2 text-xs font-black uppercase tracking-[0.4em] text-blue-600">
+                    Verified Success
+                  </p>
                 )}
               </div>
             </div>
           ))}
 
           {/* Progress Indicators */}
-          <div className="flex justify-center gap-2.5 mt-8">
-            {HIGHLIGHTS.map((_, i) => (
-              <button 
-                key={i} 
-                onClick={() => setIndex(i)}
-                className={`h-1.5 rounded-full transition-all duration-500 ${i === index ? "bg-blue-600 w-10" : "bg-slate-200 w-1.5 hover:bg-blue-300"}`}
-                aria-label={`Go to slide ${i + 1}`}
+          <div className="mt-8 flex justify-center gap-2.5">
+            {HIGHLIGHTS.map((highlight, slideIndex) => (
+              <button
+                key={`indicator-${highlight.name}-${slideIndex}`}
+                type="button"
+                onClick={() => setIndex(slideIndex)}
+                className={`h-1.5 rounded-full transition-colors duration-200 ${
+                  slideIndex === index
+                    ? "w-10 bg-blue-600"
+                    : "w-1.5 bg-slate-200 hover:bg-blue-300"
+                }`}
+                aria-label={`Go to slide ${slideIndex + 1}`}
               />
             ))}
           </div>

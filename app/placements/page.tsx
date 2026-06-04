@@ -17,6 +17,24 @@ export default function PlacementsPage() {
     { label: "Success Stories", value: "500+" },
     { label: "Quality Mentors", value: "25+" },
   ];
+    const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "/",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Placements",
+        item: "/placements",
+      },
+    ],
+  };
 
   return (
     <main className="min-h-screen bg-white">

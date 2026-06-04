@@ -74,7 +74,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
           {visibleStudents.map((student, index) => (
             <RevealOnScroll key={student.id} delayMs={(index % 4) * 100}>
               <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl hover:translate-y-[-12px] transition-all duration-500 border border-slate-100 dark:border-slate-700 group relative">
-                <div className="aspect-[4/5] relative overflow-hidden bg-slate-100 dark:bg-slate-900">
+                <div className="aspect-[4/5] relative overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
                   {student.image ? (
                     <Image
                       src={student.image}
@@ -82,7 +82,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                       fill
                       loading="lazy"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      className="object-contain object-bottom transition-transform duration-300 sm:group-hover:scale-[1.02]"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-700">
