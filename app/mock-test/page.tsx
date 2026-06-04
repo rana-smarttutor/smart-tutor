@@ -1,4 +1,5 @@
 import QuizArenaClient from "@/components/quiz-arena-client";
+import type { Metadata } from "next";
 
 export const dynamic = "force-static";
 
