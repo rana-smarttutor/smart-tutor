@@ -1,61 +1,128 @@
-import { randomUUID } from "crypto";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+
+import { getSessionUser } from "@/lib/auth";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+
+function getExtension(fileName: string, contentType: string) {
+  const extensionFromName = fileName.split(".").pop()?.toLowerCase();
+
+  if (
+    extensionFromName &&
+    ["png", "jpg", "jpeg", "webp"].includes(extensionFromName)
+  ) {
+    return extensionFromName === "jpeg" ? "jpg" : extensionFromName;
+  }
+
+  if (contentType === "image/png") return "png";
+  if (contentType === "image/jpeg") return "jpg";
+  if (contentType === "image/webp") return "webp";
+
+  return "";
+}
 
 export async function POST(request: Request) {
   try {
-    const formData = await request.formData();
-    const file = formData.get("file");
+    const session = await getSessionUser();
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { success: false, message: "No file uploaded." },
-        { status: 400 }
-      );
-    }
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-
-    if (!allowedTypes.includes(file.type)) {
+    if (!session) {
       return NextResponse.json(
         {
           success: false,
-          message: "Only JPG, PNG, and WEBP images are allowed.",
+          message: "Unauthorized.",
         },
-        { status: 400 }
+        { status: 401 },
       );
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const role = String(session.role || "").toLowerCase();
 
-    const extension =
-      file.type === "image/png"
-        ? "png"
-        : file.type === "image/webp"
-        ? "webp"
-        : "jpg";
+    if (role !== "admin" && role !== "educator") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only admin and educator users can upload student photos.",
+        },
+        { status: 403 },
+      );
+    }
 
-    const fileName = `${randomUUID()}.${extension}`;
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-    const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "student-photos"
-    );
+    if (!token) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "BLOB_READ_WRITE_TOKEN is missing.",
+        },
+        { status: 500 },
+      );
+    }
 
-    await mkdir(uploadDir, { recursive: true });
+    const formData = await request.formData();
+    const file = formData.get("file");
 
-    const filePath = path.join(uploadDir, fileName);
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "No photo file was uploaded.",
+        },
+        { status: 400 },
+      );
+    }
 
-    await writeFile(filePath, buffer);
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Student photo must be smaller than 2 MB.",
+        },
+        { status: 400 },
+      );
+    }
 
-    const publicUrl = `/student-photos/${fileName}`;
+    const validTypes = ["image/png", "image/jpeg", "image/webp"];
+
+    if (!validTypes.includes(file.type)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Only PNG, JPG and WEBP images are allowed.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const extension = getExtension(file.name, file.type);
+
+    if (!extension) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid photo file extension.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const blobPath = `student-performance/photos/${randomUUID()}.${extension}`;
+
+    const blob = await put(blobPath, file, {
+      access: "public",
+      token,
+      contentType: file.type,
+    });
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: blob.url,
+      pathname: blob.pathname,
     });
   } catch (error) {
     console.error("Student photo upload error:", error);
@@ -63,9 +130,12 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to upload student photo.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload student photo.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -60,6 +60,7 @@ export default function ReportCreatorForm() {
     reportType: "weekly",
     period: "",
     status: "",
+    academyName: "SmartIQ Academy",
 
     studentName: "",
     classLevel: "",
@@ -110,59 +111,59 @@ export default function ReportCreatorForm() {
       [name]: value,
     }));
   }
-async function handleStudentPhotoUpload(
-  event: React.ChangeEvent<HTMLInputElement>
-) {
-  const file = event.target.files?.[0];
+  async function handleStudentPhotoUpload(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
 
-  if (!file) return;
+    if (!file) return;
 
-  const validType =
-    ["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
-    /\.(png|jpg|jpeg|webp)$/i.test(file.name);
+    const validType =
+      ["image/png", "image/jpeg", "image/webp"].includes(file.type) ||
+      /\.(png|jpg|jpeg|webp)$/i.test(file.name);
 
-  if (!validType) {
-    alert("Only PNG, JPG and WEBP images are allowed.");
-    event.target.value = "";
-    return;
-  }
-
-  if (file.size > 2 * 1024 * 1024) {
-    alert("Student photo must be smaller than 2 MB.");
-    event.target.value = "";
-    return;
-  }
-
-  setIsPhotoUploading(true);
-
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch("/api/student-performance/upload-photo", {
-      method: "POST",
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(result.message || "Failed to upload student photo.");
+    if (!validType) {
+      alert("Only PNG, JPG and WEBP images are allowed.");
+      event.target.value = "";
+      return;
     }
 
-    updateForm("photo", result.url);
-  } catch (error) {
-    console.error(error);
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Student photo must be smaller than 2 MB.");
+      event.target.value = "";
+      return;
+    }
 
-    alert(
-      error instanceof Error
-        ? error.message
-        : "Failed to upload student photo."
-    );
-  } finally {
-    setIsPhotoUploading(false);
+    setIsPhotoUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/student-performance/upload-photo", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Failed to upload student photo.");
+      }
+
+      updateForm("photo", result.url);
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload student photo.",
+      );
+    } finally {
+      setIsPhotoUploading(false);
+    }
   }
-}
   function updateHeuristic(name: string, value: string) {
     setHeuristics((current) => ({
       ...current,
@@ -213,51 +214,51 @@ async function handleStudentPhotoUpload(
 
     if (accuracy && accuracy < 70) {
       improvementPoints.push(
-        `Accuracy is ${accuracy}%, so the student should slow down slightly, read questions carefully, and focus on avoiding careless mistakes.`
+        `Accuracy is ${accuracy}%, so the student should slow down slightly, read questions carefully, and focus on avoiding careless mistakes.`,
       );
     } else if (accuracy && accuracy < 85) {
       improvementPoints.push(
-        `Accuracy is ${accuracy}%, which is decent, but mistake analysis after every test will help improve performance.`
+        `Accuracy is ${accuracy}%, which is decent, but mistake analysis after every test will help improve performance.`,
       );
     } else if (accuracy) {
       improvementPoints.push(
-        `Accuracy is strong at ${accuracy}%, so the student should maintain this with timed practice.`
+        `Accuracy is strong at ${accuracy}%, so the student should maintain this with timed practice.`,
       );
     }
 
     if (homework && homework < 75) {
       improvementPoints.push(
-        `Homework completion is ${homework}%, so daily homework discipline needs improvement.`
+        `Homework completion is ${homework}%, so daily homework discipline needs improvement.`,
       );
     } else if (homework) {
       improvementPoints.push(
-        `Homework completion is ${homework}%, which shows good learning discipline.`
+        `Homework completion is ${homework}%, which shows good learning discipline.`,
       );
     }
 
     if (attendanceValue && attendanceValue < 85) {
       improvementPoints.push(
-        `Attendance is ${attendanceValue}%, so regular class attendance should be improved for better continuity.`
+        `Attendance is ${attendanceValue}%, so regular class attendance should be improved for better continuity.`,
       );
     } else if (attendanceValue) {
       improvementPoints.push(
-        `Attendance is ${attendanceValue}%, which supports consistent academic progress.`
+        `Attendance is ${attendanceValue}%, which supports consistent academic progress.`,
       );
     }
 
     if (improvement > 0) {
       improvementPoints.push(
-        `The student has improved by ${improvement}%, which is a positive sign. The same routine should continue with weekly targets.`
+        `The student has improved by ${improvement}%, which is a positive sign. The same routine should continue with weekly targets.`,
       );
     } else if (improvement < 0) {
       improvementPoints.push(
         `Performance has dropped by ${Math.abs(
-          improvement
-        )}%, so the student needs extra revision and monitoring this week.`
+          improvement,
+        )}%, so the student needs extra revision and monitoring this week.`,
       );
     } else {
       improvementPoints.push(
-        `Improvement is stable, so the student should set weekly targets to create visible progress.`
+        `Improvement is stable, so the student should set weekly targets to create visible progress.`,
       );
     }
 
@@ -303,11 +304,15 @@ async function handleStudentPhotoUpload(
     }));
   }
 
-  function updateSubject(index: number, field: keyof SubjectRow, value: string) {
+  function updateSubject(
+    index: number,
+    field: keyof SubjectRow,
+    value: string,
+  ) {
     setSubjects((current) =>
       current.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      )
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
     );
   }
 
@@ -324,15 +329,15 @@ async function handleStudentPhotoUpload(
 
   function removeSubject(index: number) {
     setSubjects((current) =>
-      current.filter((_, itemIndex) => itemIndex !== index)
+      current.filter((_, itemIndex) => itemIndex !== index),
     );
   }
 
   function updateTrend(index: number, field: keyof TrendRow, value: string) {
     setTrend((current) =>
       current.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      )
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
     );
   }
 
@@ -342,19 +347,19 @@ async function handleStudentPhotoUpload(
 
   function removeTrendPoint(index: number) {
     setTrend((current) =>
-      current.filter((_, itemIndex) => itemIndex !== index)
+      current.filter((_, itemIndex) => itemIndex !== index),
     );
   }
 
   function updateAttendance(
     index: number,
     field: keyof AttendanceRow,
-    value: string | boolean
+    value: string | boolean,
   ) {
     setAttendance((current) =>
       current.map((item, itemIndex) =>
-        itemIndex === index ? { ...item, [field]: value } : item
-      )
+        itemIndex === index ? { ...item, [field]: value } : item,
+      ),
     );
   }
 
@@ -364,7 +369,7 @@ async function handleStudentPhotoUpload(
 
   function removeAttendanceDay(index: number) {
     setAttendance((current) =>
-      current.filter((_, itemIndex) => itemIndex !== index)
+      current.filter((_, itemIndex) => itemIndex !== index),
     );
   }
 
@@ -376,6 +381,7 @@ async function handleStudentPhotoUpload(
       reportType: form.reportType,
       period: form.period,
       status: form.status,
+      academyName: form.academyName || "SmartIQ Academy",
 
       heuristics: {
         outstanding: Number(heuristics.outstanding) || 95,
@@ -396,7 +402,7 @@ async function handleStudentPhotoUpload(
         parentRelation: form.parentRelation,
         parentContact: form.parentContact,
         photo: form.photo,
-        },
+      },
 
       metrics: {
         averageScore: Number(form.averageScore) || 0,
@@ -623,6 +629,13 @@ async function handleStudentPhotoUpload(
             />
 
             <Field
+              label="Academy / Institute Name"
+              name="academyName"
+              value={form.academyName}
+              onChange={updateForm}
+            />
+
+            <Field
               label="Student Name"
               name="studentName"
               value={form.studentName}
@@ -635,8 +648,6 @@ async function handleStudentPhotoUpload(
               value={form.classLevel}
               onChange={updateForm}
             />
-
-          
 
             <Field
               label="City"
@@ -651,42 +662,43 @@ async function handleStudentPhotoUpload(
               value={form.state}
               onChange={updateForm}
             />
-            
+
             <div className="spr-field spr-photo-upload-field">
-  <span>Student Photo</span>
+              <span>Student Photo</span>
 
-  <label className="spr-photo-upload-button">
-    <input
-      type="file"
-      accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-      onChange={handleStudentPhotoUpload}
-      disabled={isPhotoUploading}
-    />
+              <label className="spr-photo-upload-button">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+                  onChange={handleStudentPhotoUpload}
+                  disabled={isPhotoUploading}
+                />
 
-    {isPhotoUploading ? "Uploading Photo..." : "Upload Student Photo"}
-  </label>
+                {isPhotoUploading
+                  ? "Uploading Photo..."
+                  : "Upload Student Photo"}
+              </label>
 
-  <p className="spr-muted-line">
-    PNG, JPG or WEBP only. Maximum size: 2 MB.
-  </p>
+              <p className="spr-muted-line">
+                PNG, JPG or WEBP only. Maximum size: 2 MB.
+              </p>
 
-  {form.photo ? (
-    <div className="spr-photo-preview">
-      <img src={form.photo} alt="Student preview" />
+              {form.photo ? (
+                <div className="spr-photo-preview">
+                  <img src={form.photo} alt="Student preview" />
 
-      <button
-        type="button"
-        className="spr-remove-photo-btn"
-        onClick={() => updateForm("photo", "")}
-      >
-        Remove Photo
-      </button>
-    </div>
-  ) : (
-    <p className="spr-muted-line">No student photo uploaded.</p>
-  )}
-</div>
-
+                  <button
+                    type="button"
+                    className="spr-remove-photo-btn"
+                    onClick={() => updateForm("photo", "")}
+                  >
+                    Remove Photo
+                  </button>
+                </div>
+              ) : (
+                <p className="spr-muted-line">No student photo uploaded.</p>
+              )}
+            </div>
 
             <Field
               label="Batch"
@@ -783,7 +795,9 @@ async function handleStudentPhotoUpload(
                   label="Subject"
                   name={`subject-${index}`}
                   value={item.subject}
-                  onChange={(_, value) => updateSubject(index, "subject", value)}
+                  onChange={(_, value) =>
+                    updateSubject(index, "subject", value)
+                  }
                 />
 
                 <Field
@@ -813,7 +827,11 @@ async function handleStudentPhotoUpload(
             ))}
           </div>
 
-          <button type="button" className="spr-secondary-btn" onClick={addSubject}>
+          <button
+            type="button"
+            className="spr-secondary-btn"
+            onClick={addSubject}
+          >
             Add Subject
           </button>
         </section>
@@ -905,7 +923,7 @@ async function handleStudentPhotoUpload(
                     updateAttendance(
                       index,
                       "present",
-                      event.target.value === "present"
+                      event.target.value === "present",
                     )
                   }
                 >
@@ -1012,7 +1030,11 @@ async function handleStudentPhotoUpload(
           </div>
         </section>
 
-        <button type="submit" className="spr-primary-btn full" disabled={isSubmitting}>
+        <button
+          type="submit"
+          className="spr-primary-btn full"
+          disabled={isSubmitting}
+        >
           {isSubmitting ? "Creating Report..." : "Create Performance Report"}
         </button>
       </form>
