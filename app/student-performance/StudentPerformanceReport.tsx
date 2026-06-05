@@ -8,6 +8,14 @@ type Report = {
   reportType: string;
   period: string;
   status: string;
+  academyName?: string;
+  heuristics?: {
+    outstanding: number;
+    excellent: number;
+    good: number;
+    average: number;
+    weak: number;
+  };
   student: {
     name: string;
     classLevel: string;
@@ -62,9 +70,41 @@ type Report = {
 };
 };
 
-function statusClass(value: number) {
-  if (value >= 75) return "good";
-  if (value >= 55) return "average";
+function statusClass(value: number, heuristics?: Report["heuristics"]) {
+  const numericValue = Number(value || 0);
+
+  if (!heuristics) {
+    if (numericValue >= 75) return "good";
+    if (numericValue >= 55) return "average";
+    return "bad";
+  }
+
+  if (numericValue >= Number(heuristics.good || 70)) {
+    return "good";
+  }
+
+  if (numericValue >= Number(heuristics.average || 50)) {
+    return "average";
+  }
+
+  return "bad";
+}
+
+function rankStatusClass(rank: number) {
+  const numericRank = Number(rank || 0);
+
+  if (numericRank <= 0) {
+    return "bad";
+  }
+
+  if (numericRank <= 3) {
+    return "good";
+  }
+
+  if (numericRank <= 10) {
+    return "average";
+  }
+
   return "bad";
 }
 
@@ -474,7 +514,7 @@ export default function StudentPerformanceReport({ report }: { report: Report })
           </div>
 
         <div className="t5-dashboard-bottom-strip t5-dashboard-bottom-center-only">
-  <span>SmartIQ Academy</span>
+  <span>{report.academyName || "SmartIQ Academy"}</span>
 </div>
 </div>
 
@@ -530,58 +570,66 @@ export default function StudentPerformanceReport({ report }: { report: Report })
             : "Weekly Performance"}
         </h2>
 
-        <section className="t5-metrics-grid">
-          <MetricCard
-            label={
-              report.reportType === "monthly"
-                ? "Monthly Average Score"
-                : "Weekly Average Score"
-            }
-            value={report.metrics.averageScore}
-            suffix="%"
-            helper="Last tests average"
-            tone="good"
-          />
+<section className="t5-metrics-grid">
+  <MetricCard
+    label={
+      report.reportType === "monthly"
+        ? "Monthly Average Score"
+        : "Weekly Average Score"
+    }
+    value={report.metrics.averageScore}
+    suffix="%"
+    helper="Last tests average"
+    tone={statusClass(Number(report.metrics.averageScore || 0))}
+  />
 
-          <MetricCard
-            label="Batch Rank"
-            value={report.metrics.batchRank}
-            helper="Latest test rank"
-            tone="good"
-          />
+  <MetricCard
+    label="Batch Rank"
+    value={report.metrics.batchRank}
+    helper="Latest test rank"
+    tone={
+      Number(report.metrics.batchRank || 0) <= 0
+        ? "bad"
+        : Number(report.metrics.batchRank || 0) <= 3
+          ? "good"
+          : Number(report.metrics.batchRank || 0) <= 10
+            ? "average"
+            : "bad"
+    }
+  />
 
-          <MetricCard
-            label="Attendance"
-            value={report.metrics.attendancePercentage}
-            suffix="%"
-            tone="good"
-          />
+  <MetricCard
+    label="Attendance"
+    value={report.metrics.attendancePercentage}
+    suffix="%"
+    tone={statusClass(Number(report.metrics.attendancePercentage || 0))}
+  />
 
-          <MetricCard
-            label="Homework Completion"
-            value={report.metrics.homeworkCompletionPercentage}
-            suffix="%"
-            tone="average"
-          />
+  <MetricCard
+    label="Homework Completion"
+    value={report.metrics.homeworkCompletionPercentage}
+    suffix="%"
+    tone={statusClass(Number(report.metrics.homeworkCompletionPercentage || 0))}
+  />
 
-          <MetricCard
-            label="Improvement"
-            value={
-              report.metrics.improvementPercentage > 0
-                ? `+${report.metrics.improvementPercentage}`
-                : report.metrics.improvementPercentage
-            }
-            suffix="%"
-            tone={report.metrics.improvementPercentage >= 0 ? "good" : "bad"}
-          />
+  <MetricCard
+    label="Improvement"
+    value={
+      report.metrics.improvementPercentage > 0
+        ? `+${report.metrics.improvementPercentage}`
+        : report.metrics.improvementPercentage
+    }
+    suffix="%"
+    tone={statusClass(Number(report.metrics.improvementPercentage || 0))}
+  />
 
-          <MetricCard
-            label="Accuracy"
-            value={report.metrics.accuracyPercentage}
-            suffix="%"
-            tone="good"
-          />
-        </section>
+  <MetricCard
+    label="Accuracy"
+    value={report.metrics.accuracyPercentage}
+    suffix="%"
+    tone={statusClass(Number(report.metrics.accuracyPercentage || 0))}
+  />
+</section>
 
         <section className="t5-chart-grid">
           <LineChart data={report.marksTrend} />
