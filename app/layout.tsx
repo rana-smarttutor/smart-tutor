@@ -127,14 +127,23 @@ export default function RootLayout({
     "url": "https://smarttutors.co.in",
     "logo": "https://smarttutors.co.in/image4.jpeg",
     "description": "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform. Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams.",
-    "address": {
-      "@type": "PostalAddress",
-      "streetAddress": "Vashi",
-      "addressLocality": "Navi Mumbai",
-      "addressRegion": "Maharashtra",
-      "postalCode": "400703",
-      "addressCountry": "IN"
-    },
+"address": [
+  {
+    "@type": "PostalAddress",
+    "streetAddress": "Sector 17, Vashi",
+    "addressLocality": "Navi Mumbai",
+    "addressRegion": "Maharashtra",
+    "postalCode": "400703",
+    "addressCountry": "IN"
+  },
+  {
+    "@type": "PostalAddress",
+    "streetAddress": "ADD PANVEL ADDRESS HERE",
+    "addressLocality": "Panvel",
+    "addressRegion": "Maharashtra",
+    "addressCountry": "IN"
+  }
+],
     "contactPoint": {
       "@type": "ContactPoint",
       "telephone": "+91-8850447887",
@@ -176,7 +185,7 @@ export default function RootLayout({
         "name": "Where is Smart Tutors located?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "The main campus is located in Vashi, Navi Mumbai, offering both offline campus learning and online digital programs."
+          "text": "Smart Tutors has offline campus support in Vashi and Panvel, along with online digital programs."
         }
       },
       {

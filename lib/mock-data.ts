@@ -562,17 +562,29 @@ const mockQuizQuestions: QuizQuestion[] = [
 export function getPublicInstituteData() {
   return {
     profile: {
-      name: "Smart Tutors",
-      city: "Vashi",
+  name: "Smart Tutors",
+  city: "Navi Mumbai",
+  address: "Vashi Branch: Sector 17, Vashi, Navi Mumbai | Panvel Branch:  Sector 5, New Panvel East, Panvel",
+  branches: [
+    {
+      name: "Vashi Branch",
       address: "Sector 17, Vashi, Navi Mumbai",
-      phone: "+91 88504 47887",
-      email: "info@smarttutors.co.in",
-      hours: "Mon - Sat | 08:00 AM - 08:30 PM",
-      specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
-      directorName: "Prof. Ravi Rana",
-      directorTitle: "Director & Founder",
-      affiliatedInstitutes: ["SmartIQ Academy", "Smart Tutors", "Prime Digital School"],
+      mapQuery: "Sector 17, Vashi, Navi Mumbai",
     },
+    {
+      name: "Panvel Branch",
+      address: "Sector 5, New Panvel East, Panvel",
+      mapQuery: "Sector 5, New Panvel East, Panvel",
+    },
+  ],
+  phone: "+91 8850447887",
+  email: "info@smarttutors.co.in",
+  hours: "Monday to Saturday",
+  specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
+  directorName: "Prof. Ravi Rana",
+  directorTitle: "Director & Founder",
+  affiliatedInstitutes: ["SmartIQ Academy", "Smart Tutors", "Prime Digital School"],
+},
     socialLinks,
     contactMethods,
     contactActions,

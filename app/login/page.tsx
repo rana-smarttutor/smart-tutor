@@ -20,6 +20,19 @@ export default async function LoginPage() {
         <section className="surface order-1 flex h-full flex-col justify-center rounded-[2rem] p-8 sm:p-10 xl:order-2">
           <div className="mx-auto w-full max-w-md">
             <RealLoginForm />
+
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-center">
+              <p className="text-sm font-semibold text-[var(--color-muted)]">
+                Don&apos;t have an account?
+              </p>
+
+              <Link
+                href="/contact"
+                className="text-sm font-bold text-blue-500 hover:underline"
+              >
+                Contact Admissions to Register
+              </Link>
+            </div>
           </div>
         </section>
 
@@ -98,19 +111,6 @@ export default async function LoginPage() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-4 pt-1">
-                <p className="text-sm font-semibold text-[var(--color-heading)]">
-                  Don&apos;t have an account?
-                </p>
-
-                <Link
-                  href="/contact"
-                  className="text-sm font-bold text-blue-600 hover:underline"
-                >
-                  Contact Admissions to Register
-                </Link>
               </div>
             </div>
           </div>

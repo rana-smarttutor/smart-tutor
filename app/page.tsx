@@ -15,7 +15,8 @@ import { ProgramCarousel } from "@/components/program-carousel";
 
 export const metadata: Metadata = {
   title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
-  description: "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance.",
+  description:
+    "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance.",
   alternates: {
     canonical: "https://smarttutors.co.in",
   },
@@ -38,48 +39,65 @@ export default async function Home() {
     {
       role: "student",
       title: "Learning Portal",
-      summary: "Access 1-on-1 tutoring, mock tests, and digital resources to accelerate your growth.",
-      features: ["Live Classes", "Personalized Dashboard", "Instant Doubt Solving"]
+      summary:
+        "Access 1-on-1 tutoring, mock tests, and digital resources to accelerate your growth.",
+      features: [
+        "Live Classes",
+        "Personalized Dashboard",
+        "Instant Doubt Solving",
+      ],
     },
     {
       role: "educator",
       title: "Mentor Studio",
-      summary: "Manage your teaching schedule, track student performance, and deliver high-impact lectures.",
-      features: ["Resource Manager", "Performance Tracking", "Student Communication"]
+      summary:
+        "Manage your teaching schedule, track student performance, and deliver high-impact lectures.",
+      features: [
+        "Resource Manager",
+        "Performance Tracking",
+        "Student Communication",
+      ],
     },
     {
       role: "parent",
       title: "Parent Connect",
-      summary: "Stay updated with your child's academic progress through real-time reports and attendance tracking.",
-      features: ["Progress Reports", "Direct Mentor Chat", "Attendance Logs"]
+      summary:
+        "Stay updated with your child's academic progress through real-time reports and attendance tracking.",
+      features: ["Progress Reports", "Direct Mentor Chat", "Attendance Logs"],
     },
     {
       role: "admin",
       title: "Operations Hub",
-      summary: "Full control over institute management, course scheduling, and campus operations.",
-      features: ["Admissions Manager", "Fee Tracking", "System Analytics"]
-    }
+      summary:
+        "Full control over institute management, course scheduling, and campus operations.",
+      features: ["Admissions Manager", "Fee Tracking", "System Analytics"],
+    },
   ];
 
   return (
     <main className="relative overflow-hidden pb-16 pt-8">
       <section className="section-shell grid gap-8 pt-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-        <RevealOnScroll className="space-y-7 text-center lg:text-left w-full max-w-full"> 
+        <RevealOnScroll className="space-y-7 text-center lg:text-left w-full max-w-full">
           <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
             <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
               <span className="h-2.5 w-2.5 rounded-full bg-info animate-pulse" />
               Admissions | Exams | Placement
             </div>
 
-            <div className="surface-soft border-success inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-success">
-              <span className="h-2.5 w-2.5 rounded-full bg-success" />
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400 px-5 py-2 text-sm font-bold text-emerald-400">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               Offline Campus
-            </div> 
+            </span>
 
             <div className="surface-soft border-success inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-success">
               <span className="h-2.5 w-2.5 rounded-full bg-success" />
               Vashi's Results-Driven Campus
-            </div> 
+            </div>
+
+            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400 px-5 py-2 text-sm font-bold text-emerald-400">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              Panvel's Results-Driven Campus
+            </span>
           </div>
 
           <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-blue-600">
@@ -88,18 +106,23 @@ export default async function Home() {
 
           <div className="space-y-5">
             <h1 className="mx-auto max-w-5xl text-3xl font-black leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
-              Beyond Coaching. <br className="hidden xl:block" /> Total Empowerment.
+              Beyond Coaching. <br className="hidden xl:block" /> Total
+              Empowerment.
             </h1>
             <p className="mx-auto max-w-2xl text-sm sm:text-lg leading-relaxed text-[var(--color-muted)] xl:mx-0 font-medium">
-              Smart Tutors provides <strong>Programs mapped to every stage of growth</strong>. 
-              We bring disciplined preparation, sharp mentoring, and real academic 
-              momentum into one focused institute experience. From school boards to 
-              civil services and digital future skills.
+              Smart Tutors provides{" "}
+              <strong>Programs mapped to every stage of growth</strong>. We
+              bring disciplined preparation, sharp mentoring, and real academic
+              momentum into one focused institute experience. From school boards
+              to civil services and digital future skills.
             </p>
           </div>
 
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:items-start lg:justify-start">
-            <Link href="/login" className="action-button inline-flex items-center justify-center px-8 sm:px-10 py-4 sm:py-5 text-base shadow-xl glow-primary min-h-15 sm:min-h-16 w-full sm:w-auto">
+            <Link
+              href="/login"
+              className="action-button inline-flex items-center justify-center px-8 sm:px-10 py-4 sm:py-5 text-base shadow-xl glow-primary min-h-15 sm:min-h-16 w-full sm:w-auto"
+            >
               Start Your Journey
             </Link>
             <a
@@ -107,7 +130,11 @@ export default async function Home() {
               download
               className="surface inline-flex items-center justify-center gap-3 rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-2 border-emerald-100 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-15 sm:min-h-16 w-full sm:w-auto group"
             >
-              <svg className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M17.523 15.3414C17.068 15.3414 16.699 15.7114 16.699 16.1654V18.1564C16.699 18.3304 16.558 18.4714 16.384 18.4714H7.616C7.442 18.4714 7.301 18.3304 7.301 18.1564V16.1654C7.301 15.7104 6.932 15.3414 6.477 15.3414C6.022 15.3414 5.653 15.7114 5.653 16.1654V18.1564C5.653 19.2384 6.534 20.1194 7.616 20.1194H16.384C17.466 20.1194 18.347 19.2384 18.347 18.1564V16.1654C18.347 15.7114 17.978 15.3414 17.523 15.3414Z" />
                 <path d="M11.364 15.1194C11.538 15.2934 11.765 15.3744 12 15.3744C12.235 15.3744 12.462 15.2934 12.636 15.1194L15.753 12.0024C16.089 11.6664 16.089 11.1214 15.753 10.7854C15.417 10.4494 14.872 10.4494 14.536 10.7854L12.824 12.4974V4.70642C12.824 4.23042 12.438 3.84442 11.962 3.84442C11.486 3.84442 11.1 4.23042 11.1 4.70642V12.4974L9.388 10.7854C9.052 10.4494 8.507 10.4494 8.171 10.7854C7.835 11.1214 7.835 11.6664 8.171 12.0024L11.364 15.1194Z" />
               </svg>
@@ -117,24 +144,37 @@ export default async function Home() {
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-4">
             {data.metrics.map((metric, index) => (
-              <article key={metric.label} className="surface rounded-[1.25rem] p-4 sm:p-5 text-center lg:text-left border-b-4 border-blue-600 hover:-translate-y-1 transition-all">
+              <article
+                key={metric.label}
+                className="surface rounded-[1.25rem] p-4 sm:p-5 text-center lg:text-left border-b-4 border-blue-600 hover:-translate-y-1 transition-all"
+              >
                 <div className="flex flex-col">
                   <CountUpValue
                     value={metric.value}
                     className="text-2xl sm:text-xl lg:text-2xl font-bold tracking-tight text-blue-700"
                   />
-                  <p className="mt-1 text-xs sm:text-sm font-bold text-[var(--color-heading)]">{metric.label}</p>
+                  <p className="mt-1 text-xs sm:text-sm font-bold text-[var(--color-heading)]">
+                    {metric.label}
+                  </p>
                 </div>
               </article>
             ))}
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 opacity-80 grayscale hover:grayscale-0 transition-all justify-center lg:justify-start">
-            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">Recognized By</p>
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-muted)]">
+              Recognized By
+            </p>
             <div className="flex flex-wrap gap-4 sm:gap-8 items-center justify-center">
-              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">ISO 9001:2015</span>
-              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">MSME Certified</span>
-              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">Digital India</span>
+              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">
+                ISO 9001:2015
+              </span>
+              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">
+                MSME Certified
+              </span>
+              <span className="font-bold text-sm sm:text-lg whitespace-nowrap">
+                Digital India
+              </span>
             </div>
           </div>
 
@@ -142,7 +182,7 @@ export default async function Home() {
             <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 group bg-white">
               <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
               <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
-              
+
               <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center text-center lg:text-left">
                 <div className="max-w-2xl mx-auto lg:mx-0">
                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-6">
@@ -150,25 +190,27 @@ export default async function Home() {
                     Limited Slots for 2026-27
                   </div>
                   <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-[1.1] tracking-tight">
-                    Ready to Start Your <span className="text-blue-600">Journey?</span>
+                    Ready to Start Your{" "}
+                    <span className="text-blue-600">Journey?</span>
                   </h3>
                   <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
-                    Join 500+ students already excelling with Smart Tutors. Get access to expert mentoring and disciplined preparation.
+                    Join 500+ students already excelling with Smart Tutors. Get
+                    access to expert mentoring and disciplined preparation.
                   </p>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row lg:flex-col gap-4 min-w-[240px] justify-center lg:justify-start">
-                  <Link 
-                    href="/login" 
+                  <Link
+                    href="/login"
                     className="group/btn relative inline-flex h-14 items-center justify-center gap-3 bg-blue-600 text-white px-8 rounded-xl font-black text-base transition-all hover:bg-blue-700 hover:scale-[1.02] shadow-xl shadow-blue-500/25 active:scale-95 overflow-hidden"
                   >
                     Enroll Now
                   </Link>
-                  
-                  <a 
-                    href="https://wa.me/918850447887" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
+
+                  <a
+                    href="https://wa.me/918850447887"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 text-emerald-700 px-8 rounded-xl font-black text-base border-2 border-emerald-100 transition-all hover:bg-emerald-100 hover:scale-[1.02] active:scale-95"
                   >
                     WhatsApp
@@ -203,7 +245,10 @@ export default async function Home() {
             </div>
             <div className="mt-5 grid gap-3">
               {data.headlineLines.map((line) => (
-                <div key={line} className="surface-soft rounded-xl px-4 py-3 border-l-4 border-blue-500 hover:bg-blue-50 transition-colors">
+                <div
+                  key={line}
+                  className="surface-soft rounded-xl px-4 py-3 border-l-4 border-blue-500 hover:bg-blue-50 transition-colors"
+                >
                   <p className="text-sm font-bold tracking-[0.04em] text-[var(--color-heading)]">
                     {line}
                   </p>
@@ -213,7 +258,7 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
       </section>
-
+     
       <section className="pt-14 sm:pt-20 pb-0">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10 sm:mb-16">
@@ -224,7 +269,9 @@ export default async function Home() {
               Recent Results
             </h2>
             <p className="text-[var(--color-muted)] text-sm sm:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-              Smart Tutors honors the dedication and remarkable achievements of our students. Our proven track record defines our commitment to academic brilliance.
+              Smart Tutors honors the dedication and remarkable achievements of
+              our students. Our proven track record defines our commitment to
+              academic brilliance.
             </p>
           </div>
 
@@ -242,14 +289,19 @@ export default async function Home() {
               Programs Mapped to Every Stage of Growth
             </h2>
             <p className="text-[var(--color-muted)] text-base sm:text-lg font-medium">
-              We provide a complete educational pathway from school foundation to high-level government service and future digital skills.
+              We provide a complete educational pathway from school foundation
+              to high-level government service and future digital skills.
             </p>
           </div>
 
-          <ProgramCarousel programs={data.programs} />
           
+          <ProgramCarousel programs={data.programs} />
+
           <div className="mt-10 sm:mt-16 text-center">
-            <Link href="/courses" className="action-button px-10 py-5 text-lg shadow-2xl">
+            <Link
+              href="/courses"
+              className="action-button px-10 py-5 text-lg shadow-2xl"
+            >
               Explore All {courseLibrary.length}+ Programs
             </Link>
           </div>
@@ -259,7 +311,9 @@ export default async function Home() {
       <RevealOnScroll className="section-shell py-14" delayMs={40}>
         <div className="mb-9 text-center lg:text-left">
           <p className="section-label">Roles</p>
-          <h2 className="section-title">One system for students, teachers, and institute operations.</h2>
+          <h2 className="section-title">
+            One system for students, teachers, and institute operations.
+          </h2>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-4">
@@ -268,7 +322,9 @@ export default async function Home() {
               key={role.role}
               className={`surface rounded-xl bg-gradient-to-br ${roleAccentMap[role.role as keyof typeof roleAccentMap]} p-6 text-center lg:text-left hover:shadow-2xl hover:translate-y-[-4px] transition-all border-blue-100/50 flex flex-col h-full`}
             >
-              <p className="keyword-line uppercase tracking-widest text-[10px] font-black">{role.role}</p>
+              <p className="keyword-line uppercase tracking-widest text-[10px] font-black">
+                {role.role}
+              </p>
               <h3 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-[var(--color-heading)]">
                 {role.title}
               </h3>
@@ -293,31 +349,51 @@ export default async function Home() {
           <article className="surface rounded-xl p-8 hover:shadow-xl transition-all">
             <div className="mb-8">
               <p className="section-label">Latest Educational Insights</p>
-              <h2 className="section-title">Stay updated with the academic world</h2>
+              <h2 className="section-title">
+                Stay updated with the academic world
+              </h2>
             </div>
-            
+
             <div className="space-y-6">
               <div className="surface-soft rounded-xl p-6 border-l-4 border-blue-600 hover:bg-blue-50 transition-colors">
-                <span className="pill mb-3 bg-blue-100 text-blue-700 border-none font-bold">Exams 2026</span>
-                <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">CBSE Board Exam Phase 2 Schedule</h3>
+                <span className="pill mb-3 bg-blue-100 text-blue-700 border-none font-bold">
+                  Exams 2026
+                </span>
+                <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
+                  CBSE Board Exam Phase 2 Schedule
+                </h3>
                 <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium">
-                  Phase 2 (Improvement/Compartment) exams for Class 10 are scheduled from May 15 to June 1, 2026. Over 6.6 lakh students have registered for this phase.
+                  Phase 2 (Improvement/Compartment) exams for Class 10 are
+                  scheduled from May 15 to June 1, 2026. Over 6.6 lakh students
+                  have registered for this phase.
                 </p>
               </div>
 
               <div className="surface-soft rounded-xl p-6 border-l-4 border-indigo-600 hover:bg-indigo-50 transition-colors">
-                <span className="pill mb-3 bg-indigo-100 text-indigo-700 border-none font-bold">UPSC Update</span>
-                <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">Civil Services Prelims 2026</h3>
+                <span className="pill mb-3 bg-indigo-100 text-indigo-700 border-none font-bold">
+                  UPSC Update
+                </span>
+                <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
+                  Civil Services Prelims 2026
+                </h3>
                 <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium">
-                  The UPSC CSE Preliminary Exam is set for May 24, 2026. Candidates are advised to begin their final revision cycles focusing on current affairs.
+                  The UPSC CSE Preliminary Exam is set for May 24, 2026.
+                  Candidates are advised to begin their final revision cycles
+                  focusing on current affairs.
                 </p>
               </div>
 
               <div className="surface-soft rounded-xl p-6 border-l-4 border-emerald-600 hover:bg-emerald-50 transition-colors">
-                <span className="pill mb-3 bg-emerald-100 text-emerald-700 border-none font-bold">NEP 2020</span>
-                <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">New AI-Integrated Curriculum</h3>
+                <span className="pill mb-3 bg-emerald-100 text-emerald-700 border-none font-bold">
+                  NEP 2020
+                </span>
+                <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
+                  New AI-Integrated Curriculum
+                </h3>
                 <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium">
-                  Computational thinking and basic Artificial Intelligence have been integrated into the curriculum starting from Class 3 for the 2026-27 session.
+                  Computational thinking and basic Artificial Intelligence have
+                  been integrated into the curriculum starting from Class 3 for
+                  the 2026-27 session.
                 </p>
               </div>
             </div>
@@ -326,24 +402,49 @@ export default async function Home() {
           <div className="flex flex-col gap-6">
             <article className="relative overflow-hidden rounded-[1.5rem] p-10 bg-gradient-to-br from-[#1e40af] via-[#3730a3] to-[#4338ca] text-white shadow-2xl hover:scale-[1.02] transition-all group">
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl group-hover:bg-white/20 transition-all"></div>
-              <p className="text-blue-200 text-sm font-black uppercase tracking-[0.2em] mb-3 relative z-10">Promotional Offer</p>
-              <h2 className="text-4xl font-black leading-tight mb-4 drop-shadow-md relative z-10">Advance Your Career with Smart Tutors</h2>
+              <p className="text-blue-200 text-sm font-black uppercase tracking-[0.2em] mb-3 relative z-10">
+                Promotional Offer
+              </p>
+              <h2 className="text-4xl font-black leading-tight mb-4 drop-shadow-md relative z-10">
+                Advance Your Career with Smart Tutors
+              </h2>
               <p className="text-blue-50 text-lg leading-relaxed mb-8 font-medium relative z-10">
-                Join our specialized coaching programs and get access to exclusive mock tests, personal mentoring, and board-certified study materials.
+                Join our specialized coaching programs and get access to
+                exclusive mock tests, personal mentoring, and board-certified
+                study materials.
               </p>
               <ul className="space-y-4 mb-10 relative z-10">
-                {["Personalized Learning Path", "Expert Faculty Support", "Weekly Mock Assessments", "Comprehensive Study Material"].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-base font-bold">
+                {[
+                  "Personalized Learning Path",
+                  "Expert Faculty Support",
+                  "Weekly Mock Assessments",
+                  "Comprehensive Study Material",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-3 text-base font-bold"
+                  >
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-400/30 text-blue-200">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
                     {item}
                   </li>
                 ))}
               </ul>
-              <Link href="/contact" className="inline-flex items-center justify-center w-full py-5 bg-white text-blue-800 font-black text-lg rounded-xl hover:bg-blue-50 transition-all hover:scale-105 shadow-xl relative z-10">
+              <Link
+                href="/contact"
+                className="inline-flex items-center justify-center w-full py-5 bg-white text-blue-800 font-black text-lg rounded-xl hover:bg-blue-50 transition-all hover:scale-105 shadow-xl relative z-10"
+              >
                 Book a Consultation
               </Link>
             </article>

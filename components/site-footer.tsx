@@ -5,8 +5,17 @@ import { getPublicInstituteData } from "@/lib/data-store";
 
 export async function SiteFooter() {
   const data = await getPublicInstituteData();
-  const mapQuery = encodeURIComponent(data.profile.address);
-  const mapLink = `https://maps.google.com/?q=${mapQuery}`;
+
+  const branches =
+    data.profile.branches?.length
+      ? data.profile.branches
+      : [
+          {
+            name: "Smart Tutors Campus",
+            address: data.profile.address,
+            mapQuery: data.profile.address,
+          },
+        ];
 
   return (
     <footer className="section-shell pb-8 pt-6">
@@ -29,9 +38,16 @@ export async function SiteFooter() {
                 {data.profile.directorName} | {data.profile.directorTitle}
               </p>
 
-              <p className="font-semibold text-[var(--color-heading)]">
-                {data.profile.address}
-              </p>
+              <div className="space-y-2">
+                {branches.map((branch) => (
+                  <p
+                    key={branch.name}
+                    className="font-semibold text-[var(--color-heading)]"
+                  >
+                    {branch.name}: {branch.address}
+                  </p>
+                ))}
+              </div>
 
               <p>{data.profile.phone}</p>
               <p>{data.profile.email}</p>
@@ -93,17 +109,25 @@ export async function SiteFooter() {
               </p>
 
               <p className="mt-2 max-w-xs text-xs font-medium leading-6 text-[var(--color-muted)]">
-                Open our campus location directly in Google Maps for directions.
+                Open our campus locations directly in Google Maps for
+                directions.
               </p>
 
-              <a
-                href={mapLink}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-md hover:bg-blue-700"
-              >
-                Open Google Maps
-              </a>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                {branches.map((branch) => (
+                  <a
+                    key={branch.name}
+                    href={`https://maps.google.com/?q=${encodeURIComponent(
+                      branch.mapQuery || branch.address,
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-md hover:bg-blue-700"
+                  >
+                    {branch.name}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -114,8 +138,8 @@ export async function SiteFooter() {
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
               © {new Date().getFullYear()} Smart Tutors Academy. All rights
-              reserved. Results may differ between users. Promotional claims
-              may be stylized.
+              reserved. Results may differ between users. Promotional claims may
+              be stylized.
             </p>
           </div>
         </div>
