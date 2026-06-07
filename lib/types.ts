@@ -112,10 +112,17 @@ export type ContactAction = {
 
 export type DetailedCourse = CourseItem;
 
+export type InstituteBranch = {
+  name: string;
+  address: string;
+  mapQuery: string;
+};
+
 export type InstituteProfile = {
   name: string;
   city: string;
   address: string;
+  branches: InstituteBranch[];
   phone: string;
   email: string;
   hours: string;

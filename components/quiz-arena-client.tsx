@@ -4,24 +4,21 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import {
-  competitiveExams,
   difficultyOptions,
+  getExamDetails,
   getExamTitle,
+  getExamsByCategory,
   getLevelTitle,
   levelOptions,
-  levelSubjects,
-  streamSubjects,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
-  type Stream,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 
 type Step =
   | "welcome"
   | "level"
-  | "stream"
   | "exam"
   | "subject"
   | "difficulty"
@@ -43,7 +40,6 @@ export default function QuizArenaClient() {
   const [selectedLevel, setSelectedLevel] = useState<EducationLevel | null>(
     null,
   );
-  const [selectedStream, setSelectedStream] = useState<Stream | null>(null);
   const [selectedExam, setSelectedExam] = useState<CompetitiveExam | null>(
     null,
   );
@@ -57,31 +53,27 @@ export default function QuizArenaClient() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
 
+  const selectedExamDetails = useMemo(() => {
+    return getExamDetails(selectedExam);
+  }, [selectedExam]);
+
+  const currentExamOptions = useMemo(() => {
+    return getExamsByCategory(selectedLevel);
+  }, [selectedLevel]);
+
   const subjects = useMemo(() => {
-    if (!selectedLevel) {
+    if (!selectedExamDetails) {
       return [];
     }
 
-    if (selectedLevel === "class-11-12" && selectedStream) {
-      return streamSubjects[selectedStream];
-    }
-
-    if (selectedLevel === "competitive-exam" && selectedExam) {
-      return (
-        competitiveExams.find((exam) => exam.id === selectedExam)?.subjects ??
-        []
-      );
-    }
-
-    return levelSubjects[selectedLevel] ?? [];
-  }, [selectedExam, selectedLevel, selectedStream]);
+    return selectedExamDetails.subjects;
+  }, [selectedExamDetails]);
 
   const playfulMode =
-    selectedLevel === "class-1-2" || selectedLevel === "class-3-5";
+    selectedExam === "class-6-8" || selectedExam === "class-9-10";
 
   function selectLevel(level: EducationLevel) {
     setSelectedLevel(level);
-    setSelectedStream(null);
     setSelectedExam(null);
     setSelectedSubject(null);
     setSelectedDifficulty(null);
@@ -89,23 +81,11 @@ export default function QuizArenaClient() {
     setResult(null);
     setMessage("");
     setShowExitModal(false);
-
-    if (level === "class-11-12") {
-      setStep("stream");
-      return;
-    }
-
-    if (level === "competitive-exam") {
-      setStep("exam");
-      return;
-    }
-
-    setStep("subject");
+    setStep("exam");
   }
 
   function changeLevel() {
     setSelectedLevel(null);
-    setSelectedStream(null);
     setSelectedExam(null);
     setSelectedSubject(null);
     setSelectedDifficulty(null);
@@ -125,9 +105,8 @@ export default function QuizArenaClient() {
       return;
     }
 
-    if (step === "stream" || step === "exam") {
+    if (step === "exam") {
       setSelectedLevel(null);
-      setSelectedStream(null);
       setSelectedExam(null);
       setSelectedSubject(null);
       setSelectedDifficulty(null);
@@ -138,21 +117,7 @@ export default function QuizArenaClient() {
     if (step === "subject") {
       setSelectedSubject(null);
       setSelectedDifficulty(null);
-
-      if (selectedLevel === "class-11-12") {
-        setSelectedStream(null);
-        setStep("stream");
-        return;
-      }
-
-      if (selectedLevel === "competitive-exam") {
-        setSelectedExam(null);
-        setStep("exam");
-        return;
-      }
-
-      setSelectedLevel(null);
-      setStep("level");
+      setStep("exam");
       return;
     }
 
@@ -186,7 +151,7 @@ export default function QuizArenaClient() {
   }
 
   async function startChallenge() {
-    if (!selectedLevel || !selectedSubject || !selectedDifficulty) {
+    if (!selectedLevel || !selectedExam || !selectedSubject || !selectedDifficulty) {
       setMessage("Please complete your quiz selection first.");
       return;
     }
@@ -204,7 +169,6 @@ export default function QuizArenaClient() {
         },
         body: JSON.stringify({
           level: selectedLevel,
-          stream: selectedStream,
           exam: selectedExam,
           subject: selectedSubject,
           difficulty: selectedDifficulty,
@@ -344,21 +308,26 @@ export default function QuizArenaClient() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-xl text-lg text-slate-300">
-                Fresh AI-powered quizzes designed for your class, college level
-                or competitive examination.
+                Fresh AI-powered quizzes for school, junior college,
+                competitive exams, government exams and MBA entrance
+                preparation.
               </p>
 
               <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-slate-300">
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  ✨ Fresh Questions
+                  📘 School Courses
                 </span>
 
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  🔥 Build Streaks
+                  🎯 Competitive Exams
                 </span>
 
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  🏆 Level Up
+                  🏛️ Government Exams
+                </span>
+
+                <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
+                  📊 MBA Entrances
                 </span>
               </div>
 
@@ -376,11 +345,11 @@ export default function QuizArenaClient() {
         {step === "level" && (
           <section>
             <Header
-              title="Which level are you studying at?"
-              subtitle="Choose your learning journey to receive questions designed for your level."
+              title="Choose your course category"
+              subtitle="Select the type of course or exam you want to practise."
             />
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2">
               {levelOptions.map((level) => (
                 <button
                   type="button"
@@ -389,53 +358,18 @@ export default function QuizArenaClient() {
                   className="rounded-3xl border border-white/10 bg-white/10 p-6 text-left backdrop-blur-sm transition hover:-translate-y-1 hover:border-cyan-300 hover:bg-white/15"
                 >
                   <div className="mb-5 text-4xl">{level.icon}</div>
+
                   <h2 className="text-xl font-bold">{level.title}</h2>
-                  <p className="mt-2 text-sm text-slate-300">
+
+                  <p className="mt-2 text-sm font-semibold text-cyan-200">
                     {level.subtitle}
+                  </p>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    {level.description}
                   </p>
                 </button>
               ))}
-            </div>
-          </section>
-        )}
-
-        {step === "stream" && (
-          <section>
-            <Header
-              title="Choose your stream"
-              subtitle="Select your Class 11–12 learning path."
-            />
-
-            <div className="grid gap-5 md:grid-cols-3">
-              {(["science", "commerce", "humanities"] as Stream[]).map(
-                (stream) => (
-                  <button
-                    type="button"
-                    key={stream}
-                    onClick={() => {
-                      setSelectedStream(stream);
-                      setSelectedSubject(null);
-                      setSelectedDifficulty(null);
-                      setStep("subject");
-                    }}
-                    className="rounded-3xl border border-white/10 bg-white/10 p-8 text-left capitalize transition hover:-translate-y-1 hover:border-cyan-300"
-                  >
-                    <div className="text-4xl">
-                      {stream === "science"
-                        ? "🔬"
-                        : stream === "commerce"
-                          ? "📊"
-                          : "🌍"}
-                    </div>
-
-                    <h2 className="mt-5 text-2xl font-bold">{stream}</h2>
-
-                    <p className="mt-3 text-slate-300">
-                      Continue with {stream} subjects
-                    </p>
-                  </button>
-                ),
-              )}
             </div>
           </section>
         )}
@@ -443,33 +377,49 @@ export default function QuizArenaClient() {
         {step === "exam" && (
           <section>
             <Header
-              title="Which exam are you preparing for?"
-              subtitle="Select your target competitive examination."
+              title="Choose your course or exam"
+              subtitle="Pick the exact board, stream or entrance exam you want to practise."
             />
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              {competitiveExams.map((exam) => (
-                <button
-                  type="button"
-                  key={exam.id}
-                  onClick={() => {
-                    setSelectedExam(exam.id);
-                    setSelectedSubject(null);
-                    setSelectedDifficulty(null);
-                    setStep("subject");
-                  }}
-                  className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
-                >
-                  <span className="text-2xl">🎯</span>
+            {currentExamOptions.length === 0 ? (
+              <div className="rounded-3xl border border-white/10 bg-white/10 p-8 text-center">
+                <p className="font-semibold text-slate-300">
+                  No courses found for this category.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {currentExamOptions.map((exam) => (
+                  <button
+                    type="button"
+                    key={exam.id}
+                    onClick={() => {
+                      setSelectedExam(exam.id);
+                      setSelectedSubject(null);
+                      setSelectedDifficulty(null);
+                      setStep("subject");
+                    }}
+                    className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
+                  >
+                    <span className="text-2xl">🎯</span>
 
-                  <h2 className="mt-4 text-lg font-bold">{exam.title}</h2>
+                    <h2 className="mt-4 text-lg font-bold">{exam.title}</h2>
 
-                  <p className="mt-2 text-sm text-slate-300">
-                    {exam.subjects.length} subjects
-                  </p>
-                </button>
-              ))}
-            </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                      {exam.eligibility}
+                    </p>
+
+                    <p className="mt-3 rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-cyan-200">
+                      {exam.trendNote}
+                    </p>
+
+                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      {exam.subjects.length} subjects
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -477,8 +427,21 @@ export default function QuizArenaClient() {
           <section>
             <Header
               title="Choose your subject"
-              subtitle="What would you like to practise today?"
+              subtitle={`${
+                selectedExamDetails?.title ?? "Selected course"
+              } • What would you like to practise today?`}
             />
+
+            {selectedExamDetails && (
+              <div className="mx-auto mb-8 max-w-3xl rounded-2xl border border-white/10 bg-white/10 p-5 text-center">
+                <p className="text-sm font-semibold text-cyan-200">
+                  {selectedExamDetails.eligibility}
+                </p>
+                <p className="mt-2 text-sm text-slate-300">
+                  {selectedExamDetails.trendNote}
+                </p>
+              </div>
+            )}
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {subjects.map((subject) => (
@@ -554,8 +517,16 @@ export default function QuizArenaClient() {
                   disabled={isGenerating}
                   className="rounded-2xl bg-cyan-400 px-12 py-4 text-lg font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isGenerating ? "Creating Your Quiz..." : "Start Challenge"}
+                  {isGenerating
+                    ? "Creating Your Quiz..."
+                    : "Start Challenge"}
                 </button>
+
+                {isGenerating && (
+                  <p className="mt-4 text-sm text-slate-300">
+                    AI is preparing fresh questions for your selected course.
+                  </p>
+                )}
               </div>
             )}
           </section>
@@ -591,7 +562,13 @@ export default function QuizArenaClient() {
   );
 }
 
-function Header({ title, subtitle }: { title: string; subtitle: string }) {
+function Header({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
   return (
     <header className="mb-10 text-center">
       <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-300">
@@ -928,7 +905,7 @@ function ResultScreen({
           onClick={onChangeLevel}
           className="rounded-2xl border border-white/20 px-8 py-4 font-bold text-white transition hover:bg-white/10"
         >
-          Change Level
+          Change Category
         </button>
 
         <Link

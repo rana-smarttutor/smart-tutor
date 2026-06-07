@@ -3,7 +3,7 @@ import type {
   Difficulty,
   EducationLevel,
   Stream,
-} from './quiz-arena-config';
+} from "./quiz-arena-config";
 
 export type QuizQuestion = {
   id: string;
