@@ -8,12 +8,12 @@ const RESULT_CATEGORIES = [
   {
     id: "10-ssc",
     label: "10th SSC",
-    image: "/hof/10 ssc blue.png",
+    image: "/hof/10 th SSC.png",
   },
   {
     id: "10-cbsc",
     label: "10th CBSE",
-    image: "/hof/10 cbsc.png",
+    image: "/hof/10th CBSC.png",
   },
   {
     id: "hsc-1",
@@ -28,13 +28,18 @@ const RESULT_CATEGORIES = [
   {
     id: "jee",
     label: "JEE Main",
-    image: "/hof/jee.png",
+    image: "/hof/JEE.png",
   },
-  {
-    id: "neet-cet",
-    label: "NEET / CET",
-    image: "/hof/jee.png",
-  },
+ {
+  id: "neet",
+  label: "NEET",
+  image: "/hof/NEET.png",
+},
+{
+  id: "cet",
+  label: "CET",
+  image: "/hof/CET.png",
+},
   {
     id: "banking",
     label: "Banking Exam",
@@ -48,12 +53,12 @@ const RESULT_CATEGORIES = [
   {
     id: "railway",
     label: "Railway Exam",
-    image: "/hof/Railway.png",
+    image: "/hof/railway.png",
   },
   {
     id: "ssc-cgl",
     label: "SSC CGL",
-    image: "/hof/SSC CGL.png",
+    image: "/hof/SSC CGL UPDATED.png",
   },
 ];
 

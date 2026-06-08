@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 :root {
   --font-sans: var(--font-geist-sans), sans-serif;
   --font-headline: var(--font-geist-sans), sans-serif;
@@ -113,7 +111,7 @@
   color-scheme: dark;
 }
 
-@theme inline {
+.theme-inline {
   --color-background: var(--color-background);
   --color-foreground: var(--color-body);
   --color-primary: var(--color-primary);
@@ -705,12 +703,73 @@ footer {
   }
 
 }
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+.library-scroll-row {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.25s ease;
 }
 
+.library-scroll-row:hover {
+  scrollbar-color: rgba(15, 23, 42, 0.55) rgba(15, 23, 42, 0.08);
+}
+
+.library-scroll-row::-webkit-scrollbar {
+  height: 8px;
+}
+
+.library-scroll-row::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.library-scroll-row:hover::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.library-scroll-row::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.library-scroll-row:hover::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.library-scroll-row:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.75);
+}
+.library-scroll-row {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.25s ease;
+}
+
+.library-scroll-row:hover {
+  scrollbar-color: rgba(15, 23, 42, 0.55) rgba(15, 23, 42, 0.08);
+}
+
+.library-scroll-row::-webkit-scrollbar {
+  height: 8px;
+}
+
+.library-scroll-row::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.library-scroll-row:hover::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.library-scroll-row::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.library-scroll-row:hover::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.library-scroll-row:hover::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.75);
+}
