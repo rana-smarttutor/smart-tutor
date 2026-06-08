@@ -223,14 +223,12 @@ export default async function Home() {
 
         <RevealOnScroll className="grid min-w-0 gap-4" delayMs={90}>
           <div className="surface graph-paper rounded-xl p-6 hover:shadow-xl transition-all">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-8">
-              <div>
-                <p className="section-label">Campus Highlights</p>
-                <h2 className="section-title text-xl sm:text-xl mt-2 text-left">
-                  Visible trust, visible outcomes
-                </h2>
-              </div>
-              <LiveClock label="Campus Time" className="sm:min-w-[220px]" />
+            <div className="mb-8">
+              <p className="section-label">Campus Highlights</p>
+
+              <h2 className="section-title mt-2 whitespace-nowrap text-left text-3xl sm:text-4xl">
+                Visible trust, visible outcomes
+              </h2>
             </div>
 
             <CampusHighlightsCarousel />
@@ -258,7 +256,7 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
       </section>
-     
+
       <section className="pt-14 sm:pt-20 pb-0">
         <div className="container mx-auto px-4">
           <div className="text-center mb-10 sm:mb-16">
@@ -294,7 +292,6 @@ export default async function Home() {
             </p>
           </div>
 
-          
           <ProgramCarousel programs={data.programs} />
 
           <div className="mt-10 sm:mt-16 text-center">
