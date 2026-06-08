@@ -7,6 +7,8 @@ export type DigitalLibraryBook = {
   price: string;
   fileName: string;
   pathname: string;
+  categoryId?: string;
+  categoryLabel?: string;
   url?: string;
   downloadUrl?: string;
   thumbnailUrl?: string;
@@ -15,6 +17,22 @@ export type DigitalLibraryBook = {
 
 const DEFAULT_BOOK_DESCRIPTION =
   "Access this PDF study material for focused learning and revision.";
+
+const DEFAULT_CATEGORY_ID = "school-learning";
+const DEFAULT_CATEGORY_LABEL = "School Learning Library";
+
+const CATEGORY_LABELS: Record<string, string> = {
+  "school-learning": "School Learning Library",
+  "competitive-exam": "All Competitive Exam Library",
+  "government-exam": "All Government Exam Library",
+  fiction: "Fiction Books Library",
+  "non-fiction": "Non-Fiction Books Library",
+  biography: "Biography & Autobiography Library",
+  "personality-development": "Personality Development Library",
+  "spoken-english": "Spoken English Library",
+  "technology-ai": "Technology & AI Library",
+  "career-placement": "Career & Placement Library",
+};
 
 function displayPrice(rawPrice: string) {
   if (rawPrice === "free" || Number(rawPrice) <= 0) {
@@ -31,31 +49,137 @@ function humanizeSlug(value: string) {
     .trim();
 }
 
+function guessCategoryFromText(text: string) {
+  const value = text.toLowerCase().replace(/[_-]/g, " ");
+
+  if (
+    [
+      "python",
+      "computer",
+      "coding",
+      "programming",
+      "ai",
+      "deep learning",
+      "machine learning",
+      "data",
+      "analytics",
+      "google analytics",
+    ].some((keyword) => value.includes(keyword))
+  ) {
+    return {
+      categoryId: "technology-ai",
+      categoryLabel: CATEGORY_LABELS["technology-ai"],
+    };
+  }
+
+  if (
+    [
+      "banking",
+      "railway",
+      "ssc cgl",
+      "government",
+      "upsc",
+      "mpsc",
+      "ibps",
+    ].some((keyword) => value.includes(keyword))
+  ) {
+    return {
+      categoryId: "government-exam",
+      categoryLabel: CATEGORY_LABELS["government-exam"],
+    };
+  }
+
+  if (
+    ["jee", "neet", "cet", "entrance", "competitive"].some((keyword) =>
+      value.includes(keyword),
+    )
+  ) {
+    return {
+      categoryId: "competitive-exam",
+      categoryLabel: CATEGORY_LABELS["competitive-exam"],
+    };
+  }
+
+  if (
+    [
+      "algebra",
+      "trigonometry",
+      "chemistry",
+      "physics",
+      "calculus",
+      "economics",
+      "science",
+      "school",
+      "cbse",
+      "ssc",
+      "hsc",
+    ].some((keyword) => value.includes(keyword))
+  ) {
+    return {
+      categoryId: "school-learning",
+      categoryLabel: CATEGORY_LABELS["school-learning"],
+    };
+  }
+
+  return {
+    categoryId: DEFAULT_CATEGORY_ID,
+    categoryLabel: DEFAULT_CATEGORY_LABEL,
+  };
+}
+
 function parseNewBookPath(pathname: string) {
   const value = pathname
     .replace("digital-library/books/", "")
     .replace(/\.pdf$/i, "");
 
-  const [id, rawPrice = "free", thirdPart = "", ...remainingParts] =
+  const [id, rawPrice = "free", thirdPart = "", fourthPart = "", ...restParts] =
     value.split("__");
 
-  const hasDescription = remainingParts.length > 0;
+  let categoryId = "";
+  let categoryLabel = "";
+  let storedDescription = "";
+  let storedTitle = "";
 
-  const storedDescription = hasDescription ? thirdPart : "";
-  const storedTitle = hasDescription ? remainingParts.join("__") : thirdPart;
+  // New format:
+  // timestamp__price__sectionId__description__title
+  if (restParts.length > 0) {
+    categoryId = thirdPart || DEFAULT_CATEGORY_ID;
+    categoryLabel = CATEGORY_LABELS[categoryId] || humanizeSlug(categoryId);
+    storedDescription = fourthPart || "";
+    storedTitle = restParts.join("__");
+  } else if (fourthPart) {
+    // Old description format:
+    // timestamp__price__description__title
+    storedDescription = thirdPart || "";
+    storedTitle = fourthPart;
+    const guessed = guessCategoryFromText(`${storedTitle} ${storedDescription}`);
+    categoryId = guessed.categoryId;
+    categoryLabel = guessed.categoryLabel;
+  } else {
+    // Old format:
+    // timestamp__price__title
+    storedTitle = thirdPart;
+    const guessed = guessCategoryFromText(storedTitle);
+    categoryId = guessed.categoryId;
+    categoryLabel = guessed.categoryLabel;
+  }
 
-  const thumbnailKey = hasDescription
-    ? `${id}__${rawPrice}__${storedDescription}__${storedTitle}`
-    : `${id}__${rawPrice}__${storedTitle}`;
+  const thumbnailKey =
+    restParts.length > 0
+      ? `${id}__${rawPrice}__${categoryId}__${storedDescription}__${storedTitle}`
+      : fourthPart
+        ? `${id}__${rawPrice}__${storedDescription}__${storedTitle}`
+        : `${id}__${rawPrice}__${storedTitle}`;
 
   return {
     thumbnailKey,
     title: humanizeSlug(storedTitle),
-    description: hasDescription
-      ? humanizeSlug(storedDescription) || DEFAULT_BOOK_DESCRIPTION
-      : DEFAULT_BOOK_DESCRIPTION,
+    description:
+      humanizeSlug(storedDescription) || DEFAULT_BOOK_DESCRIPTION,
     fileName: `${storedTitle}.pdf`,
     price: displayPrice(rawPrice),
+    categoryId,
+    categoryLabel,
   };
 }
 
@@ -76,11 +200,16 @@ function parseOldBookPath(pathname: string) {
         ? parts.slice(1).join("-") || rawName
         : rawName;
 
+  const title = fileName.replace(/\.[^/.]+$/, "").replace(/-/g, " ");
+  const guessed = guessCategoryFromText(title);
+
   return {
-    title: fileName.replace(/\.[^/.]+$/, "").replace(/-/g, " "),
+    title,
     description: DEFAULT_BOOK_DESCRIPTION,
     fileName,
     price: hasTimestamp && hasPrice ? displayPrice(possiblePrice) : "Free",
+    categoryId: guessed.categoryId,
+    categoryLabel: guessed.categoryLabel,
   };
 }
 
@@ -128,6 +257,8 @@ export async function getDigitalLibraryBooks(
         price: parsed.price,
         fileName: parsed.fileName,
         pathname: blob.pathname,
+        categoryId: parsed.categoryId,
+        categoryLabel: parsed.categoryLabel,
         url: canAccessPdf ? blob.url : undefined,
         downloadUrl: canAccessPdf ? blob.downloadUrl || blob.url : undefined,
         thumbnailUrl: thumbnailMap.get(parsed.thumbnailKey),
@@ -147,6 +278,8 @@ export async function getDigitalLibraryBooks(
         price: parsed.price,
         fileName: parsed.fileName,
         pathname: blob.pathname,
+        categoryId: parsed.categoryId,
+        categoryLabel: parsed.categoryLabel,
         url: canAccessPdf ? blob.url : undefined,
         downloadUrl: canAccessPdf ? blob.downloadUrl || blob.url : undefined,
         thumbnailUrl: undefined,

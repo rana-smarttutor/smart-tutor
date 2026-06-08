@@ -45,6 +45,9 @@ type DashboardTemplate = {
 type UserDocument = SessionUser & {
   password: string;
   program: string;
+  mobile?: string;
+  mobileKey?: string;
+  parentMobile?: string;
   emailKey?: string;
   status?: "active" | "pending";
   permissions?: PermissionItem[];
@@ -114,19 +117,22 @@ async function ensureUserIndexes() {
   if (!userIndexesPromise) {
     userIndexesPromise = (async () => {
       const collection = await getCollection<UserDocument>(COLLECTIONS.users);
-      await collection.updateMany(
-        {},
-        [
-          {
-            $set: {
-              emailKey: { $toLower: "$email" },
-            },
+      await collection.updateMany({}, [
+        {
+          $set: {
+            emailKey: { $toLower: "$email" },
           },
-        ],
-      );
+        },
+      ]);
       await Promise.all([
-        collection.createIndex({ id: 1 }, { unique: true, name: "users_unique_id" }),
-        collection.createIndex({ emailKey: 1 }, { unique: true, name: "users_unique_emailKey" }),
+        collection.createIndex(
+          { id: 1 },
+          { unique: true, name: "users_unique_id" },
+        ),
+        collection.createIndex(
+          { emailKey: 1 },
+          { unique: true, name: "users_unique_emailKey" },
+        ),
       ]);
     })().catch((error) => {
       userIndexesPromise = null;
@@ -182,7 +188,11 @@ function getRoleLabel(role: Role) {
   return "Student Workspace";
 }
 
-function buildHeroTitle(role: Role, template: DashboardTemplate, user: SessionUser | null) {
+function buildHeroTitle(
+  role: Role,
+  template: DashboardTemplate,
+  user: SessionUser | null,
+) {
   if (!user) {
     return template.heroTitle;
   }
@@ -212,7 +222,8 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
     inferCourseTemplateKey(document.title) ??
     DEFAULT_COURSE_TEMPLATE_KEY;
   const template =
-    getCourseTemplateByKey(templateKey) ?? getCourseTemplateByKey(DEFAULT_COURSE_TEMPLATE_KEY);
+    getCourseTemplateByKey(templateKey) ??
+    getCourseTemplateByKey(DEFAULT_COURSE_TEMPLATE_KEY);
 
   if (!template) {
     throw new Error("Default course template could not be resolved.");
@@ -232,12 +243,15 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
     duration: document.duration ?? template.duration,
     mode: document.mode ?? template.mode,
     audienceLabel: document.audienceLabel ?? template.audienceLabel,
-    courseNamesIncluded:
-      document.courseNamesIncluded?.length ? document.courseNamesIncluded : template.courseNamesIncluded,
-    branchesIncluded:
-      document.branchesIncluded?.length ? document.branchesIncluded : template.branchesIncluded,
-    subjectsCovered:
-      document.subjectsCovered?.length ? document.subjectsCovered : template.subjectsCovered,
+    courseNamesIncluded: document.courseNamesIncluded?.length
+      ? document.courseNamesIncluded
+      : template.courseNamesIncluded,
+    branchesIncluded: document.branchesIncluded?.length
+      ? document.branchesIncluded
+      : template.branchesIncluded,
+    subjectsCovered: document.subjectsCovered?.length
+      ? document.subjectsCovered
+      : template.subjectsCovered,
     points: document.points?.length ? document.points : template.points,
     audience: document.audience?.length ? document.audience : template.audience,
   } satisfies CourseItem;
@@ -263,7 +277,8 @@ function dedupeAndSortCourses(courses: CourseItem[]) {
 
   return [...byStandardKey.values()].sort((left, right) => {
     const orderDifference =
-      getCourseTemplateOrder(left.standardKey) - getCourseTemplateOrder(right.standardKey);
+      getCourseTemplateOrder(left.standardKey) -
+      getCourseTemplateOrder(right.standardKey);
 
     if (orderDifference !== 0) {
       return orderDifference;
@@ -276,10 +291,12 @@ function dedupeAndSortCourses(courses: CourseItem[]) {
 async function ensureStandardCoursesBackfilled() {
   if (!standardCoursesBackfillPromise) {
     standardCoursesBackfillPromise = (async () => {
-      const collection = await getCollection<CourseItem & { createdAt?: string; createdBy?: string }>(
-        COLLECTIONS.courses,
+      const collection = await getCollection<
+        CourseItem & { createdAt?: string; createdBy?: string }
+      >(COLLECTIONS.courses);
+      const existingCourses = stripMongoIds(
+        await collection.find({}).toArray(),
       );
-      const existingCourses = stripMongoIds(await collection.find({}).toArray());
 
       for (const course of existingCourses) {
         if (course.standardKey) {
@@ -302,14 +319,21 @@ async function ensureStandardCoursesBackfilled() {
         );
       }
 
-      const normalizedCourses = stripMongoIds(await collection.find({}).toArray());
+      const normalizedCourses = stripMongoIds(
+        await collection.find({}).toArray(),
+      );
       const existingKeys = new Set(
         normalizedCourses
-          .map((course) => course.standardKey ?? inferCourseTemplateKey(course.title))
+          .map(
+            (course) =>
+              course.standardKey ?? inferCourseTemplateKey(course.title),
+          )
           .filter((key): key is string => Boolean(key)),
       );
 
-      const missingTemplates = courseLibrary.filter((template) => !existingKeys.has(template.standardKey));
+      const missingTemplates = courseLibrary.filter(
+        (template) => !existingKeys.has(template.standardKey),
+      );
 
       if (!missingTemplates.length) {
         return;
@@ -335,7 +359,10 @@ async function ensureStandardCoursesBackfilled() {
 
 function normalizeStringArray(value: string[] | string | null | undefined) {
   if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
+    return value.filter(
+      (item): item is string =>
+        typeof item === "string" && item.trim().length > 0,
+    );
   }
 
   if (typeof value === "string" && value.trim().length > 0) {
@@ -377,7 +404,11 @@ function isMessageActive(message: MessageItem, now = Date.now()) {
   return Number.isNaN(expiryTime) ? true : expiryTime > now;
 }
 
-function isMessageVisibleToUser(message: MessageItem, role: Role, userId?: string) {
+function isMessageVisibleToUser(
+  message: MessageItem,
+  role: Role,
+  userId?: string,
+) {
   if (!message.audience.includes(role)) {
     return false;
   }
@@ -389,7 +420,9 @@ function isMessageVisibleToUser(message: MessageItem, role: Role, userId?: strin
   return userId ? message.userIds.includes(userId) : false;
 }
 
-function normalizePublicInstituteData(document: PublicInstituteData): PublicInstituteData {
+function normalizePublicInstituteData(
+  document: PublicInstituteData,
+): PublicInstituteData {
   const template = getTemplatePublicInstituteData();
 
   return {
@@ -411,10 +444,13 @@ function normalizePublicInstituteData(document: PublicInstituteData): PublicInst
   };
 }
 
-export const getPublicInstituteData = cache(async function getPublicInstituteData() {
-  const document = await getContentDocument<PublicInstituteData>("public-site");
-  return normalizePublicInstituteData(document);
-});
+export const getPublicInstituteData = cache(
+  async function getPublicInstituteData() {
+    const document =
+      await getContentDocument<PublicInstituteData>("public-site");
+    return normalizePublicInstituteData(document);
+  },
+);
 
 export async function getMockQuizQuestions() {
   const collection = await getCollection<QuizQuestion>(COLLECTIONS.quizzes);
@@ -429,7 +465,9 @@ export async function getDemoCredentials() {
     })
     .toArray();
 
-  const byRole = new Map(documents.map((document) => [document.role, document]));
+  const byRole = new Map(
+    documents.map((document) => [document.role, document]),
+  );
 
   return (["student", "educator", "admin"] as const)
     .map((role) => byRole.get(role))
@@ -450,14 +488,18 @@ export async function getDemoCredentials() {
 export async function findUserByCredentials(login: string, password: string) {
   const collection = await getUsersCollection();
   const normalizedLogin = login.toLowerCase();
+  const mobileLogin = normalizedLogin.replace(/[^\d]/g, "").slice(-10);
   const emailLocalPart = normalizedLogin.includes("@")
     ? normalizedLogin.split("@")[0]
     : normalizedLogin;
-  
+
   const query: any = {
     password,
     $or: [
+      { mobile: mobileLogin },
+      { mobileKey: mobileLogin },
       { email: normalizedLogin },
+      { emailKey: normalizedLogin },
       { name: login },
       { name: normalizedLogin },
       {
@@ -486,9 +528,9 @@ export async function findUserById(id: string) {
 export async function getCoursesForRole(role: Role) {
   await ensureStandardCoursesBackfilled();
   const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
-  const hydrated = stripMongoIds(await collection.find({ audience: role }).toArray()).map((course) =>
-    hydrateCourse(course),
-  );
+  const hydrated = stripMongoIds(
+    await collection.find({ audience: role }).toArray(),
+  ).map((course) => hydrateCourse(course));
   return dedupeAndSortCourses(hydrated);
 }
 
@@ -516,13 +558,15 @@ export async function createCourse(input: {
 
   await ensureStandardCoursesBackfilled();
 
-  const collection = await getCollection<CourseItem & { createdAt?: string; createdBy?: string }>(
-    COLLECTIONS.courses,
-  );
+  const collection = await getCollection<
+    CourseItem & { createdAt?: string; createdBy?: string }
+  >(COLLECTIONS.courses);
   const existing = await collection.findOne({ standardKey: input.standardKey });
 
   if (existing) {
-    throw new Error("This standardized course already exists. Edit the existing course instead.");
+    throw new Error(
+      "This standardized course already exists. Edit the existing course instead.",
+    );
   }
 
   const course: CourseItem & { createdAt: string; createdBy: string } = {
@@ -589,7 +633,9 @@ export async function updateCourse(input: {
   });
 
   if (conflictingCourse) {
-    throw new Error("This standardized course already exists. Edit the existing course instead.");
+    throw new Error(
+      "This standardized course already exists. Edit the existing course instead.",
+    );
   }
 
   await collection.updateOne(
@@ -635,8 +681,8 @@ export async function updateCourse(input: {
 export async function getAllDetailedCourses() {
   await ensureStandardCoursesBackfilled();
   const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
-  const hydrated = stripMongoIds(await collection.find({}).toArray()).map((course) =>
-    hydrateCourse(course),
+  const hydrated = stripMongoIds(await collection.find({}).toArray()).map(
+    (course) => hydrateCourse(course),
   );
   return dedupeAndSortCourses(hydrated);
 }
@@ -650,7 +696,9 @@ export async function getTestsForRole(role: Role, userId?: string) {
 
   if (role === "student") {
     return stripMongoIds(
-      await collection.find({ audience: role, assignedUserIds: userId }).toArray(),
+      await collection
+        .find({ audience: role, assignedUserIds: userId })
+        .toArray(),
     );
   }
 
@@ -693,7 +741,9 @@ export async function getMessagesForRole(role: Role, userId?: string) {
     .filter((message) => isMessageActive(message, now))
     .sort((left, right) => {
       const leftTime = left.createdAt ? new Date(left.createdAt).getTime() : 0;
-      const rightTime = right.createdAt ? new Date(right.createdAt).getTime() : 0;
+      const rightTime = right.createdAt
+        ? new Date(right.createdAt).getTime()
+        : 0;
       return rightTime - leftTime;
     });
 }
@@ -713,7 +763,9 @@ export async function createMessage(input: {
     body: input.body,
     channel: input.channel,
     author: input.author,
-    audience: input.audience?.length ? input.audience : ["student", "educator", "admin"],
+    audience: input.audience?.length
+      ? input.audience
+      : ["student", "educator", "admin"],
     userIds: input.userIds?.length ? input.userIds : undefined,
     createdAt: new Date().toISOString(),
     expiresAt: input.expiresAt ?? null,
@@ -732,13 +784,18 @@ export async function getUsersForAdmin() {
 
 export async function getStudentDirectory() {
   const collection = await getUsersCollection();
-  const students = await collection.find({ role: "student" }).sort({ name: 1 }).toArray();
+  const students = await collection
+    .find({ role: "student" })
+    .sort({ name: 1 })
+    .toArray();
   return students.map(toManagedUser);
 }
 
 export async function createUserRecord(input: {
   name: string;
   email: string;
+  mobile?: string;
+  parentMobile?: string;
   role: Role;
   password: string;
   program: string;
@@ -749,6 +806,9 @@ export async function createUserRecord(input: {
     name: input.name,
     email: input.email,
     emailKey: input.email.toLowerCase(),
+    mobile: input.mobile,
+    mobileKey: input.mobile,
+    parentMobile: input.parentMobile,
     role: input.role,
     label: getRoleLabel(input.role),
     password: input.password,
@@ -800,17 +860,33 @@ export async function findUserDocumentByEmail(email: string) {
   return collection.findOne({ emailKey: email.toLowerCase() });
 }
 
+export async function findUserDocumentByMobile(mobile: string) {
+  const collection = await getUsersCollection();
+  const mobileKey = mobile.replace(/[^\d]/g, "").slice(-10);
+
+  return collection.findOne({
+    $or: [{ mobile: mobileKey }, { mobileKey }],
+  });
+}
+
 export async function getTestSubmissionsForRole(role: Role, userId?: string) {
-  const collection = await getCollection<TestSubmission>(COLLECTIONS.submissions);
+  const collection = await getCollection<TestSubmission>(
+    COLLECTIONS.submissions,
+  );
 
   if (role === "student") {
     return stripMongoIds(
-      await collection.find({ studentId: userId }).sort({ submittedAt: -1 }).toArray(),
+      await collection
+        .find({ studentId: userId })
+        .sort({ submittedAt: -1 })
+        .toArray(),
     );
   }
 
   if (role === "educator" || role === "admin") {
-    return stripMongoIds(await collection.find({}).sort({ submittedAt: -1 }).toArray());
+    return stripMongoIds(
+      await collection.find({}).sort({ submittedAt: -1 }).toArray(),
+    );
   }
 
   return [];
@@ -842,7 +918,9 @@ export async function createTestSubmission(input: {
     publishedMessageTitle: `${test.title} pending review`,
   };
 
-  const submissions = await getCollection<TestSubmission>(COLLECTIONS.submissions);
+  const submissions = await getCollection<TestSubmission>(
+    COLLECTIONS.submissions,
+  );
   await submissions.insertOne(submission);
   return { submission };
 }
@@ -853,7 +931,9 @@ export async function gradeSubmission(input: {
   feedback?: string;
   gradedBy: string;
 }) {
-  const submissions = await getCollection<TestSubmission>(COLLECTIONS.submissions);
+  const submissions = await getCollection<TestSubmission>(
+    COLLECTIONS.submissions,
+  );
   const submission = await submissions.findOne({ id: input.submissionId });
 
   if (!submission) {
@@ -865,12 +945,16 @@ export async function gradeSubmission(input: {
     ...submission,
     score: input.score,
     status: "published",
-    feedback: input.feedback || `Result reviewed and published by ${input.gradedBy}.`,
+    feedback:
+      input.feedback || `Result reviewed and published by ${input.gradedBy}.`,
     gradedBy: input.gradedBy,
     publishedMessageTitle,
   };
 
-  await submissions.updateOne({ id: input.submissionId }, { $set: updatedSubmission });
+  await submissions.updateOne(
+    { id: input.submissionId },
+    { $set: updatedSubmission },
+  );
 
   const message = await createMessage({
     title: publishedMessageTitle,
@@ -922,10 +1006,7 @@ export async function getDashboardBundle(
 export async function getLibraryBooksForRole(role: Role) {
   const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
   return stripMongoIds(
-    await collection
-      .find({ audience: role })
-      .sort({ createdAt: -1 })
-      .toArray(),
+    await collection.find({ audience: role }).sort({ createdAt: -1 }).toArray(),
   );
 }
 
@@ -935,7 +1016,9 @@ export async function getLibraryBookById(id: string) {
   return book ? stripMongoId(book) : null;
 }
 
-export async function createLibraryBook(input: Omit<LibraryBook, "id" | "createdAt">) {
+export async function createLibraryBook(
+  input: Omit<LibraryBook, "id" | "createdAt">,
+) {
   const book: LibraryBook = {
     id: randomUUID(),
     ...input,
@@ -950,52 +1033,65 @@ export async function createLibraryBook(input: Omit<LibraryBook, "id" | "created
 export async function deleteLibraryBook(id: string) {
   const collection = await getCollection<LibraryBook>(COLLECTIONS.library);
   const book = await collection.findOne({ id });
-  
+
   if (!book) return null;
 
   await collection.deleteOne({ id });
   return book;
 }
 
-export async function getPerformanceReports(filter: { studentId?: string; batchName?: string } = {}) {
-  const collection = await getCollection<PerformanceReport>(COLLECTIONS.performance);
+export async function getPerformanceReports(
+  filter: { studentId?: string; batchName?: string } = {},
+) {
+  const collection = await getCollection<PerformanceReport>(
+    COLLECTIONS.performance,
+  );
   const query: any = {};
   if (filter.studentId) query.studentId = filter.studentId;
   if (filter.batchName) query.batchName = filter.batchName;
-  
+
   return stripMongoIds(
-    await collection.find(query).sort({ createdAt: -1 }).toArray()
+    await collection.find(query).sort({ createdAt: -1 }).toArray(),
   );
 }
 
-export async function createPerformanceReport(input: Omit<PerformanceReport, "id" | "createdAt">) {
+export async function createPerformanceReport(
+  input: Omit<PerformanceReport, "id" | "createdAt">,
+) {
   const report: PerformanceReport = {
     id: randomUUID(),
     ...input,
     createdAt: new Date().toISOString(),
   };
 
-  const collection = await getCollection<PerformanceReport>(COLLECTIONS.performance);
+  const collection = await getCollection<PerformanceReport>(
+    COLLECTIONS.performance,
+  );
   await collection.insertOne(report);
   return report;
 }
 
 export async function getPerformanceHeuristics(educatorId: string) {
-  const collection = await getCollection<{ educatorId: string; heuristics: PerformanceHeuristics }>(
-    COLLECTIONS.heuristics
-  );
+  const collection = await getCollection<{
+    educatorId: string;
+    heuristics: PerformanceHeuristics;
+  }>(COLLECTIONS.heuristics);
   const document = await collection.findOne({ educatorId });
   return document ? document.heuristics : DEFAULT_HEURISTICS;
 }
 
-export async function savePerformanceHeuristics(educatorId: string, heuristics: PerformanceHeuristics) {
-  const collection = await getCollection<{ educatorId: string; heuristics: PerformanceHeuristics }>(
-    COLLECTIONS.heuristics
-  );
+export async function savePerformanceHeuristics(
+  educatorId: string,
+  heuristics: PerformanceHeuristics,
+) {
+  const collection = await getCollection<{
+    educatorId: string;
+    heuristics: PerformanceHeuristics;
+  }>(COLLECTIONS.heuristics);
   await collection.updateOne(
     { educatorId },
     { $set: { heuristics } },
-    { upsert: true }
+    { upsert: true },
   );
   return heuristics;
 }

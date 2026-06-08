@@ -21,18 +21,7 @@ export default async function LoginPage() {
           <div className="mx-auto w-full max-w-md">
             <RealLoginForm />
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-center">
-              <p className="text-sm font-semibold text-[var(--color-muted)]">
-                Don&apos;t have an account?
-              </p>
-
-              <Link
-                href="/contact"
-                className="text-sm font-bold text-blue-500 hover:underline"
-              >
-                Contact Admissions to Register
-              </Link>
-            </div>
+            
           </div>
         </section>
 

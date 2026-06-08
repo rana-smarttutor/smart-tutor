@@ -1,7 +1,7 @@
 "use client";
 
 import { upload } from "@vercel/blob/client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Book = {
   _id?: string;
@@ -10,10 +10,12 @@ type Book = {
   description?: string;
   price?: string;
   fileName?: string;
+  pathname?: string;
+  categoryId?: string;
+  categoryLabel?: string;
   url?: string;
   downloadUrl?: string;
   thumbnailUrl?: string;
-  pathname?: string;
 };
 
 type UploadedBlobInfo = {
@@ -27,6 +29,192 @@ type DigitalLibraryClientProps = {
   canManage?: boolean;
   isLoggedIn?: boolean;
 };
+
+type LibraryCategory = {
+  id: string;
+  label: string;
+  description: string;
+  keywords: string[];
+};
+
+const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
+  {
+    id: "all",
+    label: "All Libraries",
+    description: "Browse every available PDF study material.",
+    keywords: [],
+  },
+  {
+    id: "school-learning",
+    label: "School Learning Library",
+    description: "School subjects, board exams, concepts and textbook support.",
+    keywords: [
+      "school",
+      "ssc",
+      "cbse",
+      "hsc",
+      "math",
+      "maths",
+      "algebra",
+      "trigonometry",
+      "chemistry",
+      "physics",
+      "biology",
+      "science",
+      "computer",
+      "calculus",
+      "economics",
+      "english",
+      "evs",
+    ],
+  },
+  {
+    id: "competitive-exam",
+    label: "All Competitive Exam Library",
+    description: "JEE, NEET, CET, entrance exams and competitive preparation.",
+    keywords: [
+      "jee",
+      "neet",
+      "cet",
+      "entrance",
+      "competitive",
+      "exam",
+      "mcq",
+      "aptitude",
+      "reasoning",
+    ],
+  },
+  {
+    id: "government-exam",
+    label: "All Government Exam Library",
+    description:
+      "Government exam preparation, banking, railway, SSC and public sector exams.",
+    keywords: [
+      "government",
+      "ssc cgl",
+      "ssc",
+      "banking",
+      "railway",
+      "upsc",
+      "mpsc",
+      "police",
+      "clerk",
+      "po",
+      "ibps",
+    ],
+  },
+  {
+    id: "fiction",
+    label: "Fiction Books Library",
+    description: "Novels, stories and creative reading books.",
+    keywords: [
+      "fiction",
+      "novel",
+      "story",
+      "stories",
+      "literature",
+      "drama",
+      "poem",
+      "poetry",
+    ],
+  },
+  {
+    id: "non-fiction",
+    label: "Non-Fiction Books Library",
+    description: "Knowledge books, practical learning and real-world subjects.",
+    keywords: [
+      "non fiction",
+      "non-fiction",
+      "history",
+      "geography",
+      "business",
+      "finance",
+      "economics",
+      "psychology",
+      "science",
+    ],
+  },
+  {
+    id: "biography",
+    label: "Biography & Autobiography Library",
+    description: "Life stories, leaders, achievers and inspirational journeys.",
+    keywords: [
+      "biography",
+      "autobiography",
+      "memoir",
+      "life story",
+      "gandhi",
+      "abdul kalam",
+      "steve jobs",
+      "elon",
+      "leader",
+    ],
+  },
+  {
+    id: "personality-development",
+    label: "Personality Development Library",
+    description: "Confidence, communication, habits, mindset and self-growth.",
+    keywords: [
+      "personality",
+      "confidence",
+      "communication",
+      "self help",
+      "self-help",
+      "habits",
+      "mindset",
+      "leadership",
+      "motivation",
+      "growth",
+    ],
+  },
+  {
+    id: "spoken-english",
+    label: "Spoken English Library",
+    description: "English speaking, vocabulary, grammar and fluency improvement.",
+    keywords: [
+      "spoken english",
+      "english speaking",
+      "grammar",
+      "vocabulary",
+      "communication",
+      "fluency",
+      "ielts",
+    ],
+  },
+  {
+    id: "technology-ai",
+    label: "Technology & AI Library",
+    description: "Computer science, Python, AI, data analytics and digital skills.",
+    keywords: [
+      "computer",
+      "python",
+      "coding",
+      "programming",
+      "ai",
+      "artificial intelligence",
+      "machine learning",
+      "deep learning",
+      "data",
+      "analytics",
+      "google analytics",
+    ],
+  },
+  {
+    id: "career-placement",
+    label: "Career & Placement Library",
+    description: "Interview preparation, resumes, career skills and job readiness.",
+    keywords: [
+      "career",
+      "placement",
+      "interview",
+      "resume",
+      "cv",
+      "job",
+      "corporate",
+      "aptitude",
+    ],
+  },
+];
 
 function safeBookName(name: string) {
   return name
@@ -73,6 +261,28 @@ function editPriceValue(value?: string) {
   }
 
   return String(value).replace(/[^\d]/g, "") || "0";
+}
+
+function getBookSearchText(book: Book) {
+  return `${book.title || ""} ${book.description || ""} ${book.fileName || ""} ${
+    book.price || ""
+  }`
+    .toLowerCase()
+    .replace(/[_-]/g, " ");
+}
+
+function getBookCategoryIds(book: Book) {
+  const searchText = getBookSearchText(book);
+
+  return DEFAULT_LIBRARY_CATEGORIES.filter((category) => {
+    if (category.id === "all") {
+      return true;
+    }
+
+    return category.keywords.some((keyword) =>
+      searchText.includes(keyword.toLowerCase()),
+    );
+  }).map((category) => category.id);
 }
 
 async function readJsonResponse(response: Response) {
@@ -123,8 +333,19 @@ export function DigitalLibraryClient({
   const [allowedToManage, setAllowedToManage] = useState(canManage);
   const [loggedIn, setLoggedIn] = useState(isLoggedIn);
   const [query, setQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeLibraryCategory, setActiveLibraryCategory] = useState("all");
 
+  const [customLibraryCategories, setCustomLibraryCategories] = useState<
+    LibraryCategory[]
+  >([]);
+  const [librarySectionId, setLibrarySectionId] = useState("school-learning");
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
+  const [newSectionName, setNewSectionName] = useState("");
+  const [newSectionDescription, setNewSectionDescription] = useState("");
+  const [isCreatingSection, setIsCreatingSection] = useState(false);
+  const [sectionError, setSectionError] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [bookName, setBookName] = useState("");
@@ -139,21 +360,113 @@ export function DigitalLibraryClient({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const filteredBooks = useMemo(() => {
-    const value = query.trim().toLowerCase();
+  const libraryCategories = useMemo(() => {
+    const map = new Map<string, LibraryCategory>();
 
-    if (!value) {
-      return books;
+    [...DEFAULT_LIBRARY_CATEGORIES, ...customLibraryCategories].forEach(
+      (category) => {
+        if (!map.has(category.id)) {
+          map.set(category.id, category);
+        }
+      },
+    );
+
+    return Array.from(map.values());
+  }, [customLibraryCategories]);
+
+  const filteredBooks = useMemo(() => {
+    const searchValue = query.trim().toLowerCase();
+
+    return books.filter((book) => {
+      const bookSearchText = getBookSearchText(book);
+      const fallbackCategoryIds = getBookCategoryIds(book);
+
+      const bookCategoryIds = book.categoryId
+        ? ["all", book.categoryId]
+        : fallbackCategoryIds;
+
+      const matchesCategory =
+        activeLibraryCategory === "all" ||
+        bookCategoryIds.includes(activeLibraryCategory);
+
+      const matchesSearch = !searchValue || bookSearchText.includes(searchValue);
+
+      return matchesCategory && matchesSearch;
+    });
+  }, [books, query, activeLibraryCategory]);
+
+  async function loadCustomSections() {
+    try {
+      const response = await fetch("/api/digital-library/sections", {
+        cache: "no-store",
+      });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        sections?: LibraryCategory[];
+      };
+
+      if (response.ok && data.success) {
+        setCustomLibraryCategories(data.sections || []);
+      }
+    } catch (error) {
+      console.error("Custom library sections load error:", error);
+    }
+  }
+
+  async function createLibrarySection() {
+    const label = newSectionName.trim();
+
+    if (!label) {
+      setSectionError("Please enter a section name.");
+      return;
     }
 
-    return books.filter((book) =>
-      `${book.title} ${book.description || ""} ${book.fileName || ""} ${
-        book.price || ""
-      }`
-        .toLowerCase()
-        .includes(value),
-    );
-  }, [books, query]);
+    setIsCreatingSection(true);
+    setSectionError("");
+
+    try {
+      const response = await fetch("/api/digital-library/sections", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          label,
+          description:
+            newSectionDescription.trim() || "Custom digital library section.",
+        }),
+      });
+
+      const data = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        sections?: LibraryCategory[];
+        section?: LibraryCategory;
+      };
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to create section.");
+      }
+
+      setCustomLibraryCategories(data.sections || []);
+      setActiveLibraryCategory(data.section?.id || "all");
+      setLibrarySectionId(data.section?.id || "school-learning");
+      setNewSectionName("");
+      setNewSectionDescription("");
+      setIsSectionModalOpen(false);
+    } catch (error) {
+      setSectionError(
+        error instanceof Error ? error.message : "Failed to create section.",
+      );
+    } finally {
+      setIsCreatingSection(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadCustomSections();
+  }, []);
 
   async function loadBooks() {
     setIsLoading(true);
@@ -196,6 +509,7 @@ export function DigitalLibraryClient({
     setBookName("");
     setDescription("");
     setPrice("0");
+    setLibrarySectionId("school-learning");
     setPdfFile(null);
     setThumbnailFile(null);
     setUploadStatus("");
@@ -212,6 +526,7 @@ export function DigitalLibraryClient({
     setBookName(book.title);
     setDescription(book.description || "");
     setPrice(editPriceValue(book.price));
+    setLibrarySectionId(book.categoryId || "school-learning");
     setPdfFile(null);
     setThumbnailFile(null);
     setUploadStatus("");
@@ -318,13 +633,23 @@ export function DigitalLibraryClient({
       return;
     }
 
+    const selectedLibrarySection =
+      libraryCategories.find((category) => category.id === librarySectionId) ||
+      libraryCategories.find((category) => category.id === "school-learning") ||
+      DEFAULT_LIBRARY_CATEGORIES[1];
+
+    const safeSectionId =
+      selectedLibrarySection.id === "all"
+        ? "school-learning"
+        : selectedLibrarySection.id;
+
     const storedPrice = normalizeStoredPrice(price);
     const storedDescription = safeBookName(
       description ||
         "Access this PDF study material for focused learning and revision",
     ).slice(0, 90);
 
-    const assetKey = `${Date.now()}__${storedPrice}__${storedDescription}__${safeTitle}`;
+    const assetKey = `${Date.now()}__${storedPrice}__${safeSectionId}__${storedDescription}__${safeTitle}`;
 
     setIsSaving(true);
     setUploadProgress(0);
@@ -378,6 +703,8 @@ export function DigitalLibraryClient({
             title,
             price,
             description,
+            categoryId: safeSectionId,
+            categoryLabel: selectedLibrarySection.label,
             assetKey,
             uploadedPdf,
             uploadedThumbnail,
@@ -578,13 +905,49 @@ export function DigitalLibraryClient({
             />
           </div>
 
+          <div className="mt-6">
+            <div className="library-scroll-row flex gap-3 overflow-x-auto pb-3">
+              {allowedToManage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSectionError("");
+                    setIsSectionModalOpen(true);
+                  }}
+                  className="shrink-0 rounded-full border border-emerald-500 bg-emerald-500 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400"
+                >
+                  + Create Section
+                </button>
+              )}
+
+              {libraryCategories.map((category) => {
+                const isActive = activeLibraryCategory === category.id;
+
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setActiveLibraryCategory(category.id)}
+                    className={`shrink-0 rounded-full border px-5 py-3 text-xs font-black uppercase tracking-widest transition ${
+                      isActive
+                        ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300"
+                    }`}
+                  >
+                    {category.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {isLoading ? (
             <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300">
               Loading library...
             </p>
           ) : filteredBooks.length === 0 ? (
             <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300">
-              No PDFs found.
+              No PDFs found in this library section.
             </p>
           ) : (
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -668,6 +1031,89 @@ export function DigitalLibraryClient({
           )}
         </section>
       </section>
+
+      {allowedToManage && isSectionModalOpen && (
+        <div
+          className="fixed inset-0 z-[105] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
+          onMouseDown={() => {
+            if (!isCreatingSection) {
+              setIsSectionModalOpen(false);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(event) => event.stopPropagation()}
+            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-7"
+          >
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-emerald-500">
+              New Library Section
+            </p>
+
+            <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+              Create Section
+            </h2>
+
+            <div className="mt-6 grid gap-4">
+              <label className="grid gap-2">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                  Section Name
+                </span>
+
+                <input
+                  value={newSectionName}
+                  onChange={(event) => setNewSectionName(event.target.value)}
+                  placeholder="Example: Olympiad Library"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-emerald-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                  Short Description
+                </span>
+
+                <textarea
+                  value={newSectionDescription}
+                  onChange={(event) =>
+                    setNewSectionDescription(event.target.value)
+                  }
+                  placeholder="Write what this section is for"
+                  rows={3}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-emerald-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                />
+              </label>
+
+              {sectionError && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+                  {sectionError}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-7 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsSectionModalOpen(false)}
+                disabled={isCreatingSection}
+                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black dark:border-white/15"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void createLibrarySection()}
+                disabled={isCreatingSection}
+                className="rounded-xl bg-emerald-500 px-6 py-3 text-sm font-black text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isCreatingSection ? "Creating..." : "Create Section"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {allowedToManage && bookToDelete && (
         <div
@@ -791,6 +1237,27 @@ export function DigitalLibraryClient({
                   rows={3}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
                 />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                  Library Section
+                </span>
+
+                <select
+                  value={librarySectionId}
+                  onChange={(event) => setLibrarySectionId(event.target.value)}
+                  required
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                >
+                  {libraryCategories
+                    .filter((category) => category.id !== "all")
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.label}
+                      </option>
+                    ))}
+                </select>
               </label>
 
               <label className="grid gap-2">
