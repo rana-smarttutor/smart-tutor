@@ -95,8 +95,8 @@ export function GrandSuccessCarousel() {
       </div>
 
       <div className="flex w-full flex-col items-center">
-        <div className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-[1.5rem] border-2 border-white bg-slate-50 shadow-2xl transition-all duration-500 sm:rounded-[2.5rem] sm:border-4">
-          <div className="relative aspect-[16/10] w-full sm:aspect-[21/10]">
+        <div className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-[1.5rem] border-2 border-white bg-white shadow-2xl transition-all duration-500 sm:rounded-[2.5rem] sm:border-4">
+          <div className="relative aspect-[16/11] w-full sm:aspect-[21/11]">
             <Image
               key={activeCategory.image}
               src={activeCategory.image}
@@ -104,7 +104,7 @@ export function GrandSuccessCarousel() {
               fill
               priority
               sizes="(max-width: 768px) 100vw, 1100px"
-              className="object-cover object-center transition-opacity duration-500 ease-in-out"
+              className="object-contain object-center transition-opacity duration-500 ease-in-out"
             />
           </div>
         </div>

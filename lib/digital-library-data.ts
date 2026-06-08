@@ -3,6 +3,7 @@ import { list } from "@vercel/blob";
 export type DigitalLibraryBook = {
   id: string;
   title: string;
+  description: string;
   price: string;
   fileName: string;
   pathname: string;
@@ -12,6 +13,9 @@ export type DigitalLibraryBook = {
   uploadedAt: string;
 };
 
+const DEFAULT_BOOK_DESCRIPTION =
+  "Access this PDF study material for focused learning and revision.";
+
 function displayPrice(rawPrice: string) {
   if (rawPrice === "free" || Number(rawPrice) <= 0) {
     return "Free";
@@ -20,17 +24,36 @@ function displayPrice(rawPrice: string) {
   return `₹${Number(rawPrice).toLocaleString("en-IN")}`;
 }
 
+function humanizeSlug(value: string) {
+  return decodeURIComponent(value || "")
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function parseNewBookPath(pathname: string) {
   const value = pathname
     .replace("digital-library/books/", "")
     .replace(/\.pdf$/i, "");
 
-  const [id, rawPrice = "free", ...titleParts] = value.split("__");
-  const storedTitle = titleParts.join("__");
+  const [id, rawPrice = "free", thirdPart = "", ...remainingParts] =
+    value.split("__");
+
+  const hasDescription = remainingParts.length > 0;
+
+  const storedDescription = hasDescription ? thirdPart : "";
+  const storedTitle = hasDescription ? remainingParts.join("__") : thirdPart;
+
+  const thumbnailKey = hasDescription
+    ? `${id}__${rawPrice}__${storedDescription}__${storedTitle}`
+    : `${id}__${rawPrice}__${storedTitle}`;
 
   return {
-    thumbnailKey: `${id}__${rawPrice}__${storedTitle}`,
-    title: storedTitle.replace(/-/g, " "),
+    thumbnailKey,
+    title: humanizeSlug(storedTitle),
+    description: hasDescription
+      ? humanizeSlug(storedDescription) || DEFAULT_BOOK_DESCRIPTION
+      : DEFAULT_BOOK_DESCRIPTION,
     fileName: `${storedTitle}.pdf`,
     price: displayPrice(rawPrice),
   };
@@ -44,8 +67,7 @@ function parseOldBookPath(pathname: string) {
   const hasTimestamp = /^\d{10,}$/.test(possibleTimestamp);
 
   const possiblePrice = hasTimestamp ? parts[1] || "free" : "free";
-  const hasPrice =
-    possiblePrice === "free" || /^\d+$/.test(possiblePrice);
+  const hasPrice = possiblePrice === "free" || /^\d+$/.test(possiblePrice);
 
   const fileName =
     hasTimestamp && hasPrice
@@ -56,6 +78,7 @@ function parseOldBookPath(pathname: string) {
 
   return {
     title: fileName.replace(/\.[^/.]+$/, "").replace(/-/g, " "),
+    description: DEFAULT_BOOK_DESCRIPTION,
     fileName,
     price: hasTimestamp && hasPrice ? displayPrice(possiblePrice) : "Free",
   };
@@ -101,13 +124,12 @@ export async function getDigitalLibraryBooks(
       return {
         id: encodeURIComponent(blob.pathname),
         title: parsed.title,
+        description: parsed.description,
         price: parsed.price,
         fileName: parsed.fileName,
         pathname: blob.pathname,
         url: canAccessPdf ? blob.url : undefined,
-        downloadUrl: canAccessPdf
-          ? blob.downloadUrl || blob.url
-          : undefined,
+        downloadUrl: canAccessPdf ? blob.downloadUrl || blob.url : undefined,
         thumbnailUrl: thumbnailMap.get(parsed.thumbnailKey),
         uploadedAt: new Date(blob.uploadedAt).toISOString(),
       };
@@ -121,13 +143,12 @@ export async function getDigitalLibraryBooks(
       return {
         id: encodeURIComponent(blob.pathname),
         title: parsed.title,
+        description: parsed.description,
         price: parsed.price,
         fileName: parsed.fileName,
         pathname: blob.pathname,
         url: canAccessPdf ? blob.url : undefined,
-        downloadUrl: canAccessPdf
-          ? blob.downloadUrl || blob.url
-          : undefined,
+        downloadUrl: canAccessPdf ? blob.downloadUrl || blob.url : undefined,
         thumbnailUrl: undefined,
         uploadedAt: new Date(blob.uploadedAt).toISOString(),
       };
@@ -135,7 +156,6 @@ export async function getDigitalLibraryBooks(
 
   return [...newBooks, ...oldBooks].sort(
     (a, b) =>
-      new Date(b.uploadedAt).getTime() -
-      new Date(a.uploadedAt).getTime(),
+      new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
   );
 }

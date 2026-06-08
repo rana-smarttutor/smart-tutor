@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 
 type UploadPayload = {
   assetType?: 'book' | 'thumbnail';
+  description?: string;
 };
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -80,6 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
             : 5 * 1024 * 1024,
           tokenPayload: JSON.stringify({
             assetType: payload.assetType,
+            description: payload.description,
             pathname,
           }),
         };

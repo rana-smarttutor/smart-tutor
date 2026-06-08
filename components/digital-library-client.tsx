@@ -7,6 +7,7 @@ type Book = {
   _id?: string;
   id?: string;
   title: string;
+  description?: string;
   price?: string;
   fileName?: string;
   url?: string;
@@ -127,6 +128,7 @@ export function DigitalLibraryClient({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [bookName, setBookName] = useState("");
+  const [description, setDescription] = useState("");
   const [price, setPrice] = useState("0");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -145,7 +147,9 @@ export function DigitalLibraryClient({
     }
 
     return books.filter((book) =>
-      `${book.title} ${book.fileName || ""} ${book.price || ""}`
+      `${book.title} ${book.description || ""} ${book.fileName || ""} ${
+        book.price || ""
+      }`
         .toLowerCase()
         .includes(value),
     );
@@ -190,6 +194,7 @@ export function DigitalLibraryClient({
     setIsModalOpen(false);
     setEditingBook(null);
     setBookName("");
+    setDescription("");
     setPrice("0");
     setPdfFile(null);
     setThumbnailFile(null);
@@ -205,6 +210,7 @@ export function DigitalLibraryClient({
   function openEdit(book: Book) {
     setEditingBook(book);
     setBookName(book.title);
+    setDescription(book.description || "");
     setPrice(editPriceValue(book.price));
     setPdfFile(null);
     setThumbnailFile(null);
@@ -313,7 +319,12 @@ export function DigitalLibraryClient({
     }
 
     const storedPrice = normalizeStoredPrice(price);
-    const assetKey = `${Date.now()}__${storedPrice}__${safeTitle}`;
+    const storedDescription = safeBookName(
+      description ||
+        "Access this PDF study material for focused learning and revision",
+    ).slice(0, 90);
+
+    const assetKey = `${Date.now()}__${storedPrice}__${storedDescription}__${safeTitle}`;
 
     setIsSaving(true);
     setUploadProgress(0);
@@ -366,6 +377,7 @@ export function DigitalLibraryClient({
           body: JSON.stringify({
             title,
             price,
+            description,
             assetKey,
             uploadedPdf,
             uploadedThumbnail,
@@ -384,9 +396,7 @@ export function DigitalLibraryClient({
     } catch (error) {
       console.error("Material save error:", error);
 
-      alert(
-        error instanceof Error ? error.message : "Unable to save material.",
-      );
+      alert(error instanceof Error ? error.message : "Unable to save material.");
     } finally {
       setIsSaving(false);
       setUploadStatus("");
@@ -610,8 +620,8 @@ export function DigitalLibraryClient({
                     </h3>
 
                     <p className="mt-2 line-clamp-2 min-h-[48px] text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">
-                      Access this PDF study material for focused learning and
-                      revision.
+                      {book.description ||
+                        "Access this PDF study material for focused learning and revision."}
                     </p>
 
                     <div className="mt-5 grid grid-cols-2 gap-3">
@@ -658,6 +668,7 @@ export function DigitalLibraryClient({
           )}
         </section>
       </section>
+
       {allowedToManage && bookToDelete && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-[2px]"
@@ -721,6 +732,7 @@ export function DigitalLibraryClient({
           </div>
         </div>
       )}
+
       {allowedToManage && isModalOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
@@ -764,6 +776,20 @@ export function DigitalLibraryClient({
                   onChange={(event) => setBookName(event.target.value)}
                   placeholder="Enter book name"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                />
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                  Description
+                </span>
+
+                <textarea
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  placeholder="Enter description shown on the PDF card"
+                  rows={3}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
                 />
               </label>
 
