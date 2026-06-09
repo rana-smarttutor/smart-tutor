@@ -7,6 +7,7 @@ type RealLoginFormProps = {
 };
 
 type AuthMode = "login" | "signup";
+type SignupRole = "student" | "parent";
 
 function normalizePhone(value: string) {
   return value.replace(/[^\d]/g, "").slice(0, 10);
@@ -14,6 +15,7 @@ function normalizePhone(value: string) {
 
 export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("login");
+  const [signupRole, setSignupRole] = useState<SignupRole>("student");
 
   const [emailOrMobile, setEmailOrMobile] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +24,11 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
   const [course, setCourse] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
   const [studentMobile, setStudentMobile] = useState("");
+
+  const [parentName, setParentName] = useState("");
+  const [parentEmail, setParentEmail] = useState("");
   const [parentMobile, setParentMobile] = useState("");
+  const [linkedStudentMobile, setLinkedStudentMobile] = useState("");
 
   const [activeRole, setActiveRole] = useState("student");
   const [error, setError] = useState("");
@@ -34,59 +40,99 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
     setPassword("");
 
     if (nextMode === "signup") {
+      setSignupRole("student");
       setActiveRole("student");
     }
+  }
+
+  function validateSignup() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const cleanPassword = password.trim();
+
+    if (signupRole === "student") {
+      const cleanStudentName = studentName.trim();
+      const cleanCourse = course.trim();
+      const cleanEmail = studentEmail.trim().toLowerCase();
+      const cleanStudentMobile = normalizePhone(studentMobile);
+
+      if (
+        !cleanStudentName ||
+        !cleanCourse ||
+        !cleanEmail ||
+        !cleanStudentMobile ||
+        !cleanPassword
+      ) {
+        setError("Please fill all student signup fields.");
+        return false;
+      }
+
+      if (!emailRegex.test(cleanEmail)) {
+        setError("Please enter a valid student email address.");
+        return false;
+      }
+
+      if (cleanStudentMobile.length !== 10) {
+        setError("Please enter a valid 10-digit student mobile number.");
+        return false;
+      }
+
+      if (cleanPassword.length < 6) {
+        setError("Password must be at least 6 characters long.");
+        return false;
+      }
+
+      return true;
+    }
+
+    const cleanParentName = parentName.trim();
+    const cleanParentEmail = parentEmail.trim().toLowerCase();
+    const cleanParentMobile = normalizePhone(parentMobile);
+    const cleanStudentMobile = normalizePhone(linkedStudentMobile);
+
+    if (
+      !cleanParentName ||
+      !cleanParentEmail ||
+      !cleanParentMobile ||
+      !cleanStudentMobile ||
+      !cleanPassword
+    ) {
+      setError("Please fill all parent signup fields.");
+      return false;
+    }
+
+    if (!emailRegex.test(cleanParentEmail)) {
+      setError("Please enter a valid parent email address.");
+      return false;
+    }
+
+    if (cleanParentMobile.length !== 10) {
+      setError("Please enter a valid 10-digit parent mobile number.");
+      return false;
+    }
+
+    if (cleanStudentMobile.length !== 10) {
+      setError("Please enter the student's valid 10-digit mobile number.");
+      return false;
+    }
+
+    if (cleanPassword.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return false;
+    }
+
+    return true;
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsPending(true);
     setError("");
-if (mode === "signup") {
-  const cleanStudentName = studentName.trim();
-  const cleanCourse = course.trim();
-  const cleanEmail = studentEmail.trim().toLowerCase();
-  const cleanStudentMobile = normalizePhone(studentMobile);
-  const cleanParentMobile = normalizePhone(parentMobile);
-  const cleanPassword = password.trim();
 
-  if (
-    !cleanStudentName ||
-    !cleanCourse ||
-    !cleanEmail ||
-    !cleanStudentMobile ||
-    !cleanParentMobile ||
-    !cleanPassword
-  ) {
-    setError("Please fill all signup fields before creating an account.");
-    setIsPending(false);
-    return;
-  }
+    if (mode === "signup" && !validateSignup()) {
+      setIsPending(false);
+      return;
+    }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-    setError("Please enter a valid student email address.");
-    setIsPending(false);
-    return;
-  }
-
-  if (cleanStudentMobile.length !== 10) {
-    setError("Please enter a valid 10-digit student mobile number.");
-    setIsPending(false);
-    return;
-  }
-
-  if (cleanParentMobile.length !== 10) {
-    setError("Please enter a valid 10-digit parent mobile number.");
-    setIsPending(false);
-    return;
-  }
-
-  if (cleanPassword.length < 6) {
-    setError("Password must be at least 6 characters long.");
-    setIsPending(false);
-    return;
-  }
-}
     try {
       const response = await fetch(
         mode === "login" ? "/api/auth/login" : "/api/auth/signup",
@@ -103,14 +149,23 @@ if (mode === "signup") {
                   password,
                   role: activeRole,
                 }
-              : {
-                  name: studentName,
-                  course,
-                  email: studentEmail,
-                  studentMobile,
-                  parentMobile,
-                  password,
-                },
+              : signupRole === "student"
+                ? {
+                    signupType: "student",
+                    name: studentName.trim(),
+                    course: course.trim(),
+                    email: studentEmail.trim().toLowerCase(),
+                    studentMobile: normalizePhone(studentMobile),
+                    password,
+                  }
+                : {
+                    signupType: "parent",
+                    name: parentName.trim(),
+                    email: parentEmail.trim().toLowerCase(),
+                    parentMobile: normalizePhone(parentMobile),
+                    studentMobile: normalizePhone(linkedStudentMobile),
+                    password,
+                  },
           ),
         },
       );
@@ -135,7 +190,7 @@ if (mode === "signup") {
       setError(
         mode === "login"
           ? "Unable to reach the login route."
-          : "Unable to create student account.",
+          : "Unable to create account.",
       );
     } finally {
       setIsPending(false);
@@ -154,7 +209,7 @@ if (mode === "signup") {
         <p className="text-sm font-medium text-[var(--color-muted)]">
           {mode === "login"
             ? "Select your portal and enter credentials to access your workspace."
-            : "Create a student account with student and parent details."}
+            : "Choose student or parent and create your account."}
         </p>
       </div>
 
@@ -210,56 +265,82 @@ if (mode === "signup") {
         </div>
       )}
 
-
+      {mode === "signup" && (
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { id: "student", label: "Student", icon: "🎓" },
+            { id: "parent", label: "Parent", icon: "👪" },
+          ].map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                setSignupRole(item.id as SignupRole);
+                setError("");
+              }}
+              className={`flex flex-col items-center justify-center rounded-2xl border p-5 transition-all duration-300 ${
+                signupRole === item.id
+                  ? "scale-[1.02] border-blue-600 bg-blue-50 text-blue-600 shadow-lg shadow-blue-200/50"
+                  : "border-slate-100 bg-slate-50/50 text-slate-400 hover:border-blue-200 hover:bg-blue-50/30"
+              }`}
+            >
+              <span className="mb-1 text-2xl">{item.icon}</span>
+              <span className="text-[10px] font-black uppercase tracking-wider">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         {mode === "signup" ? (
-          <>
-            <div className="space-y-1.5">
-              <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                Student Name
-              </label>
-              <input
-                type="text"
-                value={studentName}
-                onChange={(event) => setStudentName(event.target.value)}
-                autoComplete="name"
-                required
-                className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                placeholder="Enter student full name"
-              />
-            </div>
+          signupRole === "student" ? (
+            <>
+              <div className="space-y-1.5">
+                <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Student Name
+                </label>
+                <input
+                  type="text"
+                  value={studentName}
+                  onChange={(event) => setStudentName(event.target.value)}
+                  autoComplete="name"
+                  required
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                  placeholder="Enter student full name"
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                Course
-              </label>
-              <input
-                type="text"
-                value={course}
-                onChange={(event) => setCourse(event.target.value)}
-                required
-                className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                placeholder="Example: 10th SSC, JEE, NEET, Banking"
-              />
-            </div>
+              <div className="space-y-1.5">
+                <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Course
+                </label>
+                <input
+                  type="text"
+                  value={course}
+                  onChange={(event) => setCourse(event.target.value)}
+                  required
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                  placeholder="Example: 10th SSC, JEE, NEET, Banking"
+                />
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                Student Email
-              </label>
-              <input
-                type="email"
-                value={studentEmail}
-                onChange={(event) => setStudentEmail(event.target.value)}
-                autoComplete="email"
-                required
-                className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                placeholder="student@example.com"
-              />
-            </div>
+              <div className="space-y-1.5">
+                <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Student Email
+                </label>
+                <input
+                  type="email"
+                  value={studentEmail}
+                  onChange={(event) => setStudentEmail(event.target.value)}
+                  autoComplete="email"
+                  required
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                  placeholder="student@example.com"
+                />
+              </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
                   Student Number
@@ -274,7 +355,39 @@ if (mode === "signup") {
                   maxLength={10}
                   required
                   className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                  placeholder="10-digit number"
+                  placeholder="Enter student 10-digit number"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-1.5">
+                <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Parent Name
+                </label>
+                <input
+                  type="text"
+                  value={parentName}
+                  onChange={(event) => setParentName(event.target.value)}
+                  autoComplete="name"
+                  required
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                  placeholder="Enter parent full name"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Parent Email
+                </label>
+                <input
+                  type="email"
+                  value={parentEmail}
+                  onChange={(event) => setParentEmail(event.target.value)}
+                  autoComplete="email"
+                  required
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                  placeholder="parent@example.com"
                 />
               </div>
 
@@ -292,11 +405,29 @@ if (mode === "signup") {
                   maxLength={10}
                   required
                   className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                  placeholder="10-digit number"
+                  placeholder="Enter parent 10-digit number"
                 />
               </div>
-            </div>
-          </>
+
+              <div className="space-y-1.5">
+                <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Student Number
+                </label>
+                <input
+                  type="tel"
+                  value={linkedStudentMobile}
+                  onChange={(event) =>
+                    setLinkedStudentMobile(normalizePhone(event.target.value))
+                  }
+                  inputMode="numeric"
+                  maxLength={10}
+                  required
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                  placeholder="Enter student's registered number"
+                />
+              </div>
+            </>
+          )
         ) : (
           <div className="space-y-1.5">
             <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
@@ -359,7 +490,9 @@ if (mode === "signup") {
                 : "Creating account..."
               : mode === "login"
                 ? "Login"
-                : "Create Student Account"}
+                : signupRole === "student"
+                  ? "Create Student Account"
+                  : "Create Parent Account"}
 
             {!isPending && (
               <span className="transition-transform group-hover:translate-x-1">
@@ -370,9 +503,7 @@ if (mode === "signup") {
         </button>
 
         <p className="text-center text-sm font-bold text-[var(--color-muted)]">
-          {mode === "login"
-            ? "New student?"
-            : "Already have an account?"}{" "}
+          {mode === "login" ? "New here?" : "Already have an account?"}{" "}
           <button
             type="button"
             onClick={() => switchMode(mode === "login" ? "signup" : "login")}

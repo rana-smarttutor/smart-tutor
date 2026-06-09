@@ -48,6 +48,8 @@ type UserDocument = SessionUser & {
   mobile?: string;
   mobileKey?: string;
   parentMobile?: string;
+  linkedStudentId?: string;
+  linkedStudentMobile?: string;
   emailKey?: string;
   status?: "active" | "pending";
   permissions?: PermissionItem[];
@@ -796,6 +798,8 @@ export async function createUserRecord(input: {
   email: string;
   mobile?: string;
   parentMobile?: string;
+  linkedStudentId?: string;
+  linkedStudentMobile?: string;
   role: Role;
   password: string;
   program: string;
@@ -809,6 +813,8 @@ export async function createUserRecord(input: {
     mobile: input.mobile,
     mobileKey: input.mobile,
     parentMobile: input.parentMobile,
+    linkedStudentId: input.linkedStudentId,
+    linkedStudentMobile: input.linkedStudentMobile,
     role: input.role,
     label: getRoleLabel(input.role),
     password: input.password,
