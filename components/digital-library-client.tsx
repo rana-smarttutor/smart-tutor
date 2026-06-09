@@ -16,6 +16,7 @@ type Book = {
   url?: string;
   downloadUrl?: string;
   thumbnailUrl?: string;
+  previewUrl?: string;
 };
 
 type UploadedBlobInfo = {
@@ -805,16 +806,25 @@ export function DigitalLibraryClient({
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function previewBook(book: Book) {
-    const url = book.thumbnailUrl || book.url;
-
-    if (!url) {
-      alert("Preview is not available for this material.");
-      return;
-    }
-
-    window.open(url, "_blank", "noopener,noreferrer");
+function previewBook(book: Book) {
+  if (!loggedIn && !allowedToManage) {
+    window.location.href = `/login?callbackUrl=${encodeURIComponent(
+      "/library",
+    )}`;
+    return;
   }
+
+  if (!book.pathname) {
+    alert("Preview is not available for this material.");
+    return;
+  }
+
+  const previewUrl = `/api/digital-library/preview?pathname=${encodeURIComponent(
+    book.pathname,
+  )}`;
+
+  window.open(previewUrl, "_blank");
+}
 
   return (
     <main className="min-h-screen bg-transparent px-4 py-8 text-slate-950 dark:text-white sm:px-6">
