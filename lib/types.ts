@@ -1,11 +1,14 @@
 export type Role = "student" | "educator" | "admin" | "parent";
 
+export type UserStatus = "active" | "pending" | "rejected";
+
 export type SessionUser = {
   id: string;
   name: string;
   email: string;
   role: Role;
   label: string;
+  status?: UserStatus;
 };
 
 export type DemoCredential = {
@@ -22,7 +25,7 @@ export type DemoUserRecord = SessionUser & {
 
 export type ManagedUser = SessionUser & {
   program: string;
-  status: "active" | "pending";
+  status: UserStatus;
   passwordHint?: string;
 };
 

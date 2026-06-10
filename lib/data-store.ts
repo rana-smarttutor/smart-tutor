@@ -51,7 +51,7 @@ type UserDocument = SessionUser & {
   linkedStudentId?: string;
   linkedStudentMobile?: string;
   emailKey?: string;
-  status?: "active" | "pending";
+  status?: "active" | "pending" | "rejected";
   permissions?: PermissionItem[];
   createdAt?: string;
   updatedAt?: string;
@@ -177,7 +177,7 @@ function toManagedUser(user: UserDocument): ManagedUser {
   return {
     ...toSessionUser(user),
     program: user.program,
-    status: user.status ?? "active",
+    status: (user.status === "rejected" ? "pending" : user.status) ?? "active",
     passwordHint: user.password,
   };
 }
@@ -780,8 +780,74 @@ export async function createMessage(input: {
 
 export async function getUsersForAdmin() {
   const collection = await getUsersCollection();
+
   const users = await collection.find({}).sort({ name: 1 }).toArray();
+
   return users.map(toManagedUser);
+}
+
+export async function getPendingEducatorRequests() {
+  const collection = await getUsersCollection();
+
+  const users = await collection
+    .find({
+      role: "educator",
+      status: "pending",
+    })
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  return users.map(toManagedUser);
+}
+
+export async function approveEducatorRequest(userId: string) {
+  const collection = await getUsersCollection();
+
+  const result = await collection.updateOne(
+    {
+      id: userId,
+      role: "educator",
+    },
+    {
+      $set: {
+        status: "active",
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    return null;
+  }
+
+  const updatedUser = await collection.findOne({ id: userId });
+
+  return updatedUser ? toManagedUser(updatedUser) : null;
+}
+
+export async function rejectEducatorRequest(userId: string) {
+  const collection = await getUsersCollection();
+
+  const result = await collection.updateOne(
+    {
+      id: userId,
+      role: "educator",
+    },
+    {
+      $set: {
+        status: "rejected",
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    return null;
+  }
+
+  const updatedUser = await collection.findOne({ id: userId });
+
+  return updatedUser ? toManagedUser(updatedUser) : null;
 }
 
 export async function getStudentDirectory() {
@@ -803,7 +869,7 @@ export async function createUserRecord(input: {
   role: Role;
   password: string;
   program: string;
-  status?: "active" | "pending";
+  status?: "active" | "pending" | "rejected";
 }) {
   const document: UserDocument = {
     id: randomUUID(),
@@ -836,7 +902,7 @@ export async function updateUserRecord(input: {
   role: Role;
   password: string;
   program: string;
-  status?: "active" | "pending";
+  status?: "active" | "pending" | "rejected";
 }) {
   const collection = await getUsersCollection();
   const document: Partial<UserDocument> = {

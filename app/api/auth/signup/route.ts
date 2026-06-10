@@ -17,7 +17,7 @@ function normalizeMobile(value?: string) {
 
 export async function POST(request: Request) {
   let body: {
-    signupType?: "student" | "parent";
+    signupType?: "student" | "parent" | "educator";
 
     name?: string;
     course?: string;
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
   try {
     body = (await request.json()) as {
-      signupType?: "student" | "parent";
+      signupType?: "student" | "parent" | "educator";
       name?: string;
       course?: string;
       email?: string;
@@ -46,7 +46,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const signupType = body.signupType === "parent" ? "parent" : "student";
+  const signupType =
+    body.signupType === "parent"
+      ? "parent"
+      : body.signupType === "educator"
+        ? "educator"
+        : "student";
 
   const name = sanitizeTextInput(body.name, 80);
   const course = sanitizeTextInput(body.course, 120);
@@ -58,12 +63,14 @@ export async function POST(request: Request) {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (signupType === "student") {
+  if (signupType === "student" || signupType === "educator") {
     if (!name || !course || !email || !studentMobile || !password) {
       return NextResponse.json(
         {
           error:
-            "All student signup fields are required. Please fill student name, course, email, student number, parent number and password.",
+            signupType === "educator"
+              ? "All faculty signup fields are required. Please fill faculty name, department/subject, email, mobile number and password."
+              : "All student signup fields are required. Please fill student name, course, email, student number and password.",
         },
         { status: 400 },
       );
@@ -71,19 +78,27 @@ export async function POST(request: Request) {
 
     if (!emailRegex.test(email)) {
       return NextResponse.json(
-        { error: "Please enter a valid student email address." },
+        {
+          error:
+            signupType === "educator"
+              ? "Please enter a valid faculty email address."
+              : "Please enter a valid student email address.",
+        },
         { status: 400 },
       );
     }
 
     if (studentMobile.length !== 10) {
       return NextResponse.json(
-        { error: "Please enter a valid 10-digit student mobile number." },
+        {
+          error:
+            signupType === "educator"
+              ? "Please enter a valid 10-digit faculty mobile number."
+              : "Please enter a valid 10-digit student mobile number.",
+        },
         { status: 400 },
       );
     }
-
-
 
     if (password.length < 6) {
       return NextResponse.json(
@@ -105,7 +120,12 @@ export async function POST(request: Request) {
 
     if (existingMobile) {
       return NextResponse.json(
-        { error: "An account with this student mobile number already exists." },
+        {
+          error:
+            signupType === "educator"
+              ? "An account with this faculty mobile number already exists."
+              : "An account with this student mobile number already exists.",
+        },
         { status: 409 },
       );
     }
@@ -114,11 +134,28 @@ export async function POST(request: Request) {
       name,
       email,
       mobile: studentMobile,
-      role: "student",
+      role: signupType === "educator" ? "educator" : "student",
       password,
       program: course,
-      status: "active",
+      status: signupType === "educator" ? "pending" : "active",
     });
+
+    if (signupType === "educator") {
+      return NextResponse.json({
+        pendingApproval: true,
+        message:
+          "Your faculty account request has been submitted. Please wait for admin approval.",
+        redirectTo: "/waiting-approval",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          label: user.label,
+          status: user.status,
+        },
+      });
+    }
 
     return createSessionResponse({
       id: user.id,
