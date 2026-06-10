@@ -7,7 +7,7 @@ type RealLoginFormProps = {
 };
 
 type AuthMode = "login" | "signup";
-type SignupRole = "student" | "parent";
+type SignupRole = "student" | "parent" | "educator";
 
 function normalizePhone(value: string) {
   return value.replace(/[^\d]/g, "").slice(0, 10);
@@ -49,7 +49,7 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const cleanPassword = password.trim();
 
-    if (signupRole === "student") {
+    if (signupRole === "student" || signupRole === "educator") {
       const cleanStudentName = studentName.trim();
       const cleanCourse = course.trim();
       const cleanEmail = studentEmail.trim().toLowerCase();
@@ -62,17 +62,29 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
         !cleanStudentMobile ||
         !cleanPassword
       ) {
-        setError("Please fill all student signup fields.");
+        setError(
+          signupRole === "educator"
+            ? "Please fill all faculty signup fields."
+            : "Please fill all student signup fields.",
+        );
         return false;
       }
 
       if (!emailRegex.test(cleanEmail)) {
-        setError("Please enter a valid student email address.");
+        setError(
+          signupRole === "educator"
+            ? "Please enter a valid faculty email address."
+            : "Please enter a valid student email address.",
+        );
         return false;
       }
 
       if (cleanStudentMobile.length !== 10) {
-        setError("Please enter a valid 10-digit student mobile number.");
+        setError(
+          signupRole === "educator"
+            ? "Please enter a valid 10-digit faculty mobile number."
+            : "Please enter a valid 10-digit student mobile number.",
+        );
         return false;
       }
 
@@ -149,11 +161,14 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
                   password,
                   role: activeRole,
                 }
-              : signupRole === "student"
+              : signupRole === "student" || signupRole === "educator"
                 ? {
-                    signupType: "student",
+                    signupType: signupRole,
                     name: studentName.trim(),
-                    course: course.trim(),
+                    course:
+                      signupRole === "educator"
+                        ? course.trim() || "Faculty / Educator"
+                        : course.trim(),
                     email: studentEmail.trim().toLowerCase(),
                     studentMobile: normalizePhone(studentMobile),
                     password,
@@ -173,14 +188,18 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
       const responsePayload = (await response.json()) as {
         error?: string;
         message?: string;
+        redirectTo?: string;
+        pendingApproval?: boolean;
       };
-
       if (!response.ok) {
         setError(
-          responsePayload.error ??
-            responsePayload.message ??
-            "Request failed.",
+          responsePayload.error ?? responsePayload.message ?? "Request failed.",
         );
+        return;
+      }
+
+      if (responsePayload.redirectTo) {
+        window.location.assign(responsePayload.redirectTo);
         return;
       }
 
@@ -266,10 +285,11 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
       )}
 
       {mode === "signup" && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           {[
             { id: "student", label: "Student", icon: "🎓" },
             { id: "parent", label: "Parent", icon: "👪" },
+            { id: "educator", label: "Faculty", icon: "👨‍🏫" },
           ].map((item) => (
             <button
               key={item.id}
@@ -295,11 +315,11 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         {mode === "signup" ? (
-          signupRole === "student" ? (
+          signupRole === "student" || signupRole === "educator" ? (
             <>
               <div className="space-y-1.5">
                 <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Student Name
+                  {signupRole === "educator" ? "Faculty Name" : "Student Name"}
                 </label>
                 <input
                   type="text"
@@ -308,13 +328,19 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
                   autoComplete="name"
                   required
                   className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                  placeholder="Enter student full name"
+                  placeholder={
+                    signupRole === "educator"
+                      ? "Enter faculty full name"
+                      : "Enter student full name"
+                  }
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Course
+                  {signupRole === "educator"
+                    ? "Department / Subject"
+                    : "Course"}
                 </label>
                 <input
                   type="text"
@@ -322,13 +348,19 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
                   onChange={(event) => setCourse(event.target.value)}
                   required
                   className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                  placeholder="Example: 10th SSC, JEE, NEET, Banking"
+                  placeholder={
+                    signupRole === "educator"
+                      ? "Example: Maths Faculty, Science Teacher"
+                      : "Example: 10th SSC, JEE, NEET, Banking"
+                  }
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Student Email
+                  {signupRole === "educator"
+                    ? "Faculty Email"
+                    : "Student Email"}
                 </label>
                 <input
                   type="email"
@@ -343,7 +375,9 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
 
               <div className="space-y-1.5">
                 <label className="ml-1 text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Student Number
+                  {signupRole === "educator"
+                    ? "Faculty Number"
+                    : "Student Number"}
                 </label>
                 <input
                   type="tel"
@@ -355,7 +389,11 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
                   maxLength={10}
                   required
                   className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                  placeholder="Enter student 10-digit number"
+                  placeholder={
+                    signupRole === "educator"
+                      ? "Enter faculty 10-digit number"
+                      : "Enter student 10-digit number"
+                  }
                 />
               </div>
             </>
@@ -453,7 +491,9 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            autoComplete={
+              mode === "login" ? "current-password" : "new-password"
+            }
             required
             className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
             placeholder="••••••••"
@@ -492,7 +532,9 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
                 ? "Login"
                 : signupRole === "student"
                   ? "Create Student Account"
-                  : "Create Parent Account"}
+                  : signupRole === "educator"
+                    ? "Request Faculty Account"
+                    : "Create Parent Account"}
 
             {!isPending && (
               <span className="transition-transform group-hover:translate-x-1">
