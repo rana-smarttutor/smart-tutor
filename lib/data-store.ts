@@ -463,7 +463,7 @@ export async function getDemoCredentials() {
   const collection = await getUsersCollection();
   const documents = await collection
     .find({
-      role: { $in: ["student", "educator", "admin"] as Role[] },
+      role: { $in: ["student", "educator", "admin", "parent"] as Role[] },
     })
     .toArray();
 
@@ -471,7 +471,7 @@ export async function getDemoCredentials() {
     documents.map((document) => [document.role, document]),
   );
 
-  return (["student", "educator", "admin"] as const)
+  return (["student", "educator", "admin", "parent"] as const)
     .map((role) => byRole.get(role))
     .flatMap((document) =>
       document
@@ -720,7 +720,7 @@ export async function createTest(input: {
     title: input.title,
     status: input.status,
     summary: input.summary,
-    audience: ["student", "educator", "admin"],
+    audience: ["student", "educator", "admin", "parent"],
     assignedUserIds: input.assignedUserIds,
     createdBy: input.createdBy,
     questions: input.questions,
@@ -767,7 +767,7 @@ export async function createMessage(input: {
     author: input.author,
     audience: input.audience?.length
       ? input.audience
-      : ["student", "educator", "admin"],
+      : ["student", "educator", "admin", "parent"],
     userIds: input.userIds?.length ? input.userIds : undefined,
     createdAt: new Date().toISOString(),
     expiresAt: input.expiresAt ?? null,
@@ -946,10 +946,32 @@ export async function getTestSubmissionsForRole(role: Role, userId?: string) {
     COLLECTIONS.submissions,
   );
 
+  if (!userId) {
+    return [];
+  }
+
   if (role === "student") {
     return stripMongoIds(
       await collection
         .find({ studentId: userId })
+        .sort({ submittedAt: -1 })
+        .toArray(),
+    );
+  }
+
+  if (role === "parent") {
+    const users = await getUsersCollection();
+    const parent = await users.findOne({ id: userId });
+
+    const linkedStudentId = parent?.linkedStudentId;
+
+    if (!linkedStudentId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({ studentId: linkedStudentId })
         .sort({ submittedAt: -1 })
         .toArray(),
     );
@@ -1028,15 +1050,21 @@ export async function gradeSubmission(input: {
     { $set: updatedSubmission },
   );
 
+  const users = await getUsersCollection();
+  const linkedParents = await users
+    .find({ role: "parent", linkedStudentId: submission.studentId })
+    .toArray();
+
+  const linkedParentIds = linkedParents.map((parent) => parent.id);
+
   const message = await createMessage({
     title: publishedMessageTitle,
     body: `${submission.studentName}'s test review has been completed and the result is now available on the board.`,
     channel: "Results",
-    audience: ["student", "educator", "admin"],
-    userIds: [submission.studentId],
+    audience: ["student", "educator", "admin", "parent"],
+    userIds: [submission.studentId, ...linkedParentIds],
     author: input.gradedBy,
   });
-
   return {
     submission: updatedSubmission,
     message,

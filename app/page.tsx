@@ -100,16 +100,34 @@ export default async function Home() {
             </span>
           </div>
 
-          <p className="text-[10px] md:text-xs font-black uppercase tracking-[0.4em] text-blue-600">
-            India’s No.1 Trusted Smart Learning Platform
-          </p>
-
           <div className="space-y-5">
-            <h1 className="mx-auto max-w-5xl text-3xl font-black leading-[1.1] tracking-[-0.035em] text-[var(--color-heading)] sm:text-5xl xl:mx-0 xl:text-6xl">
-              Beyond Coaching. <br className="hidden xl:block" /> Total
-              Empowerment.
+            <p className="text-[9px] font-black uppercase tracking-[0.4em] text-blue-600 md:text-[11px]">
+              India&apos;s No.1 Trusted Smart Learning Platform
+            </p>
+
+            <h1 className="mx-auto max-w-[680px] font-serif text-[2.35rem] font-black leading-[1.05] tracking-[-0.035em] text-[var(--color-heading)] sm:text-[3.6rem] lg:text-[4.15rem] xl:mx-0 xl:max-w-[720px]">
+              Get Smart Results
+              <br />
+              <span className="relative inline-block whitespace-nowrap text-blue-600 dark:text-blue-400">
+                With Smart Tutors.
+                <svg
+                  className="absolute -bottom-2 left-[72%] h-3.5 w-[34%] -translate-x-1/2 sm:-bottom-3 sm:h-4"
+                  viewBox="0 0 280 32"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 21C70 8 171 7 272 18"
+                    stroke="#F5B400"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
             </h1>
-            <p className="mx-auto max-w-2xl text-sm sm:text-lg leading-relaxed text-[var(--color-muted)] xl:mx-0 font-medium">
+
+            <p className="mx-auto max-w-2xl text-sm font-medium leading-relaxed text-[var(--color-muted)] sm:text-lg xl:mx-0">
               Smart Tutors provides{" "}
               <strong>Programs mapped to every stage of growth</strong>. We
               bring disciplined preparation, sharp mentoring, and real academic
@@ -226,7 +244,7 @@ export default async function Home() {
             <div className="mb-8">
               <p className="section-label">Campus Highlights</p>
 
-              <h2 className="section-title mt-2 whitespace-nowrap text-left text-3xl sm:text-4xl">
+              <h2 className="section-title mt-2 text-left text-3xl sm:text-3xl">
                 Visible trust, visible outcomes
               </h2>
             </div>

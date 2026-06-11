@@ -167,7 +167,12 @@ const sidebarByRole = {
   parent: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "child-progress", label: "Child Progress" },
+    { id: "attendance", label: "Attendance" },
+    { id: "test-reports", label: "Test Reports" },
     { id: "performance", label: "Performance" },
+    { id: "fees", label: "Fees" },
+    { id: "library", label: "Library" },
   ],
 } as const;
 
@@ -213,11 +218,16 @@ export function DashboardShell({
     sidebarByRole[role][0]?.id ?? "overview",
   );
   const [messages, setMessages] = useState<MessageItem[]>(dashboard.messages);
-  const [submissions, setSubmissions] = useState<TestSubmission[]>(dashboard.submissions);
+  const [submissions, setSubmissions] = useState<TestSubmission[]>(
+    dashboard.submissions,
+  );
   const [libraryBooks, setLibraryBooks] = useState<LibraryBook[]>([]);
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
-  const [performanceReports, setPerformanceReports] = useState<PerformanceReport[]>([]);
-  const [heuristics, setHeuristics] = useState<PerformanceHeuristics>(DEFAULT_HEURISTICS);
+  const [performanceReports, setPerformanceReports] = useState<
+    PerformanceReport[]
+  >([]);
+  const [heuristics, setHeuristics] =
+    useState<PerformanceHeuristics>(DEFAULT_HEURISTICS);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
 
   const showOverview = activeSection === "overview";
@@ -228,6 +238,10 @@ export function DashboardShell({
   const showAccounts = activeSection === "accounts";
   const showLibrary = activeSection === "library";
   const showPerformance = activeSection === "performance";
+  const showChildProgress = activeSection === "child-progress";
+  const showAttendance = activeSection === "attendance";
+  const showTestReports = activeSection === "test-reports";
+  const showFees = activeSection === "fees";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
@@ -237,7 +251,11 @@ export function DashboardShell({
   ];
 
   useEffect(() => {
-    if (showPerformance && performanceReports.length === 0 && !isPerformanceLoading) {
+    if (
+      showPerformance &&
+      performanceReports.length === 0 &&
+      !isPerformanceLoading
+    ) {
       void refreshPerformance();
     }
   }, [showPerformance]);
@@ -256,12 +274,16 @@ export function DashboardShell({
       }
 
       // Fetch Heuristics (Always fetch for educator to allow editing, or default for student)
-      const educatorId = role === "student" ? performanceReports[0]?.createdBy : session?.id;
+      const educatorId =
+        role === "student" ? performanceReports[0]?.createdBy : session?.id;
       if (educatorId) {
-        const heuristicsRes = await fetch(`/api/performance?educatorId=${educatorId}`, {
-          method: "GET",
-          credentials: "same-origin",
-        });
+        const heuristicsRes = await fetch(
+          `/api/performance?educatorId=${educatorId}`,
+          {
+            method: "GET",
+            credentials: "same-origin",
+          },
+        );
         if (heuristicsRes.ok) {
           const payload = await heuristicsRes.json();
           if (payload.heuristics) setHeuristics(payload.heuristics);
@@ -359,14 +381,17 @@ export function DashboardShell({
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleFocus);
     };
-  }, [showMessages, session?.id]);;
+  }, [showMessages, session?.id]);
 
   return (
     <main className="section-shell min-h-screen overflow-x-hidden pb-10 pt-8">
       <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="dashboard-sidebar overflow-hidden rounded-[2rem] p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="truncate text-3xl font-semibold tracking-[-0.06em] text-[var(--color-heading)]">
+            <Link
+              href="/"
+              className="truncate text-3xl font-semibold tracking-[-0.06em] text-[var(--color-heading)]"
+            >
               Smart Tutors
             </Link>
             <ThemeToggle />
@@ -376,10 +401,16 @@ export function DashboardShell({
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-primary)]">
               Active Session
             </p>
-            <p className="mt-3 truncate text-lg font-bold text-[var(--color-heading)] sm:text-xl" title={session?.name}>
+            <p
+              className="mt-3 truncate text-lg font-bold text-[var(--color-heading)] sm:text-xl"
+              title={session?.name}
+            >
               {session ? session.name : "Smart Tutors"}
             </p>
-            <p className="mt-1 truncate text-sm font-medium text-[var(--color-muted)]" title={session?.email}>
+            <p
+              className="mt-1 truncate text-sm font-medium text-[var(--color-muted)]"
+              title={session?.email}
+            >
               {session ? session.email : "Login required"}
             </p>
             <span className="mt-4 inline-flex max-w-full truncate rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-heading)]">
@@ -415,7 +446,9 @@ export function DashboardShell({
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-strong)]">
                 Support
               </p>
-              <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">{supportContact}</p>
+              <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">
+                {supportContact}
+              </p>
             </div>
           </div>
         </aside>
@@ -439,7 +472,8 @@ export function DashboardShell({
                     API Scope
                   </p>
                   <p className="mt-2 text-sm leading-7 text-[var(--color-heading)]">
-                    Auth, dashboard, courses, users, tests, and messages are wired.
+                    Auth, dashboard, courses, users, tests, and messages are
+                    wired.
                   </p>
                 </div>
               </div>
@@ -450,7 +484,10 @@ export function DashboardShell({
             <>
               <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {dashboard.stats.map((item) => (
-                  <article key={item.label} className="surface overflow-hidden rounded-[1.25rem] p-4 sm:p-5">
+                  <article
+                    key={item.label}
+                    className="surface overflow-hidden rounded-[1.25rem] p-4 sm:p-5"
+                  >
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                       {item.label}
                     </p>
@@ -477,11 +514,18 @@ export function DashboardShell({
                   </div>
                   <div className="mt-6 grid gap-4">
                     {dashboard.primaryPanel.items.map((item) => (
-                      <div key={item.title} className="surface-soft rounded-3xl p-5">
+                      <div
+                        key={item.title}
+                        className="surface-soft rounded-3xl p-5"
+                      >
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <p className="text-lg font-semibold text-[var(--color-heading)]">{item.title}</p>
-                            <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">{item.description}</p>
+                            <p className="text-lg font-semibold text-[var(--color-heading)]">
+                              {item.title}
+                            </p>
+                            <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                              {item.description}
+                            </p>
                           </div>
                           <span className="pill">{item.meta}</span>
                         </div>
@@ -512,7 +556,10 @@ export function DashboardShell({
 
                     <div className="mt-5 grid gap-3 sm:grid-cols-2">
                       {profileHighlights.map((item) => (
-                        <div key={item.label} className="surface-soft rounded-3xl p-4">
+                        <div
+                          key={item.label}
+                          className="surface-soft rounded-3xl p-4"
+                        >
                           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
                             {item.label}
                           </p>
@@ -525,19 +572,25 @@ export function DashboardShell({
 
                     <div className="mt-5 grid gap-3">
                       <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-sm font-semibold text-[var(--color-heading)]">Workspace checklist</p>
+                        <p className="text-sm font-semibold text-[var(--color-heading)]">
+                          Workspace checklist
+                        </p>
                         <div className="mt-4 grid gap-3">
                           {workspaceChecklist.map((item) => (
                             <div key={item} className="flex items-start gap-3">
                               <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--color-accent)]" />
-                              <p className="min-w-0 text-sm leading-6 text-[var(--color-muted)]">{item}</p>
+                              <p className="min-w-0 text-sm leading-6 text-[var(--color-muted)]">
+                                {item}
+                              </p>
                             </div>
                           ))}
                         </div>
                       </div>
 
                       <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-sm font-semibold text-[var(--color-heading)]">Support contact</p>
+                        <p className="text-sm font-semibold text-[var(--color-heading)]">
+                          Support contact
+                        </p>
                         <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">
                           {supportContact}
                         </p>
@@ -549,19 +602,27 @@ export function DashboardShell({
                     <p className="section-label">Permissions + Notices</p>
                     <div className="mt-5 grid gap-4">
                       <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-lg font-semibold text-[var(--color-heading)]">Permissions</p>
+                        <p className="text-lg font-semibold text-[var(--color-heading)]">
+                          Permissions
+                        </p>
                         <div className="mt-4 space-y-3">
                           {dashboard.permissions.map((group) => (
                             <div key={group.title}>
-                              <p className="text-sm font-semibold text-[var(--color-heading)]">{group.title}</p>
-                              <p className="mt-1 text-sm leading-7 text-[var(--color-muted)]">{group.description}</p>
+                              <p className="text-sm font-semibold text-[var(--color-heading)]">
+                                {group.title}
+                              </p>
+                              <p className="mt-1 text-sm leading-7 text-[var(--color-muted)]">
+                                {group.description}
+                              </p>
                             </div>
                           ))}
                         </div>
                       </div>
                       {messages.length ? (
                         <div className="surface-soft rounded-3xl p-5">
-                          <p className="text-lg font-semibold text-[var(--color-heading)]">Recent notices</p>
+                          <p className="text-lg font-semibold text-[var(--color-heading)]">
+                            Recent notices
+                          </p>
                           <div className="mt-4 space-y-3">
                             {messages.slice(0, 3).map((message) => (
                               <div key={message.id}>
@@ -601,7 +662,9 @@ export function DashboardShell({
               submissions={submissions}
               studentDirectory={studentDirectory}
               onSubmissionsChange={setSubmissions}
-              onMessagePublished={(message) => setMessages((current) => [message, ...current])}
+              onMessagePublished={(message) =>
+                setMessages((current) => [message, ...current])
+              }
             />
           ) : null}
 
@@ -632,8 +695,12 @@ export function DashboardShell({
                   <div key={course.id} className="surface-soft rounded-3xl p-5">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-lg font-semibold text-[var(--color-heading)]">{course.title}</p>
-                        <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">{course.summary}</p>
+                        <p className="text-lg font-semibold text-[var(--color-heading)]">
+                          {course.title}
+                        </p>
+                        <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                          {course.summary}
+                        </p>
                       </div>
                       <span className="pill">{course.schedule}</span>
                     </div>
@@ -656,23 +723,295 @@ export function DashboardShell({
               </div>
               <div className="mt-6 grid gap-4">
                 {submissions.map((submission) => (
-                  <div key={submission.id} className="surface-soft rounded-3xl p-5">
+                  <div
+                    key={submission.id}
+                    className="surface-soft rounded-3xl p-5"
+                  >
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="truncate text-lg font-semibold text-[var(--color-heading)]" title={submission.studentName}>
+                        <p
+                          className="truncate text-lg font-semibold text-[var(--color-heading)]"
+                          title={submission.studentName}
+                        >
                           {submission.studentName}
                         </p>
                         <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                          Score {submission.score ?? "Pending"}/{submission.total} | {submission.publishedMessageTitle}
+                          Score {submission.score ?? "Pending"}/
+                          {submission.total} |{" "}
+                          {submission.publishedMessageTitle}
                         </p>
                         {submission.feedback ? (
-                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">{submission.feedback}</p>
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                            {submission.feedback}
+                          </p>
                         ) : null}
                       </div>
                       <span className="pill">{submission.status}</span>
                     </div>
                   </div>
                 ))}
+              </div>
+            </article>
+          ) : null}
+          {role === "parent" && showChildProgress ? (
+            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="section-label">Child Progress</p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+                    Academic Growth Summary
+                  </h2>
+                </div>
+                <span className="pill">Parent View</span>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  {
+                    label: "Overall Progress",
+                    value: "82%",
+                    detail: "Improved compared to last month",
+                  },
+                  {
+                    label: "Strong Subject",
+                    value: "English",
+                    detail: "Consistent performance",
+                  },
+                  {
+                    label: "Needs Focus",
+                    value: "Maths",
+                    detail: "Practice required in word problems",
+                  },
+                  {
+                    label: "Study Activity",
+                    value: "14 hrs",
+                    detail: "This week learning time",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="surface-soft rounded-3xl p-5"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                      {item.label}
+                    </p>
+                    <p className="mt-3 text-2xl font-semibold text-[var(--color-heading)]">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 grid gap-4">
+                {[
+                  {
+                    subject: "Mathematics",
+                    score: "68%",
+                    note: "Needs regular practice",
+                  },
+                  {
+                    subject: "Science",
+                    score: "76%",
+                    note: "Improving steadily",
+                  },
+                  {
+                    subject: "English",
+                    score: "88%",
+                    note: "Strong performance",
+                  },
+                  {
+                    subject: "Social Studies",
+                    score: "72%",
+                    note: "Good, but revision needed",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.subject}
+                    className="surface-soft rounded-3xl p-5"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-lg font-semibold text-[var(--color-heading)]">
+                          {item.subject}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
+                          {item.note}
+                        </p>
+                      </div>
+                      <span className="pill">{item.score}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ) : null}
+
+          {role === "parent" && showAttendance ? (
+            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="section-label">Attendance</p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+                    Monthly Attendance
+                  </h2>
+                </div>
+                <span className="pill">94% Present</span>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {[
+                  {
+                    label: "Present",
+                    value: "29 Days",
+                    detail: "Classes attended",
+                  },
+                  {
+                    label: "Absent",
+                    value: "2 Days",
+                    detail: "Missed sessions",
+                  },
+                  {
+                    label: "Attendance Rate",
+                    value: "94%",
+                    detail: "Current month",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="surface-soft rounded-3xl p-5"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                      {item.label}
+                    </p>
+                    <p className="mt-3 text-2xl font-semibold text-[var(--color-heading)]">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 surface-soft rounded-3xl p-5">
+                <p className="text-lg font-semibold text-[var(--color-heading)]">
+                  Attendance Note
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                  Your child has maintained good attendance this month. Please
+                  ensure regular participation before upcoming tests.
+                </p>
+              </div>
+            </article>
+          ) : null}
+
+          {role === "parent" && showTestReports ? (
+            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="section-label">Test Reports</p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+                    Recent Test Performance
+                  </h2>
+                </div>
+                <span className="pill">{submissions.length} entries</span>
+              </div>
+
+              <div className="mt-6 grid gap-4">
+                {submissions.length ? (
+                  submissions.map((submission) => (
+                    <div
+                      key={submission.id}
+                      className="surface-soft rounded-3xl p-5"
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="text-lg font-semibold text-[var(--color-heading)]">
+                            {submission.publishedMessageTitle}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                            Score {submission.score ?? "Pending"}/
+                            {submission.total}
+                          </p>
+                          {submission.feedback ? (
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                              {submission.feedback}
+                            </p>
+                          ) : null}
+                        </div>
+                        <span className="pill">{submission.status}</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="surface-soft rounded-3xl p-5">
+                    <p className="text-sm leading-6 text-[var(--color-muted)]">
+                      No test reports are available yet.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </article>
+          ) : null}
+
+          {role === "parent" && showFees ? (
+            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="section-label">Fees</p>
+                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+                    Fee Status
+                  </h2>
+                </div>
+                <span className="pill">No Dues</span>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {[
+                  {
+                    label: "Current Status",
+                    value: "Paid",
+                    detail: "No pending dues",
+                  },
+                  {
+                    label: "Last Payment",
+                    value: "₹12,000",
+                    detail: "Received successfully",
+                  },
+                  {
+                    label: "Next Due Date",
+                    value: "15 July",
+                    detail: "Upcoming installment",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="surface-soft rounded-3xl p-5"
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                      {item.label}
+                    </p>
+                    <p className="mt-3 text-2xl font-semibold text-[var(--color-heading)]">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                      {item.detail}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 surface-soft rounded-3xl p-5">
+                <p className="text-lg font-semibold text-[var(--color-heading)]">
+                  Payment Note
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
+                  This section can later be connected with real invoices,
+                  receipts, and online payment history.
+                </p>
               </div>
             </article>
           ) : null}
@@ -707,12 +1046,16 @@ export function DashboardShell({
               <div className="mb-8">
                 <p className="section-label">Analytics Hub</p>
                 <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--color-heading)]">
-                  {role === "student" ? "Your Performance" : "Student Analytics"}
+                  {role === "student"
+                    ? "Your Performance"
+                    : "Student Analytics"}
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
-                  {role === "student" 
+                  {role === "student"
                     ? "Track your academic progress, strengths, and areas for improvement."
-                    : "Manage and create detailed performance reports for your students."}
+                    : role === "parent"
+                      ? "View your child's academic progress, strengths, and areas that need support."
+                      : "Manage and create detailed performance reports for your students."}
                 </p>
               </div>
 
@@ -722,19 +1065,28 @@ export function DashboardShell({
                 </div>
               ) : (
                 <div className="space-y-12">
-                  {role !== "student" && (
+                  {(role === "educator" || role === "admin") && (
                     <PerformanceReportCreator
                       session={session}
                       studentDirectory={studentDirectory}
                       onReportCreated={(newReport) => {
-                        setPerformanceReports([newReport, ...performanceReports]);
+                        setPerformanceReports([
+                          newReport,
+                          ...performanceReports,
+                        ]);
                         // Optionally switch to a view mode or show success
                       }}
                     />
                   )}
-                  
-                  {(performanceReports.length > 0) && (
-                    <div className={role !== "student" ? "pt-12 border-t border-[var(--color-border)]" : ""}>
+
+                  {performanceReports.length > 0 && (
+                    <div
+                      className={
+                        role !== "student"
+                          ? "pt-12 border-t border-[var(--color-border)]"
+                          : ""
+                      }
+                    >
                       <PerformanceDashboard
                         reports={performanceReports}
                         heuristics={heuristics}
@@ -745,7 +1097,9 @@ export function DashboardShell({
 
                   {performanceReports.length === 0 && role === "student" && (
                     <div className="text-center py-12">
-                      <p className="text-[var(--color-muted)]">No performance reports have been published for you yet.</p>
+                      <p className="text-[var(--color-muted)]">
+                        No performance reports have been published for you yet.
+                      </p>
                     </div>
                   )}
                 </div>
