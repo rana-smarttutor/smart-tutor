@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 
 import { createSessionResponse } from "@/lib/auth";
 import { findUserByCredentials } from "@/lib/data-store";
+import type { Role } from "@/lib/types";
 import { sanitizePasswordInput, sanitizeTextInput } from "@/lib/validation";
-import { Role } from "@/lib/types";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   let body: {
@@ -15,12 +18,16 @@ export async function POST(request: Request) {
 
   try {
     body = (await request.json()) as {
+      login?: string;
       email?: string;
       password?: string;
       role?: Role;
     };
   } catch {
-    return NextResponse.json({ error: "Invalid login payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid login payload." },
+      { status: 400 },
+    );
   }
 
   const login = sanitizeTextInput(body.login ?? body.email, 120).toLowerCase();
@@ -39,6 +46,21 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Invalid email or password." },
       { status: 401 },
+    );
+  }
+
+  if (user.role === "educator" && user.status !== "active") {
+    return NextResponse.json(
+      {
+        error:
+          user.status === "rejected"
+            ? "Your faculty account request was rejected by admin."
+            : "Your faculty account is waiting for admin approval.",
+        pendingApproval: user.status !== "rejected",
+        redirectTo:
+          user.status === "rejected" ? "/login" : "/waiting-approval",
+      },
+      { status: user.status === "rejected" ? 403 : 200 },
     );
   }
 

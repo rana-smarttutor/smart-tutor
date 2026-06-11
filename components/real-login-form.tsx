@@ -228,7 +228,7 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
         <p className="text-sm font-medium text-[var(--color-muted)]">
           {mode === "login"
             ? "Select your portal and enter credentials to access your workspace."
-            : "Choose student or parent and create your account."}
+            : "Choose student, parent or faculty and create your account."}
         </p>
       </div>
 
@@ -369,7 +369,11 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
                   autoComplete="email"
                   required
                   className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                  placeholder="student@example.com"
+                  placeholder={
+                    signupRole === "educator"
+                      ? "faculty@example.com"
+                      : "student@example.com"
+                  }
                 />
               </div>
 
