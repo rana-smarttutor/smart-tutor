@@ -1318,14 +1318,62 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
 ];
 
 export function getCourseTemplateOptions() {
-  return courseLibrary.map((course) => ({
-    standardKey: course.standardKey,
-    title: course.title,
-  }));
+  return [
+    { standardKey: "Class 6-8", title: "Class 6-8" },
+    { standardKey: "Class 9-10", title: "Class 9-10" },
+    { standardKey: "Class 11-12 Science", title: "Class 11-12 Science" },
+    { standardKey: "Class 11-12 Commerce", title: "Class 11-12 Commerce" },
+    { standardKey: "Class 11-12 Arts", title: "Class 11-12 Arts" },
+    { standardKey: "Graduation", title: "Graduation" },
+    { standardKey: "Post Grad", title: "Post Grad" },
+    { standardKey: "Govt Exams", title: "Govt Exams" },
+    { standardKey: "Skills", title: "Skills" },
+  ];
 }
 
 export function getCourseTemplateByKey(standardKey: string) {
-  return courseLibrary.find((course) => course.standardKey === standardKey) ?? null;
+  const directMatch = courseLibrary.find(
+    (course) => course.standardKey === standardKey,
+  );
+
+  if (directMatch) {
+    return directMatch;
+  }
+
+  if (standardKey === "Class 11-12 Science") {
+    return (
+      courseLibrary.find(
+        (course) =>
+          course.sections.includes("Class 11-12") &&
+          course.stream === "Science",
+      ) ?? null
+    );
+  }
+
+  if (standardKey === "Class 11-12 Commerce") {
+    return (
+      courseLibrary.find(
+        (course) =>
+          course.sections.includes("Class 11-12") &&
+          course.stream === "Commerce",
+      ) ?? null
+    );
+  }
+
+  if (standardKey === "Class 11-12 Arts") {
+    return (
+      courseLibrary.find(
+        (course) =>
+          course.sections.includes("Class 11-12") &&
+          course.stream === "Arts",
+      ) ?? null
+    );
+  }
+
+  return (
+    courseLibrary.find((course) => course.sections.includes(standardKey)) ??
+    null
+  );
 }
 
 export function getCourseTemplateOrder(standardKey?: string) {
@@ -1333,8 +1381,19 @@ export function getCourseTemplateOrder(standardKey?: string) {
     return Number.MAX_SAFE_INTEGER;
   }
 
-  const index = courseLibrary.findIndex((course) => course.standardKey === standardKey);
-  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  const directIndex = courseLibrary.findIndex(
+    (course) => course.standardKey === standardKey,
+  );
+
+  if (directIndex !== -1) {
+    return directIndex;
+  }
+
+  const sectionIndex = getCourseTemplateOptions().findIndex(
+    (option) => option.standardKey === standardKey,
+  );
+
+  return sectionIndex === -1 ? Number.MAX_SAFE_INTEGER : sectionIndex;
 }
 
 export function inferCourseTemplateKey(input?: string) {
@@ -1343,10 +1402,26 @@ export function inferCourseTemplateKey(input?: string) {
   }
 
   const normalized = input.trim().toLowerCase();
-  
-  // Create a mapping from title to standardKey
+
+  const sectionMap: Record<string, string> = {
+    "class 6-8": "Class 6-8",
+    "class 9-10": "Class 9-10",
+    "class 11-12 science": "Class 11-12 Science",
+    "class 11-12 commerce": "Class 11-12 Commerce",
+    "class 11-12 arts": "Class 11-12 Arts",
+    graduation: "Graduation",
+    "post grad": "Post Grad",
+    "govt exams": "Govt Exams",
+    skills: "Skills",
+  };
+
+  if (sectionMap[normalized]) {
+    return sectionMap[normalized];
+  }
+
   const titleMap: Record<string, string> = {};
-  courseLibrary.forEach(course => {
+
+  courseLibrary.forEach((course) => {
     titleMap[course.title.toLowerCase()] = course.standardKey;
   });
 
