@@ -5,19 +5,101 @@ import { useEffect, useState, useMemo } from "react";
 import { CourseCatalog } from "@/components/course-catalog";
 import type { CourseItem } from "@/lib/types";
 
-const COURSE_CACHE_KEY = "smart-tutor-course-cache-v4";
+const COURSE_CACHE_KEY = "smart-tutor-course-cache-v6";
 const CLASS_6_8_REGULAR_TITLE = "Class 6th-8th Regular Academic (State/CBSE)";
 
 const TABS = [
   "Class 6-8",
   "Class 9-10",
-  "Class 11-12",
+  "Class 11-12 Science",
+  "Class 11-12 Commerce",
+  "Class 11-12 Arts",
   "Graduation",
   "Post Grad",
   "Govt Exams",
-  "Skills"
+  "Skills",
 ];
 
+function getCourseStream(course: CourseItem) {
+  const text = [
+    course.stream,
+    course.title,
+    course.summary,
+    course.description,
+    course.audienceLabel,
+    ...(course.subjectsCovered ?? []),
+    ...(course.branchesIncluded ?? []),
+    ...(course.courseNamesIncluded ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  if (
+    text.includes("science") ||
+    text.includes("physics") ||
+    text.includes("chemistry") ||
+    text.includes("biology") ||
+    text.includes("mathematics") ||
+    text.includes("jee") ||
+    text.includes("neet") ||
+    text.includes("engineering") ||
+    text.includes("medical") ||
+    text.includes("software") ||
+    text.includes("it ")
+  ) {
+    return "Science";
+  }
+
+  if (
+    text.includes("commerce") ||
+    text.includes("account") ||
+    text.includes("accounting") ||
+    text.includes("business") ||
+    text.includes("economics") ||
+    text.includes("ca") ||
+    text.includes("cs") ||
+    text.includes("cma") ||
+    text.includes("mba") ||
+    text.includes("management")
+  ) {
+    return "Commerce";
+  }
+
+  if (
+    text.includes("arts") ||
+    text.includes("humanities") ||
+    text.includes("history") ||
+    text.includes("political") ||
+    text.includes("geography") ||
+    text.includes("sociology") ||
+    text.includes("psychology") ||
+    text.includes("law") ||
+    text.includes("design")
+  ) {
+    return "Arts";
+  }
+
+  return course.stream;
+}
+
+function matchesCourseTab(course: CourseItem, activeTab: string) {
+  const hasClass1112 = course.sections?.includes("Class 11-12");
+
+  if (activeTab === "Class 11-12 Science") {
+    return hasClass1112 && getCourseStream(course) === "Science";
+  }
+
+  if (activeTab === "Class 11-12 Commerce") {
+    return hasClass1112 && getCourseStream(course) === "Commerce";
+  }
+
+  if (activeTab === "Class 11-12 Arts") {
+    return hasClass1112 && getCourseStream(course) === "Arts";
+  }
+
+  return course.sections?.includes(activeTab);
+}
 type CourseCatalogClientProps = {
   initialCourses: CourseItem[];
 };
@@ -93,7 +175,7 @@ export function CourseCatalogClient({ initialCourses }: CourseCatalogClientProps
       if (course.title === CLASS_6_8_REGULAR_TITLE) {
         return activeTab === "Class 6-8";
       }
-      return course.sections && course.sections.includes(activeTab);
+      return matchesCourseTab(course, activeTab);
     });
   }, [courses, activeTab, searchQuery]);
 
