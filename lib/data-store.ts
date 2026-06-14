@@ -36,8 +36,6 @@ import type {
   TestSubmission,
 } from "@/lib/types";
 
-
-
 type DashboardTemplate = {
   roleLabel: string;
   heroTitle: string;
@@ -1224,6 +1222,17 @@ export async function createFeeInvoice(input: {
   status: FeeInvoice["status"];
   notes?: string;
   createdBy: string;
+  branch?: FeeInvoice["branch"];
+  receiptNo?: string;
+  parentName?: string;
+  classCourse?: string;
+  batch?: string;
+  rollNo?: string;
+  academicYear?: string;
+  mobileNo?: string;
+  particulars?: string;
+  month?: string;
+  paymentMode?: string;
 }) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
 
@@ -1243,6 +1252,17 @@ export async function createFeeInvoice(input: {
     createdBy: input.createdBy,
     createdAt: now,
     updatedAt: now,
+    branch: input.branch,
+    receiptNo: input.receiptNo,
+    parentName: input.parentName,
+    classCourse: input.classCourse,
+    batch: input.batch,
+    rollNo: input.rollNo,
+    academicYear: input.academicYear,
+    mobileNo: input.mobileNo,
+    particulars: input.particulars,
+    month: input.month,
+    paymentMode: input.paymentMode,
   };
 
   await collection.insertOne(invoice);
@@ -1273,6 +1293,14 @@ export async function updateFeeInvoice(
   const updatedInvoice = await collection.findOne({ id: invoiceId });
 
   return updatedInvoice ? stripMongoId(updatedInvoice) : null;
+}
+
+export async function deleteFeeInvoice(invoiceId: string) {
+  const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+
+  const result = await collection.deleteOne({ id: invoiceId });
+
+  return result.deletedCount > 0;
 }
 
 export async function getLecturesForRole(role: Role, userId?: string) {
@@ -1399,20 +1427,20 @@ export async function getDashboardBundle(
   ]);
 
   return {
-  roleLabel: user?.label ?? template.roleLabel,
-  heroTitle: buildHeroTitle(role, template, user),
-  heroDescription: template.heroDescription,
-  stats: template.stats,
-  primaryPanel: template.primaryPanel,
-  permissions: template.permissions,
-  courses: role === "admin" ? courses : courses.slice(0, 3),
-  tests: tests.slice(0, 4),
-  messages: messages.slice(0, 6),
-  submissions: submissions.slice(0, 6),
-  attendanceSheets,
-  feeInvoices,
-  lectures,
-};
+    roleLabel: user?.label ?? template.roleLabel,
+    heroTitle: buildHeroTitle(role, template, user),
+    heroDescription: template.heroDescription,
+    stats: template.stats,
+    primaryPanel: template.primaryPanel,
+    permissions: template.permissions,
+    courses: role === "admin" ? courses : courses.slice(0, 3),
+    tests: tests.slice(0, 4),
+    messages: messages.slice(0, 6),
+    submissions: submissions.slice(0, 6),
+    attendanceSheets,
+    feeInvoices,
+    lectures,
+  };
 }
 
 export async function getLibraryBooksForRole(role: Role) {

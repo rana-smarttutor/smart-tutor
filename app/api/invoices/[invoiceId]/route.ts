@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { updateFeeInvoice } from "@/lib/data-store";
+import { deleteFeeInvoice, updateFeeInvoice } from "@/lib/data-store";
 import { getSessionUser } from "@/lib/auth";
 
 type RouteContext = {
@@ -38,4 +38,26 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   return NextResponse.json({ feeInvoice });
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const session = await getSessionUser();
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (session.role !== "admin" && session.role !== "educator") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { invoiceId } = await context.params;
+
+  const deleted = await deleteFeeInvoice(invoiceId);
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true });
 }

@@ -347,6 +347,19 @@ export type FeeInvoice = {
   studentId: string;
   studentName: string;
   parentId?: string;
+
+  branch?: "panvel" | "vashi";
+  receiptNo?: string;
+  parentName?: string;
+  classCourse?: string;
+  batch?: string;
+  rollNo?: string;
+  academicYear?: string;
+  mobileNo?: string;
+  particulars?: string;
+  month?: string;
+  paymentMode?: string;
+
   title: string;
   amount: number;
   paidAmount?: number;
