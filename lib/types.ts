@@ -311,6 +311,81 @@ export type PerformanceReport = {
   createdBy: string;
 };
 
+// =========================
+// Attendance System
+// =========================
+
+export type AttendanceStatus = "present" | "absent" | "late" | "excused";
+
+export type AttendanceRecord = {
+  studentId: string;
+  studentName: string;
+  status: AttendanceStatus;
+  remarks?: string;
+};
+
+export type AttendanceSheet = {
+  id: string;
+  title: string;
+  date: string;
+  batchName?: string;
+  subject?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+  records: AttendanceRecord[];
+};
+
+// =========================
+// Fee / Invoice System
+// =========================
+
+export type FeeInvoiceStatus = "paid" | "unpaid" | "partial" | "overdue";
+
+export type FeeInvoice = {
+  id: string;
+  studentId: string;
+  studentName: string;
+  parentId?: string;
+  title: string;
+  amount: number;
+  paidAmount?: number;
+  dueDate: string;
+  status: FeeInvoiceStatus;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// Lecture / Live Class System
+// =========================
+
+export type LectureStatus = "scheduled" | "completed" | "cancelled";
+
+export type LectureItem = {
+  id: string;
+  title: string;
+  subject?: string;
+  batchName?: string;
+  description?: string;
+  startsAt: string;
+  endsAt?: string;
+  meetingLink?: string;
+  recordingLink?: string;
+  materialLink?: string;
+  assignedStudentIds?: string[];
+  status: LectureStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// Dashboard Bundle
+// =========================
+
 export type DashboardBundle = {
   roleLabel: string;
   heroTitle: string;
@@ -322,4 +397,7 @@ export type DashboardBundle = {
   tests: TestItem[];
   messages: MessageItem[];
   submissions: TestSubmission[];
+  attendanceSheets: AttendanceSheet[];
+  feeInvoices: FeeInvoice[];
+  lectures: LectureItem[];
 };
