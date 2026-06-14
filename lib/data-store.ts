@@ -14,12 +14,18 @@ import {
   courseLibrary,
 } from "@/lib/course-library";
 import type {
+  AttendanceSheet,
   CourseItem,
-  DashboardBundle,
   DashboardMetric,
+  DashboardBundle,
   DemoCredential,
+  FeeInvoice,
+  LectureItem,
+  LibraryBook,
   ManagedUser,
   MessageItem,
+  PerformanceHeuristics,
+  PerformanceReport,
   PermissionItem,
   PublicInstituteData,
   QuizQuestion,
@@ -28,18 +34,17 @@ import type {
   TestItem,
   TestQuestion,
   TestSubmission,
-  LibraryBook,
-  PerformanceHeuristics,
-  PerformanceReport,
 } from "@/lib/types";
+
+
 
 type DashboardTemplate = {
   roleLabel: string;
   heroTitle: string;
   heroDescription: string;
-  stats: DashboardMetric[];
+  stats: DashboardBundle["stats"];
   primaryPanel: DashboardBundle["primaryPanel"];
-  permissions: PermissionItem[];
+  permissions: DashboardBundle["permissions"];
 };
 
 type UserDocument = SessionUser & {
@@ -75,6 +80,9 @@ const COLLECTIONS = {
   library: "digital_library",
   performance: "performance_reports",
   heuristics: "performance_heuristics",
+  attendanceSheets: "attendanceSheets",
+  feeInvoices: "feeInvoices",
+  lectures: "lectures",
 } as const;
 
 export const DEFAULT_HEURISTICS: PerformanceHeuristics = {
@@ -1071,6 +1079,302 @@ export async function gradeSubmission(input: {
   };
 }
 
+async function getLinkedStudentIdForViewer(role: Role, userId?: string) {
+  if (!userId) {
+    return null;
+  }
+
+  if (role === "student") {
+    return userId;
+  }
+
+  if (role === "parent") {
+    const users = await getUsersCollection();
+    const parent = await users.findOne({ id: userId });
+
+    return parent?.linkedStudentId ?? null;
+  }
+
+  return null;
+}
+
+export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
+  const collection = await getCollection<AttendanceSheet>(
+    COLLECTIONS.attendanceSheets,
+  );
+
+  if (role === "admin" || role === "educator") {
+    return stripMongoIds(
+      await collection.find({}).sort({ date: -1, createdAt: -1 }).toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({ "records.studentId": linkedStudentId })
+      .sort({ date: -1, createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createAttendanceSheet(input: {
+  title: string;
+  date: string;
+  batchName?: string;
+  subject?: string;
+  createdBy: string;
+  records: AttendanceSheet["records"];
+}) {
+  const collection = await getCollection<AttendanceSheet>(
+    COLLECTIONS.attendanceSheets,
+  );
+
+  const now = new Date().toISOString();
+
+  const sheet: AttendanceSheet = {
+    id: `attendance-${Date.now()}`,
+    title: input.title,
+    date: input.date,
+    batchName: input.batchName,
+    subject: input.subject,
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+    records: input.records,
+  };
+
+  await collection.insertOne(sheet);
+
+  return stripMongoId(sheet);
+}
+
+export async function updateAttendanceSheet(
+  attendanceId: string,
+  input: Partial<{
+    title: string;
+    date: string;
+    batchName: string;
+    subject: string;
+    records: AttendanceSheet["records"];
+  }>,
+) {
+  const collection = await getCollection<AttendanceSheet>(
+    COLLECTIONS.attendanceSheets,
+  );
+
+  const update = {
+    ...input,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await collection.updateOne({ id: attendanceId }, { $set: update });
+
+  const updatedSheet = await collection.findOne({ id: attendanceId });
+
+  return updatedSheet ? stripMongoId(updatedSheet) : null;
+}
+
+export async function deleteAttendanceSheet(attendanceId: string) {
+  const collection = await getCollection<AttendanceSheet>(
+    COLLECTIONS.attendanceSheets,
+  );
+
+  const result = await collection.deleteOne({ id: attendanceId });
+
+  return result.deletedCount > 0;
+}
+
+export async function getFeeInvoicesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+
+  if (role === "admin" || role === "educator") {
+    return stripMongoIds(
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({ studentId: linkedStudentId })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createFeeInvoice(input: {
+  studentId: string;
+  studentName: string;
+  parentId?: string;
+  title: string;
+  amount: number;
+  paidAmount?: number;
+  dueDate: string;
+  status: FeeInvoice["status"];
+  notes?: string;
+  createdBy: string;
+}) {
+  const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+
+  const now = new Date().toISOString();
+
+  const invoice: FeeInvoice = {
+    id: `invoice-${Date.now()}`,
+    studentId: input.studentId,
+    studentName: input.studentName,
+    parentId: input.parentId,
+    title: input.title,
+    amount: input.amount,
+    paidAmount: input.paidAmount ?? 0,
+    dueDate: input.dueDate,
+    status: input.status,
+    notes: input.notes,
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(invoice);
+
+  return stripMongoId(invoice);
+}
+
+export async function updateFeeInvoice(
+  invoiceId: string,
+  input: Partial<{
+    title: string;
+    amount: number;
+    paidAmount: number;
+    dueDate: string;
+    status: FeeInvoice["status"];
+    notes: string;
+  }>,
+) {
+  const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+
+  const update = {
+    ...input,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await collection.updateOne({ id: invoiceId }, { $set: update });
+
+  const updatedInvoice = await collection.findOne({ id: invoiceId });
+
+  return updatedInvoice ? stripMongoId(updatedInvoice) : null;
+}
+
+export async function getLecturesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
+
+  if (role === "admin" || role === "educator") {
+    return stripMongoIds(
+      await collection.find({}).sort({ startsAt: -1 }).toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({
+        $or: [
+          { assignedStudentIds: { $exists: false } },
+          { assignedStudentIds: { $size: 0 } },
+          { assignedStudentIds: linkedStudentId },
+        ],
+      })
+      .sort({ startsAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createLecture(input: {
+  title: string;
+  subject?: string;
+  batchName?: string;
+  description?: string;
+  startsAt: string;
+  endsAt?: string;
+  meetingLink?: string;
+  recordingLink?: string;
+  materialLink?: string;
+  assignedStudentIds?: string[];
+  status: LectureItem["status"];
+  createdBy: string;
+}) {
+  const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
+
+  const now = new Date().toISOString();
+
+  const lecture: LectureItem = {
+    id: `lecture-${Date.now()}`,
+    title: input.title,
+    subject: input.subject,
+    batchName: input.batchName,
+    description: input.description,
+    startsAt: input.startsAt,
+    endsAt: input.endsAt,
+    meetingLink: input.meetingLink,
+    recordingLink: input.recordingLink,
+    materialLink: input.materialLink,
+    assignedStudentIds: input.assignedStudentIds ?? [],
+    status: input.status,
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(lecture);
+
+  return stripMongoId(lecture);
+}
+
+export async function updateLecture(
+  lectureId: string,
+  input: Partial<{
+    title: string;
+    subject: string;
+    batchName: string;
+    description: string;
+    startsAt: string;
+    endsAt: string;
+    meetingLink: string;
+    recordingLink: string;
+    materialLink: string;
+    assignedStudentIds: string[];
+    status: LectureItem["status"];
+  }>,
+) {
+  const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
+
+  const update = {
+    ...input,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await collection.updateOne({ id: lectureId }, { $set: update });
+
+  const updatedLecture = await collection.findOne({ id: lectureId });
+
+  return updatedLecture ? stripMongoId(updatedLecture) : null;
+}
+
 export async function getDashboardBundle(
   role: Role,
   userId?: string,
@@ -1088,19 +1392,27 @@ export async function getDashboardBundle(
     ]);
 
   const template = config.templates[role];
+  const [attendanceSheets, feeInvoices, lectures] = await Promise.all([
+    getAttendanceSheetsForRole(role, userId),
+    getFeeInvoicesForRole(role, userId),
+    getLecturesForRole(role, userId),
+  ]);
 
   return {
-    roleLabel: user?.label ?? template.roleLabel,
-    heroTitle: buildHeroTitle(role, template, user),
-    heroDescription: template.heroDescription,
-    stats: template.stats,
-    primaryPanel: template.primaryPanel,
-    permissions: template.permissions,
-    courses: role === "admin" ? courses : courses.slice(0, 3),
-    tests: tests.slice(0, 4),
-    messages: messages.slice(0, 6),
-    submissions: submissions.slice(0, 6),
-  };
+  roleLabel: user?.label ?? template.roleLabel,
+  heroTitle: buildHeroTitle(role, template, user),
+  heroDescription: template.heroDescription,
+  stats: template.stats,
+  primaryPanel: template.primaryPanel,
+  permissions: template.permissions,
+  courses: role === "admin" ? courses : courses.slice(0, 3),
+  tests: tests.slice(0, 4),
+  messages: messages.slice(0, 6),
+  submissions: submissions.slice(0, 6),
+  attendanceSheets,
+  feeInvoices,
+  lectures,
+};
 }
 
 export async function getLibraryBooksForRole(role: Role) {

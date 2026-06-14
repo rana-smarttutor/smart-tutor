@@ -7,8 +7,11 @@ import { useEffect, useState } from "react";
 import { LiveClock } from "@/components/live-clock";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AttendanceManager } from "@/components/attendance-manager";
+import { InvoiceManager } from "@/components/invoice-manager";
+import { LectureManager } from "@/components/lecture-manager";
 import type {
-  CourseItem,
+  DashboardBundle,
   LibraryBook,
   ManagedUser,
   MessageItem,
@@ -16,7 +19,6 @@ import type {
   PerformanceReport,
   Role,
   SessionUser,
-  TestItem,
   TestSubmission,
 } from "@/lib/types";
 import { DEFAULT_HEURISTICS } from "@/lib/data-store";
@@ -111,22 +113,7 @@ const PerformanceDashboard = dynamic(
   },
 );
 
-type DashboardBundle = {
-  roleLabel: string;
-  heroTitle: string;
-  heroDescription: string;
-  stats: { label: string; value: string; detail: string }[];
-  primaryPanel: {
-    title: string;
-    badge: string;
-    items: { title: string; description: string; meta: string }[];
-  };
-  permissions: { title: string; description: string }[];
-  courses: CourseItem[];
-  tests: TestItem[];
-  messages: any[];
-  submissions: TestSubmission[];
-};
+
 
 type Props = {
   session: SessionUser | null;
@@ -145,6 +132,9 @@ const sidebarByRole = {
     { id: "tests", label: "Tests" },
     { id: "performance", label: "Performance" },
     { id: "results", label: "Results" },
+    { id: "attendance", label: "Attendance" },
+    { id: "fees", label: "Fees" },
+    { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
   educator: [
@@ -153,6 +143,9 @@ const sidebarByRole = {
     { id: "tests", label: "Test Studio" },
     { id: "performance", label: "Analytics Hub" },
     { id: "results", label: "Results" },
+    { id: "attendance", label: "Attendance" },
+    { id: "fees", label: "Invoices" },
+    { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
   admin: [
@@ -162,6 +155,9 @@ const sidebarByRole = {
     { id: "performance", label: "Analytics Hub" },
     { id: "courses", label: "Courses" },
     { id: "accounts", label: "Accounts" },
+    { id: "attendance", label: "Attendance" },
+    { id: "fees", label: "Invoices" },
+    { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
   parent: [
@@ -172,6 +168,7 @@ const sidebarByRole = {
     { id: "test-reports", label: "Test Reports" },
     { id: "performance", label: "Performance" },
     { id: "fees", label: "Fees" },
+    { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
 } as const;
@@ -242,6 +239,7 @@ export function DashboardShell({
   const showAttendance = activeSection === "attendance";
   const showTestReports = activeSection === "test-reports";
   const showFees = activeSection === "fees";
+  const showLectures = activeSection === "lectures";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
@@ -849,63 +847,12 @@ export function DashboardShell({
             </article>
           ) : null}
 
-          {role === "parent" && showAttendance ? (
-            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="section-label">Attendance</p>
-                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Monthly Attendance
-                  </h2>
-                </div>
-                <span className="pill">94% Present</span>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {[
-                  {
-                    label: "Present",
-                    value: "29 Days",
-                    detail: "Classes attended",
-                  },
-                  {
-                    label: "Absent",
-                    value: "2 Days",
-                    detail: "Missed sessions",
-                  },
-                  {
-                    label: "Attendance Rate",
-                    value: "94%",
-                    detail: "Current month",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="surface-soft rounded-3xl p-5"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                      {item.label}
-                    </p>
-                    <p className="mt-3 text-2xl font-semibold text-[var(--color-heading)]">
-                      {item.value}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                      {item.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 surface-soft rounded-3xl p-5">
-                <p className="text-lg font-semibold text-[var(--color-heading)]">
-                  Attendance Note
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
-                  Your child has maintained good attendance this month. Please
-                  ensure regular participation before upcoming tests.
-                </p>
-              </div>
-            </article>
+          {showAttendance ? (
+            <AttendanceManager
+              role={role}
+              attendanceSheets={dashboard.attendanceSheets}
+              studentDirectory={studentDirectory}
+            />
           ) : null}
 
           {role === "parent" && showTestReports ? (
@@ -957,63 +904,20 @@ export function DashboardShell({
             </article>
           ) : null}
 
-          {role === "parent" && showFees ? (
-            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="section-label">Fees</p>
-                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Fee Status
-                  </h2>
-                </div>
-                <span className="pill">No Dues</span>
-              </div>
+          {showFees ? (
+            <InvoiceManager
+              role={role}
+              feeInvoices={dashboard.feeInvoices}
+              studentDirectory={studentDirectory}
+            />
+          ) : null}
 
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {[
-                  {
-                    label: "Current Status",
-                    value: "Paid",
-                    detail: "No pending dues",
-                  },
-                  {
-                    label: "Last Payment",
-                    value: "₹12,000",
-                    detail: "Received successfully",
-                  },
-                  {
-                    label: "Next Due Date",
-                    value: "15 July",
-                    detail: "Upcoming installment",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="surface-soft rounded-3xl p-5"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                      {item.label}
-                    </p>
-                    <p className="mt-3 text-2xl font-semibold text-[var(--color-heading)]">
-                      {item.value}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                      {item.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 surface-soft rounded-3xl p-5">
-                <p className="text-lg font-semibold text-[var(--color-heading)]">
-                  Payment Note
-                </p>
-                <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
-                  This section can later be connected with real invoices,
-                  receipts, and online payment history.
-                </p>
-              </div>
-            </article>
+          {showLectures ? (
+            <LectureManager
+              role={role}
+              lectures={dashboard.lectures}
+              studentDirectory={studentDirectory}
+            />
           ) : null}
 
           {showLibrary ? (
