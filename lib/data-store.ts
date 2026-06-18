@@ -81,7 +81,34 @@ const COLLECTIONS = {
   attendanceSheets: "attendanceSheets",
   feeInvoices: "feeInvoices",
   lectures: "lectures",
+  enquiries: "enquiries",
 } as const;
+
+// ... (existing code)
+
+export async function createEnquiry(input: {
+  name: string;
+  contact: string;
+  role: string;
+  courseTitle: string;
+  courseKey: string;
+  message: string;
+}) {
+  const collection = await getCollection(COLLECTIONS.enquiries);
+  const enquiry = {
+    ...input,
+    createdAt: new Date().toISOString(),
+    status: "new",
+  };
+  await collection.insertOne(enquiry);
+  return enquiry;
+}
+
+export async function getAllEnquiries() {
+  const collection = await getCollection(COLLECTIONS.enquiries);
+  return await collection.find({}).sort({ createdAt: -1 }).toArray();
+}
+
 
 export const DEFAULT_HEURISTICS: PerformanceHeuristics = {
   outstanding: 95,

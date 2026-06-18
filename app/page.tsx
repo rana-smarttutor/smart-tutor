@@ -9,6 +9,7 @@ import { getPublicInstituteData } from "@/lib/data-store";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { StudentCarousel } from "@/components/student-carousel";
 import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
+import HomeToppers from "@/components/home-toppers";
 import { courseLibrary } from "@/lib/course-library";
 import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
 import { ProgramCarousel } from "@/components/program-carousel";
@@ -292,6 +293,10 @@ export default async function Home() {
           </div>
 
           <GrandSuccessCarousel />
+          
+          <div className="mt-12">
+            <HomeToppers />
+          </div>
         </div>
       </section>
 

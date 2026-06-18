@@ -48,10 +48,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/login`,
+      url: `${baseUrl}/quiz-arena`,
       lastModified: lastMod,
-      changeFrequency: 'monthly',
-      priority: 0.4,
+      changeFrequency: 'weekly',
+      priority: 0.7,
     },
   ];
 

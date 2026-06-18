@@ -113,6 +113,17 @@ const PerformanceDashboard = dynamic(
   },
 );
 
+const DashboardEnquiryManager = dynamic(
+  () =>
+    import("@/components/dashboard-enquiry-manager").then(
+      (module) => module.DashboardEnquiryManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 
 
 type Props = {
@@ -151,6 +162,7 @@ const sidebarByRole = {
   admin: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "enquiries", label: "Enquiries" },
     { id: "tests", label: "Test Studio" },
     { id: "performance", label: "Analytics Hub" },
     { id: "courses", label: "Courses" },
@@ -229,6 +241,7 @@ export function DashboardShell({
 
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
+  const showEnquiries = activeSection === "enquiries";
   const showTests = activeSection === "tests";
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
@@ -650,6 +663,10 @@ export function DashboardShell({
               studentDirectory={studentDirectory}
               onMessagesChange={setMessages}
             />
+          ) : null}
+
+          {showEnquiries && role === "admin" ? (
+            <DashboardEnquiryManager />
           ) : null}
 
           {showTests ? (

@@ -396,6 +396,24 @@ export type LectureItem = {
 };
 
 // =========================
+// Enquiry System
+// =========================
+
+export type EnquiryStatus = "new" | "contacted" | "enrolled" | "closed";
+
+export type Enquiry = {
+  id?: string;
+  name: string;
+  contact: string;
+  role: string;
+  courseTitle: string;
+  courseKey: string;
+  message: string;
+  createdAt: string;
+  status: EnquiryStatus;
+};
+
+// =========================
 // Dashboard Bundle
 // =========================
 

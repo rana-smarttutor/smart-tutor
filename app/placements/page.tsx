@@ -1,9 +1,18 @@
+import { Metadata } from "next";
 import Image from "next/image";
 
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { generatedPlacedStudents } from "@/lib/placed-students-data";
+
+export const metadata: Metadata = {
+  title: "Hall of Fame & Placements | Smart Tutors",
+  description: "Our students consistently achieve top ranks in competitive exams and secure placements in leading companies. Explore our Hall of Fame and success stories.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/placements",
+  },
+};
 
 export const dynamic = "force-static";
 

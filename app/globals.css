@@ -52,6 +52,10 @@
   --color-accent: var(--color-primary);
   --color-accent-strong: var(--color-primary-strong);
   --color-highlight: var(--color-primary-soft);
+
+  /* New Design Tokens */
+  --shadow-premium: 0 10px 30px rgba(15, 23, 42, 0.05);
+  --shadow-glow: 0 0 15px rgba(21, 101, 255, 0.2);
   
   --scroll-layer-a:
     linear-gradient(180deg, rgba(37, 99, 235, 0.05) 0%, rgba(30, 64, 175, 0.05) 100%),
@@ -738,38 +742,27 @@ footer {
 .library-scroll-row:hover::-webkit-scrollbar-thumb:hover {
   background: rgba(15, 23, 42, 0.75);
 }
-.library-scroll-row {
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  transition: scrollbar-color 0.25s ease;
+
+/* New Design Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.library-scroll-row:hover {
-  scrollbar-color: rgba(15, 23, 42, 0.55) rgba(15, 23, 42, 0.08);
+@keyframes soft-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.4);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 4px 24px rgba(37, 211, 102, 0.6);
+  }
 }
 
-.library-scroll-row::-webkit-scrollbar {
-  height: 8px;
-}
-
-.library-scroll-row::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 999px;
-}
-
-.library-scroll-row:hover::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.08);
-}
-
-.library-scroll-row::-webkit-scrollbar-thumb {
-  background: transparent;
-  border-radius: 999px;
-}
-
-.library-scroll-row:hover::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.55);
-}
-
-.library-scroll-row:hover::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.75);
+.whatsapp-pulse {
+  animation: soft-pulse 2s infinite ease-in-out;
 }
