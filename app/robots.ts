@@ -11,27 +11,27 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact', '/quiz-arena'],
         disallow: ['/api/', '/dashboard/', '/admin/', '/student-performance/', '/login', '/logout', '/*.json$'],
       },
       {
         userAgent: 'GPTBot',
-        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact', '/quiz-arena'],
         disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       },
       {
         userAgent: 'ChatGPT-User',
-        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact', '/quiz-arena'],
         disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       },
       {
         userAgent: 'Claude-Web',
-        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact', '/quiz-arena'],
         disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       },
       {
         userAgent: 'Google-Extended',
-        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact'],
+        allow: ['/', '/courses', '/placements', '/mock-test', '/library', '/contact', '/quiz-arena'],
         disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/'],
       }
     ],

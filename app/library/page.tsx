@@ -3,6 +3,14 @@ import DigitalLibraryClient from "@/components/digital-library-client";
 import { getSessionUser } from "@/lib/auth";
 import { getDigitalLibraryBooks } from "@/lib/digital-library-data";
 
+export const metadata: Metadata = {
+  title: "Digital Library & Study Materials | Smart Tutors",
+  description: "Access a vast collection of study materials, textbooks, and resources in our Digital Library. Curated content for all board standards and competitive exams.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/library",
+  },
+};
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

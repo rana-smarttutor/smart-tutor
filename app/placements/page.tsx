@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import Image from "next/image";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { PlacementPortalHero } from "@/components/placement-portal-hero";
