@@ -1249,7 +1249,6 @@ export async function createFeeInvoice(input: {
   status: FeeInvoice["status"];
   notes?: string;
   createdBy: string;
-  branch?: FeeInvoice["branch"];
   receiptNo?: string;
   parentName?: string;
   classCourse?: string;
@@ -1262,7 +1261,7 @@ export async function createFeeInvoice(input: {
   paymentMode?: string;
 }) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
-
+  const receiptNo = await generateFeeReceiptNo();
   const now = new Date().toISOString();
 
   const invoice: FeeInvoice = {
@@ -1279,7 +1278,6 @@ export async function createFeeInvoice(input: {
     createdBy: input.createdBy,
     createdAt: now,
     updatedAt: now,
-    branch: input.branch,
     receiptNo: input.receiptNo,
     parentName: input.parentName,
     classCourse: input.classCourse,
@@ -1561,4 +1559,25 @@ export async function savePerformanceHeuristics(
     { upsert: true },
   );
   return heuristics;
+}
+
+async function generateFeeReceiptNo() {
+  const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+
+  const year = new Date().getFullYear();
+  const prefix = `ST-REC-${year}-`;
+
+  const latestReceipt = await collection
+    .find({ receiptNo: { $regex: `^${prefix}` } })
+    .sort({ receiptNo: -1 })
+    .limit(1)
+    .next();
+
+  const lastNumber = latestReceipt?.receiptNo?.startsWith(prefix)
+    ? Number(latestReceipt.receiptNo.replace(prefix, ""))
+    : 0;
+
+  const nextNumber = Number.isFinite(lastNumber) ? lastNumber + 1 : 1;
+
+  return `${prefix}${String(nextNumber).padStart(3, "0")}`;
 }

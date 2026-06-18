@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LegalModals } from "@/components/legal-modals";
+import Image from "next/image";
 import { getPublicInstituteData } from "@/lib/data-store";
 
 export async function SiteFooter() {
@@ -33,27 +34,35 @@ export async function SiteFooter() {
               Admissions, learning, and institute operations in one workspace.
             </p>
 
-            <div className="mt-5 space-y-3 text-sm text-[var(--color-muted)]">
-              <p className="font-semibold text-[var(--color-heading)]">
+            <div className="space-y-3">
+              <p className="font-bold text-[var(--color-heading)]">
                 {data.profile.directorName} | {data.profile.directorTitle}
               </p>
 
-              <div className="space-y-2">
-                {branches.map((branch) => (
-                  <p
-                    key={branch.name}
-                    className="font-semibold text-[var(--color-heading)]"
-                  >
-                    {branch.name}: {branch.address}
-                  </p>
-                ))}
-              </div>
-
-              <p>{data.profile.phone}</p>
-              <p>{data.profile.email}</p>
-              <p>{data.profile.hours}</p>
-              <p>{data.profile.affiliatedInstitutes.join(" | ")}</p>
+              <Image
+                src="/ravi-rana.png"
+                alt="Prof. Ravi Rana"
+                width={96}
+                height={96}
+                className="h-24 w-24 rounded-2xl border border-white/10 object-cover shadow-lg"
+              />
             </div>
+
+            <div className="space-y-2">
+              {branches.map((branch) => (
+                <p
+                  key={branch.name}
+                  className="font-semibold text-[var(--color-heading)]"
+                >
+                  {branch.name}: {branch.address}
+                </p>
+              ))}
+            </div>
+
+            <p>{data.profile.phone}</p>
+            <p>{data.profile.email}</p>
+            <p>{data.profile.hours}</p>
+            <p>{data.profile.affiliatedInstitutes.join(" | ")}</p>
           </div>
 
           <div>

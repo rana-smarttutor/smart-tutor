@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import type { FeeInvoice, ManagedUser, Role } from "@/lib/types";
 
-type BranchKey = "panvel" | "vashi";
-
 type ReceiptInvoice = FeeInvoice & {
-  branch?: BranchKey;
   receiptNo?: string;
   parentName?: string;
   classCourse?: string;
@@ -37,23 +34,33 @@ type DropdownTheme = {
   borderColor: string;
 };
 
-const INSTITUTE_LOGO_PATH = "/smart-tutors-logo.png";
-
-const branchDetails: Record<BranchKey, { label: string; address: string }> = {
-  panvel: {
-    label: "Panvel",
-    address: "Sector 5, New Panvel East, Panvel",
-  },
-  vashi: {
-    label: "Vashi",
-    address: "Sector 17, Vashi, Navi Mumbai",
-  },
+type CreateReceiptPayload = {
+  studentId: string;
+  studentName: string;
+  parentName?: string;
+  classCourse?: string;
+  batch?: string;
+  rollNo?: string;
+  academicYear?: string;
+  mobileNo?: string;
+  particulars?: string;
+  month?: string;
+  paymentMode?: string;
+  title: string;
+  amount: number;
+  paidAmount: number;
+  dueDate: string;
+  status: FeeInvoice["status"];
+  notes?: string;
 };
 
-const branchOptions: SelectOption[] = [
-  { label: "Panvel", value: "panvel" },
-  { label: "Vashi", value: "vashi" },
-];
+const INSTITUTE_LOGO_PATH = "/smart-tutors-logo.png";
+const FOUNDER_SIGN_PATH = "/founder-sign.png";
+
+const INSTITUTE_NAME = "Smart Tutors";
+const INSTITUTE_WEBSITE = "www.smarttutors.co.in";
+const INSTITUTE_PHONE = "+91 8850447887";
+const INSTITUTE_EMAIL = "info@smarttutors.co.in";
 
 const paymentModeOptions: SelectOption[] = [
   { label: "Online", value: "Online" },
@@ -61,13 +68,6 @@ const paymentModeOptions: SelectOption[] = [
   { label: "UPI", value: "UPI" },
   { label: "Bank Transfer", value: "Bank Transfer" },
   { label: "Cheque", value: "Cheque" },
-];
-
-const statusOptions: SelectOption[] = [
-  { label: "Unpaid", value: "unpaid" },
-  { label: "Partial", value: "partial" },
-  { label: "Paid", value: "paid" },
-  { label: "Overdue", value: "overdue" },
 ];
 
 const fallbackDropdownTheme: DropdownTheme = {
@@ -218,13 +218,11 @@ function CustomSelect({
   options,
   onChange,
   placeholder = "Select",
-  small = false,
 }: {
   value: string;
   options: SelectOption[];
   onChange: (value: string) => void;
   placeholder?: string;
-  small?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const dropdownTheme = useDropdownTheme();
@@ -238,11 +236,7 @@ function CustomSelect({
         type="button"
         onClick={() => setOpen((current) => !current)}
         style={dropdownTheme}
-        className={`flex w-full items-center justify-between gap-3 border text-left font-semibold shadow-sm outline-none transition hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${
-          small
-            ? "rounded-xl px-3 py-2 text-sm"
-            : "rounded-2xl px-4 py-3 text-sm"
-        }`}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-semibold shadow-sm outline-none transition hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
       >
         <span className="truncate">{selectedLabel}</span>
         <span className="text-xs opacity-70">▾</span>
@@ -305,13 +299,6 @@ function escapeHtml(value: string) {
 
 function formatCurrency(value: number) {
   return `₹${value.toLocaleString("en-IN")}`;
-}
-
-function generateReceiptNumber(nextIndex: number) {
-  return `ST-INV-${new Date().getFullYear()}-${String(nextIndex).padStart(
-    3,
-    "0",
-  )}`;
 }
 
 function numberToWordsIndian(amount: number) {
@@ -385,6 +372,15 @@ function numberToWordsIndian(amount: number) {
   return `${parts.join(" ")} Rupees Only`;
 }
 
+function getReceiptStatus(
+  amount: number,
+  paidAmount: number,
+): FeeInvoice["status"] {
+  if (paidAmount >= amount && amount > 0) return "paid";
+  if (paidAmount > 0) return "partial";
+  return "unpaid";
+}
+
 export function InvoiceManager({
   role,
   feeInvoices,
@@ -394,10 +390,6 @@ export function InvoiceManager({
 
   const [invoices, setInvoices] = useState<ReceiptInvoice[]>(feeInvoices);
   const [studentId, setStudentId] = useState(studentDirectory[0]?.id ?? "");
-  const [branch, setBranch] = useState<BranchKey>("panvel");
-  const [receiptNo, setReceiptNo] = useState(
-    generateReceiptNumber(feeInvoices.length + 1),
-  );
   const [paymentMode, setPaymentMode] = useState("Online");
   const [parentName, setParentName] = useState("");
   const [classCourse, setClassCourse] = useState("");
@@ -407,11 +399,9 @@ export function InvoiceManager({
   const [mobileNo, setMobileNo] = useState("");
   const [particulars, setParticulars] = useState("Monthly Fee");
   const [month, setMonth] = useState("");
-  const [title, setTitle] = useState("Monthly Fee Invoice");
   const [amount, setAmount] = useState("");
   const [paidAmount, setPaidAmount] = useState("0");
   const [dueDate, setDueDate] = useState(new Date().toISOString().slice(0, 10));
-  const [status, setStatus] = useState<FeeInvoice["status"]>("unpaid");
   const [notes, setNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -437,32 +427,30 @@ export function InvoiceManager({
 
     if (!student) return;
 
-    setIsSaving(true);
+    const totalAmount = Number(amount || 0);
+    const receivedAmount = Number(paidAmount || 0);
 
-    const receiptPayload: Omit<
-      ReceiptInvoice,
-      "id" | "createdBy" | "createdAt" | "updatedAt"
-    > = {
+    const receiptPayload: CreateReceiptPayload = {
       studentId: student.id,
       studentName: student.name,
-      branch,
-      receiptNo,
-      parentName,
-      classCourse,
-      batch,
-      rollNo,
-      academicYear,
-      mobileNo,
-      particulars,
-      month,
-      paymentMode,
-      title,
-      amount: Number(amount || 0),
-      paidAmount: Number(paidAmount || 0),
+      parentName: parentName.trim() || undefined,
+      classCourse: classCourse.trim() || undefined,
+      batch: batch.trim() || undefined,
+      rollNo: rollNo.trim() || undefined,
+      academicYear: academicYear.trim() || undefined,
+      mobileNo: mobileNo.trim() || undefined,
+      particulars: particulars.trim() || undefined,
+      month: month.trim() || undefined,
+      paymentMode: paymentMode.trim() || undefined,
+      title: particulars.trim() || "Fee Receipt",
+      amount: totalAmount,
+      paidAmount: receivedAmount,
       dueDate,
-      status,
-      notes,
+      status: getReceiptStatus(totalAmount, receivedAmount),
+      notes: notes.trim() || undefined,
     };
+
+    setIsSaving(true);
 
     try {
       const response = await fetch("/api/invoices", {
@@ -474,18 +462,15 @@ export function InvoiceManager({
       });
 
       const payload: { feeInvoice?: ReceiptInvoice } = await response.json();
-      const feeInvoice = payload.feeInvoice;
 
-      if (response.ok && feeInvoice) {
-        setInvoices((current) => [
-          {
-            ...feeInvoice,
-            ...receiptPayload,
-          },
-          ...current,
-        ]);
+      if (response.ok && payload.feeInvoice) {
+        const newInvoice = {
+          ...payload.feeInvoice,
+          ...receiptPayload,
+        } as ReceiptInvoice;
 
-        setReceiptNo(generateReceiptNumber(invoices.length + 2));
+        setInvoices((current) => [newInvoice, ...current]);
+
         setParentName("");
         setClassCourse("");
         setBatch("");
@@ -500,36 +485,6 @@ export function InvoiceManager({
     } finally {
       setIsSaving(false);
     }
-  }
-
-  async function updateInvoiceStatus(
-    invoiceId: string,
-    nextStatus: FeeInvoice["status"],
-  ) {
-    if (!canEdit) return;
-
-    const invoice = invoices.find((item) => item.id === invoiceId);
-
-    if (!invoice) return;
-
-    const optimisticInvoice: ReceiptInvoice = {
-      ...invoice,
-      status: nextStatus,
-    };
-
-    setInvoices((current) =>
-      current.map((item) => (item.id === invoiceId ? optimisticInvoice : item)),
-    );
-
-    await fetch(`/api/invoices/${invoiceId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        status: nextStatus,
-      }),
-    });
   }
 
   async function deleteInvoice(invoiceId: string) {
@@ -557,15 +512,15 @@ export function InvoiceManager({
     return Math.max(invoice.amount - (invoice.paidAmount ?? 0), 0);
   }
 
-  function openInvoicePdf(invoice: ReceiptInvoice) {
+  function openReceiptPdf(invoice: ReceiptInvoice) {
     const balance = getBalance(invoice);
-    const selectedBranch = branchDetails[invoice.branch ?? "panvel"];
     const receiptDate = invoice.createdAt
       ? new Date(invoice.createdAt).toLocaleDateString("en-IN")
       : new Date().toLocaleDateString("en-IN");
 
     const printDate = new Date().toLocaleString("en-IN");
     const logoUrl = `${window.location.origin}${INSTITUTE_LOGO_PATH}`;
+    const founderSignUrl = `${window.location.origin}${FOUNDER_SIGN_PATH}`;
     const amountInWords = numberToWordsIndian(invoice.paidAmount ?? 0);
 
     const popup = window.open("", "_blank", "width=1000,height=1100");
@@ -581,53 +536,62 @@ export function InvoiceManager({
         <head>
           <title>${escapeHtml(invoice.receiptNo || invoice.title)}</title>
           <style>
-            * { box-sizing: border-box; }
+            * {
+              box-sizing: border-box;
+            }
+
             body {
               margin: 0;
               padding: 16px;
               font-family: Arial, sans-serif;
               color: #000;
-              background: #fff;
+              background: #ffffff;
               font-size: 12px;
             }
+
             .receipt {
               width: 100%;
               max-width: 980px;
               margin: 0 auto;
               border: 2px solid #111;
-              background: #fff;
+              background: #ffffff;
             }
+
             .header {
-              text-align: center;
-              border-bottom: 1px solid #111;
-              padding: 8px 12px 6px;
               position: relative;
-              min-height: 98px;
+              min-height: 88px;
+              border-bottom: 1px solid #111;
+              padding: 10px 14px 8px;
+              text-align: center;
             }
+
             .logo {
               position: absolute;
               left: 16px;
-              top: 8px;
-              width: 82px;
-              height: 82px;
+              top: 12px;
+              width: 76px;
+              height: 76px;
               object-fit: contain;
             }
+
             .institute {
-              font-size: 17px;
-              font-weight: 800;
               margin: 0;
+              font-size: 19px;
+              font-weight: 900;
               text-transform: capitalize;
             }
-            .branch {
-              font-size: 12px;
+
+            .website {
               margin-top: 4px;
+              font-size: 12px;
               font-weight: 700;
             }
-            .address,
+
             .contact {
               margin-top: 4px;
               font-size: 11px;
             }
+
             .title-row {
               display: flex;
               justify-content: center;
@@ -636,69 +600,122 @@ export function InvoiceManager({
               border-bottom: 1px solid #111;
               padding: 6px 12px;
             }
+
             .title-row h2 {
               margin: 0;
               font-size: 15px;
               text-decoration: underline;
             }
+
             .copy {
               position: absolute;
               right: 12px;
               font-size: 10px;
             }
+
             .details,
             .fee-table {
               width: 100%;
               border-collapse: collapse;
             }
+
             .details td {
               border-bottom: 1px solid #999;
               padding: 5px 8px;
               vertical-align: top;
             }
+
             .details .label {
               width: 125px;
               font-weight: 700;
             }
+
             .details .value {
               font-weight: 600;
             }
+
             .fee-table th,
             .fee-table td {
               border: 1px solid #999;
               padding: 6px 8px;
               text-align: left;
             }
+
             .fee-table th {
               font-weight: 800;
               background: #f3f4f6;
               text-align: center;
             }
+
             .fee-table .number {
               text-align: right;
               white-space: nowrap;
             }
+
             .summary {
               padding: 8px 10px;
               border-top: 1px solid #111;
               line-height: 1.7;
             }
+
             .summary strong {
               font-weight: 800;
             }
+
             .footer {
-              padding: 8px 10px;
-              border-top: 1px solid #111;
-              font-size: 11px;
               display: flex;
               justify-content: space-between;
-              gap: 16px;
+              gap: 24px;
+              border-top: 1px solid #111;
+              padding: 12px 14px;
+              min-height: 120px;
             }
-            .note {
+
+            .footer-note {
+              max-width: 56%;
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1.5;
+            }
+
+            .signature-block {
+              width: 220px;
+              text-align: center;
+              font-size: 11px;
+              color: #111;
+            }
+
+            .signature-label {
+              text-align: left;
+              margin-bottom: 2px;
+            }
+
+            .signature-image {
+              width: 150px;
+              height: 52px;
+              object-fit: contain;
+              display: block;
+              margin: 0 auto 2px;
+            }
+
+            .signature-name {
+              font-weight: 800;
+              border-top: 1px solid #111;
+              padding-top: 4px;
+              margin-top: 2px;
+            }
+
+            .signature-title {
+              margin-top: 2px;
+              font-size: 10px;
               font-weight: 700;
             }
+
             @media print {
-              body { padding: 0; }
+              body {
+                padding: 0;
+              }
+
               .receipt {
                 max-width: none;
                 border: 2px solid #111;
@@ -711,10 +728,11 @@ export function InvoiceManager({
           <div class="receipt">
             <div class="header">
               <img src="${logoUrl}" class="logo" onerror="this.style.display='none'" />
-              <h1 class="institute">Smart Tutors</h1>
-              <div class="branch">${escapeHtml(selectedBranch.label)} Branch Office</div>
-              <div class="address">${escapeHtml(selectedBranch.address)}</div>
-              <div class="contact">Phone: +91 8850447887 | Email: info@smarttutors.co.in</div>
+              <h1 class="institute">${escapeHtml(INSTITUTE_NAME)}</h1>
+              <div class="website">Website: ${escapeHtml(INSTITUTE_WEBSITE)}</div>
+              <div class="contact">
+                Phone: ${escapeHtml(INSTITUTE_PHONE)} | Email: ${escapeHtml(INSTITUTE_EMAIL)}
+              </div>
             </div>
 
             <div class="title-row">
@@ -792,14 +810,27 @@ export function InvoiceManager({
             </div>
 
             <div class="footer">
-              <div class="note">This is a computer generated receipt and does not require signature.</div>
-              <div>Smart Tutors</div>
+              <div class="footer-note">
+                This is a computer generated receipt.
+              </div>
+
+              <div class="signature-block">
+                <img
+                  src="${founderSignUrl}"
+                  class="signature-image"
+                  onerror="this.style.display='none'"
+                />
+                <div class="signature-name">Founder</div>
+                <div class="signature-title">Authorized Signatory</div>
+              </div>
             </div>
           </div>
 
           <script>
             window.onload = function () {
-              window.print();
+              setTimeout(function () {
+                window.print();
+              }, 300);
             };
           </script>
         </body>
@@ -820,39 +851,12 @@ export function InvoiceManager({
           <p className="text-sm text-[var(--color-muted)]">
             {canEdit
               ? "Generate fee receipts and download them as PDF."
-              : "View your fee receipts and payment status."}
+              : "View your fee receipts and payment details."}
           </p>
         </div>
 
         {canEdit ? (
           <div className="mt-6 grid overflow-visible gap-4 md:grid-cols-3">
-            <FieldLabel label="Branch">
-              <CustomSelect
-                value={branch}
-                options={branchOptions}
-                onChange={(nextBranch) =>
-                  setBranch(nextBranch === "vashi" ? "vashi" : "panvel")
-                }
-              />
-            </FieldLabel>
-
-            <FieldLabel label="Receipt No">
-              <input
-                value={receiptNo}
-                onChange={(event) => setReceiptNo(event.target.value)}
-                placeholder="ST-INV-2026-001"
-                className={fieldClass}
-              />
-            </FieldLabel>
-
-            <FieldLabel label="Payment Mode">
-              <CustomSelect
-                value={paymentMode}
-                options={paymentModeOptions}
-                onChange={setPaymentMode}
-              />
-            </FieldLabel>
-
             <FieldLabel label="Student Name">
               <CustomSelect
                 value={studentId}
@@ -915,6 +919,14 @@ export function InvoiceManager({
               />
             </FieldLabel>
 
+            <FieldLabel label="Payment Mode">
+              <CustomSelect
+                value={paymentMode}
+                options={paymentModeOptions}
+                onChange={setPaymentMode}
+              />
+            </FieldLabel>
+
             <FieldLabel label="Particulars">
               <input
                 value={particulars}
@@ -929,15 +941,6 @@ export function InvoiceManager({
                 value={month}
                 onChange={(event) => setMonth(event.target.value)}
                 placeholder="Example: June 2026"
-                className={fieldClass}
-              />
-            </FieldLabel>
-
-            <FieldLabel label="Invoice Title">
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Example: Monthly Fee Invoice"
                 className={fieldClass}
               />
             </FieldLabel>
@@ -957,7 +960,7 @@ export function InvoiceManager({
                 type="number"
                 value={paidAmount}
                 onChange={(event) => setPaidAmount(event.target.value)}
-                placeholder="Example: 0"
+                placeholder="Example: 10000"
                 className={fieldClass}
               />
             </FieldLabel>
@@ -971,21 +974,11 @@ export function InvoiceManager({
               />
             </FieldLabel>
 
-            <FieldLabel label="Payment Status">
-              <CustomSelect
-                value={status}
-                options={statusOptions}
-                onChange={(nextStatus) =>
-                  setStatus(nextStatus as FeeInvoice["status"])
-                }
-              />
-            </FieldLabel>
-
             <FieldLabel label="Notes">
               <textarea
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Example: Please pay before due date."
+                placeholder="Example: Payment received."
                 className={`${fieldClass} min-h-24 md:col-span-2`}
               />
             </FieldLabel>
@@ -1027,23 +1020,9 @@ export function InvoiceManager({
                   </p>
                 </div>
 
-                {canEdit ? (
-                  <div className="min-w-36">
-                    <CustomSelect
-                      value={invoice.status}
-                      options={statusOptions}
-                      small
-                      onChange={(nextStatus) =>
-                        updateInvoiceStatus(
-                          invoice.id,
-                          nextStatus as FeeInvoice["status"],
-                        )
-                      }
-                    />
-                  </div>
-                ) : (
-                  <span className="pill capitalize">{invoice.status}</span>
-                )}
+                <span className="pill">
+                  Balance {formatCurrency(getBalance(invoice))}
+                </span>
               </div>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -1084,7 +1063,7 @@ export function InvoiceManager({
               <div className="mt-5 flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() => openInvoicePdf(invoice)}
+                  onClick={() => openReceiptPdf(invoice)}
                   className="rounded-full border border-blue-400/30 bg-blue-500/10 px-5 py-3 text-sm font-black text-blue-600 hover:bg-blue-500/20 dark:text-blue-100"
                 >
                   Download Receipt PDF
