@@ -39,7 +39,6 @@ export async function POST(request: Request) {
     status: body.status ?? "unpaid",
     notes: body.notes ? String(body.notes) : undefined,
     createdBy: session.id,
-    branch: body.branch === "vashi" ? "vashi" : "panvel",
     receiptNo: body.receiptNo ? String(body.receiptNo) : undefined,
     parentName: body.parentName ? String(body.parentName) : undefined,
     classCourse: body.classCourse ? String(body.classCourse) : undefined,
