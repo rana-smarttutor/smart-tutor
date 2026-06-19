@@ -9,6 +9,8 @@ type Report = {
   period: string;
   status: string;
   academyName?: string;
+  title?: string;
+periodLabel?: string;
   heuristics?: {
     outstanding: number;
     excellent: number;
@@ -452,11 +454,16 @@ export default function StudentPerformanceReport({ report }: { report: Report })
     };
   }, []);
 
-  const reportTitle = useMemo(() => {
-    return report.reportType === "monthly"
+const reportTitle = useMemo(() => {
+  return (
+    report.title?.trim() ||
+    report.periodLabel?.trim() ||
+    report.period?.trim() ||
+    (report.reportType === "monthly"
       ? "Monthly Student Performance Report"
-      : "Weekly Student Performance Report";
-  }, [report.reportType]);
+      : "Weekly Student Performance Report")
+  );
+}, [report.period, report.periodLabel, report.reportType, report.title]);
 
   function downloadPdf() {
     window.print();

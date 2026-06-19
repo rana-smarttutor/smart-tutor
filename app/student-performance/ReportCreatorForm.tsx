@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import "./student-performance.css";
 
@@ -18,6 +18,12 @@ type TrendRow = {
 type AttendanceRow = {
   date: string;
   present: boolean;
+};
+
+type RegisteredStudent = {
+  id: string;
+  name: string;
+  program: string;
 };
 
 const defaultSubjects: SubjectRow[] = [
@@ -47,6 +53,16 @@ export default function ReportCreatorForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHeuristics, setShowHeuristics] = useState(false);
   const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+  const [studentEntryMode, setStudentEntryMode] = useState<
+    "registered" | "manual"
+  >("registered");
+
+  const [registeredStudents, setRegisteredStudents] = useState<
+    RegisteredStudent[]
+  >([]);
+
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
 
   const [heuristics, setHeuristics] = useState({
     outstanding: "95",
@@ -96,9 +112,10 @@ export default function ReportCreatorForm() {
   });
 
   const reportTitle =
-    form.reportType === "monthly"
+    form.period.trim() ||
+    (form.reportType === "monthly"
       ? "Monthly Student Performance Report"
-      : "Weekly Student Performance Report";
+      : "Weekly Student Performance Report");
 
   const [subjects, setSubjects] = useState<SubjectRow[]>(defaultSubjects);
   const [trend, setTrend] = useState<TrendRow[]>(defaultTrend);
@@ -163,6 +180,45 @@ export default function ReportCreatorForm() {
     } finally {
       setIsPhotoUploading(false);
     }
+  }
+  useEffect(() => {
+    async function loadRegisteredStudents() {
+      setIsLoadingStudents(true);
+
+      try {
+        const response = await fetch(
+          "/api/student-performance/registered-students",
+        );
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setRegisteredStudents(result.students || []);
+        }
+      } catch (error) {
+        console.error("Failed to load registered students:", error);
+      } finally {
+        setIsLoadingStudents(false);
+      }
+    }
+
+    void loadRegisteredStudents();
+  }, []);
+
+  function selectRegisteredStudent(studentId: string) {
+    setSelectedStudentId(studentId);
+
+    const selectedStudent = registeredStudents.find(
+      (student) => student.id === studentId,
+    );
+
+    if (!selectedStudent) return;
+
+    setForm((current) => ({
+      ...current,
+      studentName: selectedStudent.name,
+      course: selectedStudent.program || current.course,
+    }));
   }
   function updateHeuristic(name: string, value: string) {
     setHeuristics((current) => ({
@@ -375,11 +431,30 @@ export default function ReportCreatorForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const periodLabel = form.period.trim();
+
+    if (!periodLabel) {
+      alert("Please enter the report period.");
+      return;
+    }
+
+    if (studentEntryMode === "registered" && !selectedStudentId) {
+      alert(
+        "Please select a registered student or switch to manual report mode.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     const reportPayload = {
       reportType: form.reportType,
       period: form.period,
+      title: periodLabel,
+      periodLabel,
+      linkedStudentId:
+        studentEntryMode === "registered" ? selectedStudentId : null,
       status: form.status,
       academyName: form.academyName || "SmartIQ Academy",
 
@@ -596,6 +671,67 @@ export default function ReportCreatorForm() {
               cutoff values.
             </p>
           )}
+        </section>
+
+        <section className="spr-section">
+          <h2>Student Account Link</h2>
+
+          <div className="spr-grid two">
+            <label className="spr-field">
+              <span>Student Type</span>
+
+              <select
+                value={studentEntryMode}
+                onChange={(event) => {
+                  const nextMode = event.target.value as
+                    | "registered"
+                    | "manual";
+
+                  setStudentEntryMode(nextMode);
+
+                  if (nextMode === "manual") {
+                    setSelectedStudentId("");
+                  }
+                }}
+              >
+                <option value="registered">
+                  Select a Smart Tutors Student
+                </option>
+                <option value="manual">Create Report Manually</option>
+              </select>
+            </label>
+
+            {studentEntryMode === "registered" ? (
+              <label className="spr-field">
+                <span>Registered Student</span>
+
+                <select
+                  value={selectedStudentId}
+                  onChange={(event) =>
+                    selectRegisteredStudent(event.target.value)
+                  }
+                  disabled={isLoadingStudents}
+                >
+                  <option value="">
+                    {isLoadingStudents
+                      ? "Loading students..."
+                      : "Select a registered student"}
+                  </option>
+
+                  {registeredStudents.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name} — {student.program}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <p className="spr-muted-line">
+                This report will be created as a standalone report. It will not
+                appear inside any Smart Tutors student dashboard.
+              </p>
+            )}
+          </div>
         </section>
 
         <section className="spr-section">

@@ -124,7 +124,14 @@ const DashboardEnquiryManager = dynamic(
   },
 );
 
-
+type StandaloneStudentReport = {
+  id: string;
+  title: string;
+  period: string;
+  periodLabel: string;
+  reportType: "weekly" | "monthly" | string;
+  createdAt?: string | null;
+};
 
 type Props = {
   session: SessionUser | null;
@@ -238,6 +245,11 @@ export function DashboardShell({
   const [heuristics, setHeuristics] =
     useState<PerformanceHeuristics>(DEFAULT_HEURISTICS);
   const [isPerformanceLoading, setIsPerformanceLoading] = useState(false);
+  const [standaloneStudentReports, setStandaloneStudentReports] = useState<
+    StandaloneStudentReport[]
+  >([]);
+  const [isStandaloneReportsLoading, setIsStandaloneReportsLoading] =
+    useState(false);
 
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
@@ -306,6 +318,50 @@ export function DashboardShell({
       setIsPerformanceLoading(false);
     }
   }
+
+  useEffect(() => {
+    if (!showPerformance || role !== "student") {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadStandaloneStudentReports() {
+      setIsStandaloneReportsLoading(true);
+
+      try {
+        const response = await fetch("/api/student-performance/reports/mine", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json()) as {
+          reports?: StandaloneStudentReport[];
+        };
+
+        if (!isMounted) {
+          return;
+        }
+
+        setStandaloneStudentReports(response.ok ? payload.reports || [] : []);
+      } catch {
+        if (isMounted) {
+          setStandaloneStudentReports([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsStandaloneReportsLoading(false);
+        }
+      }
+    }
+
+    void loadStandaloneStudentReports();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [role, showPerformance]);
 
   useEffect(() => {
     if (showLibrary && libraryBooks.length === 0 && !isLibraryLoading) {
@@ -986,6 +1042,66 @@ export function DashboardShell({
                 </div>
               ) : (
                 <div className="space-y-12">
+                  {role === "student" ? (
+                    <section className="surface-soft rounded-[2rem] p-5 sm:p-6">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <p className="section-label">Performance Reports</p>
+                          <h3 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+                            Your Published Reports
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                            Open your detailed academic performance reports.
+                          </p>
+                        </div>
+                        <span className="pill">
+                          {standaloneStudentReports.length} reports
+                        </span>
+                      </div>
+
+                      <div className="mt-6 grid gap-4">
+                        {isStandaloneReportsLoading ? (
+                          <div className="flex h-28 items-center justify-center">
+                            <span className="h-7 w-7 animate-spin rounded-full border-4 border-[var(--color-primary)] border-t-transparent" />
+                          </div>
+                        ) : standaloneStudentReports.length ? (
+                          standaloneStudentReports.map((report) => (
+                            <div
+                              key={report.id}
+                              className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5"
+                            >
+                              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                  <p className="text-lg font-semibold text-[var(--color-heading)]">
+                                    {report.title || report.periodLabel || report.period}
+                                  </p>
+                                  <p className="mt-2 text-sm text-[var(--color-muted)]">
+                                    {report.reportType === "monthly"
+                                      ? "Monthly Performance Report"
+                                      : "Weekly Performance Report"}
+                                  </p>
+                                </div>
+
+                                <Link
+                                  href={`/student-performance/report/${report.id}`}
+                                  className="inline-flex w-fit items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+                                >
+                                  View Report
+                                </Link>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="rounded-3xl border border-dashed border-[var(--color-border)] p-6 text-center">
+                            <p className="text-sm text-[var(--color-muted)]">
+                              No performance reports have been published for you yet.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  ) : null}
+
                   {(role === "educator" || role === "admin") && (
                     <PerformanceReportCreator
                       session={session}
@@ -1016,7 +1132,10 @@ export function DashboardShell({
                     </div>
                   )}
 
-                  {performanceReports.length === 0 && role === "student" && (
+                  {performanceReports.length === 0 &&
+                    standaloneStudentReports.length === 0 &&
+                    !isStandaloneReportsLoading &&
+                    role === "student" && (
                     <div className="text-center py-12">
                       <p className="text-[var(--color-muted)]">
                         No performance reports have been published for you yet.
