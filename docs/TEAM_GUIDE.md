@@ -8,6 +8,7 @@
 - Role-aware dashboard shell for student, educator, and admin.
 - Real login form now supports username/email + password, with direct demo role access kept as a secondary shortcut.
 - Local API routes for auth, dashboard, courses, messages, tests, users, institute data, bootstrap initialization, and Mongo health checks.
+- Digital library PDF content is split across two stores: book PDFs live in Mega.nz through `lib/mega.ts`, while thumbnails, sections, and book metadata stay in Vercel Blob.
 - MongoDB now acts as the runtime source of truth through `MONGODB_URI` and `MONGODB_DB`.
 - Public course catalog reads live detailed course data from Mongo and also keeps a browser-side local cache copy.
 - Admin can manage standardized courses through the dashboard using a select-only course name list with editable duration, mode, summary, description, and key points.
@@ -29,6 +30,7 @@
 - `app/api/**/route.ts`: local APIs
 - `app/api/admin/bootstrap/route.ts`: protected bootstrap route for initializing Mongo collections from the template dataset
 - `app/api/admin/mongo-status/route.ts`: Mongo connectivity check
+- `app/api/digital-library/**`: library listing, upload, download, preview, and metadata routes
 - `app/api/courses/details/route.ts`: live detailed course feed for the public catalog
 - `components/theme-provider.tsx`: theme state
 - `components/real-login-form.tsx`: username/email + password sign-in
@@ -62,6 +64,10 @@
   1. one unique id per person
   2. one unique normalized email per person
   3. no duplicate user across multiple categories
+- Keep the digital library storage split stable:
+  1. main PDFs belong in Mega.nz
+  2. thumbnails, sections, and metadata stay in Blob
+  3. use the metadata blobs to resolve Mega download links for library listings and edits
 - Use the standardized course templates in `lib/course-library.ts` when creating or editing courses. Admin can edit course details, but not invent arbitrary new course-name variants.
 - Keep school-stage coverage explicit in course templates. If Smart Tutors adds a new academic branch, extend `lib/course-library.ts` first and then update public-facing summary copy in `lib/mock-data.ts`.
 - Interactive public modules like course popups and mock tests should read from Mongo-backed routes or repository functions, not from page-local arrays.

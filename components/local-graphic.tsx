@@ -15,7 +15,7 @@ import {
   Database,
   Cloud,
   FileText
-} from "lucide-react";
+} from "@/components/ui-icons";
 
 interface LocalGraphicProps {
   title: string;

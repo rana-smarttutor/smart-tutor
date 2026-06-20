@@ -1,5 +1,14 @@
 import { list } from "@vercel/blob";
 
+import {
+  DIGITAL_LIBRARY_BOOK_PREFIX,
+  DIGITAL_LIBRARY_METADATA_PREFIX,
+  getBookAssetKey,
+  getLibraryDownloadRoute,
+  type DigitalLibraryStorageKind,
+  type MegaBookMetadata,
+} from "@/lib/digital-library-storage";
+
 export type DigitalLibraryBook = {
   id: string;
   title: string;
@@ -13,6 +22,7 @@ export type DigitalLibraryBook = {
   downloadUrl?: string;
   thumbnailUrl?: string;
   uploadedAt: string;
+  storageType?: DigitalLibraryStorageKind;
 };
 
 const DEFAULT_BOOK_DESCRIPTION =
@@ -32,6 +42,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   "spoken-english": "Spoken English Library",
   "technology-ai": "Technology & AI Library",
   "career-placement": "Career & Placement Library",
+};
+
+type ParsedBookPath = {
+  title: string;
+  description: string;
+  fileName: string;
+  price: string;
+  categoryId: string;
+  categoryLabel: string;
 };
 
 function displayPrice(rawPrice: string) {
@@ -127,7 +146,7 @@ function guessCategoryFromText(text: string) {
   };
 }
 
-function parseNewBookPath(pathname: string) {
+function parseNewBookPath(pathname: string): ParsedBookPath {
   const value = pathname
     .replace("digital-library/books/", "")
     .replace(/\.pdf$/i, "");
@@ -140,42 +159,27 @@ function parseNewBookPath(pathname: string) {
   let storedDescription = "";
   let storedTitle = "";
 
-  // New format:
-  // timestamp__price__sectionId__description__title
   if (restParts.length > 0) {
     categoryId = thirdPart || DEFAULT_CATEGORY_ID;
     categoryLabel = CATEGORY_LABELS[categoryId] || humanizeSlug(categoryId);
     storedDescription = fourthPart || "";
     storedTitle = restParts.join("__");
   } else if (fourthPart) {
-    // Old description format:
-    // timestamp__price__description__title
     storedDescription = thirdPart || "";
     storedTitle = fourthPart;
     const guessed = guessCategoryFromText(`${storedTitle} ${storedDescription}`);
     categoryId = guessed.categoryId;
     categoryLabel = guessed.categoryLabel;
   } else {
-    // Old format:
-    // timestamp__price__title
     storedTitle = thirdPart;
     const guessed = guessCategoryFromText(storedTitle);
     categoryId = guessed.categoryId;
     categoryLabel = guessed.categoryLabel;
   }
 
-  const thumbnailKey =
-    restParts.length > 0
-      ? `${id}__${rawPrice}__${categoryId}__${storedDescription}__${storedTitle}`
-      : fourthPart
-        ? `${id}__${rawPrice}__${storedDescription}__${storedTitle}`
-        : `${id}__${rawPrice}__${storedTitle}`;
-
   return {
-    thumbnailKey,
     title: humanizeSlug(storedTitle),
-    description:
-      humanizeSlug(storedDescription) || DEFAULT_BOOK_DESCRIPTION,
+    description: humanizeSlug(storedDescription) || DEFAULT_BOOK_DESCRIPTION,
     fileName: `${storedTitle}.pdf`,
     price: displayPrice(rawPrice),
     categoryId,
@@ -183,7 +187,7 @@ function parseNewBookPath(pathname: string) {
   };
 }
 
-function parseOldBookPath(pathname: string) {
+function parseOldBookPath(pathname: string): ParsedBookPath {
   const rawName = pathname.replace("digital-library/", "");
   const parts = rawName.split("-");
 
@@ -213,6 +217,107 @@ function parseOldBookPath(pathname: string) {
   };
 }
 
+function getThumbnailMap(blobs: Awaited<ReturnType<typeof list>>["blobs"]) {
+  return new Map(
+    blobs
+      .filter((blob) =>
+        blob.pathname.startsWith("digital-library/thumbnails/"),
+      )
+      .map((blob) => {
+        const thumbnailKey = blob.pathname
+          .replace("digital-library/thumbnails/", "")
+          .replace(/\.(png|jpg|jpeg|webp)$/i, "");
+
+        return [thumbnailKey, blob.url];
+      }),
+  );
+}
+
+async function readMetadataRecord(blobUrl: string) {
+  const response = await fetch(blobUrl, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to read book metadata.");
+  }
+
+  return (await response.json()) as MegaBookMetadata;
+}
+
+function normalizeMetadataBook(
+  record: MegaBookMetadata,
+  canAccessPdf: boolean,
+  thumbnailUrl: string | undefined,
+): DigitalLibraryBook {
+  return {
+    id: encodeURIComponent(record.pathname),
+    title: record.title,
+    description: record.description,
+    price: record.price,
+    fileName: record.fileName,
+    pathname: record.pathname,
+    categoryId: record.categoryId,
+    categoryLabel: record.categoryLabel,
+    url: canAccessPdf ? record.megaDownloadUrl : undefined,
+    downloadUrl: getLibraryDownloadRoute(record.pathname),
+    thumbnailUrl: record.thumbnailUrl || thumbnailUrl,
+    uploadedAt: new Date(record.updatedAt || record.uploadedAt).toISOString(),
+    storageType: "mega",
+  };
+}
+
+function normalizeBlobBook(
+  pathname: string,
+  blobUrl: string,
+  uploadedAt: string | Date,
+  canAccessPdf: boolean,
+  thumbnailUrl: string | undefined,
+): DigitalLibraryBook {
+  const parsed = parseNewBookPath(pathname);
+
+  return {
+    id: encodeURIComponent(pathname),
+    title: parsed.title,
+    description: parsed.description,
+    price: parsed.price,
+    fileName: parsed.fileName,
+    pathname,
+    categoryId: parsed.categoryId,
+    categoryLabel: parsed.categoryLabel,
+    url: canAccessPdf ? blobUrl : undefined,
+    downloadUrl: getLibraryDownloadRoute(pathname),
+    thumbnailUrl,
+    uploadedAt: new Date(uploadedAt).toISOString(),
+    storageType: "blob",
+  };
+}
+
+function normalizeLegacyBook(
+  pathname: string,
+  blobUrl: string,
+  uploadedAt: string | Date,
+  canAccessPdf: boolean,
+) {
+  const parsed = parseOldBookPath(pathname);
+
+  return {
+    id: encodeURIComponent(pathname),
+    title: parsed.title,
+    description: parsed.description,
+    price: parsed.price,
+    fileName: parsed.fileName,
+    pathname,
+    categoryId: parsed.categoryId,
+    categoryLabel: parsed.categoryLabel,
+    url: canAccessPdf ? blobUrl : undefined,
+    downloadUrl: getLibraryDownloadRoute(pathname),
+    thumbnailUrl: undefined,
+    uploadedAt: new Date(uploadedAt).toISOString(),
+    storageType: "blob" as const,
+  };
+}
+
 export async function getDigitalLibraryBooks(
   canAccessPdf: boolean,
 ): Promise<DigitalLibraryBook[]> {
@@ -227,67 +332,57 @@ export async function getDigitalLibraryBooks(
     token,
   });
 
-  const thumbnailMap = new Map(
-    blobs
-      .filter((blob) =>
-        blob.pathname.startsWith("digital-library/thumbnails/"),
-      )
-      .map((blob) => {
-        const thumbnailKey = blob.pathname
-          .replace("digital-library/thumbnails/", "")
-          .replace(/\.(png|jpg|jpeg|webp)$/i, "");
+  const thumbnailMap = getThumbnailMap(blobs);
 
-        return [thumbnailKey, blob.url];
-      }),
+  const metadataBlobs = blobs.filter((blob) =>
+    blob.pathname.startsWith(DIGITAL_LIBRARY_METADATA_PREFIX) &&
+    blob.pathname.toLowerCase().endsWith(".json"),
   );
 
-  const newBooks: DigitalLibraryBook[] = blobs
+  const metadataBooks = await Promise.all(
+    metadataBlobs.map(async (blob) => {
+      const record = await readMetadataRecord(blob.url);
+      const thumbnailKey = getBookAssetKey(record.pathname);
+
+      return normalizeMetadataBook(
+        record,
+        canAccessPdf,
+        record.thumbnailUrl || thumbnailMap.get(thumbnailKey),
+      );
+    }),
+  );
+
+  const metadataPathSet = new Set(
+    metadataBooks.map((book) => book.pathname),
+  );
+
+  const blobBooks = blobs
+    .filter((blob) =>
+      blob.pathname.startsWith(DIGITAL_LIBRARY_BOOK_PREFIX) &&
+      blob.pathname.toLowerCase().endsWith(".pdf") &&
+      !metadataPathSet.has(blob.pathname),
+    )
+    .map((blob) =>
+      normalizeBlobBook(
+        blob.pathname,
+        blob.url,
+        blob.uploadedAt,
+        canAccessPdf,
+        thumbnailMap.get(getBookAssetKey(blob.pathname)),
+      ),
+    );
+
+  const legacyBooks = blobs
     .filter(
       (blob) =>
-        blob.pathname.startsWith("digital-library/books/") &&
-        blob.pathname.toLowerCase().endsWith(".pdf"),
+        /^digital-library\/[^/]+\.pdf$/i.test(blob.pathname) &&
+        !metadataPathSet.has(blob.pathname),
     )
-    .map((blob) => {
-      const parsed = parseNewBookPath(blob.pathname);
+    .map((blob) =>
+      normalizeLegacyBook(blob.pathname, blob.url, blob.uploadedAt, canAccessPdf),
+    );
 
-      return {
-        id: encodeURIComponent(blob.pathname),
-        title: parsed.title,
-        description: parsed.description,
-        price: parsed.price,
-        fileName: parsed.fileName,
-        pathname: blob.pathname,
-        categoryId: parsed.categoryId,
-        categoryLabel: parsed.categoryLabel,
-        url: canAccessPdf ? blob.url : undefined,
-        downloadUrl: canAccessPdf ? blob.downloadUrl || blob.url : undefined,
-        thumbnailUrl: thumbnailMap.get(parsed.thumbnailKey),
-        uploadedAt: new Date(blob.uploadedAt).toISOString(),
-      };
-    });
-
-  const oldBooks: DigitalLibraryBook[] = blobs
-    .filter((blob) => /^digital-library\/[^/]+\.pdf$/i.test(blob.pathname))
-    .map((blob) => {
-      const parsed = parseOldBookPath(blob.pathname);
-
-      return {
-        id: encodeURIComponent(blob.pathname),
-        title: parsed.title,
-        description: parsed.description,
-        price: parsed.price,
-        fileName: parsed.fileName,
-        pathname: blob.pathname,
-        categoryId: parsed.categoryId,
-        categoryLabel: parsed.categoryLabel,
-        url: canAccessPdf ? blob.url : undefined,
-        downloadUrl: canAccessPdf ? blob.downloadUrl || blob.url : undefined,
-        thumbnailUrl: undefined,
-        uploadedAt: new Date(blob.uploadedAt).toISOString(),
-      };
-    });
-
-  return [...newBooks, ...oldBooks].sort(
+  return [...metadataBooks, ...blobBooks, ...legacyBooks].sort(
     (a, b) =>
       new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
   );

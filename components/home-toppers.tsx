@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ToppersSection from "./toppers-section";
-import { BookOpen, School, FlaskConical, Layers, FileText, Brain } from "lucide-react";
+import { BookOpen, School, FlaskConical, Layers, FileText, Brain } from "@/components/ui-icons";
 
 export default function HomeToppers() {
   const [activeTab, setActiveTab] = useState("Class 11-12");

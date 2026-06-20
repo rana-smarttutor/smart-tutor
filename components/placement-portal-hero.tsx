@@ -10,7 +10,7 @@ import {
   Handshake,
   Upload,
   Users,
-} from "lucide-react";
+} from "@/components/ui-icons";
 
 export function PlacementPortalHero() {
   return (

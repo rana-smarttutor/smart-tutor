@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Trophy, BookOpen, Star, HelpingHand, MapPin, Phone, Mail } from "lucide-react";
+import { Sparkles, Trophy, BookOpen, Star, HelpingHand, MapPin, Phone, Mail } from "@/components/ui-icons";
 import { motion } from "motion/react";
 
 import SpotlightSection from "@/components/spotlight-section";

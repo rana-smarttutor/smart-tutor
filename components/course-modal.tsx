@@ -12,7 +12,7 @@ import {
   Sparkles,
   Phone,
   User
-} from "lucide-react";
+} from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 import { CourseItem } from "@/lib/types";
 

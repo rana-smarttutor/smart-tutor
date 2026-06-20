@@ -1,7 +1,17 @@
-import { copy, del, list } from "@vercel/blob";
+import { copy, del, list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import {
+  DIGITAL_LIBRARY_BOOK_PREFIX,
+  getBookAssetKey,
+  getLibraryDownloadRoute,
+  getMetadataPathForBook,
+  getThumbnailPathForAssetKey,
+  isBookPath,
+  type MegaBookMetadata,
+} from "@/lib/digital-library-storage";
+import { deleteMegaFileByNodeId } from "@/lib/mega";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,11 +26,17 @@ type UploadedBlobInfo = {
   pathname?: string;
   url?: string;
   downloadUrl?: string;
+  megaDownloadUrl?: string;
+  megaFileName?: string;
+  megaNodeId?: string;
 };
 
 type EditMaterialBody = {
   title?: string;
   price?: string;
+  description?: string;
+  categoryId?: string;
+  categoryLabel?: string;
   assetKey?: string;
   uploadedPdf?: UploadedBlobInfo | null;
   uploadedThumbnail?: UploadedBlobInfo | null;
@@ -31,12 +47,6 @@ function safeBookName(name: string) {
     .trim()
     .replace(/\s+/g, "-")
     .replace(/[^a-zA-Z0-9\-_]/g, "");
-}
-
-function getExtension(name: string) {
-  const index = name.lastIndexOf(".");
-
-  return index === -1 ? "" : name.slice(index).toLowerCase();
 }
 
 function normalizeStoredPrice(value: string) {
@@ -51,13 +61,6 @@ function formatDisplayPrice(value: string) {
   return value === "free"
     ? "Free"
     : `₹${Number(value).toLocaleString("en-IN")}`;
-}
-
-function isValidBookPath(pathname: string) {
-  return (
-    pathname.startsWith("digital-library/books/") &&
-    pathname.toLowerCase().endsWith(".pdf")
-  );
 }
 
 function isValidThumbnailPath(pathname: string) {
@@ -80,24 +83,98 @@ async function findMaterial(pathname: string, token: string) {
     token,
   });
 
-  return blobs.find((blob) => blob.pathname === pathname);
+  return blobs.find((blob) => blob.pathname === pathname) || null;
+}
+
+async function readJsonBlob<T>(blobUrl: string): Promise<T> {
+  const response = await fetch(blobUrl, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to read stored library metadata.");
+  }
+
+  return (await response.json()) as T;
 }
 
 async function findThumbnail(pathname: string, token: string) {
-  if (!isValidBookPath(pathname)) {
+  const assetKey = getBookAssetKey(pathname);
+
+  if (!assetKey) {
     return undefined;
   }
 
-  const key = pathname
-    .replace("digital-library/books/", "")
-    .replace(/\.pdf$/i, "");
-
   const { blobs } = await list({
-    prefix: `digital-library/thumbnails/${key}`,
+    prefix: `digital-library/thumbnails/${assetKey}`,
     token,
   });
 
   return blobs[0];
+}
+
+async function loadMetadata(pathname: string, token: string) {
+  const metadataPath = getMetadataPathForBook(pathname);
+
+  if (!metadataPath) {
+    return null;
+  }
+
+  const metadataBlob = await findMaterial(metadataPath, token);
+
+  if (!metadataBlob) {
+    return null;
+  }
+
+  return {
+    blob: metadataBlob,
+    record: await readJsonBlob<MegaBookMetadata>(metadataBlob.url),
+  };
+}
+
+function validateUploadedPdf(
+  uploadedPdf: UploadedBlobInfo | null | undefined,
+  expectedPathname: string,
+) {
+  if (!uploadedPdf) {
+    return null;
+  }
+
+  if (
+    uploadedPdf.pathname !== expectedPathname ||
+    !uploadedPdf.megaDownloadUrl ||
+    !uploadedPdf.megaNodeId ||
+    !uploadedPdf.megaFileName
+  ) {
+    throw new Error("Invalid uploaded PDF information.");
+  }
+
+  return uploadedPdf;
+}
+
+function validateUploadedThumbnail(
+  uploadedThumbnail: UploadedBlobInfo | null | undefined,
+  assetKey: string,
+) {
+  if (!uploadedThumbnail) {
+    return null;
+  }
+
+  const thumbnailPath = uploadedThumbnail.pathname || "";
+
+  if (
+    !isValidThumbnailPath(thumbnailPath) ||
+    !thumbnailPath.includes(`/thumbnails/${assetKey}`) ||
+    !uploadedThumbnail.url
+  ) {
+    throw new Error("Invalid uploaded thumbnail information.");
+  }
+
+  return uploadedThumbnail;
+}
+
+function currentTargetPath(assetKey: string) {
+  return `${DIGITAL_LIBRARY_BOOK_PREFIX}${assetKey}.pdf`;
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -108,7 +185,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           success: false,
           message: "Only admins and educators can edit materials.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -120,21 +197,131 @@ export async function PATCH(request: Request, context: RouteContext) {
           success: false,
           message: "BLOB_READ_WRITE_TOKEN is missing.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const { bookId } = await context.params;
     const oldPathname = decodeURIComponent(bookId);
+    const existingMetadata = await loadMetadata(oldPathname, token);
+    const currentThumbnail = await findThumbnail(oldPathname, token);
+    const body = (await request.json()) as EditMaterialBody;
 
-    if (!isValidBookPath(oldPathname)) {
+    if (!isBookPath(oldPathname)) {
       return NextResponse.json(
         {
           success: false,
           message: "Invalid library material.",
         },
-        { status: 400 }
+        { status: 400 },
       );
+    }
+
+    const title = String(body.title || "").trim();
+    const price = String(body.price || "0").trim();
+    const description = String(body.description || "").trim();
+    const safeTitle = safeBookName(title);
+    const storedPrice = normalizeStoredPrice(price);
+    const assetKey = String(body.assetKey || "").trim();
+    const targetPathname = currentTargetPath(assetKey);
+
+    if (!title || !safeTitle) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Book name is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!assetKey || !targetPathname.endsWith(`${safeTitle}.pdf`)) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid material update information.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const uploadedPdf = validateUploadedPdf(body.uploadedPdf, targetPathname);
+    const uploadedThumbnail = validateUploadedThumbnail(
+      body.uploadedThumbnail,
+      assetKey,
+    );
+
+    const previous = existingMetadata?.record || null;
+    const nextThumbnailUrl =
+      uploadedThumbnail?.url || previous?.thumbnailUrl || currentThumbnail?.url;
+    const nextThumbnailPath =
+      uploadedThumbnail?.pathname ||
+      previous?.thumbnailPathname ||
+      currentThumbnail?.pathname;
+
+    const nextRecord: MegaBookMetadata = {
+      pathname: targetPathname,
+      title,
+      description,
+      price: formatDisplayPrice(storedPrice),
+      fileName: `${safeTitle}.pdf`,
+      categoryId: String(body.categoryId || previous?.categoryId || ""),
+      categoryLabel: String(body.categoryLabel || previous?.categoryLabel || ""),
+      thumbnailUrl: nextThumbnailUrl,
+      thumbnailPathname: nextThumbnailPath,
+      megaDownloadUrl:
+        uploadedPdf?.megaDownloadUrl ||
+        previous?.megaDownloadUrl ||
+        existingMetadata?.record.megaDownloadUrl ||
+        "",
+      megaNodeId:
+        uploadedPdf?.megaNodeId ||
+        previous?.megaNodeId ||
+        existingMetadata?.record.megaNodeId ||
+        "",
+      megaFileName:
+        uploadedPdf?.megaFileName ||
+        previous?.megaFileName ||
+        existingMetadata?.record.megaFileName ||
+        "",
+      uploadedAt: previous?.uploadedAt || existingMetadata?.record.uploadedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      storageType: "mega",
+    };
+
+    if (existingMetadata) {
+      const nextMetadataPath = getMetadataPathForBook(targetPathname);
+
+      if (uploadedPdf?.megaNodeId && previous?.megaNodeId && uploadedPdf.megaNodeId !== previous.megaNodeId) {
+        await deleteMegaFileByNodeId(previous.megaNodeId);
+      }
+
+      await put(nextMetadataPath, JSON.stringify(nextRecord, null, 2), {
+        access: "public",
+        token,
+        contentType: "application/json",
+        allowOverwrite: true,
+      });
+
+      if (existingMetadata.blob.pathname !== nextMetadataPath) {
+        await del(existingMetadata.blob.pathname, { token });
+      }
+
+      if (
+        uploadedThumbnail &&
+        currentThumbnail &&
+        currentThumbnail.pathname !== uploadedThumbnail.pathname
+      ) {
+        await del(currentThumbnail.pathname, { token });
+      }
+
+      return NextResponse.json({
+        success: true,
+        book: {
+          ...nextRecord,
+          downloadUrl: getLibraryDownloadRoute(nextRecord.pathname),
+        },
+      });
     }
 
     const currentBook = await findMaterial(oldPathname, token);
@@ -145,127 +332,65 @@ export async function PATCH(request: Request, context: RouteContext) {
           success: false,
           message: "Material not found.",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    const currentThumbnail = await findThumbnail(oldPathname, token);
-    const body = (await request.json()) as EditMaterialBody;
-
-    const title = String(body.title || "").trim();
-    const price = String(body.price || "0").trim();
-    const safeTitle = safeBookName(title);
-    const storedPrice = normalizeStoredPrice(price);
-    const assetKey = String(body.assetKey || "").trim();
-
-    if (!title || !safeTitle) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Book name is required.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const expectedEnding = `__${storedPrice}__${safeTitle}`;
-
-    if (!assetKey || !assetKey.endsWith(expectedEnding)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid material update information.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const targetPdfPath = `digital-library/books/${assetKey}.pdf`;
-    const uploadedPdfPath = body.uploadedPdf?.pathname || "";
-
-    let newBook: {
-      pathname: string;
-      url: string;
-      downloadUrl?: string;
-    };
-
-    if (uploadedPdfPath) {
-      if (
-        !isValidBookPath(uploadedPdfPath) ||
-        uploadedPdfPath !== targetPdfPath ||
-        !body.uploadedPdf?.url
-      ) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Invalid uploaded PDF information.",
-          },
-          { status: 400 }
-        );
-      }
-
-      newBook = {
-        pathname: uploadedPdfPath,
-        url: body.uploadedPdf.url,
-        downloadUrl: body.uploadedPdf.downloadUrl || body.uploadedPdf.url,
-      };
-    } else {
-      const copiedBook = await copy(oldPathname, targetPdfPath, {
+    if (uploadedPdf) {
+      await put(getMetadataPathForBook(targetPathname), JSON.stringify(nextRecord, null, 2), {
         access: "public",
-        addRandomSuffix: false,
         token,
+        contentType: "application/json",
+        allowOverwrite: true,
       });
 
-      newBook = {
-        pathname: copiedBook.pathname,
-        url: copiedBook.url,
-        downloadUrl: copiedBook.downloadUrl || copiedBook.url,
-      };
-    }
+      await del(oldPathname, { token });
 
-    let thumbnailUrl: string | undefined;
-    const uploadedThumbnailPath = body.uploadedThumbnail?.pathname || "";
-
-    if (uploadedThumbnailPath) {
       if (
-        !isValidThumbnailPath(uploadedThumbnailPath) ||
-        !uploadedThumbnailPath.includes(`/thumbnails/${assetKey}`) ||
-        !body.uploadedThumbnail?.url
+        uploadedThumbnail &&
+        currentThumbnail &&
+        currentThumbnail.pathname !== uploadedThumbnail.pathname
       ) {
-        return NextResponse.json(
-          {
-            success: false,
-            message: "Invalid uploaded thumbnail information.",
-          },
-          { status: 400 }
-        );
+        await del(currentThumbnail.pathname, { token });
       }
 
-      thumbnailUrl = body.uploadedThumbnail.url;
-    } else if (currentThumbnail) {
-      const currentExtension =
-        getExtension(currentThumbnail.pathname) || ".jpg";
+      return NextResponse.json({
+        success: true,
+        book: {
+          ...nextRecord,
+          downloadUrl: getLibraryDownloadRoute(nextRecord.pathname),
+        },
+      });
+    }
+
+    const targetPdfPath = targetPathname;
+
+    const copiedBook = await copy(oldPathname, targetPdfPath, {
+      access: "public",
+      addRandomSuffix: false,
+      token,
+    });
+
+    let thumbnailUrl: string | undefined;
+
+    if (currentThumbnail) {
+      const currentExtension = currentThumbnail.pathname
+        .match(/\.(png|jpg|jpeg|webp)$/i)?.[0] || ".jpg";
 
       const copiedThumbnail = await copy(
         currentThumbnail.pathname,
-        `digital-library/thumbnails/${assetKey}${currentExtension}`,
+        getThumbnailPathForAssetKey(assetKey, currentExtension),
         {
           access: "public",
           addRandomSuffix: false,
           token,
-        }
+        },
       );
 
       thumbnailUrl = copiedThumbnail.url;
     }
 
-    const oldFilesToDelete = [oldPathname];
-
-    if (currentThumbnail) {
-      oldFilesToDelete.push(currentThumbnail.pathname);
-    }
-
-    await del(oldFilesToDelete, {
+    await del([oldPathname, currentThumbnail?.pathname].filter(Boolean) as string[], {
       token,
     });
 
@@ -275,9 +400,9 @@ export async function PATCH(request: Request, context: RouteContext) {
         title,
         price: formatDisplayPrice(storedPrice),
         fileName: `${safeTitle}.pdf`,
-        pathname: newBook.pathname,
-        url: newBook.url,
-        downloadUrl: newBook.downloadUrl || newBook.url,
+        pathname: copiedBook.pathname,
+        url: copiedBook.url,
+        downloadUrl: copiedBook.downloadUrl || copiedBook.url,
         thumbnailUrl,
       },
     });
@@ -292,7 +417,7 @@ export async function PATCH(request: Request, context: RouteContext) {
             ? error.message
             : "Failed to edit material.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -305,7 +430,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
           success: false,
           message: "Only admins and educators can delete materials.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -317,33 +442,38 @@ export async function DELETE(_request: Request, context: RouteContext) {
           success: false,
           message: "BLOB_READ_WRITE_TOKEN is missing.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     const { bookId } = await context.params;
     const pathname = decodeURIComponent(bookId);
+    const metadata = await loadMetadata(pathname, token);
+    const thumbnail = await findThumbnail(pathname, token);
 
-    if (!isValidBookPath(pathname)) {
+    if (!isBookPath(pathname)) {
       return NextResponse.json(
         {
           success: false,
           message: "Invalid library material.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const thumbnail = await findThumbnail(pathname, token);
-    const targets = [pathname];
-
-    if (thumbnail) {
-      targets.push(thumbnail.pathname);
+    if (metadata?.record.megaNodeId) {
+      await deleteMegaFileByNodeId(metadata.record.megaNodeId);
     }
 
-    await del(targets, {
-      token,
-    });
+    if (metadata) {
+      await del(metadata.blob.pathname, { token });
+    } else {
+      await del(pathname, { token });
+    }
+
+    if (thumbnail?.pathname) {
+      await del(thumbnail.pathname, { token });
+    }
 
     return NextResponse.json({
       success: true,
@@ -360,7 +490,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
             ? error.message
             : "Failed to delete material.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

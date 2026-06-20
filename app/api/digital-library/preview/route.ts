@@ -1,8 +1,14 @@
-import { list, put } from "@vercel/blob";
+import { list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { PDFDocument } from "pdf-lib";
 
 import { getSessionUser } from "@/lib/auth";
+import {
+  getMetadataPathForBook,
+  getBookAssetKey,
+  type MegaBookMetadata,
+} from "@/lib/digital-library-storage";
+import { downloadMegaFileBuffer } from "@/lib/mega";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +33,60 @@ function isValidBookPath(pathname: string) {
   );
 }
 
-async function getOrCreatePreview(pathname: string) {
+async function findExactBlob(pathname: string, token: string) {
+  const { blobs } = await list({
+    prefix: pathname,
+    token,
+  });
+
+  return blobs.find((blob) => blob.pathname === pathname) || null;
+}
+
+async function readJsonBlob<T>(blobUrl: string): Promise<T> {
+  const response = await fetch(blobUrl, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to read book metadata.");
+  }
+
+  return (await response.json()) as T;
+}
+
+async function getBookBytes(pathname: string, token: string) {
+  const metadataPath = getMetadataPathForBook(pathname);
+
+  if (metadataPath) {
+    const metadataBlob = await findExactBlob(metadataPath, token);
+
+    if (metadataBlob) {
+      const metadata = await readJsonBlob<MegaBookMetadata>(metadataBlob.url);
+
+      if (metadata.megaDownloadUrl) {
+        return downloadMegaFileBuffer(metadata.megaDownloadUrl);
+      }
+    }
+  }
+
+  const originalBlob = await findExactBlob(pathname, token);
+
+  if (!originalBlob) {
+    throw new Error("Original PDF was not found.");
+  }
+
+  const pdfResponse = await fetch(originalBlob.url, {
+    cache: "no-store",
+  });
+
+  if (!pdfResponse.ok) {
+    throw new Error("Unable to read original PDF.");
+  }
+
+  return Buffer.from(await pdfResponse.arrayBuffer());
+}
+
+async function buildPreviewBytes(pathname: string) {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
 
   if (!token) {
@@ -42,34 +101,7 @@ async function getOrCreatePreview(pathname: string) {
     throw new Error("This file cannot be previewed.");
   }
 
-  const previewPath = getPreviewPath(pathname);
-
-  const { blobs } = await list({
-    prefix: "digital-library/",
-    token,
-  });
-
-  const existingPreview = blobs.find((blob) => blob.pathname === previewPath);
-
-  if (existingPreview) {
-    return existingPreview.url;
-  }
-
-  const originalBlob = blobs.find((blob) => blob.pathname === pathname);
-
-  if (!originalBlob) {
-    throw new Error("Original PDF was not found.");
-  }
-
-  const pdfResponse = await fetch(originalBlob.url, {
-    cache: "no-store",
-  });
-
-  if (!pdfResponse.ok) {
-    throw new Error("Unable to read original PDF.");
-  }
-
-  const pdfBytes = await pdfResponse.arrayBuffer();
+  const pdfBytes = await getBookBytes(pathname, token);
 
   const sourcePdf = await PDFDocument.load(pdfBytes, {
     ignoreEncryption: true,
@@ -94,14 +126,20 @@ async function getOrCreatePreview(pathname: string) {
     useObjectStreams: true,
   });
 
-  const previewBlob = await put(previewPath, Buffer.from(previewBytes), {
-    access: "public",
-    token,
-    contentType: "application/pdf",
-    allowOverwrite: true,
-  });
+  return previewBytes;
+}
 
-  return previewBlob.url;
+function createPreviewResponse(pdfBytes: Uint8Array) {
+  const body = pdfBytes.slice().buffer;
+
+  return new NextResponse(body, {
+    headers: {
+      "Cache-Control": "no-store, no-transform",
+      "Content-Type": "application/pdf",
+      "Content-Disposition": 'inline; filename="preview.pdf"',
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }
 
 export async function GET(request: Request) {
@@ -115,9 +153,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const pathname = searchParams.get("pathname") || "";
 
-    const previewUrl = await getOrCreatePreview(pathname);
+    const previewBytes = await buildPreviewBytes(pathname);
 
-    return NextResponse.redirect(previewUrl);
+    return createPreviewResponse(previewBytes);
   } catch (error) {
     console.error("PDF preview GET error:", error);
 
@@ -152,12 +190,9 @@ export async function POST(request: Request) {
       pathname?: string;
     };
 
-    const previewUrl = await getOrCreatePreview(String(body.pathname || ""));
+    const previewBytes = await buildPreviewBytes(String(body.pathname || ""));
 
-    return NextResponse.json({
-      success: true,
-      previewUrl,
-    });
+    return createPreviewResponse(previewBytes);
   } catch (error) {
     console.error("PDF preview POST error:", error);
 

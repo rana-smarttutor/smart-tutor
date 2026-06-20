@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, X } from "lucide-react";
+import { Download, X } from "@/components/ui-icons";
 
 export function PWAInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Phone, User, Calendar, BookOpen, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Mail, Phone, User, Calendar, BookOpen, Clock, CheckCircle, XCircle } from "@/components/ui-icons";
 import { Enquiry } from "@/lib/types";
 
 export function DashboardEnquiryManager() {

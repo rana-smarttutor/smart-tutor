@@ -16,7 +16,7 @@ import {
   FlaskConical,
   Coins,
   History
-} from "lucide-react";
+} from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 import { CourseItem } from "@/lib/types";
 import LocalGraphic from "@/components/local-graphic";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, X, Send } from "lucide-react";
+import { MessageCircle, X, Send } from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 
 interface WhatsAppFABProps {

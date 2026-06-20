@@ -23,6 +23,9 @@ type UploadedBlobInfo = {
   pathname: string;
   url: string;
   downloadUrl?: string;
+  megaDownloadUrl?: string;
+  megaFileName?: string;
+  megaNodeId?: string;
 };
 
 type DigitalLibraryClientProps = {
@@ -286,20 +289,131 @@ function getBookCategoryIds(book: Book) {
   }).map((category) => category.id);
 }
 
-async function readJsonResponse(response: Response) {
+async function readJsonResponse<T = {
+  success?: boolean;
+  message?: string;
+  books?: Book[];
+  canManage?: boolean;
+  isLoggedIn?: boolean;
+}>(response: Response) {
   const text = await response.text();
 
   try {
-    return JSON.parse(text) as {
-      success?: boolean;
-      message?: string;
-      books?: Book[];
-      canManage?: boolean;
-      isLoggedIn?: boolean;
-    };
+    return JSON.parse(text) as T;
   } catch {
     throw new Error(text || "The server returned an invalid response.");
   }
+}
+
+type StreamUploadEvent =
+  | {
+      type: "status";
+      message: string;
+      progress: number;
+    }
+  | {
+      type: "progress";
+      message: string;
+      progress: number;
+      megaProgress?: number;
+    }
+  | {
+      type: "complete";
+      message: string;
+      progress: number;
+      url: string;
+      fileName: string;
+      nodeId: string;
+    }
+  | {
+      type: "error";
+      message: string;
+      progress: number;
+    };
+
+type TransferState = {
+  label: string;
+  progress: number;
+  visible: boolean;
+};
+
+function parseNdjsonChunk(
+  buffer: string,
+  chunk: string,
+  onEvent: (event: StreamUploadEvent) => void,
+) {
+  const combined = `${buffer}${chunk}`;
+  const lines = combined.split("\n");
+  const remainder = lines.pop() || "";
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      continue;
+    }
+
+    try {
+      onEvent(JSON.parse(trimmed) as StreamUploadEvent);
+    } catch {
+      // Ignore malformed streaming fragments and wait for the next chunk.
+    }
+  }
+
+  return remainder;
+}
+
+async function postFormDataWithProgress(
+  url: string,
+  formData: FormData,
+  onUploadProgress: (percent: number) => void,
+  onEvent: (event: StreamUploadEvent) => void,
+) {
+  return await new Promise<StreamUploadEvent>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let buffer = "";
+    let lastResponseLength = 0;
+    let lastEvent: StreamUploadEvent = {
+      type: "status",
+      message: "Initializing...",
+      progress: 0,
+    };
+
+    xhr.open("POST", url, true);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        onUploadProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      }
+    };
+
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState >= 3) {
+        const responseChunk = xhr.responseText.slice(lastResponseLength);
+        lastResponseLength = xhr.responseText.length;
+        buffer = parseNdjsonChunk(buffer, responseChunk, (event) => {
+          lastEvent = event;
+          onEvent(event);
+        });
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("The upload request failed."));
+    xhr.onabort = () => reject(new Error("The upload request was cancelled."));
+    xhr.onload = () => {
+      // The promise should only resolve if the stream ended properly.
+      // If the last event wasn't 'complete', it might be an error.
+      if (lastEvent.type === "complete") {
+        resolve(lastEvent);
+      } else {
+        // If we didn't get a 'complete' event but the request finished, 
+        // something likely went wrong on the backend.
+        reject(new Error(lastEvent.type === "error" ? lastEvent.message : "Upload did not complete successfully."));
+      }
+    };
+
+    xhr.send(formData);
+  });
 }
 
 function BookThumbnail({ book }: { book: Book }) {
@@ -356,10 +470,14 @@ export function DigitalLibraryClient({
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadStatus, setUploadStatus] = useState("");
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [transferState, setTransferState] = useState<TransferState>({
+    label: "",
+    progress: 0,
+    visible: false,
+  });
 
   const libraryCategories = useMemo(() => {
     const map = new Map<string, LibraryCategory>();
@@ -514,7 +632,11 @@ export function DigitalLibraryClient({
     setPdfFile(null);
     setThumbnailFile(null);
     setUploadStatus("");
-    setUploadProgress(0);
+    setTransferState({
+      label: "",
+      progress: 0,
+      visible: false,
+    });
   }
 
   function openUpload() {
@@ -531,7 +653,11 @@ export function DigitalLibraryClient({
     setPdfFile(null);
     setThumbnailFile(null);
     setUploadStatus("");
-    setUploadProgress(0);
+    setTransferState({
+      label: "",
+      progress: 0,
+      visible: false,
+    });
     setIsModalOpen(true);
   }
 
@@ -545,23 +671,61 @@ export function DigitalLibraryClient({
     pathname: string,
     file: File,
   ): Promise<UploadedBlobInfo> {
-    const blob = await upload(pathname, file, {
-      access: "public",
-      contentType: "application/pdf",
-      handleUploadUrl: "/api/digital-library/upload",
-      clientPayload: JSON.stringify({
-        assetType: "book",
-      }),
-      multipart: true,
-      onUploadProgress: ({ percentage }) => {
-        setUploadProgress(Math.round(percentage));
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", pathname.split("/").pop() || file.name || "book.pdf");
+
+    setTransferState({
+      label: "Uploading PDF to server...",
+      progress: 0,
+      visible: true,
+    });
+
+    const uploadEvent = await postFormDataWithProgress(
+      "/api/digital-library/upload-mega",
+      formData,
+      (percent) => {
+        setTransferState((current) => ({
+          ...current,
+          label: "Uploading PDF to server...",
+          progress: Math.min(45, Math.round((percent / 100) * 45)),
+          visible: true,
+        }));
       },
+      (event) => {
+        if (event.type === "status" || event.type === "progress") {
+          setTransferState({
+            label: event.message,
+            progress: Math.min(100, Math.round(event.progress)),
+            visible: true,
+          });
+        }
+      },
+    );
+
+    if (uploadEvent.type === "error") {
+      throw new Error(uploadEvent.message);
+    }
+
+    if (uploadEvent.type !== "complete") {
+      throw new Error("Mega upload did not complete.");
+    }
+
+    setTransferState({
+      label: uploadEvent.message,
+      progress: 100,
+      visible: true,
     });
 
     return {
-      pathname: blob.pathname,
-      url: blob.url,
-      downloadUrl: blob.downloadUrl || blob.url,
+      pathname,
+      url: uploadEvent.url,
+      downloadUrl: `/api/digital-library/download?pathname=${encodeURIComponent(
+        pathname,
+      )}`,
+      megaDownloadUrl: uploadEvent.url,
+      megaFileName: uploadEvent.fileName,
+      megaNodeId: uploadEvent.nodeId,
     };
   }
 
@@ -577,7 +741,11 @@ export function DigitalLibraryClient({
         assetType: "thumbnail",
       }),
       onUploadProgress: ({ percentage }) => {
-        setUploadProgress(Math.round(percentage));
+        setTransferState({
+          label: "Uploading thumbnail...",
+          progress: Math.round(percentage),
+          visible: true,
+        });
       },
     });
 
@@ -653,7 +821,11 @@ export function DigitalLibraryClient({
     const assetKey = `${Date.now()}__${storedPrice}__${safeSectionId}__${storedDescription}__${safeTitle}`;
 
     setIsSaving(true);
-    setUploadProgress(0);
+    setTransferState({
+      label: "",
+      progress: 0,
+      visible: false,
+    });
 
     try {
       let uploadedPdf: UploadedBlobInfo | null = null;
@@ -680,6 +852,31 @@ export function DigitalLibraryClient({
       }
 
       if (!editingBook) {
+        setUploadStatus("Saving book metadata...");
+
+        const response = await fetch("/api/digital-library", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            price,
+            description,
+            categoryId: safeSectionId,
+            categoryLabel: selectedLibrarySection.label,
+            assetKey,
+            uploadedPdf,
+            uploadedThumbnail,
+          }),
+        });
+
+        const result = await readJsonResponse(response);
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to save material.");
+        }
+
         setUploadStatus("Upload completed.");
 
         resetModal();
@@ -713,7 +910,11 @@ export function DigitalLibraryClient({
         },
       );
 
-      const result = await readJsonResponse(response);
+      const result = await readJsonResponse<{
+        success?: boolean;
+        message?: string;
+        redirectUrl?: string;
+      }>(response);
 
       if (!response.ok || !result.success) {
         throw new Error(result.message || "Unable to save material.");
@@ -728,7 +929,11 @@ export function DigitalLibraryClient({
     } finally {
       setIsSaving(false);
       setUploadStatus("");
-      setUploadProgress(0);
+      setTransferState({
+        label: "",
+        progress: 0,
+        visible: false,
+      });
     }
   }
 
@@ -788,7 +993,7 @@ export function DigitalLibraryClient({
     }
   }
 
-  function downloadBook(book: Book) {
+  async function downloadBook(book: Book) {
     if (!loggedIn && !allowedToManage) {
       window.location.href = `/login?callbackUrl=${encodeURIComponent(
         "/library",
@@ -796,35 +1001,52 @@ export function DigitalLibraryClient({
       return;
     }
 
-    const url = book.downloadUrl || book.url;
+    const url = book.downloadUrl;
 
     if (!url) {
       alert("Download is not available for this material.");
       return;
     }
 
-    window.open(url, "_blank", "noopener,noreferrer");
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+      });
+      const result = await readJsonResponse<{
+        success?: boolean;
+        message?: string;
+        redirectUrl?: string;
+      }>(response);
+
+      if (!response.ok || !result.success || !result.redirectUrl) {
+        throw new Error(result.message || "Download is not available for this material.");
+      }
+
+      window.location.href = result.redirectUrl;
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Download failed.");
+    }
   }
 
-function previewBook(book: Book) {
-  if (!loggedIn && !allowedToManage) {
-    window.location.href = `/login?callbackUrl=${encodeURIComponent(
-      "/library",
+  function previewBook(book: Book) {
+    if (!loggedIn && !allowedToManage) {
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(
+        "/library",
+      )}`;
+      return;
+    }
+
+    if (!book.pathname) {
+      alert("Preview is not available for this material.");
+      return;
+    }
+
+    const previewUrl = `/api/digital-library/preview?pathname=${encodeURIComponent(
+      book.pathname,
     )}`;
-    return;
+
+    window.open(previewUrl, "_blank");
   }
-
-  if (!book.pathname) {
-    alert("Preview is not available for this material.");
-    return;
-  }
-
-  const previewUrl = `/api/digital-library/preview?pathname=${encodeURIComponent(
-    book.pathname,
-  )}`;
-
-  window.open(previewUrl, "_blank");
-}
 
   return (
     <main className="min-h-screen bg-transparent px-4 py-8 text-slate-950 dark:text-white sm:px-6">
@@ -860,13 +1082,15 @@ function previewBook(book: Book) {
               </a>
 
               {allowedToManage && (
-                <button
-                  type="button"
-                  onClick={openUpload}
-                  className="rounded-full bg-blue-600 px-8 py-4 font-black text-white shadow-xl shadow-blue-500/20 transition hover:-translate-y-1 hover:bg-blue-500"
-                >
-                  Upload Material
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={openUpload}
+                    className="rounded-full bg-blue-600 px-8 py-4 font-black text-white shadow-xl shadow-blue-500/20 transition hover:-translate-y-1 hover:bg-blue-500"
+                  >
+                    Upload Material
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -892,6 +1116,24 @@ function previewBook(book: Book) {
             </div>
           </div>
         </section>
+
+        {transferState.visible && (
+          <div className="mt-4">
+            <div className="rounded-[1.75rem] border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10">
+              <div className="flex items-center justify-between gap-4 text-sm font-black text-blue-700 dark:text-blue-200">
+                <span>{transferState.label || "Processing..."}</span>
+                <span>{transferState.progress}%</span>
+              </div>
+
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-white/10">
+                <div
+                  className="h-full rounded-full bg-blue-600 transition-all"
+                  style={{ width: `${transferState.progress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <section
           id="library-files"
@@ -1335,18 +1577,18 @@ function previewBook(book: Book) {
                 </span>
               </label>
 
-              {isSaving && (
+              {isSaving && transferState.visible && (
                 <div className="rounded-2xl bg-blue-50 p-4 dark:bg-blue-500/10">
                   <div className="flex items-center justify-between gap-4 text-sm font-bold text-blue-600 dark:text-blue-300">
-                    <span>{uploadStatus || "Saving material..."}</span>
-                    {uploadProgress > 0 && <span>{uploadProgress}%</span>}
+                    <span>{transferState.label || uploadStatus || "Saving material..."}</span>
+                    <span>{transferState.progress}%</span>
                   </div>
 
-                  {uploadProgress > 0 && (
+                  {transferState.progress > 0 && (
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-white/10">
                       <div
                         className="h-full rounded-full bg-blue-600 transition-all"
-                        style={{ width: `${uploadProgress}%` }}
+                        style={{ width: `${transferState.progress}%` }}
                       />
                     </div>
                   )}

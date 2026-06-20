@@ -1,6 +1,6 @@
 "use client";
 
-import { Trophy, Award, Star, Quote } from "lucide-react";
+import { Trophy, Award, Star, Quote } from "@/components/ui-icons";
 import { motion } from "motion/react";
 
 interface Topper {

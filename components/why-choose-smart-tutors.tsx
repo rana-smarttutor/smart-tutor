@@ -11,7 +11,7 @@ import {
   Award,
   RefreshCw,
   Briefcase
-} from "lucide-react";
+} from "@/components/ui-icons";
 import { motion } from "motion/react";
 
 export default function WhyChooseSmartTutors() {
