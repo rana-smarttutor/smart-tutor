@@ -28,6 +28,86 @@ interface SpotlightSectionProps {
   allCourses: CourseItem[];
 }
 
+type StreamFilter = "Science" | "Commerce" | "Arts" | "All";
+
+function normaliseCourseText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function getCourseSearchText(course: CourseItem) {
+  return [
+    course.stream,
+    course.title,
+    course.summary,
+    course.description,
+    course.audienceLabel,
+    ...(course.sections ?? []),
+    ...(course.subjectsCovered ?? []),
+    ...(course.branchesIncluded ?? []),
+    ...(course.courseNamesIncluded ?? []),
+  ]
+    .filter((value): value is string => typeof value === "string")
+    .join(" ");
+}
+
+function matchesActiveTab(course: CourseItem, activeTab: string) {
+  const tabKey = normaliseCourseText(activeTab);
+
+  return (course.sections ?? []).some((section) => {
+    const sectionKey = normaliseCourseText(section);
+
+    return sectionKey === tabKey || sectionKey.startsWith(tabKey);
+  });
+}
+
+function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
+  if (stream === "All") {
+    return true;
+  }
+
+  const courseText = normaliseCourseText(getCourseSearchText(course));
+
+  const streamKeywords: Record<Exclude<StreamFilter, "All">, string[]> = {
+    Science: [
+      "science",
+      "pcm",
+      "pcb",
+      "jee",
+      "neet",
+      "physics",
+      "chemistry",
+      "biology",
+      "mathematics",
+      "computerscience",
+    ],
+    Commerce: [
+      "commerce",
+      "accountancy",
+      "accounts",
+      "economics",
+      "businessstudies",
+      "cafoundation",
+      "csfoundation",
+    ],
+    Arts: [
+      "arts",
+      "humanities",
+      "clat",
+      "literature",
+      "history",
+      "psychology",
+      "sociology",
+      "politicalscience",
+      "finearts",
+      "visualarts",
+    ],
+  };
+
+  return streamKeywords[stream].some((keyword) =>
+    courseText.includes(keyword),
+  );
+}
+
 export default function SpotlightSection({
   activeTab,
   setActiveTab,
@@ -56,20 +136,31 @@ export default function SpotlightSection({
   // Active stream filter state (specifically for Class 11-12)
   const [activeStream, setActiveStream] = useState<"Science" | "Commerce" | "Arts" | "All">("All");
 
-  useEffect(() => {
-    let filtered = allCourses.filter(c => c.sections.includes(activeTab));
-    // If stream filter applies
-    if (activeTab === "Class 11-12" && activeStream !== "All") {
-      filtered = filtered.filter((course) => course.stream === activeStream);
+useEffect(() => {
+  const filteredCourses = allCourses.filter((course) => {
+    if (!matchesActiveTab(course, activeTab)) {
+      return false;
     }
-    setTabCourses(filtered);
-    setSpotlightIndex(0);
-  }, [activeTab, activeStream, allCourses]);
+
+    if (activeTab !== "Class 11-12") {
+      return true;
+    }
+
+    return matchesSelectedStream(course, activeStream);
+  });
+
+  setTabCourses(filteredCourses);
+  setSpotlightIndex(0);
+}, [activeTab, activeStream, allCourses]);
 
   // Handle changing stream
-  const handleStreamClick = (stream: "Science" | "Commerce" | "Arts") => {
-    setActiveStream(activeStream === stream ? "All" : stream);
-  };
+const handleStreamClick = (
+  stream: Exclude<StreamFilter, "All">,
+) => {
+  setActiveStream((currentStream) =>
+    currentStream === stream ? "All" : stream,
+  );
+};
 
   const currentSpotlight = tabCourses[spotlightIndex];
 

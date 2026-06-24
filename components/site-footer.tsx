@@ -35,17 +35,16 @@ export async function SiteFooter() {
             </p>
 
             <div className="space-y-3">
-              <p className="font-bold text-[var(--color-heading)]">
-                {data.profile.directorName} | {data.profile.directorTitle}
-              </p>
-
-              <Image
+               <Image
                 src="/ravi-rana.png"
                 alt="Prof. Ravi Rana"
                 width={96}
                 height={96}
-                className="h-24 w-24 rounded-2xl border border-white/10 object-cover shadow-lg"
+                className="h-24 w-24 rounded-2xl border border-white/10 object-cover object-top shadow-lg"
               />
+              <p className="font-bold text-[var(--color-heading)]">
+                {data.profile.directorName} | {data.profile.directorTitle}
+              </p>
             </div>
 
             <div className="space-y-2">

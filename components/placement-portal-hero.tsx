@@ -100,7 +100,7 @@ export function PlacementPortalHero() {
 
               <div className="flex justify-center">
                 <Image
-                  src="/placements/hero-company.png"
+                  src="/hero-company.png"
                   alt="Recruitment illustration"
                   width={420}
                   height={420}
