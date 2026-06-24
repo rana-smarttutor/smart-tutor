@@ -142,14 +142,14 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
   ],
   parent: [
     {
-      title: "Progress tracking",
+      title: "View-only access",
       description:
-        "View child's grades, attendance, and mentor feedback.",
+        "View performance reports, attendance, test results, fees, and lecture schedules — no editing rights.",
     },
     {
-      title: "Institute updates",
+      title: "Notifications & forms",
       description:
-        "Receive notices and announcements for your child's batch.",
+        "Receive targeted messages from admin and faculty. Submit request forms for meetings, leave, or enquiries.",
     },
   ],
 };
@@ -228,7 +228,7 @@ const messages: MessageItem[] = [
     body:
       "Science and maths revision worksheets will be discussed in the 6:00 PM batch today.",
     channel: "Batch Board",
-    audience: ["student", "educator", "admin"],
+    audience: ["student", "educator", "admin", "parent"],
     userIds: ["student-1", "educator-2", "admin-1"],
   },
   {
@@ -245,7 +245,7 @@ const messages: MessageItem[] = [
     body:
       "Parents for class 6 to 10 enquiries can request a call-back for batch guidance this week.",
     channel: "Admissions",
-    audience: ["student", "admin"],
+    audience: ["student", "parent", "admin"],
   },
   {
     id: "message-4",
@@ -261,9 +261,19 @@ const messages: MessageItem[] = [
     body:
       "The weekly concept check is now available with faculty remarks for the batch.",
     channel: "Results",
-    audience: ["student", "educator", "admin"],
+    audience: ["student", "educator", "admin", "parent"],
     userIds: ["student-3", "educator-2", "admin-1"],
     author: "Neha Joshi",
+  },
+  {
+    id: "message-6",
+    title: "Parent-teacher meeting scheduled",
+    body:
+      "PTM for Class 10 batch is scheduled on Saturday at 11:00 AM. Parents are requested to confirm attendance.",
+    channel: "Parent Notice",
+    audience: ["parent", "educator", "admin"],
+    userIds: ["educator-2", "admin-1"],
+    author: "Admin Desk",
   },
 ];
 
@@ -285,92 +295,71 @@ const testSubmissions: TestSubmission[] = [
 ];
 
 const dashboardStats: Record<Role, DashboardMetric[]> = {
-  student: [
-    {
-      label: "Active subjects",
-      value: "04",
-      detail: "Track core subjects, revision, and assigned learning goals.",
-    },
-    {
-      label: "Tests this week",
-      value: "03",
-      detail: "Scheduled unit tests, mock papers, and review checkpoints.",
-    },
-    {
-      label: "Mentor notices",
-      value: "08",
-      detail: "Batch updates, reminders, and study follow-ups in one place.",
-    },
-    {
-      label: "Book downloads",
-      value: "1.2k+",
-      detail: "Total resources accessed by students across the platform.",
-    },
-  ],
+  student: [],
   educator: [
     {
       label: "Active batches",
       value: "12",
-      detail: "School, college, and competitive cohorts in one teaching console.",
+      detail: "",
     },
     {
       label: "Tests to grade",
       value: "18",
-      detail: "Pending checking across boards, aptitude, and competitive programs.",
+      detail: "",
     },
     {
       label: "Mentoring load",
       value: "34",
-      detail: "Doubt solving, answer review, and improvement planning in progress.",
+      detail: "",
     },
     {
       label: "Resource reach",
       value: "1.2k+",
-      detail: "Total downloads of textbooks and revision guides.",
+      detail: "",
     },
   ],
   admin: [
     {
       label: "Managed accounts",
       value: "286",
-      detail: "Student, parent-facing support, and staff account oversight.",
+      detail: "",
     },
     {
       label: "Open enquiries",
       value: "42",
-      detail: "New admissions, counselling requests, and programme follow-ups.",
+      detail: "",
     },
     {
       label: "Institute batches",
       value: "24",
-      detail: "Academic and competitive batch planning across the week.",
+      detail: "",
     },
     {
       label: "Total visitors",
       value: "5.5k+",
-      detail: "Total unique visitors across Smart Tutors digital channels.",
+      detail: "",
     },
   ],
   parent: [
     {
-      label: "Child's progress",
-      value: "88%",
-      detail: "Overall academic performance across core subjects.",
+      label: "Total students",
+      value: "2,500+",
+      detail: "",
     },
     {
-      label: "Attendance",
-      value: "95%",
-      detail: "Daily session attendance and batch discipline.",
+      label: "Success rate",
+      value: "96%",
+      detail: "",
     },
     {
-      label: "Mentor remarks",
-      value: "03",
-      detail: "Recent feedback from subject mentors and faculty.",
+      label: "Expert faculty",
+      value: "40+",
+      detail: "",
     },
     {
-      label: "Upcoming tests",
-      value: "02",
-      detail: "Next week's scheduled evaluations for your child.",
+      label: "Years legacy",
+      value: "12+",
+      detail: "",
     },
   ],
 };
@@ -849,12 +838,12 @@ export function getDashboardBundle(role: Role, userId?: string) {
     student: {
       title: `Welcome back${user ? `, ${user.name.split(" ")[0]}` : ""}`,
       description:
-        "Tests, materials, and messages in one place.",
+        "Track tests, attendance, lectures, and results — everything you need to stay on top of your learning.",
     },
     parent: {
-      title: `Parent Connect${user ? ` | ${user.name.split(" ")[0]}` : ""}`,
+      title: "Parent Dashboard",
       description:
-        "Monitor your child's progress and stay connected.",
+        "View institute updates, notices, fee details, and connect with educators — all in one place.",
     },
     educator: {
       title: `Educator Console${user ? ` | ${user.name}` : ""}`,
@@ -877,51 +866,65 @@ export function getDashboardBundle(role: Role, userId?: string) {
     primaryPanel: {
       title:
         role === "student"
-          ? "Today's learner priorities"
-          : role === "educator"
-            ? "Teaching priorities"
-            : "Admin priorities",
+          ? "Today's priorities"
+          : role === "parent"
+            ? "Child's snapshot"
+            : role === "educator"
+              ? "Teaching priorities"
+              : "Admin priorities",
       badge:
         role === "admin"
           ? "Operations"
           : role === "educator"
             ? "Delivery"
-            : "Learning",
+            : role === "parent"
+              ? "Parent View"
+              : "Learning",
       items: [
         {
           title:
             role === "student"
-              ? "Personal study schedule"
-              : role === "educator"
-                ? "Assessment flow"
-                : "Access review",
+              ? "Pending tests and submissions"
+              : role === "parent"
+                ? "Review recent test reports"
+                : role === "educator"
+                  ? "Assessment flow"
+                  : "Access review",
           description:
             role === "student"
-              ? "See daily priorities, revision work, and mentor reminders."
-              : role === "educator"
-                ? "Issue tests and review pending evaluations."
-                : "Approve users and verify permissions.",
+              ? "Complete your pending tests and check graded results."
+              : role === "parent"
+                ? "Your child's recent test scores and mentor feedback are ready to review."
+                : role === "educator"
+                  ? "Issue tests and review pending evaluations."
+                  : "Approve users and verify permissions.",
           meta:
             role === "student"
-              ? "Student"
-              : role === "educator"
-                ? "Educator"
-                : "Admin",
+              ? "Action Required"
+              : role === "parent"
+                ? "Academic"
+                : role === "educator"
+                  ? "Educator"
+                  : "Admin",
         },
         {
           title:
             role === "student"
-              ? "Result and material access"
-              : role === "educator"
-                ? "Batch communication"
-                : "Institute visibility",
+              ? "Upcoming lectures and schedule"
+              : role === "parent"
+                ? "Check attendance & fees"
+                : role === "educator"
+                  ? "Batch communication"
+                  : "Institute visibility",
           description:
             role === "student"
-              ? "Find results, notes, and practice files quickly."
-              : role === "educator"
-                ? "Send notices and follow-ups to each batch."
-                : "Track branch health, faculty loads, and alerts.",
-          meta: "Workflow",
+              ? "View today's lectures, batch schedule, and study materials."
+              : role === "parent"
+                ? "Monitor attendance regularity and pending fee invoices."
+                : role === "educator"
+                  ? "Send notices and follow-ups to each batch."
+                  : "Track branch health, faculty loads, and alerts.",
+          meta: "Schedule",
         },
       ],
     },
@@ -1111,7 +1114,12 @@ function toManagedUser(user: DemoUserRecord): ManagedUser {
 }
 
 function normalizeRole(input?: string): Role {
-  if (input === "student" || input === "educator" || input === "admin") {
+  if (
+    input === "student" ||
+    input === "educator" ||
+    input === "admin" ||
+    input === "parent"
+  ) {
     return input;
   }
 
@@ -1156,10 +1164,10 @@ export function getTemplateSeedData() {
             permissions: rolePermissions.admin,
           },
           parent: {
-            roleLabel: "Parent Connect",
-            heroTitle: "Parent Connect",
+            roleLabel: "Parent Dashboard",
+            heroTitle: "Parent Dashboard",
             heroDescription:
-              "Monitor your child's progress and stay connected.",
+              "View institute updates, notices, fee details, and connect with educators — all in one place.",
             stats: dashboardStats.parent,
             primaryPanel: getDashboardBundle("parent").primaryPanel,
             permissions: rolePermissions.parent,

@@ -56,7 +56,7 @@ function matchesActiveTab(course: CourseItem, activeTab: string) {
   return (course.sections ?? []).some((section) => {
     const sectionKey = normaliseCourseText(section);
 
-    return sectionKey === tabKey || sectionKey.startsWith(tabKey);
+    return sectionKey === tabKey;
   });
 }
 

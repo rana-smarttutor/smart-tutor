@@ -61,10 +61,10 @@ export default async function Home() {
     },
     {
       role: "parent",
-      title: "Parent Connect",
+      title: "Parent Dashboard",
       summary:
-        "Stay updated with your child's academic progress through real-time reports and attendance tracking.",
-      features: ["Progress Reports", "Direct Mentor Chat", "Attendance Logs"],
+        "Stay connected with the institute — access notices, fee details, and communicate with educators.",
+      features: ["Institute Notices", "Fee Details", "Educator Connect"],
     },
     {
       role: "admin",

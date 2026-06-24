@@ -38,6 +38,7 @@ export async function POST(request: Request) {
     program?: string;
     status?: "active" | "pending";
     confirm?: boolean;
+    linkedStudentId?: string;
   };
 
   try {
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       program?: string;
       status?: "active" | "pending";
       confirm?: boolean;
+      linkedStudentId?: string;
     };
   } catch {
     return NextResponse.json({ error: "Invalid user payload." }, { status: 400 });
@@ -67,9 +69,19 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!name || !email || !role || !password || !program || !validateEmailFormat(email)) {
+  if (
+    !name || !email || !role || !password || !validateEmailFormat(email) ||
+    (role !== "parent" && !program)
+  ) {
     return NextResponse.json(
       { error: "Enter valid account details before creating a new user." },
+      { status: 400 },
+    );
+  }
+
+  if (role === "parent" && !body.linkedStudentId) {
+    return NextResponse.json(
+      { error: "Select a student to link this parent account with." },
       { status: 400 },
     );
   }
@@ -90,6 +102,7 @@ export async function POST(request: Request) {
     password,
     program,
     status: body.status,
+    linkedStudentId: role === "parent" ? body.linkedStudentId : undefined,
   });
 
   return NextResponse.json({ user }, { status: 201 });

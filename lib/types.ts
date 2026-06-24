@@ -27,6 +27,7 @@ export type ManagedUser = SessionUser & {
   program: string;
   status: UserStatus;
   passwordHint?: string;
+  linkedStudentId?: string;
 };
 
 export type DashboardMetric = {

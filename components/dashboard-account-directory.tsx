@@ -15,6 +15,7 @@ type CreateAccountForm = {
   program: string;
   password: string;
   confirm: boolean;
+  linkedStudentId: string;
 };
 
 export function DashboardAccountDirectory({
@@ -33,6 +34,7 @@ export function DashboardAccountDirectory({
     program: "",
     password: "Student@123",
     confirm: false,
+    linkedStudentId: "",
   });
 
   const accountCounts = useMemo(
@@ -42,6 +44,11 @@ export function DashboardAccountDirectory({
       admins: users.filter((item) => item.role === "admin").length,
       parents: users.filter((item) => item.role === "parent").length,
     }),
+    [users],
+  );
+
+  const studentOptions = useMemo(
+    () => users.filter((item) => item.role === "student").sort((a, b) => a.name.localeCompare(b.name)),
     [users],
   );
 
@@ -89,6 +96,7 @@ export function DashboardAccountDirectory({
       program: "",
       password: "Student@123",
       confirm: false,
+      linkedStudentId: "",
     });
     setActiveTab("directory");
     setStatus("New registered account draft created.");
@@ -214,15 +222,35 @@ export function DashboardAccountDirectory({
                   <option value="parent">Parent</option>
                   <option value="admin">Admin</option>
                 </select>
-                <input
-                  value={createForm.program}
-                  onChange={(event) =>
-                    setCreateForm((current) => ({ ...current, program: event.target.value.slice(0, 60) }))
-                  }
-                  placeholder="Program / responsibility"
-                  className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
-                />
+                {createForm.role !== "parent" ? (
+                  <input
+                    value={createForm.program}
+                    onChange={(event) =>
+                      setCreateForm((current) => ({ ...current, program: event.target.value.slice(0, 60) }))
+                    }
+                    placeholder="Program / responsibility"
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                ) : null}
               </div>
+
+              {createForm.role === "parent" ? (
+                <select
+                  value={createForm.linkedStudentId}
+                  onChange={(event) =>
+                    setCreateForm((current) => ({ ...current, linkedStudentId: event.target.value }))
+                  }
+                  className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                >
+                  <option value="">Select student to link...</option>
+                  {studentOptions.map((student) => (
+                    <option key={student.id} value={student.id}>
+                      {student.name} — {student.email}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+
               <input
                 value={createForm.password}
                 onChange={(event) =>
@@ -245,11 +273,11 @@ export function DashboardAccountDirectory({
               <button type="button" onClick={handleCreate} className="btn-action btn-md w-full font-bold">
                 Register New Account
               </button>
-              </div>
-              </div>
+            </div>
+          </div>
 
-              <div className="grid gap-4">
-              <div className="surface-soft rounded-[1.75rem] p-5 border border-blue-100/50">
+          <div className="grid gap-4">
+            <div className="surface-soft rounded-[1.75rem] p-5 border border-blue-100/50">
               <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4">Current Registered Mix</p>
               <div className="grid gap-3 sm:grid-cols-4">
                 <div className="surface rounded-2xl p-4 text-center border border-[var(--color-border)]">
@@ -269,9 +297,9 @@ export function DashboardAccountDirectory({
                   <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Admins</p>
                 </div>
               </div>
-              </div>
+            </div>
 
-              <div className="surface-soft rounded-[1.75rem] p-5 border border-[var(--color-border)]">
+            <div className="surface-soft rounded-[1.75rem] p-5 border border-[var(--color-border)]">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)] mb-4">Creation Checklist</p>
               <div className="grid gap-2">
                 {[
@@ -285,16 +313,16 @@ export function DashboardAccountDirectory({
                   </div>
                 ))}
               </div>
-              </div>
-              </div>
-              </div>
-              ) : (
-              <div className="mt-6">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-sm font-semibold text-[var(--color-heading)]">
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-6">
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <p className="text-sm font-semibold text-[var(--color-heading)]">
               Directory sorted by <span className="text-blue-600 uppercase text-xs font-bold tracking-wider">{sortBy === "role" ? "role" : "name"}</span>.
-              </p>
-              <label className="inline-flex items-center gap-3 rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-5 py-2 text-sm font-bold text-[var(--color-heading)] shadow-sm">
+            </p>
+            <label className="inline-flex items-center gap-3 rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-5 py-2 text-sm font-bold text-[var(--color-heading)] shadow-sm">
               <span>Sort By</span>
               <select
                 value={sortBy}
@@ -304,142 +332,143 @@ export function DashboardAccountDirectory({
                 <option value="name">Full Name</option>
                 <option value="role">Academy Role</option>
               </select>
-              </label>
-              </div>
+            </label>
+          </div>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-              {sortedUsers.map((user) => {
+          <div className="grid gap-4 lg:grid-cols-2">
+            {sortedUsers.map((user) => {
               const currentDraft = drafts[user.id] ?? user;
               const isEditing = editingUserId === user.id;
 
               return (
-              <div key={user.id} className="surface-soft rounded-[1.75rem] p-5 border border-transparent hover:border-blue-100 transition-all">
-                {isEditing ? (
-                  <div className="grid gap-3">
-                    <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">Editing Account</p>
-                    <input
-                      value={currentDraft.name}
-                      onChange={(event) =>
-                        setDrafts((current) => ({
-                          ...current,
-                          [user.id]: { ...currentDraft, name: event.target.value.slice(0, 48) },
-                        }))
-                      }
-                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
-                      placeholder="Full name"
-                    />
-                    <input
-                      value={currentDraft.email}
-                      onChange={(event) =>
-                        setDrafts((current) => ({
-                          ...current,
-                          [user.id]: { ...currentDraft, email: event.target.value.slice(0, 60) },
-                        }))
-                      }
-                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
-                      placeholder="Email address"
-                    />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <select
-                        value={currentDraft.role}
-                        onChange={(event) =>
-                          setDrafts((current) => ({
-                            ...current,
-                            [user.id]: { ...currentDraft, role: event.target.value as Role },
-                          }))
-                        }
-                        className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
-                      >
-                        <option value="student">Student</option>
-                        <option value="educator">Faculty</option>
-                        <option value="parent">Parent</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                <div key={user.id} className="surface-soft rounded-[1.75rem] p-5 border border-transparent hover:border-blue-100 transition-all">
+                  {isEditing ? (
+                    <div className="grid gap-3">
+                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">Editing Account</p>
                       <input
-                        value={currentDraft.program}
+                        value={currentDraft.name}
                         onChange={(event) =>
                           setDrafts((current) => ({
                             ...current,
-                            [user.id]: { ...currentDraft, program: event.target.value.slice(0, 60) },
+                            [user.id]: { ...currentDraft, name: event.target.value.slice(0, 48) },
                           }))
                         }
                         className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
-                        placeholder="Program"
+                        placeholder="Full name"
                       />
+                      <input
+                        value={currentDraft.email}
+                        onChange={(event) =>
+                          setDrafts((current) => ({
+                            ...current,
+                            [user.id]: { ...currentDraft, email: event.target.value.slice(0, 60) },
+                          }))
+                        }
+                        className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
+                        placeholder="Email address"
+                      />
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <select
+                          value={currentDraft.role}
+                          onChange={(event) =>
+                            setDrafts((current) => ({
+                              ...current,
+                              [user.id]: { ...currentDraft, role: event.target.value as Role },
+                            }))
+                          }
+                          className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
+                        >
+                          <option value="student">Student</option>
+                          <option value="educator">Faculty</option>
+                          <option value="parent">Parent</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <input
+                          value={currentDraft.program}
+                          onChange={(event) =>
+                            setDrafts((current) => ({
+                              ...current,
+                              [user.id]: { ...currentDraft, program: event.target.value.slice(0, 60) },
+                            }))
+                          }
+                          className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
+                          placeholder="Program"
+                        />
+                      </div>
+                      <input
+                        value={currentDraft.passwordHint ?? ""}
+                        onChange={(event) =>
+                          setDrafts((current) => ({
+                            ...current,
+                            [user.id]: { ...currentDraft, passwordHint: event.target.value.slice(0, 24) },
+                          }))
+                        }
+                        className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
+                        placeholder="Password"
+                      />
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        <button type="button" onClick={() => handleSave(user.id)} className="btn-action btn-sm">
+                          Update Account
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingUserId(null)}
+                          className="btn-surface btn-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     </div>
-                    <input
-                      value={currentDraft.passwordHint ?? ""}
-                      onChange={(event) =>
-                        setDrafts((current) => ({
-                          ...current,
-                          [user.id]: { ...currentDraft, passwordHint: event.target.value.slice(0, 24) },
-                        }))
-                      }
-                      className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
-                      placeholder="Password"
-                    />
-                    <div className="flex flex-wrap gap-3 mt-2">
-                      <button type="button" onClick={() => handleSave(user.id)} className="btn-action btn-sm">
-                        Update Account
-                      </button>
+                  ) : (
+                    <div>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="truncate text-lg font-bold text-[var(--color-heading)]" title={user.name}>
+                            {user.name}
+                          </p>
+                          <p className="mt-1 truncate text-xs font-medium text-[var(--color-muted)]" title={user.email}>
+                            {user.email}
+                          </p>
+                        </div>
+                        <span className="pill bg-blue-50 text-blue-700 border-blue-100">{user.role}</span>
+                      </div>
+                      <div className="mt-4 grid gap-2">
+                        <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider w-16">Program</span>
+                          <span className="font-semibold text-[var(--color-heading)]">{user.program}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider w-16">Status</span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-bold border border-green-100 uppercase">
+                            <span className="h-1 w-1 rounded-full bg-green-500" />
+                            {user.status}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
+                          <span className="text-[10px] font-bold uppercase tracking-wider w-16">Secret</span>
+                          <code className="bg-white px-2 py-0.5 rounded border border-[var(--color-border)] text-xs font-mono text-blue-600">
+                            {user.passwordHint ?? "••••••••"}
+                          </code>
+                        </div>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setEditingUserId(null)}
-                        className="btn-surface btn-sm"
+                        onClick={() => {
+                          setEditingUserId(user.id);
+                          setDrafts((current) => ({ ...current, [user.id]: user }));
+                        }}
+                        className="btn-action btn-sm mt-6 w-full sm:w-auto"
                       >
-                        Cancel
+                        Edit User Profile
                       </button>
                     </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-bold text-[var(--color-heading)]" title={user.name}>
-                          {user.name}
-                        </p>
-                        <p className="mt-1 truncate text-xs font-medium text-[var(--color-muted)]" title={user.email}>
-                          {user.email}
-                        </p>
-                      </div>
-                      <span className="pill bg-blue-50 text-blue-700 border-blue-100">{user.role}</span>
-                    </div>
-                    <div className="mt-4 grid gap-2">
-                      <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-                        <span className="text-[10px] font-bold uppercase tracking-wider w-16">Program</span>
-                        <span className="font-semibold text-[var(--color-heading)]">{user.program}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-                        <span className="text-[10px] font-bold uppercase tracking-wider w-16">Status</span>
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 text-green-700 text-[10px] font-bold border border-green-100 uppercase">
-                          <span className="h-1 w-1 rounded-full bg-green-500" />
-                          {user.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
-                        <span className="text-[10px] font-bold uppercase tracking-wider w-16">Secret</span>
-                        <code className="bg-white px-2 py-0.5 rounded border border-[var(--color-border)] text-xs font-mono text-blue-600">
-                          {user.passwordHint ?? "••••••••"}
-                        </code>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingUserId(user.id);
-                        setDrafts((current) => ({ ...current, [user.id]: user }));
-                      }}
-                      className="btn-action btn-sm mt-6 w-full sm:w-auto"
-                    >
-                      Edit User Profile
-                    </button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
               );
-              })}
-              </div>
-              </div>
-              )}    </section>
+            })}
+          </div>
+        </div>
+      )}
+    </section>
   );
 }

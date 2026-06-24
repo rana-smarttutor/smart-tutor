@@ -212,15 +212,16 @@ function toManagedUser(user: UserDocument): ManagedUser {
     program: user.program,
     status: (user.status === "rejected" ? "pending" : user.status) ?? "active",
     passwordHint: user.password,
+    linkedStudentId: user.linkedStudentId,
   };
 }
 
 function getRoleLabel(role: Role) {
   if (role === "admin") return "Admin Console";
   if (role === "educator") return "Educator Desk";
-  if (role === "student") return "Student Workspace";
-  if (role === "parent") return "Parent Connect";
-  return "Student Workspace";
+  if (role === "student") return "Student Dashboard";
+  if (role === "parent") return "Parent Dashboard";
+  return "Student Dashboard";
 }
 
 function buildHeroTitle(
@@ -237,7 +238,7 @@ function buildHeroTitle(
   }
 
   if (role === "parent") {
-    return `Parent Connect | ${user.name.split(" ")[0]}`;
+    return `Parent Dashboard`;
   }
 
   if (role === "educator") {
@@ -267,7 +268,14 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
   return {
     id: document.id,
     category: document.category ?? template.category,
-    sections: document.sections?.length ? document.sections : template.sections,
+    sections: document.sections?.length
+      ? (() => {
+          const valid = document.sections.filter((s) =>
+            template.sections.includes(s),
+          );
+          return valid.length ? valid : template.sections;
+        })()
+      : template.sections,
     statusLabel: document.statusLabel ?? template.statusLabel,
     standardKey: templateKey,
     tagline: document.tagline ?? template.tagline,
@@ -809,6 +817,36 @@ export async function createMessage(input: {
   const collection = await getCollection<typeof message>(COLLECTIONS.messages);
   await collection.insertOne(message);
   return message;
+}
+
+export async function updateMessage(
+  messageId: string,
+  input: {
+    title?: string;
+    body?: string;
+    channel?: string;
+    expiresAt?: string | null;
+  },
+) {
+  const collection = await getCollection<MessageDocument>(COLLECTIONS.messages);
+  const update: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+
+  if (input.title !== undefined) update.title = input.title;
+  if (input.body !== undefined) update.body = input.body;
+  if (input.channel !== undefined) update.channel = input.channel;
+  if (input.expiresAt !== undefined) update.expiresAt = input.expiresAt;
+
+  const result = await collection.updateOne({ id: messageId }, { $set: update });
+  if (result.matchedCount === 0) return null;
+
+  const updated = await collection.findOne({ id: messageId });
+  return updated ? normalizeMessage(updated) : null;
+}
+
+export async function deleteMessage(messageId: string) {
+  const collection = await getCollection<MessageDocument>(COLLECTIONS.messages);
+  const result = await collection.deleteOne({ id: messageId });
+  return result.deletedCount > 0;
 }
 
 export async function getUsersForAdmin() {

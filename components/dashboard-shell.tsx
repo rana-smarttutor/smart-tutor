@@ -147,9 +147,7 @@ const sidebarByRole = {
   student: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
-    { id: "tests", label: "Tests" },
-    { id: "performance", label: "Performance" },
-    { id: "results", label: "Results" },
+    { id: "tests", label: "My Tests" },
     { id: "attendance", label: "Attendance" },
     { id: "fees", label: "Fees" },
     { id: "lectures", label: "Lectures" },
@@ -159,7 +157,6 @@ const sidebarByRole = {
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
     { id: "tests", label: "Test Studio" },
-    { id: "performance", label: "Analytics Hub" },
     { id: "results", label: "Results" },
     { id: "attendance", label: "Attendance" },
     { id: "fees", label: "Invoices" },
@@ -182,10 +179,7 @@ const sidebarByRole = {
   parent: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
-    { id: "child-progress", label: "Child Progress" },
     { id: "attendance", label: "Attendance" },
-    { id: "test-reports", label: "Test Reports" },
-    { id: "performance", label: "Performance" },
     { id: "fees", label: "Fees" },
     { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
@@ -260,17 +254,17 @@ export function DashboardShell({
   const showAccounts = activeSection === "accounts";
   const showLibrary = activeSection === "library";
   const showPerformance = activeSection === "performance";
-  const showChildProgress = activeSection === "child-progress";
   const showAttendance = activeSection === "attendance";
-  const showTestReports = activeSection === "test-reports";
   const showFees = activeSection === "fees";
   const showLectures = activeSection === "lectures";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
+    ...(role === "student" || role === "parent"
+      ? [{ label: "Student ID", value: session?.id ?? "—" }]
+      : []),
     { label: "Messages", value: `${messages.length}` },
     { label: "Tests", value: `${dashboard.tests.length}` },
-    { label: "Results", value: `${submissions.length}` },
   ];
 
   useEffect(() => {
@@ -390,11 +384,23 @@ export function DashboardShell({
       setIsLibraryLoading(false);
     }
   }
-  const workspaceChecklist = [
-    "Profile identity and current access level",
-    "Live notices from the message center",
-    "Current tests, results, and role-specific workflow status",
-  ];
+  const workspaceChecklist = role === "student"
+    ? [
+        "Complete pending tests and review graded results",
+        "Check today's lecture schedule and study materials",
+        "Track attendance and fee status regularly",
+      ]
+    : role === "parent"
+      ? [
+          "Review your child's academic progress and test reports",
+          "Check attendance regularity and fee invoices",
+          "Read institute notices and mentor messages",
+        ]
+      : [
+        "Profile identity and current access level",
+        "Live notices from the message center",
+        "Current tests, results, and role-specific workflow status",
+      ];
 
   useEffect(() => {
     if (!showMessages) {
@@ -521,31 +527,35 @@ export function DashboardShell({
         </aside>
 
         <section className="grid min-w-0 gap-6">
-          <header className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-              <div className="min-w-0 max-w-4xl">
-                <p className="section-label">Post-Login Workspace</p>
-                <h1 className="mt-3 break-words text-3xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-4xl">
-                  {dashboard.heroTitle}
-                </h1>
-                <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
-                  {dashboard.heroDescription}
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <LiveClock label="Campus Time" />
-                <div className="surface-soft rounded-3xl p-4">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                    API Scope
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-[var(--color-heading)]">
-                    Auth, dashboard, courses, users, tests, and messages are
-                    wired.
+          {showOverview ? (
+            <header className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 max-w-4xl">
+                  <p className="section-label">Post-Login Workspace</p>
+                  <h1 className="mt-3 break-words text-3xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-4xl">
+                    {dashboard.heroTitle}
+                  </h1>
+                  <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
+                    {dashboard.heroDescription}
                   </p>
                 </div>
+                {role !== "student" && role !== "parent" ? (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <LiveClock label="Campus Time" />
+                    <div className="surface-soft rounded-3xl p-4">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                        API Scope
+                      </p>
+                      <p className="mt-2 text-sm leading-7 text-[var(--color-heading)]">
+                        Auth, dashboard, courses, users, tests, and messages are
+                        wired.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
               </div>
-            </div>
-          </header>
+            </header>
+          ) : null}
 
           {showOverview ? (
             <>
@@ -572,32 +582,45 @@ export function DashboardShell({
                 <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="section-label">Priority Board</p>
+                      <p className="section-label">Message Board</p>
                       <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                        {dashboard.primaryPanel.title}
+                        Recent Updates
                       </h2>
                     </div>
-                    <span className="pill">{dashboard.primaryPanel.badge}</span>
+                    <span className="pill">{messages.length} messages</span>
                   </div>
                   <div className="mt-6 grid gap-4">
-                    {dashboard.primaryPanel.items.map((item) => (
-                      <div
-                        key={item.title}
-                        className="surface-soft rounded-3xl p-5"
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-lg font-semibold text-[var(--color-heading)]">
-                              {item.title}
+                    {messages.length ? (
+                      messages.slice(0, 4).map((message) => (
+                        <div
+                          key={message.id}
+                          className="surface-soft rounded-3xl p-5"
+                        >
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <p className="text-lg font-semibold text-[var(--color-heading)]">
+                                {message.title}
+                              </p>
+                              <span className="pill shrink-0">{message.channel}</span>
+                            </div>
+                            <p className="text-sm leading-6 text-[var(--color-muted)]">
+                              {message.body}
                             </p>
-                            <p className="mt-2 text-sm leading-7 text-[var(--color-muted)]">
-                              {item.description}
-                            </p>
+                            {message.author ? (
+                              <p className="text-xs font-medium text-[var(--color-muted)] opacity-60">
+                                — {message.author}
+                              </p>
+                            ) : null}
                           </div>
-                          <span className="pill">{item.meta}</span>
                         </div>
+                      ))
+                    ) : (
+                      <div className="surface-soft rounded-3xl p-5">
+                        <p className="text-sm leading-6 text-[var(--color-muted)]">
+                          No messages yet.
+                        </p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </article>
 
@@ -726,17 +749,59 @@ export function DashboardShell({
           ) : null}
 
           {showTests ? (
-            <DashboardTestStudio
-              session={session}
-              role={role}
-              initialTests={dashboard.tests}
-              submissions={submissions}
-              studentDirectory={studentDirectory}
-              onSubmissionsChange={setSubmissions}
-              onMessagePublished={(message) =>
-                setMessages((current) => [message, ...current])
-              }
-            />
+            <>
+              <DashboardTestStudio
+                session={session}
+                role={role}
+                initialTests={dashboard.tests}
+                submissions={submissions}
+                studentDirectory={studentDirectory}
+                onSubmissionsChange={setSubmissions}
+                onMessagePublished={(message) =>
+                  setMessages((current) => [message, ...current])
+                }
+              />
+
+              {role === "student" && submissions.length > 0 ? (
+                <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="section-label">Graded Results</p>
+                      <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+                        Your Test Results
+                      </h2>
+                    </div>
+                    <span className="pill">{submissions.length} entries</span>
+                  </div>
+                  <div className="mt-6 grid gap-4">
+                    {submissions.map((submission) => (
+                      <div
+                        key={submission.id}
+                        className="surface-soft rounded-3xl p-5"
+                      >
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-lg font-semibold text-[var(--color-heading)]">
+                              {submission.publishedMessageTitle}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                              Score {submission.score ?? "Pending"}/
+                              {submission.total}
+                            </p>
+                            {submission.feedback ? (
+                              <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+                                {submission.feedback}
+                              </p>
+                            ) : null}
+                          </div>
+                          <span className="pill">{submission.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ) : null}
+            </>
           ) : null}
 
           {showAccounts && role === "admin" ? (
@@ -781,7 +846,7 @@ export function DashboardShell({
             </article>
           ) : null}
 
-          {showResults ? (
+          {(role === "educator" || role === "admin") && showResults ? (
             <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
               <div className="flex items-center justify-between gap-4">
                 <div>
@@ -824,158 +889,17 @@ export function DashboardShell({
               </div>
             </article>
           ) : null}
-          {role === "parent" && showChildProgress ? (
-            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="section-label">Child Progress</p>
-                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Academic Growth Summary
-                  </h2>
-                </div>
-                <span className="pill">Parent View</span>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {[
-                  {
-                    label: "Overall Progress",
-                    value: "82%",
-                    detail: "Improved compared to last month",
-                  },
-                  {
-                    label: "Strong Subject",
-                    value: "English",
-                    detail: "Consistent performance",
-                  },
-                  {
-                    label: "Needs Focus",
-                    value: "Maths",
-                    detail: "Practice required in word problems",
-                  },
-                  {
-                    label: "Study Activity",
-                    value: "14 hrs",
-                    detail: "This week learning time",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="surface-soft rounded-3xl p-5"
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                      {item.label}
-                    </p>
-                    <p className="mt-3 text-2xl font-semibold text-[var(--color-heading)]">
-                      {item.value}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                      {item.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 grid gap-4">
-                {[
-                  {
-                    subject: "Mathematics",
-                    score: "68%",
-                    note: "Needs regular practice",
-                  },
-                  {
-                    subject: "Science",
-                    score: "76%",
-                    note: "Improving steadily",
-                  },
-                  {
-                    subject: "English",
-                    score: "88%",
-                    note: "Strong performance",
-                  },
-                  {
-                    subject: "Social Studies",
-                    score: "72%",
-                    note: "Good, but revision needed",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.subject}
-                    className="surface-soft rounded-3xl p-5"
-                  >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-lg font-semibold text-[var(--color-heading)]">
-                          {item.subject}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
-                          {item.note}
-                        </p>
-                      </div>
-                      <span className="pill">{item.score}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </article>
-          ) : null}
 
           {showAttendance ? (
             <AttendanceManager
               role={role}
               attendanceSheets={dashboard.attendanceSheets}
               studentDirectory={studentDirectory}
+              userId={session?.id}
             />
           ) : null}
 
-          {role === "parent" && showTestReports ? (
-            <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="section-label">Test Reports</p>
-                  <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Recent Test Performance
-                  </h2>
-                </div>
-                <span className="pill">{submissions.length} entries</span>
-              </div>
 
-              <div className="mt-6 grid gap-4">
-                {submissions.length ? (
-                  submissions.map((submission) => (
-                    <div
-                      key={submission.id}
-                      className="surface-soft rounded-3xl p-5"
-                    >
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-lg font-semibold text-[var(--color-heading)]">
-                            {submission.publishedMessageTitle}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                            Score {submission.score ?? "Pending"}/
-                            {submission.total}
-                          </p>
-                          {submission.feedback ? (
-                            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-                              {submission.feedback}
-                            </p>
-                          ) : null}
-                        </div>
-                        <span className="pill">{submission.status}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="surface-soft rounded-3xl p-5">
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">
-                      No test reports are available yet.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </article>
-          ) : null}
 
           {showFees ? (
             <InvoiceManager

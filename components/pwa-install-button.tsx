@@ -3,33 +3,26 @@
 import { useEffect, useState } from "react";
 import { Download, X } from "@/components/ui-icons";
 
+const STORAGE_KEY = "smarttutors_pwa_dismissed";
+
 export function PWAInstallButton() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Check if the app is already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
-      return;
-    }
+    if (localStorage.getItem(STORAGE_KEY)) return;
+    if (window.matchMedia("(display-mode: standalone)").matches) return;
 
     const handleBeforeInstallPrompt = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Update UI notify the user they can install the PWA
       setIsVisible(true);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
-    // Register service worker
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((reg) => console.log("SW registered"))
-        .catch((err) => console.log("SW error", err));
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
 
     return () => {
@@ -37,38 +30,46 @@ export function PWAInstallButton() {
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-
-    // Show the install prompt
-    deferredPrompt.prompt();
-
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-
-    // We've used the prompt, and can't use it again, throw it away
-    setDeferredPrompt(null);
+  function dismiss() {
+    localStorage.setItem(STORAGE_KEY, "1");
     setIsVisible(false);
-  };
+  }
+
+  async function handleInstallClick() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    dismiss();
+  }
 
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-[176px] right-6 z-[99999] animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="relative group">
+    <div className="fixed left-0 right-0 top-16 z-[99999] mx-auto flex max-w-md animate-in fade-in slide-in-from-top-4 duration-500 px-4">
+      <div className="flex w-full items-center gap-3 rounded-2xl border border-blue-200 bg-white px-5 py-4 shadow-2xl shadow-blue-500/10 dark:border-blue-800 dark:bg-slate-900">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+          <Download className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-slate-900 dark:text-white">
+            Install Smart Tutors
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Add to home screen for the best experience.
+          </p>
+        </div>
         <button
           onClick={handleInstallClick}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all hover:scale-105 font-bold text-sm border border-white/20"
+          className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/25 hover:bg-blue-700"
         >
-          <Download className="w-4 h-4" />
-          Install App
+          Install
         </button>
         <button
-          onClick={() => setIsVisible(false)}
-          className="absolute -top-2 -right-2 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full shadow-md text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"
+          onClick={dismiss}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
         >
-          <X className="w-3 h-3" />
+          <X className="h-4 w-4" />
         </button>
       </div>
     </div>

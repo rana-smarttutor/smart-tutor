@@ -61,7 +61,12 @@ export function sanitizeOptions(values: string[] | undefined) {
 }
 
 export function sanitizeRoleInput(value: string | undefined): Role | null {
-  if (value === "student" || value === "educator" || value === "admin") {
+  if (
+    value === "student" ||
+    value === "educator" ||
+    value === "admin" ||
+    value === "parent"
+  ) {
     return value;
   }
 

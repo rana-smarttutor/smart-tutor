@@ -109,7 +109,7 @@ export function GrandSuccessCarousel() {
               fill
               priority
               sizes="(max-width: 768px) 100vw, 1100px"
-              className="object-contain object-center transition-opacity duration-500 ease-in-out"
+              className="object-cover object-center transition-opacity duration-500 ease-in-out"
             />
           </div>
         </div>

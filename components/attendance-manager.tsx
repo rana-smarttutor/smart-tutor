@@ -8,6 +8,7 @@ type AttendanceManagerProps = {
   role: Role;
   attendanceSheets: AttendanceSheet[];
   studentDirectory: ManagedUser[];
+  userId?: string;
 };
 
 type AttendanceStatus = "present" | "absent" | "late" | "excused";
@@ -22,6 +23,7 @@ export function AttendanceManager({
   role,
   attendanceSheets,
   studentDirectory,
+  userId,
 }: AttendanceManagerProps) {
   const canEdit = role === "admin" || role === "educator";
 
@@ -134,7 +136,7 @@ export function AttendanceManager({
     }
   }
 
-  function getSummary(sheet: AttendanceSheet) {
+  function getSheetSummary(sheet: AttendanceSheet) {
     const present = sheet.records.filter(
       (record) => record.status === "present",
     ).length;
@@ -150,8 +152,65 @@ export function AttendanceManager({
     return { present, absent, late };
   }
 
+  function getStudentAttendanceSummary() {
+    if (canEdit || !sheets.length) return null;
+
+    // For student role: use userId (their own ID)
+    // For parent role: find the student ID that appears in every sheet (the linked child)
+    const viewerStudentId = role === "student"
+      ? userId
+      : sheets.every((sheet) =>
+          sheet.records.some((r) => r.studentId === sheets[0].records[0]?.studentId),
+        )
+        ? sheets[0].records[0]?.studentId
+        : null;
+
+    if (!viewerStudentId) return null;
+
+    let totalPresent = 0;
+    for (const sheet of sheets) {
+      const record = sheet.records.find((r) => r.studentId === viewerStudentId);
+      if (record && (record.status === "present" || record.status === "late")) {
+        totalPresent++;
+      }
+    }
+
+    return { totalConducted: sheets.length, totalPresent };
+  }
+
+  const attendanceSummary = getStudentAttendanceSummary();
+
   return (
     <section className="space-y-6">
+      {attendanceSummary ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="surface rounded-[2rem] p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+              Lectures Conducted
+            </p>
+            <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+              {attendanceSummary.totalConducted}
+            </p>
+          </div>
+          <div className="surface rounded-[2rem] p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+              Lectures Attended
+            </p>
+            <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+              {attendanceSummary.totalPresent}
+            </p>
+          </div>
+          <div className="surface rounded-[2rem] p-5">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+              Attendance %
+            </p>
+            <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
+              {Math.round((attendanceSummary.totalPresent / attendanceSummary.totalConducted) * 100)}%
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="surface rounded-[2rem] p-6">
         <div className="flex flex-col gap-2">
           <p className="section-label">Attendance</p>
@@ -251,7 +310,7 @@ export function AttendanceManager({
         <div className="mt-5 space-y-3">
           {sheets.length ? (
             sheets.map((sheet) => {
-              const summary = getSummary(sheet);
+              const summary = getSheetSummary(sheet);
               const isActive = activeSheetId === sheet.id;
 
               return (

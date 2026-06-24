@@ -26,6 +26,12 @@ export function DashboardMessageCenter({
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
   const [expiryPreset, setExpiryPreset] = useState<"24h" | "7d" | "30d" | "never">("7d");
   const [status, setStatus] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editBody, setEditBody] = useState("");
+  const [editChannel, setEditChannel] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const canPost = role === "educator" || role === "admin";
 
@@ -79,6 +85,71 @@ export function DashboardMessageCenter({
     setSelectedStudentIds([]);
     setExpiryPreset("7d");
     setStatus("Message board updated.");
+  }
+
+  function startEdit(message: MessageItem) {
+    setEditingId(message.id);
+    setEditTitle(message.title);
+    setEditBody(message.body);
+    setEditChannel(message.channel);
+    setStatus("");
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditTitle("");
+    setEditBody("");
+    setEditChannel("");
+    setStatus("");
+  }
+
+  async function handleEdit(messageId: string) {
+    if (!editTitle.trim() || !editBody.trim() || !editChannel.trim()) {
+      setStatus("Title, body, and channel are required.");
+      return;
+    }
+
+    const response = await fetch(`/api/messages/${messageId}`, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: editTitle,
+        body: editBody,
+        channel: editChannel,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json()) as { error?: string };
+      setStatus(payload.error ?? "Message could not be updated.");
+      return;
+    }
+
+    const data = (await response.json()) as { message: MessageItem };
+    onMessagesChange(
+      messages.map((m) => (m.id === messageId ? data.message : m)),
+    );
+    cancelEdit();
+    setStatus("Message updated.");
+  }
+
+  async function handleDelete(messageId: string) {
+    const response = await fetch(`/api/messages/${messageId}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json()) as { error?: string };
+      setStatus(payload.error ?? "Message could not be deleted.");
+      setDeleteConfirmId(null);
+      return;
+    }
+
+    onMessagesChange(messages.filter((m) => m.id !== messageId));
+    setDeleteConfirmId(null);
+    setStatus("Message deleted.");
   }
 
   return (
@@ -206,21 +277,107 @@ export function DashboardMessageCenter({
       <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         {messages.map((message) => (
           <div key={message.id} className="surface-soft overflow-hidden rounded-3xl p-5">
-            <div className="flex items-center justify-between gap-3">
-              <p className="min-w-0 truncate text-base font-semibold text-[var(--color-heading)]" title={message.title}>
-                {message.title}
-              </p>
-              <span className="pill shrink-0">{message.channel}</span>
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-muted)]">
-              {message.author ? <span>By {message.author}</span> : null}
-              {message.createdAt ? <span>{new Date(message.createdAt).toLocaleString()}</span> : null}
-              {message.expiresAt ? <span>Expires {new Date(message.expiresAt).toLocaleString()}</span> : <span>No expiry</span>}
-            </div>
-            <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">{message.body}</p>
+            {editingId === message.id ? (
+              <div className="grid gap-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-blue-600">Editing Message</p>
+                <input
+                  value={editTitle}
+                  onChange={(event) => setEditTitle(event.target.value.slice(0, 80))}
+                  placeholder="Message title"
+                  className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                />
+                <textarea
+                  value={editBody}
+                  onChange={(event) => setEditBody(event.target.value.slice(0, 280))}
+                  placeholder="Message body"
+                  rows={3}
+                  className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                />
+                <select
+                  value={editChannel}
+                  onChange={(event) => setEditChannel(event.target.value)}
+                  className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                >
+                  <option value="Student Notice">Student Notice</option>
+                  <option value="Academic Update">Academic Update</option>
+                  <option value="Results">Results</option>
+                  <option value="Admin Board">Admin Board</option>
+                </select>
+                <div className="flex flex-wrap gap-3">
+                  <button type="button" onClick={() => handleEdit(message.id)} className="btn-action btn-sm">
+                    Save
+                  </button>
+                  <button type="button" onClick={cancelEdit} className="btn-surface btn-sm">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-base font-semibold text-[var(--color-heading)]" title={message.title}>
+                    {message.title}
+                  </p>
+                  <span className="pill shrink-0">{message.channel}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-muted)]">
+                  {message.author ? <span>By {message.author}</span> : null}
+                  {message.createdAt ? <span>{new Date(message.createdAt).toLocaleString()}</span> : null}
+                  {message.expiresAt ? <span>Expires {new Date(message.expiresAt).toLocaleString()}</span> : <span>No expiry</span>}
+                </div>
+                <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">{message.body}</p>
+                {canPost ? (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(message)}
+                      className="rounded-full border border-[var(--color-border)] px-4 py-1.5 text-xs font-bold text-[var(--color-heading)] hover:bg-blue-500/10"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(message.id)}
+                      className="rounded-full border border-red-400/30 px-4 py-1.5 text-xs font-bold text-red-600 hover:bg-red-500/10"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         ))}
       </div>
+
+      {deleteConfirmId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl">
+            <h3 className="text-2xl font-black text-[var(--color-heading)]">
+              Delete message?
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
+              This action cannot be undone.
+            </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="flex-1 rounded-full border border-red-400/30 bg-red-500 px-5 py-3 text-sm font-black text-white hover:bg-red-600"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
