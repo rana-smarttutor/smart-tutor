@@ -149,6 +149,7 @@ const sidebarByRole = {
     { id: "messages", label: "Messages" },
     { id: "tests", label: "My Tests" },
     { id: "attendance", label: "Attendance" },
+    { id: "performance", label: "Performance Reports" },
     { id: "fees", label: "Fees" },
     { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
