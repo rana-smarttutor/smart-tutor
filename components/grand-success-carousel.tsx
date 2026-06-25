@@ -115,7 +115,7 @@ export function GrandSuccessCarousel() {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-900 sm:text-lg">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-heading)] transition-colors sm:text-lg">
             {activeCategory.label} Results
           </p>
           <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-blue-600 shadow-sm" />
