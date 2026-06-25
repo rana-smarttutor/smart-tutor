@@ -85,17 +85,17 @@ export default async function Home() {
               Admissions | Exams | Placement
             </div>
 
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400 px-5 py-2 text-sm font-bold text-emerald-400">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+            <span className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
+              <span className="h-2.5 w-2.5 rounded-full bg-info animate-pulse" />
               Offline Campus
             </span>
 
-            <div className="surface-soft border-success inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-success">
-              <span className="h-2.5 w-2.5 rounded-full bg-success" />
+            <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
+              <span  className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               Vashi's Results-Driven Campus
             </div>
 
-            <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400 px-5 py-2 text-sm font-bold text-emerald-400">
+            <span className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
               <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               Panvel's Results-Driven Campus
             </span>

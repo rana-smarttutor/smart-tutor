@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Trophy, BookOpen, Star, HelpingHand, MapPin, Phone, Mail } from "@/components/ui-icons";
+import {
+  Sparkles,
+  Trophy,
+  BookOpen,
+  Star,
+  HelpingHand,
+  MapPin,
+  Phone,
+  Mail,
+} from "@/components/ui-icons";
 import { motion } from "motion/react";
 
+import ToppersSection from "@/components/toppers-section";
 import SpotlightSection from "@/components/spotlight-section";
 import SkillsGrid from "@/components/skills-grid";
-import ToppersSection from "@/components/toppers-section";
 import WhyChooseSmartTutors from "@/components/why-choose-smart-tutors";
 import CourseModal from "@/components/course-modal";
 import WhatsAppFAB from "@/components/whatsapp-fab";
@@ -17,7 +26,9 @@ interface CoursesRedesignClientProps {
   allCourses: CourseItem[];
 }
 
-export default function CoursesRedesignClient({ allCourses }: CoursesRedesignClientProps) {
+export default function CoursesRedesignClient({
+  allCourses,
+}: CoursesRedesignClientProps) {
   const [activeTab, setActiveTab] = useState("Class 11-12");
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
 
@@ -30,22 +41,28 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
   ];
 
   return (
-    <div id="smart-tutors-root" className="min-h-screen bg-slate-50/50 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-950">
+    <div
+      id="smart-tutors-root"
+      className="min-h-screen bg-slate-50/50 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-950"
+    >
       {/* 2. Main Hero Context Section */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12 sm:space-y-16">
-        
         {/* Visual Greetings Banner */}
         <section className="bg-white border border-slate-200 p-6 sm:p-8 rounded-xl shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="absolute top-0 right-0 w-44 h-44 bg-indigo-50/20 rounded-full blur-2xl pointer-events-none" />
           <div className="space-y-2 relative z-10">
             <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider flex items-center gap-1 w-max">
-              <Sparkles className="w-3.5 h-3.5" /> Direct Admissions Open 2026-2027
+              <Sparkles className="w-3.5 h-3.5" /> Direct Admissions Open
+              2026-2027
             </span>
             <h1 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-tight">
-              A Legacy of <span className="text-indigo-600">Educational Excellence</span>
+              A Legacy of{" "}
+              <span className="text-indigo-600">Educational Excellence</span>
             </h1>
             <p className="text-slate-500 text-xs font-semibold max-w-xl leading-relaxed">
-              Explore dynamic classroom tracks, comprehensive syllabus structures, and professional job-ready certification majors curated by seasoned faculty boards.
+              Explore dynamic classroom tracks, comprehensive syllabus
+              structures, and professional job-ready certification majors
+              curated by seasoned faculty boards.
             </p>
           </div>
 
@@ -74,7 +91,8 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
               Explore Our Academic Catalog
             </h2>
             <p className="text-slate-500 text-xs font-semibold max-w-xl leading-relaxed">
-              Select your academic division below to browse targeted preparatory programs, syllabus specifications, and toppers' boards.
+              Select your academic division below to browse targeted preparatory
+              programs, syllabus specifications, and toppers' boards.
             </p>
           </div>
 
@@ -93,7 +111,6 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
             allCourses={allCourses}
           />
         </section>
-
         {/* 5. Hall of Fame (Toppers Wall) Section */}
         <section>
           <ToppersSection activeTab={activeTab} />
@@ -115,14 +132,19 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
               Looking for a Customized Academic Syllabus?
             </h3>
             <p className="text-slate-400 text-xs font-medium leading-relaxed">
-              Book a free counseling session or 1-on-1 assessment with our faculty advisors to outline a bespoke routine that suits your learning timeline.
+              Book a free counseling session or 1-on-1 assessment with our
+              faculty advisors to outline a bespoke routine that suits your
+              learning timeline.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.button
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => {
-                  const fallbackCourse = allCourses.find((c) => c.standardKey === "class-6-8-regular-academic") || allCourses[0];
+                  const fallbackCourse =
+                    allCourses.find(
+                      (c) => c.standardKey === "class-6-8-regular-academic",
+                    ) || allCourses[0];
                   setSelectedCourse(fallbackCourse);
                 }}
                 className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs py-2.5 px-6 rounded shadow-sm cursor-pointer transition-all uppercase tracking-wider"
@@ -131,7 +153,10 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
               </motion.button>
               <button
                 onClick={() => {
-                  window.open("https://api.whatsapp.com/send?phone=918850447887&text=Hi%20Smart%20Tutors,%20I'd%20like%20to%20receive%20the%20admissions%20brochure%20and%20class%20schedules.", "_blank");
+                  window.open(
+                    "https://api.whatsapp.com/send?phone=918850447887&text=Hi%20Smart%20Tutors,%20I'd%20like%20to%20receive%20the%20admissions%20brochure%20and%20class%20schedules.",
+                    "_blank",
+                  );
                 }}
                 className="w-full sm:w-auto bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-semibold text-xs py-2.5 px-6 rounded cursor-pointer transition-all uppercase tracking-wider"
               >
@@ -140,7 +165,6 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
             </div>
           </div>
         </section>
-
       </main>
 
       {/* Lightbox Modal & Floating Action Assistant */}
@@ -148,7 +172,7 @@ export default function CoursesRedesignClient({ allCourses }: CoursesRedesignCli
         course={selectedCourse}
         onClose={() => setSelectedCourse(null)}
       />
-      
+
       <WhatsAppFAB currentCourseTitle={selectedCourse?.title} />
     </div>
   );
