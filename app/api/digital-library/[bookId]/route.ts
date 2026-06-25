@@ -26,9 +26,6 @@ type UploadedBlobInfo = {
   pathname?: string;
   url?: string;
   downloadUrl?: string;
-  megaDownloadUrl?: string;
-  megaFileName?: string;
-  megaNodeId?: string;
 };
 
 type EditMaterialBody = {
@@ -140,12 +137,7 @@ function validateUploadedPdf(
     return null;
   }
 
-  if (
-    uploadedPdf.pathname !== expectedPathname ||
-    !uploadedPdf.megaDownloadUrl ||
-    !uploadedPdf.megaNodeId ||
-    !uploadedPdf.megaFileName
-  ) {
+  if (uploadedPdf.pathname !== expectedPathname || !uploadedPdf.url) {
     throw new Error("Invalid uploaded PDF information.");
   }
 
@@ -269,31 +261,37 @@ export async function PATCH(request: Request, context: RouteContext) {
       categoryLabel: String(body.categoryLabel || previous?.categoryLabel || ""),
       thumbnailUrl: nextThumbnailUrl,
       thumbnailPathname: nextThumbnailPath,
-      megaDownloadUrl:
-        uploadedPdf?.megaDownloadUrl ||
-        previous?.megaDownloadUrl ||
-        existingMetadata?.record.megaDownloadUrl ||
+      blobUrl:
+        uploadedPdf?.url ||
+        previous?.blobUrl ||
+        existingMetadata?.record.blobUrl ||
         "",
-      megaNodeId:
-        uploadedPdf?.megaNodeId ||
-        previous?.megaNodeId ||
-        existingMetadata?.record.megaNodeId ||
+      blobPathname:
+        uploadedPdf?.pathname ||
+        previous?.blobPathname ||
+        existingMetadata?.record.blobPathname ||
         "",
-      megaFileName:
-        uploadedPdf?.megaFileName ||
-        previous?.megaFileName ||
-        existingMetadata?.record.megaFileName ||
-        "",
+      megaDownloadUrl: previous?.megaDownloadUrl || existingMetadata?.record.megaDownloadUrl || "",
+      megaNodeId: previous?.megaNodeId || existingMetadata?.record.megaNodeId || "",
+      megaFileName: previous?.megaFileName || existingMetadata?.record.megaFileName || "",
       uploadedAt: previous?.uploadedAt || existingMetadata?.record.uploadedAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      storageType: "mega",
+      storageType: previous?.storageType || "blob",
     };
 
     if (existingMetadata) {
       const nextMetadataPath = getMetadataPathForBook(targetPathname);
 
-      if (uploadedPdf?.megaNodeId && previous?.megaNodeId && uploadedPdf.megaNodeId !== previous.megaNodeId) {
+      if (uploadedPdf && previous?.megaNodeId) {
         await deleteMegaFileByNodeId(previous.megaNodeId);
+      }
+
+      if (
+        uploadedPdf?.pathname &&
+        previous?.blobPathname &&
+        uploadedPdf.pathname !== previous.blobPathname
+      ) {
+        await del(previous.blobPathname, { token });
       }
 
       await put(nextMetadataPath, JSON.stringify(nextRecord, null, 2), {
@@ -463,6 +461,10 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     if (metadata?.record.megaNodeId) {
       await deleteMegaFileByNodeId(metadata.record.megaNodeId);
+    }
+
+    if (metadata?.record.blobPathname) {
+      await del(metadata.record.blobPathname, { token });
     }
 
     if (metadata) {

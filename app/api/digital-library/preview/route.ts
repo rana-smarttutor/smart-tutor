@@ -66,6 +66,18 @@ async function getBookBytes(pathname: string, token: string) {
       if (metadata.megaDownloadUrl) {
         return downloadMegaFileBuffer(metadata.megaDownloadUrl);
       }
+
+      if (metadata.blobUrl) {
+        const pdfResponse = await fetch(metadata.blobUrl, {
+          cache: "no-store",
+        });
+
+        if (!pdfResponse.ok) {
+          throw new Error("Unable to read PDF from blob storage.");
+        }
+
+        return Buffer.from(await pdfResponse.arrayBuffer());
+      }
     }
   }
 

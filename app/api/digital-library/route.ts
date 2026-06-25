@@ -21,9 +21,6 @@ type UploadedBlobInfo = {
   pathname?: string;
   url?: string;
   downloadUrl?: string;
-  megaDownloadUrl?: string;
-  megaFileName?: string;
-  megaNodeId?: string;
 };
 
 type SaveMaterialBody = {
@@ -113,12 +110,7 @@ function validateUploadedPdf(
     return null;
   }
 
-  if (
-    uploadedPdf.pathname !== expectedPathname ||
-    !uploadedPdf.megaDownloadUrl ||
-    !uploadedPdf.megaNodeId ||
-    !uploadedPdf.megaFileName
-  ) {
+  if (uploadedPdf.pathname !== expectedPathname || !uploadedPdf.url) {
     throw new Error("Invalid uploaded PDF information.");
   }
 
@@ -188,13 +180,14 @@ function createMetadataRecord(
     thumbnailUrl: uploadedThumbnail?.url || previous?.thumbnailUrl,
     thumbnailPathname:
       uploadedThumbnail?.pathname || previous?.thumbnailPathname || undefined,
-    megaDownloadUrl:
-      uploadedPdf.megaDownloadUrl || previous?.megaDownloadUrl || "",
-    megaNodeId: uploadedPdf.megaNodeId || previous?.megaNodeId || "",
-    megaFileName: uploadedPdf.megaFileName || previous?.megaFileName || "",
+    blobUrl: uploadedPdf.url || previous?.blobUrl || "",
+    blobPathname: uploadedPdf.pathname || previous?.blobPathname || "",
+    megaDownloadUrl: previous?.megaDownloadUrl || "",
+    megaNodeId: previous?.megaNodeId || "",
+    megaFileName: previous?.megaFileName || "",
     uploadedAt,
     updatedAt: now,
-    storageType: "mega",
+    storageType: previous?.storageType || "blob",
   };
 }
 
@@ -314,12 +307,11 @@ export async function POST(request: Request) {
       categoryLabel,
       thumbnailUrl: uploadedThumbnail?.url,
       thumbnailPathname: uploadedThumbnail?.pathname,
-      megaDownloadUrl: uploadedPdf.megaDownloadUrl || "",
-      megaNodeId: uploadedPdf.megaNodeId || "",
-      megaFileName: uploadedPdf.megaFileName || "",
+      blobUrl: uploadedPdf.url || "",
+      blobPathname: uploadedPdf.pathname || "",
       uploadedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      storageType: "mega",
+      storageType: "blob",
     };
 
     await saveMetadataRecord(token, pathname, record);

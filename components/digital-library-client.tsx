@@ -23,9 +23,6 @@ type UploadedBlobInfo = {
   pathname: string;
   url: string;
   downloadUrl?: string;
-  megaDownloadUrl?: string;
-  megaFileName?: string;
-  megaNodeId?: string;
 };
 
 type DigitalLibraryClientProps = {
@@ -305,116 +302,11 @@ async function readJsonResponse<T = {
   }
 }
 
-type StreamUploadEvent =
-  | {
-      type: "status";
-      message: string;
-      progress: number;
-    }
-  | {
-      type: "progress";
-      message: string;
-      progress: number;
-      megaProgress?: number;
-    }
-  | {
-      type: "complete";
-      message: string;
-      progress: number;
-      url: string;
-      fileName: string;
-      nodeId: string;
-    }
-  | {
-      type: "error";
-      message: string;
-      progress: number;
-    };
-
 type TransferState = {
   label: string;
   progress: number;
   visible: boolean;
 };
-
-function parseNdjsonChunk(
-  buffer: string,
-  chunk: string,
-  onEvent: (event: StreamUploadEvent) => void,
-) {
-  const combined = `${buffer}${chunk}`;
-  const lines = combined.split("\n");
-  const remainder = lines.pop() || "";
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      continue;
-    }
-
-    try {
-      onEvent(JSON.parse(trimmed) as StreamUploadEvent);
-    } catch {
-      // Ignore malformed streaming fragments and wait for the next chunk.
-    }
-  }
-
-  return remainder;
-}
-
-async function postFormDataWithProgress(
-  url: string,
-  formData: FormData,
-  onUploadProgress: (percent: number) => void,
-  onEvent: (event: StreamUploadEvent) => void,
-) {
-  return await new Promise<StreamUploadEvent>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    let buffer = "";
-    let lastResponseLength = 0;
-    let lastEvent: StreamUploadEvent = {
-      type: "status",
-      message: "Initializing...",
-      progress: 0,
-    };
-
-    xhr.open("POST", url, true);
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable && event.total > 0) {
-        onUploadProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
-      }
-    };
-
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState >= 3) {
-        const responseChunk = xhr.responseText.slice(lastResponseLength);
-        lastResponseLength = xhr.responseText.length;
-        buffer = parseNdjsonChunk(buffer, responseChunk, (event) => {
-          lastEvent = event;
-          onEvent(event);
-        });
-      }
-    };
-
-    xhr.onerror = () => reject(new Error("The upload request failed."));
-    xhr.onabort = () => reject(new Error("The upload request was cancelled."));
-    xhr.onload = () => {
-      // The promise should only resolve if the stream ended properly.
-      // If the last event wasn't 'complete', it might be an error.
-      if (lastEvent.type === "complete") {
-        resolve(lastEvent);
-      } else {
-        // If we didn't get a 'complete' event but the request finished, 
-        // something likely went wrong on the backend.
-        reject(new Error(lastEvent.type === "error" ? lastEvent.message : "Upload did not complete successfully."));
-      }
-    };
-
-    xhr.send(formData);
-  });
-}
 
 function BookThumbnail({ book }: { book: Book }) {
   if (book.thumbnailUrl) {
@@ -671,61 +563,37 @@ export function DigitalLibraryClient({
     pathname: string,
     file: File,
   ): Promise<UploadedBlobInfo> {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("name", pathname.split("/").pop() || file.name || "book.pdf");
-
     setTransferState({
-      label: "Uploading PDF to server...",
+      label: "Uploading PDF...",
       progress: 0,
       visible: true,
     });
 
-    const uploadEvent = await postFormDataWithProgress(
-      "/api/digital-library/upload-mega",
-      formData,
-      (percent) => {
+    const blob = await upload(pathname, file, {
+      access: "public",
+      contentType: "application/pdf",
+      handleUploadUrl: "/api/digital-library/upload",
+      clientPayload: JSON.stringify({ assetType: "book" }),
+      onUploadProgress: ({ percentage }) => {
         setTransferState((current) => ({
           ...current,
-          label: "Uploading PDF to server...",
-          progress: Math.min(45, Math.round((percent / 100) * 45)),
+          label: "Uploading PDF...",
+          progress: Math.round(percentage),
           visible: true,
         }));
       },
-      (event) => {
-        if (event.type === "status" || event.type === "progress") {
-          setTransferState({
-            label: event.message,
-            progress: Math.min(100, Math.round(event.progress)),
-            visible: true,
-          });
-        }
-      },
-    );
-
-    if (uploadEvent.type === "error") {
-      throw new Error(uploadEvent.message);
-    }
-
-    if (uploadEvent.type !== "complete") {
-      throw new Error("Mega upload did not complete.");
-    }
+    });
 
     setTransferState({
-      label: uploadEvent.message,
+      label: "PDF uploaded successfully.",
       progress: 100,
       visible: true,
     });
 
     return {
-      pathname,
-      url: uploadEvent.url,
-      downloadUrl: `/api/digital-library/download?pathname=${encodeURIComponent(
-        pathname,
-      )}`,
-      megaDownloadUrl: uploadEvent.url,
-      megaFileName: uploadEvent.fileName,
-      megaNodeId: uploadEvent.nodeId,
+      pathname: blob.pathname,
+      url: blob.url,
+      downloadUrl: blob.downloadUrl || blob.url,
     };
   }
 

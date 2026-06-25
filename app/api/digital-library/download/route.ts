@@ -52,11 +52,13 @@ async function resolveBookDownload(pathname: string, token: string) {
 
   const metadata = await readJsonBlob<MegaBookMetadata>(metadataBlob.url);
 
-  if (!metadata.megaDownloadUrl) {
+  const downloadUrl = metadata.megaDownloadUrl || metadata.blobUrl;
+
+  if (!downloadUrl) {
     return NextResponse.json(
       {
         success: false,
-        message: "Mega download link is missing for this book.",
+        message: "Download link is missing for this book.",
       },
       { status: 409 },
     );
@@ -64,7 +66,7 @@ async function resolveBookDownload(pathname: string, token: string) {
 
   return NextResponse.json({
     success: true,
-    redirectUrl: metadata.megaDownloadUrl,
+    redirectUrl: downloadUrl,
   });
 }
 

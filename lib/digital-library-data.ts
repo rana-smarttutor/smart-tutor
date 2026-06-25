@@ -259,11 +259,11 @@ function normalizeMetadataBook(
     pathname: record.pathname,
     categoryId: record.categoryId,
     categoryLabel: record.categoryLabel,
-    url: canAccessPdf ? record.megaDownloadUrl : undefined,
+    url: canAccessPdf ? (record.megaDownloadUrl || record.blobUrl) : undefined,
     downloadUrl: getLibraryDownloadRoute(record.pathname),
     thumbnailUrl: record.thumbnailUrl || thumbnailUrl,
     uploadedAt: new Date(record.updatedAt || record.uploadedAt).toISOString(),
-    storageType: "mega",
+    storageType: record.storageType || "blob",
   };
 }
 

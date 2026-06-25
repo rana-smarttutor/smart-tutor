@@ -17,6 +17,8 @@ export type MegaBookMetadata = {
   megaDownloadUrl?: string;
   megaNodeId?: string;
   megaFileName?: string;
+  blobUrl?: string;
+  blobPathname?: string;
   uploadedAt: string;
   updatedAt?: string;
   storageType?: DigitalLibraryStorageKind;
