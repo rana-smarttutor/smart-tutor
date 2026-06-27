@@ -1,14 +1,257 @@
 import { NextResponse } from "next/server";
 
+import { createSessionResponse } from "@/lib/auth";
+import {
+  createUserRecord,
+  findUserDocumentByEmail,
+  findUserDocumentByMobile,
+} from "@/lib/data-store";
+import {
+  sanitizeEmailInput,
+  sanitizePasswordInput,
+  sanitizeTextInput,
+  validateEmailFormat,
+} from "@/lib/validation";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST() {
-  return NextResponse.json(
-    {
-      error:
-        "Self-registration is disabled. Accounts are created by the institute administration. Please contact Smart Tutors admission desk.",
-    },
-    { status: 410 },
-  );
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as {
+      role?: string;
+      name?: string;
+      email?: string;
+      password?: string;
+      mobile?: string;
+      dob?: string;
+      parentName?: string;
+      parentEmail?: string;
+      parentMobile?: string;
+      parentPassword?: string;
+      courseWanted?: string;
+      courseWantedTitle?: string;
+      studentType?: string;
+      weakSubjects?: string[];
+      strongSubjects?: string[];
+      marks10?: string;
+      marks12?: string;
+      graduationMarks?: string;
+      address?: string;
+      profilePhoto?: string;
+
+      confirmPassword?: string;
+      qualification?: string;
+      cvUrl?: string;
+      experience?: string;
+      subjects?: string[];
+    };
+
+    const role = body.role === "educator" ? "educator" : "student";
+    const name = sanitizeTextInput(body.name, 100);
+    const email = sanitizeEmailInput(body.email);
+    const password = sanitizePasswordInput(body.password);
+    const mobile = sanitizeTextInput(body.mobile, 15);
+    const dob = sanitizeTextInput(body.dob, 20);
+    const address = sanitizeTextInput(body.address, 300);
+    const parentName = sanitizeTextInput(body.parentName, 100);
+    const parentEmail = sanitizeEmailInput(body.parentEmail);
+    const parentMobile = sanitizeTextInput(body.parentMobile, 15);
+    const parentPassword = sanitizePasswordInput(body.parentPassword);
+
+    if (!name) {
+      return NextResponse.json(
+        { error: "Full name is required." },
+        { status: 400 },
+      );
+    }
+
+    if (!email || !validateEmailFormat(email)) {
+      return NextResponse.json(
+        { error: "A valid email address is required." },
+        { status: 400 },
+      );
+    }
+
+    if (!password || password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters." },
+        { status: 400 },
+      );
+    }
+
+    if (role === "educator") {
+      const confirmPassword = sanitizePasswordInput(body.confirmPassword);
+
+      if (password !== confirmPassword) {
+        return NextResponse.json(
+          { error: "Passwords do not match." },
+          { status: 400 },
+        );
+      }
+    }
+
+    if (!mobile || mobile.replace(/[^\d]/g, "").length < 10) {
+      return NextResponse.json(
+        { error: "A valid 10-digit mobile number is required." },
+        { status: 400 },
+      );
+    }
+
+    const existingEmail = await findUserDocumentByEmail(email);
+
+    if (existingEmail) {
+      return NextResponse.json(
+        { error: "An account with this email already exists." },
+        { status: 409 },
+      );
+    }
+
+    const existingMobile = await findUserDocumentByMobile(mobile);
+
+    if (existingMobile) {
+      return NextResponse.json(
+        { error: "An account with this mobile number already exists." },
+        { status: 409 },
+      );
+    }
+
+    if (!body.profilePhoto) {
+      return NextResponse.json(
+        { error: "Profile photo is required." },
+        { status: 400 },
+      );
+    }
+
+    const profile: Record<string, unknown> = {};
+
+    if (dob) profile.dob = dob;
+    if (address) profile.address = address;
+    profile.profilePhoto = body.profilePhoto;
+
+    if (role === "student") {
+      if (!parentEmail || !validateEmailFormat(parentEmail)) {
+        return NextResponse.json(
+          { error: "Parent email is required and must be valid." },
+          { status: 400 },
+        );
+      }
+      if (!parentMobile || parentMobile.replace(/[^\d]/g, "").length < 10) {
+        return NextResponse.json(
+          { error: "Parent mobile number is required and must be 10 digits." },
+          { status: 400 },
+        );
+      }
+
+      if (!parentPassword || parentPassword.length < 6) {
+        return NextResponse.json(
+          { error: "Parent password must be at least 6 characters." },
+          { status: 400 },
+        );
+      }
+
+      profile.parentEmail = parentEmail;
+      profile.parentMobile = parentMobile;
+      if (parentName) profile.parentName = parentName;
+      if (body.courseWanted) profile.courseWanted = body.courseWanted;
+      if (body.courseWantedTitle)
+        profile.courseWantedTitle = body.courseWantedTitle;
+      if (body.studentType === "home" || body.studentType === "on-campus")
+        profile.studentType = body.studentType;
+      if (body.weakSubjects?.length)
+        profile.weakSubjects = body.weakSubjects.slice(0, 10);
+      if (body.strongSubjects?.length)
+        profile.strongSubjects = body.strongSubjects.slice(0, 10);
+      if (body.marks10)
+        profile.marks10 = sanitizeTextInput(body.marks10, 20);
+      if (body.marks12)
+        profile.marks12 = sanitizeTextInput(body.marks12, 20);
+      if (body.graduationMarks)
+        profile.graduationMarks = sanitizeTextInput(body.graduationMarks, 20);
+    }
+
+    if (role === "educator") {
+      const qualification = sanitizeTextInput(body.qualification, 200);
+
+      if (!qualification) {
+        return NextResponse.json(
+          { error: "Qualification is required for educators." },
+          { status: 400 },
+        );
+      }
+
+      profile.qualification = qualification;
+
+      if (body.cvUrl) profile.cvUrl = body.cvUrl;
+      if (body.experience)
+        profile.experience = sanitizeTextInput(body.experience, 100);
+      if (body.subjects?.length)
+        profile.subjects = body.subjects.slice(0, 20);
+    }
+
+    const status = "pending";
+
+    const user = await createUserRecord({
+      name,
+      email,
+      password,
+      mobile,
+      role,
+      program: body.courseWanted || "general",
+      status,
+      profile: profile as import("@/lib/types").UserProfile,
+    });
+
+    if (role === "student" && parentEmail) {
+      const parentAccountName = parentName || `Parent of ${name}`;
+      const existingParentEmail = await findUserDocumentByEmail(parentEmail);
+
+      if (!existingParentEmail) {
+        await createUserRecord({
+          name: parentAccountName,
+          email: parentEmail,
+          mobile: parentMobile || mobile,
+          role: "parent",
+          password: parentPassword,
+          program: "parent",
+          status: "active",
+          linkedStudentId: user.id,
+          linkedStudentMobile: mobile,
+        });
+      }
+    }
+
+    const response = createSessionResponse({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      label: user.label,
+      status: user.status,
+      verified: user.verified,
+    });
+
+    const responseData = await response.json();
+
+    return NextResponse.json({
+      ...responseData,
+      message:
+        "Registration submitted for admin approval. You will be notified once your account is activated.",
+      redirectTo: "/application-submitted",
+    });
+  } catch (error) {
+    console.error("Signup error:", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Registration failed. Please try again.",
+      },
+      { status: 500 },
+    );
+  }
 }
+
+

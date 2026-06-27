@@ -475,18 +475,38 @@ export function DashboardShell({
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-primary)]">
               Active Session
             </p>
-            <p
-              className="mt-3 truncate text-lg font-bold text-[var(--color-heading)] sm:text-xl"
-              title={session?.name}
-            >
-              {session ? session.name : "Smart Tutors"}
-            </p>
-            <p
-              className="mt-1 truncate text-sm font-medium text-[var(--color-muted)]"
-              title={session?.email}
-            >
-              {session ? session.email : "Login required"}
-            </p>
+            <div className="mt-4 flex items-center gap-3">
+              {dashboard.profile?.profilePhoto ? (
+                <img
+                  src={dashboard.profile.profilePhoto}
+                  alt={session?.name ?? "User"}
+                  className="h-12 w-12 shrink-0 rounded-full border-2 border-[var(--color-border)] object-cover"
+                />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--color-highlight)] text-sm font-bold text-[var(--color-accent)]">
+                  {getInitials(session?.name)}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p
+                  className="truncate text-lg font-bold text-[var(--color-heading)] sm:text-xl"
+                  title={session?.name}
+                >
+                  {session ? session.name : "Smart Tutors"}
+                  {session?.verified ? (
+                    <span className="ml-1.5 inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold leading-none align-middle">
+                      ✓
+                    </span>
+                  ) : null}
+                </p>
+                <p
+                  className="truncate text-sm font-medium text-[var(--color-muted)]"
+                  title={session?.email}
+                >
+                  {session ? session.email : "Login required"}
+                </p>
+              </div>
+            </div>
             <span className="mt-4 inline-flex max-w-full truncate rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-heading)]">
               {dashboard.roleLabel}
             </span>
@@ -628,13 +648,30 @@ export function DashboardShell({
                 <div className="grid gap-6">
                   <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.4rem] bg-[var(--color-highlight)] text-xl font-semibold text-[var(--color-accent)]">
-                        {getInitials(session?.name)}
-                      </div>
+                      {dashboard.profile?.profilePhoto ? (
+                        <img
+                          src={dashboard.profile.profilePhoto}
+                          alt={session?.name ?? "User"}
+                          className="h-16 w-16 shrink-0 rounded-[1.4rem] border-2 border-[var(--color-border)] object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.4rem] bg-[var(--color-highlight)] text-xl font-semibold text-[var(--color-accent)]">
+                          {getInitials(session?.name)}
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="section-label">Profile</p>
                         <p className="mt-3 break-words text-xl font-semibold text-[var(--color-heading)]">
                           {session ? session.name : "Smart Tutors User"}
+                          {session?.verified ? (
+                            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-[10px] font-bold leading-none align-middle">
+                              ✓ Verified
+                            </span>
+                          ) : (
+                            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-400 text-[10px] font-bold leading-none align-middle">
+                              Unverified
+                            </span>
+                          )}
                         </p>
                         <p className="mt-2 break-all text-sm leading-6 text-[var(--color-muted)]">
                           {session ? session.email : "Login required"}
@@ -660,6 +697,78 @@ export function DashboardShell({
                         </div>
                       ))}
                     </div>
+
+                    {role === "student" && dashboard.profile ? (
+                      <div className="mt-5">
+                        <div className="surface-soft rounded-3xl p-5">
+                          <p className="text-sm font-semibold text-[var(--color-heading)]">
+                            Academic Profile
+                          </p>
+                          <div className="mt-3 grid gap-2">
+                            {dashboard.profile.courseWantedTitle ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Course</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.courseWantedTitle}</span>
+                              </div>
+                            ) : null}
+                            {dashboard.profile.studentType ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Type</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.studentType === "on-campus" ? "On Campus" : "Home Student"}</span>
+                              </div>
+                            ) : null}
+                            {dashboard.profile.weakSubjects && dashboard.profile.weakSubjects.length > 0 ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Focus</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.weakSubjects.join(", ")}</span>
+                              </div>
+                            ) : null}
+                            {dashboard.profile.marks10 ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Class 10</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.marks10}</span>
+                              </div>
+                            ) : null}
+                            {dashboard.profile.marks12 ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Class 12</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.marks12}</span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {role === "educator" && dashboard.profile ? (
+                      <div className="mt-5">
+                        <div className="surface-soft rounded-3xl p-5">
+                          <p className="text-sm font-semibold text-[var(--color-heading)]">
+                            Professional Profile
+                          </p>
+                          <div className="mt-3 grid gap-2">
+                            {dashboard.profile.qualification ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Qualification</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.qualification}</span>
+                              </div>
+                            ) : null}
+                            {dashboard.profile.experience ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Experience</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.experience}</span>
+                              </div>
+                            ) : null}
+                            {dashboard.profile.subjects && dashboard.profile.subjects.length > 0 ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Subjects</span>
+                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.subjects.join(", ")}</span>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div className="mt-5 grid gap-3">
                       <div className="surface-soft rounded-3xl p-5">

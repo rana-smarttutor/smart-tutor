@@ -34,6 +34,7 @@ import type {
   TestItem,
   TestQuestion,
   TestSubmission,
+  UserProfile,
 } from "@/lib/types";
 
 type DashboardTemplate = {
@@ -55,9 +56,11 @@ type UserDocument = SessionUser & {
   linkedStudentMobile?: string;
   emailKey?: string;
   status?: "active" | "pending" | "rejected";
+  verified?: boolean;
   permissions?: PermissionItem[];
   createdAt?: string;
   updatedAt?: string;
+  profile?: UserProfile;
 };
 
 type MessageDocument = MessageItem & {
@@ -203,6 +206,8 @@ function toSessionUser(user: UserDocument): SessionUser {
     email: user.email,
     role: user.role,
     label: user.label,
+    status: user.status,
+    verified: user.verified,
   };
 }
 
@@ -882,6 +887,7 @@ export async function approveEducatorRequest(userId: string) {
     {
       $set: {
         status: "active",
+        verified: true,
         updatedAt: new Date().toISOString(),
       },
     },
@@ -921,6 +927,67 @@ export async function rejectEducatorRequest(userId: string) {
   return updatedUser ? toManagedUser(updatedUser) : null;
 }
 
+export async function getPendingUserRequests() {
+  const collection = await getUsersCollection();
+
+  const users = await collection
+    .find({ status: "pending" })
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  return users.map(toManagedUser);
+}
+
+export async function approveUserRequest(userId: string) {
+  const collection = await getUsersCollection();
+
+  const result = await collection.updateOne(
+    { id: userId },
+    {
+      $set: {
+        status: "active",
+        verified: true,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    return null;
+  }
+
+  const updatedUser = await collection.findOne({ id: userId });
+
+  return updatedUser ? toManagedUser(updatedUser) : null;
+}
+
+export async function rejectUserRequest(userId: string) {
+  const collection = await getUsersCollection();
+
+  const result = await collection.deleteOne({ id: userId });
+
+  return result.deletedCount > 0;
+}
+
+export async function toggleUserVerification(
+  userId: string,
+  verified: boolean,
+) {
+  const collection = await getUsersCollection();
+
+  const result = await collection.updateOne(
+    { id: userId },
+    {
+      $set: {
+        verified,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  return result.matchedCount > 0;
+}
+
 export async function getStudentDirectory() {
   const collection = await getUsersCollection();
   const students = await collection
@@ -941,6 +1008,7 @@ export async function createUserRecord(input: {
   password: string;
   program: string;
   status?: "active" | "pending" | "rejected";
+  profile?: UserProfile;
 }) {
   const document: UserDocument = {
     id: randomUUID(),
@@ -948,7 +1016,7 @@ export async function createUserRecord(input: {
     email: input.email,
     emailKey: input.email.toLowerCase(),
     mobile: input.mobile,
-    mobileKey: input.mobile,
+    mobileKey: input.mobile?.replace(/[^\d]/g, "").slice(-10),
     parentMobile: input.parentMobile,
     linkedStudentId: input.linkedStudentId,
     linkedStudentMobile: input.linkedStudentMobile,
@@ -959,6 +1027,7 @@ export async function createUserRecord(input: {
     status: input.status ?? "active",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    profile: input.profile,
   };
 
   const collection = await getUsersCollection();
@@ -974,6 +1043,7 @@ export async function updateUserRecord(input: {
   password: string;
   program: string;
   status?: "active" | "pending" | "rejected";
+  verified?: boolean;
 }) {
   const collection = await getUsersCollection();
   const document: Partial<UserDocument> = {
@@ -987,6 +1057,10 @@ export async function updateUserRecord(input: {
     status: input.status ?? "active",
     updatedAt: new Date().toISOString(),
   };
+
+  if (input.verified !== undefined) {
+    document.verified = input.verified;
+  }
 
   await collection.updateOne({ id: input.id }, { $set: document });
   const updated = await collection.findOne({ id: input.id });
@@ -1470,12 +1544,13 @@ export async function getDashboardBundle(
   role: Role,
   userId?: string,
 ): Promise<DashboardBundle> {
-  const [config, user, courses, tests, messages, submissions] =
+  const [config, user, userDoc, courses, tests, messages, submissions] =
     await Promise.all([
       getContentDocument<{ templates: Record<Role, DashboardTemplate> }>(
         "dashboard-config",
       ),
       userId ? findUserById(userId) : Promise.resolve(null),
+      userId ? findFullUserById(userId) : Promise.resolve(undefined),
       getCoursesForRole(role),
       getTestsForRole(role, userId),
       getMessagesForRole(role, userId),
@@ -1503,7 +1578,14 @@ export async function getDashboardBundle(
     attendanceSheets,
     feeInvoices,
     lectures,
+    profile: userDoc?.profile,
   };
+}
+
+async function findFullUserById(id: string) {
+  const collection = await getUsersCollection();
+  const user = await collection.findOne({ id });
+  return user as UserDocument | null;
 }
 
 export async function getLibraryBooksForRole(role: Role) {

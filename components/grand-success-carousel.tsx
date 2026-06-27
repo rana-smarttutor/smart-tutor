@@ -81,44 +81,46 @@ export function GrandSuccessCarousel() {
   }, []);
 
   return (
-    <RevealOnScroll className="section-shell py-4 sm:py-8">
-      <div className="mb-8 flex flex-wrap justify-center gap-2 sm:mb-12">
-        {RESULT_CATEGORIES.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => setActiveCategory(category)}
-            className={`rounded-full border-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 sm:text-xs ${
-              activeCategory.id === category.id
-                ? "scale-105 border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
-                : "border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
-            }`}
-          >
-            {category.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex w-full flex-col items-center">
-        <div className="relative mx-auto w-full max-w-6xl overflow-hidden rounded-[1.5rem] border-2 border-white bg-white shadow-2xl transition-all duration-500 sm:rounded-[2.5rem] sm:border-4">
-          <div className="relative aspect-video w-full overflow-hidden bg-white">
-            <Image
-              key={activeCategory.image}
-              src={activeCategory.image}
-              alt={activeCategory.label}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 1100px"
-              className="object-contain object-center transition-opacity duration-500 ease-in-out"
-            />
-          </div>
+    <RevealOnScroll>
+      <div className="flex w-full flex-col items-center px-4 sm:px-6">
+        <div className="mb-8 flex flex-wrap justify-center gap-2 sm:mb-12">
+          {RESULT_CATEGORIES.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setActiveCategory(category)}
+              className={`rounded-full border-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 sm:text-xs ${
+                activeCategory.id === category.id
+                  ? "scale-105 border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
+                  : "border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
+              }`}
+            >
+              {category.label}
+            </button>
+          ))}
         </div>
 
-        <div className="mt-8 text-center">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-heading)] transition-colors sm:text-lg">
-            {activeCategory.label} Results
-          </p>
-          <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-blue-600 shadow-sm" />
+        <div className="flex w-full flex-col items-center">
+          <div className="w-full max-w-5xl overflow-hidden rounded-2xl border-2 border-white bg-white shadow-2xl transition-all duration-500 sm:rounded-3xl sm:border-4">
+            <div className="relative mx-auto aspect-video w-full max-w-5xl bg-white">
+              <Image
+                key={activeCategory.image}
+                src={activeCategory.image}
+                alt={activeCategory.label}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 1100px"
+                className="object-contain object-center transition-opacity duration-500 ease-in-out"
+              />
+            </div>
+          </div>
+
+          <div className="mt-6 text-center sm:mt-8">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[var(--color-heading)] transition-colors sm:text-lg">
+              {activeCategory.label} Results
+            </p>
+            <div className="mx-auto mt-3 h-1.5 w-16 rounded-full bg-blue-600 shadow-sm" />
+          </div>
         </div>
       </div>
     </RevealOnScroll>

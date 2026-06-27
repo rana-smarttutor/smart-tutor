@@ -4,6 +4,16 @@ import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { PlacementPortalHero } from "@/components/placement-portal-hero";
 import { SiteHeader } from "@/components/site-header";
 import { generatedPlacedStudents } from "@/lib/placed-students-data";
+
+export const metadata: Metadata = {
+  title: "Placements & Success Stories",
+  description:
+    "Explore the success stories of Smart Tutors students who excelled in board exams, competitive exams, and secured top ranks. 500+ success stories and counting.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/placements",
+  },
+};
+
 export const dynamic = "force-static";
 export default function PlacementsPage() {
   const allStudents = generatedPlacedStudents;

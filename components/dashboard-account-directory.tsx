@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ManagedUser, Role } from "@/lib/types";
 
@@ -16,6 +16,9 @@ type CreateAccountForm = {
   password: string;
   confirm: boolean;
   linkedStudentId: string;
+  parentName: string;
+  parentEmail: string;
+  parentMobile: string;
 };
 
 export function DashboardAccountDirectory({
@@ -26,7 +29,8 @@ export function DashboardAccountDirectory({
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, ManagedUser>>({});
   const [status, setStatus] = useState("");
-  const [activeTab, setActiveTab] = useState<"register" | "directory">("register");
+  const [activeTab, setActiveTab] = useState<"register" | "directory" | "verification">("register");
+  const [pendingRequests, setPendingRequests] = useState<ManagedUser[]>([]);
   const [createForm, setCreateForm] = useState<CreateAccountForm>({
     name: "",
     email: "",
@@ -35,6 +39,9 @@ export function DashboardAccountDirectory({
     password: "Student@123",
     confirm: false,
     linkedStudentId: "",
+    parentName: "",
+    parentEmail: "",
+    parentMobile: "",
   });
 
   const accountCounts = useMemo(
@@ -73,6 +80,19 @@ export function DashboardAccountDirectory({
     });
   }, [sortBy, users]);
 
+  useEffect(() => {
+    if (activeTab !== "verification") return;
+
+    fetch("/api/admin/user-requests", { credentials: "same-origin" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok && Array.isArray(data.requests)) {
+          setPendingRequests(data.requests);
+        }
+      })
+      .catch(() => {});
+  }, [activeTab]);
+
   async function handleCreate() {
     const response = await fetch("/api/users", {
       method: "POST",
@@ -97,6 +117,9 @@ export function DashboardAccountDirectory({
       password: "Student@123",
       confirm: false,
       linkedStudentId: "",
+      parentName: "",
+      parentEmail: "",
+      parentMobile: "",
     });
     setActiveTab("directory");
     setStatus("New registered account draft created.");
@@ -121,6 +144,7 @@ export function DashboardAccountDirectory({
         program: draft.program,
         status: draft.status,
         password: draft.passwordHint,
+        verified: draft.verified,
       }),
     });
 
@@ -172,6 +196,17 @@ export function DashboardAccountDirectory({
           }`}
         >
           Registered Directory
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("verification")}
+          className={`btn-md font-bold ${
+            activeTab === "verification"
+              ? "btn-action"
+              : "btn-surface"
+          }`}
+        >
+          Verification Requests
         </button>
       </div>
 
@@ -251,6 +286,35 @@ export function DashboardAccountDirectory({
                 </select>
               ) : null}
 
+              {createForm.role === "student" ? (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <input
+                    value={createForm.parentName}
+                    onChange={(event) =>
+                      setCreateForm((current) => ({ ...current, parentName: event.target.value.slice(0, 60) }))
+                    }
+                    placeholder="Parent name"
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                  <input
+                    value={createForm.parentEmail}
+                    onChange={(event) =>
+                      setCreateForm((current) => ({ ...current, parentEmail: event.target.value.slice(0, 60) }))
+                    }
+                    placeholder="Parent email"
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                  <input
+                    value={createForm.parentMobile}
+                    onChange={(event) =>
+                      setCreateForm((current) => ({ ...current, parentMobile: event.target.value.slice(0, 15) }))
+                    }
+                    placeholder="Parent mobile"
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+              ) : null}
+
               <input
                 value={createForm.password}
                 onChange={(event) =>
@@ -316,7 +380,7 @@ export function DashboardAccountDirectory({
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === "directory" ? (
         <div className="mt-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <p className="text-sm font-semibold text-[var(--color-heading)]">
@@ -406,6 +470,20 @@ export function DashboardAccountDirectory({
                         className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] border border-[var(--color-border)] outline-none focus:border-blue-400"
                         placeholder="Password"
                       />
+                      <label className="flex items-center gap-3 text-sm text-[var(--color-heading)]">
+                        <input
+                          type="checkbox"
+                          checked={currentDraft.verified ?? false}
+                          onChange={(event) =>
+                            setDrafts((current) => ({
+                              ...current,
+                              [user.id]: { ...currentDraft, verified: event.target.checked },
+                            }))
+                          }
+                          className="h-5 w-5 rounded border-[var(--color-border)] accent-violet-600"
+                        />
+                        <span>Verified Badge</span>
+                      </label>
                       <div className="flex flex-wrap gap-3 mt-2">
                         <button type="button" onClick={() => handleSave(user.id)} className="btn-action btn-sm">
                           Update Account
@@ -443,6 +521,12 @@ export function DashboardAccountDirectory({
                             <span className="h-1 w-1 rounded-full bg-green-500" />
                             {user.status}
                           </span>
+                          {user.verified ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[10px] font-bold border border-violet-200 uppercase">
+                              <span className="text-xs">✓</span>
+                              Verified
+                            </span>
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-2 text-sm text-[var(--color-muted)]">
                           <span className="text-[10px] font-bold uppercase tracking-wider w-16">Secret</span>
@@ -467,6 +551,76 @@ export function DashboardAccountDirectory({
               );
             })}
           </div>
+        </div>
+      ) : (
+        <div className="mt-6">
+          <p className="text-sm font-semibold text-[var(--color-heading)] mb-4">
+            Pending Approval Requests
+          </p>
+          {pendingRequests.length === 0 ? (
+            <p className="text-sm text-[var(--color-muted)]">No pending requests.</p>
+          ) : (
+            <div className="grid gap-4">
+              {pendingRequests.map((req) => (
+                <div key={req.id} className="surface-soft rounded-[1.75rem] p-5 border border-amber-200">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-lg font-bold text-[var(--color-heading)]">{req.name}</p>
+                      <p className="mt-1 truncate text-xs font-medium text-[var(--color-muted)]">{req.email}</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="pill bg-amber-50 text-amber-700 border-amber-100">{req.role}</span>
+                        <span className="pill bg-blue-50 text-blue-700 border-blue-100">{req.program}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await fetch("/api/admin/user-requests/approve", {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userId: req.id }),
+                          });
+                          const data = await res.json();
+                          if (data.ok) {
+                            setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                            setStatus(`Approved: ${req.name}`);
+                          } else {
+                            setStatus(data.error ?? "Failed to approve.");
+                          }
+                        }}
+                        className="btn-sm font-bold bg-green-600 text-white px-4 py-2 rounded-full hover:bg-green-700 transition"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await fetch("/api/admin/user-requests/reject", {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ userId: req.id }),
+                          });
+                          const data = await res.json();
+                          if (data.ok) {
+                            setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                            setStatus(`Rejected: ${req.name}`);
+                          } else {
+                            setStatus(data.error ?? "Failed to reject.");
+                          }
+                        }}
+                        className="btn-sm font-bold bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700 transition"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>

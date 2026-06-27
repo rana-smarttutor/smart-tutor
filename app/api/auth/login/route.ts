@@ -49,18 +49,19 @@ export async function POST(request: Request) {
     );
   }
 
-  if (user.role === "educator" && user.status !== "active") {
+  if (user.status && user.status !== "active") {
+    const isRejected = user.status === "rejected";
+    const roleLabel = user.role === "educator" ? "faculty" : "account";
+
     return NextResponse.json(
       {
-        error:
-          user.status === "rejected"
-            ? "Your faculty account request was rejected by admin."
-            : "Your faculty account is waiting for admin approval.",
-        pendingApproval: user.status !== "rejected",
-        redirectTo:
-          user.status === "rejected" ? "/login" : "/waiting-approval",
+        error: isRejected
+          ? `Your ${roleLabel} request was rejected by admin.`
+          : `Your ${roleLabel} is waiting for admin approval.`,
+        pendingApproval: !isRejected,
+        redirectTo: isRejected ? "/login" : "/application-submitted",
       },
-      { status: user.status === "rejected" ? 403 : 200 },
+      { status: isRejected ? 403 : 200 },
     );
   }
 

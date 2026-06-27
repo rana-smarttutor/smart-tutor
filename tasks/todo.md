@@ -1,29 +1,45 @@
-# Task Review
+# Pending Approval Flow for Signups
 
-## Checklist
+## Architecture
 
-- [x] Add a Mega-backed storage helper with upload, download, and public link support.
-- [x] Store digital-library PDF metadata in Blob while moving the actual book PDFs to Mega.
-- [x] Update the library UI to show upload and migration progress clearly.
-- [x] Route book downloads through authenticated Mega redirects instead of proxying PDF bytes through the app.
-- [x] Keep the library focused on metadata in Blob and book files in Mega.nz.
-- [x] Stop storing generated previews in Blob to avoid Hobby quota exhaustion.
-- [x] Verify the digital library typecheck after the storage migration.
-- [ ] Verify the production build after the storage migration.
+### 1. Types (`lib/types.ts`)
+- Add `verified?: boolean` to `SessionUser`, `UserDocument`, `UserProfile`
 
-## Current Task
+### 2. Data Store (`lib/data-store.ts`)
+- `toSessionUser()` → include `status` + `verified`
+- Student signup → status `"pending"` (not `"active"`)
+- `approveUserRequest(id)` → sets `status: "active"`, `verified: true`
+- `rejectUserRequest(id)` → deletes the user document
+- `getPendingUserRequests()` → all users with `status: "pending"`
+- `toggleUserVerification(id, verified)` → set verified boolean
+- Parent account gets parentEmail + **parentPassword** (not auto-generated)
 
-- [x] Inspect the current digital library storage flow and build error surface.
-- [x] Implement the Mega-backed PDF flow for main books while keeping thumbnails and section data in Blob.
-- [x] Migrate existing books from Blob to Mega and keep the listing/edit/delete behavior stable.
-- [ ] Verify the result with a production build and note any remaining environment limits.
+### 3. Signup Form
+- Add `parentPassword` field to `FormData`
+- Add `parentPassword` + `parentConfirmPassword` inputs to Personal Information section
+- On success → redirect to `/application-submitted`
 
-## Review
+### 4. Application Submitted Page
+- Create `/application-submitted/page.tsx`
+- Shows "Application in Process" with status info
+- If pending → "Awaiting admin confirmation"
+- If rejected → "Contact admin"
 
-- The digital library now stores book PDFs in Mega.nz, while thumbnails, sections, and metadata remain in Vercel Blob.
-- The library list route now reads Mega metadata blobs and still falls back to legacy Blob PDFs during migration.
-- The upload flow now shows upload and transfer progress, and downloads authenticate through the app before redirecting to the Mega link.
-- The old proxy-download code and bulk migration path were removed so book downloads now rely on Mega metadata links only.
-- PDF previews are generated and streamed directly instead of being written back into Blob, which avoids quota exhaustion.
-- `npx tsc --noEmit --pretty false --incremental false` passed after the migration, redirect cutover, and icon fixes.
-- `npm run build` started successfully but timed out in this environment before finishing, so production build verification is still pending.
+### 5. Login Fix (`app/api/auth/login/route.ts`)
+- Fix `user.status` check (was broken because SessionUser dropped status)
+- Pending users of ANY role → return pendingApproval=true
+- Rejected users → return 403
+
+### 6. Dashboard Guard (`app/dashboard/page.tsx`)
+- Add status check: if pending → redirect to `/application-submitted`
+- If rejected → redirect to `/login` with error
+
+### 7. Admin Panel
+- Add "Verification Requests" tab in `dashboard-account-directory.tsx`
+- Table of pending users with Approve / Reject buttons
+- In "Registered Directory" edit modal → add verified badge toggle
+- New API endpoints: `POST /api/admin/approve`, `POST /api/admin/reject`, `PATCH /api/users/verify`
+
+### 8. Verification Badge
+- Show checkmark badge on profile card
+- Show in admin user table

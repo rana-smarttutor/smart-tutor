@@ -9,6 +9,7 @@ export type SessionUser = {
   role: Role;
   label: string;
   status?: UserStatus;
+  verified?: boolean;
 };
 
 export type DemoCredential = {
@@ -417,6 +418,32 @@ export type Enquiry = {
 // Dashboard Bundle
 // =========================
 
+export type UserProfile = {
+  verified?: boolean;
+  dob?: string;
+  profilePhoto?: string;
+  address?: string;
+
+  // Student specific
+  parentName?: string;
+  parentEmail?: string;
+  parentMobile?: string;
+  courseWanted?: string;
+  courseWantedTitle?: string;
+  studentType?: "home" | "on-campus";
+  weakSubjects?: string[];
+  strongSubjects?: string[];
+  marks10?: string;
+  marks12?: string;
+  graduationMarks?: string;
+
+  // Educator specific
+  qualification?: string;
+  cvUrl?: string;
+  experience?: string;
+  subjects?: string[];
+};
+
 export type DashboardBundle = {
   roleLabel: string;
   heroTitle: string;
@@ -431,4 +458,5 @@ export type DashboardBundle = {
   attendanceSheets: AttendanceSheet[];
   feeInvoices: FeeInvoice[];
   lectures: LectureItem[];
+  profile?: UserProfile;
 };

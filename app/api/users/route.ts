@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { createUserRecord, findUserDocumentByEmail, getStudentDirectory, getUsersForAdmin, updateUserRecord } from "@/lib/data-store";
 import { sanitizeEmailInput, sanitizePasswordInput, sanitizeRoleInput, sanitizeTextInput, validateEmailFormat } from "@/lib/validation";
+import type { UserProfile } from "@/lib/types";
 
 export async function GET() {
   const session = await getSessionUser();
@@ -39,6 +40,9 @@ export async function POST(request: Request) {
     status?: "active" | "pending";
     confirm?: boolean;
     linkedStudentId?: string;
+    parentName?: string;
+    parentEmail?: string;
+    parentMobile?: string;
   };
 
   try {
@@ -51,6 +55,9 @@ export async function POST(request: Request) {
       status?: "active" | "pending";
       confirm?: boolean;
       linkedStudentId?: string;
+      parentName?: string;
+      parentEmail?: string;
+      parentMobile?: string;
     };
   } catch {
     return NextResponse.json({ error: "Invalid user payload." }, { status: 400 });
@@ -95,6 +102,17 @@ export async function POST(request: Request) {
     );
   }
 
+  const profile: UserProfile = {};
+
+  if (role === "student") {
+    const parentName = sanitizeTextInput(body.parentName, 100);
+    const parentEmail = sanitizeEmailInput(body.parentEmail);
+    const parentMobile = sanitizeTextInput(body.parentMobile, 15);
+    if (parentName) profile.parentName = parentName;
+    if (parentEmail) profile.parentEmail = parentEmail;
+    if (parentMobile) profile.parentMobile = parentMobile;
+  }
+
   const user = await createUserRecord({
     name,
     email,
@@ -103,7 +121,28 @@ export async function POST(request: Request) {
     program,
     status: body.status,
     linkedStudentId: role === "parent" ? body.linkedStudentId : undefined,
+    profile: Object.keys(profile).length > 0 ? profile : undefined,
   });
+
+  if (role === "student" && body.parentEmail) {
+    const parentEmail = sanitizeEmailInput(body.parentEmail);
+    const existingParentEmail = await findUserDocumentByEmail(parentEmail);
+
+    if (!existingParentEmail && parentEmail) {
+      const parentName = sanitizeTextInput(body.parentName, 100) || `Parent of ${name}`;
+      const parentPassword = "Parent@" + Math.random().toString(36).substring(2, 8).replace(/[^a-zA-Z0-9]/g, "");
+
+      await createUserRecord({
+        name: parentName,
+        email: parentEmail,
+        role: "parent",
+        password: parentPassword,
+        program: "parent",
+        status: "active",
+        linkedStudentId: user.id,
+      });
+    }
+  }
 
   return NextResponse.json({ user }, { status: 201 });
 }
@@ -126,6 +165,7 @@ export async function PATCH(request: Request) {
     password?: string;
     program?: string;
     status?: "active" | "pending";
+    verified?: boolean;
   };
 
   try {
@@ -137,6 +177,7 @@ export async function PATCH(request: Request) {
       password?: string;
       program?: string;
       status?: "active" | "pending";
+      verified?: boolean;
     };
   } catch {
     return NextResponse.json({ error: "Invalid update payload." }, { status: 400 });
@@ -176,6 +217,7 @@ export async function PATCH(request: Request) {
     password,
     program,
     status: body.status,
+    verified: body.verified,
   });
 
   return NextResponse.json(

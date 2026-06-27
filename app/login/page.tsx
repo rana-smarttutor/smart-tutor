@@ -1,9 +1,19 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { RealLoginForm } from "@/components/real-login-form";
 import { getSessionUser } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Sign In",
+  description:
+    "Sign in to your Smart Tutors account to access your dashboard, courses, tests, performance reports, and more.",
+  alternates: {
+    canonical: "https://smarttutors.co.in/login",
+  },
+};
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +31,17 @@ export default async function LoginPage() {
           <div className="mx-auto w-full max-w-md">
             <RealLoginForm />
 
-            
+            <div className="mt-6 text-center">
+              <p className="text-xs text-slate-400">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/signup"
+                  className="font-bold text-blue-600 hover:text-blue-700"
+                >
+                  Create Account
+                </Link>
+              </p>
+            </div>
           </div>
         </section>
 

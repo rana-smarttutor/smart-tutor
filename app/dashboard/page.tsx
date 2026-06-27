@@ -18,6 +18,14 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  if (session.status === "pending") {
+    redirect("/application-submitted");
+  }
+
+  if (session.status === "rejected") {
+    redirect("/login?error=account_rejected");
+  }
+
   const role = session.role;
 
   const [dashboard, educatorStudentDirectory, managedUsers] = await Promise.all([
