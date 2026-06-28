@@ -39,7 +39,7 @@ export function HomeGlobe() {
           <div className="grid min-w-0 gap-4">
             <div className="media-slot rounded-[1.8rem] p-4 sm:p-5">
               <p className="keyword-line">Result collage</p>
-              <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-slate-50 dark:bg-slate-900/50">
+              <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-slate-50 ">
                 <Image
                   src="/result-1.jpeg"
                   alt="Smart Tutors topper showcase"

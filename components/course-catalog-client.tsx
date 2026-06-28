@@ -240,7 +240,7 @@ export function CourseCatalogClient({ initialCourses }: CourseCatalogClientProps
                 <h2 className="text-2xl font-black tracking-tight text-[var(--color-heading)] sm:text-3xl">
                   {activeTab} Programs
                 </h2>
-                <div className="h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent dark:from-blue-900/50" />
+                <div className="h-px flex-grow bg-gradient-to-r from-blue-200 to-transparent " />
               </div>
             )}
             <CourseCatalog courses={filteredCourses} />

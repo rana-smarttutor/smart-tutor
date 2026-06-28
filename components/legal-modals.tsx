@@ -29,7 +29,7 @@ export function LegalModals() {
       {activeModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div 
-            className="relative w-full max-w-2xl max-h-[80vh] overflow-hidden bg-white dark:bg-slate-900 rounded-[2rem] shadow-2xl flex flex-col border border-[var(--color-border)] animate-in zoom-in-95 duration-200"
+            className="relative w-full max-w-2xl max-h-[80vh] overflow-hidden bg-white  rounded-[2rem] shadow-2xl flex flex-col border border-[var(--color-border)] animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-background-strong)]">
@@ -38,7 +38,7 @@ export function LegalModals() {
               </h2>
               <button 
                 onClick={closeModal}
-                className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-slate-800 transition-colors border border-[var(--color-border)]"
+                className="h-10 w-10 rounded-full flex items-center justify-center hover:bg-white  transition-colors border border-[var(--color-border)]"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />

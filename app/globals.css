@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --font-sans: var(--font-geist-sans), sans-serif;
@@ -765,4 +766,29 @@ footer {
 
 .whatsapp-pulse {
   animation: soft-pulse 2s infinite ease-in-out;
+}
+
+html {
+  color-scheme: light;
+}
+
+html,
+body {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark,
+html[data-theme="dark"] {
+  color-scheme: light;
+}
+
+html,
+body {
+  background-color: #ffffff;
+  color: #0f172a;
 }

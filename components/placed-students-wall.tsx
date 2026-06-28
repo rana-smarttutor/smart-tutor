@@ -35,15 +35,15 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
   const visibleStudents = filteredStudents.slice(0, displayCount);
 
   return (
-    <section className="py-24 bg-gradient-to-b from-blue-50 to-white dark:from-slate-950 dark:to-slate-900">
+    <section className="py-24 bg-gradient-to-b from-blue-50 to-white  ">
       <div className="container mx-auto px-4">
         <RevealOnScroll>
           <div className="text-center mb-16">
             <p className="section-label mb-4">Achievements</p>
-            <h2 className="text-4xl md:text-6xl font-bold mb-6 text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-4xl md:text-6xl font-bold mb-6 text-slate-900  tracking-tight">
               Our Wall of Success
             </h2>
-            <p className="text-lg text-slate-700 dark:text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed">
+            <p className="text-lg text-slate-700  max-w-2xl mx-auto font-medium leading-relaxed">
               Celebrating the exceptional performance of our students in
               competitive examinations. Their success is a testament to our
               focused mentoring and their dedication.
@@ -62,7 +62,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
               className={`px-8 py-3 rounded-full font-bold transition-all shadow-md hover:scale-105 ${
                 filter === cat.value
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
-                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-blue-400"
+                  : "bg-white  text-slate-700  border border-slate-200  hover:border-blue-400"
               }`}
             >
               {cat.label}
@@ -73,8 +73,8 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
           {visibleStudents.map((student, index) => (
             <RevealOnScroll key={student.id} delayMs={(index % 4) * 100}>
-              <div className="bg-white dark:bg-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl hover:translate-y-[-12px] transition-all duration-500 border border-slate-100 dark:border-slate-700 group relative">
-                <div className="aspect-[4/5] relative overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+              <div className="bg-white  rounded-[2.5rem] overflow-hidden shadow-xl hover:shadow-2xl hover:translate-y-[-12px] transition-all duration-500 border border-slate-100  group relative">
+                <div className="aspect-[4/5] relative overflow-hidden bg-gradient-to-b from-slate-50 to-slate-100  ">
                   {student.image ? (
                     <Image
                       src={student.image}
@@ -85,7 +85,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                       className="object-contain object-bottom transition-transform duration-300 sm:group-hover:scale-[1.02]"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300 dark:text-slate-700">
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 ">
                       <svg
                         className="w-12 h-12"
                         fill="currentColor"
@@ -164,11 +164,11 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
                     </div>
                   </div>
                 </div>
-                <div className="p-8 text-center border-t border-slate-50 dark:border-slate-800">
-                  <p className="text-[10px] text-blue-600 dark:text-blue-400 font-black mb-2 uppercase tracking-[0.25em]">
+                <div className="p-8 text-center border-t border-slate-50 ">
+                  <p className="text-[10px] text-blue-600  font-black mb-2 uppercase tracking-[0.25em]">
                     {student.examName}
                   </p>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white leading-tight truncate">
+                  <h3 className="text-sm font-black text-slate-900  leading-tight truncate">
                     {student.name}
                   </h3>
                   <div className="mt-4 flex justify-center gap-4">
@@ -203,7 +203,7 @@ export function PlacedStudentsWall({ students }: PlacedStudentsWallProps) {
           <div className="mt-16 text-center">
             <button
               onClick={() => setDisplayCount((prev) => prev + 8)}
-              className="inline-flex items-center justify-center px-8 py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white  border-2 border-slate-200  text-slate-900  font-bold rounded-xl hover:bg-slate-50  transition-all shadow-sm"
             >
               View More Success Stories
               <svg

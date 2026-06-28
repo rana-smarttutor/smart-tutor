@@ -917,16 +917,16 @@ export function DigitalLibraryClient({
   }
 
   return (
-    <main className="min-h-screen bg-transparent px-4 py-8 text-slate-950 dark:text-white sm:px-6">
+    <main className="min-h-screen bg-transparent px-4 py-8 text-slate-950  sm:px-6">
       <section className="mx-auto max-w-7xl">
         <section className="grid items-center gap-8 py-6 xl:grid-cols-[1.05fr_0.95fr]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-600 dark:border-sky-400/40 dark:bg-white/10 dark:text-sky-300">
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-600   ">
               <span className="h-3 w-3 rounded-full bg-sky-400" />
               Smart Tutors Library
             </span>
 
-            <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400 sm:text-sm">
+            <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-blue-600  sm:text-sm">
               India&apos;s Trusted Smart Learning Platform
             </p>
 
@@ -936,7 +936,7 @@ export function DigitalLibraryClient({
               Smarter Study Access.
             </h1>
 
-            <p className="mt-6 max-w-3xl text-base font-semibold leading-8 text-slate-600 dark:text-slate-300 sm:text-lg">
+            <p className="mt-6 max-w-3xl text-base font-semibold leading-8 text-slate-600  sm:text-lg">
               Explore PDF notes and learning materials with clear prices,
               attractive previews and secure download access.
             </p>
@@ -963,8 +963,8 @@ export function DigitalLibraryClient({
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-[#101a2e] sm:p-8">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 dark:text-blue-400">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl   sm:p-8">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 ">
               Library Highlights
             </p>
 
@@ -974,8 +974,8 @@ export function DigitalLibraryClient({
               clear pricing
             </h2>
 
-            <div className="mt-8 rounded-3xl border border-slate-100 bg-slate-50 p-5 dark:border-white/10 dark:bg-[#071124]">
-              <p className="text-sm font-black text-slate-600 dark:text-slate-300">
+            <div className="mt-8 rounded-3xl border border-slate-100 bg-slate-50 p-5  ">
+              <p className="text-sm font-black text-slate-600 ">
                 Total PDFs
               </p>
               <strong className="mt-2 block text-4xl font-black text-blue-600">
@@ -987,13 +987,13 @@ export function DigitalLibraryClient({
 
         {transferState.visible && (
           <div className="mt-4">
-            <div className="rounded-[1.75rem] border border-blue-200 bg-blue-50 p-4 shadow-sm dark:border-blue-500/20 dark:bg-blue-500/10">
-              <div className="flex items-center justify-between gap-4 text-sm font-black text-blue-700 dark:text-blue-200">
+            <div className="rounded-[1.75rem] border border-blue-200 bg-blue-50 p-4 shadow-sm  ">
+              <div className="flex items-center justify-between gap-4 text-sm font-black text-blue-700 ">
                 <span>{transferState.label || "Processing..."}</span>
                 <span>{transferState.progress}%</span>
               </div>
 
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-white/10">
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 ">
                 <div
                   className="h-full rounded-full bg-blue-600 transition-all"
                   style={{ width: `${transferState.progress}%` }}
@@ -1005,11 +1005,11 @@ export function DigitalLibraryClient({
 
         <section
           id="library-files"
-          className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#101a2e] sm:p-6"
+          className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-4 shadow-xl   sm:p-6"
         >
-          <div className="flex flex-col gap-5 border-b border-slate-100 pb-6 dark:border-white/10 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-5 border-b border-slate-100 pb-6  md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">
+              <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 ">
                 Library Collection
               </p>
               <h2 className="mt-2 text-2xl font-black sm:text-3xl">
@@ -1021,7 +1021,7 @@ export function DigitalLibraryClient({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search PDFs..."
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white md:max-w-sm"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500    md:max-w-sm"
             />
           </div>
 
@@ -1051,7 +1051,7 @@ export function DigitalLibraryClient({
                     className={`shrink-0 rounded-full border px-5 py-3 text-xs font-black uppercase tracking-widest transition ${
                       isActive
                         ? "border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-600   "
                     }`}
                   >
                     {category.label}
@@ -1062,11 +1062,11 @@ export function DigitalLibraryClient({
           </div>
 
           {isLoading ? (
-            <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300">
+            <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500   ">
               Loading library...
             </p>
           ) : filteredBooks.length === 0 ? (
-            <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500 dark:border-white/10 dark:bg-[#111c31] dark:text-slate-300">
+            <p className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center font-bold text-slate-500   ">
               No PDFs found in this library section.
             </p>
           ) : (
@@ -1078,7 +1078,7 @@ export function DigitalLibraryClient({
                 return (
                   <article
                     key={book.pathname || book.id || book._id || book.title}
-                    className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl dark:border-white/10 dark:bg-[#101a2e]"
+                    className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-4 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl  "
                   >
                     <div className="h-[180px] overflow-hidden rounded-[18px] bg-slate-100">
                       <BookThumbnail book={book} />
@@ -1102,7 +1102,7 @@ export function DigitalLibraryClient({
                       {book.title}
                     </h3>
 
-                    <p className="mt-2 line-clamp-2 min-h-[48px] text-sm font-medium leading-6 text-slate-600 dark:text-slate-300">
+                    <p className="mt-2 line-clamp-2 min-h-[48px] text-sm font-medium leading-6 text-slate-600 ">
                       {book.description ||
                         "Access this PDF study material for focused learning and revision."}
                     </p>
@@ -1119,7 +1119,7 @@ export function DigitalLibraryClient({
                       <button
                         type="button"
                         onClick={() => previewBook(book)}
-                        className="rounded-[14px] border border-slate-200 px-2 py-3 text-xs font-extrabold transition hover:bg-slate-50 dark:border-white/15 dark:hover:bg-white/5 sm:text-sm"
+                        className="rounded-[14px] border border-slate-200 px-2 py-3 text-xs font-extrabold transition hover:bg-slate-50   sm:text-sm"
                       >
                         Preview 👁
                       </button>
@@ -1130,7 +1130,7 @@ export function DigitalLibraryClient({
                         <button
                           type="button"
                           onClick={() => openEdit(book)}
-                          className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-500/10 sm:text-sm"
+                          className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50   sm:text-sm"
                         >
                           Edit
                         </button>
@@ -1138,7 +1138,7 @@ export function DigitalLibraryClient({
                         <button
                           type="button"
                           onClick={() => requestDeleteBook(book)}
-                          className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-500/10 sm:text-sm"
+                          className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50   sm:text-sm"
                         >
                           Delete
                         </button>
@@ -1165,19 +1165,19 @@ export function DigitalLibraryClient({
             role="dialog"
             aria-modal="true"
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-7"
+            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl   sm:p-7"
           >
             <p className="text-xs font-black uppercase tracking-[0.28em] text-emerald-500">
               New Library Section
             </p>
 
-            <h2 className="mt-2 text-2xl font-black text-slate-950 dark:text-white">
+            <h2 className="mt-2 text-2xl font-black text-slate-950 ">
               Create Section
             </h2>
 
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Section Name
                 </span>
 
@@ -1185,12 +1185,12 @@ export function DigitalLibraryClient({
                   value={newSectionName}
                   onChange={(event) => setNewSectionName(event.target.value)}
                   placeholder="Example: Olympiad Library"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-emerald-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-emerald-500   "
                 />
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Short Description
                 </span>
 
@@ -1201,12 +1201,12 @@ export function DigitalLibraryClient({
                   }
                   placeholder="Write what this section is for"
                   rows={3}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-emerald-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-emerald-500   "
                 />
               </label>
 
               {sectionError && (
-                <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+                <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600   ">
                   {sectionError}
                 </div>
               )}
@@ -1217,7 +1217,7 @@ export function DigitalLibraryClient({
                 type="button"
                 onClick={() => setIsSectionModalOpen(false)}
                 disabled={isCreatingSection}
-                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black dark:border-white/15"
+                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black "
               >
                 Cancel
               </button>
@@ -1246,32 +1246,32 @@ export function DigitalLibraryClient({
             aria-labelledby="delete-material-title"
             aria-describedby="delete-material-description"
             onMouseDown={(event) => event.stopPropagation()}
-            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-8"
+            className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-2xl   sm:p-8"
           >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl dark:bg-red-500/15">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl ">
               🗑️
             </div>
 
             <h2
               id="delete-material-title"
-              className="mt-5 text-2xl font-black text-slate-950 dark:text-white"
+              className="mt-5 text-2xl font-black text-slate-950 "
             >
               Delete PDF?
             </h2>
 
             <p
               id="delete-material-description"
-              className="mt-3 text-sm font-medium leading-6 text-slate-600 dark:text-slate-300"
+              className="mt-3 text-sm font-medium leading-6 text-slate-600 "
             >
               Are you sure you want to delete{" "}
-              <span className="font-black text-slate-950 dark:text-white">
+              <span className="font-black text-slate-950 ">
                 “{bookToDelete.title}”
               </span>
               ? This action cannot be undone.
             </p>
 
             {deleteError && (
-              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600 dark:border-red-400/30 dark:bg-red-500/10 dark:text-red-200">
+              <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600   ">
                 {deleteError}
               </div>
             )}
@@ -1281,7 +1281,7 @@ export function DigitalLibraryClient({
                 type="button"
                 onClick={cancelDeleteBook}
                 disabled={isDeleting}
-                className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+                className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60   "
               >
                 Cancel
               </button>
@@ -1307,11 +1307,11 @@ export function DigitalLibraryClient({
           <form
             onSubmit={(event) => void submitMaterial(event)}
             onMouseDown={(event) => event.stopPropagation()}
-            className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-[#101a2e] sm:p-7"
+            className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl   sm:p-7"
           >
             <div className="flex items-start justify-between gap-5">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-600 dark:text-blue-400">
+                <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-600 ">
                   {editingBook ? "Edit Center" : "Upload Center"}
                 </p>
 
@@ -1324,7 +1324,7 @@ export function DigitalLibraryClient({
                 type="button"
                 onClick={closeModal}
                 disabled={isSaving}
-                className="rounded-full border border-slate-200 px-3 py-2 text-sm font-black dark:border-white/15"
+                className="rounded-full border border-slate-200 px-3 py-2 text-sm font-black "
               >
                 ✕
               </button>
@@ -1332,7 +1332,7 @@ export function DigitalLibraryClient({
 
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Name of the book
                 </span>
 
@@ -1341,12 +1341,12 @@ export function DigitalLibraryClient({
                   value={bookName}
                   onChange={(event) => setBookName(event.target.value)}
                   placeholder="Enter book name"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500   "
                 />
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Description
                 </span>
 
@@ -1355,12 +1355,12 @@ export function DigitalLibraryClient({
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder="Enter description shown on the PDF card"
                   rows={3}
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-blue-500   "
                 />
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Library Section
                 </span>
 
@@ -1368,7 +1368,7 @@ export function DigitalLibraryClient({
                   value={librarySectionId}
                   onChange={(event) => setLibrarySectionId(event.target.value)}
                   required
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500   "
                 >
                   {libraryCategories
                     .filter((category) => category.id !== "all")
@@ -1381,7 +1381,7 @@ export function DigitalLibraryClient({
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Book upload (PDF only)
                 </span>
 
@@ -1392,7 +1392,7 @@ export function DigitalLibraryClient({
                   onChange={(event) =>
                     setPdfFile(event.target.files?.[0] || null)
                   }
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white   "
                 />
 
                 {editingBook && (
@@ -1403,7 +1403,7 @@ export function DigitalLibraryClient({
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Thumbnail upload
                 </span>
 
@@ -1414,7 +1414,7 @@ export function DigitalLibraryClient({
                   onChange={(event) =>
                     setThumbnailFile(event.target.files?.[0] || null)
                   }
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white   "
                 />
 
                 {editingBook && (
@@ -1425,7 +1425,7 @@ export function DigitalLibraryClient({
               </label>
 
               <label className="grid gap-2">
-                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                <span className="text-sm font-bold text-slate-600 ">
                   Price in INR
                 </span>
 
@@ -1437,7 +1437,7 @@ export function DigitalLibraryClient({
                   value={price}
                   onChange={(event) => setPrice(event.target.value)}
                   placeholder="Enter 0 for Free"
-                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500 dark:border-white/10 dark:bg-[#111c31] dark:text-white"
+                  className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500   "
                 />
 
                 <span className="text-xs font-bold text-slate-500">
@@ -1446,14 +1446,14 @@ export function DigitalLibraryClient({
               </label>
 
               {isSaving && transferState.visible && (
-                <div className="rounded-2xl bg-blue-50 p-4 dark:bg-blue-500/10">
-                  <div className="flex items-center justify-between gap-4 text-sm font-bold text-blue-600 dark:text-blue-300">
+                <div className="rounded-2xl bg-blue-50 p-4 ">
+                  <div className="flex items-center justify-between gap-4 text-sm font-bold text-blue-600 ">
                     <span>{transferState.label || uploadStatus || "Saving material..."}</span>
                     <span>{transferState.progress}%</span>
                   </div>
 
                   {transferState.progress > 0 && (
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 dark:bg-white/10">
+                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100 ">
                       <div
                         className="h-full rounded-full bg-blue-600 transition-all"
                         style={{ width: `${transferState.progress}%` }}
@@ -1469,7 +1469,7 @@ export function DigitalLibraryClient({
                 type="button"
                 onClick={closeModal}
                 disabled={isSaving}
-                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black dark:border-white/15"
+                className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black "
               >
                 Cancel
               </button>

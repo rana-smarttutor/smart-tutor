@@ -47,15 +47,15 @@ export function PWAInstallButton() {
 
   return (
     <div className="fixed left-0 right-0 top-16 z-[99999] mx-auto flex max-w-md animate-in fade-in slide-in-from-top-4 duration-500 px-4">
-      <div className="flex w-full items-center gap-3 rounded-2xl border border-blue-200 bg-white px-5 py-4 shadow-2xl shadow-blue-500/10 dark:border-blue-800 dark:bg-slate-900">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+      <div className="flex w-full items-center gap-3 rounded-2xl border border-blue-200 bg-white px-5 py-4 shadow-2xl shadow-blue-500/10  ">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600  ">
           <Download className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-slate-900 dark:text-white">
+          <p className="text-sm font-bold text-slate-900 ">
             Install Smart Tutors
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-500 ">
             Add to home screen for the best experience.
           </p>
         </div>
@@ -67,7 +67,7 @@ export function PWAInstallButton() {
         </button>
         <button
           onClick={dismiss}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600  "
         >
           <X className="h-4 w-4" />
         </button>

@@ -38,7 +38,7 @@ export default async function ContactPage() {
             {data.contactMethods.map((item) => (
               <div
                 key={item.label}
-                className="relative overflow-hidden group rounded-3xl p-6 transition-transform duration-200 sm:hover:-translate-y-1 hover:shadow-xl border border-[var(--color-border)] shadow-sm bg-white dark:bg-slate-900"
+                className="relative overflow-hidden group rounded-3xl p-6 transition-transform duration-200 sm:hover:-translate-y-1 hover:shadow-xl border border-[var(--color-border)] shadow-sm bg-white "
               >
                 {/* Decorative background glow based on item color */}
                 <div
@@ -249,10 +249,10 @@ export default async function ContactPage() {
             address={data.profile.address}
           />
 
-          <div className="rounded-3xl p-6 border-t-4 border-blue-600 shadow-lg border-x border-b border-[var(--color-border)] bg-white dark:bg-slate-900">
+          <div className="rounded-3xl p-6 border-t-4 border-blue-600 shadow-lg border-x border-b border-[var(--color-border)] bg-white ">
             <p className="section-label mb-4 text-blue-600">Leadership Desk</p>
             <div className="flex items-center gap-4 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 shrink-0">
+              <div className="h-10 w-10 rounded-xl bg-blue-50  flex items-center justify-center text-blue-600 shrink-0">
                 <svg
                   className="w-5 h-5"
                   fill="none"
@@ -276,12 +276,12 @@ export default async function ContactPage() {
                 </p>
               </div>
             </div>
-            <p className="text-xs leading-6 text-[var(--color-muted)] font-bold bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-100 dark:border-blue-800">
+            <p className="text-xs leading-6 text-[var(--color-muted)] font-bold bg-blue-50  p-3 rounded-xl border border-blue-100 ">
               {data.profile.affiliatedInstitutes.join(" | ")}
             </p>
           </div>
 
-          <div className="rounded-3xl p-6 shadow-lg border border-[var(--color-border)] bg-white dark:bg-slate-900">
+          <div className="rounded-3xl p-6 shadow-lg border border-[var(--color-border)] bg-white ">
             <p className="section-label mb-4">Social Network</p>
             <div className="grid grid-cols-2 gap-3">
               {data.socialLinks.map((item) => (

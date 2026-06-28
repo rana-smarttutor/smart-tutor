@@ -273,6 +273,7 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
   return {
     id: document.id,
     category: document.category ?? template.category,
+    stream: document.stream ?? template.stream ?? "General",
     sections: document.sections?.length
       ? (() => {
           const valid = document.sections.filter((s) =>
@@ -620,6 +621,7 @@ export async function createCourse(input: {
   const course: CourseItem & { createdAt: string; createdBy: string } = {
     id: randomUUID(),
     category: template.category,
+    stream: template.stream ?? "General",
     sections: input.sections?.length ? input.sections : template.sections,
     statusLabel: template.statusLabel,
     standardKey: input.standardKey,
@@ -692,6 +694,7 @@ export async function updateCourse(input: {
       $set: {
         standardKey: input.standardKey,
         category: template.category,
+        stream: template.stream ?? "General",
         sections: input.sections?.length ? input.sections : template.sections,
         statusLabel: template.statusLabel,
         tagline: input.tagline || template.tagline,

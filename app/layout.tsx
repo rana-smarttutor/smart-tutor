@@ -206,6 +206,7 @@ export default function RootLayout({
       data-theme="light"
       data-scroll-behavior="smooth"
       className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}
+      style={{ colorScheme: "light" }}
     >
       <head>
         <meta name="theme-color" content="#2563eb" />
