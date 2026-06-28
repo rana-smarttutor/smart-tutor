@@ -335,13 +335,13 @@ export function AttendanceManager({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-black text-green-600 dark:text-green-100">
+                      <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-black text-green-600 ">
                         Present {summary.present}
                       </span>
-                      <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-black text-red-600 dark:text-red-100">
+                      <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-black text-red-600 ">
                         Absent {summary.absent}
                       </span>
-                      <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-700 dark:text-yellow-100">
+                      <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-700 ">
                         Late {summary.late}
                       </span>
 
@@ -360,7 +360,7 @@ export function AttendanceManager({
                           type="button"
                           onClick={() => setSheetToDelete(sheet)}
                           disabled={deletingId === sheet.id}
-                          className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60 dark:text-red-100"
+                          className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60 "
                         >
                           {deletingId === sheet.id ? "Deleting..." : "Delete"}
                         </button>

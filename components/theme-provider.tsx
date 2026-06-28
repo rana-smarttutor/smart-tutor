@@ -3,8 +3,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
-  useState,
+  useLayoutEffect,
   type ReactNode,
 } from "react";
 
@@ -15,42 +14,30 @@ type ThemeContextValue = {
   toggleTheme: () => void;
 };
 
-const ThemeContext = createContext<ThemeContextValue | null>(null);
-const fallbackThemeContext: ThemeContextValue = {
+const ThemeContext = createContext<ThemeContextValue>({
   theme: "light",
-  toggleTheme: () => undefined,
-};
+  toggleTheme: () => {},
+});
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  useLayoutEffect(() => {
+    const root = document.documentElement;
 
-  useEffect(() => {
-    const documentTheme =
-      document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-    const storedTheme = window.localStorage.getItem("smart-tutor-theme");
+    root.classList.remove("dark");
+    root.classList.add("light");
+    root.dataset.theme = "light";
+    root.style.colorScheme = "light";
 
-    if (storedTheme === "light" || storedTheme === "dark") {
-      setTheme(storedTheme);
-      return;
-    }
-
-    setTheme(documentTheme);
+    window.localStorage.removeItem("theme");
+    window.localStorage.removeItem("smart-tutor-theme");
+    window.localStorage.removeItem("color-theme");
   }, []);
-
-  useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
 
   return (
     <ThemeContext.Provider
       value={{
-        theme,
-        toggleTheme: () =>
-          setTheme((current) => {
-            const nextTheme = current === "light" ? "dark" : "light";
-            applyTheme(nextTheme);
-            return nextTheme;
-          }),
+        theme: "light",
+        toggleTheme: () => {},
       }}
     >
       {children}
@@ -59,24 +46,5 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
-
-  if (!context) {
-    return fallbackThemeContext;
-  }
-
-  return context;
-}
-
-function applyTheme(theme: Theme) {
-  document.documentElement.dataset.theme = theme;
-  document.documentElement.style.colorScheme = theme === "light" ? "only light" : "dark";
-  
-  if (theme === "dark") {
-    document.documentElement.classList.add("dark");
-  } else {
-    document.documentElement.classList.remove("dark");
-  }
-  
-  window.localStorage.setItem("smart-tutor-theme", theme);
+  return useContext(ThemeContext);
 }

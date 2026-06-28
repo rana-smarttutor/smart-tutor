@@ -122,7 +122,7 @@ export function MockLoginForm({ credentials, compact = false, onSuccess }: MockL
 
       <form className="space-y-5" onSubmit={handleSubmit}>
         {error ? (
-          <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:text-rose-200">
+          <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 ">
             {error}
           </p>
         ) : null}

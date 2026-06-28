@@ -8,16 +8,16 @@ export function LazyCampusMap({
   address,
 }: LazyCampusMapProps) {
   return (
-    <div className="rounded-3xl border border-[var(--color-border)] bg-white p-5 shadow-lg dark:bg-slate-900">
+    <div className="rounded-3xl border border-[var(--color-border)] bg-white p-5 shadow-lg ">
       <div className="mb-4 flex items-center justify-between">
         <p className="section-label m-0">Campus Location</p>
 
-        <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+        <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-700  ">
           Visit Us
         </span>
       </div>
 
-      <div className="flex h-[300px] flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-slate-100 px-8 text-center shadow-inner dark:from-slate-900 dark:to-slate-950 sm:h-[360px]">
+      <div className="flex h-[300px] flex-col items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-slate-100 px-8 text-center shadow-inner   sm:h-[360px]">
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-600/20">
           <svg
             className="h-8 w-8"

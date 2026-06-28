@@ -108,7 +108,7 @@ export default async function Home() {
             <h1 className="mx-auto max-w-[680px] font-serif text-[2.35rem] font-black leading-[1.05] tracking-[-0.035em] text-[var(--color-heading)] sm:text-[3.6rem] lg:text-[4.15rem] xl:mx-0 xl:max-w-[720px]">
               Get Smart Results
               <br />
-              <span className="relative inline-block whitespace-nowrap text-blue-600 dark:text-blue-400">
+              <span className="relative inline-block whitespace-nowrap text-blue-600 ">
                 With Smart Tutors.
                 <svg
                   className="absolute -bottom-2 left-[72%] h-3.5 w-[34%] -translate-x-1/2 sm:-bottom-3 sm:h-4"

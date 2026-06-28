@@ -19,12 +19,12 @@ function formatCurrency(value: number) {
 
 function StatusBadge({ status }: { status: FeeInvoice["status"] }) {
   const styles: Record<string, string> = {
-    paid: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border-emerald-400/30",
+    paid: "bg-emerald-500/15 text-emerald-600  border-emerald-400/30",
     unpaid:
-      "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-400/30",
+      "bg-amber-500/15 text-amber-600  border-amber-400/30",
     partial:
-      "bg-blue-500/15 text-blue-600 dark:text-blue-300 border-blue-400/30",
-    overdue: "bg-red-500/15 text-red-600 dark:text-red-300 border-red-400/30",
+      "bg-blue-500/15 text-blue-600  border-blue-400/30",
+    overdue: "bg-red-500/15 text-red-600  border-red-400/30",
   };
 
   return (
@@ -209,8 +209,8 @@ export function InvoiceManager({
         <div
           className={`rounded-2xl border px-5 py-4 text-sm font-bold shadow-lg ${
             statusMessage.type === "success"
-              ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-              : "border-red-400/30 bg-red-500/10 text-red-700 dark:text-red-300"
+              ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-700 "
+              : "border-red-400/30 bg-red-500/10 text-red-700 "
           }`}
         >
           {statusMessage.text}
@@ -256,7 +256,7 @@ export function InvoiceManager({
               <p className="text-xs font-bold uppercase text-[var(--color-muted)]">
                 Paid
               </p>
-              <p className="mt-1 text-xl font-black text-emerald-600 dark:text-emerald-400">
+              <p className="mt-1 text-xl font-black text-emerald-600 ">
                 {invoices.filter((inv) => inv.status === "paid").length}
               </p>
             </div>
@@ -371,7 +371,7 @@ export function InvoiceManager({
                     <td className="p-4 font-semibold">
                       {formatCurrency(invoice.amount)}
                     </td>
-                    <td className="p-4 text-emerald-600 dark:text-emerald-400">
+                    <td className="p-4 text-emerald-600 ">
                       {formatCurrency(invoice.paidAmount ?? 0)}
                     </td>
                     <td className="p-4 font-bold">
@@ -403,7 +403,7 @@ export function InvoiceManager({
                             type="button"
                             onClick={() => setInvoiceToDelete(invoice)}
                             disabled={deletingId === invoice.id}
-                            className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2.5 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60 dark:text-red-100"
+                            className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2.5 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60 "
                           >
                             {deletingId === invoice.id ? "..." : "Delete"}
                           </button>

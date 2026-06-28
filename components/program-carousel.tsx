@@ -25,12 +25,18 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
   );
 
   const scroll = (direction: "left" | "right") => {
-    if (scrollRef.current) {
-      const { scrollLeft, clientWidth } = scrollRef.current;
-      const scrollTo =
-        direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
-      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
-    }
+    if (!scrollRef.current) return;
+
+    const { scrollLeft, clientWidth } = scrollRef.current;
+    const scrollTo =
+      direction === "left"
+        ? scrollLeft - clientWidth
+        : scrollLeft + clientWidth;
+
+    scrollRef.current.scrollTo({
+      left: scrollTo,
+      behavior: "smooth",
+    });
   };
 
   const getBulletColor = (index: number) => {
@@ -42,6 +48,7 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
       "bg-rose-500",
       "bg-indigo-500",
     ];
+
     return colors[index % colors.length];
   };
 
@@ -54,6 +61,20 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
       "hover:border-rose-500",
       "hover:border-indigo-500",
     ];
+
+    return colors[index % colors.length];
+  };
+
+  const getButtonColor = (index: number) => {
+    const colors = [
+      "bg-blue-600 hover:bg-blue-700",
+      "bg-purple-600 hover:bg-purple-700",
+      "bg-emerald-600 hover:bg-emerald-700",
+      "bg-orange-600 hover:bg-orange-700",
+      "bg-rose-600 hover:bg-rose-700",
+      "bg-indigo-600 hover:bg-indigo-700",
+    ];
+
     return colors[index % colors.length];
   };
 
@@ -62,22 +83,42 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
       <button
         type="button"
         onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-100 bg-white/90 p-3 opacity-0 shadow-lg backdrop-blur transition-opacity hover:scale-110 active:scale-95 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-800/90 lg:block"
+        className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-100 bg-white/90 p-3 opacity-0 shadow-lg backdrop-blur transition-opacity hover:scale-110 active:scale-95 group-hover:opacity-100 lg:block"
         aria-label="Scroll left"
       >
-        <svg className="h-4 w-4 text-slate-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" />
+        <svg
+          className="h-4 w-4 text-slate-900"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="3"
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
       </button>
 
       <button
         type="button"
         onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-100 bg-white/90 p-3 opacity-0 shadow-lg backdrop-blur transition-opacity hover:scale-110 active:scale-95 group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-800/90 lg:block"
+        className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-100 bg-white/90 p-3 opacity-0 shadow-lg backdrop-blur transition-opacity hover:scale-110 active:scale-95 group-hover:opacity-100 lg:block"
         aria-label="Scroll right"
       >
-        <svg className="h-4 w-4 text-slate-900 dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+        <svg
+          className="h-4 w-4 text-slate-900"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="3"
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </button>
 
@@ -89,6 +130,7 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
         {visiblePrograms.map((program, index) => {
           const dotColor = getBulletColor(index);
           const borderHover = getBorderColor(index);
+          const buttonColor = getButtonColor(index);
 
           return (
             <div
@@ -96,25 +138,28 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
               className="w-[220px] flex-shrink-0 snap-start sm:w-[240px]"
             >
               <article
-                className={`surface group/card relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${borderHover} dark:bg-slate-950 dark:border-slate-800`}
+                className={`surface group/card relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${borderHover}`}
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
                     <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
                     {program.duration}
                   </span>
-                  <span className="text-[9px] font-bold text-slate-400">{String(index + 1).padStart(2, "0")}</span>
+
+                  <span className="text-[9px] font-bold text-slate-400">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
                 </div>
 
-                <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+                <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">
                   {program.category}
                 </p>
 
-                <h3 className="mb-2 text-sm font-bold leading-snug text-slate-900 dark:text-white line-clamp-2">
+                <h3 className="mb-2 line-clamp-2 text-sm font-bold leading-snug text-slate-900">
                   {program.title}
                 </h3>
 
-                <p className="mb-3 line-clamp-2 flex-grow text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
+                <p className="mb-3 line-clamp-2 flex-grow text-[11px] font-medium leading-relaxed text-slate-500">
                   {program.description}
                 </p>
 
@@ -122,7 +167,7 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
                   {program.focus.slice(0, 2).map((focus) => (
                     <span
                       key={focus}
-                      className="rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      className="rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-600"
                     >
                       {focus}
                     </span>
@@ -131,11 +176,21 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
 
                 <Link
                   href="/courses"
-                  className={`mt-auto inline-flex items-center justify-center gap-1 rounded-xl px-4 py-2.5 ${dotColor.replace("bg-", "bg-").replace("500", "600")} text-[9px] font-black uppercase tracking-wider text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95`}
+                  className={`mt-auto inline-flex items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${buttonColor}`}
                 >
                   View Program
-                  <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-3 w-3"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </Link>
               </article>

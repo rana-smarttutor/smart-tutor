@@ -30,33 +30,23 @@ interface SpotlightSectionProps {
 
 type StreamFilter = "Science" | "Commerce" | "Arts" | "All";
 
-function normaliseCourseText(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
-}
-
-function getCourseSearchText(course: CourseItem) {
-  return [
-    course.stream,
-    course.title,
-    course.summary,
-    course.description,
-    course.audienceLabel,
-    ...(course.sections ?? []),
-    ...(course.subjectsCovered ?? []),
-    ...(course.branchesIncluded ?? []),
-    ...(course.courseNamesIncluded ?? []),
-  ]
-    .filter((value): value is string => typeof value === "string")
-    .join(" ");
+function normaliseValue(value?: string) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 function matchesActiveTab(course: CourseItem, activeTab: string) {
-  const tabKey = normaliseCourseText(activeTab);
+  const activeTabKey = normaliseValue(activeTab);
 
   return (course.sections ?? []).some((section) => {
-    const sectionKey = normaliseCourseText(section);
+    const sectionKey = normaliseValue(section);
 
-    return sectionKey === tabKey;
+    return (
+      sectionKey === activeTabKey ||
+      sectionKey.startsWith(activeTabKey)
+    );
   });
 }
 
@@ -65,9 +55,31 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
     return true;
   }
 
-  const courseText = normaliseCourseText(getCourseSearchText(course));
+  const selectedStreamKey = normaliseValue(stream);
+  const courseStreamKey = normaliseValue(course.stream);
 
-  const streamKeywords: Record<Exclude<StreamFilter, "All">, string[]> = {
+  // First priority: exact stream field matching.
+  if (courseStreamKey === selectedStreamKey) {
+    return true;
+  }
+
+  // Backup matching for old / differently named course entries.
+  const searchableText = normaliseValue(
+    [
+      course.stream,
+      course.title,
+      course.summary,
+      course.description,
+      course.audienceLabel,
+      ...(course.subjectsCovered ?? []),
+      ...(course.branchesIncluded ?? []),
+      ...(course.courseNamesIncluded ?? []),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+
+  const keywords: Record<Exclude<StreamFilter, "All">, string[]> = {
     Science: [
       "science",
       "pcm",
@@ -88,6 +100,8 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
       "businessstudies",
       "cafoundation",
       "csfoundation",
+      "cseet",
+      "businessmath",
     ],
     Arts: [
       "arts",
@@ -103,8 +117,8 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
     ],
   };
 
-  return streamKeywords[stream].some((keyword) =>
-    courseText.includes(keyword),
+  return keywords[stream].some((keyword) =>
+    searchableText.includes(keyword),
   );
 }
 
@@ -136,9 +150,20 @@ export default function SpotlightSection({
   // Active stream filter state (specifically for Class 11-12)
   const [activeStream, setActiveStream] = useState<"Science" | "Commerce" | "Arts" | "All">("All");
 
+console.log(
+  "Commerce courses received:",
+  allCourses.filter(
+    (course) =>
+      course.sections?.includes("Class 11-12") &&
+      course.stream === "Commerce",
+  ),
+);
+
 useEffect(() => {
   const filteredCourses = allCourses.filter((course) => {
-    if (!matchesActiveTab(course, activeTab)) {
+    const belongsToSelectedTab = matchesActiveTab(course, activeTab);
+
+    if (!belongsToSelectedTab) {
       return false;
     }
 
@@ -152,7 +177,6 @@ useEffect(() => {
   setTabCourses(filteredCourses);
   setSpotlightIndex(0);
 }, [activeTab, activeStream, allCourses]);
-
   // Handle changing stream
 const handleStreamClick = (
   stream: Exclude<StreamFilter, "All">,
@@ -565,7 +589,7 @@ const handleStreamClick = (
       {tabCourses.length > 1 && (
         <div className="space-y-4 pt-4">
           <h4 className="font-display font-semibold text-xs text-slate-900 tracking-tight uppercase">
-            Other Programs in {activeTab}
+            Additional Programs in {activeTab}
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {tabCourses.map((course, idx) => {
