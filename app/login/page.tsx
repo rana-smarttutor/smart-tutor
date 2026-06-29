@@ -84,9 +84,9 @@ export default async function LoginPage() {
                       <Image
                         src="/android app.png"
                         alt="Download Smart Tutors Android app QR code"
-                        width={64}
-                        height={64}
-                        sizes="64px"
+                        width={240}
+                        height={240}
+                        sizes="128px"
                         className="h-16 w-16 rounded-lg"
                       />
 

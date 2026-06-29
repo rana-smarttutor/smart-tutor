@@ -41,7 +41,11 @@ type FormData = {
   marks10: string;
   marks12: string;
   graduationMarks: string;
-  address: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  pincode: string;
   qualification: string;
   experience: string;
   subjects: string;
@@ -71,7 +75,11 @@ function getInitialFormData(): FormData {
     marks12: "",
     graduationMarks: "",
 
-    address: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    pincode: "",
     qualification: "",
     experience: "",
     subjects: "",
@@ -243,7 +251,11 @@ export function RegistrationForm() {
         password: form.password,
         mobile: form.mobile,
         dob: form.dob,
-        address: form.address,
+        addressLine1: form.addressLine1,
+        addressLine2: form.addressLine2,
+        city: form.city,
+        state: form.state,
+        pincode: form.pincode,
         profilePhoto: form.profilePhotoUrl,
       };
 
@@ -702,13 +714,40 @@ export function RegistrationForm() {
           <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
             Address
           </h3>
-          <InputField
-            label="Address"
-            value={form.address}
-            onChange={(v) => updateField("address", v)}
-            placeholder="Enter your full address"
-            isTextarea
-          />
+          <div className="space-y-4">
+            <InputField
+              label="Address Line 1"
+              value={form.addressLine1}
+              onChange={(v) => updateField("addressLine1", v)}
+              placeholder="House / Flat / Door No., Street / Locality"
+            />
+            <InputField
+              label="Address Line 2"
+              value={form.addressLine2}
+              onChange={(v) => updateField("addressLine2", v)}
+              placeholder="Nearby landmark, Area (optional)"
+            />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <InputField
+                label="City"
+                value={form.city}
+                onChange={(v) => updateField("city", v)}
+                placeholder="e.g. Vashi"
+              />
+              <InputField
+                label="State"
+                value={form.state}
+                onChange={(v) => updateField("state", v)}
+                placeholder="e.g. Maharashtra"
+              />
+              <InputField
+                label="Pincode"
+                value={form.pincode}
+                onChange={(v) => updateField("pincode", v)}
+                placeholder="e.g. 400703"
+              />
+            </div>
+          </div>
         </div>
 
         {error && (

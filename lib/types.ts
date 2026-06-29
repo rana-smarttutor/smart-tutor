@@ -422,7 +422,11 @@ export type UserProfile = {
   verified?: boolean;
   dob?: string;
   profilePhoto?: string;
-  address?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
 
   // Student specific
   parentName?: string;

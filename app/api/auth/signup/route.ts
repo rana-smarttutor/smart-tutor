@@ -37,7 +37,11 @@ export async function POST(request: Request) {
       marks10?: string;
       marks12?: string;
       graduationMarks?: string;
-      address?: string;
+      addressLine1?: string;
+      addressLine2?: string;
+      city?: string;
+      state?: string;
+      pincode?: string;
       profilePhoto?: string;
 
       confirmPassword?: string;
@@ -53,7 +57,11 @@ export async function POST(request: Request) {
     const password = sanitizePasswordInput(body.password);
     const mobile = sanitizeTextInput(body.mobile, 15);
     const dob = sanitizeTextInput(body.dob, 20);
-    const address = sanitizeTextInput(body.address, 300);
+    const addressLine1 = sanitizeTextInput(body.addressLine1, 200);
+    const addressLine2 = sanitizeTextInput(body.addressLine2, 200);
+    const city = sanitizeTextInput(body.city, 100);
+    const state = sanitizeTextInput(body.state, 100);
+    const pincode = sanitizeTextInput(body.pincode, 20);
     const parentName = sanitizeTextInput(body.parentName, 100);
     const parentEmail = sanitizeEmailInput(body.parentEmail);
     const parentMobile = sanitizeTextInput(body.parentMobile, 15);
@@ -126,7 +134,11 @@ export async function POST(request: Request) {
     const profile: Record<string, unknown> = {};
 
     if (dob) profile.dob = dob;
-    if (address) profile.address = address;
+    if (addressLine1) profile.addressLine1 = addressLine1;
+    if (addressLine2) profile.addressLine2 = addressLine2;
+    if (city) profile.city = city;
+    if (state) profile.state = state;
+    if (pincode) profile.pincode = pincode;
     profile.profilePhoto = body.profilePhoto;
 
     if (role === "student") {

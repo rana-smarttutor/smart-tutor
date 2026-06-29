@@ -13,6 +13,7 @@ import HomeToppers from "@/components/home-toppers";
 import { courseLibrary } from "@/lib/course-library";
 import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
 import { ProgramCarousel } from "@/components/program-carousel";
+import { FeaturesSection } from "@/components/features-section";
 
 export const metadata: Metadata = {
   description:
@@ -274,6 +275,8 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
       </section>
+
+      <FeaturesSection />
 
       <section className="pt-14 sm:pt-20 pb-0">
         <div className="container mx-auto px-4">

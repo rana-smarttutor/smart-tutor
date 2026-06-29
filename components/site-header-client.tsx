@@ -104,9 +104,9 @@ const canSeeStudentPerformance =
         </div>
 
         <div className="px-2 pt-2 sm:px-3 sm:pt-3">
-          <div className="section-shell">
-            <div className="surface shell-bar rounded-[1.75rem] px-3 pt-3 sm:px-5 sm:pt-3 lg:rounded-full lg:px-5 lg:pt-3">
-              <div className="flex min-h-[3.5rem] items-center justify-between gap-3">
+          <div className="section-shell ">
+            <div className="surface shell-bar rounded-[1.75rem]  lg:rounded-full ">
+              <div className="flex min-h-[3.5rem] h-full px-3 items-center justify-between gap-3">
                 <Link
                   href="/"
                   className="brand-mark relative flex items-center"
