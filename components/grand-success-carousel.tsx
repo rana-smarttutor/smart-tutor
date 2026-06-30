@@ -109,6 +109,7 @@ export function GrandSuccessCarousel() {
                 alt={activeCategory.label}
                 fill
                 priority
+                unoptimized
                 sizes="(max-width: 768px) 100vw, 1100px"
                 className="object-contain object-center transition-opacity duration-500 ease-in-out"
               />
