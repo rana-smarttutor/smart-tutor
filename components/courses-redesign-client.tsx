@@ -116,12 +116,7 @@ export default function CoursesRedesignClient({
           <ToppersSection activeTab={activeTab} />
         </section>
 
-        {/* 6. Why Choose Us (Institutional Ledger Block) */}
-        <section>
-          <WhyChooseSmartTutors />
-        </section>
-
-        {/* 7. Bottom CTA Block */}
+        {/* 6. Bottom CTA Block */}
         <section className="bg-slate-900 text-white rounded-xl p-8 sm:p-10 text-center space-y-5 relative overflow-hidden border border-slate-800 shadow-sm">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
           <div className="max-w-2xl mx-auto space-y-4 relative z-10">

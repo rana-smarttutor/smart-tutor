@@ -76,7 +76,7 @@ export default async function Home() {
   ];
 
   return (
-    <main className="relative overflow-hidden pb-16 pt-8">
+    <main className="relative overflow-hidden pb-16 pt-2">
       <section className="section-shell grid gap-8 pt-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
         <RevealOnScroll className="space-y-7 text-center lg:text-left w-full max-w-full">
           <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
@@ -253,30 +253,18 @@ export default async function Home() {
             <CampusHighlightsCarousel />
           </div>
 
-          <div className="surface rounded-xl p-6 hover:shadow-xl transition-all">
-            <div className="mb-8">
-              <p className="section-label">Why Smart Tutors</p>
-              <h2 className="section-title text-2xl sm:text-3xl mt-2 text-left">
-                A legacy of academic growth
-              </h2>
-            </div>
-            <div className="mt-5 grid gap-3">
-              {data.headlineLines.map((line) => (
-                <div
-                  key={line}
-                  className="surface-soft rounded-xl px-4 py-3 border-l-4 border-blue-500 hover:bg-blue-50 transition-colors"
-                >
-                  <p className="text-sm font-bold tracking-[0.04em] text-[var(--color-heading)]">
-                    {line}
-                  </p>
-                </div>
-              ))}
-            </div>
+          <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex items-center justify-center min-h-[300px]">
+            <Image
+              src="/why%20choose%20us.jpeg"
+              alt="Why Choose Smart Tutors"
+              width={600}
+              height={400}
+              className="w-full h-auto rounded-lg object-contain"
+            />
           </div>
         </RevealOnScroll>
       </section>
-
-      <FeaturesSection />
+ 
 
       <section className="pt-14 sm:pt-20 pb-0">
         <div className="container mx-auto px-4">
