@@ -91,7 +91,7 @@ export default async function Home() {
             </span>
 
             <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
-              <span  className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
               Vashi's Results-Driven Campus
             </div>
 
@@ -264,7 +264,6 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
       </section>
- 
 
       <section className="pt-14 sm:pt-20 pb-0">
         <div className="container mx-auto px-4">
@@ -283,7 +282,7 @@ export default async function Home() {
           </div>
 
           <GrandSuccessCarousel />
-          
+
           <div className="mt-12">
             <HomeToppers />
           </div>
@@ -318,10 +317,11 @@ export default async function Home() {
         </div>
       </RevealOnScroll>
 
-      <RevealOnScroll className="section-shell py-14" delayMs={40}>
-        <div className="mb-9 text-center lg:text-left">
-          <p className="section-label">Roles</p>
-          <h2 className="section-title">
+      <RevealOnScroll className="section-shell py-16" delayMs={40}>
+        <div className="mb-10 max-w-5xl text-left">
+          <p className="section-label mb-3 !text-sm sm:!text-base">Roles</p>
+
+          <h2 className="section-title leading-[1.12]">
             One system for students, teachers, and institute operations.
           </h2>
         </div>
@@ -355,8 +355,8 @@ export default async function Home() {
       </RevealOnScroll>
 
       <RevealOnScroll className="section-shell py-14" delayMs={80}>
-        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="surface rounded-xl p-8 hover:shadow-xl transition-all">
+        <div className="grid items-stretch gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <article className="surface flex h-full flex-col rounded-xl p-8 transition-all hover:shadow-xl">
             <div className="mb-8">
               <p className="section-label">Latest Educational Insights</p>
               <h2 className="section-title">
@@ -409,8 +409,8 @@ export default async function Home() {
             </div>
           </article>
 
-          <div className="flex flex-col gap-6">
-            <article className="relative overflow-hidden rounded-[1.5rem] p-10 bg-gradient-to-br from-[#1e40af] via-[#3730a3] to-[#4338ca] text-white shadow-2xl hover:scale-[1.02] transition-all group">
+          <div className="flex h-full flex-col">
+            <article className="group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#1e40af] via-[#3730a3] to-[#4338ca] p-10 text-white shadow-2xl transition-all hover:scale-[1.02]">
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl group-hover:bg-white/20 transition-all"></div>
               <p className="text-blue-200 text-sm font-black uppercase tracking-[0.2em] mb-3 relative z-10">
                 Promotional Offer
@@ -453,7 +453,7 @@ export default async function Home() {
               </ul>
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center w-full py-5 bg-white text-blue-800 font-black text-lg rounded-xl hover:bg-blue-50 transition-all hover:scale-105 shadow-xl relative z-10"
+                className=" mt-auto inline-flex items-center justify-center w-full py-5 bg-white text-blue-800 font-black text-lg rounded-xl hover:bg-blue-50 transition-all hover:scale-105 shadow-xl relative z-10"
               >
                 Book a Consultation
               </Link>

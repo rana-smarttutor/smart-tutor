@@ -2,15 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  BriefcaseBusiness,
-  Building2,
-  ClipboardList,
-  GraduationCap,
-  Handshake,
-  Upload,
-  Users,
-} from "@/components/ui-icons";
+import { BriefcaseBusiness, Building2, UsersRound } from "lucide-react";
 
 export function PlacementPortalHero() {
   return (
@@ -23,7 +15,7 @@ export function PlacementPortalHero() {
             <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                  <Users className="h-4 w-4" />
+                  <UsersRound className="h-4 w-4 stroke-[2.4]" />
                   For Companies
                 </span>
 
@@ -50,7 +42,7 @@ export function PlacementPortalHero() {
                     href="/contact"
                     className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
                   >
-                    <Handshake className="h-4 w-4" />
+                    <UsersRound className="h-4 w-4 stroke-[2.4]" />
                     Become a Hiring Partner
                   </Link>
                 </div>
@@ -58,22 +50,22 @@ export function PlacementPortalHero() {
                 <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">
                   {[
                     {
-                      icon: <Upload className="h-5 w-5" />,
+                      icon: "/placement-icons/upload-jobs.png",
                       title: "Upload Jobs",
                       desc: "Post job openings in minutes",
                     },
                     {
-                      icon: <ClipboardList className="h-5 w-5" />,
+                      icon: "/placement-icons/manage-applications.png",
                       title: "Manage Applications",
                       desc: "Track applications easily",
                     },
                     {
-                      icon: <Building2 className="h-5 w-5" />,
+                      icon: "/placement-icons/campus-hiring.png",
                       title: "Campus Hiring",
                       desc: "Connect with top students",
                     },
                     {
-                      icon: <GraduationCap className="h-5 w-5" />,
+                      icon: "/placement-icons/internship-hiring.png",
                       title: "Internship Hiring",
                       desc: "Hire interns for projects",
                     },
@@ -82,8 +74,14 @@ export function PlacementPortalHero() {
                       key={item.title}
                       className="rounded-2xl border border-slate-100 bg-white px-3 py-4 text-center shadow-sm"
                     >
-                      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                        {item.icon}
+                      <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-blue-600">
+                        <Image
+                          src={item.icon}
+                          alt={item.title}
+                          width={28}
+                          height={28}
+                          className="h-7 w-7 object-contain"
+                        />
                       </div>
 
                       <p className="text-sm font-black text-slate-900">
