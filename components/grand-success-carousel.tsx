@@ -53,7 +53,7 @@ const RESULT_CATEGORIES = [
   {
     id: "railway",
     label: "Railway Exam",
-    image: "/hof/railway.png",
+    image: "/hof/Railway.png",
   },
   {
     id: "ssc-cgl",
