@@ -629,7 +629,7 @@ export function getPublicInstituteData() {
         duration: "Academic Year",
         description:
           "Build subject clarity, stronger habits, and exam confidence early with close mentoring and worksheet practice.",
-        focus: ["Maths", "Science", "English", "Study Skills"],
+        focus: ["All"],
       },
       {
         category: "Boards",

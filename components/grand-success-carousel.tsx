@@ -28,7 +28,7 @@ const RESULT_CATEGORIES = [
   {
     id: "jee",
     label: "JEE Main",
-    image: "/hof/JEE.png",
+    image: "/hof/jee-main.png",
   },
   {
     id: "neet",

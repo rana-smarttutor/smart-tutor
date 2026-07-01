@@ -75,6 +75,11 @@ export default async function Home() {
     },
   ];
 
+  const programCarouselItems = data.programs.map((program) => ({
+    ...program,
+    targetTab: "overview",
+  }));
+
   return (
     <main className="relative overflow-hidden pb-16 pt-2">
       <section className="section-shell grid gap-8 pt-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
@@ -129,11 +134,9 @@ export default async function Home() {
             </h1>
 
             <p className="mx-auto max-w-2xl text-sm font-medium leading-relaxed text-[var(--color-muted)] sm:text-lg xl:mx-0">
-              Smart Tutors provides{" "}
-              <strong>Programs mapped to every stage of growth</strong>. We
-              bring disciplined preparation, sharp mentoring, and real academic
-              momentum into one focused institute experience. From school boards
-              to civil services and digital future skills.
+              Smart Tutors offers thoughtfully designed{" "}
+              <strong>programs for every stage of a learner's journey</strong>. From
+              school academics and board preparation to competitive exams, civil services, and future-ready digital skills, our programs combine expert mentoring, structured learning, and focused practice to help students achieve meaningful academic and career growth.
             </p>
           </div>
 
@@ -304,7 +307,7 @@ export default async function Home() {
             </p>
           </div>
 
-          <ProgramCarousel programs={data.programs} />
+          <ProgramCarousel programs={programCarouselItems} />
 
           <div className="mt-10 sm:mt-16 text-center">
             <Link
