@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Mail, Phone, User, Calendar, BookOpen, Clock, CheckCircle, XCircle } from "@/components/ui-icons";
+import { Mail, Phone, User, Calendar, BookOpen, Clock, CheckCircle, XCircle, Sparkles } from "@/components/ui-icons";
 import { Enquiry } from "@/lib/types";
 
 export function DashboardEnquiryManager() {
@@ -74,7 +74,9 @@ export function DashboardEnquiryManager() {
             <p className="text-[var(--color-muted)]">No enquiries submitted yet.</p>
           </div>
         ) : (
-          enquiries.map((enquiry, index) => (
+          enquiries.map((enquiry, index) => {
+            const hasSuggestions = enquiry.suggestedCourses && enquiry.suggestedCourses.length > 0;
+            return (
             <div key={index} className="surface-soft rounded-3xl p-5 border border-[var(--color-border)] hover:border-blue-400 transition-colors">
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 <div className="space-y-4 flex-1">
@@ -100,6 +102,25 @@ export function DashboardEnquiryManager() {
                     <p className="text-sm font-bold text-[var(--color-heading)] mb-2">{enquiry.courseTitle}</p>
                     <p className="text-sm text-[var(--color-muted)] italic leading-relaxed">"{enquiry.message}"</p>
                   </div>
+
+                  {hasSuggestions && (
+                    <div className="bg-purple-50/50 rounded-2xl p-3 border border-purple-100/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600">Also Interested In</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {enquiry.suggestedCourses!.map((s) => (
+                          <span
+                            key={s.standardKey}
+                            className="bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-purple-200/50"
+                          >
+                            {s.title}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-3 shrink-0 lg:w-48">
@@ -117,7 +138,8 @@ export function DashboardEnquiryManager() {
                 </div>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </section>

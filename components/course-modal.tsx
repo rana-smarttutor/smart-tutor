@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useMemo } from "react";
 import {
   X,
   Clock,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 import { CourseItem } from "@/lib/types";
+import { getSuggestibleCourses } from "@/lib/course-library";
 
 interface CourseModalProps {
   course: CourseItem | null;
@@ -27,6 +28,28 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
   const [role, setRole] = useState("student");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
+
+  const isYearLong = course?.duration?.toLowerCase().includes("full academic year") ?? false;
+
+  const suggestionOptions = useMemo(() => {
+    if (!isYearLong || !course) return [];
+    return getSuggestibleCourses()
+      .filter((s) => s.standardKey !== course.standardKey)
+      .slice(0, 8);
+  }, [isYearLong, course]);
+
+  const toggleSuggestion = (standardKey: string) => {
+    setSelectedSuggestions((prev) => {
+      const next = new Set(prev);
+      if (next.has(standardKey)) {
+        next.delete(standardKey);
+      } else {
+        next.add(standardKey);
+      }
+      return next;
+    });
+  };
 
   if (!course) return null;
 
@@ -39,6 +62,10 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
 
     setIsSubmitting(true);
     
+    const suggestedCourses = suggestionOptions
+      .filter((s) => selectedSuggestions.has(s.standardKey))
+      .map((s) => ({ standardKey: s.standardKey, title: s.title }));
+
     try {
       const response = await fetch("/api/enquiries", {
         method: "POST",
@@ -50,6 +77,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
           courseTitle: course.title,
           courseKey: course.standardKey,
           message: `Hi Smart Tutors, I am interested in joining the course: **${course.title}** (${course.standardKey}) as a ${role}. Let's setup a counseling demo.`,
+          suggestedCourses: suggestedCourses.length > 0 ? suggestedCourses : undefined,
         }),
       });
 
@@ -70,7 +98,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
     <AnimatePresence>
       {course && (
         <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-          {/* Backdrop glass transition */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -79,7 +106,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
           />
 
-          {/* Modal Main Board */}
           <motion.div
             initial={{ scale: 0.97, y: 10, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -87,7 +113,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
             transition={{ duration: 0.2 }}
             className="bg-white rounded-xl overflow-hidden shadow-xl relative w-full max-w-4xl max-h-[90vh] flex flex-col z-10 border border-slate-200"
           >
-            {/* Header Bar */}
             <div className="p-4 bg-slate-50 text-slate-950 flex justify-between items-center border-b border-slate-200">
               <div className="flex items-center space-x-3">
                 <div className="w-9 h-9 rounded bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
@@ -109,9 +134,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
               </button>
             </div>
 
-            {/* Modal scroll area */}
             <div className="p-6 sm:p-8 overflow-y-auto flex-1 grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Core Course Specs (Left side) */}
               <div className="md:col-span-7 space-y-6">
                 <div className="space-y-1.5">
                   <span className="text-xs text-blue-600 font-semibold tracking-wider uppercase block">
@@ -125,7 +148,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                   </p>
                 </div>
 
-                {/* Grid of basic specs tags */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg text-center">
                     <Clock className="w-4 h-4 text-blue-600 mx-auto" />
@@ -144,7 +166,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                   </div>
                 </div>
 
-                {/* Subjects Covered Badges */}
                 <div className="space-y-3">
                   <h5 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none">
                     Syllabus Domains & Chapters Covered:
@@ -162,7 +183,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                   </div>
                 </div>
 
-                {/* Bullet points of progress */}
                 <div className="space-y-3 pt-4 border-t border-slate-200">
                   <h5 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none">
                     Core Modules & Outcomes:
@@ -178,7 +198,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                 </div>
               </div>
 
-              {/* Simulated interactive conversion form (Right side) */}
               <div className="md:col-span-5 bg-slate-50 border border-slate-200 p-5 rounded-lg flex flex-col justify-between self-start">
                 <AnimatePresence mode="wait">
                   {!isSuccess ? (
@@ -197,7 +216,6 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                         </p>
                       </div>
 
-                      {/* Form Fields */}
                       <div className="space-y-3">
                         <div className="space-y-1">
                           <label className="text-[9px] text-slate-400 font-bold block uppercase leading-none">
@@ -249,15 +267,52 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                         </div>
                       </div>
 
-                      {/* Pre-filled auto message text */}
+                      {suggestionOptions.length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          <label className="text-[9px] text-purple-600 font-bold block uppercase leading-none">
+                            Also interested in (Optional):
+                          </label>
+                          <p className="text-[10px] text-slate-400 font-medium leading-snug">
+                            Add short-term skill courses alongside your main program
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {suggestionOptions.map((s) => {
+                              const isSelected = selectedSuggestions.has(s.standardKey);
+                              return (
+                                <button
+                                  key={s.standardKey}
+                                  type="button"
+                                  onClick={() => toggleSuggestion(s.standardKey)}
+                                  className={`text-[10px] font-bold px-2.5 py-1.5 rounded-full border transition-all cursor-pointer ${
+                                    isSelected
+                                      ? "bg-purple-100 text-purple-800 border-purple-300 shadow-xs"
+                                      : "bg-white text-slate-500 border-slate-200 hover:border-purple-200 hover:text-purple-600"
+                                  }`}
+                                >
+                                  {isSelected && <span className="mr-1">✓</span>}
+                                  {s.title.length > 35 ? s.title.slice(0, 35) + "..." : s.title}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {selectedSuggestions.size > 0 && (
+                            <p className="text-[9px] text-purple-500 font-semibold">
+                              {selectedSuggestions.size} course{selectedSuggestions.size > 1 ? "s" : ""} selected
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="bg-slate-100 p-2.5 rounded border border-slate-200/50 space-y-1">
                         <span className="text-[9px] text-slate-400 font-bold block leading-none">Auto-generated message:</span>
                         <p className="text-slate-500 text-[10px] font-medium leading-normal italic">
                           "Hi Smart Tutors, I am interested in joining the course: **{course.title}** ({course.standardKey}) as a {role}. Let's setup a counseling demo."
+                          {selectedSuggestions.size > 0 && (
+                            <> Also interested in: {suggestionOptions.filter((s) => selectedSuggestions.has(s.standardKey)).map((s) => s.title).join(", ")}.</>
+                          )}
                         </p>
                       </div>
 
-                      {/* Action submit button */}
                       <motion.button
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.99 }}
@@ -286,6 +341,15 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                         </p>
                       </div>
 
+                      {selectedSuggestions.size > 0 && (
+                        <div className="bg-purple-50 text-purple-700 text-[9px] font-bold p-2 rounded border border-purple-100/50 space-y-1">
+                          <span className="block uppercase tracking-wider">Also Selected</span>
+                          <span className="block font-semibold">
+                            {suggestionOptions.filter((s) => selectedSuggestions.has(s.standardKey)).map((s) => s.title).join(", ")}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="bg-emerald-50 text-emerald-700 text-[9px] font-bold p-2 rounded border border-emerald-100/50 inline-flex items-center gap-1 uppercase">
                         <Sparkles className="w-3.5 h-3.5" /> Reference: {Math.floor(100000 + Math.random() * 900000)}
                       </div>
@@ -296,6 +360,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                             setIsSuccess(false);
                             setName("");
                             setContact("");
+                            setSelectedSuggestions(new Set());
                           }}
                           className="text-[10px] text-slate-400 font-bold hover:text-indigo-600 transition-colors mt-2 uppercase tracking-wide"
                         >

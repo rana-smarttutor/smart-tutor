@@ -39,14 +39,27 @@ function normaliseValue(value?: string) {
 
 function matchesActiveTab(course: CourseItem, activeTab: string) {
   const activeTabKey = normaliseValue(activeTab);
+  const sections = course.sections ?? [];
+  const hasSkillsSection = sections.some((s) => normaliseValue(s) === "skills");
 
-  return (course.sections ?? []).some((section) => {
+  // Skills courses only show under the "Skills" tab, not under class tabs
+  if (hasSkillsSection && activeTabKey !== "skills") {
+    return false;
+  }
+
+  return sections.some((section) => {
     const sectionKey = normaliseValue(section);
 
-    return (
-      sectionKey === activeTabKey ||
-      sectionKey.startsWith(activeTabKey)
-    );
+    if (sectionKey === activeTabKey || sectionKey.startsWith(activeTabKey)) {
+      return true;
+    }
+
+    // Class 6-8 tab should also show Class 6, Class 7, Class 8 foundation courses
+    if (activeTabKey === "class68" && (sectionKey === "class6" || sectionKey === "class7" || sectionKey === "class8")) {
+      return true;
+    }
+
+    return false;
   });
 }
 
