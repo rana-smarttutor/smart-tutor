@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import {
+  ArrowRight,
   BookOpen,
+  Brain,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
-  School,
-  FileText,
-  Award,
-  ArrowRight,
-  TrendingUp,
-  Brain,
-  Layers,
-  FlaskConical,
   Coins,
-  History
+  FileText,
+  FlaskConical,
+  History,
+  School,
+  Sparkles,
+  TrendingUp,
 } from "@/components/ui-icons";
-import { motion, AnimatePresence } from "motion/react";
-import { CourseItem } from "@/lib/types";
+import { AnimatePresence, motion } from "motion/react";
+
+import type { CourseItem } from "@/lib/types";
 import LocalGraphic from "@/components/local-graphic";
 
 interface SpotlightSectionProps {
@@ -43,10 +43,7 @@ function matchesActiveTab(course: CourseItem, activeTab: string) {
   return (course.sections ?? []).some((section) => {
     const sectionKey = normaliseValue(section);
 
-    return (
-      sectionKey === activeTabKey ||
-      sectionKey.startsWith(activeTabKey)
-    );
+    return sectionKey === activeTabKey || sectionKey.startsWith(activeTabKey);
   });
 }
 
@@ -58,12 +55,10 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
   const selectedStreamKey = normaliseValue(stream);
   const courseStreamKey = normaliseValue(course.stream);
 
-  // First priority: exact stream field matching.
   if (courseStreamKey === selectedStreamKey) {
     return true;
   }
 
-  // Backup matching for old / differently named course entries.
   const searchableText = normaliseValue(
     [
       course.stream,
@@ -117,91 +112,102 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
     ],
   };
 
-  return keywords[stream].some((keyword) =>
-    searchableText.includes(keyword),
-  );
+  return keywords[stream].some((keyword) => searchableText.includes(keyword));
 }
+
+const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
+  "Class 6-8": "/spotlight/class-6-8.jpeg",
+  "Class 9-10": "/spotlight/class-9-10.jpeg",
+  "Class 11-12": "/spotlight/class-11-12.jpeg",
+  Skills: "/spotlight/skills.png",
+  "Govt Exams": "/spotlight/govt-exams.jpeg",
+};
 
 export default function SpotlightSection({
   activeTab,
   setActiveTab,
   onSelectCourse,
-  allCourses
+  allCourses,
 }: SpotlightSectionProps) {
-  // Tabs representing different educational groups
   const tabs = [
     { id: "Class 6-8", label: "Class 6-8", icon: BookOpen },
     { id: "Class 9-10", label: "Class 9-10", icon: School },
     { id: "Class 11-12", label: "Class 11-12", icon: FlaskConical },
-    { id: "Graduation", label: "Graduation / UG", icon: Layers },
-    { id: "Post Grad", label: "Post Graduate", icon: Award },
     { id: "Govt Exams", label: "Govt Exams", icon: FileText },
     { id: "Skills", label: "Skills Section", icon: Brain },
   ];
 
-  // Map to track image errors
-  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
-
-  // List of courses matching active tab
   const [tabCourses, setTabCourses] = useState<CourseItem[]>([]);
-  // Index of currently spotlighted course in that section list
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+  const [activeStream, setActiveStream] = useState<StreamFilter>("All");
 
-  // Active stream filter state (specifically for Class 11-12)
-  const [activeStream, setActiveStream] = useState<"Science" | "Commerce" | "Arts" | "All">("All");
+  useEffect(() => {
+    const filteredCourses = allCourses.filter((course) => {
+      if (!matchesActiveTab(course, activeTab)) {
+        return false;
+      }
 
-console.log(
-  "Commerce courses received:",
-  allCourses.filter(
-    (course) =>
-      course.sections?.includes("Class 11-12") &&
-      course.stream === "Commerce",
-  ),
-);
+      if (activeTab !== "Class 11-12") {
+        return true;
+      }
 
-useEffect(() => {
-  const filteredCourses = allCourses.filter((course) => {
-    const belongsToSelectedTab = matchesActiveTab(course, activeTab);
+      return matchesSelectedStream(course, activeStream);
+    });
 
-    if (!belongsToSelectedTab) {
-      return false;
+    const priorityStandardKey =
+      activeTab === "Class 6-8" ? "class-6-8-regular-academic" : null;
+
+    if (priorityStandardKey) {
+      filteredCourses.sort((firstCourse, secondCourse) => {
+        const isFirstPriority =
+          firstCourse.standardKey === priorityStandardKey ||
+          firstCourse.title === "Class 6th-8th Regular Academic (State/CBSE)";
+
+        const isSecondPriority =
+          secondCourse.standardKey === priorityStandardKey ||
+          secondCourse.title === "Class 6th-8th Regular Academic (State/CBSE)";
+
+        if (isFirstPriority && !isSecondPriority) {
+          return -1;
+        }
+
+        if (!isFirstPriority && isSecondPriority) {
+          return 1;
+        }
+
+        return 0;
+      });
     }
 
-    if (activeTab !== "Class 11-12") {
-      return true;
-    }
+    setTabCourses(filteredCourses);
+    setSpotlightIndex(0);
+  }, [activeTab, activeStream, allCourses]);
 
-    return matchesSelectedStream(course, activeStream);
-  });
-
-  setTabCourses(filteredCourses);
-  setSpotlightIndex(0);
-}, [activeTab, activeStream, allCourses]);
-  // Handle changing stream
-const handleStreamClick = (
-  stream: Exclude<StreamFilter, "All">,
-) => {
-  setActiveStream((currentStream) =>
-    currentStream === stream ? "All" : stream,
-  );
-};
+  const handleStreamClick = (stream: Exclude<StreamFilter, "All">) => {
+    setActiveStream((currentStream) =>
+      currentStream === stream ? "All" : stream,
+    );
+  };
 
   const currentSpotlight = tabCourses[spotlightIndex];
 
-  // Rotate spotlight index
   const nextSpotlight = () => {
     if (tabCourses.length > 1) {
-      setSpotlightIndex((prev) => (prev + 1) % tabCourses.length);
+      setSpotlightIndex(
+        (previousIndex) => (previousIndex + 1) % tabCourses.length,
+      );
     }
   };
 
   const prevSpotlight = () => {
     if (tabCourses.length > 1) {
-      setSpotlightIndex((prev) => (prev - 1 + tabCourses.length) % tabCourses.length);
+      setSpotlightIndex(
+        (previousIndex) =>
+          (previousIndex - 1 + tabCourses.length) % tabCourses.length,
+      );
     }
   };
 
-  // Get illustrative section metadata based on active tab
   const getSectionMetadata = () => {
     switch (activeTab) {
       case "Class 6-8":
@@ -211,6 +217,7 @@ const handleStreamClick = (
           logoBg: "bg-blue-50 text-blue-600",
           logo: BookOpen,
         };
+
       case "Class 9-10":
         return {
           title: "Class 9-10 Programs",
@@ -218,6 +225,7 @@ const handleStreamClick = (
           logoBg: "bg-blue-50 text-blue-600",
           logo: School,
         };
+
       case "Class 11-12":
         return {
           title: "Class 11-12 Programs",
@@ -225,20 +233,7 @@ const handleStreamClick = (
           logoBg: "bg-blue-50 text-blue-600",
           logo: FlaskConical,
         };
-      case "Graduation":
-        return {
-          title: "Graduation Programs",
-          desc: "Empowering undergraduates with elite career pathways.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: Layers,
-        };
-      case "Post Grad":
-        return {
-          title: "Postgraduate Programs",
-          desc: "Advance your expertise with customized administrative paths.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: Award,
-        };
+
       case "Govt Exams":
         return {
           title: "Government Exam Targets",
@@ -246,6 +241,7 @@ const handleStreamClick = (
           logoBg: "bg-blue-50 text-blue-600",
           logo: FileText,
         };
+
       default:
         return {
           title: "Professional Skills Development",
@@ -259,104 +255,142 @@ const handleStreamClick = (
   const sectionMeta = getSectionMetadata();
   const SectionLogo = sectionMeta.logo;
 
-  // Selected preset Unsplash premium images matching typical courses in library
   const getSuggestedImage = (course: CourseItem) => {
-    if (!course) return "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=600";
+    if (!course) {
+      return "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=600";
+    }
+
     const title = course.title.toLowerCase();
-    if (title.includes("scientist") || title.includes("robotics") || title.includes("coding") || title.includes("tech")) {
+
+    if (
+      title.includes("scientist") ||
+      title.includes("robotics") ||
+      title.includes("coding") ||
+      title.includes("tech")
+    ) {
       return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600";
     }
-    if (title.includes("financial") || title.includes("accounting") || title.includes("ledger") || title.includes("budgeting")) {
+
+    if (
+      title.includes("financial") ||
+      title.includes("accounting") ||
+      title.includes("ledger") ||
+      title.includes("budgeting")
+    ) {
       return "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=600";
     }
-    if (title.includes("chemistry") || title.includes("science") || title.includes("boards") || title.includes("neet")) {
+
+    if (
+      title.includes("chemistry") ||
+      title.includes("science") ||
+      title.includes("boards") ||
+      title.includes("neet")
+    ) {
       return "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600";
     }
-    if (title.includes("upsc") || title.includes("govt") || title.includes("mpsc")) {
+
+    if (
+      title.includes("upsc") ||
+      title.includes("govt") ||
+      title.includes("mpsc")
+    ) {
       return "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600";
     }
-    if (title.includes("speaking") || title.includes("personality") || title.includes("english")) {
+
+    if (
+      title.includes("speaking") ||
+      title.includes("personality") ||
+      title.includes("english")
+    ) {
       return "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=600";
     }
+
     return "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=600";
   };
 
   return (
     <div className="space-y-8">
-      {/* 1. Category Tabs Navigation - exactly as per specifications */}
-      <div className="bg-white border border-slate-200 p-2 rounded-xl shadow-sm overflow-x-auto no-scrollbar scroll-smooth flex space-x-2">
+      <div className="no-scrollbar flex space-x-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
         {tabs.map((tab) => {
           const TabIcon = tab.icon;
           const isActive = activeTab === tab.id;
+
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => {
                 setActiveTab(tab.id);
                 setActiveStream("All");
               }}
               style={{ height: "42px" }}
-              className={`flex items-center space-x-2 px-5 rounded-lg cursor-pointer whitespace-nowrap text-xs font-semibold transition-all duration-200 ${
+              className={`flex cursor-pointer items-center space-x-2 whitespace-nowrap rounded-lg px-5 text-xs font-semibold transition-all duration-200 ${
                 isActive
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-white text-slate-600 hover:text-blue-600 hover:bg-slate-50 border border-slate-200"
+                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-blue-600"
               }`}
             >
-              <TabIcon className="w-3.5 h-3.5 flex-shrink-0" />
+              <TabIcon className="h-3.5 w-3.5 shrink-0" />
               <span>{tab.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* 2. Section Header and Carousel Controls */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center space-x-4">
-          <div className={`${sectionMeta.logoBg} p-3.5 rounded-2xl shadow-sm flex items-center justify-center`}>
-            <SectionLogo className="w-7 h-7" />
+          <div
+            className={`${sectionMeta.logoBg} flex items-center justify-center rounded-2xl p-3.5 shadow-sm`}
+          >
+            <SectionLogo className="h-7 w-7" />
           </div>
+
           <div>
-            <h2 className="font-display font-bold text-2xl text-slate-900 tracking-tight leading-tight">
+            <h2 className="font-display text-2xl font-bold leading-tight tracking-tight text-slate-900">
               {sectionMeta.title}
             </h2>
-            <p className="text-slate-500 text-xs md:text-sm font-medium">
+
+            <p className="text-xs font-medium text-slate-500 md:text-sm">
               {sectionMeta.desc}
             </p>
           </div>
         </div>
 
-        {/* Dynamic horizontal separator line */}
-        <div className="hidden lg:block flex-1 h-[2px] bg-slate-100 mx-6" />
+        <div className="mx-6 hidden h-[2px] flex-1 bg-slate-100 lg:block" />
 
-        {/* Action Carousel navigation buttons */}
-        <div className="flex items-center space-x-3 self-end md:self-center">
-          <span className="text-[10px] text-slate-400 font-bold font-mono">
-            {tabCourses.length > 0 ? `${spotlightIndex + 1} / ${tabCourses.length}` : "No Programs"}
+        <div className="flex self-end space-x-3 md:self-center">
+          <span className="font-mono text-[10px] font-bold text-slate-400">
+            {tabCourses.length > 0
+              ? `${spotlightIndex + 1} / ${tabCourses.length}`
+              : "No Programs"}
           </span>
+
           <div className="flex space-x-2">
             <button
+              type="button"
               onClick={prevSpotlight}
               disabled={tabCourses.length <= 1}
-              className={`w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 hover:text-blue-600 transition-all cursor-pointer ${
-                tabCourses.length <= 1 ? "opacity-45 cursor-not-allowed" : ""
+              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white transition-all hover:bg-slate-50 hover:text-blue-600 ${
+                tabCourses.length <= 1 ? "cursor-not-allowed opacity-45" : ""
               }`}
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="h-4 w-4" />
             </button>
+
             <button
+              type="button"
               onClick={nextSpotlight}
               disabled={tabCourses.length <= 1}
-              className={`w-9 h-9 rounded-lg border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 hover:text-blue-600 transition-all cursor-pointer ${
-                tabCourses.length <= 1 ? "opacity-45 cursor-not-allowed" : ""
+              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white transition-all hover:bg-slate-50 hover:text-blue-600 ${
+                tabCourses.length <= 1 ? "cursor-not-allowed opacity-45" : ""
               }`}
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="h-4 w-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* 3. Featured Program Spotlight Card */}
       <AnimatePresence mode="wait">
         {currentSpotlight ? (
           <motion.div
@@ -365,78 +399,87 @@ const handleStreamClick = (
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25 }}
-            className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm grid grid-cols-1 md:grid-cols-12"
+            className="grid grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:grid-cols-12"
           >
-            {/* Image Box */}
-            <div className="md:col-span-5 relative h-64 md:h-full bg-slate-50 min-h-[280px]">
-              {!imageErrors[currentSpotlight.id] ? (
-                <img
-                  src={getSuggestedImage(currentSpotlight)}
-                  alt={currentSpotlight.title}
-                  onError={() => {
-                    setImageErrors((prev) => ({ ...prev, [currentSpotlight.id]: true }));
-                  }}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <LocalGraphic title={currentSpotlight.title} className="w-full h-full" />
-              )}
-              <div className="absolute inset-0 bg-linear-to-r from-slate-900/40 via-transparent to-transparent hidden md:block" />
-              <div className="absolute top-4 left-4">
-                <span className="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-sm flex items-center gap-1.5 uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3" />
+            <div className="relative min-h-[280px] h-64 bg-slate-50 md:col-span-5 md:h-full">
+              <Image
+                src={
+                  SECTION_SPOTLIGHT_IMAGES[activeTab] ||
+                  "/spotlight/class-6-8.jpg"
+                }
+                alt={`${activeTab} programs`}
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 42vw"
+                className="object-cover object-center"
+              />
+
+              <div className="absolute inset-0 hidden bg-linear-to-r from-slate-900/40 via-transparent to-transparent md:block" />
+
+              <div className="absolute left-4 top-4">
+                <span className="flex items-center gap-1.5 rounded bg-blue-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+                  <Sparkles className="h-3 w-3" />
                   {currentSpotlight.statusLabel}
                 </span>
               </div>
             </div>
 
-            {/* Program Details Area */}
-            <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+            <div className="flex flex-col justify-between space-y-6 p-6 md:col-span-7 sm:p-8">
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider">
-                    {activeTab} SPOTLIGHT
+                  <span className="rounded bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                    {activeTab} Spotlight
                   </span>
+
                   {currentSpotlight.stream !== "General" && (
-                    <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider">
-                      {currentSpotlight.stream} STREAM
+                    <span className="rounded bg-slate-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-700">
+                      {currentSpotlight.stream} Stream
                     </span>
                   )}
-                  <span className="bg-slate-50 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded border border-slate-200 uppercase tracking-wider">
+
+                  <span className="rounded border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     {currentSpotlight.duration}
                   </span>
                 </div>
 
-                <h3 className="font-display font-bold text-xl text-slate-900 leading-tight">
+                <h3 className="font-display text-xl font-bold leading-tight text-slate-900">
                   {currentSpotlight.title}
                 </h3>
 
-                <p className="text-slate-500 text-xs sm:text-xs font-semibold leading-relaxed">
+                <p className="text-xs font-semibold leading-relaxed text-slate-500">
                   {currentSpotlight.description}
                 </p>
 
-                {/* Sub feature tags exactly mapping Image Specs */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                  <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center space-x-3">
-                    <div className="bg-white text-blue-600 p-1.5 rounded border border-slate-200 flex-shrink-0">
-                      <BookOpen className="w-3.5 h-3.5" />
+                <div className="grid grid-cols-1 gap-3 pt-2 sm:grid-cols-2">
+                  <div className="flex items-center space-x-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="shrink-0 rounded border border-slate-200 bg-white p-1.5 text-blue-600">
+                      <BookOpen className="h-3.5 w-3.5" />
                     </div>
+
                     <div>
-                      <span className="text-[9px] text-slate-400 font-bold block leading-none uppercase">STREAM COURSES</span>
-                      <span className="text-[11px] text-slate-700 font-semibold block leading-tight truncate mt-0.5 max-w-[200px]">
-                        {currentSpotlight.courseNamesIncluded.slice(0, 2).join(" & ")}
+                      <span className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                        Stream Courses
+                      </span>
+
+                      <span className="mt-0.5 block max-w-[200px] truncate text-[11px] font-semibold leading-tight text-slate-700">
+                        {currentSpotlight.courseNamesIncluded
+                          .slice(0, 2)
+                          .join(" & ")}
                       </span>
                     </div>
                   </div>
 
-                  <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center space-x-3">
-                    <div className="bg-white text-blue-600 p-1.5 rounded border border-slate-200 flex-shrink-0">
-                      <TrendingUp className="w-3.5 h-3.5" />
+                  <div className="flex items-center space-x-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <div className="shrink-0 rounded border border-slate-200 bg-white p-1.5 text-blue-600">
+                      <TrendingUp className="h-3.5 w-3.5" />
                     </div>
+
                     <div>
-                      <span className="text-[9px] text-slate-400 font-bold block leading-none uppercase">TEST & TRACKING</span>
-                      <span className="text-[11px] text-slate-700 font-semibold block leading-tight truncate mt-0.5">
+                      <span className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                        Test & Tracking
+                      </span>
+
+                      <span className="mt-0.5 block text-[11px] font-semibold leading-tight text-slate-700">
                         Weekly Concept Mocks
                       </span>
                     </div>
@@ -444,140 +487,209 @@ const handleStreamClick = (
                 </div>
               </div>
 
-              {/* Action row with main button */}
-              <div className="pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-left w-full sm:w-auto">
-                  <span className="text-[9px] text-slate-400 font-bold block leading-none uppercase">FORMAT</span>
-                  <span className="text-xs text-slate-700 font-bold block mt-0.5">{currentSpotlight.mode}</span>
+              <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-4 sm:flex-row">
+                <div className="w-full text-left sm:w-auto">
+                  <span className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                    Format
+                  </span>
+
+                  <span className="mt-0.5 block text-xs font-bold text-slate-700">
+                    {currentSpotlight.mode}
+                  </span>
                 </div>
 
-                <div className="flex w-full sm:w-auto justify-end">
+                <div className="flex w-full justify-end sm:w-auto">
                   <motion.button
+                    type="button"
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => onSelectCourse(currentSpotlight)}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs py-2.5 px-5 rounded-md flex items-center justify-center space-x-2 shadow-sm transition-all cursor-pointer"
+                    className="flex w-full cursor-pointer items-center justify-center space-x-2 rounded-md bg-blue-600 px-5 py-2.5 text-xs font-medium text-white shadow-sm transition-all hover:bg-blue-500 sm:w-auto"
                   >
                     <span>View Full Selector</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </motion.button>
                 </div>
               </div>
             </div>
           </motion.div>
         ) : (
-          <div className="bg-slate-50 border border-dashed border-slate-200 p-12 text-center rounded-xl">
-            <p className="text-slate-400 text-xs font-semibold">No featured programs available for this selection.</p>
+          <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+            <p className="text-xs font-semibold text-slate-400">
+              No featured programs available for this selection.
+            </p>
           </div>
         )}
       </AnimatePresence>
 
-      {/* 4. Stream Cards Selection (Specifically for Class 11-12) as per specifications */}
       {activeTab === "Class 11-12" && (
         <div className="space-y-4 pt-4">
           <div className="flex items-center space-x-2">
-            <span className="text-slate-800 text-xs font-bold tracking-tight">Browse Stream Majors:</span>
-            <span className="text-[9px] bg-slate-100 text-slate-500 font-bold uppercase py-0.5 px-2 rounded-md">
+            <span className="text-xs font-bold tracking-tight text-slate-800">
+              Browse Stream Majors:
+            </span>
+
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-500">
               Click to Filter Spotlight
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Science Major */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <motion.div
               whileHover={{ y: -3, border: "1px solid #6366f1" }}
               onClick={() => handleStreamClick("Science")}
-              className={`border p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between space-y-4 shadow-xs ${
-                activeStream === "Science" ? "bg-blue-50/40 border-blue-500" : "bg-white border-slate-200"
+              className={`flex cursor-pointer flex-col justify-between space-y-4 rounded-xl border p-4 shadow-xs transition-all ${
+                activeStream === "Science"
+                  ? "border-blue-500 bg-blue-50/40"
+                  : "border-slate-200 bg-white"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-blue-50 text-blue-600 p-2 rounded-lg flex items-center justify-center">
-                    <FlaskConical className="w-4 h-4" />
+                  <div className="flex items-center justify-center rounded-lg bg-blue-50 p-2 text-blue-600">
+                    <FlaskConical className="h-4 w-4" />
                   </div>
+
                   <div>
-                    <h4 className="font-display font-bold text-xs text-slate-900">Science Stream</h4>
-                    <span className="text-[9px] text-slate-400 block leading-none mt-0.5">IIT-JEE / NEET / Boards</span>
+                    <h4 className="font-display text-xs font-bold text-slate-900">
+                      Science Stream
+                    </h4>
+
+                    <span className="mt-0.5 block text-[9px] leading-none text-slate-400">
+                      IIT-JEE / NEET / Boards
+                    </span>
                   </div>
                 </div>
-                <div className="bg-slate-100 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded">HSC/CBSE</div>
+
+                <div className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
+                  HSC/CBSE
+                </div>
               </div>
-              <p className="text-slate-500 text-[11px] leading-relaxed font-semibold">
-                Physics, Chemistry, Mathematics, Biology & Specialized Computer Science labs.
+
+              <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
+                Physics, Chemistry, Mathematics, Biology & Specialized Computer
+                Science labs.
               </p>
+
               <div className="flex items-center justify-between pt-2">
-                <span className="text-blue-600 font-bold text-[9px] uppercase">Highly Popular</span>
-                <div className={`w-6 h-6 rounded-md text-white flex items-center justify-center shadow-xs transition-colors ${
-                  activeStream === "Science" ? "bg-blue-600" : "bg-slate-200 text-slate-400"
-                }`}>
-                  <ArrowRight className="w-3 h-3" />
+                <span className="text-[9px] font-bold uppercase text-blue-600">
+                  Highly Popular
+                </span>
+
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-md shadow-xs transition-colors ${
+                    activeStream === "Science"
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-400"
+                  }`}
+                >
+                  <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
             </motion.div>
 
-            {/* Commerce Major */}
             <motion.div
               whileHover={{ y: -3, border: "1px solid #6366f1" }}
               onClick={() => handleStreamClick("Commerce")}
-              className={`border p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between space-y-4 shadow-xs ${
-                activeStream === "Commerce" ? "bg-blue-50/40 border-blue-500" : "bg-white border-slate-200"
+              className={`flex cursor-pointer flex-col justify-between space-y-4 rounded-xl border p-4 shadow-xs transition-all ${
+                activeStream === "Commerce"
+                  ? "border-blue-500 bg-blue-50/40"
+                  : "border-slate-200 bg-white"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-blue-50 text-blue-600 p-2 rounded-lg flex items-center justify-center">
-                    <Coins className="w-4 h-4" />
+                  <div className="flex items-center justify-center rounded-lg bg-blue-50 p-2 text-blue-600">
+                    <Coins className="h-4 w-4" />
                   </div>
+
                   <div>
-                    <h4 className="font-display font-bold text-xs text-slate-900">Commerce Stream</h4>
-                    <span className="text-[9px] text-slate-400 block leading-none mt-0.5">CA/CS Base & Audit</span>
+                    <h4 className="font-display text-xs font-bold text-slate-900">
+                      Commerce Stream
+                    </h4>
+
+                    <span className="mt-0.5 block text-[9px] leading-none text-slate-400">
+                      CA/CS Base & Audit
+                    </span>
                   </div>
                 </div>
-                <div className="bg-slate-100 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded">HSC/CBSE</div>
+
+                <div className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
+                  HSC/CBSE
+                </div>
               </div>
-              <p className="text-slate-500 text-[11px] leading-relaxed font-semibold">
-                Advanced Accountancy, Business Studies, Economics & Professional Math tracks.
+
+              <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
+                Advanced Accountancy, Business Studies, Economics & Professional
+                Math tracks.
               </p>
+
               <div className="flex items-center justify-between pt-2">
-                <span className="text-blue-600 font-bold text-[9px] uppercase">Corporate Path</span>
-                <div className={`w-6 h-6 rounded-md text-white flex items-center justify-center shadow-xs transition-colors ${
-                  activeStream === "Commerce" ? "bg-blue-600" : "bg-slate-200 text-slate-400"
-                }`}>
-                  <ArrowRight className="w-3 h-3" />
+                <span className="text-[9px] font-bold uppercase text-blue-600">
+                  Corporate Path
+                </span>
+
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-md shadow-xs transition-colors ${
+                    activeStream === "Commerce"
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-400"
+                  }`}
+                >
+                  <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
             </motion.div>
 
-            {/* Arts Major */}
             <motion.div
               whileHover={{ y: -3, border: "1px solid #6366f1" }}
               onClick={() => handleStreamClick("Arts")}
-              className={`border p-4 rounded-xl cursor-pointer transition-all flex flex-col justify-between space-y-4 shadow-xs ${
-                activeStream === "Arts" ? "bg-blue-50/40 border-blue-500" : "bg-white border-slate-200"
+              className={`flex cursor-pointer flex-col justify-between space-y-4 rounded-xl border p-4 shadow-xs transition-all ${
+                activeStream === "Arts"
+                  ? "border-blue-500 bg-blue-50/40"
+                  : "border-slate-200 bg-white"
               }`}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-blue-50 text-blue-600 p-2 rounded-lg flex items-center justify-center">
-                    <History className="w-4 h-4" />
+                  <div className="flex items-center justify-center rounded-lg bg-blue-50 p-2 text-blue-600">
+                    <History className="h-4 w-4" />
                   </div>
+
                   <div>
-                    <h4 className="font-display font-bold text-xs text-slate-900">Arts Stream</h4>
-                    <span className="text-[9px] text-slate-400 block leading-none mt-0.5">CLAT & Administrative</span>
+                    <h4 className="font-display text-xs font-bold text-slate-900">
+                      Arts Stream
+                    </h4>
+
+                    <span className="mt-0.5 block text-[9px] leading-none text-slate-400">
+                      CLAT & Administrative
+                    </span>
                   </div>
                 </div>
-                <div className="bg-slate-100 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded">HSC/State</div>
+
+                <div className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
+                  HSC/State
+                </div>
               </div>
-              <p className="text-slate-500 text-[11px] leading-relaxed font-semibold">
-                Drawing, Applied Arts, Fine Arts, Design sensitivity & Literature foundations.
+
+              <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
+                Drawing, Applied Arts, Fine Arts, Design sensitivity &
+                Literature foundations.
               </p>
+
               <div className="flex items-center justify-between pt-2">
-                <span className="text-blue-600 font-bold text-[9px] uppercase">Creative Lead</span>
-                <div className={`w-6 h-6 rounded-md text-white flex items-center justify-center shadow-xs transition-colors ${
-                  activeStream === "Arts" ? "bg-blue-600" : "bg-slate-200 text-slate-400"
-                }`}>
-                  <ArrowRight className="w-3 h-3" />
+                <span className="text-[9px] font-bold uppercase text-blue-600">
+                  Creative Lead
+                </span>
+
+                <div
+                  className={`flex h-6 w-6 items-center justify-center rounded-md shadow-xs transition-colors ${
+                    activeStream === "Arts"
+                      ? "bg-blue-600 text-white"
+                      : "bg-slate-200 text-slate-400"
+                  }`}
+                >
+                  <ArrowRight className="h-3 w-3" />
                 </div>
               </div>
             </motion.div>
@@ -585,48 +697,59 @@ const handleStreamClick = (
         </div>
       )}
 
-      {/* 5. Sub grid of other courses targeting this active tab section */}
       {tabCourses.length > 1 && (
         <div className="space-y-4 pt-4">
-          <h4 className="font-display font-semibold text-xs text-slate-900 tracking-tight uppercase">
+          <h4 className="font-display text-xs font-semibold uppercase tracking-tight text-slate-900">
             Additional Programs in {activeTab}
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tabCourses.map((course, idx) => {
-              if (idx === spotlightIndex) return null; // skip current highlighted
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {tabCourses.map((course, courseIndex) => {
+              if (courseIndex === spotlightIndex) {
+                return null;
+              }
+
               return (
                 <motion.div
                   key={course.id}
-                  whileHover={{ y: -3, boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)" }}
-                  className="bg-white border border-slate-200 p-5 rounded-xl flex flex-col justify-between space-y-4 shadow-sm"
+                  whileHover={{
+                    y: -3,
+                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
+                  }}
+                  className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="bg-slate-50 text-slate-500 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border border-slate-200">
+                      <span className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
                         {course.stream} Stream
                       </span>
-                      <span className="text-slate-400 text-[9px] font-bold">{course.duration}</span>
+
+                      <span className="text-[9px] font-bold text-slate-400">
+                        {course.duration}
+                      </span>
                     </div>
 
-                    <h5 className="font-display font-bold text-[14px] text-slate-800 leading-tight">
+                    <h5 className="font-display text-[14px] font-bold leading-tight text-slate-800">
                       {course.title}
                     </h5>
 
-                    <p className="text-slate-500 text-[11px] font-medium leading-relaxed line-clamp-2">
+                    <p className="line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500">
                       {course.summary}
                     </p>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded">
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                    <span className="rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                       {course.mode}
                     </span>
+
                     <button
+                      type="button"
                       onClick={() => onSelectCourse(course)}
-                      className="text-xs text-blue-600 font-bold flex items-center space-x-1 hover:text-blue-700 cursor-pointer"
+                      className="flex cursor-pointer items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-700"
                     >
                       <span>Explore</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
+                      <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </motion.div>

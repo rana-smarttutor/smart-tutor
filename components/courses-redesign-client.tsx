@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Sparkles,
   Trophy,
@@ -26,10 +27,31 @@ interface CoursesRedesignClientProps {
   allCourses: CourseItem[];
 }
 
+const COURSE_TABS = [
+  "Class 6-8",
+  "Class 9-10",
+  "Class 11-12",
+  "Govt Exams",
+  "Skills",
+] as const;
+
+function isCourseTab(tab: string | null): tab is (typeof COURSE_TABS)[number] {
+  return tab !== null && COURSE_TABS.includes(tab as (typeof COURSE_TABS)[number]);
+}
+
 export default function CoursesRedesignClient({
   allCourses,
 }: CoursesRedesignClientProps) {
-  const [activeTab, setActiveTab] = useState("Class 11-12");
+  const searchParams = useSearchParams();
+const requestedTab = searchParams.get("tab");
+
+const [activeTab, setActiveTab] = useState("Class 6-8");
+
+useEffect(() => {
+  if (isCourseTab(requestedTab)) {
+    setActiveTab(requestedTab);
+  }
+}, [requestedTab]);
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
 
   // Quick stats definitions

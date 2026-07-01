@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import { useRef } from "react";
 import Link from "next/link";
 
 interface Program {
@@ -9,32 +9,86 @@ interface Program {
   duration: string;
   description: string;
   focus: string[];
-  stage?: string;
-  color?: string;
+  targetTab: string;
 }
 
 interface ProgramCarouselProps {
   programs: Program[];
 }
 
+const HOME_PROGRAMS: Program[] = [
+  {
+    category: "School Foundation",
+    title: "Class 6 to 8 Foundation",
+    duration: "Academic Year",
+    description:
+      "Build strong subject clarity, study habits, and confidence across core school subjects.",
+    focus: ["Maths", "Science"],
+    targetTab: "Class 6-8",
+  },
+  {
+    category: "Board Preparation",
+    title: "Class 9 to 10 Success",
+    duration: "Year-Round",
+    description:
+      "Focused board preparation with concept clarity, revision plans, tests, and expert guidance.",
+    focus: ["Board Revision", "Concept Clarity"],
+    targetTab: "Class 9-10",
+  },
+  {
+    category: "Senior Secondary",
+    title: "Class 11 to 12 Academic Excellence",
+    duration: "Semester-Based",
+    description:
+      "Structured support for Science, Commerce, and Arts streams with board-focused preparation.",
+    focus: ["Science", "Commerce & Arts"],
+    targetTab: "Class 11-12",
+  },
+  {
+    category: "Entrance Exams",
+    title: "JEE, NEET, CET, and CUET",
+    duration: "Batch-Based",
+    description:
+      "Targeted entrance preparation for engineering, medical, university, and professional pathways.",
+    focus: ["JEE / NEET", "CET / CUET"],
+    targetTab: "Class 11-12",
+  },
+  {
+    category: "Competitive Exams",
+    title: "Government Exam Preparation",
+    duration: "Long-Term",
+    description:
+      "Complete preparation for UPSC, SSC, Banking, Railway, Police, NDA, CDS, and Defence exams.",
+    focus: ["UPSC / SSC", "Banking / Defence"],
+    targetTab: "Govt Exams",
+  },
+  {
+    category: "Career Skills",
+    title: "Skill Development Programs",
+    duration: "Career-Ready",
+    description:
+      "Learn coding, AI, digital marketing, communication, finance, and professional career skills.",
+    focus: ["Coding & AI", "Digital Skills"],
+    targetTab: "Skills",
+  },
+];
+
 export function ProgramCarousel({ programs }: ProgramCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const visiblePrograms = programs.filter(
-    (program) => program.title !== "Class 1 to 5 Foundation",
-  );
+  const visiblePrograms =
+    HOME_PROGRAMS.length > 0 ? HOME_PROGRAMS : programs;
 
   const scroll = (direction: "left" | "right") => {
     if (!scrollRef.current) return;
 
     const { scrollLeft, clientWidth } = scrollRef.current;
-    const scrollTo =
-      direction === "left"
-        ? scrollLeft - clientWidth
-        : scrollLeft + clientWidth;
 
     scrollRef.current.scrollTo({
-      left: scrollTo,
+      left:
+        direction === "left"
+          ? scrollLeft - clientWidth
+          : scrollLeft + clientWidth,
       behavior: "smooth",
     });
   };
@@ -134,7 +188,7 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
 
           return (
             <div
-              key={`${program.title}-${index}`}
+              key={program.title}
               className="w-[220px] flex-shrink-0 snap-start sm:w-[240px]"
             >
               <article
@@ -142,7 +196,9 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
               >
                 <div className="mb-3 flex items-center justify-between gap-2">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                    <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${dotColor}`}
+                    />
                     {program.duration}
                   </span>
 
@@ -159,12 +215,12 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
                   {program.title}
                 </h3>
 
-                <p className="mb-3 line-clamp-2 flex-grow text-[11px] font-medium leading-relaxed text-slate-500">
+                <p className="mb-3 line-clamp-3 flex-grow text-[11px] font-medium leading-relaxed text-slate-500">
                   {program.description}
                 </p>
 
                 <div className="mb-3 flex flex-wrap gap-1">
-                  {program.focus.slice(0, 2).map((focus) => (
+                  {program.focus.map((focus) => (
                     <span
                       key={focus}
                       className="rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-600"
@@ -175,7 +231,7 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
                 </div>
 
                 <Link
-                  href="/courses"
+                  href={`/courses?tab=${encodeURIComponent(program.targetTab)}`}
                   className={`mt-auto inline-flex items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${buttonColor}`}
                 >
                   View Program

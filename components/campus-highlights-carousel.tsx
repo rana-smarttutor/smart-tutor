@@ -15,11 +15,13 @@ const HIGHLIGHTS = [
   },
   ...generatedPlacedStudents.map((student) => ({
     name: student.name,
-    result: student.rank
-      ? `Rank ${student.rank}`
-      : student.marks
-        ? `${student.marks} Percentile`
-        : "",
+result: student.rank
+  ? student.rank.toLowerCase().startsWith("rank")
+    ? student.rank
+    : `Rank ${student.rank}`
+  : student.marks
+    ? `${student.marks} Percentile`
+    : "",
     exam: student.examName,
     image: student.image,
     type: student.rank ? "rank" : "percentile",
@@ -139,11 +141,7 @@ export function CampusHighlightsCarousel() {
                   {highlight.name}
                 </h3>
 
-                {highlight.name !== "Smart Tutors" && (
-                  <p className="mt-2 text-xs font-black uppercase tracking-[0.4em] text-blue-600">
-                    Verified Success
-                  </p>
-                )}
+
               </div>
             </div>
           ))}
