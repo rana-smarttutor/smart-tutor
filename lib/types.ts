@@ -412,6 +412,10 @@ export type Enquiry = {
   message: string;
   createdAt: string;
   status: EnquiryStatus;
+  suggestedCourses?: {
+    standardKey: string;
+    title: string;
+  }[];
 };
 
 // =========================

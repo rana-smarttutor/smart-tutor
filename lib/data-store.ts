@@ -96,10 +96,12 @@ export async function createEnquiry(input: {
   courseTitle: string;
   courseKey: string;
   message: string;
+  suggestedCourses?: { standardKey: string; title: string }[];
 }) {
   const collection = await getCollection(COLLECTIONS.enquiries);
   const enquiry = {
     ...input,
+    suggestedCourses: input.suggestedCourses?.length ? input.suggestedCourses : [],
     createdAt: new Date().toISOString(),
     status: "new",
   };

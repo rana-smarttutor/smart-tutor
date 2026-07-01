@@ -87,7 +87,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "verification_token", // PLACEHOLDER: Replace with actual token from Google Search Console
+    google: "add_your_google_search_console_verification_code_here",
   },
   category: 'education',
   icons: {

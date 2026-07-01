@@ -68,7 +68,7 @@ useEffect(() => {
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-950"
     >
       {/* 2. Main Hero Context Section */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12 sm:space-y-16">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-8 sm:pb-12 space-y-12 sm:space-y-16">
         {/* Visual Greetings Banner */}
         <section className="bg-white border border-slate-200 p-6 sm:p-8 rounded-xl shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="absolute top-0 right-0 w-44 h-44 bg-indigo-50/20 rounded-full blur-2xl pointer-events-none" />
@@ -160,7 +160,7 @@ useEffect(() => {
                 onClick={() => {
                   const fallbackCourse =
                     allCourses.find(
-                      (c) => c.standardKey === "class-6-8-regular-academic",
+                      (c) => c.standardKey === "class-6-regular-academic",
                     ) || allCourses[0];
                   setSelectedCourse(fallbackCourse);
                 }}

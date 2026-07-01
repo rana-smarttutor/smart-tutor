@@ -15,12 +15,6 @@
 - The standardized course library now covers primary, middle school, secondary, senior secondary, junior college, diploma, graduation, entrance exams, government exams, and counselling tracks.
 - User integrity now requires one unique person id and one unique email per user, with no guest accounts stored in the user system.
 
-## Demo credentials
-
-- Student: `riya@smarttutors.demo` / `Student@123`
-- Educator: `amit@smarttutors.demo` / `Educator@123`
-- Admin: `admin@smarttutors.demo` / `Admin@123`
-
 ## Core files
 
 - `app/page.tsx`: landing page
@@ -34,10 +28,8 @@
 - `app/api/courses/details/route.ts`: live detailed course feed for the public catalog
 - `components/theme-provider.tsx`: theme state
 - `components/real-login-form.tsx`: username/email + password sign-in
-- `components/mock-login-form.tsx`: direct demo access flow
 - `components/logout-button.tsx`: session cleanup flow
 - `components/dashboard-course-manager.tsx`: admin course creation and editing
-- `components/course-catalog-client.tsx`: public course catalog fetch + local cache wrapper
 - `lib/mock-data.ts`: template seed source only
 - `lib/data-store.ts`: Mongo-backed runtime repository for auth, public content, dashboard data, and writes
 - `lib/auth.ts`: cookie session helpers
@@ -45,6 +37,11 @@
 - `lib/mongodb.ts`: MongoDB client utility
 - `lib/seed-database.ts`: collection bootstrap logic for direct Mongo template upload
 - `lib/course-library.ts`: standardized course-name source and template definitions
+
+## Architecture
+
+- **Proxy (`proxy.ts`)**: Next.js 16 proxy file at root. Handles auth guard (redirects unauthenticated users to `/login`), SEO (crawlers bypass auth), and security headers. All route protection lives here — do not create separate middleware.
+- **Route protection**: Public routes are defined in `proxy.ts`. Dashboard and authenticated pages get automatic redirect. API routes are protected per-route using `getSessionUser()` from `lib/auth.ts`.
 
 ## Working rules
 
@@ -72,6 +69,26 @@
 - Keep school-stage coverage explicit in course templates. If Smart Tutors adds a new academic branch, extend `lib/course-library.ts` first and then update public-facing summary copy in `lib/mock-data.ts`.
 - Interactive public modules like course popups and mock tests should read from Mongo-backed routes or repository functions, not from page-local arrays.
 - Keep public institute identity details such as primary phone, WhatsApp, Instagram, and leadership info centralized in `lib/mock-data.ts` so the Mongo bootstrap content and UI stay aligned.
+
+## Testing
+
+Tests live in `__tests__/` (unit) and `scripts/` (integration/stress/security).
+
+```bash
+npm test              # Jest unit tests
+npm run test:api      # API endpoint health checks
+npm run test:stress   # Concurrent load testing
+npm run test:security # XSS, injection, CORS, path traversal audit
+```
+
+## Build & Deploy
+
+```bash
+npm run build         # Production build (zero errors required)
+npm run typecheck     # TypeScript check
+```
+
+Vercel deployment uses `vercel.json` for routing, headers, CORS, and regions.
 
 ## Suggested next milestones
 

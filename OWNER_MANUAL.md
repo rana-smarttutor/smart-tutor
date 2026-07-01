@@ -142,21 +142,52 @@ The AI Assistant is a key differentiator for your institute, providing 24/7 acad
 
 ---
 
-## 10. Testing & Verification Accounts
+## 10. Testing & Verification
 
-For testing the platform features, use the following bootstrapped demo accounts. **Note:** These are for development/staging environments.
-
-| Role | Email | Password | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin@smarttutors.co.in` | `admin123` | Full control, user management, and global settings. |
-| **Educator**| `faculty@smarttutors.co.in`| `faculty123` | Create tests, manage library, and generate performance reports. |
-| **Student** | `student@smarttutors.co.in`| `student123` | View courses, take tests, and analyze performance reports. |
+Test accounts are created during database bootstrap. Ask your technical lead for the current set of demo credentials.
 
 ### Verification Steps:
-1.  **Faculty:** Log in with `faculty@smarttutors.co.in`, go to "Analytics Hub", and create a report for "Student Workspace".
-2.  **Student:** Log in with `student@smarttutors.co.in`, go to "Performance", and verify the charts and PDF download functionality.
+1.  **Faculty:** Log in, go to "Analytics Hub", and create a report for a student.
+2.  **Student:** Log in, go to "Performance", and verify the charts and PDF download functionality.
+
+---
+
+## 11. Production Deployment
+
+### Deploying to Vercel
+1. Connect your Git repository to [Vercel](https://vercel.com).
+2. Configure the following **Environment Variables** in the Vercel dashboard:
+
+| Variable | Description |
+| :--- | :--- |
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `MONGODB_DB` | Database name |
+| `MONGODB_BOOTSTRAP_KEY` | Secret key for bootstrap endpoint |
+| `SESSION_SECRET` | Random 64-char string for session signing |
+| `GEMINI_API_KEY` | Google Gemini AI API key |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `RAZORPAY_KEY_ID` | Razorpay payment gateway key |
+| `RAZORPAY_KEY_SECRET` | Razorpay payment gateway secret |
+| `BLOB_READ_WRITE_TOKEN` | Vercel Blob storage token |
+
+3. Deploy — the included `vercel.json` handles routing, headers, and CORS.
+
+### Running Tests
+```bash
+# Unit tests (validation, auth)
+npm test
+
+# API health checks (requires server running)
+npm run test:api
+
+# Load test (20 concurrent users × 10 requests each)
+npm run test:stress
+
+# Security audit (XSS, injection, path traversal, CORS)
+npm run test:security
+```
 
 ---
 
 **Support Contact:**
-For technical issues or advanced configuration, please contact your technical lead or the Smart Tutors support team at `ankitmali50@gmail.com`.
+For technical issues or advanced configuration, please contact your technical lead.

@@ -1,93 +1,155 @@
-# Smart Tutors: The Complete Academic Empowerment Platform
+# Smart Tutors — Academic Empowerment Platform
 
-Smart Tutors is a production-grade educational ecosystem designed for a Vashi-based institute. It bridges the gap between traditional coaching and digital-first learning through a sophisticated Next.js architecture, MongoDB persistence, and an integrated AI mentoring system.
-
----
-
-## 🌟 Key Features
-
-### 🏛️ Public Engagement
-- **Dynamic Landing Page**: Polished storytelling with animated reveals, institute branding, and achievement showcases.
-- **Interactive Course Catalog**: Real-time course feed from MongoDB with smart client-side caching for instant browsing.
-- **Achiever Section**: Animated "Placed Students" wall to build parental trust and institutional credibility.
-- **Growth Metrics**: Real-time counters for student success, active enrollments, book downloads, and platform visitors.
-
-### 🎓 Role-Aware Workspaces
-- **Student Dashboard**: Personalized view of study priorities, revision schedules, notices, and test results.
-- **Educator Desk**: High-visibility console for managing batches, issuing assessments, and coordinating learner feedback.
-- **Admin Command Center**: Total oversight of institute operations, including user account management and standardized curriculum control.
-
-### 🤖 SmartTutors AI Assistant
-- **24/7 Mentoring**: Expert guidance on study plans and exam preparation (UPSC, Boards, JEE/NEET).
-- **Document Analysis**: Students can upload study materials for the AI to analyze and provide contextual tutoring.
-- **Context-Aware Sessions**: The AI remembers student profiles to provide personalized academic advice.
-
-### 📚 Digital Resource Center
-- **Cloud-Backed Library**: Integrated Vercel Blob storage for textbooks and revision guides.
-- **Seamless Distribution**: Role-based access control for distributing materials to specific batches or individuals.
+Production-grade educational ecosystem for a Vashi-based institute. Next.js 16, MongoDB, AI mentoring.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- **Framework**: Next.js 15+ (App Router)
-- **UI Library**: React 19
-- **Styling**: Tailwind CSS v4 & Vanilla CSS
-- **Database**: MongoDB (Native Node Driver)
-- **Cloud Storage**: Vercel Blob Integration
-- **State Management**: React Hooks & Context
-- **Deployment**: Vercel-optimized
+| Layer | Choice |
+|-------|--------|
+| **Framework** | Next.js 16 (App Router, Turbopack) |
+| **UI** | React 19, Tailwind CSS v4 |
+| **Database** | MongoDB 7 (Native Driver) |
+| **Storage** | Vercel Blob + Mega.nz |
+| **AI** | Gemini API, OpenAI API |
+| **Auth** | HMAC-signed cookie sessions |
+| **Charts** | Recharts |
+| **Icons** | Lucide React, Motion |
+| **Deployment** | Vercel (configured via `vercel.json`) |
 
 ---
 
-## 🚀 Getting Started
-
-### 1. Environment Configuration
-Copy `example.env` to `.env.local` and provide your credentials:
+## Quick Start
 
 ```bash
-MONGODB_URI=your-mongodb-uri
-MONGODB_DB=smart_tutor
-MONGODB_BOOTSTRAP_KEY=your-secure-key
-BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
-```
-
-### 2. Database Initialization
-Before running the app, bootstrap your MongoDB cluster with the standard dataset:
-1. Start the development server: `npm run dev`
-2. Initialize the database via the bootstrap route (see `OWNER_MANUAL.md` for details).
-
-### 3. Development
-```bash
+cp example.env .env.local   # fill in your credentials
 npm install
-npm run dev
+npm run dev                 # http://localhost:3000
+```
+
+### First-time setup
+
+After starting the dev server, bootstrap the database:
+
+```bash
+curl -X POST http://localhost:3000/api/admin/bootstrap \
+  -H "x-bootstrap-key: YOUR_BOOTSTRAP_KEY"
 ```
 
 ---
 
-## 📖 Documentation
+## Project Structure
 
-- **[Owner & Admin Manual](./OWNER_MANUAL.md)**: A non-technical guide for institute owners to manage students, courses, and library content.
-- **[Team Guide](./docs/TEAM_GUIDE.md)**: Project conventions, architecture patterns, and contribution rules for developers.
-- **[Agent Instructions](./AGENTS.md)**: Specialized guidelines for AI-assisted development and maintenance.
+```
+├── app/                  # Next.js App Router pages + API routes
+│   ├── api/              #   47 route handlers
+│   ├── dashboard/        #   Role-aware dashboard
+│   ├── courses/          #   Public course catalog
+│   ├── library/          #   Digital library
+│   └── ...
+├── components/           # 46 React components
+├── lib/                  # Shared modules
+│   ├── auth.ts           #   Session cookie management
+│   ├── data-store.ts     #   MongoDB read/write operations
+│   ├── validation.ts     #   Input sanitization
+│   ├── mongodb.ts        #   Mongo client singleton
+│   └── mock-data.ts      #   Bootstrap template source
+├── proxy.ts              # Next.js 16 proxy (auth guard, SEO, security headers)
+├── vercel.json           # Vercel deployment configuration
+├── scripts/              # Integration, stress, and security test scripts
+├── __tests__/            # Unit tests
+└── docs/
+    ├── TEAM_GUIDE.md     # Developer conventions and architecture
+    └── AGENTS.md         # AI-assisted development rules
+```
 
 ---
 
-## 🔐 Security & Integrity
+## API Routes
 
-- **Role-Based Access Control (RBAC)**: Secure API routes and dashboard sections.
-- **User Integrity**: Enforced unique IDs and normalized email keys.
-- **Data Protection**: Environment-protected secrets and session-based authentication.
+All 47 API handlers live under `app/api/`:
+
+| Category | Routes |
+|----------|--------|
+| **Auth** | login, signup, logout, session |
+| **Users** | CRUD, verify, registered students |
+| **Courses** | listing, details |
+| **Tests** | CRUD, submissions, questions |
+| **Library** | books CRUD, upload, download, preview, sections |
+| **Dashboard** | aggregated data per role |
+| **Admin** | bootstrap, mongo-status, user/educator requests |
+| **Messaging** | messages, chat, enquiries |
+| **Payments** | Razorpay create-order, verify |
+| **Performance** | reports CRUD, photos, analytics |
+| **Mega.nz** | upload, stream, folders, delete |
+| **Mock Test** | quiz data, AI generation |
 
 ---
 
-## 📞 Contact & Support
+## Testing
 
-**Smart Tutors Academy**
-- **Location**: Sector 17, Vashi, Navi Mumbai
-- **Phone**: +91 88504 47887
-- **Email**: info@smarttutors.co.in
-- **Website**: [smarttutors.co.in](https://smarttutors.co.in)
+```bash
+npm test                  # Unit tests (validation, auth)
+npm run test:api          # API endpoint health checks
+npm run test:stress       # Load test (20 concurrent × 10 requests)
+npm run test:security     # Security audit (XSS, injection, CORS)
+```
+
+Test files:
+- `__tests__/validation.test.ts` — 30+ sanitization unit tests
+- `scripts/api-test.mjs` — endpoint availability + auth guard checks
+- `scripts/stress-test.mjs` — concurrent load with latency metrics
+- `scripts/security-test.mjs` — 20+ attack surface checks
 
 ---
-*Built with passion for academic excellence and student empowerment.*
+
+## Deployment
+
+```bash
+npm run build             # Zero-error production build
+```
+
+### Vercel
+
+1. Push to Git, import into Vercel.
+2. Set all env vars from `example.env` plus `SESSION_SECRET`.
+3. Deploy — `vercel.json` handles headers, CORS, redirects, and regions.
+
+### Required Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `MONGODB_URI` | Yes | MongoDB Atlas connection string |
+| `MONGODB_DB` | Yes | Database name |
+| `MONGODB_BOOTSTRAP_KEY` | Yes | Bootstrap endpoint secret |
+| `SESSION_SECRET` | Yes | 64-char random string for session HMAC |
+| `GEMINI_API_KEY` | No | Gemini AI (chatbot + quiz generation) |
+| `OPENAI_API_KEY` | No | OpenAI (fallback chatbot) |
+| `RAZORPAY_KEY_ID` | No | Razorpay payment gateway |
+| `RAZORPAY_KEY_SECRET` | No | Razorpay payment gateway |
+| `BLOB_READ_WRITE_TOKEN` | No | Vercel Blob (digital library) |
+
+---
+
+## Security
+
+- **Proxy** (`proxy.ts`): Auth guard with crawler bypass (SEO-friendly). Sets `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`.
+- **Input sanitization**: All user inputs pass through `lib/validation.ts` (XSS, control chars, length limits).
+- **Session auth**: HMAC-signed cookies, httpOnly, secure in production, 8-hour expiry.
+- **API auth**: Per-route `getSessionUser()` checks; 401 on missing/invalid session.
+
+---
+
+## Documentation
+
+- **[Owner Manual](./OWNER_MANUAL.md)** — Non-technical guide for institute administrators.
+- **[Team Guide](./docs/TEAM_GUIDE.md)** — Architecture, conventions, and contribution rules.
+- **[Agent Rules](./AGENTS.md)** — Guidelines for AI-assisted development.
+
+---
+
+## Contact
+
+**Smart Tutors Academy** — Sector 17, Vashi, Navi Mumbai
+- Website: [smarttutors.co.in](https://smarttutors.co.in)

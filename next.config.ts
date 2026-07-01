@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   compress: true,
   allowedDevOrigins: ["localhost", "127.0.0.1", ...localNetworkOrigins],
   experimental: {
-    optimizePackageImports: ["lucide-react", "framer-motion"], // Common heavy packages
+    optimizePackageImports: ["lucide-react", "motion"],
   },
   async headers() {
     return [

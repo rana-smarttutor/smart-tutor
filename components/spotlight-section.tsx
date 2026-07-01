@@ -39,8 +39,15 @@ function normaliseValue(value?: string) {
 
 function matchesActiveTab(course: CourseItem, activeTab: string) {
   const activeTabKey = normaliseValue(activeTab);
+  const sections = course.sections ?? [];
+  const hasSkillsSection = sections.some((s) => normaliseValue(s) === "skills");
 
-  return (course.sections ?? []).some((section) => {
+  // Skills courses only show under the "Skills" tab, not under class tabs
+  if (hasSkillsSection && activeTabKey !== "skills") {
+    return false;
+  }
+
+  return sections.some((section) => {
     const sectionKey = normaliseValue(section);
 
     return sectionKey === activeTabKey || sectionKey.startsWith(activeTabKey);
