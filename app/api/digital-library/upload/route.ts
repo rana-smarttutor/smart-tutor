@@ -88,11 +88,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       },
 
       onUploadCompleted: async ({ blob, tokenPayload }) => {
-        console.log('Digital library upload completed:', {
-          pathname: blob.pathname,
-          url: blob.url,
-          tokenPayload,
-        });
+        // Upload completed
       },
     });
 

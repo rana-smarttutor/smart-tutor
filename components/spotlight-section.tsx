@@ -150,14 +150,7 @@ export default function SpotlightSection({
   // Active stream filter state (specifically for Class 11-12)
   const [activeStream, setActiveStream] = useState<"Science" | "Commerce" | "Arts" | "All">("All");
 
-console.log(
-  "Commerce courses received:",
-  allCourses.filter(
-    (course) =>
-      course.sections?.includes("Class 11-12") &&
-      course.stream === "Commerce",
-  ),
-);
+// Commerce courses received
 
 useEffect(() => {
   const filteredCourses = allCourses.filter((course) => {

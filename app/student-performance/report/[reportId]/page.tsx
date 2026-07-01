@@ -12,7 +12,7 @@ type PageProps = {
 async function getReport(reportId: string) {
   try {
     if (!ObjectId.isValid(reportId)) {
-      console.log("Invalid report ID:", reportId);
+      // Invalid report ID
       return null;
     }
 
@@ -23,7 +23,7 @@ async function getReport(reportId: string) {
     });
 
     if (!report) {
-      console.log("No report found for ID:", reportId);
+      // No report found for ID
       return null;
     }
 

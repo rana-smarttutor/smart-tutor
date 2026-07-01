@@ -13,7 +13,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/quiz-arena`, lastModified: lastMod, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/contact`, lastModified: lastMod, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/library`, lastModified: lastMod, changeFrequency: 'weekly', priority: 0.7 },
-    { url: `${baseUrl}/digital-library`, lastModified: lastMod, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/signup`, lastModified: lastMod, changeFrequency: 'monthly', priority: 0.6 },
   ];
 
