@@ -19,6 +19,7 @@ import SpotlightSection from "@/components/spotlight-section";
 import SkillsGrid from "@/components/skills-grid";
 import WhyChooseSmartTutors from "@/components/why-choose-smart-tutors";
 import CourseModal from "@/components/course-modal";
+import SmartTutorsAIChatbot from "@/components/SmartTutorsAIChatbot";
 import WhatsAppFAB from "@/components/whatsapp-fab";
 
 import { CourseItem } from "@/lib/types";
@@ -28,8 +29,11 @@ interface CoursesRedesignClientProps {
 }
 
 const COURSE_TABS = [
-  "Class 6-8",
-  "Class 9-10",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
   "Class 11-12",
   "Govt Exams",
   "Skills",
@@ -45,7 +49,7 @@ export default function CoursesRedesignClient({
   const searchParams = useSearchParams();
 const requestedTab = searchParams.get("tab");
 
-const [activeTab, setActiveTab] = useState("Class 6-8");
+const [activeTab, setActiveTab] = useState("Class 6");
 
 useEffect(() => {
   if (isCourseTab(requestedTab)) {
@@ -190,6 +194,7 @@ useEffect(() => {
         onClose={() => setSelectedCourse(null)}
       />
 
+      <SmartTutorsAIChatbot />
       <WhatsAppFAB currentCourseTitle={selectedCourse?.title} />
     </div>
   );

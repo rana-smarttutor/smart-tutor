@@ -47,10 +47,19 @@ function matchesActiveTab(course: CourseItem, activeTab: string) {
     return false;
   }
 
+  const TAB_SECTION_MAP: Record<string, string[]> = {
+    class6: ["class6", "class68"],
+    class7: ["class7", "class68"],
+    class8: ["class8", "class68"],
+    class9: ["class9", "class910"],
+    class10: ["class10", "class910"],
+  };
+
+  const allowedSections = TAB_SECTION_MAP[activeTabKey] ?? [activeTabKey];
+
   return sections.some((section) => {
     const sectionKey = normaliseValue(section);
-
-    return sectionKey === activeTabKey || sectionKey.startsWith(activeTabKey);
+    return allowedSections.includes(sectionKey);
   });
 }
 
@@ -123,8 +132,11 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
 }
 
 const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
-  "Class 6-8": "/spotlight/class-6-8.jpeg",
-  "Class 9-10": "/spotlight/class-9-10.jpeg",
+  "Class 6": "/spotlight/class-6-8.jpeg",
+  "Class 7": "/spotlight/class-6-8.jpeg",
+  "Class 8": "/spotlight/class-6-8.jpeg",
+  "Class 9": "/spotlight/class-9-10.jpeg",
+  "Class 10": "/spotlight/class-9-10.jpeg",
   "Class 11-12": "/spotlight/class-11-12.jpeg",
   Skills: "/spotlight/skills.png",
   "Govt Exams": "/spotlight/govt-exams.jpeg",
@@ -137,8 +149,11 @@ export default function SpotlightSection({
   allCourses,
 }: SpotlightSectionProps) {
   const tabs = [
-    { id: "Class 6-8", label: "Class 6-8", icon: BookOpen },
-    { id: "Class 9-10", label: "Class 9-10", icon: School },
+    { id: "Class 6", label: "Class 6", icon: BookOpen },
+    { id: "Class 7", label: "Class 7", icon: BookOpen },
+    { id: "Class 8", label: "Class 8", icon: BookOpen },
+    { id: "Class 9", label: "Class 9", icon: School },
+    { id: "Class 10", label: "Class 10", icon: School },
     { id: "Class 11-12", label: "Class 11-12", icon: FlaskConical },
     { id: "Govt Exams", label: "Govt Exams", icon: FileText },
     { id: "Skills", label: "Skills Section", icon: Brain },
@@ -161,18 +176,23 @@ export default function SpotlightSection({
       return matchesSelectedStream(course, activeStream);
     });
 
-    const priorityStandardKey =
-      activeTab === "Class 6-8" ? "class-6-8-regular-academic" : null;
+    const priorityKeys: Record<string, string> = {
+      "Class 6": "class-6-regular-academic",
+      "Class 7": "class-7-regular-academic",
+      "Class 8": "class-8-regular-academic",
+      "Class 9": "class-9-regular-academic",
+      "Class 10": "class-10-regular-academic",
+    };
+
+    const priorityStandardKey = priorityKeys[activeTab] ?? null;
 
     if (priorityStandardKey) {
       filteredCourses.sort((firstCourse, secondCourse) => {
         const isFirstPriority =
-          firstCourse.standardKey === priorityStandardKey ||
-          firstCourse.title === "Class 6th-8th Regular Academic (State/CBSE)";
+          firstCourse.standardKey === priorityStandardKey;
 
         const isSecondPriority =
-          secondCourse.standardKey === priorityStandardKey ||
-          secondCourse.title === "Class 6th-8th Regular Academic (State/CBSE)";
+          secondCourse.standardKey === priorityStandardKey;
 
         if (isFirstPriority && !isSecondPriority) {
           return -1;
@@ -217,17 +237,41 @@ export default function SpotlightSection({
 
   const getSectionMetadata = () => {
     switch (activeTab) {
-      case "Class 6-8":
+      case "Class 6":
         return {
-          title: "Class 6-8 Programs",
+          title: "Class 6 Programs",
           desc: "Build a strong foundation for future success.",
           logoBg: "bg-blue-50 text-blue-600",
           logo: BookOpen,
         };
 
-      case "Class 9-10":
+      case "Class 7":
         return {
-          title: "Class 9-10 Programs",
+          title: "Class 7 Programs",
+          desc: "Build a strong foundation for future success.",
+          logoBg: "bg-blue-50 text-blue-600",
+          logo: BookOpen,
+        };
+
+      case "Class 8":
+        return {
+          title: "Class 8 Programs",
+          desc: "Build a strong foundation for future success.",
+          logoBg: "bg-blue-50 text-blue-600",
+          logo: BookOpen,
+        };
+
+      case "Class 9":
+        return {
+          title: "Class 9 Programs",
+          desc: "Master key concepts and excel in board exams.",
+          logoBg: "bg-blue-50 text-blue-600",
+          logo: School,
+        };
+
+      case "Class 10":
+        return {
+          title: "Class 10 Programs",
           desc: "Master key concepts and excel in board exams.",
           logoBg: "bg-blue-50 text-blue-600",
           logo: School,
@@ -739,6 +783,17 @@ export default function SpotlightSection({
                     <h5 className="font-display text-[14px] font-bold leading-tight text-slate-800">
                       {course.title}
                     </h5>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {course.sections?.map((section) => (
+                        <span
+                          key={section}
+                          className="rounded bg-indigo-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-indigo-600"
+                        >
+                          {section}
+                        </span>
+                      ))}
+                    </div>
 
                     <p className="line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500">
                       {course.summary}
