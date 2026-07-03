@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 
+import { CoursesHero } from "@/components/courses-hero";
 import CoursesRedesignClient from "@/components/courses-redesign-client";
 import { getAllDetailedCourses } from "@/lib/data-store";
 
@@ -41,6 +42,7 @@ export default async function CoursesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      <CoursesHero />
       <CoursesRedesignClient allCourses={courses} />
     </>
   );

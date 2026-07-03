@@ -1,16 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Sparkles,
-  Trophy,
-  BookOpen,
-  Star,
   HelpingHand,
-  MapPin,
-  Phone,
-  Mail,
 } from "@/components/ui-icons";
 import { motion } from "motion/react";
 
@@ -58,83 +51,40 @@ useEffect(() => {
 }, [requestedTab]);
   const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
 
-  // Quick stats definitions
-  const stats = [
-    { value: "10,000+", label: "Success stories" },
-    { value: "99.37%", label: "Max percentile" },
-    { value: "50+", label: "Academic programs" },
-    { value: "1-on-1", label: "Personal mentoring" },
-  ];
+  const searchQuery = searchParams.get("search") ?? "";
+
+  const filteredCourses = useMemo(() => {
+    if (!searchQuery.trim()) return allCourses;
+    const q = searchQuery.toLowerCase();
+    return allCourses.filter(
+      (c) =>
+        c.title.toLowerCase().includes(q) ||
+        c.category.toLowerCase().includes(q) ||
+        c.tagline.toLowerCase().includes(q) ||
+        c.summary.toLowerCase().includes(q) ||
+        c.subjectsCovered.some((s) => s.toLowerCase().includes(q)) ||
+        c.courseNamesIncluded.some((n) => n.toLowerCase().includes(q)),
+    );
+  }, [allCourses, searchQuery]);
 
   return (
     <div
       id="smart-tutors-root"
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-950"
     >
-      {/* 2. Main Hero Context Section */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-8 sm:pb-12 space-y-12 sm:space-y-16">
-        {/* Visual Greetings Banner */}
-        <section className="bg-white border border-slate-200 p-6 sm:p-8 rounded-xl shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="absolute top-0 right-0 w-44 h-44 bg-indigo-50/20 rounded-full blur-2xl pointer-events-none" />
-          <div className="space-y-2 relative z-10">
-            <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2.5 py-1 rounded uppercase tracking-wider flex items-center gap-1 w-max">
-              <Sparkles className="w-3.5 h-3.5" /> Direct Admissions Open
-              2026-2027
-            </span>
-            <h1 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-tight">
-              A Legacy of{" "}
-              <span className="text-indigo-600">Educational Excellence</span>
-            </h1>
-            <p className="text-slate-500 text-xs font-semibold max-w-xl leading-relaxed">
-              Explore dynamic classroom tracks, comprehensive syllabus
-              structures, and professional job-ready certification majors
-              curated by seasoned faculty boards.
-            </p>
-          </div>
-
-          {/* Core metrics counters */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg relative z-10 w-full md:max-w-xl">
-            {stats.map((stat, idx) => (
-              <div key={idx} className="text-center p-2">
-                <span className="font-display font-bold text-indigo-600 text-base sm:text-lg block leading-none">
-                  {stat.value}
-                </span>
-                <span className="text-slate-400 text-[9px] font-bold uppercase tracking-wider block mt-1.5 leading-tight">
-                  {stat.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 3. Interactive Tabbed Navigator & Spotlight Card Section */}
-        <section className="space-y-6">
-          <div className="text-center md:text-left space-y-1">
-            <span className="text-[10px] text-indigo-600 font-extrabold uppercase tracking-wider block font-mono">
-              program pathways
-            </span>
-            <h2 className="font-display font-bold text-xl sm:text-2xl text-slate-900 tracking-tight leading-none">
-              Explore Our Academic Catalog
-            </h2>
-            <p className="text-slate-500 text-xs font-semibold max-w-xl leading-relaxed">
-              Select your academic division below to browse targeted preparatory
-              programs, syllabus specifications, and toppers' boards.
-            </p>
-          </div>
-
-          <SpotlightSection
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            onSelectCourse={setSelectedCourse}
-            allCourses={allCourses}
-          />
-        </section>
+        <SpotlightSection
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onSelectCourse={setSelectedCourse}
+          allCourses={filteredCourses}
+        />
 
         {/* 4. Skills Section Specific Grid Display */}
         <section className="space-y-6">
           <SkillsGrid
             onSelectCourse={setSelectedCourse}
-            allCourses={allCourses}
+            allCourses={filteredCourses}
           />
         </section>
         {/* 5. Hall of Fame (Toppers Wall) Section */}
