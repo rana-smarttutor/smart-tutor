@@ -1,8 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import type { AttendanceSheet, ManagedUser, Role } from "@/lib/types";
+import type {
+  AttendanceSheet,
+  Batch,
+  LectureItem,
+  ManagedUser,
+  Role,
+} from "@/lib/types";
 
 type AttendanceManagerProps = {
   role: Role;
@@ -27,7 +33,10 @@ export function AttendanceManager({
 }: AttendanceManagerProps) {
   const canEdit = role === "admin" || role === "educator";
 
-  const [sheets, setSheets] = useState(attendanceSheets);
+  const [sheets, setSheets] = useState<AttendanceSheet[]>(attendanceSheets);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [lectures, setLectures] = useState<LectureItem[]>([]);
+
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
   const [sheetToDelete, setSheetToDelete] = useState<AttendanceSheet | null>(
     null,
@@ -35,19 +44,181 @@ export function AttendanceManager({
 
   const [title, setTitle] = useState("Daily Attendance");
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [batchName, setBatchName] = useState("");
+  const [batchId, setBatchId] = useState("");
   const [subject, setSubject] = useState("");
+  const [lectureId, setLectureId] = useState("");
+
+  const [isLoadingSetup, setIsLoadingSetup] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    setSheets(attendanceSheets);
+  }, [attendanceSheets]);
+
+  useEffect(() => {
+    if (!canEdit) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadSetupData() {
+      setIsLoadingSetup(true);
+
+      try {
+        const [batchResponse, lectureResponse] = await Promise.all([
+          fetch("/api/batches", {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+          }),
+          fetch("/api/lectures", {
+            method: "GET",
+            credentials: "same-origin",
+            cache: "no-store",
+          }),
+        ]);
+
+        const batchPayload = (await batchResponse.json()) as {
+          batches?: Batch[];
+        };
+
+        const lecturePayload = (await lectureResponse.json()) as {
+          lectures?: LectureItem[];
+        };
+
+        if (!cancelled) {
+          setBatches(batchPayload.batches ?? []);
+          setLectures(lecturePayload.lectures ?? []);
+        }
+      } catch {
+        if (!cancelled) {
+          setMessage("Unable to load batches and lectures.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingSetup(false);
+        }
+      }
+    }
+
+    void loadSetupData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canEdit]);
 
   const activeSheet = sheets.find((sheet) => sheet.id === activeSheetId);
 
+  const selectedBatch = useMemo(
+    () => batches.find((batch) => batch.id === batchId),
+    [batches, batchId],
+  );
+
+  const batchStudents = useMemo(() => {
+    if (!selectedBatch) {
+      return [];
+    }
+
+    return selectedBatch.studentIds
+      .map((studentId) =>
+        studentDirectory.find(
+          (student) => student.id === studentId && student.role === "student",
+        ),
+      )
+      .filter((student): student is ManagedUser => Boolean(student));
+  }, [selectedBatch, studentDirectory]);
+
+  const batchLectures = useMemo(() => {
+    if (!selectedBatch) {
+      return [];
+    }
+
+    return lectures.filter((lecture) => {
+      if (lecture.batchId === selectedBatch.id) {
+        return true;
+      }
+
+      return (
+        !lecture.batchId &&
+        lecture.batchName?.trim().toLowerCase() ===
+          selectedBatch.name.trim().toLowerCase()
+      );
+    });
+  }, [lectures, selectedBatch]);
+
+  const viewerStudentId = useMemo(() => {
+    if (role === "student") {
+      return userId;
+    }
+
+    if (role === "parent") {
+      const studentIds = new Set(
+        sheets.flatMap((sheet) =>
+          sheet.records.map((record) => record.studentId),
+        ),
+      );
+
+      if (studentIds.size === 1) {
+        return Array.from(studentIds)[0];
+      }
+    }
+
+    return undefined;
+  }, [role, sheets, userId]);
+
+  function getVisibleRecords(sheet: AttendanceSheet) {
+    if (canEdit) {
+      return sheet.records;
+    }
+
+    if (!viewerStudentId) {
+      return [];
+    }
+
+    return sheet.records.filter(
+      (record) => record.studentId === viewerStudentId,
+    );
+  }
+
+  function handleBatchChange(nextBatchId: string) {
+    setBatchId(nextBatchId);
+    setLectureId("");
+
+    const batch = batches.find((item) => item.id === nextBatchId);
+
+    if (batch?.subject) {
+      setSubject(batch.subject);
+    }
+  }
+
   async function createSheet() {
-    if (!canEdit || !studentDirectory.length) return;
+    if (!canEdit) {
+      return;
+    }
+
+    if (!title.trim()) {
+      setMessage("Attendance title is required.");
+      return;
+    }
+
+    if (!batchId || !selectedBatch) {
+      setMessage("Select a batch before creating attendance.");
+      return;
+    }
+
+    if (!batchStudents.length) {
+      setMessage("This batch has no students assigned yet.");
+      return;
+    }
 
     setIsSaving(true);
+    setMessage("");
 
-    const records = studentDirectory.map((student) => ({
+    const records = batchStudents.map((student) => ({
       studentId: student.id,
       studentName: student.name,
       status: "present" as AttendanceStatus,
@@ -61,20 +232,60 @@ export function AttendanceManager({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title,
+          title: title.trim(),
           date,
-          batchName,
-          subject,
+          batchName: selectedBatch.name,
+          batchId: selectedBatch.id,
+          lectureId: lectureId || undefined,
+          subject: subject.trim() || selectedBatch.subject || undefined,
           records,
         }),
       });
 
-      const payload = await response.json();
+      const payload = (await response.json()) as {
+        attendanceSheet?: AttendanceSheet;
+        error?: string;
+      };
 
-      if (response.ok && payload.attendanceSheet) {
-        setSheets((current) => [payload.attendanceSheet, ...current]);
-        setActiveSheetId(payload.attendanceSheet.id);
+      if (!response.ok || !payload.attendanceSheet) {
+        setMessage(payload.error ?? "Unable to create attendance sheet.");
+        return;
       }
+
+      const createdSheet = payload.attendanceSheet;
+
+      setSheets((current) => [createdSheet, ...current]);
+      setActiveSheetId(createdSheet.id);
+
+      if (lectureId) {
+        const lectureResponse = await fetch(`/api/lectures/${lectureId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            attendanceSheetId: createdSheet.id,
+          }),
+        });
+
+        const lecturePayload = (await lectureResponse.json()) as {
+          lecture?: LectureItem;
+        };
+
+        if (lectureResponse.ok && lecturePayload.lecture) {
+          setLectures((current) =>
+            current.map((lecture) =>
+              lecture.id === lectureId ? lecturePayload.lecture! : lecture,
+            ),
+          );
+        }
+      }
+
+      setMessage("Attendance sheet created successfully.");
+      setTitle("Daily Attendance");
+      setLectureId("");
+    } catch {
+      setMessage("Unable to create attendance sheet.");
     } finally {
       setIsSaving(false);
     }
@@ -85,35 +296,75 @@ export function AttendanceManager({
     studentId: string,
     status: AttendanceStatus,
   ) {
-    if (!canEdit) return;
+    if (!canEdit) {
+      return;
+    }
 
     const sheet = sheets.find((item) => item.id === sheetId);
 
-    if (!sheet) return;
+    if (!sheet) {
+      return;
+    }
+
+    const previousRecords = sheet.records;
 
     const updatedRecords = sheet.records.map((record) =>
       record.studentId === studentId ? { ...record, status } : record,
     );
 
-    const optimisticSheet = { ...sheet, records: updatedRecords };
-
     setSheets((current) =>
-      current.map((item) => (item.id === sheetId ? optimisticSheet : item)),
+      current.map((item) =>
+        item.id === sheetId ? { ...item, records: updatedRecords } : item,
+      ),
     );
 
-    await fetch(`/api/attendance/${sheetId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        records: updatedRecords,
-      }),
-    });
+    try {
+      const response = await fetch(`/api/attendance/${sheetId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          records: updatedRecords,
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        attendanceSheet?: AttendanceSheet;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.attendanceSheet) {
+        setSheets((current) =>
+          current.map((item) =>
+            item.id === sheetId ? { ...item, records: previousRecords } : item,
+          ),
+        );
+
+        setMessage(payload.error ?? "Unable to update attendance.");
+        return;
+      }
+
+      setSheets((current) =>
+        current.map((item) =>
+          item.id === sheetId ? payload.attendanceSheet! : item,
+        ),
+      );
+    } catch {
+      setSheets((current) =>
+        current.map((item) =>
+          item.id === sheetId ? { ...item, records: previousRecords } : item,
+        ),
+      );
+
+      setMessage("Unable to update attendance.");
+    }
   }
 
   async function deleteSheet(sheetId: string) {
-    if (!canEdit) return;
+    if (!canEdit) {
+      return;
+    }
 
     setDeletingId(sheetId);
 
@@ -122,15 +373,23 @@ export function AttendanceManager({
         method: "DELETE",
       });
 
-      if (response.ok) {
-        setSheets((current) => current.filter((sheet) => sheet.id !== sheetId));
-
-        if (activeSheetId === sheetId) {
-          setActiveSheetId(null);
-        }
-
-        setSheetToDelete(null);
+      if (!response.ok) {
+        setMessage("Unable to delete attendance sheet.");
+        return;
       }
+
+      setSheets((current) =>
+        current.filter((sheet) => sheet.id !== sheetId),
+      );
+
+      if (activeSheetId === sheetId) {
+        setActiveSheetId(null);
+      }
+
+      setSheetToDelete(null);
+      setMessage("Attendance sheet deleted.");
+    } catch {
+      setMessage("Unable to delete attendance sheet.");
     } finally {
       setDeletingId(null);
     }
@@ -153,29 +412,34 @@ export function AttendanceManager({
   }
 
   function getStudentAttendanceSummary() {
-    if (canEdit || !sheets.length) return null;
-
-    // For student role: use userId (their own ID)
-    // For parent role: find the student ID that appears in every sheet (the linked child)
-    const viewerStudentId = role === "student"
-      ? userId
-      : sheets.every((sheet) =>
-          sheet.records.some((r) => r.studentId === sheets[0].records[0]?.studentId),
-        )
-        ? sheets[0].records[0]?.studentId
-        : null;
-
-    if (!viewerStudentId) return null;
+    if (canEdit || !viewerStudentId || !sheets.length) {
+      return null;
+    }
 
     let totalPresent = 0;
+    let totalConducted = 0;
+
     for (const sheet of sheets) {
-      const record = sheet.records.find((r) => r.studentId === viewerStudentId);
-      if (record && (record.status === "present" || record.status === "late")) {
-        totalPresent++;
+      const record = sheet.records.find(
+        (item) => item.studentId === viewerStudentId,
+      );
+
+      if (!record) {
+        continue;
+      }
+
+      totalConducted += 1;
+
+      if (record.status === "present" || record.status === "late") {
+        totalPresent += 1;
       }
     }
 
-    return { totalConducted: sheets.length, totalPresent };
+    if (!totalConducted) {
+      return null;
+    }
+
+    return { totalConducted, totalPresent };
   }
 
   const attendanceSummary = getStudentAttendanceSummary();
@@ -192,6 +456,7 @@ export function AttendanceManager({
               {attendanceSummary.totalConducted}
             </p>
           </div>
+
           <div className="surface rounded-[2rem] p-5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
               Lectures Attended
@@ -200,12 +465,18 @@ export function AttendanceManager({
               {attendanceSummary.totalPresent}
             </p>
           </div>
+
           <div className="surface rounded-[2rem] p-5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
               Attendance %
             </p>
             <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-              {Math.round((attendanceSummary.totalPresent / attendanceSummary.totalConducted) * 100)}%
+              {Math.round(
+                (attendanceSummary.totalPresent /
+                  attendanceSummary.totalConducted) *
+                  100,
+              )}
+              %
             </p>
           </div>
         </div>
@@ -214,84 +485,151 @@ export function AttendanceManager({
       <div className="surface rounded-[2rem] p-6">
         <div className="flex flex-col gap-2">
           <p className="section-label">Attendance</p>
+
           <h2 className="text-2xl font-black text-[var(--color-heading)]">
-            Attendance Sheet
+            Batch Attendance
           </h2>
+
           <p className="text-sm text-[var(--color-muted)]">
             {canEdit
-              ? "Create, open, edit, and delete attendance sheets."
-              : "View attendance sheets shared by faculty."}
+              ? "Select an assigned batch, link a lecture if needed, and mark attendance only for students in that batch."
+              : "View attendance records shared for your learning program."}
           </p>
         </div>
 
-        {canEdit ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-5">
-            <label className="space-y-2">
-              <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                Title
-              </span>
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Daily Attendance"
-                className={fieldClass}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                Date
-              </span>
-              <input
-                type="date"
-                value={date}
-                onChange={(event) => setDate(event.target.value)}
-                className={fieldClass}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                Batch
-              </span>
-              <input
-                value={batchName}
-                onChange={(event) => setBatchName(event.target.value)}
-                placeholder="Batch name"
-                className={fieldClass}
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                Subject
-              </span>
-              <input
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-                placeholder="Subject"
-                className={fieldClass}
-              />
-            </label>
-
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={createSheet}
-                disabled={isSaving || !studentDirectory.length}
-                className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isSaving ? "Creating..." : "Create Sheet"}
-              </button>
-            </div>
+        {message ? (
+          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+            {message}
           </div>
         ) : null}
 
-        {canEdit && !studentDirectory.length ? (
-          <p className="mt-4 rounded-2xl border border-yellow-400/30 bg-yellow-400/10 p-4 text-sm font-semibold text-[var(--color-heading)]">
-            No students found. Add students first, then create attendance
-            sheets.
-          </p>
+        {canEdit ? (
+          <div className="mt-6">
+            {isLoadingSetup ? (
+              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4 text-sm text-[var(--color-muted)]">
+                Loading batches and lectures...
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+                <label className="space-y-2">
+                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                    Title
+                  </span>
+
+                  <input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    placeholder="Daily Attendance"
+                    className={fieldClass}
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                    Date
+                  </span>
+
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(event) => setDate(event.target.value)}
+                    className={fieldClass}
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                    Batch
+                  </span>
+
+                  <select
+                    value={batchId}
+                    onChange={(event) =>
+                      handleBatchChange(event.target.value)
+                    }
+                    className={fieldClass}
+                  >
+                    <option value="">Select batch</option>
+
+                    {batches.map((batch) => (
+                      <option key={batch.id} value={batch.id}>
+                        {batch.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                    Subject
+                  </span>
+
+                  <input
+                    value={subject}
+                    onChange={(event) => setSubject(event.target.value)}
+                    placeholder="Subject"
+                    className={fieldClass}
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                    Linked Lecture
+                  </span>
+
+                  <select
+                    value={lectureId}
+                    onChange={(event) => setLectureId(event.target.value)}
+                    disabled={!batchId}
+                    className={fieldClass}
+                  >
+                    <option value="">No linked lecture</option>
+
+                    {batchLectures.map((lecture) => (
+                      <option key={lecture.id} value={lecture.id}>
+                        {lecture.title} —{" "}
+                        {new Date(lecture.startsAt).toLocaleDateString(
+                          "en-IN",
+                        )}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={() => void createSheet()}
+                    disabled={isSaving || !batchId || !batchStudents.length}
+                    className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSaving ? "Creating..." : "Create Sheet"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!isLoadingSetup && !batches.length ? (
+              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-700">
+                No active batches are assigned. Create a batch and assign
+                students and faculty first.
+              </p>
+            ) : null}
+
+            {batchId && !batchStudents.length ? (
+              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-700">
+                This batch has no assigned students yet.
+              </p>
+            ) : null}
+
+            {batchStudents.length ? (
+              <p className="mt-4 text-xs font-semibold text-[var(--color-muted)]">
+                {batchStudents.length} student
+                {batchStudents.length === 1 ? "" : "s"} will be added to this
+                attendance sheet.
+              </p>
+            ) : null}
+          </div>
         ) : null}
       </div>
 
@@ -299,6 +637,7 @@ export function AttendanceManager({
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="section-label">Saved Sheets</p>
+
             <h3 className="text-xl font-black text-[var(--color-heading)]">
               Attendance Sheet List
             </h3>
@@ -327,6 +666,7 @@ export function AttendanceManager({
                       <h4 className="font-black text-[var(--color-heading)]">
                         {sheet.title}
                       </h4>
+
                       <p className="mt-1 text-sm text-[var(--color-muted)]">
                         {sheet.date}
                         {sheet.batchName ? ` • ${sheet.batchName}` : ""}
@@ -335,15 +675,21 @@ export function AttendanceManager({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-black text-green-600 ">
-                        Present {summary.present}
-                      </span>
-                      <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-black text-red-600 ">
-                        Absent {summary.absent}
-                      </span>
-                      <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-700 ">
-                        Late {summary.late}
-                      </span>
+                      {canEdit ? (
+                        <>
+                          <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-black text-green-600">
+                            Present {summary.present}
+                          </span>
+
+                          <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-black text-red-600">
+                            Absent {summary.absent}
+                          </span>
+
+                          <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-700">
+                            Late {summary.late}
+                          </span>
+                        </>
+                      ) : null}
 
                       <button
                         type="button"
@@ -360,7 +706,7 @@ export function AttendanceManager({
                           type="button"
                           onClick={() => setSheetToDelete(sheet)}
                           disabled={deletingId === sheet.id}
-                          className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60 "
+                          className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60"
                         >
                           {deletingId === sheet.id ? "Deleting..." : "Delete"}
                         </button>
@@ -375,9 +721,10 @@ export function AttendanceManager({
               <h3 className="text-lg font-black text-[var(--color-heading)]">
                 No attendance sheets yet
               </h3>
+
               <p className="mt-2 text-sm text-[var(--color-muted)]">
                 {canEdit
-                  ? "Create your first attendance sheet above."
+                  ? "Create attendance from an assigned batch above."
                   : "Attendance records will appear here once faculty updates them."}
               </p>
             </div>
@@ -390,9 +737,11 @@ export function AttendanceManager({
           <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="section-label">Open Sheet</p>
+
               <h3 className="text-lg font-black text-[var(--color-heading)]">
                 {activeSheet.title}
               </h3>
+
               <p className="text-sm text-[var(--color-muted)]">
                 {activeSheet.date}
                 {activeSheet.batchName ? ` • ${activeSheet.batchName}` : ""}
@@ -401,7 +750,8 @@ export function AttendanceManager({
             </div>
 
             <span className="pill w-fit">
-              {activeSheet.records.length} Students
+              {getVisibleRecords(activeSheet).length} Student
+              {getVisibleRecords(activeSheet).length === 1 ? "" : "s"}
             </span>
           </div>
 
@@ -416,7 +766,7 @@ export function AttendanceManager({
               </thead>
 
               <tbody>
-                {activeSheet.records.map((record) => (
+                {getVisibleRecords(activeSheet).map((record) => (
                   <tr
                     key={record.studentId}
                     className="border-b border-[var(--color-border)] last:border-0"
@@ -430,7 +780,7 @@ export function AttendanceManager({
                         <select
                           value={record.status}
                           onChange={(event) =>
-                            updateStatus(
+                            void updateStatus(
                               activeSheet.id,
                               record.studentId,
                               event.target.value as AttendanceStatus,
@@ -455,6 +805,17 @@ export function AttendanceManager({
                     </td>
                   </tr>
                 ))}
+
+                {!getVisibleRecords(activeSheet).length ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="py-8 text-center text-sm text-[var(--color-muted)]"
+                    >
+                      No attendance record is available for this account.
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
           </div>
@@ -488,6 +849,7 @@ export function AttendanceManager({
                   : ""}
                 {sheetToDelete.subject ? ` • ${sheetToDelete.subject}` : ""}
               </p>
+
               <p className="mt-1 text-xs text-[var(--color-muted)]">
                 {sheetToDelete.records.length} students included
               </p>
@@ -505,11 +867,13 @@ export function AttendanceManager({
 
               <button
                 type="button"
-                onClick={() => deleteSheet(sheetToDelete.id)}
+                onClick={() => void deleteSheet(sheetToDelete.id)}
                 disabled={deletingId === sheetToDelete.id}
                 className="flex-1 rounded-full border border-red-400/30 bg-red-500 px-5 py-3 text-sm font-black text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {deletingId === sheetToDelete.id ? "Deleting..." : "Yes, Delete"}
+                {deletingId === sheetToDelete.id
+                  ? "Deleting..."
+                  : "Yes, Delete"}
               </button>
             </div>
           </div>

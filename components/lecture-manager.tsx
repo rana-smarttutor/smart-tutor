@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
-import type { LectureItem, ManagedUser, Role } from "@/lib/types";
+import type { Batch, LectureItem, ManagedUser, Role } from "@/lib/types";
 
 type LectureManagerProps = {
   role: Role;
@@ -10,240 +15,59 @@ type LectureManagerProps = {
   studentDirectory: ManagedUser[];
 };
 
-type SelectOption = {
-  label: string;
-  value: string;
+type LectureStatus = "scheduled" | "completed" | "cancelled";
+
+type ReportDraft = {
+  topicCovered: string;
+  homeworkGiven: string;
+  assignmentGiven: string;
+  revisionTask: string;
+  doubtsSolved: string;
+  nextTopic: string;
 };
 
 const fieldClass =
   "w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none placeholder:text-[var(--color-muted)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
-const checkboxLabelClass =
-  "flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm font-bold text-[var(--color-heading)] shadow-sm";
+const textareaClass =
+  "min-h-24 w-full resize-y rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none placeholder:text-[var(--color-muted)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
-const statusOptions: SelectOption[] = [
-  { label: "Scheduled", value: "scheduled" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
-];
+const emptyReport: ReportDraft = {
+  topicCovered: "",
+  homeworkGiven: "",
+  assignmentGiven: "",
+  revisionTask: "",
+  doubtsSolved: "",
+  nextTopic: "",
+};
 
 function FieldLabel({
   label,
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <div className="relative space-y-2">
+    <label className="block space-y-2">
       <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
         {label}
       </span>
       {children}
-    </div>
+    </label>
   );
 }
 
-const fallbackDropdownTheme = {
-  backgroundColor: "#ffffff",
-  color: "#0f172a",
-  borderColor: "#cbd5e1",
-};
-
-type DropdownTheme = typeof fallbackDropdownTheme;
-
-function parseColor(color: string) {
-  const value = color.trim();
-
-  if (value.startsWith("#")) {
-    const hex = value.replace("#", "");
-
-    if (hex.length === 3) {
-      return hex.split("").map((char) => parseInt(char + char, 16));
-    }
-
-    if (hex.length >= 6) {
-      return [
-        parseInt(hex.slice(0, 2), 16),
-        parseInt(hex.slice(2, 4), 16),
-        parseInt(hex.slice(4, 6), 16),
-      ];
-    }
+function getStatusClass(status: LectureStatus) {
+  if (status === "completed") {
+    return "bg-emerald-100 text-emerald-700";
   }
 
-  const match = value.match(/rgba?\(([^)]+)\)/);
-
-  if (!match) return null;
-
-  const parts = match[1]
-    .split(",")
-    .slice(0, 3)
-    .map((part) => Number.parseFloat(part.trim()));
-
-  if (parts.some((part) => Number.isNaN(part))) return null;
-
-  return parts;
-}
-
-function getLuminance(color: string) {
-  const rgb = parseColor(color);
-
-  if (!rgb) return 0;
-
-  const [r, g, b] = rgb.map((value) => {
-    const channel = value / 255;
-
-    return channel <= 0.03928
-      ? channel / 12.92
-      : Math.pow((channel + 0.055) / 1.055, 2.4);
-  });
-
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-function readCssVariable(name: string) {
-  if (typeof window === "undefined") return "";
-
-  const rootValue = getComputedStyle(document.documentElement)
-    .getPropertyValue(name)
-    .trim();
-
-  if (rootValue) return rootValue;
-
-  return getComputedStyle(document.body).getPropertyValue(name).trim();
-}
-
-function getDropdownTheme(): DropdownTheme {
-  if (typeof window === "undefined") {
-    return fallbackDropdownTheme;
+  if (status === "cancelled") {
+    return "bg-rose-100 text-rose-700";
   }
 
-  const headingColor =
-    readCssVariable("--color-heading") ||
-    getComputedStyle(document.body).color ||
-    fallbackDropdownTheme.color;
-
-  const borderColor =
-    readCssVariable("--color-border") || fallbackDropdownTheme.borderColor;
-
-  const isDarkTheme = getLuminance(headingColor) > 0.55;
-
-  return {
-    backgroundColor: isDarkTheme ? "#020617" : "#ffffff",
-    color: headingColor,
-    borderColor,
-  };
-}
-
-function useDropdownTheme() {
-  const [theme, setTheme] = useState<DropdownTheme>(fallbackDropdownTheme);
-
-  useEffect(() => {
-    function updateTheme() {
-      setTheme(getDropdownTheme());
-    }
-
-    updateTheme();
-
-    const observer = new MutationObserver(updateTheme);
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class", "style", "data-theme"],
-    });
-
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ["class", "style", "data-theme"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  return theme;
-}
-
-function CustomSelect({
-  value,
-  options,
-  onChange,
-  placeholder = "Select",
-  small = false,
-}: {
-  value: string;
-  options: SelectOption[];
-  onChange: (value: string) => void;
-  placeholder?: string;
-  small?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const dropdownTheme = useDropdownTheme();
-
-  const selectedLabel =
-    options.find((option) => option.value === value)?.label ?? placeholder;
-
-  return (
-    <div className={`relative ${open ? "z-[9999]" : "z-30"}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((current) => !current)}
-        style={dropdownTheme}
-        className={`flex w-full items-center justify-between gap-3 border text-left font-semibold shadow-sm outline-none transition hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 ${
-          small
-            ? "rounded-xl px-3 py-2 text-sm"
-            : "rounded-2xl px-4 py-3 text-sm"
-        }`}
-      >
-        <span className="truncate">{selectedLabel}</span>
-        <span className="text-xs opacity-70">▾</span>
-      </button>
-
-      {open ? (
-        <>
-          <button
-            type="button"
-            aria-label="Close dropdown"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[9998] cursor-default bg-transparent"
-          />
-
-          <div
-            style={dropdownTheme}
-            className="absolute left-0 top-full z-[9999] mt-1 w-full overflow-hidden rounded-xl border shadow-2xl"
-          >
-            <div className="max-h-44 overflow-y-auto">
-              {options.map((option) => {
-                const isSelected = option.value === value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => {
-                      onChange(option.value);
-                      setOpen(false);
-                    }}
-                    style={
-                      isSelected
-                        ? undefined
-                        : { color: dropdownTheme.color }
-                    }
-                    className={`block w-full px-4 py-3 text-left text-sm font-semibold transition ${
-                      isSelected
-                        ? "bg-blue-600 text-white"
-                        : "hover:bg-blue-500/10"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </>
-      ) : null}
-    </div>
-  );
+  return "bg-blue-100 text-blue-700";
 }
 
 export function LectureManager({
@@ -253,32 +77,181 @@ export function LectureManager({
 }: LectureManagerProps) {
   const canEdit = role === "admin" || role === "educator";
 
-  const [items, setItems] = useState(lectures);
+  const [items, setItems] = useState<LectureItem[]>(lectures);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [isLoadingBatches, setIsLoadingBatches] = useState(false);
+
   const [title, setTitle] = useState("Live Class");
   const [subject, setSubject] = useState("");
-  const [batchName, setBatchName] = useState("");
+  const [batchId, setBatchId] = useState("");
   const [description, setDescription] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [meetingLink, setMeetingLink] = useState("");
   const [recordingLink, setRecordingLink] = useState("");
   const [materialLink, setMaterialLink] = useState("");
-  const [status, setStatus] = useState<LectureItem["status"]>("scheduled");
-  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  const [status, setStatus] = useState<LectureStatus>("scheduled");
 
-  function toggleStudent(studentId: string) {
-    setSelectedStudentIds((current) =>
-      current.includes(studentId)
-        ? current.filter((id) => id !== studentId)
-        : [...current, studentId],
-    );
+  const [newLectureReport, setNewLectureReport] =
+    useState<ReportDraft>(emptyReport);
+
+  const [reportLectureId, setReportLectureId] = useState<string | null>(null);
+  const [reportDraft, setReportDraft] = useState<ReportDraft>(emptyReport);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const selectedBatch = useMemo(
+    () => batches.find((batch) => batch.id === batchId),
+    [batches, batchId],
+  );
+
+  const batchStudents = useMemo(() => {
+    if (!selectedBatch) {
+      return [];
+    }
+
+    return (selectedBatch.studentIds ?? [])
+      .map((studentId) =>
+        studentDirectory.find(
+          (student) =>
+            student.id === studentId && student.role === "student",
+        ),
+      )
+      .filter((student): student is ManagedUser => Boolean(student));
+  }, [selectedBatch, studentDirectory]);
+
+  useEffect(() => {
+    setItems(lectures);
+  }, [lectures]);
+
+  useEffect(() => {
+    if (!canEdit) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadBatches() {
+      setIsLoadingBatches(true);
+
+      try {
+        const response = await fetch("/api/batches", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json()) as {
+          batches?: Batch[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Unable to load batches.");
+        }
+
+        if (!cancelled) {
+          setBatches(payload.batches ?? []);
+        }
+      } catch {
+        if (!cancelled) {
+          setMessage("Unable to load assigned batches.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingBatches(false);
+        }
+      }
+    }
+
+    void loadBatches();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canEdit]);
+
+  function handleBatchChange(nextBatchId: string) {
+    setBatchId(nextBatchId);
+
+    const batch = batches.find((item) => item.id === nextBatchId);
+
+    setSubject(batch?.subject ?? "");
+  }
+
+  function updateNewReport<Key extends keyof ReportDraft>(
+    key: Key,
+    value: ReportDraft[Key],
+  ) {
+    setNewLectureReport((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function updateReportDraft<Key extends keyof ReportDraft>(
+    key: Key,
+    value: ReportDraft[Key],
+  ) {
+    setReportDraft((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  }
+
+  function resetForm() {
+    setTitle("Live Class");
+    setSubject("");
+    setBatchId("");
+    setDescription("");
+    setStartsAt("");
+    setEndsAt("");
+    setMeetingLink("");
+    setRecordingLink("");
+    setMaterialLink("");
+    setStatus("scheduled");
+    setNewLectureReport(emptyReport);
   }
 
   async function createLecture() {
-    if (!canEdit || !title || !startsAt) return;
+    if (!canEdit) {
+      return;
+    }
+
+    if (!title.trim()) {
+      setMessage("Lecture title is required.");
+      return;
+    }
+
+    if (!startsAt) {
+      setMessage("Start time is required.");
+      return;
+    }
+
+    if (!batchId || !selectedBatch) {
+      setMessage("Select an assigned batch before saving the lecture.");
+      return;
+    }
+
+    if (!batchStudents.length) {
+      setMessage("The selected batch has no active students assigned.");
+      return;
+    }
+
+    if (status === "completed" && !endsAt) {
+      setMessage("End time is required for a completed lecture report.");
+      return;
+    }
+
+    if (status === "completed" && !newLectureReport.topicCovered.trim()) {
+      setMessage("Topic covered is required for a completed lecture report.");
+      return;
+    }
 
     setIsSaving(true);
+    setMessage("");
 
     try {
       const response = await fetch("/api/lectures", {
@@ -287,78 +260,199 @@ export function LectureManager({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title,
+          title: title.trim(),
           subject,
-          batchName,
+          batchId: selectedBatch.id,
+          batchName: selectedBatch.name,
           description,
           startsAt,
           endsAt,
           meetingLink,
           recordingLink,
           materialLink,
-          assignedStudentIds: selectedStudentIds,
+          assignedStudentIds: batchStudents.map((student) => student.id),
           status,
+          ...newLectureReport,
         }),
       });
 
-      const payload = await response.json();
+      const payload = (await response.json()) as {
+        lecture?: LectureItem;
+        error?: string;
+      };
 
-      if (response.ok && payload.lecture) {
-        setItems((current) => [payload.lecture, ...current]);
-        setTitle("Live Class");
-        setSubject("");
-        setBatchName("");
-        setDescription("");
-        setStartsAt("");
-        setEndsAt("");
-        setMeetingLink("");
-        setRecordingLink("");
-        setMaterialLink("");
-        setStatus("scheduled");
-        setSelectedStudentIds([]);
+      if (!response.ok || !payload.lecture) {
+        setMessage(payload.error ?? "Unable to save lecture.");
+        return;
       }
+
+      setItems((current) => [payload.lecture!, ...current]);
+
+      setMessage(
+        status === "completed"
+          ? "Daily lecture report submitted successfully."
+          : "Lecture created successfully.",
+      );
+
+      resetForm();
+    } catch {
+      setMessage("Unable to save lecture.");
     } finally {
       setIsSaving(false);
     }
   }
 
-  async function updateLectureStatus(
+  async function patchLecture(
     lectureId: string,
-    nextStatus: LectureItem["status"],
+    updates: Record<string, unknown>,
   ) {
-    if (!canEdit) return;
-
-    const lecture = items.find((item) => item.id === lectureId);
-
-    if (!lecture) return;
-
-    const optimisticLecture = {
-      ...lecture,
-      status: nextStatus,
-    };
-
-    setItems((current) =>
-      current.map((item) => (item.id === lectureId ? optimisticLecture : item)),
-    );
-
-    await fetch(`/api/lectures/${lectureId}`, {
+    const response = await fetch(`/api/lectures/${lectureId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        status: nextStatus,
-      }),
+      body: JSON.stringify(updates),
     });
+
+    const payload = (await response.json()) as {
+      lecture?: LectureItem;
+      error?: string;
+    };
+
+    if (!response.ok || !payload.lecture) {
+      setMessage(payload.error ?? "Unable to update lecture.");
+      return null;
+    }
+
+    setItems((current) =>
+      current.map((item) =>
+        item.id === lectureId ? payload.lecture! : item,
+      ),
+    );
+
+    return payload.lecture;
   }
 
-  function formatDateTime(value: string) {
-    if (!value) return "Not scheduled";
+  async function changeLectureStatus(
+    lecture: LectureItem,
+    nextStatus: LectureStatus,
+  ) {
+    if (!canEdit) {
+      return;
+    }
 
-    return new Date(value).toLocaleString("en-IN", {
+    if (nextStatus === "completed") {
+      openReportEditor(lecture);
+      return;
+    }
+
+    setMessage("");
+
+    const updatedLecture = await patchLecture(lecture.id, {
+      status: nextStatus,
+    });
+
+    if (updatedLecture) {
+      setMessage(
+        nextStatus === "cancelled"
+          ? "Lecture cancelled."
+          : "Lecture status updated.",
+      );
+    }
+  }
+
+  function openReportEditor(lecture: LectureItem) {
+    setReportLectureId(lecture.id);
+
+    setReportDraft({
+      topicCovered: lecture.topicCovered ?? "",
+      homeworkGiven: lecture.homeworkGiven ?? "",
+      assignmentGiven: lecture.assignmentGiven ?? "",
+      revisionTask: lecture.revisionTask ?? "",
+      doubtsSolved: lecture.doubtsSolved ?? "",
+      nextTopic: lecture.nextTopic ?? "",
+    });
+
+    setMessage("");
+  }
+
+  function closeReportEditor() {
+    setReportLectureId(null);
+    setReportDraft(emptyReport);
+  }
+
+  async function submitLectureReport(lecture: LectureItem) {
+    if (!reportDraft.topicCovered.trim()) {
+      setMessage("Topic covered is required.");
+      return;
+    }
+
+    if (!lecture.endsAt) {
+      setMessage(
+        "Add an end time to this lecture before submitting the report.",
+      );
+      return;
+    }
+
+    setIsSubmittingReport(true);
+    setMessage("");
+
+    try {
+      const updatedLecture = await patchLecture(lecture.id, {
+        status: "completed",
+        ...reportDraft,
+      });
+
+      if (updatedLecture) {
+        closeReportEditor();
+        setMessage("Daily lecture report submitted successfully.");
+      }
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  }
+
+  function formatDateTime(value?: string) {
+    if (!value) {
+      return "Not scheduled";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Not scheduled";
+    }
+
+    return date.toLocaleString("en-IN", {
       dateStyle: "medium",
       timeStyle: "short",
     });
+  }
+
+  function getDuration(lecture: LectureItem) {
+    if (!lecture.startsAt || !lecture.endsAt) {
+      return "—";
+    }
+
+    const start = new Date(lecture.startsAt).getTime();
+    const end = new Date(lecture.endsAt).getTime();
+
+    if (Number.isNaN(start) || Number.isNaN(end) || end <= start) {
+      return "—";
+    }
+
+    const minutes = Math.round((end - start) / 60000);
+
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    return remainingMinutes
+      ? `${hours} hr ${remainingMinutes} min`
+      : `${hours} hr`;
   }
 
   return (
@@ -366,149 +460,280 @@ export function LectureManager({
       <div className="surface overflow-visible rounded-[2rem] p-6">
         <div className="flex flex-col gap-2">
           <p className="section-label">Lectures</p>
+
           <h2 className="text-2xl font-black text-[var(--color-heading)]">
-            Live Classes & Recordings
+            Daily Lecture Reports
           </h2>
+
           <p className="text-sm text-[var(--color-muted)]">
             {canEdit
-              ? "Create live class schedules, meeting links, recordings, and study material links."
-              : "View upcoming lectures, join live classes, and access recordings."}
+              ? "Select an assigned batch to create lectures and daily reports for its students."
+              : "View your class schedule, lecture reports, homework, and study updates."}
           </p>
         </div>
 
+        {message ? (
+          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+            {message}
+          </div>
+        ) : null}
+
         {canEdit ? (
-          <div className="mt-6 grid overflow-visible gap-4 md:grid-cols-3">
-            <FieldLabel label="Lecture Title">
-              <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="Live Class"
-                className={fieldClass}
-              />
-            </FieldLabel>
+          <div className="mt-6 space-y-6">
+            {!isLoadingBatches && !batches.length ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                No batches are assigned yet. Create a batch and assign faculty
+                before creating lectures.
+              </div>
+            ) : null}
 
-            <FieldLabel label="Subject">
-              <input
-                value={subject}
-                onChange={(event) => setSubject(event.target.value)}
-                placeholder="Subject"
-                className={fieldClass}
-              />
-            </FieldLabel>
+            <div className="grid gap-4 md:grid-cols-3">
+              <FieldLabel label="Lecture Title">
+                <input
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="e.g. Mathematics Live Class"
+                  className={fieldClass}
+                />
+              </FieldLabel>
 
-            <FieldLabel label="Batch / Class">
-              <input
-                value={batchName}
-                onChange={(event) => setBatchName(event.target.value)}
-                placeholder="Batch / Class"
-                className={fieldClass}
-              />
-            </FieldLabel>
+              <FieldLabel label="Subject">
+                <input
+                  value={subject}
+                  onChange={(event) => setSubject(event.target.value)}
+                  placeholder="Subject"
+                  className={fieldClass}
+                />
+              </FieldLabel>
 
-            <FieldLabel label="Start Time">
-              <input
-                type="datetime-local"
-                value={startsAt}
-                onChange={(event) => setStartsAt(event.target.value)}
-                className={fieldClass}
-              />
-            </FieldLabel>
+              <FieldLabel label="Assigned Batch">
+                <select
+                  value={batchId}
+                  onChange={(event) => handleBatchChange(event.target.value)}
+                  disabled={isLoadingBatches}
+                  className={fieldClass}
+                >
+                  <option value="">
+                    {isLoadingBatches
+                      ? "Loading batches..."
+                      : "Select assigned batch"}
+                  </option>
 
-            <FieldLabel label="End Time">
-              <input
-                type="datetime-local"
-                value={endsAt}
-                onChange={(event) => setEndsAt(event.target.value)}
-                className={fieldClass}
-              />
-            </FieldLabel>
+                  {batches.map((batch) => (
+                    <option key={batch.id} value={batch.id}>
+                      {batch.name}
+                    </option>
+                  ))}
+                </select>
+              </FieldLabel>
 
-            <FieldLabel label="Lecture Status">
-              <CustomSelect
-                value={status}
-                options={statusOptions}
-                onChange={(nextStatus: string) =>
-                  setStatus(nextStatus as LectureItem["status"])
-                }
-              />
-            </FieldLabel>
+              <FieldLabel label="Start Time">
+                <input
+                  type="datetime-local"
+                  value={startsAt}
+                  onChange={(event) => setStartsAt(event.target.value)}
+                  className={fieldClass}
+                />
+              </FieldLabel>
 
-            <FieldLabel label="Meeting Link">
-              <input
-                value={meetingLink}
-                onChange={(event) => setMeetingLink(event.target.value)}
-                placeholder="Google Meet / Zoom link"
-                className={fieldClass}
-              />
-            </FieldLabel>
+              <FieldLabel label="End Time">
+                <input
+                  type="datetime-local"
+                  value={endsAt}
+                  onChange={(event) => setEndsAt(event.target.value)}
+                  className={fieldClass}
+                />
+              </FieldLabel>
 
-            <FieldLabel label="Recording Link">
-              <input
-                value={recordingLink}
-                onChange={(event) => setRecordingLink(event.target.value)}
-                placeholder="Recording link"
-                className={fieldClass}
-              />
-            </FieldLabel>
+              <FieldLabel label="Save As">
+                <select
+                  value={status}
+                  onChange={(event) =>
+                    setStatus(event.target.value as LectureStatus)
+                  }
+                  className={fieldClass}
+                >
+                  <option value="scheduled">Scheduled Lecture</option>
+                  <option value="completed">Completed Lecture Report</option>
+                  <option value="cancelled">Cancelled Lecture</option>
+                </select>
+              </FieldLabel>
+            </div>
 
-            <FieldLabel label="Material Link">
-              <input
-                value={materialLink}
-                onChange={(event) => setMaterialLink(event.target.value)}
-                placeholder="Notes / material link"
-                className={fieldClass}
-              />
-            </FieldLabel>
+            <div className="grid gap-4 md:grid-cols-3">
+              <FieldLabel label="Meeting Link">
+                <input
+                  value={meetingLink}
+                  onChange={(event) => setMeetingLink(event.target.value)}
+                  placeholder="Google Meet / Zoom link"
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Recording Link">
+                <input
+                  value={recordingLink}
+                  onChange={(event) => setRecordingLink(event.target.value)}
+                  placeholder="Recording link"
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Material Link">
+                <input
+                  value={materialLink}
+                  onChange={(event) => setMaterialLink(event.target.value)}
+                  placeholder="Notes / material link"
+                  className={fieldClass}
+                />
+              </FieldLabel>
+            </div>
 
             <FieldLabel label="Lecture Description">
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Lecture description"
-                className={`${fieldClass} min-h-24 md:col-span-3`}
+                placeholder="Optional lecture description"
+                className={textareaClass}
               />
             </FieldLabel>
 
-            <div className="surface-soft rounded-2xl border border-[var(--color-border)] p-4 md:col-span-3">
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-black text-[var(--color-heading)]">
-                  Assign Students
-                </p>
-                <p className="text-xs text-[var(--color-muted)]">
-                  Leave all unchecked to make this lecture visible to all
-                  students.
-                </p>
+            {status === "completed" ? (
+              <div className="rounded-[2rem] border border-emerald-200 bg-emerald-50/40 p-5">
+                <div>
+                  <p className="text-sm font-black text-emerald-700">
+                    Daily Lecture Report
+                  </p>
+
+                  <p className="mt-1 text-xs text-emerald-700/80">
+                    These details will be visible to the selected batch’s
+                    students and parents.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                  <FieldLabel label="Topic Covered">
+                    <input
+                      value={newLectureReport.topicCovered}
+                      onChange={(event) =>
+                        updateNewReport("topicCovered", event.target.value)
+                      }
+                      placeholder="e.g. Quadratic Equations"
+                      className={fieldClass}
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Doubts Solved">
+                    <input
+                      value={newLectureReport.doubtsSolved}
+                      onChange={(event) =>
+                        updateNewReport("doubtsSolved", event.target.value)
+                      }
+                      placeholder="e.g. 8 student doubts solved"
+                      className={fieldClass}
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Homework Given">
+                    <textarea
+                      value={newLectureReport.homeworkGiven}
+                      onChange={(event) =>
+                        updateNewReport("homeworkGiven", event.target.value)
+                      }
+                      placeholder="Homework details"
+                      className={textareaClass}
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Assignment Given">
+                    <textarea
+                      value={newLectureReport.assignmentGiven}
+                      onChange={(event) =>
+                        updateNewReport("assignmentGiven", event.target.value)
+                      }
+                      placeholder="Assignment details"
+                      className={textareaClass}
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Revision Task">
+                    <textarea
+                      value={newLectureReport.revisionTask}
+                      onChange={(event) =>
+                        updateNewReport("revisionTask", event.target.value)
+                      }
+                      placeholder="Topics students should revise"
+                      className={textareaClass}
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Next Topic">
+                    <textarea
+                      value={newLectureReport.nextTopic}
+                      onChange={(event) =>
+                        updateNewReport("nextTopic", event.target.value)
+                      }
+                      placeholder="Topic planned for the next lecture"
+                      className={textareaClass}
+                    />
+                  </FieldLabel>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-[var(--color-heading)]">
+                    Batch Students
+                  </p>
+
+                  <p className="mt-1 text-xs text-[var(--color-muted)]">
+                    Students are assigned automatically from the selected batch.
+                  </p>
+                </div>
+
+                <span className="pill w-fit">
+                  {batchStudents.length} Student
+                  {batchStudents.length === 1 ? "" : "s"}
+                </span>
               </div>
 
-              <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {studentDirectory.length ? (
-                  studentDirectory.map((student) => (
-                    <label key={student.id} className={checkboxLabelClass}>
-                      <input
-                        type="checkbox"
-                        checked={selectedStudentIds.includes(student.id)}
-                        onChange={() => toggleStudent(student.id)}
-                        className="h-4 w-4 accent-blue-600"
-                      />
-                      {student.name}
-                    </label>
-                  ))
-                ) : (
-                  <p className="rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-3 text-sm font-semibold text-[var(--color-heading)] sm:col-span-2 lg:col-span-3">
-                    No students found. Add students first, or leave this lecture
-                    unassigned.
-                  </p>
-                )}
-              </div>
+              {!batchId ? (
+                <p className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-3 text-sm font-semibold text-[var(--color-heading)]">
+                  Select a batch above to load its assigned students.
+                </p>
+              ) : batchStudents.length ? (
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {batchStudents.map((student) => (
+                    <div
+                      key={student.id}
+                      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm font-bold text-[var(--color-heading)] shadow-sm"
+                    >
+                      <span className="truncate">{student.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-3 text-sm font-semibold text-[var(--color-heading)]">
+                  This batch has no active students assigned.
+                </p>
+              )}
             </div>
 
             <button
               type="button"
-              onClick={createLecture}
-              disabled={isSaving || !startsAt}
-              className="action-button px-5 py-3 md:col-span-3 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => void createLecture()}
+              disabled={isSaving || !batchId || !batchStudents.length}
+              className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSaving ? "Creating..." : "Create Lecture"}
+              {isSaving
+                ? "Saving..."
+                : status === "completed"
+                  ? "Submit Daily Lecture Report"
+                  : status === "cancelled"
+                    ? "Save Cancelled Lecture"
+                    : "Create Lecture"}
             </button>
           </div>
         ) : null}
@@ -516,116 +741,340 @@ export function LectureManager({
 
       <div className="grid gap-4 lg:grid-cols-2">
         {items.length ? (
-          items.map((lecture) => (
-            <div
-              key={lecture.id}
-              className="surface overflow-visible rounded-[2rem] p-6"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-black text-[var(--color-heading)]">
-                    {lecture.title}
-                  </h3>
-                  <p className="text-sm text-[var(--color-muted)]">
-                    {lecture.subject || "General"}
-                    {lecture.batchName ? ` • ${lecture.batchName}` : ""}
-                  </p>
-                </div>
+          items.map((lecture) => {
+            const lectureStatus =
+              (lecture.status as LectureStatus | undefined) ?? "scheduled";
 
-                {canEdit ? (
-                  <div className="min-w-36">
-                    <CustomSelect
-                      value={lecture.status}
-                      options={statusOptions}
-                      small
-                      onChange={(nextStatus: string) =>
-                        updateLectureStatus(
-                          lecture.id,
-                          nextStatus as LectureItem["status"],
-                        )
-                      }
-                    />
+            const isEditingReport = reportLectureId === lecture.id;
+
+            return (
+              <article
+                key={lecture.id}
+                className="surface overflow-visible rounded-[2rem] p-6"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-black text-[var(--color-heading)]">
+                      {lecture.title}
+                    </h3>
+
+                    <p className="mt-1 text-sm text-[var(--color-muted)]">
+                      {lecture.subject || "General"}
+                      {lecture.batchName ? ` • ${lecture.batchName}` : ""}
+                    </p>
                   </div>
-                ) : (
-                  <span className="pill capitalize">{lecture.status}</span>
-                )}
-              </div>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="surface-soft rounded-2xl p-4">
-                  <p className="text-xs font-bold uppercase text-[var(--color-muted)]">
-                    Starts
-                  </p>
-                  <p className="mt-1 text-sm font-black text-[var(--color-heading)]">
-                    {formatDateTime(lecture.startsAt)}
-                  </p>
+                  <span
+                    className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getStatusClass(
+                      lectureStatus,
+                    )}`}
+                  >
+                    {lectureStatus}
+                  </span>
                 </div>
 
-                <div className="surface-soft rounded-2xl p-4">
-                  <p className="text-xs font-bold uppercase text-[var(--color-muted)]">
-                    Ends
-                  </p>
-                  <p className="mt-1 text-sm font-black text-[var(--color-heading)]">
-                    {lecture.endsAt ? formatDateTime(lecture.endsAt) : "—"}
-                  </p>
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div className="surface-soft rounded-2xl p-4">
+                    <p className="text-xs font-bold uppercase text-[var(--color-muted)]">
+                      Starts
+                    </p>
+
+                    <p className="mt-1 text-sm font-black text-[var(--color-heading)]">
+                      {formatDateTime(lecture.startsAt)}
+                    </p>
+                  </div>
+
+                  <div className="surface-soft rounded-2xl p-4">
+                    <p className="text-xs font-bold uppercase text-[var(--color-muted)]">
+                      Ends
+                    </p>
+
+                    <p className="mt-1 text-sm font-black text-[var(--color-heading)]">
+                      {formatDateTime(lecture.endsAt)}
+                    </p>
+                  </div>
+
+                  <div className="surface-soft rounded-2xl p-4">
+                    <p className="text-xs font-bold uppercase text-[var(--color-muted)]">
+                      Duration
+                    </p>
+
+                    <p className="mt-1 text-sm font-black text-[var(--color-heading)]">
+                      {getDuration(lecture)}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {lecture.description ? (
-                <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
-                  {lecture.description}
-                </p>
-              ) : null}
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                {lecture.meetingLink ? (
-                  <a
-                    href={lecture.meetingLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="action-button px-5 py-3 text-sm"
-                  >
-                    Join Lecture
-                  </a>
+                {lecture.description ? (
+                  <p className="mt-4 text-sm leading-relaxed text-[var(--color-muted)]">
+                    {lecture.description}
+                  </p>
                 ) : null}
 
-                {lecture.recordingLink ? (
-                  <a
-                    href={lecture.recordingLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10"
-                  >
-                    Watch Recording
-                  </a>
+                {lectureStatus === "completed" ? (
+                  <div className="mt-5 rounded-[1.5rem] border border-emerald-100 bg-emerald-50/50 p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
+                      Daily Lecture Report
+                    </p>
+
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <ReportItem
+                        label="Topic Covered"
+                        value={lecture.topicCovered}
+                      />
+                      <ReportItem
+                        label="Doubts Solved"
+                        value={lecture.doubtsSolved}
+                      />
+                      <ReportItem
+                        label="Homework"
+                        value={lecture.homeworkGiven}
+                      />
+                      <ReportItem
+                        label="Assignment"
+                        value={lecture.assignmentGiven}
+                      />
+                      <ReportItem
+                        label="Revision Task"
+                        value={lecture.revisionTask}
+                      />
+                      <ReportItem
+                        label="Next Topic"
+                        value={lecture.nextTopic}
+                      />
+                    </div>
+                  </div>
                 ) : null}
 
-                {lecture.materialLink ? (
-                  <a
-                    href={lecture.materialLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10"
-                  >
-                    Open Material
-                  </a>
+                {isEditingReport ? (
+                  <div className="mt-5 rounded-[1.5rem] border border-blue-200 bg-blue-50/40 p-4">
+                    <p className="text-sm font-black text-blue-700">
+                      Complete Daily Lecture Report
+                    </p>
+
+                    {!lecture.endsAt ? (
+                      <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+                        This lecture does not have an end time. Add it before
+                        marking it completed.
+                      </p>
+                    ) : null}
+
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <FieldLabel label="Topic Covered">
+                        <input
+                          value={reportDraft.topicCovered ?? ""}
+                          onChange={(event) =>
+                            updateReportDraft(
+                              "topicCovered",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Topic covered"
+                          className={fieldClass}
+                        />
+                      </FieldLabel>
+
+                      <FieldLabel label="Doubts Solved">
+                        <input
+                          value={reportDraft.doubtsSolved ?? ""}
+                          onChange={(event) =>
+                            updateReportDraft(
+                              "doubtsSolved",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Doubts solved"
+                          className={fieldClass}
+                        />
+                      </FieldLabel>
+
+                      <FieldLabel label="Homework Given">
+                        <textarea
+                          value={reportDraft.homeworkGiven ?? ""}
+                          onChange={(event) =>
+                            updateReportDraft(
+                              "homeworkGiven",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Homework details"
+                          className={textareaClass}
+                        />
+                      </FieldLabel>
+
+                      <FieldLabel label="Assignment Given">
+                        <textarea
+                          value={reportDraft.assignmentGiven ?? ""}
+                          onChange={(event) =>
+                            updateReportDraft(
+                              "assignmentGiven",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Assignment details"
+                          className={textareaClass}
+                        />
+                      </FieldLabel>
+
+                      <FieldLabel label="Revision Task">
+                        <textarea
+                          value={reportDraft.revisionTask ?? ""}
+                          onChange={(event) =>
+                            updateReportDraft(
+                              "revisionTask",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Revision task"
+                          className={textareaClass}
+                        />
+                      </FieldLabel>
+
+                      <FieldLabel label="Next Topic">
+                        <textarea
+                          value={reportDraft.nextTopic ?? ""}
+                          onChange={(event) =>
+                            updateReportDraft(
+                              "nextTopic",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Next topic"
+                          className={textareaClass}
+                        />
+                      </FieldLabel>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        disabled={isSubmittingReport || !lecture.endsAt}
+                        onClick={() => void submitLectureReport(lecture)}
+                        className="action-button px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {isSubmittingReport
+                          ? "Submitting..."
+                          : "Submit Report & Mark Completed"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={closeReportEditor}
+                        className="rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 ) : null}
-              </div>
-            </div>
-          ))
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {lecture.meetingLink ? (
+                    <a
+                      href={lecture.meetingLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="action-button px-5 py-3 text-sm"
+                    >
+                      Join Lecture
+                    </a>
+                  ) : null}
+
+                  {lecture.recordingLink ? (
+                    <a
+                      href={lecture.recordingLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10"
+                    >
+                      Watch Recording
+                    </a>
+                  ) : null}
+
+                  {lecture.materialLink ? (
+                    <a
+                      href={lecture.materialLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10"
+                    >
+                      Open Material
+                    </a>
+                  ) : null}
+
+                  {canEdit && lectureStatus !== "completed" ? (
+                    <button
+                      type="button"
+                      onClick={() => openReportEditor(lecture)}
+                      className="rounded-full border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-black text-emerald-700 hover:bg-emerald-100"
+                    >
+                      Submit Report
+                    </button>
+                  ) : null}
+
+                  {canEdit && lectureStatus === "completed" ? (
+                    <button
+                      type="button"
+                      onClick={() => openReportEditor(lecture)}
+                      className="rounded-full border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-black text-blue-700 hover:bg-blue-100"
+                    >
+                      Edit Report
+                    </button>
+                  ) : null}
+
+                  {canEdit && lectureStatus !== "cancelled" ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void changeLectureStatus(lecture, "cancelled")
+                      }
+                      className="rounded-full border border-rose-200 px-5 py-3 text-sm font-black text-rose-600 hover:bg-rose-50"
+                    >
+                      Cancel Lecture
+                    </button>
+                  ) : null}
+                </div>
+              </article>
+            );
+          })
         ) : (
           <div className="surface-soft rounded-[2rem] border border-[var(--color-border)] p-10 text-center lg:col-span-2">
             <h3 className="text-lg font-black text-[var(--color-heading)]">
               No lectures yet
             </h3>
+
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               {canEdit
-                ? "Create your first lecture schedule above."
-                : "Upcoming live classes and recordings will appear here."}
+                ? "Create your first lecture or daily lecture report above."
+                : "Your scheduled lectures and reports will appear here."}
             </p>
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+function ReportItem({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string;
+}) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700/70">
+        {label}
+      </p>
+
+      <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-[var(--color-heading)]">
+        {value}
+      </p>
+    </div>
   );
 }

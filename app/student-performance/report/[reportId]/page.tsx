@@ -1,7 +1,12 @@
-import { ObjectId } from "mongodb";
-import { getMongoDatabase } from "@/lib/mongodb";
+import { redirect } from "next/navigation";
+
+import { StudentPerformanceReportPrintActions } from "@/components/student-performance-report-print-actions";
+import { getSessionUser } from "@/lib/auth";
+import { getAccessibleStudentPerformanceReport } from "@/lib/student-performance-report-access";
 import StudentPerformanceReport from "../../StudentPerformanceReport";
 import "../../student-performance.css";
+
+export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{
@@ -9,54 +14,63 @@ type PageProps = {
   }>;
 };
 
-async function getReport(reportId: string) {
-  try {
-    if (!ObjectId.isValid(reportId)) {
-      // Invalid report ID
-      return null;
-    }
+export default async function StudentPerformanceReportPage({
+  params,
+}: PageProps) {
+  const session = await getSessionUser();
 
-    const db = await getMongoDatabase();
-
-    const report = await db.collection("performanceReports").findOne({
-      _id: new ObjectId(reportId),
-    });
-
-    if (!report) {
-      // No report found for ID
-      return null;
-    }
-
-    return {
-      ...report,
-      _id: report._id.toString(),
-    };
-  } catch (error) {
-    console.error("Report fetch error:", error);
-    return null;
+  if (!session) {
+    redirect("/login");
   }
-}
 
-export default async function StudentPerformanceReportPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const report = await getReport(resolvedParams.reportId);
+  const { reportId } = await params;
 
-  if (!report) {
+  const result = await getAccessibleStudentPerformanceReport(
+    reportId,
+    session,
+  );
+
+  if (result.status !== "ok") {
     return (
       <main className="min-h-screen bg-slate-950 px-4 py-10 text-white">
         <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-slate-900 p-8">
-          <h1 className="text-3xl font-black">Report not found</h1>
-          <p className="mt-3 text-slate-300">
-            This performance report could not be found or the report ID is invalid.
-          </p>
+          <h1 className="text-3xl font-black">Report unavailable</h1>
 
-          <p className="mt-5 rounded-xl bg-slate-800 p-4 text-sm text-slate-300">
-            Report ID checked: {resolvedParams.reportId}
+          <p className="mt-3 text-slate-300">
+            This report does not exist or is not available for your account.
           </p>
         </section>
       </main>
     );
   }
 
-  return <StudentPerformanceReport report={report as any} />;
+  const report = result.report;
+
+  const studentName =
+    typeof report.studentName === "string"
+      ? report.studentName
+      : "Student";
+
+  const reportType =
+    typeof report.reportType === "string"
+      ? report.reportType.charAt(0).toUpperCase() +
+        report.reportType.slice(1)
+      : "Performance";
+
+  const period =
+    typeof report.period === "string"
+      ? report.period
+      : "Academic Report";
+
+  return (
+    <>
+      <StudentPerformanceReportPrintActions
+        studentName={studentName}
+        reportType={reportType}
+        period={period}
+      />
+
+      <StudentPerformanceReport report={report as any} />
+    </>
+  );
 }

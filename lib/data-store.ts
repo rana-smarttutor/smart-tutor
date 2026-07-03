@@ -15,11 +15,14 @@ import {
 } from "@/lib/course-library";
 import type {
   AttendanceSheet,
+  Batch,
   CourseItem,
   DashboardMetric,
   DashboardBundle,
   DemoCredential,
   FeeInvoice,
+  FeeInstallment,
+  FeeInstallmentPlan,
   LectureItem,
   LibraryBook,
   ManagedUser,
@@ -31,10 +34,18 @@ import type {
   QuizQuestion,
   Role,
   SessionUser,
+  TeacherBatchAssignment,
   TestItem,
   TestQuestion,
   TestSubmission,
   UserProfile,
+  WeeklyTest,
+  BehaviourNote,
+  TeacherFeedback,
+  TeacherPayout,
+  AppNotification,
+  StudentDailyActivity,
+  DashboardAnalytics,
 } from "@/lib/types";
 
 type DashboardTemplate = {
@@ -81,12 +92,23 @@ const COLLECTIONS = {
   library: "digital_library",
   performance: "performance_reports",
   heuristics: "performance_heuristics",
+
   attendanceSheets: "attendanceSheets",
   feeInvoices: "feeInvoices",
   lectures: "lectures",
+
+  batches: "batches",
+  teacherBatchAssignments: "teacherBatchAssignments",
+  weeklyTests: "weeklyTests",
+  teacherFeedback: "teacherFeedback",
+  behaviourNotes: "behaviourNotes",
+  dailyActivities: "dailyActivities",
+  feeInstallmentPlans: "feeInstallmentPlans",
+  teacherPayouts: "teacherPayouts",
+  notifications: "notifications",
+
   enquiries: "enquiries",
 } as const;
-
 // ... (existing code)
 
 export async function createEnquiry(input: {
@@ -113,7 +135,6 @@ export async function getAllEnquiries() {
   const collection = await getCollection(COLLECTIONS.enquiries);
   return await collection.find({}).sort({ createdAt: -1 }).toArray();
 }
-
 
 export const DEFAULT_HEURISTICS: PerformanceHeuristics = {
   outstanding: 95,
@@ -839,14 +860,19 @@ export async function updateMessage(
   },
 ) {
   const collection = await getCollection<MessageDocument>(COLLECTIONS.messages);
-  const update: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  const update: Record<string, unknown> = {
+    updatedAt: new Date().toISOString(),
+  };
 
   if (input.title !== undefined) update.title = input.title;
   if (input.body !== undefined) update.body = input.body;
   if (input.channel !== undefined) update.channel = input.channel;
   if (input.expiresAt !== undefined) update.expiresAt = input.expiresAt;
 
-  const result = await collection.updateOne({ id: messageId }, { $set: update });
+  const result = await collection.updateOne(
+    { id: messageId },
+    { $set: update },
+  );
   if (result.matchedCount === 0) return null;
 
   const updated = await collection.findOne({ id: messageId });
@@ -856,6 +882,282 @@ export async function updateMessage(
 export async function deleteMessage(messageId: string) {
   const collection = await getCollection<MessageDocument>(COLLECTIONS.messages);
   const result = await collection.deleteOne({ id: messageId });
+  return result.deletedCount > 0;
+}
+
+type NotificationTargetMode = "everyone" | "selected-users";
+
+export async function getNotificationsForUser(userId: string) {
+  const collection = await getCollection<AppNotification>(
+    COLLECTIONS.notifications,
+  );
+
+  return stripMongoIds(
+    await collection
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function getNotificationRecipientIdsForSender(input: {
+  senderId: string;
+  senderRole: "admin" | "educator";
+  targetMode: NotificationTargetMode;
+  selectedUserIds: string[];
+}) {
+  const users = await getUsersCollection();
+
+  const allowedRoles: Role[] =
+    input.senderRole === "admin"
+      ? ["student", "educator", "parent"]
+      : ["student", "parent"];
+
+  const eligibleUsers = await users
+    .find({
+      id: { $ne: input.senderId },
+      role: { $in: allowedRoles },
+      verified: { $ne: false },
+      $or: [
+        { status: "active" },
+        { status: { $exists: false } },
+        { status: null },
+      ],
+    } as any)
+    .toArray();
+
+  const eligibleIds = new Set(eligibleUsers.map((user) => user.id));
+
+  if (input.targetMode === "everyone") {
+    return [...eligibleIds];
+  }
+
+  const requestedIds = [
+    ...new Set(
+      input.selectedUserIds
+        .filter((id) => typeof id === "string")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  const invalidIds = requestedIds.filter((id) => !eligibleIds.has(id));
+
+  if (invalidIds.length) {
+    throw new Error(
+      "One or more selected users are not eligible to receive this notification.",
+    );
+  }
+
+  return requestedIds;
+}
+
+export async function getNotificationRecipientIdsForStudents(
+  studentIds: string[],
+  options: {
+    includeLinkedParents?: boolean;
+  } = {},
+) {
+  const normalizedStudentIds = [
+    ...new Set(
+      studentIds
+        .filter((id) => typeof id === "string")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!normalizedStudentIds.length) {
+    return [];
+  }
+
+  const users = await getUsersCollection();
+
+  const activeUserFilter = {
+    verified: { $ne: false },
+    $or: [
+      { status: "active" },
+      { status: { $exists: false } },
+      { status: null },
+    ],
+  };
+
+  const students = await users
+    .find({
+      id: { $in: normalizedStudentIds },
+      role: "student",
+      ...activeUserFilter,
+    } as any)
+    .toArray();
+
+  const validStudentIds = students.map((student) => student.id);
+
+  if (!validStudentIds.length || options.includeLinkedParents === false) {
+    return validStudentIds;
+  }
+
+  const linkedParents = await users
+    .find({
+      role: "parent",
+      linkedStudentId: { $in: validStudentIds },
+      ...activeUserFilter,
+    } as any)
+    .toArray();
+
+  return [
+    ...new Set([
+      ...validStudentIds,
+      ...linkedParents.map((parent) => parent.id),
+    ]),
+  ];
+}
+
+export async function createNotifications(input: {
+  userIds: string[];
+  title: string;
+  message: string;
+  type: AppNotification["type"];
+  link?: string;
+}) {
+
+  async function getNotificationRecipientIdsForStudents(
+  studentIds: string[],
+) {
+  const normalizedStudentIds = [
+    ...new Set(
+      studentIds
+        .filter((id) => typeof id === "string")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!normalizedStudentIds.length) {
+    return [];
+  }
+
+  const users = await getUsersCollection();
+
+  const activeUserFilter = {
+    verified: { $ne: false },
+    $or: [
+      { status: "active" },
+      { status: { $exists: false } },
+      { status: null },
+    ],
+  };
+
+  const students = await users
+    .find({
+      id: { $in: normalizedStudentIds },
+      role: "student",
+      ...activeUserFilter,
+    } as any)
+    .toArray();
+
+  const validStudentIds = students.map((student) => student.id);
+
+  if (!validStudentIds.length) {
+    return [];
+  }
+
+  const linkedParents = await users
+    .find({
+      role: "parent",
+      linkedStudentId: { $in: validStudentIds },
+      ...activeUserFilter,
+    } as any)
+    .toArray();
+
+  return [
+    ...new Set([
+      ...validStudentIds,
+      ...linkedParents.map((parent) => parent.id),
+    ]),
+  ];
+}
+
+  const recipientIds = [
+    ...new Set(
+      input.userIds
+        .filter((id) => typeof id === "string")
+        .map((id) => id.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!recipientIds.length) {
+    throw new Error("At least one notification recipient is required.");
+  }
+
+  const now = new Date().toISOString();
+
+  const notifications: AppNotification[] = recipientIds.map((userId) => ({
+    id: `notification-${randomUUID()}`,
+    userId,
+    title: input.title.trim(),
+    message: input.message.trim(),
+    type: input.type,
+    link: input.link?.trim() || undefined,
+    read: false,
+    createdAt: now,
+  }));
+
+  const collection = await getCollection<AppNotification>(
+    COLLECTIONS.notifications,
+  );
+
+  await collection.insertMany(notifications);
+
+  return notifications;
+}
+
+export async function updateNotificationReadState(input: {
+  notificationId: string;
+  userId: string;
+  read: boolean;
+}) {
+  const collection = await getCollection<AppNotification>(
+    COLLECTIONS.notifications,
+  );
+
+  const result = await collection.updateOne(
+    {
+      id: input.notificationId,
+      userId: input.userId,
+    },
+    {
+      $set: {
+        read: input.read,
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    return null;
+  }
+
+  const notification = await collection.findOne({
+    id: input.notificationId,
+    userId: input.userId,
+  });
+
+  return notification ? stripMongoId(notification) : null;
+}
+
+export async function deleteNotificationForUser(input: {
+  notificationId: string;
+  userId: string;
+}) {
+  const collection = await getCollection<AppNotification>(
+    COLLECTIONS.notifications,
+  );
+
+  const result = await collection.deleteOne({
+    id: input.notificationId,
+    userId: input.userId,
+  });
+
   return result.deletedCount > 0;
 }
 
@@ -1245,9 +1547,22 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
     COLLECTIONS.attendanceSheets,
   );
 
-  if (role === "admin" || role === "educator") {
+  if (role === "admin") {
     return stripMongoIds(
       await collection.find({}).sort({ date: -1, createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({ createdBy: userId })
+        .sort({ date: -1, createdAt: -1 })
+        .toArray(),
     );
   }
 
@@ -1269,7 +1584,9 @@ export async function createAttendanceSheet(input: {
   title: string;
   date: string;
   batchName?: string;
+  batchId?: string;
   subject?: string;
+  lectureId?: string;
   createdBy: string;
   records: AttendanceSheet["records"];
 }) {
@@ -1284,7 +1601,9 @@ export async function createAttendanceSheet(input: {
     title: input.title,
     date: input.date,
     batchName: input.batchName,
+    batchId: input.batchId,
     subject: input.subject,
+    lectureId: input.lectureId,
     createdBy: input.createdBy,
     createdAt: now,
     updatedAt: now,
@@ -1302,7 +1621,9 @@ export async function updateAttendanceSheet(
     title: string;
     date: string;
     batchName: string;
+    batchId: string;
     subject: string;
+    lectureId: string;
     records: AttendanceSheet["records"];
   }>,
 ) {
@@ -1335,10 +1656,14 @@ export async function deleteAttendanceSheet(attendanceId: string) {
 export async function getFeeInvoicesForRole(role: Role, userId?: string) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
 
-  if (role === "admin" || role === "educator") {
+  if (role === "admin") {
     return stripMongoIds(
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
+  }
+
+  if (role === "educator") {
+    return [];
   }
 
   const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
@@ -1395,7 +1720,7 @@ export async function createFeeInvoice(input: {
     createdBy: input.createdBy,
     createdAt: now,
     updatedAt: now,
-    receiptNo: input.receiptNo,
+    receiptNo: input.receiptNo ?? receiptNo,
     parentName: input.parentName,
     classCourse: input.classCourse,
     batch: input.batch,
@@ -1448,12 +1773,26 @@ export async function deleteFeeInvoice(invoiceId: string) {
 export async function getLecturesForRole(role: Role, userId?: string) {
   const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
 
-  if (role === "admin" || role === "educator") {
+  if (role === "admin") {
     return stripMongoIds(
       await collection.find({}).sort({ startsAt: -1 }).toArray(),
     );
   }
 
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({
+          $or: [{ teacherId: userId }, { createdBy: userId }],
+        })
+        .sort({ startsAt: -1 })
+        .toArray(),
+    );
+  }
   const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
 
   if (!linkedStudentId) {
@@ -1463,11 +1802,7 @@ export async function getLecturesForRole(role: Role, userId?: string) {
   return stripMongoIds(
     await collection
       .find({
-        $or: [
-          { assignedStudentIds: { $exists: false } },
-          { assignedStudentIds: { $size: 0 } },
-          { assignedStudentIds: linkedStudentId },
-        ],
+        assignedStudentIds: linkedStudentId,
       })
       .sort({ startsAt: -1 })
       .toArray(),
@@ -1478,6 +1813,8 @@ export async function createLecture(input: {
   title: string;
   subject?: string;
   batchName?: string;
+  batchId?: string;
+  teacherId?: string;
   description?: string;
   startsAt: string;
   endsAt?: string;
@@ -1486,6 +1823,14 @@ export async function createLecture(input: {
   materialLink?: string;
   assignedStudentIds?: string[];
   status: LectureItem["status"];
+  topicCovered?: string;
+  homeworkGiven?: string;
+  assignmentGiven?: string;
+  revisionTask?: string;
+  doubtsSolved?: string;
+  nextTopic?: string;
+  attendanceSheetId?: string;
+  lectureReportSubmittedAt?: string;
   createdBy: string;
 }) {
   const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
@@ -1497,6 +1842,8 @@ export async function createLecture(input: {
     title: input.title,
     subject: input.subject,
     batchName: input.batchName,
+    batchId: input.batchId,
+    teacherId: input.teacherId ?? input.createdBy,
     description: input.description,
     startsAt: input.startsAt,
     endsAt: input.endsAt,
@@ -1505,6 +1852,14 @@ export async function createLecture(input: {
     materialLink: input.materialLink,
     assignedStudentIds: input.assignedStudentIds ?? [],
     status: input.status,
+    topicCovered: input.topicCovered,
+    homeworkGiven: input.homeworkGiven,
+    assignmentGiven: input.assignmentGiven,
+    revisionTask: input.revisionTask,
+    doubtsSolved: input.doubtsSolved,
+    nextTopic: input.nextTopic,
+    attendanceSheetId: input.attendanceSheetId,
+    lectureReportSubmittedAt: input.lectureReportSubmittedAt,
     createdBy: input.createdBy,
     createdAt: now,
     updatedAt: now,
@@ -1529,6 +1884,16 @@ export async function updateLecture(
     materialLink: string;
     assignedStudentIds: string[];
     status: LectureItem["status"];
+    batchId: string;
+    teacherId: string;
+    topicCovered: string;
+    homeworkGiven: string;
+    assignmentGiven: string;
+    revisionTask: string;
+    doubtsSolved: string;
+    nextTopic: string;
+    attendanceSheetId: string;
+    lectureReportSubmittedAt: string;
   }>,
 ) {
   const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
@@ -1545,29 +1910,588 @@ export async function updateLecture(
   return updatedLecture ? stripMongoId(updatedLecture) : null;
 }
 
+function getAnalyticsPercent(value: number, total: number) {
+  if (total <= 0) {
+    return null;
+  }
+
+  return Math.round((value / total) * 100);
+}
+
+function formatAnalyticsCurrency(value: number) {
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
+}
+
+function buildDashboardAnalytics(input: {
+  role: Role;
+  studentId?: string;
+  attendanceSheets: AttendanceSheet[];
+  weeklyTests: WeeklyTest[];
+  dailyActivities: StudentDailyActivity[];
+  feeInvoices: FeeInvoice[];
+  feeInstallmentPlans: FeeInstallmentPlan[];
+  batches: Batch[];
+  lectures: LectureItem[];
+  teacherPayouts: TeacherPayout[];
+  users: ManagedUser[];
+}): DashboardAnalytics {
+  const targetStudentId = input.studentId;
+
+  const attendanceRecords = input.attendanceSheets.flatMap((sheet) =>
+    sheet.records
+      .filter(
+        (record) =>
+          !targetStudentId || record.studentId === targetStudentId,
+      )
+      .map((record) => ({
+        ...record,
+        date: sheet.date,
+      })),
+  );
+
+  const present = attendanceRecords.filter(
+    (record) => record.status === "present",
+  ).length;
+
+  const late = attendanceRecords.filter(
+    (record) => record.status === "late",
+  ).length;
+
+  const absent = attendanceRecords.filter(
+    (record) => record.status === "absent",
+  ).length;
+
+  const excused = attendanceRecords.filter(
+    (record) => record.status === "excused",
+  ).length;
+
+  const attendanceEligibleRecords = attendanceRecords.filter(
+    (record) => record.status !== "excused",
+  ).length;
+
+  const attendanceRate = getAnalyticsPercent(
+    present + late,
+    attendanceEligibleRecords,
+  );
+
+  const assessmentRows = input.weeklyTests.flatMap((weeklyTest) =>
+    weeklyTest.results.flatMap((result) => {
+      if (
+        targetStudentId &&
+        result.studentId !== targetStudentId
+      ) {
+        return [];
+      }
+
+      if (
+        result.status !== "present" ||
+        typeof result.obtainedMarks !== "number" ||
+        !Number.isFinite(result.obtainedMarks)
+      ) {
+        return [];
+      }
+
+      return [
+        {
+          subject: weeklyTest.subject || "General",
+          obtainedMarks: result.obtainedMarks,
+          totalMarks: weeklyTest.totalMarks,
+        },
+      ];
+    }),
+  );
+
+  const assessmentTotalMarks = assessmentRows.reduce(
+    (sum, row) => sum + row.totalMarks,
+    0,
+  );
+
+  const assessmentObtainedMarks = assessmentRows.reduce(
+    (sum, row) => sum + row.obtainedMarks,
+    0,
+  );
+
+  const averageScore = getAnalyticsPercent(
+    assessmentObtainedMarks,
+    assessmentTotalMarks,
+  );
+
+  const subjectMap = new Map<
+    string,
+    {
+      obtainedMarks: number;
+      totalMarks: number;
+      resultCount: number;
+    }
+  >();
+
+  for (const row of assessmentRows) {
+    const current = subjectMap.get(row.subject) ?? {
+      obtainedMarks: 0,
+      totalMarks: 0,
+      resultCount: 0,
+    };
+
+    current.obtainedMarks += row.obtainedMarks;
+    current.totalMarks += row.totalMarks;
+    current.resultCount += 1;
+
+    subjectMap.set(row.subject, current);
+  }
+
+  const subjectPerformance = [...subjectMap.entries()]
+    .map(([subject, value]) => ({
+      subject,
+      percentage: getAnalyticsPercent(
+        value.obtainedMarks,
+        value.totalMarks,
+      ) ?? 0,
+      resultCount: value.resultCount,
+    }))
+    .sort((left, right) => right.percentage - left.percentage)
+    .slice(0, 4);
+
+  const learningActivities = input.dailyActivities.filter(
+    (activity) =>
+      !targetStudentId || activity.studentId === targetStudentId,
+  );
+
+  const homeworkCompleted = learningActivities.filter(
+    (activity) => activity.homeworkCompleted,
+  ).length;
+
+  const assignmentCompleted = learningActivities.filter(
+    (activity) => activity.assignmentCompleted,
+  ).length;
+
+  const revisionCompleted = learningActivities.filter(
+    (activity) => activity.revisionCompleted,
+  ).length;
+
+  const homeworkRate = getAnalyticsPercent(
+    homeworkCompleted,
+    learningActivities.length,
+  );
+
+  const assignmentRate = getAnalyticsPercent(
+    assignmentCompleted,
+    learningActivities.length,
+  );
+
+  const revisionRate = getAnalyticsPercent(
+    revisionCompleted,
+    learningActivities.length,
+  );
+
+  const learningRates = [
+    homeworkRate,
+    assignmentRate,
+    revisionRate,
+  ].filter((value): value is number => value !== null);
+
+  const completionRate = learningRates.length
+    ? Math.round(
+        learningRates.reduce((sum, value) => sum + value, 0) /
+          learningRates.length,
+      )
+    : null;
+
+  const studyMinuteEntries = learningActivities
+    .map((activity) => activity.studyMinutes)
+    .filter(
+      (minutes): minutes is number =>
+        typeof minutes === "number" &&
+        Number.isFinite(minutes) &&
+        minutes >= 0,
+    );
+
+  const averageStudyMinutes = studyMinuteEntries.length
+    ? Math.round(
+        studyMinuteEntries.reduce((sum, minutes) => sum + minutes, 0) /
+          studyMinuteEntries.length,
+      )
+    : null;
+
+  let finance: DashboardAnalytics["finance"] = null;
+
+  if (input.role !== "educator") {
+    if (input.feeInvoices.length > 0) {
+      const billed = input.feeInvoices.reduce(
+        (sum, invoice) => sum + invoice.amount,
+        0,
+      );
+
+      const collected = input.feeInvoices.reduce(
+        (sum, invoice) =>
+          sum + Math.min(invoice.amount, invoice.paidAmount ?? 0),
+        0,
+      );
+
+      const pending = Math.max(0, billed - collected);
+      const today = new Date().toISOString().slice(0, 10);
+
+      const overdueCount = input.feeInvoices.filter((invoice) => {
+        const outstanding = Math.max(
+          0,
+          invoice.amount - (invoice.paidAmount ?? 0),
+        );
+
+        return (
+          outstanding > 0 &&
+          (invoice.status === "overdue" ||
+            (Boolean(invoice.dueDate) && invoice.dueDate < today))
+        );
+      }).length;
+
+      finance = {
+        billed,
+        collected,
+        pending,
+        overdueCount,
+      };
+    } else if (input.feeInstallmentPlans.length > 0) {
+      const billed = input.feeInstallmentPlans.reduce(
+        (sum, plan) => sum + plan.totalFee,
+        0,
+      );
+
+      const collected = input.feeInstallmentPlans.reduce(
+        (sum, plan) => sum + plan.paidAmount,
+        0,
+      );
+
+      const pending = input.feeInstallmentPlans.reduce(
+        (sum, plan) => sum + plan.pendingAmount,
+        0,
+      );
+
+      const overdueCount = input.feeInstallmentPlans.reduce(
+        (sum, plan) =>
+          sum +
+          plan.installments.filter(
+            (installment) => installment.status === "overdue",
+          ).length,
+        0,
+      );
+
+      finance = {
+        billed,
+        collected,
+        pending,
+        overdueCount,
+      };
+    } else {
+      finance = {
+        billed: 0,
+        collected: 0,
+        pending: 0,
+        overdueCount: 0,
+      };
+    }
+  }
+
+  const activeBatches = input.batches.filter(
+    (batch) => batch.status === "active",
+  );
+
+  const batchLearnerIds = new Set(
+    activeBatches.flatMap((batch) => batch.studentIds),
+  );
+
+  const activeStudents = input.users.filter(
+    (user) => user.role === "student" && user.status === "active",
+  ).length;
+
+  const learners =
+    input.role === "admin"
+      ? Math.max(activeStudents, batchLearnerIds.size)
+      : batchLearnerIds.size;
+
+  const completedLectures = input.lectures.filter(
+    (lecture) => lecture.status === "completed",
+  ).length;
+
+  const scheduledLectures = input.lectures.filter(
+    (lecture) => lecture.status === "scheduled",
+  ).length;
+
+  const pendingPayout = input.teacherPayouts.reduce(
+    (sum, payout) => sum + payout.pendingAmount,
+    0,
+  );
+
+  const attendanceValue =
+    attendanceRate === null ? "—" : `${attendanceRate}%`;
+
+  const assessmentValue =
+    averageScore === null ? "—" : `${averageScore}%`;
+
+  const learningValue =
+    completionRate === null ? "—" : `${completionRate}%`;
+
+  let metrics: DashboardMetric[];
+
+  if (input.role === "admin") {
+    metrics = [
+      {
+        label: "Active Learners",
+        value: `${learners}`,
+        detail: "Active student accounts and enrolled batch learners",
+      },
+      {
+        label: "Active Batches",
+        value: `${activeBatches.length}`,
+        detail: "Current active batches across the institute",
+      },
+      {
+        label: "Attendance",
+        value: attendanceValue,
+        detail: `${attendanceRecords.length} attendance records analysed`,
+      },
+      {
+        label: "Fee Pending",
+        value: formatAnalyticsCurrency(finance?.pending ?? 0),
+        detail: `${finance?.overdueCount ?? 0} overdue invoice or installment items`,
+      },
+    ];
+  } else if (input.role === "educator") {
+    metrics = [
+      {
+        label: "Assigned Batches",
+        value: `${activeBatches.length}`,
+        detail: "Active batches assigned to your account",
+      },
+      {
+        label: "Learners",
+        value: `${learners}`,
+        detail: "Unique students in your active batches",
+      },
+      {
+        label: "Attendance",
+        value: attendanceValue,
+        detail: `${attendanceRecords.length} records created by you`,
+      },
+      {
+        label: "Pending Earnings",
+        value: formatAnalyticsCurrency(pendingPayout),
+        detail: "Outstanding teacher payout amount",
+      },
+    ];
+  } else {
+    metrics = [
+      {
+        label: "Attendance",
+        value: attendanceValue,
+        detail: `${attendanceRecords.length} recorded attendance entries`,
+      },
+      {
+        label: "Test Average",
+        value: assessmentValue,
+        detail: `${assessmentRows.length} marked weekly-test results`,
+      },
+      {
+        label: "Learning Completion",
+        value: learningValue,
+        detail: `${learningActivities.length} daily learning activities`,
+      },
+      {
+        label: "Fee Pending",
+        value: formatAnalyticsCurrency(finance?.pending ?? 0),
+        detail: `${finance?.overdueCount ?? 0} overdue invoice or installment items`,
+      },
+    ];
+  }
+
+  const insights: DashboardAnalytics["insights"] = [];
+
+  if (attendanceRate === null) {
+    insights.push({
+      title: "Attendance data is pending",
+      description:
+        "Record attendance consistently to unlock a reliable attendance trend.",
+      tone: "neutral",
+    });
+  } else if (attendanceRate < 75) {
+    insights.push({
+      title: "Attendance needs attention",
+      description: `Attendance is ${attendanceRate}%. Review absences and follow up early.`,
+      tone: "warning",
+    });
+  } else {
+    insights.push({
+      title: "Attendance is on track",
+      description: `Attendance is currently ${attendanceRate}%, including present and late records.`,
+      tone: "positive",
+    });
+  }
+
+  if (averageScore === null) {
+    insights.push({
+      title: "Assessment data is pending",
+      description:
+        "Publish weekly-test results to begin tracking academic performance.",
+      tone: "neutral",
+    });
+  } else if (averageScore < 50) {
+    insights.push({
+      title: "Test performance needs support",
+      description: `The current weekly-test average is ${averageScore}%. Focus on weak subjects and revision.`,
+      tone: "warning",
+    });
+  } else if (averageScore >= 75) {
+    insights.push({
+      title: "Assessment performance is strong",
+      description: `The current weekly-test average is ${averageScore}%. Maintain the same consistency.`,
+      tone: "positive",
+    });
+  } else {
+    insights.push({
+      title: "Assessment progress is developing",
+      description: `The current weekly-test average is ${averageScore}%. Target regular practice for improvement.`,
+      tone: "neutral",
+    });
+  }
+
+  if (completionRate !== null && completionRate < 70) {
+    insights.push({
+      title: "Daily learning completion is low",
+      description: `Only ${completionRate}% of recorded learning work is complete. Prioritise homework, assignments, and revision.`,
+      tone: "warning",
+    });
+  }
+
+  if (finance && finance.pending > 0) {
+    insights.push({
+      title: "Fee follow-up is required",
+      description: `${formatAnalyticsCurrency(finance.pending)} remains pending across the available fee records.`,
+      tone: finance.overdueCount > 0 ? "warning" : "neutral",
+    });
+  }
+
+  if (
+    (input.role === "admin" || input.role === "educator") &&
+    scheduledLectures > 0
+  ) {
+    insights.push({
+      title: "Upcoming delivery workload",
+      description: `${scheduledLectures} lecture${
+        scheduledLectures === 1 ? "" : "s"
+      } are currently scheduled.`,
+      tone: "neutral",
+    });
+  }
+
+  if (!insights.length) {
+    insights.push({
+      title: "Analytics will grow with activity",
+      description:
+        "Continue recording attendance, learning activity, tests, lectures, and fee updates.",
+      tone: "neutral",
+    });
+  }
+
+  return {
+    refreshedAt: new Date().toISOString(),
+    metrics,
+    attendance: {
+      rate: attendanceRate,
+      totalRecords: attendanceRecords.length,
+      present,
+      absent,
+      late,
+      excused,
+    },
+    assessments: {
+      averageScore,
+      publishedTests: input.weeklyTests.filter(
+        (weeklyTest) => weeklyTest.published,
+      ).length,
+      resultCount: assessmentRows.length,
+      subjectPerformance,
+    },
+    learning: {
+      activitiesRecorded: learningActivities.length,
+      completionRate,
+      homeworkRate,
+      assignmentRate,
+      revisionRate,
+      averageStudyMinutes,
+    },
+    finance,
+    operations: {
+      activeBatches: activeBatches.length,
+      learners,
+      completedLectures,
+      scheduledLectures,
+    },
+    insights: insights.slice(0, 4),
+  };
+}
+
 export async function getDashboardBundle(
   role: Role,
   userId?: string,
 ): Promise<DashboardBundle> {
-  const [config, user, userDoc, courses, tests, messages, submissions] =
-    await Promise.all([
-      getContentDocument<{ templates: Record<Role, DashboardTemplate> }>(
-        "dashboard-config",
-      ),
-      userId ? findUserById(userId) : Promise.resolve(null),
-      userId ? findFullUserById(userId) : Promise.resolve(undefined),
-      getCoursesForRole(role),
-      getTestsForRole(role, userId),
-      getMessagesForRole(role, userId),
-      getTestSubmissionsForRole(role, userId),
-    ]);
-
-  const template = config.templates[role];
-  const [attendanceSheets, feeInvoices, lectures] = await Promise.all([
+  const [
+    config,
+    user,
+    userDoc,
+    courses,
+    tests,
+    messages,
+    submissions,
+    attendanceSheets,
+    feeInvoices,
+    lectures,
+    batches,
+    weeklyTests,
+    dailyActivities,
+    feeInstallmentPlans,
+    teacherPayouts,
+    users,
+  ] = await Promise.all([
+    getContentDocument<{ templates: Record<Role, DashboardTemplate> }>(
+      "dashboard-config",
+    ),
+    userId ? findUserById(userId) : Promise.resolve(null),
+    userId ? findFullUserById(userId) : Promise.resolve(null),
+    getCoursesForRole(role),
+    getTestsForRole(role, userId),
+    getMessagesForRole(role, userId),
+    getTestSubmissionsForRole(role, userId),
     getAttendanceSheetsForRole(role, userId),
     getFeeInvoicesForRole(role, userId),
     getLecturesForRole(role, userId),
+    getBatchesForRole(role, userId),
+    getWeeklyTestsForRole(role, userId),
+    getDailyActivitiesForRole(role, userId),
+    getFeeInstallmentPlansForRole(role, userId),
+    getTeacherPayoutsForRole(role, userId),
+    role === "admin" ? getUsersForAdmin() : Promise.resolve([]),
   ]);
+
+  const template = config.templates[role];
+
+  const linkedStudentId =
+    role === "student"
+      ? userId
+      : role === "parent"
+        ? userDoc?.linkedStudentId
+        : undefined;
+
+  const analytics = buildDashboardAnalytics({
+    role,
+    studentId: linkedStudentId,
+    attendanceSheets,
+    weeklyTests,
+    dailyActivities,
+    feeInvoices,
+    feeInstallmentPlans,
+    batches,
+    lectures,
+    teacherPayouts,
+    users,
+  });
 
   return {
     roleLabel: user?.label ?? template.roleLabel,
@@ -1583,7 +2507,9 @@ export async function getDashboardBundle(
     attendanceSheets,
     feeInvoices,
     lectures,
+    linkedStudentId: userDoc?.linkedStudentId,
     profile: userDoc?.profile,
+    analytics,
   };
 }
 
@@ -1706,3 +2632,1569 @@ async function generateFeeReceiptNo() {
 
   return `${prefix}${String(nextNumber).padStart(3, "0")}`;
 }
+
+export async function getBatchesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<Batch>(COLLECTIONS.batches);
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) return [];
+
+    return stripMongoIds(
+      await collection
+        .find({ teacherIds: userId, status: "active" })
+        .sort({ createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) return [];
+
+  return stripMongoIds(
+    await collection
+      .find({ studentIds: linkedStudentId, status: "active" })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createBatch(input: {
+  name: string;
+  courseId?: string;
+  courseName?: string;
+  subject?: string;
+  schedule?: string;
+  studentIds?: string[];
+  teacherIds?: string[];
+  createdBy: string;
+}) {
+  const name = input.name.trim();
+
+  if (!name) {
+    throw new Error("Batch name is required.");
+  }
+
+  const collection = await getCollection<Batch>(COLLECTIONS.batches);
+  const now = new Date().toISOString();
+
+  const batch: Batch = {
+    id: `batch-${randomUUID()}`,
+    name,
+    courseId: input.courseId?.trim() || undefined,
+    courseName: input.courseName?.trim() || undefined,
+    subject: input.subject?.trim() || undefined,
+    schedule: input.schedule?.trim() || undefined,
+    studentIds: [...new Set(input.studentIds ?? [])],
+    teacherIds: [...new Set(input.teacherIds ?? [])],
+    status: "active",
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(batch);
+
+  return batch;
+}
+
+export async function updateBatch(
+  batchId: string,
+  input: Partial<{
+    name: string;
+    courseId: string;
+    courseName: string;
+    subject: string;
+    schedule: string;
+    studentIds: string[];
+    teacherIds: string[];
+    status: "active" | "archived";
+  }>,
+) {
+  const collection = await getCollection<Batch>(COLLECTIONS.batches);
+
+  const updates: Partial<Batch> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (typeof input.name === "string") {
+    updates.name = input.name.trim();
+  }
+
+  if (typeof input.courseId === "string") {
+    updates.courseId = input.courseId.trim() || undefined;
+  }
+
+  if (typeof input.courseName === "string") {
+    updates.courseName = input.courseName.trim() || undefined;
+  }
+
+  if (typeof input.subject === "string") {
+    updates.subject = input.subject.trim() || undefined;
+  }
+
+  if (typeof input.schedule === "string") {
+    updates.schedule = input.schedule.trim() || undefined;
+  }
+
+  if (Array.isArray(input.studentIds)) {
+    updates.studentIds = [...new Set(input.studentIds)];
+  }
+
+  if (Array.isArray(input.teacherIds)) {
+    updates.teacherIds = [...new Set(input.teacherIds)];
+  }
+
+  if (input.status === "active" || input.status === "archived") {
+    updates.status = input.status;
+  }
+
+  await collection.updateOne({ id: batchId }, { $set: updates });
+
+  const updatedBatch = await collection.findOne({ id: batchId });
+  return updatedBatch ? stripMongoId(updatedBatch) : null;
+}
+
+export async function assignTeacherToBatch(input: {
+  batchId: string;
+  teacherId: string;
+  subject?: string;
+  assignedBy: string;
+}) {
+  const batchCollection = await getCollection<Batch>(COLLECTIONS.batches);
+  const assignmentCollection = await getCollection<TeacherBatchAssignment>(
+    COLLECTIONS.teacherBatchAssignments,
+  );
+
+  const batch = await batchCollection.findOne({ id: input.batchId });
+
+  if (!batch) {
+    throw new Error("Batch not found.");
+  }
+
+  const existingAssignment = await assignmentCollection.findOne({
+    batchId: input.batchId,
+    teacherId: input.teacherId,
+  });
+
+  const now = new Date().toISOString();
+
+  if (!existingAssignment) {
+    const assignment: TeacherBatchAssignment = {
+      id: `teacher-batch-${randomUUID()}`,
+      batchId: input.batchId,
+      teacherId: input.teacherId,
+      subject: input.subject?.trim() || undefined,
+      assignedAt: now,
+      assignedBy: input.assignedBy,
+    };
+
+    await assignmentCollection.insertOne(assignment);
+  }
+
+  await batchCollection.updateOne(
+    { id: input.batchId },
+    {
+      $set: {
+        teacherIds: [
+          ...new Set([...(batch.teacherIds ?? []), input.teacherId]),
+        ],
+        updatedAt: now,
+      },
+    },
+  );
+
+  const updatedBatch = await batchCollection.findOne({ id: input.batchId });
+  return updatedBatch ? stripMongoId(updatedBatch) : null;
+}
+
+export async function removeTeacherFromBatch(input: {
+  batchId: string;
+  teacherId: string;
+}) {
+  const batchCollection = await getCollection<Batch>(COLLECTIONS.batches);
+  const assignmentCollection = await getCollection<TeacherBatchAssignment>(
+    COLLECTIONS.teacherBatchAssignments,
+  );
+
+  const batch = await batchCollection.findOne({ id: input.batchId });
+
+  if (!batch) {
+    throw new Error("Batch not found.");
+  }
+
+  await assignmentCollection.deleteOne({
+    batchId: input.batchId,
+    teacherId: input.teacherId,
+  });
+
+  await batchCollection.updateOne(
+    { id: input.batchId },
+    {
+      $set: {
+        teacherIds: (batch.teacherIds ?? []).filter(
+          (teacherId) => teacherId !== input.teacherId,
+        ),
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  const updatedBatch = await batchCollection.findOne({ id: input.batchId });
+  return updatedBatch ? stripMongoId(updatedBatch) : null;
+}
+
+export async function getWeeklyTestsForRole(role: Role, userId?: string) {
+  const collection = await getCollection<WeeklyTest>(COLLECTIONS.weeklyTests);
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ testDate: -1, createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({ teacherId: userId })
+        .sort({ testDate: -1, createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({
+        published: true,
+        "results.studentId": linkedStudentId,
+      })
+      .sort({ testDate: -1, createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createWeeklyTest(input: {
+  title: string;
+  batchId: string;
+  batchName: string;
+  teacherId: string;
+  subject: string;
+  testDate: string;
+  totalMarks: number;
+  published?: boolean;
+  results: WeeklyTest["results"];
+}) {
+  if (!input.title.trim()) {
+    throw new Error("Test title is required.");
+  }
+
+  if (!input.batchId) {
+    throw new Error("Batch is required.");
+  }
+
+  if (!input.subject.trim()) {
+    throw new Error("Subject is required.");
+  }
+
+  if (!input.testDate) {
+    throw new Error("Test date is required.");
+  }
+
+  if (!Number.isFinite(input.totalMarks) || input.totalMarks <= 0) {
+    throw new Error("Total marks must be greater than zero.");
+  }
+
+  if (!input.results.length) {
+    throw new Error("Add at least one student result.");
+  }
+
+  const collection = await getCollection<WeeklyTest>(COLLECTIONS.weeklyTests);
+
+  const now = new Date().toISOString();
+
+  const weeklyTest: WeeklyTest = {
+    id: `weekly-test-${randomUUID()}`,
+    title: input.title.trim(),
+    batchId: input.batchId,
+    batchName: input.batchName.trim(),
+    teacherId: input.teacherId,
+    subject: input.subject.trim(),
+    testDate: input.testDate,
+    totalMarks: input.totalMarks,
+    published: input.published ?? false,
+    results: input.results.map((result) => ({
+      studentId: result.studentId,
+      studentName: result.studentName,
+      obtainedMarks:
+        typeof result.obtainedMarks === "number"
+          ? result.obtainedMarks
+          : undefined,
+      status: result.status,
+      remarks: result.remarks?.trim() || undefined,
+    })),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(weeklyTest);
+
+  return stripMongoId(weeklyTest);
+}
+
+export async function updateWeeklyTest(
+  weeklyTestId: string,
+  input: Partial<{
+    title: string;
+    subject: string;
+    testDate: string;
+    totalMarks: number;
+    published: boolean;
+    results: WeeklyTest["results"];
+  }>,
+) {
+  const collection = await getCollection<WeeklyTest>(COLLECTIONS.weeklyTests);
+
+  const updates: Partial<WeeklyTest> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (typeof input.title === "string") {
+    updates.title = input.title.trim();
+  }
+
+  if (typeof input.subject === "string") {
+    updates.subject = input.subject.trim();
+  }
+
+  if (typeof input.testDate === "string") {
+    updates.testDate = input.testDate;
+  }
+
+  if (
+    typeof input.totalMarks === "number" &&
+    Number.isFinite(input.totalMarks) &&
+    input.totalMarks > 0
+  ) {
+    updates.totalMarks = input.totalMarks;
+  }
+
+  if (typeof input.published === "boolean") {
+    updates.published = input.published;
+  }
+
+  if (Array.isArray(input.results)) {
+    updates.results = input.results.map((result) => ({
+      studentId: result.studentId,
+      studentName: result.studentName,
+      obtainedMarks:
+        typeof result.obtainedMarks === "number"
+          ? result.obtainedMarks
+          : undefined,
+      status: result.status,
+      remarks: result.remarks?.trim() || undefined,
+    }));
+  }
+
+  await collection.updateOne({ id: weeklyTestId }, { $set: updates });
+
+  const updatedTest = await collection.findOne({ id: weeklyTestId });
+
+  return updatedTest ? stripMongoId(updatedTest) : null;
+}
+
+export async function deleteWeeklyTest(weeklyTestId: string) {
+  const collection = await getCollection<WeeklyTest>(COLLECTIONS.weeklyTests);
+
+  const result = await collection.deleteOne({ id: weeklyTestId });
+
+  return result.deletedCount > 0;
+}
+
+export async function getTeacherFeedbackForRole(role: Role, userId?: string) {
+  const collection = await getCollection<TeacherFeedback>(
+    COLLECTIONS.teacherFeedback,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({ teacherId: userId })
+        .sort({ createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({
+        studentId: linkedStudentId,
+        visibleToParent: true,
+      })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createTeacherFeedback(input: {
+  studentId: string;
+  studentName: string;
+  teacherId: string;
+  teacherName?: string;
+  batchId?: string;
+  batchName?: string;
+  subject?: string;
+  category: TeacherFeedback["category"];
+  strengths?: string;
+  areasToImprove?: string;
+  feedback: string;
+  visibleToParent: boolean;
+}) {
+  if (!input.studentId) {
+    throw new Error("Student is required.");
+  }
+
+  if (!input.teacherId) {
+    throw new Error("Teacher is required.");
+  }
+
+  if (!input.feedback.trim()) {
+    throw new Error("Feedback is required.");
+  }
+
+  const collection = await getCollection<TeacherFeedback>(
+    COLLECTIONS.teacherFeedback,
+  );
+
+  const now = new Date().toISOString();
+
+  const feedback: TeacherFeedback = {
+    id: `feedback-${randomUUID()}`,
+    studentId: input.studentId,
+    studentName: input.studentName.trim(),
+    teacherId: input.teacherId,
+    teacherName: input.teacherName?.trim() || undefined,
+    batchId: input.batchId,
+    batchName: input.batchName?.trim() || undefined,
+    subject: input.subject?.trim() || undefined,
+    category: input.category,
+    strengths: input.strengths?.trim() || undefined,
+    areasToImprove: input.areasToImprove?.trim() || undefined,
+    feedback: input.feedback.trim(),
+    visibleToParent: input.visibleToParent,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(feedback);
+
+  return stripMongoId(feedback);
+}
+
+export async function updateTeacherFeedback(
+  feedbackId: string,
+  input: Partial<{
+    category: TeacherFeedback["category"];
+    strengths: string;
+    areasToImprove: string;
+    feedback: string;
+    visibleToParent: boolean;
+    subject: string;
+  }>,
+) {
+  const collection = await getCollection<TeacherFeedback>(
+    COLLECTIONS.teacherFeedback,
+  );
+
+  const updates: Partial<TeacherFeedback> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (input.category) {
+    updates.category = input.category;
+  }
+
+  if (typeof input.strengths === "string") {
+    updates.strengths = input.strengths.trim() || undefined;
+  }
+
+  if (typeof input.areasToImprove === "string") {
+    updates.areasToImprove = input.areasToImprove.trim() || undefined;
+  }
+
+  if (typeof input.feedback === "string") {
+    if (!input.feedback.trim()) {
+      throw new Error("Feedback cannot be empty.");
+    }
+
+    updates.feedback = input.feedback.trim();
+  }
+
+  if (typeof input.subject === "string") {
+    updates.subject = input.subject.trim() || undefined;
+  }
+
+  if (typeof input.visibleToParent === "boolean") {
+    updates.visibleToParent = input.visibleToParent;
+  }
+
+  await collection.updateOne({ id: feedbackId }, { $set: updates });
+
+  const updatedFeedback = await collection.findOne({ id: feedbackId });
+
+  return updatedFeedback ? stripMongoId(updatedFeedback) : null;
+}
+
+export async function deleteTeacherFeedback(feedbackId: string) {
+  const collection = await getCollection<TeacherFeedback>(
+    COLLECTIONS.teacherFeedback,
+  );
+
+  const result = await collection.deleteOne({ id: feedbackId });
+
+  return result.deletedCount > 0;
+}
+
+export async function getBehaviourNotesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<BehaviourNote>(
+    COLLECTIONS.behaviourNotes,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({ teacherId: userId })
+        .sort({ createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({
+        studentId: linkedStudentId,
+        visibleToParent: true,
+      })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createBehaviourNote(input: {
+  studentId: string;
+  studentName: string;
+  teacherId: string;
+  teacherName?: string;
+  batchId?: string;
+  batchName?: string;
+  rating: BehaviourNote["rating"];
+  note: string;
+  actionTaken?: string;
+  visibleToParent: boolean;
+  resolved?: boolean;
+}) {
+  if (!input.studentId) {
+    throw new Error("Student is required.");
+  }
+
+  if (!input.teacherId) {
+    throw new Error("Teacher is required.");
+  }
+
+  if (!input.note.trim()) {
+    throw new Error("Behaviour note is required.");
+  }
+
+  const collection = await getCollection<BehaviourNote>(
+    COLLECTIONS.behaviourNotes,
+  );
+
+  const now = new Date().toISOString();
+
+  const behaviourNote: BehaviourNote = {
+    id: `behaviour-${randomUUID()}`,
+    studentId: input.studentId,
+    studentName: input.studentName.trim(),
+    teacherId: input.teacherId,
+    teacherName: input.teacherName?.trim() || undefined,
+    batchId: input.batchId,
+    batchName: input.batchName?.trim() || undefined,
+    rating: input.rating,
+    note: input.note.trim(),
+    actionTaken: input.actionTaken?.trim() || undefined,
+    visibleToParent: input.visibleToParent,
+    resolved: input.resolved ?? false,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(behaviourNote);
+
+  return stripMongoId(behaviourNote);
+}
+
+export async function updateBehaviourNote(
+  behaviourNoteId: string,
+  input: Partial<{
+    rating: BehaviourNote["rating"];
+    note: string;
+    actionTaken: string;
+    visibleToParent: boolean;
+    resolved: boolean;
+  }>,
+) {
+  const collection = await getCollection<BehaviourNote>(
+    COLLECTIONS.behaviourNotes,
+  );
+
+  const updates: Partial<BehaviourNote> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (input.rating) {
+    updates.rating = input.rating;
+  }
+
+  if (typeof input.note === "string") {
+    if (!input.note.trim()) {
+      throw new Error("Behaviour note cannot be empty.");
+    }
+
+    updates.note = input.note.trim();
+  }
+
+  if (typeof input.actionTaken === "string") {
+    updates.actionTaken = input.actionTaken.trim() || undefined;
+  }
+
+  if (typeof input.visibleToParent === "boolean") {
+    updates.visibleToParent = input.visibleToParent;
+  }
+
+  if (typeof input.resolved === "boolean") {
+    updates.resolved = input.resolved;
+  }
+
+  await collection.updateOne({ id: behaviourNoteId }, { $set: updates });
+
+  const updatedNote = await collection.findOne({ id: behaviourNoteId });
+
+  return updatedNote ? stripMongoId(updatedNote) : null;
+}
+
+export async function deleteBehaviourNote(behaviourNoteId: string) {
+  const collection = await getCollection<BehaviourNote>(
+    COLLECTIONS.behaviourNotes,
+  );
+
+  const result = await collection.deleteOne({ id: behaviourNoteId });
+
+  return result.deletedCount > 0;
+}
+
+export async function getDailyActivitiesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<StudentDailyActivity>(
+    COLLECTIONS.dailyActivities,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ date: -1, createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({ teacherId: userId })
+        .sort({ date: -1, createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({
+        studentId: linkedStudentId,
+        visibleToParent: true,
+      })
+      .sort({ date: -1, createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function createDailyActivity(input: {
+  studentId: string;
+  studentName: string;
+
+  batchId: string;
+  batchName: string;
+
+  teacherId: string;
+  teacherName?: string;
+
+  subject?: string;
+  date: string;
+
+  topicStudied?: string;
+
+  homeworkCompleted: boolean;
+  assignmentCompleted: boolean;
+  revisionCompleted: boolean;
+
+  doubtsRaised?: string;
+  participation: StudentDailyActivity["participation"];
+
+  studyMinutes?: number;
+  teacherVerified: boolean;
+  teacherNote?: string;
+
+  visibleToParent: boolean;
+}) {
+  if (!input.studentId) {
+    throw new Error("Student is required.");
+  }
+
+  if (!input.batchId) {
+    throw new Error("Batch is required.");
+  }
+
+  if (!input.teacherId) {
+    throw new Error("Teacher is required.");
+  }
+
+  if (!input.date) {
+    throw new Error("Activity date is required.");
+  }
+
+  const collection = await getCollection<StudentDailyActivity>(
+    COLLECTIONS.dailyActivities,
+  );
+
+  const now = new Date().toISOString();
+
+  const activity: StudentDailyActivity = {
+    id: `daily-activity-${randomUUID()}`,
+
+    studentId: input.studentId,
+    studentName: input.studentName.trim(),
+
+    batchId: input.batchId,
+    batchName: input.batchName.trim(),
+
+    teacherId: input.teacherId,
+    teacherName: input.teacherName?.trim() || undefined,
+
+    subject: input.subject?.trim() || undefined,
+    date: input.date,
+
+    topicStudied: input.topicStudied?.trim() || undefined,
+
+    homeworkCompleted: input.homeworkCompleted,
+    assignmentCompleted: input.assignmentCompleted,
+    revisionCompleted: input.revisionCompleted,
+
+    doubtsRaised: input.doubtsRaised?.trim() || undefined,
+    participation: input.participation,
+
+    studyMinutes:
+      typeof input.studyMinutes === "number" &&
+      Number.isFinite(input.studyMinutes) &&
+      input.studyMinutes >= 0
+        ? input.studyMinutes
+        : undefined,
+
+    teacherVerified: input.teacherVerified,
+    teacherNote: input.teacherNote?.trim() || undefined,
+
+    visibleToParent: input.visibleToParent,
+
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(activity);
+
+  return stripMongoId(activity);
+}
+
+export async function updateDailyActivity(
+  activityId: string,
+  input: Partial<{
+    subject: string;
+    date: string;
+
+    topicStudied: string;
+
+    homeworkCompleted: boolean;
+    assignmentCompleted: boolean;
+    revisionCompleted: boolean;
+
+    doubtsRaised: string;
+    participation: StudentDailyActivity["participation"];
+
+    studyMinutes: number;
+    teacherVerified: boolean;
+    teacherNote: string;
+
+    visibleToParent: boolean;
+  }>,
+) {
+  const collection = await getCollection<StudentDailyActivity>(
+    COLLECTIONS.dailyActivities,
+  );
+
+  const updates: Partial<StudentDailyActivity> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (typeof input.subject === "string") {
+    updates.subject = input.subject.trim() || undefined;
+  }
+
+  if (typeof input.date === "string" && input.date.trim()) {
+    updates.date = input.date;
+  }
+
+  if (typeof input.topicStudied === "string") {
+    updates.topicStudied = input.topicStudied.trim() || undefined;
+  }
+
+  if (typeof input.homeworkCompleted === "boolean") {
+    updates.homeworkCompleted = input.homeworkCompleted;
+  }
+
+  if (typeof input.assignmentCompleted === "boolean") {
+    updates.assignmentCompleted = input.assignmentCompleted;
+  }
+
+  if (typeof input.revisionCompleted === "boolean") {
+    updates.revisionCompleted = input.revisionCompleted;
+  }
+
+  if (typeof input.doubtsRaised === "string") {
+    updates.doubtsRaised = input.doubtsRaised.trim() || undefined;
+  }
+
+  if (input.participation) {
+    updates.participation = input.participation;
+  }
+
+  if (
+    typeof input.studyMinutes === "number" &&
+    Number.isFinite(input.studyMinutes) &&
+    input.studyMinutes >= 0
+  ) {
+    updates.studyMinutes = input.studyMinutes;
+  }
+
+  if (typeof input.teacherVerified === "boolean") {
+    updates.teacherVerified = input.teacherVerified;
+  }
+
+  if (typeof input.teacherNote === "string") {
+    updates.teacherNote = input.teacherNote.trim() || undefined;
+  }
+
+  if (typeof input.visibleToParent === "boolean") {
+    updates.visibleToParent = input.visibleToParent;
+  }
+
+  await collection.updateOne({ id: activityId }, { $set: updates });
+
+  const updatedActivity = await collection.findOne({ id: activityId });
+
+  return updatedActivity ? stripMongoId(updatedActivity) : null;
+}
+
+export async function deleteDailyActivity(activityId: string) {
+  const collection = await getCollection<StudentDailyActivity>(
+    COLLECTIONS.dailyActivities,
+  );
+
+  const result = await collection.deleteOne({ id: activityId });
+
+  return result.deletedCount > 0;
+}
+
+function getInstallmentStatus(
+  amount: number,
+  paidAmount: number,
+  dueDate: string,
+): FeeInstallment["status"] {
+  if (paidAmount >= amount) {
+    return "paid";
+  }
+
+  if (paidAmount > 0) {
+    return "partial";
+  }
+
+  const dueTime = new Date(`${dueDate}T23:59:59`).getTime();
+
+  if (!Number.isNaN(dueTime) && dueTime < Date.now()) {
+    return "overdue";
+  }
+
+  return "due";
+}
+
+function normalizeInstallments(
+  installments: Array<
+    Pick<
+      FeeInstallment,
+      | "installmentNumber"
+      | "amount"
+      | "paidAmount"
+      | "dueDate"
+      | "paidDate"
+      | "receiptNumber"
+      | "paymentMode"
+      | "notes"
+    >
+  >,
+): FeeInstallment[] {
+  if (!installments.length) {
+    throw new Error("Add at least one installment.");
+  }
+
+  const usedNumbers = new Set<number>();
+
+  return installments
+    .map((installment) => {
+      const installmentNumber = Number(installment.installmentNumber);
+      const amount = Number(installment.amount);
+      const paidAmount = Number(installment.paidAmount ?? 0);
+
+      if (
+        !Number.isInteger(installmentNumber) ||
+        installmentNumber < 1
+      ) {
+        throw new Error("Each installment must have a valid installment number.");
+      }
+
+      if (usedNumbers.has(installmentNumber)) {
+        throw new Error("Installment numbers cannot be repeated.");
+      }
+
+      usedNumbers.add(installmentNumber);
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw new Error("Every installment amount must be greater than zero.");
+      }
+
+      if (
+        !Number.isFinite(paidAmount) ||
+        paidAmount < 0 ||
+        paidAmount > amount
+      ) {
+        throw new Error(
+          `Paid amount for installment ${installmentNumber} must be between 0 and ${amount}.`,
+        );
+      }
+
+      if (
+        typeof installment.dueDate !== "string" ||
+        !installment.dueDate.trim()
+      ) {
+        throw new Error(
+          `Due date is required for installment ${installmentNumber}.`,
+        );
+      }
+
+      const pendingAmount = Math.max(0, amount - paidAmount);
+
+      return {
+        installmentNumber,
+        amount,
+        paidAmount,
+        pendingAmount,
+        dueDate: installment.dueDate,
+        paidDate:
+          paidAmount > 0 && typeof installment.paidDate === "string"
+            ? installment.paidDate
+            : undefined,
+        status: getInstallmentStatus(
+          amount,
+          paidAmount,
+          installment.dueDate,
+        ),
+        receiptNumber: installment.receiptNumber?.trim() || undefined,
+        paymentMode: installment.paymentMode?.trim() || undefined,
+        notes: installment.notes?.trim() || undefined,
+      };
+    })
+    .sort((left, right) => left.installmentNumber - right.installmentNumber);
+}
+
+function calculatePlanAmounts(installments: FeeInstallment[]) {
+  const totalFee = installments.reduce(
+    (sum, installment) => sum + installment.amount,
+    0,
+  );
+
+  const paidAmount = installments.reduce(
+    (sum, installment) => sum + installment.paidAmount,
+    0,
+  );
+
+  const pendingAmount = Math.max(0, totalFee - paidAmount);
+
+  return {
+    totalFee,
+    paidAmount,
+    pendingAmount,
+    status:
+      pendingAmount === 0
+        ? ("completed" as const)
+        : ("active" as const),
+  };
+}
+
+export async function getFeeInstallmentPlansForRole(
+  role: Role,
+  userId?: string,
+) {
+  const collection = await getCollection<FeeInstallmentPlan>(
+    COLLECTIONS.feeInstallmentPlans,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    return [];
+  }
+
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({ studentId: linkedStudentId })
+      .sort({ createdAt: -1 })
+      .toArray(),
+  );
+}
+
+export async function getFeeInstallmentPlanById(planId: string) {
+  const collection = await getCollection<FeeInstallmentPlan>(
+    COLLECTIONS.feeInstallmentPlans,
+  );
+
+  const plan = await collection.findOne({ id: planId });
+
+  return plan ? stripMongoId(plan) : null;
+}
+
+export async function createFeeInstallmentPlan(input: {
+  studentId: string;
+  studentName: string;
+  parentId?: string;
+
+  invoiceId?: string;
+  title: string;
+
+  courseName?: string;
+  batchName?: string;
+  academicYear?: string;
+  notes?: string;
+
+  createdBy: string;
+
+  installments: Array<
+    Pick<
+      FeeInstallment,
+      | "installmentNumber"
+      | "amount"
+      | "paidAmount"
+      | "dueDate"
+      | "paidDate"
+      | "receiptNumber"
+      | "paymentMode"
+      | "notes"
+    >
+  >;
+}) {
+  if (!input.studentId) {
+    throw new Error("Student is required.");
+  }
+
+  if (!input.studentName.trim()) {
+    throw new Error("Student name is required.");
+  }
+
+  if (!input.title.trim()) {
+    throw new Error("Fee plan title is required.");
+  }
+
+  if (!input.createdBy) {
+    throw new Error("Plan creator is required.");
+  }
+
+  const normalizedInstallments = normalizeInstallments(input.installments);
+  const amounts = calculatePlanAmounts(normalizedInstallments);
+
+  const collection = await getCollection<FeeInstallmentPlan>(
+    COLLECTIONS.feeInstallmentPlans,
+  );
+
+  const now = new Date().toISOString();
+
+  const plan: FeeInstallmentPlan = {
+    id: `fee-plan-${randomUUID()}`,
+
+    studentId: input.studentId,
+    studentName: input.studentName.trim(),
+    parentId: input.parentId,
+
+    invoiceId: input.invoiceId?.trim() || undefined,
+    title: input.title.trim(),
+
+    courseName: input.courseName?.trim() || undefined,
+    batchName: input.batchName?.trim() || undefined,
+    academicYear: input.academicYear?.trim() || undefined,
+
+    totalFee: amounts.totalFee,
+    paidAmount: amounts.paidAmount,
+    pendingAmount: amounts.pendingAmount,
+    status: amounts.status,
+
+    installments: normalizedInstallments,
+    notes: input.notes?.trim() || undefined,
+
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(plan);
+
+  return stripMongoId(plan);
+}
+
+export async function updateFeeInstallmentPlan(
+  planId: string,
+  input: Partial<{
+    title: string;
+    courseName: string;
+    batchName: string;
+    academicYear: string;
+    notes: string;
+    status: FeeInstallmentPlan["status"];
+    installments: Array<
+      Pick<
+        FeeInstallment,
+        | "installmentNumber"
+        | "amount"
+        | "paidAmount"
+        | "dueDate"
+        | "paidDate"
+        | "receiptNumber"
+        | "paymentMode"
+        | "notes"
+      >
+    >;
+  }>,
+) {
+  const collection = await getCollection<FeeInstallmentPlan>(
+    COLLECTIONS.feeInstallmentPlans,
+  );
+
+  const existingPlan = await collection.findOne({ id: planId });
+
+  if (!existingPlan) {
+    return null;
+  }
+
+  const updates: Partial<FeeInstallmentPlan> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (typeof input.title === "string") {
+    if (!input.title.trim()) {
+      throw new Error("Fee plan title cannot be empty.");
+    }
+
+    updates.title = input.title.trim();
+  }
+
+  if (typeof input.courseName === "string") {
+    updates.courseName = input.courseName.trim() || undefined;
+  }
+
+  if (typeof input.batchName === "string") {
+    updates.batchName = input.batchName.trim() || undefined;
+  }
+
+  if (typeof input.academicYear === "string") {
+    updates.academicYear = input.academicYear.trim() || undefined;
+  }
+
+  if (typeof input.notes === "string") {
+    updates.notes = input.notes.trim() || undefined;
+  }
+
+  if (Array.isArray(input.installments)) {
+    const normalizedInstallments = normalizeInstallments(input.installments);
+    const amounts = calculatePlanAmounts(normalizedInstallments);
+
+    updates.installments = normalizedInstallments;
+    updates.totalFee = amounts.totalFee;
+    updates.paidAmount = amounts.paidAmount;
+    updates.pendingAmount = amounts.pendingAmount;
+    updates.status = amounts.status;
+  }
+
+  if (
+    input.status === "cancelled" &&
+    existingPlan.paidAmount === 0
+  ) {
+    updates.status = "cancelled";
+  }
+
+  await collection.updateOne(
+    { id: planId },
+    { $set: updates },
+  );
+
+  const updatedPlan = await collection.findOne({ id: planId });
+
+  return updatedPlan ? stripMongoId(updatedPlan) : null;
+}
+
+export async function deleteFeeInstallmentPlan(planId: string) {
+  const collection = await getCollection<FeeInstallmentPlan>(
+    COLLECTIONS.feeInstallmentPlans,
+  );
+
+  const result = await collection.deleteOne({ id: planId });
+
+  return result.deletedCount > 0;
+}
+function normalizePayoutMonth(month: string) {
+  const normalizedMonth = month.trim();
+
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(normalizedMonth)) {
+    throw new Error("Payout month must use the YYYY-MM format.");
+  }
+
+  return normalizedMonth;
+}
+
+function normalizePayoutNumber(value: number, fieldLabel: string) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${fieldLabel} must be a valid non-negative number.`);
+  }
+
+  return value;
+}
+
+function calculateTeacherPayoutAmounts(input: {
+  basePay: number;
+  perClassRate: number;
+  completedClasses: number;
+  bonus: number;
+  deductions: number;
+  paidAmount: number;
+}) {
+  const basePay = normalizePayoutNumber(input.basePay, "Base pay");
+  const perClassRate = normalizePayoutNumber(
+    input.perClassRate,
+    "Per class rate",
+  );
+  const completedClasses = normalizePayoutNumber(
+    input.completedClasses,
+    "Completed classes",
+  );
+  const bonus = normalizePayoutNumber(input.bonus, "Bonus");
+  const deductions = normalizePayoutNumber(input.deductions, "Deductions");
+  const paidAmount = normalizePayoutNumber(input.paidAmount, "Paid amount");
+
+  const classEarnings = perClassRate * completedClasses;
+  const totalPayable = Math.max(
+    0,
+    basePay + classEarnings + bonus - deductions,
+  );
+
+  if (paidAmount > totalPayable) {
+    throw new Error("Paid amount cannot be greater than total payable.");
+  }
+
+  const pendingAmount = Math.max(0, totalPayable - paidAmount);
+
+  return {
+    basePay,
+    perClassRate,
+    completedClasses,
+    classEarnings,
+    bonus,
+    deductions,
+    totalPayable,
+    paidAmount,
+    pendingAmount,
+    status:
+      pendingAmount === 0
+        ? ("paid" as const)
+        : paidAmount > 0
+          ? ("partial" as const)
+          : ("pending" as const),
+  };
+}
+
+export async function getTeacherPayoutsForRole(
+  role: Role,
+  userId?: string,
+) {
+  const collection = await getCollection<TeacherPayout>(
+    COLLECTIONS.teacherPayouts,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection
+        .find({})
+        .sort({ month: -1, createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  if (role === "educator" && userId) {
+    return stripMongoIds(
+      await collection
+        .find({ teacherId: userId })
+        .sort({ month: -1, createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  return [];
+}
+
+export async function createTeacherPayout(input: {
+  teacherId: string;
+  month: string;
+  basePay: number;
+  perClassRate: number;
+  completedClasses: number;
+  bonus: number;
+  deductions: number;
+  paidAmount: number;
+  payoutDate?: string;
+  createdBy: string;
+}) {
+  if (!input.teacherId) {
+    throw new Error("Educator is required.");
+  }
+
+  if (!input.createdBy) {
+    throw new Error("Payout creator is required.");
+  }
+
+  const month = normalizePayoutMonth(input.month);
+
+  const users = await getUsersCollection();
+  const educator = await users.findOne({
+    id: input.teacherId,
+    role: "educator",
+    status: "active",
+  });
+
+  if (!educator) {
+    throw new Error("Choose a valid active educator.");
+  }
+
+  const collection = await getCollection<TeacherPayout>(
+    COLLECTIONS.teacherPayouts,
+  );
+
+  const existingPayout = await collection.findOne({
+    teacherId: input.teacherId,
+    month,
+  });
+
+  if (existingPayout) {
+    throw new Error(
+      "A payout record already exists for this educator and month.",
+    );
+  }
+
+  const amounts = calculateTeacherPayoutAmounts(input);
+  const now = new Date().toISOString();
+
+  const payout: TeacherPayout = {
+    id: `teacher-payout-${randomUUID()}`,
+    teacherId: input.teacherId,
+    month,
+    ...amounts,
+    payoutDate: input.payoutDate?.trim() || undefined,
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(payout);
+
+  return stripMongoId(payout);
+}
+
+export async function updateTeacherPayout(
+  payoutId: string,
+  input: Partial<{
+    month: string;
+    basePay: number;
+    perClassRate: number;
+    completedClasses: number;
+    bonus: number;
+    deductions: number;
+    paidAmount: number;
+    payoutDate: string;
+  }>,
+) {
+  const collection = await getCollection<TeacherPayout>(
+    COLLECTIONS.teacherPayouts,
+  );
+
+  const existingPayout = await collection.findOne({ id: payoutId });
+
+  if (!existingPayout) {
+    return null;
+  }
+
+  const month =
+    typeof input.month === "string"
+      ? normalizePayoutMonth(input.month)
+      : existingPayout.month;
+
+  if (month !== existingPayout.month) {
+    const conflictingPayout = await collection.findOne({
+      teacherId: existingPayout.teacherId,
+      month,
+      id: { $ne: payoutId } as any,
+    });
+
+    if (conflictingPayout) {
+      throw new Error(
+        "A payout record already exists for this educator and month.",
+      );
+    }
+  }
+
+  const amounts = calculateTeacherPayoutAmounts({
+    basePay:
+      typeof input.basePay === "number"
+        ? input.basePay
+        : existingPayout.basePay,
+    perClassRate:
+      typeof input.perClassRate === "number"
+        ? input.perClassRate
+        : existingPayout.perClassRate,
+    completedClasses:
+      typeof input.completedClasses === "number"
+        ? input.completedClasses
+        : existingPayout.completedClasses,
+    bonus:
+      typeof input.bonus === "number" ? input.bonus : existingPayout.bonus,
+    deductions:
+      typeof input.deductions === "number"
+        ? input.deductions
+        : existingPayout.deductions,
+    paidAmount:
+      typeof input.paidAmount === "number"
+        ? input.paidAmount
+        : existingPayout.paidAmount,
+  });
+
+  const updates: Partial<TeacherPayout> = {
+    month,
+    ...amounts,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (typeof input.payoutDate === "string") {
+    updates.payoutDate = input.payoutDate.trim() || undefined;
+  }
+
+  await collection.updateOne({ id: payoutId }, { $set: updates });
+
+  const updatedPayout = await collection.findOne({ id: payoutId });
+
+  return updatedPayout ? stripMongoId(updatedPayout) : null;
+}
+
+export async function deleteTeacherPayout(payoutId: string) {
+  const collection = await getCollection<TeacherPayout>(
+    COLLECTIONS.teacherPayouts,
+  );
+
+  const result = await collection.deleteOne({ id: payoutId });
+
+  return result.deletedCount > 0;
+}
+

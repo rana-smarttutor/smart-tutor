@@ -135,8 +135,12 @@ export default async function Home() {
 
             <p className="mx-auto max-w-2xl text-sm font-medium leading-relaxed text-[var(--color-muted)] sm:text-lg xl:mx-0">
               Smart Tutors offers thoughtfully designed{" "}
-              <strong>programs for every stage of a learner's journey</strong>. From
-              school academics and board preparation to competitive exams, civil services, and future-ready digital skills, our programs combine expert mentoring, structured learning, and focused practice to help students achieve meaningful academic and career growth.
+              <strong>programs for every stage of a learner's journey</strong>.
+              From school academics and board preparation to competitive exams,
+              civil services, and future-ready digital skills, our programs
+              combine expert mentoring, structured learning, and focused
+              practice to help students achieve meaningful academic and career
+              growth.
             </p>
           </div>
 
@@ -258,11 +262,12 @@ export default async function Home() {
 
           <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex items-center justify-center min-h-[300px]">
             <Image
-              src="/why%20choose%20us.jpeg"
+              src="/why-choose-smart-tutors.png"
               alt="Why Choose Smart Tutors"
-              width={600}
-              height={400}
-              className="w-full h-auto rounded-lg object-contain"
+              width={1280}
+              height={1180}
+              className="h-auto w-full rounded-[2rem]"
+              priority
             />
           </div>
         </RevealOnScroll>
@@ -398,15 +403,13 @@ export default async function Home() {
 
               <div className="surface-soft rounded-xl p-6 border-l-4 border-emerald-600 hover:bg-emerald-50 transition-colors">
                 <span className="pill mb-3 bg-emerald-100 text-emerald-700 border-none font-bold">
-                  NEP 2020
+                  Prime Digital School
                 </span>
                 <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
-                  New AI-Integrated Curriculum
+                  comming soon
                 </h3>
                 <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium">
-                  Computational thinking and basic Artificial Intelligence have
-                  been integrated into the curriculum starting from Class 3 for
-                  the 2026-27 session.
+                  Prime Digital School empowers students with future-ready digital skills, practical learning, and technology-focused education.
                 </p>
               </div>
             </div>

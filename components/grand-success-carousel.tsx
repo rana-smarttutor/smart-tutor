@@ -16,14 +16,19 @@ const RESULT_CATEGORIES = [
     image: "/hof/10th CBSC.png",
   },
   {
-    id: "hsc-1",
-    label: "12th HSC 1",
-    image: "/hof/hsc 1.png",
+    id: "12-hsc Science",
+    label: "12TH HSC SCIENCE",
+    image: "/hof/12th Hsc science.png",
   },
   {
-    id: "hsc-2",
-    label: "12th HSC 2",
-    image: "/hof/hsc 2.png",
+    id: "12-hsc Commerce",
+    label: "12TH HSC COMMERCE",
+    image: "/hof/12th Hsc commerce.png",
+  },
+    {
+    id: "12-hsc Arts",
+    label: "12TH HSC ARTS",
+    image: "/hof/12th Hsc arts.png",
   },
   {
     id: "jee",

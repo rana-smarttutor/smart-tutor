@@ -10,6 +10,12 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AttendanceManager } from "@/components/attendance-manager";
 import { InvoiceManager } from "@/components/invoice-manager";
 import { LectureManager } from "@/components/lecture-manager";
+import { DailyLearningActivityManager } from "./daily-learning-activity-manager";
+import { FeeInstallmentManager } from "./fee-installment-manager";
+import { TeacherPayoutManager } from "./teacher-payout-manager";
+import { NotificationCenter } from "./notification-center";
+import { NotificationBell } from "./notification-bell";
+import { DashboardAnalytics } from "./dashboard-analytics";
 import type {
   DashboardBundle,
   LibraryBook,
@@ -22,6 +28,7 @@ import type {
   TestSubmission,
 } from "@/lib/types";
 import { DEFAULT_HEURISTICS } from "@/lib/data-store";
+import { StudentFeedbackManager } from "./student-feedback-manager";
 function SectionLoading() {
   return (
     <div
@@ -124,6 +131,26 @@ const DashboardEnquiryManager = dynamic(
   },
 );
 
+const WeeklyTestManager = dynamic(
+  () =>
+    import("@/components/weekly-test-manager").then(
+      (module) => module.WeeklyTestManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const BatchManager = dynamic(
+  () =>
+    import("@/components/batch-manager").then((module) => module.BatchManager),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 type StandaloneStudentReport = {
   id: string;
   title: string;
@@ -147,41 +174,65 @@ const sidebarByRole = {
   student: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "My Tests" },
+    { id: "weekly-tests", label: "Weekly Tests" },
+    { id: "student-feedback", label: "Feedback & Behaviour" },
+    { id: "daily-activities", label: "Daily Learning" },
     { id: "attendance", label: "Attendance" },
     { id: "performance", label: "Performance Reports" },
     { id: "fees", label: "Fees" },
+    { id: "fee-installments", label: "Fees & Installments" },
     { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
+
   educator: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Test Studio" },
+    { id: "weekly-tests", label: "Weekly Tests" },
+    { id: "student-feedback", label: "Feedback & Behaviour" },
+    { id: "daily-activities", label: "Daily Activities" },
     { id: "results", label: "Results" },
     { id: "attendance", label: "Attendance" },
     { id: "fees", label: "Invoices" },
+    { id: "teacher-payouts", label: "My Earnings" },
     { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
+
   admin: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "notifications", label: "Notifications" },
     { id: "enquiries", label: "Enquiries" },
     { id: "tests", label: "Test Studio" },
+    { id: "weekly-tests", label: "Weekly Tests" },
+    { id: "student-feedback", label: "Feedback & Behaviour" },
+    { id: "daily-activities", label: "Daily Activities" },
     { id: "performance", label: "Analytics Hub" },
     { id: "courses", label: "Courses" },
     { id: "accounts", label: "Accounts" },
     { id: "attendance", label: "Attendance" },
     { id: "fees", label: "Invoices" },
+    { id: "fee-installments", label: "Fee Plans" },
+    { id: "teacher-payouts", label: "Teacher Payouts" },
+    { id: "batches", label: "Batch Management" },
     { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
+
   parent: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "notifications", label: "Notifications" },
+    { id: "weekly-tests", label: "Weekly Tests" },
+    { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "attendance", label: "Attendance" },
     { id: "fees", label: "Fees" },
+    { id: "fee-installments", label: "Fees & Installments" },
     { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
@@ -248,16 +299,23 @@ export function DashboardShell({
 
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
+  const showNotifications = activeSection === "notifications";
   const showEnquiries = activeSection === "enquiries";
   const showTests = activeSection === "tests";
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
   const showAccounts = activeSection === "accounts";
+  const showBatches = activeSection === "batches";
   const showLibrary = activeSection === "library";
   const showPerformance = activeSection === "performance";
   const showAttendance = activeSection === "attendance";
   const showFees = activeSection === "fees";
   const showLectures = activeSection === "lectures";
+  const showWeeklyTests = activeSection === "weekly-tests";
+  const showStudentFeedback = activeSection === "student-feedback";
+  const showDailyActivities = activeSection === "daily-activities";
+  const showFeeInstallments = activeSection === "fee-installments";
+  const showTeacherPayouts = activeSection === "teacher-payouts";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
@@ -385,23 +443,24 @@ export function DashboardShell({
       setIsLibraryLoading(false);
     }
   }
-  const workspaceChecklist = role === "student"
-    ? [
-        "Complete pending tests and review graded results",
-        "Check today's lecture schedule and study materials",
-        "Track attendance and fee status regularly",
-      ]
-    : role === "parent"
+  const workspaceChecklist =
+    role === "student"
       ? [
-          "Review your child's academic progress and test reports",
-          "Check attendance regularity and fee invoices",
-          "Read institute notices and mentor messages",
+          "Complete pending tests and review graded results",
+          "Check today's lecture schedule and study materials",
+          "Track attendance and fee status regularly",
         ]
-      : [
-        "Profile identity and current access level",
-        "Live notices from the message center",
-        "Current tests, results, and role-specific workflow status",
-      ];
+      : role === "parent"
+        ? [
+            "Review your child's academic progress and test reports",
+            "Check attendance regularity and fee invoices",
+            "Read institute notices and mentor messages",
+          ]
+        : [
+            "Profile identity and current access level",
+            "Live notices from the message center",
+            "Current tests, results, and role-specific workflow status",
+          ];
 
   useEffect(() => {
     if (!showMessages) {
@@ -548,6 +607,21 @@ export function DashboardShell({
         </aside>
 
         <section className="grid min-w-0 gap-6">
+          <header className="surface flex items-center justify-between gap-4 rounded-[1.5rem] px-5 py-4 sm:px-6">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">
+                {dashboard.roleLabel}
+              </p>
+              <p className="mt-1 truncate text-sm font-semibold text-[var(--color-heading)]">
+                {session?.name ?? "Smart Tutors"}
+              </p>
+            </div>
+
+            <NotificationBell
+              onOpenNotifications={() => setActiveSection("notifications")}
+            />
+          </header>
+
           {showOverview ? (
             <header className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -599,6 +673,13 @@ export function DashboardShell({
                 ))}
               </section>
 
+              {dashboard.analytics ? (
+                <DashboardAnalytics
+                  role={role}
+                  analytics={dashboard.analytics}
+                />
+              ) : null}
+
               <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
                 <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
                   <div className="flex items-center justify-between gap-4">
@@ -622,7 +703,9 @@ export function DashboardShell({
                               <p className="text-lg font-semibold text-[var(--color-heading)]">
                                 {message.title}
                               </p>
-                              <span className="pill shrink-0">{message.channel}</span>
+                              <span className="pill shrink-0">
+                                {message.channel}
+                              </span>
                             </div>
                             <p className="text-sm leading-6 text-[var(--color-muted)]">
                               {message.body}
@@ -707,32 +790,56 @@ export function DashboardShell({
                           <div className="mt-3 grid gap-2">
                             {dashboard.profile.courseWantedTitle ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Course</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.courseWantedTitle}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
+                                  Course
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.courseWantedTitle}
+                                </span>
                               </div>
                             ) : null}
                             {dashboard.profile.studentType ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Type</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.studentType === "on-campus" ? "On Campus" : "Home Student"}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
+                                  Type
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.studentType === "on-campus"
+                                    ? "On Campus"
+                                    : "Home Student"}
+                                </span>
                               </div>
                             ) : null}
-                            {dashboard.profile.weakSubjects && dashboard.profile.weakSubjects.length > 0 ? (
+                            {dashboard.profile.weakSubjects &&
+                            dashboard.profile.weakSubjects.length > 0 ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Focus</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.weakSubjects.join(", ")}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
+                                  Focus
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.weakSubjects.join(", ")}
+                                </span>
                               </div>
                             ) : null}
-                            {dashboard.profile.marks10 ? (
+                            {dashboard.profile.latestQualification ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Class 10</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.marks10}</span>
+                                <span className="w-20 shrink-0 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                                  Qualification
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.latestQualification}
+                                </span>
                               </div>
                             ) : null}
-                            {dashboard.profile.marks12 ? (
+
+                            {dashboard.profile.latestAcademicScore ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Class 12</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.marks12}</span>
+                                <span className="w-20 shrink-0 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                                  Latest Score
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.latestAcademicScore}
+                                </span>
                               </div>
                             ) : null}
                           </div>
@@ -749,20 +856,33 @@ export function DashboardShell({
                           <div className="mt-3 grid gap-2">
                             {dashboard.profile.qualification ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Qualification</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.qualification}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
+                                  Qualification
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.qualification}
+                                </span>
                               </div>
                             ) : null}
                             {dashboard.profile.experience ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Experience</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.experience}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
+                                  Experience
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.experience}
+                                </span>
                               </div>
                             ) : null}
-                            {dashboard.profile.subjects && dashboard.profile.subjects.length > 0 ? (
+                            {dashboard.profile.subjects &&
+                            dashboard.profile.subjects.length > 0 ? (
                               <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">Subjects</span>
-                                <span className="font-medium text-[var(--color-heading)]">{dashboard.profile.subjects.join(", ")}</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
+                                  Subjects
+                                </span>
+                                <span className="font-medium text-[var(--color-heading)]">
+                                  {dashboard.profile.subjects.join(", ")}
+                                </span>
                               </div>
                             ) : null}
                           </div>
@@ -854,6 +974,10 @@ export function DashboardShell({
             />
           ) : null}
 
+          {showNotifications ? (
+            <NotificationCenter role={role} managedUsers={managedUsers} />
+          ) : null}
+
           {showEnquiries && role === "admin" ? (
             <DashboardEnquiryManager />
           ) : null}
@@ -916,6 +1040,10 @@ export function DashboardShell({
 
           {showAccounts && role === "admin" ? (
             <DashboardAccountDirectory initialUsers={managedUsers} />
+          ) : null}
+
+          {showBatches && role === "admin" ? (
+            <BatchManager managedUsers={managedUsers} />
           ) : null}
 
           {showCourses && role === "admin" ? (
@@ -1000,6 +1128,29 @@ export function DashboardShell({
             </article>
           ) : null}
 
+          {showWeeklyTests ? (
+            <WeeklyTestManager
+              role={role}
+              studentDirectory={studentDirectory}
+              userId={session?.id}
+              linkedStudentId={dashboard.linkedStudentId}
+            />
+          ) : null}
+
+          {showStudentFeedback ? (
+            <StudentFeedbackManager
+              role={role}
+              studentDirectory={studentDirectory}
+            />
+          ) : null}
+
+          {showDailyActivities ? (
+            <DailyLearningActivityManager
+              role={role}
+              studentDirectory={studentDirectory}
+            />
+          ) : null}
+
           {showAttendance ? (
             <AttendanceManager
               role={role}
@@ -1009,7 +1160,16 @@ export function DashboardShell({
             />
           ) : null}
 
+          {showFeeInstallments ? (
+            <FeeInstallmentManager
+              role={role}
+              studentDirectory={studentDirectory}
+            />
+          ) : null}
 
+          {showTeacherPayouts && (role === "admin" || role === "educator") ? (
+            <TeacherPayoutManager role={role} managedUsers={managedUsers} />
+          ) : null}
 
           {showFees ? (
             <InvoiceManager
@@ -1107,7 +1267,9 @@ export function DashboardShell({
                               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                   <p className="text-lg font-semibold text-[var(--color-heading)]">
-                                    {report.title || report.periodLabel || report.period}
+                                    {report.title ||
+                                      report.periodLabel ||
+                                      report.period}
                                   </p>
                                   <p className="mt-2 text-sm text-[var(--color-muted)]">
                                     {report.reportType === "monthly"
@@ -1128,7 +1290,8 @@ export function DashboardShell({
                         ) : (
                           <div className="rounded-3xl border border-dashed border-[var(--color-border)] p-6 text-center">
                             <p className="text-sm text-[var(--color-muted)]">
-                              No performance reports have been published for you yet.
+                              No performance reports have been published for you
+                              yet.
                             </p>
                           </div>
                         )}
@@ -1170,12 +1333,13 @@ export function DashboardShell({
                     standaloneStudentReports.length === 0 &&
                     !isStandaloneReportsLoading &&
                     role === "student" && (
-                    <div className="text-center py-12">
-                      <p className="text-[var(--color-muted)]">
-                        No performance reports have been published for you yet.
-                      </p>
-                    </div>
-                  )}
+                      <div className="text-center py-12">
+                        <p className="text-[var(--color-muted)]">
+                          No performance reports have been published for you
+                          yet.
+                        </p>
+                      </div>
+                    )}
                 </div>
               )}
             </article>
