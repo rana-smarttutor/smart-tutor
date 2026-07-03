@@ -1,86 +1,245 @@
 import { NextResponse } from "next/server";
 
+import { getSessionUser } from "@/lib/auth";
 import {
   createLecture,
   createMessage,
-  getLecturesForRole,
+  createNotifications,
   findUserById,
+  getLecturesForRole,
+  getNotificationRecipientIdsForStudents,
 } from "@/lib/data-store";
-import { getSessionUser } from "@/lib/auth";
 
-export async function GET() {
-  const session = await getSessionUser();
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+function getOptionalText(value: unknown) {
+  return typeof value === "string" && value.trim()
+    ? value.trim()
+    : undefined;
+}
+
+function getStudentIds(value: unknown) {
+  return Array.isArray(value)
+    ? value.filter(
+        (item): item is string =>
+          typeof item === "string" && item.trim().length > 0,
+      )
+    : [];
+}
+
+function getLectureStatus(value: unknown) {
+  if (
+    value === "scheduled" ||
+    value === "completed" ||
+    value === "cancelled"
+  ) {
+    return value;
   }
 
-  const lectures = await getLecturesForRole(session.role, session.id);
+  return "scheduled";
+}
 
-  return NextResponse.json({ lectures });
+export async function GET() {
+  try {
+    const session = await getSessionUser();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const lectures = await getLecturesForRole(session.role, session.id);
+
+    return NextResponse.json({ lectures });
+  } catch (error) {
+    console.error("Get lectures error:", error);
+
+    return NextResponse.json(
+      { error: "Unable to load lectures." },
+      { status: 500 },
+    );
+  }
 }
 
 export async function POST(request: Request) {
-  const session = await getSessionUser();
+  try {
+    const session = await getSessionUser();
 
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session.role !== "admin" && session.role !== "educator") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = (await request.json()) as Record<string, unknown>;
+
+    const title = getOptionalText(body.title);
+    const startsAt = getOptionalText(body.startsAt);
+
+    if (!title) {
+      return NextResponse.json(
+        { error: "Lecture title is required." },
+        { status: 400 },
+      );
+    }
+
+    if (!startsAt) {
+      return NextResponse.json(
+        { error: "Lecture start time is required." },
+        { status: 400 },
+      );
+    }
+
+    const status = getLectureStatus(body.status);
+
+    const lecture = await createLecture({
+      title,
+      subject: getOptionalText(body.subject),
+      batchName: getOptionalText(body.batchName),
+      batchId: getOptionalText(body.batchId),
+      teacherId: session.id,
+
+      description: getOptionalText(body.description),
+      startsAt,
+      endsAt: getOptionalText(body.endsAt),
+
+      meetingLink: getOptionalText(body.meetingLink),
+      recordingLink: getOptionalText(body.recordingLink),
+      materialLink: getOptionalText(body.materialLink),
+
+      assignedStudentIds: getStudentIds(body.assignedStudentIds),
+      status,
+
+      topicCovered: getOptionalText(body.topicCovered),
+      homeworkGiven: getOptionalText(body.homeworkGiven),
+      assignmentGiven: getOptionalText(body.assignmentGiven),
+      revisionTask: getOptionalText(body.revisionTask),
+      doubtsSolved: getOptionalText(body.doubtsSolved),
+      nextTopic: getOptionalText(body.nextTopic),
+      attendanceSheetId: getOptionalText(body.attendanceSheetId),
+
+      lectureReportSubmittedAt:
+        status === "completed"
+          ? new Date().toISOString()
+          : getOptionalText(body.lectureReportSubmittedAt),
+
+      createdBy: session.id,
+    });
+
+    const author = (await findUserById(session.id))?.name || session.id;
+
+    const startTime = new Date(lecture.startsAt).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+
+    const isCompletedReport = lecture.status === "completed";
+
+    const notificationRecipientIds =
+      lecture.assignedStudentIds && lecture.assignedStudentIds.length > 0
+        ? await getNotificationRecipientIdsForStudents(
+            lecture.assignedStudentIds,
+          )
+        : [];
+
+    let messageBody = isCompletedReport
+      ? `A daily lecture report has been submitted.\n\n`
+      : `A new class has been scheduled.\n\n`;
+
+    messageBody += `Title: ${lecture.title}\n`;
+
+    if (lecture.subject) {
+      messageBody += `Subject: ${lecture.subject}\n`;
+    }
+
+    if (lecture.batchName) {
+      messageBody += `Batch: ${lecture.batchName}\n`;
+    }
+
+    messageBody += `Date & Time: ${startTime}\n`;
+
+    if (lecture.topicCovered) {
+      messageBody += `Topic Covered: ${lecture.topicCovered}\n`;
+    }
+
+    if (lecture.homeworkGiven) {
+      messageBody += `Homework: ${lecture.homeworkGiven}\n`;
+    }
+
+    if (lecture.assignmentGiven) {
+      messageBody += `Assignment: ${lecture.assignmentGiven}\n`;
+    }
+
+    if (lecture.revisionTask) {
+      messageBody += `Revision Task: ${lecture.revisionTask}\n`;
+    }
+
+    if (lecture.doubtsSolved) {
+      messageBody += `Doubts Solved: ${lecture.doubtsSolved}\n`;
+    }
+
+    if (lecture.nextTopic) {
+      messageBody += `Next Topic: ${lecture.nextTopic}\n`;
+    }
+
+    if (lecture.meetingLink && !isCompletedReport) {
+      messageBody += `Join Class: ${lecture.meetingLink}\n`;
+    }
+
+    await createMessage({
+      title: isCompletedReport
+        ? `Lecture Report: ${lecture.title}`
+        : `New Class: ${lecture.title}`,
+      body: messageBody,
+      channel: isCompletedReport ? "Daily Lecture Report" : "Academic Update",
+      author,
+      audience: ["student", "parent"],
+      userIds:
+        lecture.assignedStudentIds && lecture.assignedStudentIds.length > 0
+          ? notificationRecipientIds
+          : undefined,
+      expiresAt: null,
+    });
+
+    if (notificationRecipientIds.length > 0) {
+      const notificationTitle = isCompletedReport
+        ? `Lecture report: ${lecture.title}`
+        : `New class: ${lecture.title}`;
+
+      const notificationMessage = isCompletedReport
+        ? `The lecture report for ${lecture.title} is available.`
+        : `${lecture.title} is scheduled for ${startTime}.`;
+
+      await createNotifications({
+        userIds: notificationRecipientIds,
+        title: notificationTitle,
+        message: notificationMessage,
+        type: "lecture",
+        link: "/dashboard",
+      });
+    }
+
+    return NextResponse.json(
+      {
+        lecture,
+        notified: notificationRecipientIds.length > 0,
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Create lecture error:", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to create lecture.",
+      },
+      { status: 500 },
+    );
   }
-
-  if (session.role !== "admin" && session.role !== "educator") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const body = await request.json();
-
-  const lecture = await createLecture({
-    title: String(body.title ?? ""),
-    subject: body.subject ? String(body.subject) : undefined,
-    batchName: body.batchName ? String(body.batchName) : undefined,
-    description: body.description ? String(body.description) : undefined,
-    startsAt: String(body.startsAt ?? ""),
-    endsAt: body.endsAt ? String(body.endsAt) : undefined,
-    meetingLink: body.meetingLink ? String(body.meetingLink) : undefined,
-    recordingLink: body.recordingLink ? String(body.recordingLink) : undefined,
-    materialLink: body.materialLink ? String(body.materialLink) : undefined,
-    assignedStudentIds: Array.isArray(body.assignedStudentIds)
-      ? body.assignedStudentIds
-      : [],
-    status: body.status ?? "scheduled",
-    createdBy: session.id,
-  });
-
-  const author = (await findUserById(session.id))?.name || session.id;
-  const startTime = lecture.startsAt
-    ? new Date(lecture.startsAt).toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-      })
-    : "TBD";
-
-  let msgBody = `A new class has been scheduled.\n\n`;
-  msgBody += `Title: ${lecture.title}\n`;
-  if (lecture.subject) msgBody += `Subject: ${lecture.subject}\n`;
-  if (lecture.batchName) msgBody += `Batch: ${lecture.batchName}\n`;
-  if (lecture.description) msgBody += `Details: ${lecture.description}\n`;
-  msgBody += `Start: ${startTime}\n`;
-  if (lecture.meetingLink) msgBody += `Join: ${lecture.meetingLink}\n`;
-
-  await createMessage({
-    title: `New Class: ${lecture.title}`,
-    body: msgBody,
-    channel: "Academic Update",
-    author,
-    audience: ["student", "parent"],
-    userIds:
-      lecture.assignedStudentIds?.length
-        ? lecture.assignedStudentIds
-        : undefined,
-    expiresAt: lecture.startsAt
-      ? new Date(
-          new Date(lecture.startsAt).getTime() + 24 * 60 * 60 * 1000,
-        ).toISOString()
-      : null,
-  });
-
-  return NextResponse.json({ lecture, notified: true });
 }

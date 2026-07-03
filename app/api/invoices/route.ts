@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { createFeeInvoice, getFeeInvoicesForRole } from "@/lib/data-store";
+import {
+  createFeeInvoice,
+  createNotifications,
+  getFeeInvoicesForRole,
+  getNotificationRecipientIdsForStudents,
+} from "@/lib/data-store";
 import { getSessionUser } from "@/lib/auth";
 
 export async function GET() {
@@ -22,7 +27,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.role !== "admin" && session.role !== "educator") {
+  if (session.role !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -51,5 +56,32 @@ export async function POST(request: Request) {
     paymentMode: body.paymentMode ? String(body.paymentMode) : undefined,
   });
 
-  return NextResponse.json({ feeInvoice });
+  const recipientIds = await getNotificationRecipientIdsForStudents([
+  feeInvoice.studentId,
+]);
+
+if (recipientIds.length > 0) {
+  const dueDate = feeInvoice.dueDate
+    ? new Date(`${feeInvoice.dueDate}T00:00:00`).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
+    : "the due date";
+
+  await createNotifications({
+    userIds: recipientIds,
+    title: `New fee invoice: ${feeInvoice.title}`,
+    message: `A fee invoice of ₹${feeInvoice.amount.toLocaleString(
+      "en-IN",
+    )} has been issued. Due date: ${dueDate}.`,
+    type: "fees",
+    link: "/dashboard",
+  });
+}
+
+return NextResponse.json({
+  feeInvoice,
+  notified: recipientIds.length > 0,
+});
 }

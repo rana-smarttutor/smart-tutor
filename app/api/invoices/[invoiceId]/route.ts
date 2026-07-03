@@ -16,9 +16,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.role !== "admin" && session.role !== "educator") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+if (session.role !== "admin") {
+  return NextResponse.json(
+    { error: "Only admin can update fee invoices." },
+    { status: 403 },
+  );
+}
 
   const { invoiceId } = await context.params;
   const body = await request.json();
@@ -47,9 +50,12 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.role !== "admin" && session.role !== "educator") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+ if (session.role !== "admin") {
+  return NextResponse.json(
+    { error: "Only admin can delete fee invoices." },
+    { status: 403 },
+  );
+}
 
   const { invoiceId } = await context.params;
 

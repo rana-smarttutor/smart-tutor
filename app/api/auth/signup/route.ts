@@ -25,18 +25,21 @@ export async function POST(request: Request) {
       password?: string;
       mobile?: string;
       dob?: string;
+
       parentName?: string;
       parentEmail?: string;
       parentMobile?: string;
       parentPassword?: string;
+
       courseWanted?: string;
       courseWantedTitle?: string;
       studentType?: string;
       weakSubjects?: string[];
       strongSubjects?: string[];
-      marks10?: string;
-      marks12?: string;
-      graduationMarks?: string;
+
+      latestQualification?: string;
+      latestAcademicScore?: string;
+
       addressLine1?: string;
       addressLine2?: string;
       city?: string;
@@ -52,16 +55,19 @@ export async function POST(request: Request) {
     };
 
     const role = body.role === "educator" ? "educator" : "student";
+
     const name = sanitizeTextInput(body.name, 100);
     const email = sanitizeEmailInput(body.email);
     const password = sanitizePasswordInput(body.password);
     const mobile = sanitizeTextInput(body.mobile, 15);
     const dob = sanitizeTextInput(body.dob, 20);
+
     const addressLine1 = sanitizeTextInput(body.addressLine1, 200);
     const addressLine2 = sanitizeTextInput(body.addressLine2, 200);
     const city = sanitizeTextInput(body.city, 100);
     const state = sanitizeTextInput(body.state, 100);
     const pincode = sanitizeTextInput(body.pincode, 20);
+
     const parentName = sanitizeTextInput(body.parentName, 100);
     const parentEmail = sanitizeEmailInput(body.parentEmail);
     const parentMobile = sanitizeTextInput(body.parentMobile, 15);
@@ -139,6 +145,7 @@ export async function POST(request: Request) {
     if (city) profile.city = city;
     if (state) profile.state = state;
     if (pincode) profile.pincode = pincode;
+
     profile.profilePhoto = body.profilePhoto;
 
     if (role === "student") {
@@ -148,6 +155,7 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+
       if (!parentMobile || parentMobile.replace(/[^\d]/g, "").length < 10) {
         return NextResponse.json(
           { error: "Parent mobile number is required and must be 10 digits." },
@@ -164,22 +172,51 @@ export async function POST(request: Request) {
 
       profile.parentEmail = parentEmail;
       profile.parentMobile = parentMobile;
+
       if (parentName) profile.parentName = parentName;
-      if (body.courseWanted) profile.courseWanted = body.courseWanted;
-      if (body.courseWantedTitle)
-        profile.courseWantedTitle = body.courseWantedTitle;
-      if (body.studentType === "home" || body.studentType === "on-campus")
+
+      if (body.courseWanted) {
+        profile.courseWanted = sanitizeTextInput(body.courseWanted, 200);
+      }
+
+      if (body.courseWantedTitle) {
+        profile.courseWantedTitle = sanitizeTextInput(
+          body.courseWantedTitle,
+          200,
+        );
+      }
+
+      if (body.studentType === "online" || body.studentType === "centre-based") {
         profile.studentType = body.studentType;
-      if (body.weakSubjects?.length)
-        profile.weakSubjects = body.weakSubjects.slice(0, 10);
-      if (body.strongSubjects?.length)
-        profile.strongSubjects = body.strongSubjects.slice(0, 10);
-      if (body.marks10)
-        profile.marks10 = sanitizeTextInput(body.marks10, 20);
-      if (body.marks12)
-        profile.marks12 = sanitizeTextInput(body.marks12, 20);
-      if (body.graduationMarks)
-        profile.graduationMarks = sanitizeTextInput(body.graduationMarks, 20);
+      }
+
+      if (body.weakSubjects?.length) {
+        profile.weakSubjects = body.weakSubjects
+          .slice(0, 10)
+          .map((subject) => sanitizeTextInput(subject, 80))
+          .filter(Boolean);
+      }
+
+      if (body.strongSubjects?.length) {
+        profile.strongSubjects = body.strongSubjects
+          .slice(0, 10)
+          .map((subject) => sanitizeTextInput(subject, 80))
+          .filter(Boolean);
+      }
+
+      if (body.latestQualification) {
+        profile.latestQualification = sanitizeTextInput(
+          body.latestQualification,
+          100,
+        );
+      }
+
+      if (body.latestAcademicScore) {
+        profile.latestAcademicScore = sanitizeTextInput(
+          body.latestAcademicScore,
+          50,
+        );
+      }
     }
 
     if (role === "educator") {
@@ -194,11 +231,20 @@ export async function POST(request: Request) {
 
       profile.qualification = qualification;
 
-      if (body.cvUrl) profile.cvUrl = body.cvUrl;
-      if (body.experience)
+      if (body.cvUrl) {
+        profile.cvUrl = body.cvUrl;
+      }
+
+      if (body.experience) {
         profile.experience = sanitizeTextInput(body.experience, 100);
-      if (body.subjects?.length)
-        profile.subjects = body.subjects.slice(0, 20);
+      }
+
+      if (body.subjects?.length) {
+        profile.subjects = body.subjects
+          .slice(0, 20)
+          .map((subject) => sanitizeTextInput(subject, 80))
+          .filter(Boolean);
+      }
     }
 
     const status = "pending";
@@ -265,5 +311,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-

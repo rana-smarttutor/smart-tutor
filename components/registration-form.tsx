@@ -9,10 +9,7 @@ import {
   type FormEvent,
 } from "react";
 
-type CourseGroup =
-  | "School / Board"
-  | "Government Exams"
-  | "Skill Development";
+type CourseGroup = "School / Board" | "Government Exams" | "Skill Development";
 
 type CourseOption = {
   key: string;
@@ -40,9 +37,8 @@ type SignupFormData = {
 
   weakSubjects: string;
   strongSubjects: string;
-  marks10: string;
-  marks12: string;
-  graduationMarks: string;
+  latestQualification: string;
+  latestAcademicScore: string;
 
   addressLine1: string;
   addressLine2: string;
@@ -58,21 +54,9 @@ type SignupFormData = {
   cvUrl: string;
 };
 
-const JUNIOR_CLASSES = [
-  "Class 6",
-  "Class 7",
-  "Class 8",
-  "Class 9",
-  "Class 10",
-];
+const JUNIOR_CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"];
 
-const JUNIOR_BOARDS = [
-  "CBSE",
-  "ICSE",
-  "State Board / SSC",
-  "IGCSE",
-  "IB MYP",
-];
+const JUNIOR_BOARDS = ["CBSE", "ICSE", "State Board / SSC", "IGCSE", "IB MYP"];
 
 const SENIOR_CLASSES = [
   { key: "Class 11 Science", label: "Class 11th Science" },
@@ -189,9 +173,8 @@ function getInitialFormData(): SignupFormData {
 
     weakSubjects: "",
     strongSubjects: "",
-    marks10: "",
-    marks12: "",
-    graduationMarks: "",
+    latestQualification: "",
+    latestAcademicScore: "",
 
     addressLine1: "",
     addressLine2: "",
@@ -209,9 +192,7 @@ function getInitialFormData(): SignupFormData {
 }
 
 export function RegistrationForm() {
-  const [activeTab, setActiveTab] = useState<"student" | "educator">(
-    "student",
-  );
+  const [activeTab, setActiveTab] = useState<"student" | "educator">("student");
   const [form, setForm] = useState<SignupFormData>(getInitialFormData());
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -479,9 +460,8 @@ export function RegistrationForm() {
               .filter(Boolean)
           : [];
 
-        body.marks10 = form.marks10;
-        body.marks12 = form.marks12;
-        body.graduationMarks = form.graduationMarks;
+        body.latestQualification = form.latestQualification;
+        body.latestAcademicScore = form.latestAcademicScore;
       }
 
       if (activeTab === "educator") {
@@ -692,9 +672,7 @@ export function RegistrationForm() {
               />
 
               {form.profilePhotoUrl && (
-                <span className="text-xs text-emerald-600">
-                  Photo uploaded
-                </span>
+                <span className="text-xs text-emerald-600">Photo uploaded</span>
               )}
 
               <span className="text-[10px] text-slate-400">
@@ -862,8 +840,8 @@ export function RegistrationForm() {
                     className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
                   >
                     <option value="">Select type</option>
-                    <option value="home">Home Student</option>
-                    <option value="on-campus">On Campus Student</option>
+                    <option value="online">Online Learning</option>
+                    <option value="centre-based">Centre-Based Learning</option>
                   </select>
                 </div>
 
@@ -884,41 +862,96 @@ export function RegistrationForm() {
                 </div>
               </div>
             </div>
+            {!form.courseWanted.startsWith("Skills |") && (
+              <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
+                <h3 className="mb-2 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
+                  Academic Background
+                </h3>
 
-            <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-              <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-                Academic Marks
-              </h3>
+                <p className="mb-4 text-xs text-slate-400">
+                  Share your latest completed class or qualification to help us
+                  guide you better.
+                </p>
 
-              <p className="mb-4 text-xs text-slate-400">
-                All marks fields are optional. Fill whichever apply to you.
-              </p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                      Latest Completed Class / Qualification
+                    </label>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <InputField
-                  label="10th Marks (optional)"
-                  value={form.marks10}
-                  onChange={(value) => updateField("marks10", value)}
-                  placeholder="e.g. 85% or 8.5 CGPA"
-                />
+                    <select
+                      value={form.latestQualification}
+                      onChange={(event) =>
+                        updateField("latestQualification", event.target.value)
+                      }
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+                    >
+                      <option value="">Select qualification</option>
 
-                <InputField
-                  label="12th Marks (optional)"
-                  value={form.marks12}
-                  onChange={(value) => updateField("marks12", value)}
-                  placeholder="e.g. 78% or 7.8 CGPA"
-                />
+                      {form.courseWanted.startsWith("Class 6 |") && (
+                        <option value="Class 5">Class 5</option>
+                      )}
 
-                <InputField
-                  label="Graduation / Diploma / PG Marks (optional)"
-                  value={form.graduationMarks}
-                  onChange={(value) =>
-                    updateField("graduationMarks", value)
-                  }
-                  placeholder="e.g. 72% or 7.2 CGPA"
-                />
+                      {form.courseWanted.startsWith("Class 7 |") && (
+                        <option value="Class 6">Class 6</option>
+                      )}
+
+                      {form.courseWanted.startsWith("Class 8 |") && (
+                        <option value="Class 7">Class 7</option>
+                      )}
+
+                      {form.courseWanted.startsWith("Class 9 |") && (
+                        <option value="Class 8">Class 8</option>
+                      )}
+
+                      {form.courseWanted.startsWith("Class 10 |") && (
+                        <option value="Class 9">Class 9</option>
+                      )}
+
+                      {form.courseWanted.startsWith("Class 11") && (
+                        <>
+                          <option value="Class 10">Class 10</option>
+                          <option value="Appearing in Class 11">
+                            Appearing in Class 11
+                          </option>
+                        </>
+                      )}
+
+                      {form.courseWanted.startsWith("Class 12") && (
+                        <>
+                          <option value="Class 10">Class 10</option>
+                          <option value="Class 11">Class 11</option>
+                          <option value="Appearing in Class 12">
+                            Appearing in Class 12
+                          </option>
+                        </>
+                      )}
+
+                      {form.courseWanted.startsWith("Govt Exams |") && (
+                        <>
+                          <option value="Class 10">Class 10</option>
+                          <option value="Class 12">Class 12</option>
+                          <option value="Diploma">Diploma</option>
+                          <option value="Graduation">Graduation</option>
+                          <option value="Post Graduation">
+                            Post Graduation
+                          </option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  <InputField
+                    label="Latest Academic Score (Optional)"
+                    value={form.latestAcademicScore}
+                    onChange={(value) =>
+                      updateField("latestAcademicScore", value)
+                    }
+                    placeholder="e.g. 85%, 8.5 CGPA, First Class"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
 
@@ -1114,7 +1147,7 @@ function InputField({
 
       {isTextarea ? (
         <textarea
-          value={value}
+          value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           rows={3}
@@ -1123,7 +1156,7 @@ function InputField({
       ) : (
         <input
           type={type}
-          value={value}
+          value={value ?? ""}
           onChange={(event) => onChange(event.target.value)}
           required={required}
           placeholder={placeholder}
@@ -1131,9 +1164,7 @@ function InputField({
         />
       )}
 
-      {hint && (
-        <p className="ml-1 text-[10px] text-slate-400">{hint}</p>
-      )}
+      {hint && <p className="ml-1 text-[10px] text-slate-400">{hint}</p>}
     </div>
   );
 }

@@ -37,6 +37,62 @@ export type DashboardMetric = {
   detail: string;
 };
 
+export type DashboardInsight = {
+  title: string;
+  description: string;
+  tone: "positive" | "warning" | "neutral";
+};
+
+export type DashboardAnalytics = {
+  refreshedAt: string;
+  metrics: DashboardMetric[];
+
+  attendance: {
+    rate: number | null;
+    totalRecords: number;
+    present: number;
+    absent: number;
+    late: number;
+    excused: number;
+  };
+
+  assessments: {
+    averageScore: number | null;
+    publishedTests: number;
+    resultCount: number;
+    subjectPerformance: Array<{
+      subject: string;
+      percentage: number;
+      resultCount: number;
+    }>;
+  };
+
+  learning: {
+    activitiesRecorded: number;
+    completionRate: number | null;
+    homeworkRate: number | null;
+    assignmentRate: number | null;
+    revisionRate: number | null;
+    averageStudyMinutes: number | null;
+  };
+
+  finance: {
+    billed: number;
+    collected: number;
+    pending: number;
+    overdueCount: number;
+  } | null;
+
+  operations: {
+    activeBatches: number;
+    learners: number;
+    completedLectures: number;
+    scheduledLectures: number;
+  };
+
+  insights: DashboardInsight[];
+};
+
 export type PermissionItem = {
   title: string;
   description: string;
@@ -336,6 +392,8 @@ export type AttendanceSheet = {
   createdAt: string;
   updatedAt?: string;
   records: AttendanceRecord[];
+  lectureId?: string;
+  batchId?: string;
 };
 
 // =========================
@@ -394,6 +452,16 @@ export type LectureItem = {
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
+  topicCovered?: string;
+  homeworkGiven?: string;
+  assignmentGiven?: string;
+  revisionTask?: string;
+  doubtsSolved?: string;
+  nextTopic?: string;
+  attendanceSheetId?: string;
+  lectureReportSubmittedAt?: string;
+  batchId?: string;
+  teacherId?: string;
 };
 
 // =========================
@@ -438,12 +506,11 @@ export type UserProfile = {
   parentMobile?: string;
   courseWanted?: string;
   courseWantedTitle?: string;
-  studentType?: "home" | "on-campus";
+  studentType?: "online" | "centre-based" | "home" | "on-campus";
   weakSubjects?: string[];
   strongSubjects?: string[];
-  marks10?: string;
-  marks12?: string;
-  graduationMarks?: string;
+  latestQualification?: string;
+  latestAcademicScore?: string;
 
   // Educator specific
   qualification?: string;
@@ -466,5 +533,305 @@ export type DashboardBundle = {
   attendanceSheets: AttendanceSheet[];
   feeInvoices: FeeInvoice[];
   lectures: LectureItem[];
+  linkedStudentId?: string;
   profile?: UserProfile;
+  batches?: Batch[];
+  teacherBatchAssignments?: TeacherBatchAssignment[];
+  weeklyTests?: WeeklyTest[];
+  teacherFeedback?: TeacherFeedback[];
+  behaviourNotes?: BehaviourNote[];
+  dailyActivities?: StudentDailyActivity[];
+  feeInstallmentPlans?: FeeInstallmentPlan[];
+  teacherPayouts?: TeacherPayout[];
+  notifications?: AppNotification[];
+  analytics?: DashboardAnalytics;
+};
+
+// =========================
+// batch items
+// =========================
+
+export type Batch = {
+  id: string;
+  name: string;
+  courseId?: string;
+  courseName?: string;
+  subject?: string;
+  studentIds: string[];
+  teacherIds: string[];
+  schedule?: string;
+  status: "active" | "archived";
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type TeacherBatchAssignment = {
+  id: string;
+  teacherId: string;
+  batchId: string;
+  subject?: string;
+  assignedAt: string;
+  assignedBy: string;
+};
+
+// =========================
+// weeklyy test items
+// =========================
+
+export type WeeklyTestResultStatus =
+  | "present"
+  | "absent"
+  | "not-submitted";
+
+export type WeeklyTestResult = {
+  studentId: string;
+  studentName: string;
+  obtainedMarks?: number;
+  status: WeeklyTestResultStatus;
+  remarks?: string;
+};
+
+export type WeeklyTest = {
+  id: string;
+  title: string;
+  batchId: string;
+  batchName: string;
+  teacherId: string;
+  subject: string;
+  testDate: string;
+  totalMarks: number;
+  published: boolean;
+  results: WeeklyTestResult[];
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// TeacherFeedback
+// =========================
+
+export type FeedbackCategory =
+  | "academic"
+  | "homework"
+  | "attendance"
+  | "improvement";
+
+export type TeacherFeedback = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+
+  teacherId: string;
+  teacherName?: string;
+
+  batchId?: string;
+  batchName?: string;
+  subject?: string;
+
+  category: FeedbackCategory;
+
+  strengths?: string;
+  areasToImprove?: string;
+  feedback: string;
+
+  visibleToParent: boolean;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+
+// =========================
+// BehaviourNote
+// =========================
+
+export type BehaviourRating =
+  | "excellent"
+  | "good"
+  | "needs-improvement"
+  | "concern";
+
+export type BehaviourNote = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+
+  teacherId: string;
+  teacherName?: string;
+
+  batchId?: string;
+  batchName?: string;
+
+  rating: BehaviourRating;
+  note: string;
+  actionTaken?: string;
+
+  visibleToParent: boolean;
+  resolved?: boolean;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// StudentDailyActivity
+// =========================
+
+export type DailyActivityParticipation =
+  | "excellent"
+  | "good"
+  | "needs-improvement"
+  | "not-recorded";
+
+export type StudentDailyActivity = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+
+  batchId: string;
+  batchName: string;
+
+  teacherId: string;
+  teacherName?: string;
+
+  subject?: string;
+  date: string;
+
+  topicStudied?: string;
+
+  homeworkCompleted: boolean;
+  assignmentCompleted: boolean;
+  revisionCompleted: boolean;
+
+  doubtsRaised?: string;
+  participation: DailyActivityParticipation;
+
+  studyMinutes?: number;
+  teacherVerified: boolean;
+  teacherNote?: string;
+
+  visibleToParent: boolean;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+//  TeacherPayout
+// =========================
+
+export type TeacherPayoutStatus = "pending" | "partial" | "paid";
+
+export type TeacherPayout = {
+  id: string;
+  teacherId: string;
+  month: string;
+
+  basePay: number;
+  perClassRate: number;
+  completedClasses: number;
+  classEarnings: number;
+
+  bonus: number;
+  deductions: number;
+
+  totalPayable: number;
+  paidAmount: number;
+  pendingAmount: number;
+
+  status: TeacherPayoutStatus;
+  payoutDate?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+
+// =========================
+// Fee Installment Plans
+// =========================
+
+export type FeeInstallmentStatus =
+  | "paid"
+  | "partial"
+  | "due"
+  | "overdue";
+
+export type FeeInstallment = {
+  installmentNumber: number;
+
+  amount: number;
+  paidAmount: number;
+  pendingAmount: number;
+
+  dueDate: string;
+  paidDate?: string;
+
+  status: FeeInstallmentStatus;
+
+  receiptNumber?: string;
+  paymentMode?: string;
+  notes?: string;
+};
+
+export type FeeInstallmentPlanStatus =
+  | "active"
+  | "completed"
+  | "cancelled";
+
+export type FeeInstallmentPlan = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+  parentId?: string;
+
+  invoiceId?: string;
+  title: string;
+
+  courseName?: string;
+  batchName?: string;
+  academicYear?: string;
+
+  totalFee: number;
+  paidAmount: number;
+  pendingAmount: number;
+
+  status: FeeInstallmentPlanStatus;
+
+  installments: FeeInstallment[];
+
+  notes?: string;
+
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// Notifications
+// =========================
+
+export type AppNotificationType =
+  | "lecture"
+  | "homework"
+  | "attendance"
+  | "test"
+  | "feedback"
+  | "fees"
+  | "payment";
+
+export type AppNotification = {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: AppNotificationType;
+  link?: string;
+  read: boolean;
+  createdAt: string;
 };
