@@ -19,11 +19,18 @@ import type {
 import { courseLibrary } from "@/lib/course-library";
 import { generatedPlacedStudents } from "./placed-students-data";
 
-const CONTACT_PHONE = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
-const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smarttutors.co.in";
-const CONTACT_ADDRESS = process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
-const WHATSAPP_LINK = process.env.NEXT_PUBLIC_WHATSAPP_LINK || "https://wa.me/918850447887?text=Hello%20Smart%20Tutors";
-const INSTAGRAM_LINK = process.env.NEXT_PUBLIC_INSTAGRAM_LINK || "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
+const CONTACT_PHONE =
+  process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
+const CONTACT_EMAIL =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smarttutors.co.in";
+const CONTACT_ADDRESS =
+  process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
+const WHATSAPP_LINK =
+  process.env.NEXT_PUBLIC_WHATSAPP_LINK ||
+  "https://wa.me/918850447887?text=Hello%20Smart%20Tutors";
+const INSTAGRAM_LINK =
+  process.env.NEXT_PUBLIC_INSTAGRAM_LINK ||
+  "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
 
 export const demoCredentials = [
   {
@@ -107,37 +114,47 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
   student: [
     {
       title: "Personal dashboard",
-      description:
-        "See announcements, tests, and study progress.",
+      description: "See announcements, tests, and study progress.",
     },
     {
       title: "Message boards and materials",
-      description:
-        "Open notices, course updates, and materials.",
+      description: "Open notices, course updates, and materials.",
     },
   ],
   educator: [
     {
       title: "Teaching operations",
-      description:
-        "Create tests, grade work, and message batches.",
+      description: "Create tests, grade work, and message batches.",
     },
     {
       title: "Delivery oversight",
+      description: "Track batches, attendance, and follow-ups.",
+    },
+  ],
+  counsellor: [
+    {
+      title: "Counsellor CRM",
+      description: "Access the Sales CRM and manage only assigned leads.",
+    },
+    {
+      title: "Lead follow-ups",
       description:
-        "Track batches, attendance, and follow-ups.",
+        "Record calls, schedule follow-ups and demos, and update admissions.",
+    },
+    {
+      title: "Personal performance",
+      description:
+        "View personal lead conversion, demo, and revenue performance.",
     },
   ],
   admin: [
     {
       title: "User and permission control",
-      description:
-        "Create accounts and assign access.",
+      description: "Create accounts and assign access.",
     },
     {
       title: "Institute management",
-      description:
-        "Monitor operations, admissions, and alerts.",
+      description: "Monitor operations, admissions, and alerts.",
     },
   ],
   parent: [
@@ -168,7 +185,12 @@ const placementMcq: TestQuestion[] = [
   {
     id: "pt-q2",
     prompt: "Which communication skill is most important during HR interviews?",
-    options: ["Memorizing scripts", "Clarity and confidence", "Speaking very fast", "Avoiding examples"],
+    options: [
+      "Memorizing scripts",
+      "Clarity and confidence",
+      "Speaking very fast",
+      "Avoiding examples",
+    ],
   },
 ];
 
@@ -176,12 +198,22 @@ const polityMcq: TestQuestion[] = [
   {
     id: "gk-q1",
     prompt: "Who appoints the Prime Minister of India?",
-    options: ["Lok Sabha Speaker", "President", "Chief Justice of India", "Cabinet Secretary"],
+    options: [
+      "Lok Sabha Speaker",
+      "President",
+      "Chief Justice of India",
+      "Cabinet Secretary",
+    ],
   },
   {
     id: "gk-q2",
     prompt: "Which house of Parliament is called the Upper House?",
-    options: ["Lok Sabha", "Rajya Sabha", "Vidhan Sabha", "Legislative Council"],
+    options: [
+      "Lok Sabha",
+      "Rajya Sabha",
+      "Vidhan Sabha",
+      "Legislative Council",
+    ],
   },
 ];
 
@@ -190,8 +222,7 @@ const tests: TestItem[] = [
     id: "test-1",
     title: "Class 10 Maths Precision Test",
     status: "Scheduled",
-    summary:
-      "Board-style chapter test with speed and accuracy review.",
+    summary: "Board-style chapter test with speed and accuracy review.",
     audience: ["student", "educator", "admin"],
     assignedUserIds: ["student-1", "student-3"],
     createdBy: "Neha Joshi",
@@ -212,8 +243,7 @@ const tests: TestItem[] = [
     id: "test-3",
     title: "Senior Secondary Weekly Concept Check",
     status: "Result Published",
-    summary:
-      "Weekly learning review with corrective mentoring notes.",
+    summary: "Weekly learning review with corrective mentoring notes.",
     audience: ["student", "educator", "admin"],
     assignedUserIds: ["student-3"],
     createdBy: "Neha Joshi",
@@ -225,8 +255,7 @@ const messages: MessageItem[] = [
   {
     id: "message-1",
     title: "Class 10 revision plan update",
-    body:
-      "Science and maths revision worksheets will be discussed in the 6:00 PM batch today.",
+    body: "Science and maths revision worksheets will be discussed in the 6:00 PM batch today.",
     channel: "Batch Board",
     audience: ["student", "educator", "admin", "parent"],
     userIds: ["student-1", "educator-2", "admin-1"],
@@ -234,32 +263,28 @@ const messages: MessageItem[] = [
   {
     id: "message-2",
     title: "Civil services faculty planning note",
-    body:
-      "Sunday answer-writing review must include ethics and polity copy checks.",
+    body: "Sunday answer-writing review must include ethics and polity copy checks.",
     channel: "Faculty Desk",
     audience: ["educator", "admin"],
   },
   {
     id: "message-3",
     title: "Admissions counselling window open",
-    body:
-      "Parents for class 6 to 10 enquiries can request a call-back for batch guidance this week.",
+    body: "Parents for class 6 to 10 enquiries can request a call-back for batch guidance this week.",
     channel: "Admissions",
     audience: ["student", "parent", "admin"],
   },
   {
     id: "message-4",
     title: "Batch capacity review",
-    body:
-      "Two evening school batches are nearing full capacity and need schedule confirmation.",
+    body: "Two evening school batches are nearing full capacity and need schedule confirmation.",
     channel: "Admin",
     audience: ["admin"],
   },
   {
     id: "message-5",
     title: "Senior secondary concept check result published",
-    body:
-      "The weekly concept check is now available with faculty remarks for the batch.",
+    body: "The weekly concept check is now available with faculty remarks for the batch.",
     channel: "Results",
     audience: ["student", "educator", "admin", "parent"],
     userIds: ["student-3", "educator-2", "admin-1"],
@@ -268,8 +293,7 @@ const messages: MessageItem[] = [
   {
     id: "message-6",
     title: "Parent-teacher meeting scheduled",
-    body:
-      "PTM for Class 10 batch is scheduled on Saturday at 11:00 AM. Parents are requested to confirm attendance.",
+    body: "PTM for Class 10 batch is scheduled on Saturday at 11:00 AM. Parents are requested to confirm attendance.",
     channel: "Parent Notice",
     audience: ["parent", "educator", "admin"],
     userIds: ["educator-2", "admin-1"],
@@ -289,7 +313,8 @@ const testSubmissions: TestSubmission[] = [
     status: "published",
     submittedAt: "2026-03-22T08:30:00.000Z",
     publishedMessageTitle: "Senior secondary concept check result published",
-    feedback: "Strong conceptual clarity. Continue daily answer practice for consistent board scores.",
+    feedback:
+      "Strong conceptual clarity. Continue daily answer practice for consistent board scores.",
     gradedBy: "Neha Joshi",
   },
 ];
@@ -316,6 +341,28 @@ const dashboardStats: Record<Role, DashboardMetric[]> = {
       label: "Resource reach",
       value: "1.2k+",
       detail: "",
+    },
+  ],
+  counsellor: [
+    {
+      label: "Assigned Leads",
+      value: "0",
+      detail: "Leads assigned to you",
+    },
+    {
+      label: "Follow-ups Today",
+      value: "0",
+      detail: "Calls and meetings due today",
+    },
+    {
+      label: "Demo Classes",
+      value: "0",
+      detail: "Demos scheduled by you",
+    },
+    {
+      label: "Admissions",
+      value: "0",
+      detail: "Converted admissions",
     },
   ],
   admin: [
@@ -416,7 +463,8 @@ const contactMethods: ContactMethod[] = [
     label: "Director & Founder",
     value: "Prof. Ravi Rana",
     href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
-    description: "Leadership contact for SmartIQ Academy, Smart Tutors, and Prime Digital School.",
+    description:
+      "Leadership contact for SmartIQ Academy, Smart Tutors, and Prime Digital School.",
     color: "#1e293b",
     icon: "User",
   },
@@ -462,13 +510,19 @@ const mockQuizQuestions: QuizQuestion[] = [
     options: ["Mumbai", "Kolkata", "New Delhi", "Chennai"],
     answer: 2,
     difficulty: "easy",
-    explanation: "New Delhi is the capital of India and the seat of the central government.",
+    explanation:
+      "New Delhi is the capital of India and the seat of the central government.",
     category: "Indian Polity",
   },
   {
     id: "q2",
     question: "Who wrote India's national anthem, 'Jana Gana Mana'?",
-    options: ["Bankim Chandra Chattopadhyay", "Rabindranath Tagore", "Sarojini Naidu", "Subramania Bharati"],
+    options: [
+      "Bankim Chandra Chattopadhyay",
+      "Rabindranath Tagore",
+      "Sarojini Naidu",
+      "Subramania Bharati",
+    ],
     answer: 1,
     difficulty: "easy",
     explanation: "Rabindranath Tagore composed the national anthem of India.",
@@ -476,11 +530,13 @@ const mockQuizQuestions: QuizQuestion[] = [
   },
   {
     id: "q3",
-    question: "Which Article of the Constitution guarantees equality before law?",
+    question:
+      "Which Article of the Constitution guarantees equality before law?",
     options: ["Article 14", "Article 19", "Article 21", "Article 32"],
     answer: 0,
     difficulty: "medium",
-    explanation: "Article 14 guarantees equality before law and equal protection of laws.",
+    explanation:
+      "Article 14 guarantees equality before law and equal protection of laws.",
     category: "Constitution",
   },
   {
@@ -489,61 +545,87 @@ const mockQuizQuestions: QuizQuestion[] = [
     options: ["1757", "1764", "1857", "1748"],
     answer: 0,
     difficulty: "medium",
-    explanation: "The Battle of Plassey took place in 1757 and marked a major turning point in Indian history.",
+    explanation:
+      "The Battle of Plassey took place in 1757 and marked a major turning point in Indian history.",
     category: "History",
   },
   {
     id: "q5",
-    question: "Which river is often called the 'Sorrow of Bihar' because of frequent floods?",
+    question:
+      "Which river is often called the 'Sorrow of Bihar' because of frequent floods?",
     options: ["Damodar", "Kosi", "Mahanadi", "Gandak"],
     answer: 1,
     difficulty: "medium",
-    explanation: "The Kosi River is called the Sorrow of Bihar due to its changing course and floods.",
+    explanation:
+      "The Kosi River is called the Sorrow of Bihar due to its changing course and floods.",
     category: "Geography",
   },
   {
     id: "q6",
-    question: "The Right to Constitutional Remedies is included in which part of the Indian Constitution?",
+    question:
+      "The Right to Constitutional Remedies is included in which part of the Indian Constitution?",
     options: ["Part II", "Part III", "Part IV", "Part IVA"],
     answer: 1,
     difficulty: "hard",
-    explanation: "The Right to Constitutional Remedies under Article 32 is part of Fundamental Rights in Part III.",
+    explanation:
+      "The Right to Constitutional Remedies under Article 32 is part of Fundamental Rights in Part III.",
     category: "Constitution",
   },
   {
     id: "q7",
-    question: "Which of the following is the major greenhouse gas emitted by human activities?",
+    question:
+      "Which of the following is the major greenhouse gas emitted by human activities?",
     options: ["Helium", "Carbon Dioxide", "Argon", "Neon"],
     answer: 1,
     difficulty: "hard",
-    explanation: "Carbon dioxide is the major greenhouse gas released through fossil fuel use and industrial activity.",
+    explanation:
+      "Carbon dioxide is the major greenhouse gas released through fossil fuel use and industrial activity.",
     category: "Science",
   },
   {
     id: "q8",
     question: "Who was the first woman Governor of an Indian state?",
-    options: ["Vijaya Lakshmi Pandit", "Sarojini Naidu", "Sucheta Kripalani", "Aruna Asaf Ali"],
+    options: [
+      "Vijaya Lakshmi Pandit",
+      "Sarojini Naidu",
+      "Sucheta Kripalani",
+      "Aruna Asaf Ali",
+    ],
     answer: 1,
     difficulty: "hard",
-    explanation: "Sarojini Naidu became the first woman Governor of an Indian state, Uttar Pradesh.",
+    explanation:
+      "Sarojini Naidu became the first woman Governor of an Indian state, Uttar Pradesh.",
     category: "Modern India",
   },
   {
     id: "q9",
-    question: "The subjects of Union, State, and Concurrent Lists are given in which Schedule of the Constitution?",
-    options: ["Fifth Schedule", "Sixth Schedule", "Seventh Schedule", "Eighth Schedule"],
+    question:
+      "The subjects of Union, State, and Concurrent Lists are given in which Schedule of the Constitution?",
+    options: [
+      "Fifth Schedule",
+      "Sixth Schedule",
+      "Seventh Schedule",
+      "Eighth Schedule",
+    ],
     answer: 2,
     difficulty: "hard",
-    explanation: "The Seventh Schedule distributes legislative subjects across the Union, State, and Concurrent Lists.",
+    explanation:
+      "The Seventh Schedule distributes legislative subjects across the Union, State, and Concurrent Lists.",
     category: "Polity",
   },
   {
     id: "q10",
     question: "GDP stands for which of the following?",
-    options: ["Gross Domestic Product", "General Development Plan", "Growth Distribution Process", "Gross Demand Projection"],
+    options: [
+      "Gross Domestic Product",
+      "General Development Plan",
+      "Growth Distribution Process",
+      "Gross Demand Projection",
+    ],
     answer: 0,
     difficulty: "hard",
-    explanation: "GDP means Gross Domestic Product, a common measure of economic output.",
+    explanation:
+      "GDP means Gross Domestic Product, a common measure of economic output.",
     category: "Economics",
   },
 ];
@@ -551,34 +633,38 @@ const mockQuizQuestions: QuizQuestion[] = [
 export function getPublicInstituteData() {
   return {
     profile: {
-  name: "Smart Tutors",
-  city: "Navi Mumbai",
-  address: "Vashi Branch: Sector 17, Vashi, Navi Mumbai | Panvel Branch:  Sector 5, New Panvel East, Panvel",
-  branches: [
-    {
-      name: "Vashi Branch",
-      address: "Sector 17, Vashi, Navi Mumbai",
-      mapQuery: "Sector 17, Vashi, Navi Mumbai",
+      name: "Smart Tutors",
+      city: "Navi Mumbai",
+      address:
+        "Vashi Branch: Sector 17, Vashi, Navi Mumbai | Panvel Branch:  Sector 5, New Panvel East, Panvel",
+      branches: [
+        {
+          name: "Vashi Branch",
+          address: "Sector 17, Vashi, Navi Mumbai",
+          mapQuery: "Sector 17, Vashi, Navi Mumbai",
+        },
+        {
+          name: "Panvel Branch",
+          address: "Sector 5, New Panvel East, Panvel",
+          mapQuery: "Sector 5, New Panvel East, Panvel",
+        },
+      ],
+      phone: "+91 8850447887",
+      email: "info@smarttutors.co.in",
+      hours: "Monday to Saturday",
+      specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
+      directorName: "Prof. Ravi Rana",
+      directorTitle: "Director & Founder",
+      affiliatedInstitutes: [
+        "SmartIQ Academy",
+        "Smart Tutors",
+        "Prime Digital School",
+      ],
     },
-    {
-      name: "Panvel Branch",
-      address: "Sector 5, New Panvel East, Panvel",
-      mapQuery: "Sector 5, New Panvel East, Panvel",
-    },
-  ],
-  phone: "+91 8850447887",
-  email: "info@smarttutors.co.in",
-  hours: "Monday to Saturday",
-  specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
-  directorName: "Prof. Ravi Rana",
-  directorTitle: "Director & Founder",
-  affiliatedInstitutes: ["SmartIQ Academy", "Smart Tutors", "Prime Digital School"],
-},
     socialLinks,
     contactMethods,
     contactActions,
-    whatsappHref:
-      "https://wa.me/918850447887?text=Hello%20Smart%20Tutors",
+    whatsappHref: "https://wa.me/918850447887?text=Hello%20Smart%20Tutors",
     headlineLines: [
       "From primary classrooms to civil services preparation, every learner follows a clear academic plan.",
       "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",
@@ -637,7 +723,12 @@ export function getPublicInstituteData() {
         duration: "Year-round",
         description:
           "Academic coaching for secondary, senior secondary, and junior college learners with paper practice, revision, and milestone reviews.",
-        focus: ["Board Revision", "Concept Clarity", "Weekly Tests", "Stream Guidance"],
+        focus: [
+          "Board Revision",
+          "Concept Clarity",
+          "Weekly Tests",
+          "Stream Guidance",
+        ],
       },
       {
         category: "College Support",
@@ -645,7 +736,12 @@ export function getPublicInstituteData() {
         duration: "Semester-based",
         description:
           "Structured academic support for diploma, polytechnic, and degree-college students who need stronger semester execution and career readiness.",
-        focus: ["Semester Support", "Aptitude", "Communication", "Placement Readiness"],
+        focus: [
+          "Semester Support",
+          "Aptitude",
+          "Communication",
+          "Placement Readiness",
+        ],
       },
       {
         category: "Entrance Exams",
@@ -669,7 +765,12 @@ export function getPublicInstituteData() {
         duration: "Integrated",
         description:
           "Comprehensive preparation for Maharashtra State CETs including Engineering, Management, Law, and Education.",
-        focus: ["MHT-CET (PCM/PCB)", "MBA/MCA CET", "LLB 3/5 Yr CET", "B.Ed/Nursing CET"],
+        focus: [
+          "MHT-CET (PCM/PCB)",
+          "MBA/MCA CET",
+          "LLB 3/5 Yr CET",
+          "B.Ed/Nursing CET",
+        ],
       },
     ],
     roles: [
@@ -758,7 +859,10 @@ export function getMockQuizQuestions() {
   return mockQuizQuestions;
 }
 
-export function findDemoUser(email: string, password: string): SessionUser | null {
+export function findDemoUser(
+  email: string,
+  password: string,
+): SessionUser | null {
   const user = demoUsers.find(
     (item) => item.email.toLowerCase() === email && item.password === password,
   );
@@ -847,19 +951,23 @@ export function getDashboardBundle(role: Role, userId?: string) {
     },
     educator: {
       title: `Educator Console${user ? ` | ${user.name}` : ""}`,
+      description: "Manage tests, batches, and notices from one view.",
+    },
+    counsellor: {
+      title: "Your Sales CRM is ready",
       description:
-        "Manage tests, batches, and notices from one view.",
+        "Manage assigned leads, complete follow-ups, schedule demos, and track admissions.",
     },
     admin: {
       title: `Admin Command Center${user ? ` | ${user.name}` : ""}`,
-      description:
-        "Manage access, operations, and permissions.",
+      description: "Manage access, operations, and permissions.",
     },
   };
 
   return {
     role,
-    roleLabel: user?.label ?? `${role.charAt(0).toUpperCase()}${role.slice(1)} Access`,
+    roleLabel:
+      user?.label ?? `${role.charAt(0).toUpperCase()}${role.slice(1)} Access`,
     heroTitle: heroCopy[role].title,
     heroDescription: heroCopy[role].description,
     stats: dashboardStats[role],
@@ -967,7 +1075,9 @@ export function createMessageDraft(input: {
       input.body?.trim() ||
       `Draft message created locally by ${input.author}. Replace mock persistence with MongoDB later.`,
     channel: input.channel?.trim() || "General",
-    audience: input.audience?.length ? input.audience : ["student", "educator", "admin"],
+    audience: input.audience?.length
+      ? input.audience
+      : ["student", "educator", "admin"],
     userIds: input.userIds,
     author: input.author,
     createdAt: new Date().toISOString(),
@@ -1029,7 +1139,9 @@ export function createGradedSubmissionDraft(input: {
   feedback?: string;
   gradedBy: string;
 }) {
-  const submission = testSubmissions.find((item) => item.id === input.submissionId);
+  const submission = testSubmissions.find(
+    (item) => item.id === input.submissionId,
+  );
 
   if (!submission) {
     return null;
@@ -1085,7 +1197,7 @@ export function createUserDraft(input: {
         ? "Admin Console"
         : role === "educator"
           ? "Educator Desk"
-        : "Student Workspace",
+          : "Student Workspace",
     program: input.program?.trim() || "New Registration",
     passwordHint: defaultPassword,
     status: input.status ?? "active",
@@ -1139,8 +1251,7 @@ export function getTemplateSeedData() {
           student: {
             roleLabel: "Student Workspace",
             heroTitle: "Welcome back",
-            heroDescription:
-              "Tests, materials, and messages in one place.",
+            heroDescription: "Tests, materials, and messages in one place.",
             stats: dashboardStats.student,
             primaryPanel: getDashboardBundle("student").primaryPanel,
             permissions: rolePermissions.student,
@@ -1157,8 +1268,7 @@ export function getTemplateSeedData() {
           admin: {
             roleLabel: "Admin Console",
             heroTitle: "Admin Command Center",
-            heroDescription:
-              "Manage access, operations, and permissions.",
+            heroDescription: "Manage access, operations, and permissions.",
             stats: dashboardStats.admin,
             primaryPanel: getDashboardBundle("admin").primaryPanel,
             permissions: rolePermissions.admin,

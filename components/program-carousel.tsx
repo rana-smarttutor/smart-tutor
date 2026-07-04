@@ -234,7 +234,7 @@ export function ProgramCarousel({ programs }: ProgramCarouselProps) {
                   href={`/courses?tab=${encodeURIComponent(program.targetTab)}`}
                   className={`mt-auto inline-flex items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${buttonColor}`}
                 >
-                  View Program
+                  View Courses
                   <svg
                     className="h-3 w-3"
                     fill="none"

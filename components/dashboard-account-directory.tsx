@@ -50,6 +50,7 @@ export function DashboardAccountDirectory({
       educators: users.filter((item) => item.role === "educator").length,
       admins: users.filter((item) => item.role === "admin").length,
       parents: users.filter((item) => item.role === "parent").length,
+      counsellors: users.filter((item) => item.role === "counsellor").length,
     }),
     [users],
   );
@@ -60,12 +61,13 @@ export function DashboardAccountDirectory({
   );
 
   const sortedUsers = useMemo(() => {
-    const roleOrder: Record<Role, number> = {
-      admin: 0,
-      educator: 1,
-      student: 2,
-      parent: 3,
-    };
+const roleOrder: Record<Role, number> = {
+  admin: 0,
+  counsellor: 1,
+  educator: 2,
+  student: 3,
+  parent: 4,
+};
 
     return [...users].sort((left, right) => {
       if (sortBy === "role") {
@@ -254,6 +256,7 @@ export function DashboardAccountDirectory({
                 >
                   <option value="student">Student</option>
                   <option value="educator">Faculty</option>
+                  <option value="counsellor">Counsellor</option>
                   <option value="parent">Parent</option>
                   <option value="admin">Admin</option>
                 </select>
@@ -444,6 +447,7 @@ export function DashboardAccountDirectory({
                         >
                           <option value="student">Student</option>
                           <option value="educator">Faculty</option>
+                          <option value="counsellor">Counsellor</option>
                           <option value="parent">Parent</option>
                           <option value="admin">Admin</option>
                         </select>

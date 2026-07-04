@@ -140,9 +140,7 @@ export function WeeklyTestManager({
     );
   }, [canManage, viewerStudentId, weeklyTests]);
 
-  useEffect(() => {
-    setWeeklyTests(initialWeeklyTests);
-  }, [initialWeeklyTests]);
+
 
   useEffect(() => {
     let cancelled = false;

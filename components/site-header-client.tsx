@@ -37,41 +37,53 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  useEffect(() => {
-    setMounted(true);
-    let frame = 0;
+useEffect(() => {
+  setMounted(true);
 
-    const updateScrollProgress = () => {
-      const maxScroll =
-        document.documentElement.scrollHeight - window.innerHeight;
-      const nextProgress =
-        maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
+  let frame = 0;
 
-      setScrollProgress(nextProgress);
-      frame = 0;
-    };
+  const updateScrollProgress = () => {
+    const maxScroll =
+      document.documentElement.scrollHeight - window.innerHeight;
 
-    const queueScrollProgress = () => {
-      if (frame) {
-        return;
-      }
+    const nextProgress =
+      maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
 
-      frame = window.requestAnimationFrame(updateScrollProgress);
-    };
+    setScrollProgress((currentProgress) =>
+      Math.abs(currentProgress - nextProgress) < 0.001
+        ? currentProgress
+        : nextProgress,
+    );
 
-    updateScrollProgress();
-    window.addEventListener("scroll", queueScrollProgress, { passive: true });
-    window.addEventListener("resize", queueScrollProgress);
+    frame = 0;
+  };
 
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
+  const queueScrollProgress = () => {
+    if (frame) {
+      return;
+    }
 
-      window.removeEventListener("scroll", queueScrollProgress);
-      window.removeEventListener("resize", queueScrollProgress);
-    };
-  }, [pathname]);
+    frame = window.requestAnimationFrame(updateScrollProgress);
+  };
+
+  updateScrollProgress();
+
+  window.addEventListener("scroll", queueScrollProgress, {
+    passive: true,
+  });
+
+  window.addEventListener("resize", queueScrollProgress);
+
+  return () => {
+    if (frame) {
+      window.cancelAnimationFrame(frame);
+    }
+
+    window.removeEventListener("scroll", queueScrollProgress);
+    window.removeEventListener("resize", queueScrollProgress);
+  };
+}, []);
+
 
   function closeMenu() {
     setIsMobileMenuOpen(false);
