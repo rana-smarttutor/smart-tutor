@@ -131,6 +131,17 @@ const DashboardEnquiryManager = dynamic(
   },
 );
 
+const SalesCrmManager = dynamic(
+  () =>
+    import("@/components/sales-crm-manager").then(
+      (module) => module.SalesCrmManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 const WeeklyTestManager = dynamic(
   () =>
     import("@/components/weekly-test-manager").then(
@@ -203,11 +214,21 @@ const sidebarByRole = {
     { id: "library", label: "Library" },
   ],
 
+  counsellor: [
+    { id: "overview", label: "Overview" },
+    { id: "messages", label: "Messages" },
+    { id: "fees", label: "Invoices" },
+    { id: "fee-installments", label: "Fee Plans" },
+    { id: "notifications", label: "Notifications" },
+    { id: "sales-crm", label: "Sales CRM" },
+  ],
+
   admin: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
     { id: "notifications", label: "Notifications" },
     { id: "enquiries", label: "Enquiries" },
+    { id: "sales-crm", label: "Sales CRM" },
     { id: "tests", label: "Test Studio" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
@@ -301,6 +322,7 @@ export function DashboardShell({
   const showMessages = activeSection === "messages";
   const showNotifications = activeSection === "notifications";
   const showEnquiries = activeSection === "enquiries";
+  const showSalesCrm = activeSection === "sales-crm";
   const showTests = activeSection === "tests";
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
@@ -982,6 +1004,9 @@ export function DashboardShell({
             <DashboardEnquiryManager />
           ) : null}
 
+          {showSalesCrm && (role === "admin" || role === "counsellor") ? (
+            <SalesCrmManager role={role} />
+          ) : null}
           {showTests ? (
             <>
               <DashboardTestStudio

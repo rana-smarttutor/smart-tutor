@@ -48,6 +48,15 @@ import type {
   DashboardAnalytics,
 } from "@/lib/types";
 
+import type {
+  CrmDashboardSummary,
+  CrmLead,
+  CrmLeadActivityType,
+  CrmLeadStatus,
+  CrmStaff,
+  CrmStaffDesignation,
+} from "@/lib/crm-types";
+
 type DashboardTemplate = {
   roleLabel: string;
   heroTitle: string;
@@ -106,6 +115,9 @@ const COLLECTIONS = {
   feeInstallmentPlans: "feeInstallmentPlans",
   teacherPayouts: "teacherPayouts",
   notifications: "notifications",
+
+  crmLeads: "crmLeads",
+  crmStaff: "crmStaff",
 
   enquiries: "enquiries",
 } as const;
@@ -246,10 +258,11 @@ function toManagedUser(user: UserDocument): ManagedUser {
 
 function getRoleLabel(role: Role) {
   if (role === "admin") return "Admin Console";
+  if (role === "counsellor") return "Counsellor CRM";
   if (role === "educator") return "Educator Desk";
   if (role === "student") return "Student Dashboard";
   if (role === "parent") return "Parent Dashboard";
-  return "Student Dashboard";
+  return "Dashboard";
 }
 
 function buildHeroTitle(
@@ -272,6 +285,10 @@ function buildHeroTitle(
   if (role === "educator") {
     return `Educator Console | ${user.name}`;
   }
+
+if (role === "counsellor") {
+  return `Counsellor CRM | ${user.name}`;
+}
 
   if (role === "admin") {
     return `Admin Command Center | ${user.name}`;
@@ -1019,64 +1036,6 @@ export async function createNotifications(input: {
   type: AppNotification["type"];
   link?: string;
 }) {
-
-  async function getNotificationRecipientIdsForStudents(
-  studentIds: string[],
-) {
-  const normalizedStudentIds = [
-    ...new Set(
-      studentIds
-        .filter((id) => typeof id === "string")
-        .map((id) => id.trim())
-        .filter(Boolean),
-    ),
-  ];
-
-  if (!normalizedStudentIds.length) {
-    return [];
-  }
-
-  const users = await getUsersCollection();
-
-  const activeUserFilter = {
-    verified: { $ne: false },
-    $or: [
-      { status: "active" },
-      { status: { $exists: false } },
-      { status: null },
-    ],
-  };
-
-  const students = await users
-    .find({
-      id: { $in: normalizedStudentIds },
-      role: "student",
-      ...activeUserFilter,
-    } as any)
-    .toArray();
-
-  const validStudentIds = students.map((student) => student.id);
-
-  if (!validStudentIds.length) {
-    return [];
-  }
-
-  const linkedParents = await users
-    .find({
-      role: "parent",
-      linkedStudentId: { $in: validStudentIds },
-      ...activeUserFilter,
-    } as any)
-    .toArray();
-
-  return [
-    ...new Set([
-      ...validStudentIds,
-      ...linkedParents.map((parent) => parent.id),
-    ]),
-  ];
-}
-
   const recipientIds = [
     ...new Set(
       input.userIds
@@ -2470,7 +2429,15 @@ export async function getDashboardBundle(
     role === "admin" ? getUsersForAdmin() : Promise.resolve([]),
   ]);
 
-  const template = config.templates[role];
+  const templates = config.templates as Partial<
+  Record<Role, DashboardTemplate>
+>;
+
+const template = templates[role] ?? templates.educator;
+
+if (!template) {
+  throw new Error("Dashboard template could not be resolved.");
+}
 
   const linkedStudentId =
     role === "student"
@@ -4198,3 +4165,552 @@ export async function deleteTeacherPayout(payoutId: string) {
   return result.deletedCount > 0;
 }
 
+function createCrmActivity(input: {
+  type: CrmLeadActivityType;
+  message: string;
+  actorId: string;
+  actorName: string;
+}) {
+  return {
+    id: `crm-activity-${randomUUID()}`,
+    type: input.type,
+    message: input.message,
+    actorId: input.actorId,
+    actorName: input.actorName,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function crmDateValue(value?: string) {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = new Date(value).getTime();
+
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function getCrmMonthKey(value?: string) {
+  const timestamp = crmDateValue(value);
+
+  if (!timestamp) {
+    return null;
+  }
+
+  return new Date(timestamp).toISOString().slice(0, 7);
+}
+
+function getCrmSummary(leads: CrmLead[]): CrmDashboardSummary {
+  const now = new Date();
+  const nowTime = now.getTime();
+
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+
+  const tomorrowStart = todayStart + 24 * 60 * 60 * 1000;
+
+  const monthStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1,
+  ).getTime();
+
+  const activeLeads = leads.filter(
+    (lead) => lead.status !== "lost" && lead.status !== "admitted",
+  );
+
+  const newToday = leads.filter((lead) => {
+    const createdAt = crmDateValue(lead.createdAt);
+    return createdAt !== null && createdAt >= todayStart;
+  }).length;
+
+  const newThisMonth = leads.filter((lead) => {
+    const createdAt = crmDateValue(lead.createdAt);
+    return createdAt !== null && createdAt >= monthStart;
+  }).length;
+
+  const dueToday = activeLeads.filter((lead) => {
+    const followUpAt = crmDateValue(lead.nextFollowUpAt);
+
+    return (
+      followUpAt !== null &&
+      followUpAt >= todayStart &&
+      followUpAt < tomorrowStart
+    );
+  }).length;
+
+  const overdueFollowUps = activeLeads.filter((lead) => {
+    const followUpAt = crmDateValue(lead.nextFollowUpAt);
+    return followUpAt !== null && followUpAt < nowTime;
+  }).length;
+
+  const demoScheduled = leads.filter(
+    (lead) =>
+      lead.demo.status === "scheduled" ||
+      lead.demo.status === "rescheduled",
+  ).length;
+
+  const admissionsConfirmed = leads.filter(
+    (lead) => lead.status === "admitted",
+  ).length;
+
+  const revenueGenerated = leads.reduce(
+    (total, lead) => total + (lead.admission.paidAmount || 0),
+    0,
+  );
+
+  const pendingFeeCollection = leads.reduce(
+    (total, lead) => total + (lead.admission.pendingAmount || 0),
+    0,
+  );
+
+  const pipelineStatuses: CrmLeadStatus[] = [
+    "new",
+    "contacted",
+    "follow-up",
+    "counselling",
+    "demo-scheduled",
+    "admission-pending",
+    "admitted",
+    "lost",
+  ];
+
+  const pipeline = pipelineStatuses.map((status) => ({
+    status,
+    count: leads.filter((lead) => lead.status === status).length,
+  }));
+
+  const sourceAnalysis = [
+    "website",
+    "whatsapp",
+    "instagram",
+    "google",
+    "referral",
+    "walk-in",
+    "other",
+  ].map((source) => ({
+    source: source as CrmLead["source"],
+    count: leads.filter((lead) => lead.source === source).length,
+  }));
+
+  const staffMap = new Map<
+    string,
+    {
+      staffId: string;
+      staffName: string;
+      leadsAssigned: number;
+      demosBooked: number;
+      admissionsConverted: number;
+      revenueGenerated: number;
+    }
+  >();
+
+  for (const lead of leads) {
+    if (!lead.assignedStaffId) {
+      continue;
+    }
+
+    const current = staffMap.get(lead.assignedStaffId) ?? {
+      staffId: lead.assignedStaffId,
+      staffName: lead.assignedStaffName ?? "Unassigned staff",
+      leadsAssigned: 0,
+      demosBooked: 0,
+      admissionsConverted: 0,
+      revenueGenerated: 0,
+    };
+
+    current.leadsAssigned += 1;
+
+    if (
+      lead.demo.status === "scheduled" ||
+      lead.demo.status === "attended" ||
+      lead.demo.status === "rescheduled"
+    ) {
+      current.demosBooked += 1;
+    }
+
+    if (lead.status === "admitted") {
+      current.admissionsConverted += 1;
+      current.revenueGenerated += lead.admission.paidAmount || 0;
+    }
+
+    staffMap.set(lead.assignedStaffId, current);
+  }
+
+  const counsellorPerformance = [...staffMap.values()]
+    .map((staff) => ({
+      ...staff,
+      conversionRate: staff.leadsAssigned
+        ? Math.round((staff.admissionsConverted / staff.leadsAssigned) * 100)
+        : 0,
+    }))
+    .sort(
+      (left, right) =>
+        right.revenueGenerated - left.revenueGenerated ||
+        right.admissionsConverted - left.admissionsConverted,
+    );
+
+  const monthlyRevenue = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+    const key = date.toISOString().slice(0, 7);
+
+    const matchingLeads = leads.filter(
+      (lead) => getCrmMonthKey(lead.admission.convertedAt) === key,
+    );
+
+    return {
+      label: new Intl.DateTimeFormat("en-IN", {
+        month: "short",
+      }).format(date),
+      revenue: matchingLeads.reduce(
+        (total, lead) => total + (lead.admission.paidAmount || 0),
+        0,
+      ),
+      admissions: matchingLeads.filter(
+        (lead) => lead.status === "admitted",
+      ).length,
+    };
+  });
+
+  return {
+    totalLeads: leads.length,
+    newToday,
+    newThisMonth,
+    activeFollowUps: activeLeads.filter((lead) => Boolean(lead.nextFollowUpAt))
+      .length,
+    dueToday,
+    overdueFollowUps,
+    demoScheduled,
+    admissionsConfirmed,
+    conversionRate: leads.length
+      ? Math.round((admissionsConfirmed / leads.length) * 100)
+      : 0,
+    revenueGenerated,
+    pendingFeeCollection,
+    hotLeads: leads.filter(
+      (lead) =>
+        lead.interest === "interested" &&
+        lead.status !== "lost" &&
+        lead.status !== "admitted",
+    ).length,
+    pipeline,
+    sourceAnalysis,
+    counsellorPerformance,
+    monthlyRevenue,
+  };
+}
+
+export async function getCrmLeads() {
+  const collection = await getCollection<CrmLead>(COLLECTIONS.crmLeads);
+
+  return stripMongoIds(
+    await collection.find({}).sort({ updatedAt: -1 }).toArray(),
+  );
+}
+
+export async function getCrmLeadById(leadId: string) {
+  const collection = await getCollection<CrmLead>(COLLECTIONS.crmLeads);
+  const lead = await collection.findOne({ id: leadId });
+
+  return lead ? stripMongoId(lead) : null;
+}
+
+export async function getCrmStaff() {
+  const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
+
+  return stripMongoIds(
+    await collection
+      .find({})
+      .sort({ active: -1, name: 1 })
+      .toArray(),
+  );
+}
+
+export async function getCrmAdminWorkspace() {
+  const [leads, staff] = await Promise.all([
+    getCrmLeads(),
+    getCrmStaff(),
+  ]);
+
+  return {
+    leads,
+    staff,
+    summary: getCrmSummary(leads),
+  };
+}
+
+export async function createCrmLead(
+  input: Omit<CrmLead, "id" | "createdAt" | "updatedAt" | "activityLog">,
+) {
+  const now = new Date().toISOString();
+
+  const lead: CrmLead = {
+    ...input,
+    id: `crm-lead-${randomUUID()}`,
+    status:
+      input.interest === "not-interested" ? "lost" : input.status,
+    createdAt: now,
+    updatedAt: now,
+    activityLog: [
+      createCrmActivity({
+        type: "created",
+        message: "Lead added to the Sales CRM.",
+        actorId: input.createdBy,
+        actorName: input.createdByName,
+      }),
+    ],
+  };
+
+  const collection = await getCollection<CrmLead>(COLLECTIONS.crmLeads);
+  await collection.insertOne(lead);
+
+  return lead;
+}
+
+export async function updateCrmLead(input: {
+  leadId: string;
+  actorId: string;
+  actorName: string;
+  activityType: CrmLeadActivityType;
+  activityMessage: string;
+  updates: Partial<
+    Omit<
+      CrmLead,
+      | "id"
+      | "createdAt"
+      | "updatedAt"
+      | "activityLog"
+      | "demo"
+      | "admission"
+    >
+  > & {
+    demo?: Partial<CrmLead["demo"]>;
+    admission?: Partial<CrmLead["admission"]>;
+  };
+}) {
+  const collection = await getCollection<CrmLead>(COLLECTIONS.crmLeads);
+
+  const existingDocument = await collection.findOne({
+    id: input.leadId,
+  });
+
+  if (!existingDocument) {
+    return null;
+  }
+
+  const existing = stripMongoId(existingDocument);
+  const now = new Date().toISOString();
+
+  const nextInterest = input.updates.interest ?? existing.interest;
+  const nextStatus =
+    nextInterest === "not-interested"
+      ? "lost"
+      : input.updates.status ?? existing.status;
+
+  const updatedLead: CrmLead = {
+    ...existing,
+    ...input.updates,
+    status: nextStatus,
+    demo: {
+      ...existing.demo,
+      ...input.updates.demo,
+    },
+    admission: {
+      ...existing.admission,
+      ...input.updates.admission,
+    },
+    updatedBy: input.actorId,
+    updatedByName: input.actorName,
+    updatedAt: now,
+    activityLog: [
+      createCrmActivity({
+        type: input.activityType,
+        message: input.activityMessage,
+        actorId: input.actorId,
+        actorName: input.actorName,
+      }),
+      ...existing.activityLog,
+    ].slice(0, 250),
+  };
+
+  await collection.updateOne(
+    { id: input.leadId },
+    {
+      $set: updatedLead,
+    },
+  );
+
+  return updatedLead;
+}
+
+export async function deleteCrmLead(leadId: string) {
+  const collection = await getCollection<CrmLead>(COLLECTIONS.crmLeads);
+
+  const deleted = await collection.findOneAndDelete({
+    id: leadId,
+  });
+
+  return deleted ? stripMongoId(deleted) : null;
+}
+
+export async function createCrmStaff(input: {
+  name: string;
+  designation: CrmStaffDesignation;
+  email?: string;
+  phone?: string;
+  linkedUserId?: string;
+}) {
+  const now = new Date().toISOString();
+
+  const staff: CrmStaff = {
+    id: `crm-staff-${randomUUID()}`,
+    linkedUserId: input.linkedUserId,
+    name: input.name,
+    designation: input.designation,
+    email: input.email,
+    phone: input.phone,
+    active: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
+  await collection.insertOne(staff);
+
+  return staff;
+}
+
+export async function updateCrmStaff(
+  staffId: string,
+  updates: Partial<
+    Pick<CrmStaff, "name" | "designation" | "email" | "phone" | "active">
+  >,
+) {
+  const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
+
+  const existingDocument = await collection.findOne({
+    id: staffId,
+  });
+
+  if (!existingDocument) {
+    return null;
+  }
+
+  const existing = stripMongoId(existingDocument);
+
+  const updated: CrmStaff = {
+    ...existing,
+    ...updates,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await collection.updateOne(
+    { id: staffId },
+    {
+      $set: updated,
+    },
+  );
+
+  return updated;
+}
+
+export async function deleteCrmStaff(staffId: string) {
+  const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
+
+  const deleted = await collection.findOneAndDelete({
+    id: staffId,
+  });
+
+  return deleted ? stripMongoId(deleted) : null;
+}
+
+
+export async function getCrmCounsellorStaff(userId: string) {
+  const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
+
+  const staff = await collection.findOne({
+    linkedUserId: userId,
+    designation: "counsellor",
+    active: true,
+  });
+
+  return staff ? stripMongoId(staff) : null;
+}
+
+export async function getCrmCounsellorWorkspace(userId: string) {
+  const staff = await getCrmCounsellorStaff(userId);
+
+  if (!staff) {
+    throw new Error(
+      "This counsellor account is not linked to an active CRM staff profile.",
+    );
+  }
+
+  const collection = await getCollection<CrmLead>(COLLECTIONS.crmLeads);
+
+  const leads = stripMongoIds(
+    await collection
+      .find({ assignedStaffId: staff.id })
+      .sort({ updatedAt: -1 })
+      .toArray(),
+  );
+
+  return {
+    leads,
+    staff: [staff],
+    summary: getCrmSummary(leads),
+  };
+}
+
+export async function createOrLinkCrmCounsellor(input: {
+  userId: string;
+  name: string;
+  email: string;
+}) {
+  const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
+
+  const existingDocument = await collection.findOne({
+    $or: [{ linkedUserId: input.userId }, { email: input.email }],
+  });
+
+  if (!existingDocument) {
+    return createCrmStaff({
+      name: input.name,
+      designation: "counsellor",
+      email: input.email,
+      linkedUserId: input.userId,
+    });
+  }
+
+  const existing = stripMongoId(existingDocument);
+
+  if (
+    existing.linkedUserId &&
+    existing.linkedUserId !== input.userId
+  ) {
+    throw new Error(
+      "This CRM staff profile is already linked to another counsellor account.",
+    );
+  }
+
+  const updated: CrmStaff = {
+    ...existing,
+    name: input.name,
+    email: input.email,
+    designation: "counsellor",
+    linkedUserId: input.userId,
+    active: true,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await collection.updateOne(
+    { id: existing.id },
+    { $set: updated },
+  );
+
+  return updated;
+}

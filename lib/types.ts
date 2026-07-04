@@ -1,4 +1,9 @@
-export type Role = "student" | "educator" | "admin" | "parent";
+export type Role =
+  | "student"
+  | "educator"
+  | "admin"
+  | "parent"
+  | "counsellor";
 
 export type UserStatus = "active" | "pending" | "rejected";
 

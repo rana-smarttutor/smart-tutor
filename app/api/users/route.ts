@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
-import { createUserRecord, findUserDocumentByEmail, getStudentDirectory, getUsersForAdmin, updateUserRecord } from "@/lib/data-store";
+import {
+  createOrLinkCrmCounsellor,
+  createUserRecord,
+  findUserDocumentByEmail,
+  getStudentDirectory,
+  getUsersForAdmin,
+  updateUserRecord,
+} from "@/lib/data-store";
 import { sanitizeEmailInput, sanitizePasswordInput, sanitizeRoleInput, sanitizeTextInput, validateEmailFormat } from "@/lib/validation";
 import type { UserProfile } from "@/lib/types";
 
@@ -67,7 +74,10 @@ export async function POST(request: Request) {
   const email = sanitizeEmailInput(body.email);
   const role = sanitizeRoleInput(body.role);
   const password = sanitizePasswordInput(body.password);
-  const program = sanitizeTextInput(body.program, 60);
+  const requestedProgram = sanitizeTextInput(body.program, 60);
+
+const program =
+  requestedProgram || (role === "counsellor" ? "CRM Counsellor" : "");
 
   if (!body.confirm) {
     return NextResponse.json(
@@ -123,6 +133,14 @@ export async function POST(request: Request) {
     linkedStudentId: role === "parent" ? body.linkedStudentId : undefined,
     profile: Object.keys(profile).length > 0 ? profile : undefined,
   });
+
+if (role === "counsellor") {
+  await createOrLinkCrmCounsellor({
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+  });
+}
 
   if (role === "student" && body.parentEmail) {
     const parentEmail = sanitizeEmailInput(body.parentEmail);
@@ -219,6 +237,14 @@ export async function PATCH(request: Request) {
     status: body.status,
     verified: body.verified,
   });
+
+if (role === "counsellor") {
+  await createOrLinkCrmCounsellor({
+    userId: updatedUser.id,
+    name: updatedUser.name,
+    email: updatedUser.email,
+  });
+}
 
   return NextResponse.json(
     {

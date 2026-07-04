@@ -67,7 +67,15 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
   if (stream === "All") {
     return true;
   }
+function isPreferredCommerceSpotlight(course: CourseItem) {
+  const title = normaliseValue(course.title);
+  const stream = normaliseValue(course.stream);
 
+  return (
+    stream === "commerce" &&
+    title.includes("foundationforcacscma")
+  );
+}
   const selectedStreamKey = normaliseValue(stream);
   const courseStreamKey = normaliseValue(course.stream);
 
@@ -131,6 +139,16 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
   return keywords[stream].some((keyword) => searchableText.includes(keyword));
 }
 
+function isPreferredCommerceSpotlight(course: CourseItem) {
+  const title = normaliseValue(course.title);
+  const stream = normaliseValue(course.stream);
+
+  return (
+    stream === "commerce" &&
+    title.includes("foundationforcacscma")
+  );
+}
+
 const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
   "Class 6": "/spotlight/class-6-8.jpeg",
   "Class 7": "/spotlight/class-6-8.jpeg",
@@ -141,6 +159,16 @@ const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
   Skills: "/spotlight/skills.png",
   "Govt Exams": "/spotlight/govt-exams.jpeg",
 };
+
+function isPreferredClass1112Spotlight(course: CourseItem) {
+  const title = normaliseValue(course.title);
+  const stream = normaliseValue(course.stream);
+
+  return (
+    stream === "science" &&
+    title.includes("11th12thscienceboards")
+  );
+}
 
 export default function SpotlightSection({
   activeTab,
@@ -186,27 +214,67 @@ export default function SpotlightSection({
 
     const priorityStandardKey = priorityKeys[activeTab] ?? null;
 
-    if (priorityStandardKey) {
-      filteredCourses.sort((firstCourse, secondCourse) => {
-        const isFirstPriority =
-          firstCourse.standardKey === priorityStandardKey;
+if (priorityStandardKey) {
+  filteredCourses.sort((firstCourse, secondCourse) => {
+    const isFirstPriority =
+      firstCourse.standardKey === priorityStandardKey;
 
-        const isSecondPriority =
-          secondCourse.standardKey === priorityStandardKey;
+    const isSecondPriority =
+      secondCourse.standardKey === priorityStandardKey;
 
-        if (isFirstPriority && !isSecondPriority) {
-          return -1;
-        }
-
-        if (!isFirstPriority && isSecondPriority) {
-          return 1;
-        }
-
-        return 0;
-      });
+    if (isFirstPriority && !isSecondPriority) {
+      return -1;
     }
 
-    setTabCourses(filteredCourses);
+    if (!isFirstPriority && isSecondPriority) {
+      return 1;
+    }
+
+    return 0;
+  });
+}
+
+if (activeTab === "Class 11-12") {
+  filteredCourses.sort((firstCourse, secondCourse) => {
+    const isFirstPreferred =
+      isPreferredClass1112Spotlight(firstCourse);
+
+    const isSecondPreferred =
+      isPreferredClass1112Spotlight(secondCourse);
+
+    if (isFirstPreferred && !isSecondPreferred) {
+      return -1;
+    }
+
+    if (!isFirstPreferred && isSecondPreferred) {
+      return 1;
+    }
+
+    return 0;
+  });
+}
+
+if (activeTab === "Class 11-12" && activeStream === "Commerce") {
+  filteredCourses.sort((firstCourse, secondCourse) => {
+    const firstIsPreferred =
+      isPreferredCommerceSpotlight(firstCourse);
+
+    const secondIsPreferred =
+      isPreferredCommerceSpotlight(secondCourse);
+
+    if (firstIsPreferred && !secondIsPreferred) {
+      return -1;
+    }
+
+    if (!firstIsPreferred && secondIsPreferred) {
+      return 1;
+    }
+
+    return 0;
+  });
+}
+
+setTabCourses(filteredCourses);
     setSpotlightIndex(0);
   }, [activeTab, activeStream, allCourses]);
 
