@@ -1615,14 +1615,10 @@ export async function deleteAttendanceSheet(attendanceId: string) {
 export async function getFeeInvoicesForRole(role: Role, userId?: string) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
 
-  if (role === "admin") {
+  if (role === "admin" || role === "educator") {
     return stripMongoIds(
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
-  }
-
-  if (role === "educator") {
-    return [];
   }
 
   const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
@@ -1637,6 +1633,92 @@ export async function getFeeInvoicesForRole(role: Role, userId?: string) {
       .sort({ createdAt: -1 })
       .toArray(),
   );
+}
+
+export async function getFeeInvoiceStudentDetails(
+  studentId: string,
+  dueDate?: string,
+) {
+  const normalizedStudentId = studentId.trim();
+
+  if (!normalizedStudentId) {
+    return null;
+  }
+
+  const users = await getUsersCollection();
+  const batches = await getCollection<Batch>(COLLECTIONS.batches);
+
+  const [student, parent, activeBatchDocuments] = await Promise.all([
+    users.findOne({
+      id: normalizedStudentId,
+      role: "student",
+    }),
+
+    users.findOne({
+      role: "parent",
+      linkedStudentId: normalizedStudentId,
+    }),
+
+    batches
+      .find({
+        studentIds: normalizedStudentId,
+        status: "active",
+      })
+      .sort({
+        updatedAt: -1,
+        createdAt: -1,
+      })
+      .toArray(),
+  ]);
+
+  if (!student) {
+    return null;
+  }
+
+  const activeBatch = stripMongoIds(activeBatchDocuments)[0];
+
+  const selectedDate = dueDate
+    ? new Date(`${dueDate}T12:00:00`)
+    : new Date();
+
+  const referenceDate = Number.isNaN(selectedDate.getTime())
+    ? new Date()
+    : selectedDate;
+
+  const academicStartYear =
+    referenceDate.getMonth() >= 3
+      ? referenceDate.getFullYear()
+      : referenceDate.getFullYear() - 1;
+
+  return {
+    studentId: student.id,
+    studentName: student.name,
+    parentId: parent?.id,
+
+    parentName:
+      parent?.name ||
+      student.profile?.parentName ||
+      "",
+
+    classCourse:
+      activeBatch?.courseName?.trim() ||
+      student.program?.trim() ||
+      "",
+
+    batch: activeBatch?.name?.trim() || "",
+
+    rollNo: "",
+
+    academicYear: `${academicStartYear}-${String(
+      academicStartYear + 1,
+    ).slice(-2)}`,
+
+    mobileNo:
+      student.mobile?.trim() ||
+      student.profile?.parentMobile?.trim() ||
+      parent?.mobile?.trim() ||
+      "",
+  };
 }
 
 export async function createFeeInvoice(input: {
