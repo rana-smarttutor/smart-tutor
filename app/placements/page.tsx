@@ -2,8 +2,10 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { PlacementPortalHero } from "@/components/placement-portal-hero";
+import { StudentJobPortalHero } from "@/components/student-job-portal-hero";
 import { SiteHeader } from "@/components/site-header";
 import { generatedPlacedStudents } from "@/lib/placed-students-data";
+import { PublishedPlacementJobs } from "@/components/published-placement-jobs";
 
 export const metadata: Metadata = {
   title: "Placements & Success Stories",
@@ -44,7 +46,8 @@ export default function PlacementsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />{" "}
-      <PlacementPortalHero />{" "}
+      <PlacementPortalHero />
+      <PublishedPlacementJobs />{" "}
       <section className="relative overflow-hidden pb-20 pt-10">
         {" "}
         <div className="absolute inset-0 -z-10 bg-blue-600/5" />{" "}

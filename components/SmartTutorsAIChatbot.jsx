@@ -159,10 +159,21 @@ export default function SmartTutorsAIChatbot() {
 
   // Format text to handle bold without asterisks
   const formatContent = (content) => {
-    return content.split("\n").map((line, i) => (
+    const lines = content.split("\n");
+
+    return lines.map((line, i) => (
       <div
-        key={i}
-        style={{ marginBottom: i < content.split("\n").length - 1 ? "4px" : 0 }}
+        key={`${line}-${i}`}
+        style={{
+          marginBottom: i < lines.length - 1 ? "4px" : 0,
+          minHeight: line.trim() ? "auto" : "6px",
+          opacity: 0,
+          animationName: "chat-text-rise",
+          animationDuration: "0.35s",
+          animationTimingFunction: "ease-out",
+          animationFillMode: "both",
+          animationDelay: `${0.08 + i * 0.08}s`,
+        }}
       >
         {line.split("**").map((part, j) =>
           j % 2 === 1 ? (
@@ -190,6 +201,29 @@ export default function SmartTutorsAIChatbot() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
+        @keyframes greeting-letter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chat-text-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}  
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
 
@@ -197,7 +231,20 @@ export default function SmartTutorsAIChatbot() {
         {/* Hovering Help Text */}
         {!open && (
           <div style={styles.hoverPrompt}>
-            Hi, how can I help you?
+            <span style={styles.greetingText}>
+              {["H", "i", "i"].map((letter, index) => (
+                <span
+                  key={`${letter}-${index}`}
+                  style={{
+                    ...styles.greetingLetter,
+                    animationDelay: `${index * 0.14}s`,
+                  }}
+                >
+                  {letter}
+                </span>
+              ))}
+            </span>
+
             <div style={styles.hoverPromptArrow} />
           </div>
         )}
@@ -334,6 +381,19 @@ function getStyles(theme) {
         "chat-fade-in 0.4s ease-out, hover-float 3s ease-in-out infinite",
       whiteSpace: "nowrap",
       marginRight: "4px",
+    },
+    greetingText: {
+      display: "inline-flex",
+      overflow: "hidden",
+    },
+
+    greetingLetter: {
+      display: "inline-block",
+      opacity: 0,
+      animationName: "greeting-letter-rise",
+      animationDuration: "0.35s",
+      animationTimingFunction: "ease-out",
+      animationFillMode: "both",
     },
     hoverPromptArrow: {
       position: "absolute",

@@ -46,11 +46,11 @@ const HOME_PROGRAMS: Program[] = [
   },
   {
     category: "Entrance Exams",
-    title: "JEE, NEET, CET, and CUET",
+    title: "ENTRANCE & COMPETITIVE EXAMS",
     duration: "Batch-Based",
     description:
-      "Targeted entrance preparation for engineering, medical, university, and professional pathways.",
-    focus: ["JEE / NEET", "CET / CUET"],
+      "JEE, NEET, CET, CUET, CLAT, IPMAT, CA Foundation.",
+    focus: ["JEE / NEET", "CET / CUET", "CA / CS / CMA"],
     targetTab: "Class 11-12",
   },
   {

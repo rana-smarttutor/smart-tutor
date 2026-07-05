@@ -56,7 +56,7 @@ export default async function Home() {
       features: [
         "Resource Manager",
         "Performance Tracking",
-        "Student Communication",
+        "Student Engagement",
       ],
     },
     {
@@ -64,15 +64,9 @@ export default async function Home() {
       title: "Parent Dashboard",
       summary:
         "Stay connected with the institute — access notices, fee details, and communicate with educators.",
-      features: ["Institute Notices", "Fee Details", "Educator Connect"],
+      features: ["Institute Notices", "Fee Details", "Weekly/Monthly Reports"],
     },
-    {
-      role: "admin",
-      title: "Operations Hub",
-      summary:
-        "Full control over institute management, course scheduling, and campus operations.",
-      features: ["Admissions Manager", "Fee Tracking", "System Analytics"],
-    },
+  
   ];
 
   const programCarouselItems = data.programs.map((program) => ({
@@ -135,9 +129,9 @@ export default async function Home() {
 
             <p className="mx-auto max-w-2xl text-sm font-medium leading-relaxed text-[var(--color-muted)] sm:text-lg xl:mx-0">
               Smart Tutors offers thoughtfully designed{" "}
-              <strong>programs for every stage of a learner's journey</strong>.
+              <strong>courses for every stage of a learner's journey</strong>.
               From school academics and board preparation to competitive exams,
-              civil services, and future-ready digital skills, our programs
+              government exams, and future-ready digital skills, our courses
               combine expert mentoring, structured learning, and focused
               practice to help students achieve meaningful academic and career
               growth.
@@ -330,11 +324,11 @@ export default async function Home() {
           <p className="section-label mb-3 !text-sm sm:!text-base">Roles</p>
 
           <h2 className="section-title leading-[1.12]">
-            One system for students, teachers, and institute operations.
+            One system for Students, Educators, Parents.
           </h2>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {homeRoles.map((role) => (
             <article
               key={role.role}
@@ -366,16 +360,16 @@ export default async function Home() {
         <div className="grid items-stretch gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <article className="surface flex h-full flex-col rounded-xl p-8 transition-all hover:shadow-xl">
             <div className="mb-8">
-              <p className="section-label">Latest Educational Insights</p>
+              <p className="section-label">Upcoming Exam Updates</p>
               <h2 className="section-title">
-                Stay updated with the academic world
+                Stay updated with the Smart Tutors
               </h2>
             </div>
 
             <div className="space-y-6">
               <div className="surface-soft rounded-xl p-6 border-l-4 border-blue-600 hover:bg-blue-50 transition-colors">
                 <span className="pill mb-3 bg-blue-100 text-blue-700 border-none font-bold">
-                  Exams 2026
+                  All boards/Competative Exam  Update
                 </span>
                 <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
                   CBSE Board Exam Phase 2 Schedule
@@ -389,7 +383,7 @@ export default async function Home() {
 
               <div className="surface-soft rounded-xl p-6 border-l-4 border-indigo-600 hover:bg-indigo-50 transition-colors">
                 <span className="pill mb-3 bg-indigo-100 text-indigo-700 border-none font-bold">
-                  UPSC Update
+                  Government Exam Update
                 </span>
                 <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
                   Civil Services Prelims 2026

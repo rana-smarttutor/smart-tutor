@@ -21,6 +21,7 @@ const notificationTypes = new Set<AppNotificationType>([
   "feedback",
   "fees",
   "payment",
+  "placement",
 ]);
 
 type NotificationPayload = {
