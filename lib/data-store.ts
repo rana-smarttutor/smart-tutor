@@ -45,6 +45,9 @@ import type {
   TeacherPayout,
   AppNotification,
   StudentDailyActivity,
+  PlacementApplication,
+  PlacementJob,
+  PlacementApplicationStatus,
   DashboardAnalytics,
 } from "@/lib/types";
 
@@ -115,6 +118,8 @@ const COLLECTIONS = {
   feeInstallmentPlans: "feeInstallmentPlans",
   teacherPayouts: "teacherPayouts",
   notifications: "notifications",
+  placementJobs: "placementJobs",
+  placementApplications: "placementApplications",
 
   crmLeads: "crmLeads",
   crmStaff: "crmStaff",
@@ -1856,6 +1861,7 @@ export async function createLecture(input: {
   batchName?: string;
   batchId?: string;
   teacherId?: string;
+  teacherName?: string;
   description?: string;
   startsAt: string;
   endsAt?: string;
@@ -1885,6 +1891,7 @@ export async function createLecture(input: {
     batchName: input.batchName,
     batchId: input.batchId,
     teacherId: input.teacherId ?? input.createdBy,
+    teacherName: input.teacherName?.trim() || undefined,
     description: input.description,
     startsAt: input.startsAt,
     endsAt: input.endsAt,
@@ -4795,4 +4802,428 @@ export async function createOrLinkCrmCounsellor(input: {
   );
 
   return updated;
+}
+let placementIndexesPromise: Promise<void> | null = null;
+
+async function ensurePlacementIndexes() {
+  if (!placementIndexesPromise) {
+    placementIndexesPromise = (async () => {
+      const applications = await getCollection<PlacementApplication>(
+        COLLECTIONS.placementApplications,
+      );
+
+      await Promise.all([
+        applications.createIndex(
+          { jobId: 1, studentId: 1 },
+          {
+            unique: true,
+            name: "placement_application_unique_job_student",
+          },
+        ),
+        applications.createIndex(
+          { studentId: 1, createdAt: -1 },
+          {
+            name: "placement_application_student_created",
+          },
+        ),
+        applications.createIndex(
+          { jobId: 1, createdAt: -1 },
+          {
+            name: "placement_application_job_created",
+          },
+        ),
+      ]);
+    })().catch((error) => {
+      placementIndexesPromise = null;
+      throw error;
+    });
+  }
+
+  return placementIndexesPromise;
+}
+
+export async function getPlacementJobs(options: {
+  includeUnpublished?: boolean;
+} = {}) {
+  const collection = await getCollection<PlacementJob>(
+    COLLECTIONS.placementJobs,
+  );
+
+  const filter = options.includeUnpublished
+    ? {}
+    : {
+        status: "published" as const,
+      };
+
+  return stripMongoIds(
+    await collection
+      .find(filter)
+      .sort({
+        publishedAt: -1,
+        createdAt: -1,
+      })
+      .toArray(),
+  );
+}
+
+export async function getPlacementJobById(jobId: string) {
+  const collection = await getCollection<PlacementJob>(
+    COLLECTIONS.placementJobs,
+  );
+
+  const job = await collection.findOne({
+    id: jobId.trim(),
+  });
+
+  return job ? stripMongoId(job) : null;
+}
+
+export async function createPlacementJob(input: {
+  company: string;
+  role: string;
+  location: string;
+  salary?: string;
+  eligibility?: string;
+  jobType: PlacementJob["jobType"];
+  deadline: string;
+  description: string;
+  skills: string[];
+  applicationQuestions: PlacementJob["applicationQuestions"];
+  status: PlacementJob["status"];
+  createdBy: string;
+}) {
+  const collection = await getCollection<PlacementJob>(
+    COLLECTIONS.placementJobs,
+  );
+
+  const now = new Date().toISOString();
+
+  const job: PlacementJob = {
+    id: `placement-job-${randomUUID()}`,
+    company: input.company.trim(),
+    role: input.role.trim(),
+    location: input.location.trim(),
+    salary: input.salary?.trim() || undefined,
+    eligibility: input.eligibility?.trim() || undefined,
+    jobType: input.jobType,
+    deadline: input.deadline,
+    description: input.description.trim(),
+    skills: [...new Set(input.skills.map((skill) => skill.trim()).filter(Boolean))],
+    applicationQuestions: input.applicationQuestions,
+    status: input.status,
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+    publishedAt: input.status === "published" ? now : undefined,
+  };
+
+  await collection.insertOne(job);
+
+  return stripMongoId(job);
+}
+
+export async function updatePlacementJob(
+  jobId: string,
+  input: Partial<{
+    company: string;
+    role: string;
+    location: string;
+    salary: string;
+    eligibility: string;
+    jobType: PlacementJob["jobType"];
+    deadline: string;
+    description: string;
+    skills: string[];
+    applicationQuestions: PlacementJob["applicationQuestions"];
+    status: PlacementJob["status"];
+  }>,
+) {
+  const collection = await getCollection<PlacementJob>(
+    COLLECTIONS.placementJobs,
+  );
+
+  const existingJob = await collection.findOne({
+    id: jobId.trim(),
+  });
+
+  if (!existingJob) {
+    return null;
+  }
+
+  const updates: Partial<PlacementJob> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (typeof input.company === "string") {
+    updates.company = input.company.trim();
+  }
+
+  if (typeof input.role === "string") {
+    updates.role = input.role.trim();
+  }
+
+  if (typeof input.location === "string") {
+    updates.location = input.location.trim();
+  }
+
+  if (typeof input.salary === "string") {
+    updates.salary = input.salary.trim() || undefined;
+  }
+
+  if (typeof input.eligibility === "string") {
+    updates.eligibility = input.eligibility.trim() || undefined;
+  }
+
+  if (input.jobType) {
+    updates.jobType = input.jobType;
+  }
+
+  if (typeof input.deadline === "string") {
+    updates.deadline = input.deadline;
+  }
+
+  if (typeof input.description === "string") {
+    updates.description = input.description.trim();
+  }
+
+  if (Array.isArray(input.skills)) {
+    updates.skills = [
+      ...new Set(
+        input.skills.map((skill) => skill.trim()).filter(Boolean),
+      ),
+    ];
+  }
+
+  if (Array.isArray(input.applicationQuestions)) {
+    updates.applicationQuestions = input.applicationQuestions;
+  }
+
+  if (input.status) {
+    updates.status = input.status;
+
+    if (
+      input.status === "published" &&
+      existingJob.status !== "published"
+    ) {
+      updates.publishedAt = new Date().toISOString();
+    }
+  }
+
+  await collection.updateOne(
+    { id: jobId.trim() },
+    {
+      $set: updates,
+    },
+  );
+
+  const updatedJob = await collection.findOne({
+    id: jobId.trim(),
+  });
+
+  return updatedJob ? stripMongoId(updatedJob) : null;
+}
+
+export async function deletePlacementJob(jobId: string) {
+  const normalizedJobId = jobId.trim();
+
+  const jobs = await getCollection<PlacementJob>(
+    COLLECTIONS.placementJobs,
+  );
+
+  const applications = await getCollection<PlacementApplication>(
+    COLLECTIONS.placementApplications,
+  );
+
+  const result = await jobs.deleteOne({
+    id: normalizedJobId,
+  });
+
+  if (!result.deletedCount) {
+    return false;
+  }
+
+  await applications.deleteMany({
+    jobId: normalizedJobId,
+  });
+
+  return true;
+}
+
+export async function getPlacementApplicationsForAdmin() {
+  const collection = await getCollection<PlacementApplication>(
+    COLLECTIONS.placementApplications,
+  );
+
+  return stripMongoIds(
+    await collection
+      .find({})
+      .sort({
+        createdAt: -1,
+      })
+      .toArray(),
+  );
+}
+
+export async function getPlacementApplicationsForStudent(studentId: string) {
+  const collection = await getCollection<PlacementApplication>(
+    COLLECTIONS.placementApplications,
+  );
+
+  return stripMongoIds(
+    await collection
+      .find({
+        studentId: studentId.trim(),
+      })
+      .sort({
+        createdAt: -1,
+      })
+      .toArray(),
+  );
+}
+
+export async function getPlacementApplicationForStudent(
+  jobId: string,
+  studentId: string,
+) {
+  const collection = await getCollection<PlacementApplication>(
+    COLLECTIONS.placementApplications,
+  );
+
+  const application = await collection.findOne({
+    jobId: jobId.trim(),
+    studentId: studentId.trim(),
+  });
+
+  return application ? stripMongoId(application) : null;
+}
+
+export async function getPlacementStudentProfile(studentId: string) {
+  const users = await getUsersCollection();
+
+  const student = await users.findOne({
+    id: studentId.trim(),
+    role: "student",
+  });
+
+  if (!student) {
+    return null;
+  }
+
+  return {
+    studentId: student.id,
+    studentName: student.name,
+    studentEmail: student.email,
+    phone: student.mobile?.trim() || "",
+    programme: student.program?.trim() || "",
+  };
+}
+
+export async function createPlacementApplication(input: {
+  job: PlacementJob;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  phone: string;
+  programme: string;
+  skills: string[];
+  resumeUrl?: string;
+  experience?: string;
+  message?: string;
+  answers: PlacementApplication["answers"];
+}) {
+  await ensurePlacementIndexes();
+
+  const collection = await getCollection<PlacementApplication>(
+    COLLECTIONS.placementApplications,
+  );
+
+  const existingApplication = await collection.findOne({
+    jobId: input.job.id,
+    studentId: input.studentId,
+  });
+
+  if (existingApplication) {
+    throw new Error("You have already applied for this job.");
+  }
+
+  const now = new Date().toISOString();
+
+  const application: PlacementApplication = {
+    id: `placement-application-${randomUUID()}`,
+    jobId: input.job.id,
+    company: input.job.company,
+    jobRole: input.job.role,
+    studentId: input.studentId,
+    studentName: input.studentName,
+    studentEmail: input.studentEmail,
+    phone: input.phone.trim(),
+    programme: input.programme.trim(),
+    skills: [
+      ...new Set(
+        input.skills.map((skill) => skill.trim()).filter(Boolean),
+      ),
+    ],
+    resumeUrl: input.resumeUrl?.trim() || undefined,
+    experience: input.experience?.trim() || undefined,
+    message: input.message?.trim() || undefined,
+    answers: input.answers,
+    status: "applied",
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(application);
+
+  return stripMongoId(application);
+}
+
+export async function updatePlacementApplicationStatus(
+  applicationId: string,
+  input: {
+    status: PlacementApplicationStatus;
+    statusNote?: string;
+    updatedBy: string;
+  },
+) {
+  const collection = await getCollection<PlacementApplication>(
+    COLLECTIONS.placementApplications,
+  );
+
+  await collection.updateOne(
+    {
+      id: applicationId.trim(),
+    },
+    {
+      $set: {
+        status: input.status,
+        statusNote: input.statusNote?.trim() || undefined,
+        updatedBy: input.updatedBy,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  const application = await collection.findOne({
+    id: applicationId.trim(),
+  });
+
+  return application ? stripMongoId(application) : null;
+}
+
+export async function getAdminNotificationRecipientIds() {
+  const users = await getUsersCollection();
+
+  const admins = await users
+    .find({
+      role: "admin",
+      verified: { $ne: false },
+      $or: [
+        { status: "active" },
+        { status: { $exists: false } },
+        { status: null },
+      ],
+    } as any)
+    .toArray();
+
+  return admins.map((admin) => admin.id);
 }

@@ -467,6 +467,7 @@ export type LectureItem = {
   lectureReportSubmittedAt?: string;
   batchId?: string;
   teacherId?: string;
+  teacherName?: string;
 };
 
 // =========================
@@ -828,7 +829,8 @@ export type AppNotificationType =
   | "test"
   | "feedback"
   | "fees"
-  | "payment";
+  | "payment"
+  | "placement";
 
 export type AppNotification = {
   id: string;
@@ -839,4 +841,84 @@ export type AppNotification = {
   link?: string;
   read: boolean;
   createdAt: string;
+};
+
+
+// =========================
+// Placement Jobs System
+// =========================
+
+export type PlacementJobStatus = "draft" | "published" | "closed";
+
+export type PlacementJobType =
+  | "full-time"
+  | "internship"
+  | "part-time"
+  | "contract";
+
+export type PlacementApplicationStatus =
+  | "applied"
+  | "shortlisted"
+  | "interview"
+  | "selected"
+  | "rejected";
+
+export type PlacementApplicationQuestion = {
+  id: string;
+  label: string;
+  required: boolean;
+};
+
+export type PlacementJob = {
+  id: string;
+  company: string;
+  role: string;
+  location: string;
+  salary?: string;
+  eligibility?: string;
+  jobType: PlacementJobType;
+  deadline: string;
+  description: string;
+  skills: string[];
+  applicationQuestions: PlacementApplicationQuestion[];
+
+  status: PlacementJobStatus;
+
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+  publishedAt?: string;
+};
+
+export type PlacementApplicationAnswer = {
+  questionId: string;
+  questionLabel: string;
+  answer: string;
+};
+
+export type PlacementApplication = {
+  id: string;
+
+  jobId: string;
+  company: string;
+  jobRole: string;
+
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+
+  phone: string;
+  programme: string;
+  skills: string[];
+  resumeUrl?: string;
+  experience?: string;
+  message?: string;
+  answers: PlacementApplicationAnswer[];
+
+  status: PlacementApplicationStatus;
+  statusNote?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+  updatedBy?: string;
 };

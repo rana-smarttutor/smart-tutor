@@ -14,9 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function getOptionalText(value: unknown) {
-  return typeof value === "string" && value.trim()
-    ? value.trim()
-    : undefined;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function getStudentIds(value: unknown) {
@@ -29,11 +27,7 @@ function getStudentIds(value: unknown) {
 }
 
 function getLectureStatus(value: unknown) {
-  if (
-    value === "scheduled" ||
-    value === "completed" ||
-    value === "cancelled"
-  ) {
+  if (value === "scheduled" || value === "completed" || value === "cancelled") {
     return value;
   }
 
@@ -100,6 +94,7 @@ export async function POST(request: Request) {
       batchName: getOptionalText(body.batchName),
       batchId: getOptionalText(body.batchId),
       teacherId: session.id,
+      teacherName: session.name,
 
       description: getOptionalText(body.description),
       startsAt,
@@ -235,9 +230,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Unable to create lecture.",
+          error instanceof Error ? error.message : "Unable to create lecture.",
       },
       { status: 500 },
     );

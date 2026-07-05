@@ -142,6 +142,17 @@ const SalesCrmManager = dynamic(
   },
 );
 
+const PlacementJobsManager = dynamic(
+  () =>
+    import("@/components/placement-jobs-manager").then(
+      (module) => module.PlacementJobsManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 const WeeklyTestManager = dynamic(
   () =>
     import("@/components/weekly-test-manager").then(
@@ -156,6 +167,17 @@ const WeeklyTestManager = dynamic(
 const BatchManager = dynamic(
   () =>
     import("@/components/batch-manager").then((module) => module.BatchManager),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const TimetableManager = dynamic(
+  () =>
+    import("@/components/timetable-manager").then(
+      (module) => module.TimetableManager,
+    ),
   {
     loading: () => <SectionLoading />,
     ssr: false,
@@ -195,6 +217,7 @@ const sidebarByRole = {
     { id: "fees", label: "Fees" },
     { id: "fee-installments", label: "Fees & Installments" },
     { id: "lectures", label: "Lectures" },
+    { id: "timetable", label: "Timetable" },
     { id: "library", label: "Library" },
   ],
 
@@ -211,6 +234,7 @@ const sidebarByRole = {
     { id: "fees", label: "Invoices" },
     { id: "teacher-payouts", label: "My Earnings" },
     { id: "lectures", label: "Lectures" },
+    { id: "timetable", label: "Timetable" },
     { id: "library", label: "Library" },
   ],
 
@@ -229,6 +253,7 @@ const sidebarByRole = {
     { id: "notifications", label: "Notifications" },
     { id: "enquiries", label: "Enquiries" },
     { id: "sales-crm", label: "Sales CRM" },
+    { id: "placement-jobs", label: "Placement Jobs" },
     { id: "tests", label: "Test Studio" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
@@ -242,6 +267,7 @@ const sidebarByRole = {
     { id: "teacher-payouts", label: "Teacher Payouts" },
     { id: "batches", label: "Batch Management" },
     { id: "lectures", label: "Lectures" },
+    { id: "timetable", label: "Timetable" },
     { id: "library", label: "Library" },
   ],
 
@@ -323,6 +349,7 @@ export function DashboardShell({
   const showNotifications = activeSection === "notifications";
   const showEnquiries = activeSection === "enquiries";
   const showSalesCrm = activeSection === "sales-crm";
+  const showPlacementJobs = activeSection === "placement-jobs";
   const showTests = activeSection === "tests";
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
@@ -333,6 +360,7 @@ export function DashboardShell({
   const showAttendance = activeSection === "attendance";
   const showFees = activeSection === "fees";
   const showLectures = activeSection === "lectures";
+  const showTimetable = activeSection === "timetable";
   const showWeeklyTests = activeSection === "weekly-tests";
   const showStudentFeedback = activeSection === "student-feedback";
   const showDailyActivities = activeSection === "daily-activities";
@@ -628,7 +656,7 @@ export function DashboardShell({
           </div>
         </aside>
 
-        <section className="grid min-w-0 gap-6">
+        <section className="flex min-w-0 flex-col gap-6">
           <header className="surface flex items-center justify-between gap-4 rounded-[1.5rem] px-5 py-4 sm:px-6">
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">
@@ -1007,6 +1035,11 @@ export function DashboardShell({
           {showSalesCrm && (role === "admin" || role === "counsellor") ? (
             <SalesCrmManager role={role} />
           ) : null}
+
+          {showPlacementJobs && role === "admin" ? (
+            <PlacementJobsManager />
+          ) : null}
+
           {showTests ? (
             <>
               <DashboardTestStudio
@@ -1209,6 +1242,17 @@ export function DashboardShell({
               role={role}
               lectures={dashboard.lectures}
               studentDirectory={studentDirectory}
+            />
+          ) : null}
+
+          {showTimetable &&
+          (role === "admin" || role === "educator" || role === "student") ? (
+            <TimetableManager
+              role={role}
+              lectures={dashboard.lectures}
+              managedUsers={managedUsers}
+              session={session}
+              onCreateLecture={() => setActiveSection("lectures")}
             />
           ) : null}
 

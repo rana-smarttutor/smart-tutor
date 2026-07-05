@@ -24,15 +24,16 @@ function formatNotificationTime(value: string) {
 }
 
 function getNotificationLabel(type: AppNotification["type"]) {
-  const labels: Record<AppNotification["type"], string> = {
-    lecture: "Lecture",
-    homework: "Homework",
-    attendance: "Attendance",
-    test: "Test",
-    feedback: "Feedback",
-    fees: "Fees",
-    payment: "Payment",
-  };
+const labels: Record<AppNotification["type"], string> = {
+  lecture: "Lecture",
+  homework: "Homework",
+  attendance: "Attendance",
+  test: "Test",
+  feedback: "Feedback",
+  fees: "Fees",
+  payment: "Payment",
+  placement: "Placement",
+};
 
   return labels[type];
 }
