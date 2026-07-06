@@ -9,7 +9,6 @@ import { motion } from "motion/react";
 
 import ToppersSection from "@/components/toppers-section";
 import SpotlightSection from "@/components/spotlight-section";
-import SkillsGrid from "@/components/skills-grid";
 import WhyChooseSmartTutors from "@/components/why-choose-smart-tutors";
 import CourseModal from "@/components/course-modal";
 import SmartTutorsAIChatbot from "@/components/SmartTutorsAIChatbot";
@@ -80,13 +79,7 @@ useEffect(() => {
           allCourses={filteredCourses}
         />
 
-        {/* 4. Skills Section Specific Grid Display */}
-        <section className="space-y-6">
-          <SkillsGrid
-            onSelectCourse={setSelectedCourse}
-            allCourses={filteredCourses}
-          />
-        </section>
+
         {/* 5. Hall of Fame (Toppers Wall) Section */}
         <section>
           <ToppersSection activeTab={activeTab} />
