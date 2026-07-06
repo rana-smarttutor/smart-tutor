@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import {
   createCourse,
+  deleteCourse,
   getCoursesForRole,
   getStandardizedCourseOptions,
   updateCourse,
@@ -169,5 +170,28 @@ export async function PATCH(request: Request) {
     const message = error instanceof Error ? error.message : "Course could not be updated.";
     const status = message.includes("already exists") ? 409 : 400;
     return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const session = await getSessionUser();
+
+  if (!session || session.role !== "admin") {
+    return NextResponse.json({ error: "Only admins can delete courses." }, { status: 403 });
+  }
+
+  const body = (await request.json()) as { id?: string };
+  const id = body.id?.trim();
+
+  if (!id) {
+    return NextResponse.json({ error: "Course id is required." }, { status: 400 });
+  }
+
+  try {
+    await deleteCourse(id);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Course could not be deleted.";
+    return NextResponse.json({ error: message }, { status: 404 });
   }
 }

@@ -14,6 +14,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/contact`, lastModified: lastMod, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${baseUrl}/library`, lastModified: lastMod, changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/signup`, lastModified: lastMod, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${baseUrl}/login`, lastModified: lastMod, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${baseUrl}/privacy`, lastModified: lastMod, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/terms`, lastModified: lastMod, changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${baseUrl}/eula`, lastModified: lastMod, changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   const coursePages: MetadataRoute.Sitemap = courseLibrary.map((course) => ({

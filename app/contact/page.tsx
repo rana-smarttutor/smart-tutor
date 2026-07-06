@@ -17,8 +17,23 @@ export default async function ContactPage() {
   const data = await getPublicInstituteData();
   const mapQuery = encodeURIComponent(data.profile.address);
   const mapLink = `https://maps.google.com/?q=${mapQuery}`;
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
+      { "@type": "ListItem", "position": 2, "name": "Contact Us", "item": "https://smarttutors.co.in/contact" },
+    ],
+  };
+
   return (
-    <main className="section-shell pb-24 pt-12">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <main className="section-shell pb-24 pt-12">
       <section className="mb-20 text-center lg:text-left relative">
         <div className="absolute top-0 left-0 -z-10 h-64 w-64 bg-blue-400/10 blur-[100px] rounded-full -translate-x-1/2 -translate-y-1/2" />
         <div className="max-w-4xl">
@@ -308,5 +323,6 @@ export default async function ContactPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

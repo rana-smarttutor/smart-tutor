@@ -1,10 +1,19 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
+import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { getStudentDirectory } from "@/lib/data-store";
 import { getMongoDatabase } from "@/lib/mongodb";
 
 export async function POST(request: Request) {
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ success: false, message: "Login required." }, { status: 401 });
+  }
+  if (!hasAnyRole(session, ["admin", "educator"])) {
+    return NextResponse.json({ success: false, message: "Only educators and admins can create reports." }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
 
@@ -91,6 +100,11 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ success: false, message: "Login required." }, { status: 401 });
+  }
+
   try {
     const db = await getMongoDatabase();
 
@@ -123,6 +137,14 @@ export async function GET() {
 }
 
 export async function DELETE(request: Request) {
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ success: false, message: "Login required." }, { status: 401 });
+  }
+  if (!hasAnyRole(session, ["admin", "educator"])) {
+    return NextResponse.json({ success: false, message: "Only educators and admins can delete reports." }, { status: 403 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const reportId = searchParams.get("id");

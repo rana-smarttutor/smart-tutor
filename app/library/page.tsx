@@ -24,11 +24,26 @@ export default async function LibraryPage() {
 
   const books = await getDigitalLibraryBooks(canAccessPdf);
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
+      { "@type": "ListItem", "position": 2, "name": "Digital Library", "item": "https://smarttutors.co.in/library" },
+    ],
+  };
+
   return (
-    <DigitalLibraryClient
-      initialBooks={books}
-      canManage={canManage}
-      isLoggedIn={isLoggedIn}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <DigitalLibraryClient
+        initialBooks={books}
+        canManage={canManage}
+        isLoggedIn={isLoggedIn}
+      />
+    </>
   );
 }

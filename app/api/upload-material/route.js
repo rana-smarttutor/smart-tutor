@@ -297,6 +297,9 @@ export async function POST(req) {
     if (!session) {
       return Response.json({ success: false, message: "Login required." }, { status: 401 });
     }
+    if (session.role !== "admin" && session.role !== "educator") {
+      return Response.json({ success: false, message: "Only educators and admins can upload materials." }, { status: 403 });
+    }
 
     const formData = await req.formData();
 
@@ -434,6 +437,9 @@ export async function DELETE() {
   const session = await getSessionUser();
   if (!session) {
     return Response.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  }
+  if (session.role !== "admin") {
+    return Response.json({ success: false, message: "Only admins can clear all materials." }, { status: 403 });
   }
 
   global.smartTutorsMaterials = [];

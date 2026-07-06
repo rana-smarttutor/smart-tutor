@@ -90,6 +90,47 @@ npm run typecheck     # TypeScript check
 
 Vercel deployment uses `vercel.json` for routing, headers, CORS, and regions.
 
+## New features
+
+### Many-to-many faculty-student assignment
+- `assignedFacultyIds: string[]` replaces `assignedFacultyId` on student documents.
+- Faculty-assignment derived by querying `{ assignedFacultyIds: facultyId }` — no dual-write.
+- API: `assignStudentsToFaculty(facultyId, studentIds)` in data-store; bulk idempotent via `$addToSet` / `$pull`.
+- Directory shows comma-separated faculty names for students/parents.
+
+### Batch manager (card-grid redesign)
+- `Batch` type extended with optional `code`, `capacity`, `startDate`, `endDate` fields.
+- `createBatch` and `updateBatch` in `lib/data-store.ts` handle all new fields.
+- `deleteBatch(batchId)` removes batch + cascade-deletes teacher assignments.
+- API: `DELETE /api/batches` with `{ batchId }` body, admin-only.
+- UI: card-grid layout with stats row (Total/Active/Students/Expiring/Inactive), search filter, occupancy bar, teacher avatar, date range, modal-based CRUD with gradient headers (primary for add, warning for edit) and delete confirmation.
+
+### Timetable (weekly grid)
+- Full week view with hourly time slots (07:00–21:00) × day columns (Mon–Sun).
+- Batch filter pills, teacher dropdown, today banner with upcoming classes.
+- Type badges: Lecture (indigo), Lab (blue), Doubt (amber), Test (red), Special (purple).
+- Week navigation (Previous / This Week / Next), auto-collision layout via CSS grid.
+
+### Sidebar (CoachSutra-style)
+- Clean white surface with grouped navigation (Overview, Academics, People, Curriculum, Finance).
+- Search bar with real-time client-side filtering (`data-label` attribute matching).
+- User footer with avatar, name, role, logout — replaces previous "Active Session" card.
+- SVG icons per nav item, active state with indigo background/tint.
+- Full-height layout (`h-fit`) — no internal scrolling, content dictates height.
+
+### Legal pages & footer
+- `/privacy` — Privacy Policy
+- `/terms` — Terms & Conditions
+- `/eula` — End User License Agreement
+- `SiteFooter` component in root layout links to all three.
+
+### Color scheme (indigo)
+- Primary: `#4f46e5` (indigo-600), strong: `#4338ca`, soft: `rgba(79,70,229,0.1)`.
+- Dark mode primary: `#818cf8` (indigo-400).
+- Heading: `#1e293b`, border: `#e2e8f0`.
+- All shadow/glow/scrim values updated to match indigo palette.
+- Light body background uses indigo-teal radial gradients.
+
 ## Suggested next milestones
 
 1. Add a one-time duplicate-user cleanup script for existing Mongo collections before enforcing unique indexes on older datasets.

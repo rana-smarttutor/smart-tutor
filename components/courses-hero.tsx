@@ -50,7 +50,7 @@ export function CoursesHero() {
               Smart Tutors pathways from primary school to professional and government exam preparation.
             </p>
             <p className="text-xs text-slate-500 leading-relaxed font-medium">
-              A structured roadmap designed to build strength, discipline, and success at every major academic stage.
+              A structured roadmap designed to build strength, discipline, and success at every major academic stage. Join as a <strong className="text-blue-700">student</strong> or partner with us as a <strong className="text-blue-700">faculty member</strong>.
             </p>
           </div>
 

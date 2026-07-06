@@ -52,6 +52,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Smart Tutors Academy" }],
   creator: "Smart Tutors Academy",
+  publisher: "Smart Tutors Academy",
+  referrer: "origin-when-cross-origin",
+  applicationName: "Smart Tutors",
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -71,6 +74,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@smarttutors",
+    creator: "@smarttutors",
     title: "SMART TUTORS – India’s No.1 Trusted Smart Learning Platform",
     description: "Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform.",
     images: ["/image4.jpeg"],
@@ -105,6 +110,19 @@ export const metadata: Metadata = {
     title: 'Smart Tutors',
     statusBarStyle: 'default',
     capable: true,
+  },
+  formatDetection: {
+    telephone: true,
+    date: true,
+    address: true,
+    email: true,
+    url: true,
+  },
+  other: {
+    'apple-mobile-web-app-title': 'Smart Tutors',
+    'mobile-web-app-capable': 'yes',
+    'og:country-name': 'India',
+    'og:region': 'Maharashtra',
   },
 };
 
@@ -189,7 +207,7 @@ export default function RootLayout({
       { "@type": "ListItem", "position": 3, "name": "Placements", "item": "https://smarttutors.co.in/placements" },
       { "@type": "ListItem", "position": 4, "name": "Mock Tests", "item": "https://smarttutors.co.in/mock-test" },
       { "@type": "ListItem", "position": 5, "name": "Contact", "item": "https://smarttutors.co.in/contact" },
-      { "@type": "ListItem", "position": 6, "name": "Digital Library", "item": "https://smarttutors.co.in/digital-library" },
+      { "@type": "ListItem", "position": 6, "name": "Digital Library", "item": "https://smarttutors.co.in/library" },
       { "@type": "ListItem", "position": 7, "name": "Quiz Arena", "item": "https://smarttutors.co.in/quiz-arena" }
     ]
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ManagedUser, MessageItem, Role, SessionUser } from "@/lib/types";
 
@@ -10,6 +10,9 @@ type DashboardMessageCenterProps = {
   messages: MessageItem[];
   studentDirectory: ManagedUser[];
   onMessagesChange: (messages: MessageItem[]) => void;
+  managedUsers?: ManagedUser[];
+  assignedFacultyIds?: string[];
+  assignedFacultyNames?: string[];
 };
 
 export function DashboardMessageCenter({
@@ -18,6 +21,9 @@ export function DashboardMessageCenter({
   messages,
   studentDirectory,
   onMessagesChange,
+  managedUsers,
+  assignedFacultyIds,
+  assignedFacultyNames,
 }: DashboardMessageCenterProps) {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -33,7 +39,23 @@ export function DashboardMessageCenter({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const canPost = role === "educator" || role === "admin";
+  const [studentRecipient, setStudentRecipient] = useState<"faculty" | "admin">("faculty");
+  const [educatorRecipient, setEducatorRecipient] = useState<"admin" | "students" | "selected-students">("admin");
+
+  const canPost = role === "student" || role === "educator" || role === "admin";
+  const canPostToEveryone = role === "admin";
+
+  const studentEducators = useMemo(() => {
+    if (role !== "student" || !managedUsers || !assignedFacultyIds) return [];
+    return managedUsers.filter(
+      (u) => u.role === "educator" && assignedFacultyIds.includes(u.id)
+    );
+  }, [role, managedUsers, assignedFacultyIds]);
+
+  const adminUsers = useMemo(() => {
+    if (!managedUsers) return [];
+    return managedUsers.filter((u) => u.role === "admin");
+  }, [managedUsers]);
 
   function buildExpiryIso() {
     if (expiryPreset === "never") {
@@ -53,9 +75,60 @@ export function DashboardMessageCenter({
     return now.toISOString();
   }
 
+  function buildAudienceAndUserIds() {
+    if (role === "admin") {
+      if (targetMode === "selected-students") {
+        return {
+          audience: ["student", "educator", "admin"] as const,
+          userIds: selectedStudentIds,
+        };
+      }
+      return {
+        audience: ["student", "educator", "admin"] as const,
+        userIds: undefined as string[] | undefined,
+      };
+    }
+
+    if (role === "educator") {
+      if (educatorRecipient === "admin") {
+        return {
+          audience: ["admin"] as const,
+          userIds: adminUsers.map((u) => u.id),
+        };
+      }
+      if (educatorRecipient === "selected-students") {
+        return {
+          audience: ["student"] as const,
+          userIds: selectedStudentIds,
+        };
+      }
+      return {
+        audience: ["student"] as const,
+        userIds: studentDirectory.map((s) => s.id),
+      };
+    }
+
+    if (role === "student") {
+      if (studentRecipient === "admin") {
+        return {
+          audience: ["admin"] as const,
+          userIds: adminUsers.map((u) => u.id),
+        };
+      }
+      return {
+        audience: ["educator"] as const,
+        userIds: assignedFacultyIds ?? [],
+      };
+    }
+
+    return {
+      audience: ["student", "educator", "admin"] as const,
+      userIds: undefined as string[] | undefined,
+    };
+  }
+
   async function handlePublish() {
-    const targetAudience =
-      role === "admin" ? ["student", "educator", "admin"] : ["student", "educator", "admin"];
+    const { audience, userIds } = buildAudienceAndUserIds();
 
     const response = await fetch("/api/messages", {
       method: "POST",
@@ -65,9 +138,8 @@ export function DashboardMessageCenter({
         title,
         body,
         channel,
-        audience: targetAudience,
-        targetMode,
-        userIds: targetMode === "selected-students" ? selectedStudentIds : undefined,
+        audience,
+        userIds,
         expiresAt: buildExpiryIso(),
       }),
     });
@@ -167,7 +239,13 @@ export function DashboardMessageCenter({
       {canPost && session ? (
         <div className="mt-6 grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
           <div className="surface-soft rounded-[1.75rem] p-5">
-            <p className="text-sm font-semibold text-[var(--color-heading)]">Write institute message</p>
+            <p className="text-sm font-semibold text-[var(--color-heading)]">
+              {role === "student"
+                ? "Send a message"
+                : role === "educator"
+                  ? "Write message"
+                  : "Write institute message"}
+            </p>
             <div className="mt-4 grid gap-3">
               <input
                 value={title}
@@ -178,7 +256,11 @@ export function DashboardMessageCenter({
               <textarea
                 value={body}
                 onChange={(event) => setBody(event.target.value.slice(0, 280))}
-                placeholder="Write update for student or faculty boards"
+                placeholder={
+                  role === "student"
+                    ? "Write your message..."
+                    : "Write update for student or faculty boards"
+                }
                 rows={4}
                 className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
               />
@@ -193,41 +275,48 @@ export function DashboardMessageCenter({
                   <option value="Results">Results</option>
                   <option value="Admin Board">Admin Board</option>
                 </select>
-                <select
-                  value={targetMode}
-                  onChange={(event) =>
-                    setTargetMode(event.target.value as "everyone" | "selected-students")
-                  }
-                  className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
-                >
-                  <option value="everyone">Send to everyone</option>
-                  <option value="selected-students">Send to selected students</option>
-                </select>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="surface rounded-2xl px-4 py-3">
-                  <p className="text-sm font-semibold text-[var(--color-heading)]">Expiry</p>
+
+                {/* Recipient selector — varies by role */}
+                {canPostToEveryone ? (
                   <select
-                    value={expiryPreset}
+                    value={targetMode}
                     onChange={(event) =>
-                      setExpiryPreset(event.target.value as "24h" | "7d" | "30d" | "never")
+                      setTargetMode(event.target.value as "everyone" | "selected-students")
                     }
-                    className="mt-2 w-full bg-transparent text-sm text-[var(--color-heading)] outline-none"
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
                   >
-                    <option value="24h">24 hours</option>
-                    <option value="7d">7 days</option>
-                    <option value="30d">30 days</option>
-                    <option value="never">No expiry</option>
+                    <option value="everyone">Send to everyone</option>
+                    <option value="selected-students">Send to selected students</option>
                   </select>
-                </div>
-                <div className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-muted)]">
-                  <p className="font-semibold text-[var(--color-heading)]">Format</p>
-                  <p className="mt-2 leading-6">
-                    Title, channel, audience, expiry, and delivery scope are saved to MongoDB.
-                  </p>
-                </div>
+                ) : role === "educator" ? (
+                  <select
+                    value={educatorRecipient}
+                    onChange={(event) =>
+                      setEducatorRecipient(event.target.value as "admin" | "students" | "selected-students")
+                    }
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  >
+                    <option value="admin">Send to Admin</option>
+                    <option value="students">Send to all my students</option>
+                    <option value="selected-students">Send to selected students</option>
+                  </select>
+                ) : role === "student" ? (
+                  <select
+                    value={studentRecipient}
+                    onChange={(event) =>
+                      setStudentRecipient(event.target.value as "faculty" | "admin")
+                    }
+                    className="surface-soft rounded-2xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  >
+                    <option value="faculty">Send to my faculty</option>
+                    <option value="admin">Send to Admin</option>
+                  </select>
+                ) : null}
               </div>
-              {targetMode === "selected-students" ? (
+
+              {/* Student selected-students view (when admin picks selected-students OR educator picks selected-students) */}
+              {(targetMode === "selected-students" && canPostToEveryone) ||
+              (educatorRecipient === "selected-students" && role === "educator") ? (
                 <div className="rounded-3xl border border-[var(--color-border)] p-4">
                   <p className="text-sm font-semibold text-[var(--color-heading)]">
                     Target registered students
@@ -256,6 +345,30 @@ export function DashboardMessageCenter({
                   </div>
                 </div>
               ) : null}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="surface rounded-2xl px-4 py-3">
+                  <p className="text-sm font-semibold text-[var(--color-heading)]">Expiry</p>
+                  <select
+                    value={expiryPreset}
+                    onChange={(event) =>
+                      setExpiryPreset(event.target.value as "24h" | "7d" | "30d" | "never")
+                    }
+                    className="mt-2 w-full bg-transparent text-sm text-[var(--color-heading)] outline-none"
+                  >
+                    <option value="24h">24 hours</option>
+                    <option value="7d">7 days</option>
+                    <option value="30d">30 days</option>
+                    <option value="never">No expiry</option>
+                  </select>
+                </div>
+                <div className="surface rounded-2xl px-4 py-3 text-sm text-[var(--color-muted)]">
+                  <p className="font-semibold text-[var(--color-heading)]">Format</p>
+                  <p className="mt-2 leading-6">
+                    Title, channel, audience, expiry, and delivery scope are saved to MongoDB.
+                  </p>
+                </div>
+              </div>
               <button type="button" onClick={handlePublish} className="btn-action btn-md w-full font-bold">
                 Publish Message to Board
               </button>

@@ -1,6 +1,4 @@
 import Link from "next/link";
-
-import { LegalModals } from "@/components/legal-modals";
 import Image from "next/image";
 import { getPublicInstituteData } from "@/lib/data-store";
 
@@ -142,7 +140,17 @@ export async function SiteFooter() {
 
         <div className="mt-8 border-t border-[var(--color-border)] pt-8">
           <div className="flex flex-col gap-4 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-            <LegalModals />
+            <nav className="flex flex-wrap gap-4">
+              <Link href="/privacy" className="hover:text-[var(--color-primary)] transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-[var(--color-primary)] transition-colors">
+                Terms &amp; Conditions
+              </Link>
+              <Link href="/eula" className="hover:text-[var(--color-primary)] transition-colors">
+                EULA
+              </Link>
+            </nav>
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
               © {new Date().getFullYear()} Smart Tutors Academy. All rights

@@ -27,6 +27,7 @@ export type DemoCredential = {
 export type DemoUserRecord = SessionUser & {
   password: string;
   program: string;
+  assignedFacultyIds?: string[];
 };
 
 export type ManagedUser = SessionUser & {
@@ -34,6 +35,8 @@ export type ManagedUser = SessionUser & {
   status: UserStatus;
   passwordHint?: string;
   linkedStudentId?: string;
+  assignedFacultyIds?: string[];
+  assignedFacultyNames?: string[];
 };
 
 export type DashboardMetric = {
@@ -499,9 +502,14 @@ export type Enquiry = {
 export type UserProfile = {
   verified?: boolean;
   dob?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  fatherName?: string;
+  guardianPhone?: string;
   profilePhoto?: string;
   addressLine1?: string;
   addressLine2?: string;
+  address?: string;
   city?: string;
   state?: string;
   pincode?: string;
@@ -540,6 +548,8 @@ export type DashboardBundle = {
   feeInvoices: FeeInvoice[];
   lectures: LectureItem[];
   linkedStudentId?: string;
+  assignedFacultyIds?: string[];
+  assignedFacultyNames?: string[];
   profile?: UserProfile;
   batches?: Batch[];
   teacherBatchAssignments?: TeacherBatchAssignment[];
@@ -560,12 +570,16 @@ export type DashboardBundle = {
 export type Batch = {
   id: string;
   name: string;
+  code?: string;
   courseId?: string;
   courseName?: string;
   subject?: string;
+  capacity?: number;
   studentIds: string[];
   teacherIds: string[];
   schedule?: string;
+  startDate?: string;
+  endDate?: string;
   status: "active" | "archived";
   createdBy: string;
   createdAt: string;
@@ -921,4 +935,109 @@ export type PlacementApplication = {
   createdAt: string;
   updatedAt?: string;
   updatedBy?: string;
+};
+
+export type AuthLogAction = "login" | "logout" | "signup";
+
+export type AuthLogEntry = {
+  id: string;
+  action: AuthLogAction;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userRole: Role;
+  ip: string;
+  userAgent: string;
+  browser: string;
+  os: string;
+  timestamp: string;
+  success: boolean;
+  error?: string;
+};
+
+export type StudentRiskLevel = "low" | "medium" | "high";
+
+export type StudentStats = {
+  total: number;
+  active: number;
+  atRisk: number;
+  dropped: number;
+  newThisMonth: number;
+};
+
+export type StudentDirectoryEntry = ManagedUser & {
+  admissionNo?: string;
+  batchName?: string;
+  attendancePercent?: number;
+  feesStatus?: "paid" | "partial" | "unpaid" | "none";
+  riskLevel?: StudentRiskLevel;
+  photoUrl?: string;
+};
+
+export type BulkUpdateResult = {
+  updated: number;
+  skipped: number;
+  errors: string[];
+};
+
+export type ImportResult = {
+  imported: number;
+  skipped: number;
+  errors: string[];
+};
+
+export type PasswordResetRequestStatus = "new" | "contacted" | "resolved";
+
+export type PasswordResetRequest = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  lastPassword: string;
+  role: Role;
+  message?: string;
+  status: PasswordResetRequestStatus;
+  createdAt: string;
+  adminNote?: string;
+};
+
+// =========================
+// Homework / Assignment System
+// =========================
+
+export type HomeworkType = "homework" | "assignment" | "classwork" | "project" | "test";
+
+export type HomeworkItem = {
+  id: string;
+  title: string;
+  description?: string;
+  subject?: string;
+  hwType: HomeworkType;
+  maxMarks: number;
+  dueDate: string;
+  batchId: string;
+  batchName?: string;
+  allowLateSubmission: boolean;
+  attachmentUrl?: string;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type HomeworkSubmissionStatus = "submitted" | "graded";
+
+export type HomeworkSubmission = {
+  id: string;
+  homeworkId: string;
+  studentId: string;
+  studentName: string;
+  content?: string;
+  attachmentUrl?: string;
+  submittedAt: string;
+  status: HomeworkSubmissionStatus;
+  marks?: number;
+  feedback?: string;
+  gradedBy?: string;
+  gradedAt?: string;
 };

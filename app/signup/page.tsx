@@ -18,13 +18,26 @@ export const dynamic = "force-dynamic";
 
 export default async function SignupPage() {
   const session = await getSessionUser();
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
+      { "@type": "ListItem", "position": 2, "name": "Create Account", "item": "https://smarttutors.co.in/signup" },
+    ],
+  };
 
   if (session) {
     redirect("/dashboard");
   }
 
   return (
-    <main className="section-shell flex min-h-[calc(100dvh-8rem)] items-center pb-6 pt-4 sm:pt-6">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <main className="section-shell flex min-h-[calc(100dvh-8rem)] items-center pb-6 pt-4 sm:pt-6">
       <div className="grid w-full gap-6 xl:grid-cols-2 xl:items-stretch">
         <section className="surface order-1 flex h-full flex-col justify-center rounded-[2rem] p-8 sm:p-10 xl:order-2">
           <div className="mx-auto w-full max-w-2xl">
@@ -113,5 +126,6 @@ export default async function SignupPage() {
         </section>
       </div>
     </main>
+    </>
   );
 }

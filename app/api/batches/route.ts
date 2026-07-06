@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import {
   assignTeacherToBatch,
   createBatch,
+  deleteBatch,
   getBatchesForRole,
   removeTeacherFromBatch,
   updateBatch,
@@ -65,12 +66,16 @@ export async function POST(request: Request) {
 
     const batch = await createBatch({
       name: String(body.name ?? ""),
+      code: getOptionalText(body.code),
       courseId: getOptionalText(body.courseId),
       courseName: getOptionalText(body.courseName),
       subject: getOptionalText(body.subject),
+      capacity: typeof body.capacity === "number" ? body.capacity : undefined,
       schedule: getOptionalText(body.schedule),
       studentIds: getStringArray(body.studentIds),
       teacherIds: getStringArray(body.teacherIds),
+      startDate: getOptionalText(body.startDate),
+      endDate: getOptionalText(body.endDate),
       createdBy: session.id,
     });
 
@@ -183,6 +188,49 @@ export async function PATCH(request: Request) {
           error instanceof Error
             ? error.message
             : "Unable to update batch.",
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const session = await getSessionUser();
+
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        { error: "Only admins can delete batches." },
+        { status: 403 },
+      );
+    }
+
+    const body = (await request.json()) as { batchId?: string };
+    const batchId = body.batchId;
+
+    if (!batchId) {
+      return NextResponse.json(
+        { error: "Batch ID is required." },
+        { status: 400 },
+      );
+    }
+
+    await deleteBatch(batchId);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete batch error:", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to delete batch.",
       },
       { status: 500 },
     );

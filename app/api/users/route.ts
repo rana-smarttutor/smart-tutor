@@ -4,6 +4,7 @@ import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
   createOrLinkCrmCounsellor,
   createUserRecord,
+  deleteUserRecord,
   findUserDocumentByEmail,
   getStudentDirectory,
   getUsersForAdmin,
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
     parentName?: string;
     parentEmail?: string;
     parentMobile?: string;
+    assignedFacultyIds?: string[];
   };
 
   try {
@@ -65,6 +67,7 @@ export async function POST(request: Request) {
       parentName?: string;
       parentEmail?: string;
       parentMobile?: string;
+      assignedFacultyIds?: string[];
     };
   } catch {
     return NextResponse.json({ error: "Invalid user payload." }, { status: 400 });
@@ -132,6 +135,7 @@ const program =
     status: body.status,
     linkedStudentId: role === "parent" ? body.linkedStudentId : undefined,
     profile: Object.keys(profile).length > 0 ? profile : undefined,
+    assignedFacultyIds: role === "student" && body.assignedFacultyIds ? body.assignedFacultyIds : undefined,
   });
 
 if (role === "counsellor") {
@@ -184,6 +188,7 @@ export async function PATCH(request: Request) {
     program?: string;
     status?: "active" | "pending";
     verified?: boolean;
+    assignedFacultyIds?: string[] | null;
   };
 
   try {
@@ -196,6 +201,7 @@ export async function PATCH(request: Request) {
       program?: string;
       status?: "active" | "pending";
       verified?: boolean;
+      assignedFacultyIds?: string[] | null;
     };
   } catch {
     return NextResponse.json({ error: "Invalid update payload." }, { status: 400 });
@@ -236,6 +242,7 @@ export async function PATCH(request: Request) {
     program,
     status: body.status,
     verified: body.verified,
+    assignedFacultyIds: body.assignedFacultyIds === null ? null : (body.assignedFacultyIds ?? undefined),
   });
 
 if (role === "counsellor") {
@@ -252,4 +259,34 @@ if (role === "counsellor") {
     },
     { status: 200 },
   );
+}
+
+export async function DELETE(request: Request) {
+  const session = await getSessionUser();
+
+  if (!hasAnyRole(session, ["admin"])) {
+    return NextResponse.json(
+      { error: "Only admins can delete accounts." },
+      { status: 403 },
+    );
+  }
+
+  let body: { id?: string; mode?: string };
+
+  try {
+    body = (await request.json()) as { id?: string; mode?: string };
+  } catch {
+    return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
+  }
+
+  if (!body.id) {
+    return NextResponse.json({ error: "User id is required." }, { status: 400 });
+  }
+
+  if (body.mode === "delete") {
+    await deleteUserRecord(body.id);
+    return NextResponse.json({ ok: true, message: "User deleted." });
+  }
+
+  return NextResponse.json({ error: "Unknown mode." }, { status: 400 });
 }

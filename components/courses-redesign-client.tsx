@@ -114,7 +114,7 @@ useEffect(() => {
                 onClick={() => {
                   const fallbackCourse =
                     allCourses.find(
-                      (c) => c.standardKey === "class-6-regular-academic",
+                      (c) => c.standardKey === "class-6-academic",
                     ) || allCourses[0];
                   setSelectedCourse(fallbackCourse);
                 }}
@@ -125,13 +125,13 @@ useEffect(() => {
               <button
                 onClick={() => {
                   window.open(
-                    "https://api.whatsapp.com/send?phone=918850447887&text=Hi%20Smart%20Tutors,%20I'd%20like%20to%20receive%20the%20admissions%20brochure%20and%20class%20schedules.",
+                    "https://api.whatsapp.com/send?phone=918850447887&text=Hi%20Smart%20Tutors,%20I'd%20like%20to%20know%20more%20about%20your%20programs%20and%20schedules.",
                     "_blank",
                   );
                 }}
                 className="w-full sm:w-auto bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white font-semibold text-xs py-2.5 px-6 rounded cursor-pointer transition-all uppercase tracking-wider"
               >
-                Download Program Brochure
+                Contact for more information
               </button>
             </div>
           </div>

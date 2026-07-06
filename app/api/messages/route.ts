@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
-import { createMessage, getMessagesForRole } from "@/lib/data-store";
+import { createMessage, getMessagesForRole, getStudentDirectory, findFullUserById } from "@/lib/data-store";
 import { sanitizeIdList, sanitizeTextInput, sanitizeTextareaInput } from "@/lib/validation";
 
 export async function GET() {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!hasAnyRole(session, ["educator", "admin"])) {
+  if (!hasAnyRole(session, ["student", "educator", "admin"])) {
     return NextResponse.json(
       { error: "Only educators and admins can post institute messages." },
       { status: 403 },
@@ -73,11 +73,86 @@ export async function POST(request: Request) {
     );
   }
 
-  if (body.targetMode === "selected-students" && !userIds.length) {
+  // ---- Role-based audience restrictions ----
+  const allowedRoles = body.audience ?? [];
+
+  if (session.role === "student") {
+    // Students may only send to "educator" (their assigned faculty) or "admin"
+    const canSendToEducator =
+      allowedRoles.length === 1 &&
+      allowedRoles[0] === "educator" &&
+      userIds.length > 0;
+    const canSendToAdmin =
+      allowedRoles.length === 1 &&
+      allowedRoles[0] === "admin" &&
+      userIds.length > 0;
+
+    if (!canSendToEducator && !canSendToAdmin) {
+      return NextResponse.json(
+        { error: "Students can only send messages to their assigned faculty or to admin." },
+        { status: 403 },
+      );
+    }
+
+    // Verify student is only targeting their own assigned faculty
+    if (canSendToEducator) {
+      const studentRecord = await findFullUserById(session.id);
+      const assignedIds = studentRecord?.assignedFacultyIds ?? [];
+      const hasUnauthorized = userIds.some((uid) => !assignedIds.includes(uid));
+      if (hasUnauthorized) {
+        return NextResponse.json(
+          { error: "You may only send messages to your assigned faculty members." },
+          { status: 403 },
+        );
+      }
+    }
+  }
+
+  if (session.role === "educator") {
+    // Educators may send to "admin" or to "student" (their assigned students)
+    const canSendToAdmin =
+      allowedRoles.length === 1 &&
+      allowedRoles[0] === "admin" &&
+      userIds.length > 0;
+
+    const canSendToStudent =
+      allowedRoles.length === 1 &&
+      allowedRoles[0] === "student";
+
+    if (!canSendToAdmin && !canSendToStudent) {
+      return NextResponse.json(
+        { error: "Educators can only send messages to admin or to their assigned students." },
+        { status: 403 },
+      );
+    }
+
+    // When sending to students without specific userIds, resolve to assigned students
+    if (canSendToStudent && !userIds.length) {
+      const assignedStudents = await getStudentDirectory(session.id);
+      // body.userIds stays empty; we store resolved userIds
+      // but keep original audience so the message is scoped properly
+    }
+  }
+
+  if (session.role !== "admin" && allowedRoles.includes("student") && allowedRoles.includes("educator") && allowedRoles.includes("admin")) {
+    return NextResponse.json(
+      { error: "Only admins can send messages to all roles." },
+      { status: 403 },
+    );
+  }
+  // ---- End role-based restrictions ----
+
+  if (userIds.length === 0 && body.targetMode === "selected-students") {
     return NextResponse.json(
       { error: "Select at least one registered student for a targeted message." },
       { status: 400 },
     );
+  }
+
+  let resolvedUserIds = userIds;
+  if (session.role === "educator" && allowedRoles.includes("student") && !userIds.length) {
+    const assignedStudents = await getStudentDirectory(session.id);
+    resolvedUserIds = assignedStudents.map((s) => s.id);
   }
 
   if (expiresAt && Number.isNaN(expiresAt.getTime())) {
@@ -94,7 +169,7 @@ export async function POST(request: Request) {
     channel,
     author: session.name,
     audience: body.audience,
-    userIds,
+    userIds: resolvedUserIds,
     expiresAt: expiresAt ? expiresAt.toISOString() : null,
   });
 

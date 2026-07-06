@@ -7,19 +7,19 @@
   --font-mono: var(--font-geist-mono), monospace;
   --font-fancy: var(--font-playfair), serif;
   
-  /* Primary Palette - Indigo/Blue */
+  /* Primary Palette - Indigo */
   --color-background: #f8fafc;
   --color-background-strong: #f1f5f9;
   --color-panel: #ffffff;
   --color-panel-strong: rgba(255, 255, 255, 0.9);
-  --color-heading: #0f172a;
+  --color-heading: #1e293b;
   --color-body: #334155;
   --color-muted: #64748b;
-  --color-border: rgba(148, 163, 184, 0.3);
+  --color-border: #e2e8f0;
   
-  --color-primary: #2563eb;
-  --color-primary-strong: #1e40af;
-  --color-primary-soft: rgba(37, 99, 235, 0.1);
+  --color-primary: #4f46e5;
+  --color-primary-strong: #4338ca;
+  --color-primary-soft: rgba(79, 70, 229, 0.1);
   
   /* Secondary Palette - Emerald/Teal */
   --color-secondary: #0d9488;
@@ -56,21 +56,21 @@
 
   /* New Design Tokens */
   --shadow-premium: 0 10px 30px rgba(15, 23, 42, 0.05);
-  --shadow-glow: 0 0 15px rgba(21, 101, 255, 0.2);
+  --shadow-glow: 0 0 15px rgba(79, 70, 229, 0.2);
   
   --scroll-layer-a:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.05) 0%, rgba(30, 64, 175, 0.05) 100%),
-    linear-gradient(125deg, rgba(37, 99, 235, 0.08) 0%, transparent 54%);
+    linear-gradient(180deg, rgba(79, 70, 229, 0.05) 0%, rgba(67, 56, 202, 0.05) 100%),
+    linear-gradient(125deg, rgba(79, 70, 229, 0.08) 0%, transparent 54%);
   --scroll-layer-b:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(37, 99, 235, 0.06) 100%),
-    linear-gradient(145deg, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
+    linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(79, 70, 229, 0.06) 100%),
+    linear-gradient(145deg, rgba(79, 70, 229, 0.1) 0%, transparent 60%);
   --scroll-layer-c:
-    linear-gradient(180deg, rgba(30, 64, 175, 0.04) 0%, rgba(37, 99, 235, 0.06) 100%),
-    linear-gradient(110deg, rgba(37, 99, 235, 0.1) 0%, transparent 58%);
+    linear-gradient(180deg, rgba(67, 56, 202, 0.04) 0%, rgba(79, 70, 229, 0.06) 100%),
+    linear-gradient(110deg, rgba(79, 70, 229, 0.1) 0%, transparent 58%);
   
   --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 10px 15px -3px rgba(37, 99, 235, 0.15), 0 4px 6px -2px rgba(37, 99, 235, 0.05);
-  --shadow-lg: 0 20px 25px -5px rgba(37, 99, 235, 0.2), 0 10px 10px -5px rgba(37, 99, 235, 0.1);
+  --shadow-md: 0 10px 15px -3px rgba(79, 70, 229, 0.15), 0 4px 6px -2px rgba(79, 70, 229, 0.05);
+  --shadow-lg: 0 20px 25px -5px rgba(79, 70, 229, 0.2), 0 10px 10px -5px rgba(79, 70, 229, 0.1);
   --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-elevated: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   
@@ -87,9 +87,9 @@
   --color-muted: #94a3b8;
   --color-border: rgba(148, 163, 184, 0.15);
   
-  --color-primary: #60a5fa;
-  --color-primary-strong: #93c5fd;
-  --color-primary-soft: rgba(96, 165, 250, 0.15);
+  --color-primary: #818cf8;
+  --color-primary-strong: #a5b4fc;
+  --color-primary-soft: rgba(129, 140, 248, 0.15);
   
   --color-secondary: #14b8a6;
   --color-secondary-strong: #2dd4bf;
@@ -100,14 +100,14 @@
   --color-highlight: var(--color-primary-soft);
   
   --scroll-layer-a:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.12) 0%, rgba(30, 64, 175, 0.05) 100%),
-    linear-gradient(125deg, rgba(37, 99, 235, 0.08) 0%, transparent 54%);
+    linear-gradient(180deg, rgba(129, 140, 248, 0.12) 0%, rgba(99, 102, 241, 0.05) 100%),
+    linear-gradient(125deg, rgba(129, 140, 248, 0.08) 0%, transparent 54%);
   --scroll-layer-b:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(37, 99, 235, 0.06) 100%),
-    linear-gradient(145deg, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
+    linear-gradient(180deg, rgba(15, 23, 42, 0.03) 0%, rgba(129, 140, 248, 0.06) 100%),
+    linear-gradient(145deg, rgba(129, 140, 248, 0.1) 0%, transparent 60%);
   --scroll-layer-c:
-    linear-gradient(180deg, rgba(30, 64, 175, 0.04) 0%, rgba(37, 99, 235, 0.06) 100%),
-    linear-gradient(110deg, rgba(37, 99, 235, 0.1) 0%, transparent 58%);
+    linear-gradient(180deg, rgba(99, 102, 241, 0.04) 0%, rgba(129, 140, 248, 0.06) 100%),
+    linear-gradient(110deg, rgba(129, 140, 248, 0.1) 0%, transparent 58%);
   
   --shadow-soft: 0 24px 64px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 14px 28px rgba(0, 0, 0, 0.5);
@@ -155,7 +155,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 24%),
+    radial-gradient(circle at top left, rgba(79, 70, 229, 0.08), transparent 24%),
     radial-gradient(circle at top right, rgba(13, 148, 136, 0.08), transparent 22%),
     linear-gradient(180deg, var(--color-background) 0%, var(--color-background-strong) 100%);
   color: var(--color-body);
@@ -255,7 +255,7 @@ footer {
 .border-danger { border-color: var(--color-danger); }
 .border-info { border-color: var(--color-info); }
 
-.glow-primary:hover { box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); }
+.glow-primary:hover { box-shadow: 0 0 15px rgba(79, 70, 229, 0.4); }
 .glow-secondary:hover { box-shadow: 0 0 15px rgba(13, 148, 136, 0.4); }
 .glow-success:hover { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
 
@@ -337,7 +337,7 @@ footer {
   background: var(--color-accent);
   color: white;
   font-weight: 700;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2);
+  box-shadow: 0 12px 24px rgba(79, 70, 229, 0.2);
   padding: 0.65rem 1.6rem;
   font-size: 0.88rem;
 }
@@ -543,6 +543,28 @@ footer {
   background: color-mix(in srgb, var(--color-panel-strong) 78%, rgba(255, 255, 255, 0.5));
   border-color: var(--color-border);
   color: var(--color-heading);
+}
+
+.sb-section-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-muted);
+  padding: 0.75rem 0.75rem 0.35rem;
+  opacity: 0.7;
+}
+
+.sb-nav-item {
+  position: relative;
+}
+
+.sb-nav-item:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.sb-group:not(:last-child) {
+  margin-bottom: 0.25rem;
 }
 
 .social-tile {

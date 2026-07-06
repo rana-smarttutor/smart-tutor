@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import type {
   AttendanceSheet,
+  AttendanceStatus,
   Batch,
-  LectureItem,
   ManagedUser,
   Role,
 } from "@/lib/types";
@@ -14,869 +14,643 @@ type AttendanceManagerProps = {
   role: Role;
   attendanceSheets: AttendanceSheet[];
   studentDirectory: ManagedUser[];
+  managedUsers: ManagedUser[];
   userId?: string;
 };
 
-type AttendanceStatus = "present" | "absent" | "late" | "excused";
+const STATUS_CYCLE: (AttendanceStatus | "unmarked")[] = [
+  "unmarked",
+  "present",
+  "absent",
+  "late",
+];
 
-const fieldClass =
-  "w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none placeholder:text-[var(--color-muted)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; bg: string; color: string; dot: string }
+> = {
+  unmarked: {
+    label: "Unmarked",
+    bg: "bg-[var(--color-background-strong)]",
+    color: "text-[var(--color-muted)]",
+    dot: "bg-[var(--color-border)]",
+  },
+  present: {
+    label: "Present",
+    bg: "bg-[var(--color-success)]/10",
+    color: "text-[var(--color-success)]",
+    dot: "bg-[var(--color-success)]",
+  },
+  absent: {
+    label: "Absent",
+    bg: "bg-[var(--color-danger)]/10",
+    color: "text-[var(--color-danger)]",
+    dot: "bg-[var(--color-danger)]",
+  },
+  late: {
+    label: "Late",
+    bg: "bg-[var(--color-amber-soft)]",
+    color: "text-[var(--color-amber-strong)]",
+    dot: "bg-[var(--color-amber)]",
+  },
+};
 
-const selectClass =
-  "rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm text-[var(--color-heading)] outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
+const AVATAR_COLORS = [
+  "from-[var(--color-primary)] to-[var(--color-primary-strong)]",
+  "from-[var(--color-secondary)] to-[var(--color-secondary-strong)]",
+  "from-[var(--color-purple)] to-[var(--color-purple-strong)]",
+  "from-[var(--color-amber)] to-[var(--color-amber-strong)]",
+  "from-[var(--color-rose)] to-[var(--color-rose-strong)]",
+  "from-[var(--color-info)] to-[var(--color-info-strong)]",
+  "from-[var(--color-success)] to-[var(--color-success-strong)]",
+  "from-[var(--color-danger)] to-[var(--color-danger-strong)]",
+];
+
+function getInitials(name?: string) {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((n) => n.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function getAvatarGradient(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
 
 export function AttendanceManager({
   role,
   attendanceSheets,
   studentDirectory,
+  managedUsers,
   userId,
 }: AttendanceManagerProps) {
   const canEdit = role === "admin" || role === "educator";
+  const isAdmin = role === "admin";
 
-  const [sheets, setSheets] = useState<AttendanceSheet[]>(attendanceSheets);
   const [batches, setBatches] = useState<Batch[]>([]);
-  const [lectures, setLectures] = useState<LectureItem[]>([]);
+  const [isLoadingBatches, setIsLoadingBatches] = useState(true);
 
-  const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
-  const [sheetToDelete, setSheetToDelete] = useState<AttendanceSheet | null>(
-    null,
+  const [selectedBatchId, setSelectedBatchId] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().slice(0, 10),
   );
-
-  const [title, setTitle] = useState("Daily Attendance");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [batchId, setBatchId] = useState("");
   const [subject, setSubject] = useState("");
-  const [lectureId, setLectureId] = useState("");
+  const [search, setSearch] = useState("");
 
-  const [isLoadingSetup, setIsLoadingSetup] = useState(false);
+  const [viewMode, setViewMode] = useState<"students" | "faculty">("students");
+
+  const [localRecords, setLocalRecords] = useState<
+    { personId: string; personName: string; status: AttendanceStatus | "unmarked" }[]
+  >([]);
+  const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [lastSaved, setLastSaved] = useState("");
 
   useEffect(() => {
-    setSheets(attendanceSheets);
-  }, [attendanceSheets]);
-
-  useEffect(() => {
-    if (!canEdit) {
-      return;
-    }
-
     let cancelled = false;
-
-    async function loadSetupData() {
-      setIsLoadingSetup(true);
-
+    async function load() {
+      setIsLoadingBatches(true);
       try {
-        const [batchResponse, lectureResponse] = await Promise.all([
-          fetch("/api/batches", {
-            method: "GET",
-            credentials: "same-origin",
-            cache: "no-store",
-          }),
-          fetch("/api/lectures", {
-            method: "GET",
-            credentials: "same-origin",
-            cache: "no-store",
-          }),
-        ]);
-
-        const batchPayload = (await batchResponse.json()) as {
-          batches?: Batch[];
-        };
-
-        const lecturePayload = (await lectureResponse.json()) as {
-          lectures?: LectureItem[];
-        };
-
-        if (!cancelled) {
-          setBatches(batchPayload.batches ?? []);
-          setLectures(lecturePayload.lectures ?? []);
-        }
+        const res = await fetch("/api/batches", {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        const data = (await res.json()) as { batches?: Batch[] };
+        if (!cancelled) setBatches(data.batches ?? []);
       } catch {
-        if (!cancelled) {
-          setMessage("Unable to load batches and lectures.");
-        }
+        if (!cancelled) setMessage("Failed to load batches.");
       } finally {
-        if (!cancelled) {
-          setIsLoadingSetup(false);
-        }
+        if (!cancelled) setIsLoadingBatches(false);
       }
     }
-
-    void loadSetupData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [canEdit]);
-
-  const activeSheet = sheets.find((sheet) => sheet.id === activeSheetId);
+    void load();
+    return () => { cancelled = true; };
+  }, []);
 
   const selectedBatch = useMemo(
-    () => batches.find((batch) => batch.id === batchId),
-    [batches, batchId],
+    () => batches.find((b) => b.id === selectedBatchId),
+    [batches, selectedBatchId],
   );
 
-  const batchStudents = useMemo(() => {
-    if (!selectedBatch) {
-      return [];
-    }
+  const facultyInBatch = useMemo(() => {
+    if (!selectedBatch || !isAdmin) return [];
+    return selectedBatch.teacherIds
+      .map((tid) => managedUsers.find((u) => u.id === tid && u.role === "educator"))
+      .filter((u): u is ManagedUser => Boolean(u));
+  }, [selectedBatch, managedUsers, isAdmin]);
 
+  const studentsInBatch = useMemo(() => {
+    if (!selectedBatch) return [];
     return selectedBatch.studentIds
-      .map((studentId) =>
-        studentDirectory.find(
-          (student) => student.id === studentId && student.role === "student",
-        ),
-      )
-      .filter((student): student is ManagedUser => Boolean(student));
+      .map((sid) => studentDirectory.find((s) => s.id === sid && s.role === "student"))
+      .filter((s): s is ManagedUser => Boolean(s));
   }, [selectedBatch, studentDirectory]);
 
-  const batchLectures = useMemo(() => {
-    if (!selectedBatch) {
-      return [];
-    }
-
-    return lectures.filter((lecture) => {
-      if (lecture.batchId === selectedBatch.id) {
-        return true;
-      }
-
-      return (
-        !lecture.batchId &&
-        lecture.batchName?.trim().toLowerCase() ===
-          selectedBatch.name.trim().toLowerCase()
-      );
-    });
-  }, [lectures, selectedBatch]);
-
-  const viewerStudentId = useMemo(() => {
-    if (role === "student") {
-      return userId;
-    }
-
-    if (role === "parent") {
-      const studentIds = new Set(
-        sheets.flatMap((sheet) =>
-          sheet.records.map((record) => record.studentId),
-        ),
-      );
-
-      if (studentIds.size === 1) {
-        return Array.from(studentIds)[0];
-      }
-    }
-
-    return undefined;
-  }, [role, sheets, userId]);
-
-  function getVisibleRecords(sheet: AttendanceSheet) {
-    if (canEdit) {
-      return sheet.records;
-    }
-
-    if (!viewerStudentId) {
-      return [];
-    }
-
-    return sheet.records.filter(
-      (record) => record.studentId === viewerStudentId,
+  const filteredPeople = useMemo(() => {
+    const people = viewMode === "faculty" ? facultyInBatch : studentsInBatch;
+    if (!search) return people;
+    const q = search.toLowerCase();
+    return people.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.id?.toLowerCase() || "").includes(q),
     );
+  }, [viewMode, facultyInBatch, studentsInBatch, search]);
+
+  function loadAttendance() {
+    if (!selectedBatchId || !selectedDate) {
+      setMessage("Select a batch and date first.");
+      return;
+    }
+
+    const sheetType = viewMode === "faculty" ? "faculty" : "student";
+    const existing = attendanceSheets.find(
+      (s) =>
+        s.batchId === selectedBatchId &&
+        s.date === selectedDate &&
+        s.lectureId === sheetType,
+    );
+
+    if (existing) {
+      setActiveSheetId(existing.id);
+      setLocalRecords(
+        existing.records.map((r) => ({
+          personId: r.studentId,
+          personName: r.studentName,
+          status: r.status,
+        })),
+      );
+      if (existing.subject) setSubject(existing.subject);
+      setMessage("");
+      setHasUnsaved(false);
+      setLastSaved("");
+      return;
+    }
+
+    const people = viewMode === "faculty" ? facultyInBatch : studentsInBatch;
+    if (!people.length) {
+      setMessage(`No ${viewMode} in this batch.`);
+      return;
+    }
+
+    setActiveSheetId(null);
+    setLocalRecords(
+      people.map((p) => ({
+        personId: p.id,
+        personName: p.name,
+        status: "unmarked" as const,
+      })),
+    );
+    setMessage("");
+    setHasUnsaved(false);
+    setLastSaved("");
   }
 
-  function handleBatchChange(nextBatchId: string) {
-    setBatchId(nextBatchId);
-    setLectureId("");
-
-    const batch = batches.find((item) => item.id === nextBatchId);
-
-    if (batch?.subject) {
-      setSubject(batch.subject);
-    }
+  function cycleStatus(personId: string) {
+    if (!canEdit) return;
+    if (viewMode === "faculty" && !isAdmin) return;
+    setLocalRecords((prev) =>
+      prev.map((r) => {
+        if (r.personId !== personId) return r;
+        const idx = STATUS_CYCLE.indexOf(r.status);
+        const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+        return { ...r, status: next as AttendanceStatus | "unmarked" };
+      }),
+    );
+    setHasUnsaved(true);
   }
 
-  async function createSheet() {
-    if (!canEdit) {
-      return;
-    }
+  function markAll(status: AttendanceStatus) {
+    if (!canEdit) return;
+    if (viewMode === "faculty" && !isAdmin) return;
+    setLocalRecords((prev) =>
+      prev.map((r) => ({ ...r, status })),
+    );
+    setHasUnsaved(true);
+  }
 
-    if (!title.trim()) {
-      setMessage("Attendance title is required.");
-      return;
-    }
+  const stats = useMemo(() => {
+    const present = localRecords.filter((r) => r.status === "present").length;
+    const absent = localRecords.filter((r) => r.status === "absent").length;
+    const late = localRecords.filter((r) => r.status === "late").length;
+    const unmarked = localRecords.filter((r) => r.status === "unmarked").length;
+    const pct = localRecords.length > 0
+      ? Math.round(((present + late) / localRecords.length) * 100)
+      : 0;
+    return { present, absent, late, unmarked, total: localRecords.length, pct };
+  }, [localRecords]);
 
-    if (!batchId || !selectedBatch) {
-      setMessage("Select a batch before creating attendance.");
-      return;
-    }
-
-    if (!batchStudents.length) {
-      setMessage("This batch has no students assigned yet.");
-      return;
-    }
-
+  async function saveAttendance() {
+    if (!canEdit || !selectedBatchId || !selectedDate) return;
+    if (viewMode === "faculty" && !isAdmin) return;
     setIsSaving(true);
     setMessage("");
 
-    const records = batchStudents.map((student) => ({
-      studentId: student.id,
-      studentName: student.name,
-      status: "present" as AttendanceStatus,
-      remarks: "",
-    }));
+    const records = localRecords
+      .filter((r) => r.status !== "unmarked")
+      .map((r) => ({
+        studentId: r.personId,
+        studentName: r.personName,
+        status: r.status as AttendanceStatus,
+      }));
+
+    const sheetType = viewMode === "faculty" ? "faculty" : "student";
 
     try {
-      const response = await fetch("/api/attendance", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: title.trim(),
-          date,
-          batchName: selectedBatch.name,
-          batchId: selectedBatch.id,
-          lectureId: lectureId || undefined,
-          subject: subject.trim() || selectedBatch.subject || undefined,
-          records,
-        }),
-      });
-
-      const payload = (await response.json()) as {
-        attendanceSheet?: AttendanceSheet;
-        error?: string;
-      };
-
-      if (!response.ok || !payload.attendanceSheet) {
-        setMessage(payload.error ?? "Unable to create attendance sheet.");
-        return;
-      }
-
-      const createdSheet = payload.attendanceSheet;
-
-      setSheets((current) => [createdSheet, ...current]);
-      setActiveSheetId(createdSheet.id);
-
-      if (lectureId) {
-        const lectureResponse = await fetch(`/api/lectures/${lectureId}`, {
+      if (activeSheetId) {
+        const res = await fetch(`/api/attendance/${activeSheetId}`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ records }),
+        });
+        const data = (await res.json()) as { attendanceSheet?: AttendanceSheet; error?: string };
+        if (!res.ok || !data.attendanceSheet) {
+          setMessage(data.error ?? "Save failed.");
+          setIsSaving(false);
+          return;
+        }
+        setLastSaved(new Date().toLocaleTimeString());
+      } else {
+        const res = await fetch("/api/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            attendanceSheetId: createdSheet.id,
+            title: `${viewMode === "faculty" ? "Faculty" : "Student"} Attendance - ${selectedDate}`,
+            date: selectedDate,
+            batchName: selectedBatch?.name || "",
+            batchId: selectedBatchId,
+            lectureId: sheetType,
+            subject: subject.trim() || undefined,
+            records,
           }),
         });
-
-        const lecturePayload = (await lectureResponse.json()) as {
-          lecture?: LectureItem;
-        };
-
-        if (lectureResponse.ok && lecturePayload.lecture) {
-          setLectures((current) =>
-            current.map((lecture) =>
-              lecture.id === lectureId ? lecturePayload.lecture! : lecture,
-            ),
-          );
+        const data = (await res.json()) as { attendanceSheet?: AttendanceSheet; error?: string };
+        if (!res.ok || !data.attendanceSheet) {
+          setMessage(data.error ?? "Save failed.");
+          setIsSaving(false);
+          return;
         }
+        setActiveSheetId(data.attendanceSheet.id);
+        setLastSaved(new Date().toLocaleTimeString());
       }
 
-      setMessage("Attendance sheet created successfully.");
-      setTitle("Daily Attendance");
-      setLectureId("");
+      setHasUnsaved(false);
+      setMessage("Attendance saved.");
     } catch {
-      setMessage("Unable to create attendance sheet.");
+      setMessage("Unable to save attendance.");
     } finally {
       setIsSaving(false);
     }
   }
 
-  async function updateStatus(
-    sheetId: string,
-    studentId: string,
-    status: AttendanceStatus,
-  ) {
-    if (!canEdit) {
-      return;
+  const viewerSummary = useMemo(() => {
+    if (canEdit || !userId) return null;
+    let present = 0;
+    let total = 0;
+    for (const sheet of attendanceSheets) {
+      const record = sheet.records.find((r) => r.studentId === userId);
+      if (!record) continue;
+      total++;
+      if (record.status === "present" || record.status === "late") present++;
     }
-
-    const sheet = sheets.find((item) => item.id === sheetId);
-
-    if (!sheet) {
-      return;
-    }
-
-    const previousRecords = sheet.records;
-
-    const updatedRecords = sheet.records.map((record) =>
-      record.studentId === studentId ? { ...record, status } : record,
-    );
-
-    setSheets((current) =>
-      current.map((item) =>
-        item.id === sheetId ? { ...item, records: updatedRecords } : item,
-      ),
-    );
-
-    try {
-      const response = await fetch(`/api/attendance/${sheetId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          records: updatedRecords,
-        }),
-      });
-
-      const payload = (await response.json()) as {
-        attendanceSheet?: AttendanceSheet;
-        error?: string;
-      };
-
-      if (!response.ok || !payload.attendanceSheet) {
-        setSheets((current) =>
-          current.map((item) =>
-            item.id === sheetId ? { ...item, records: previousRecords } : item,
-          ),
-        );
-
-        setMessage(payload.error ?? "Unable to update attendance.");
-        return;
-      }
-
-      setSheets((current) =>
-        current.map((item) =>
-          item.id === sheetId ? payload.attendanceSheet! : item,
-        ),
-      );
-    } catch {
-      setSheets((current) =>
-        current.map((item) =>
-          item.id === sheetId ? { ...item, records: previousRecords } : item,
-        ),
-      );
-
-      setMessage("Unable to update attendance.");
-    }
-  }
-
-  async function deleteSheet(sheetId: string) {
-    if (!canEdit) {
-      return;
-    }
-
-    setDeletingId(sheetId);
-
-    try {
-      const response = await fetch(`/api/attendance/${sheetId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        setMessage("Unable to delete attendance sheet.");
-        return;
-      }
-
-      setSheets((current) =>
-        current.filter((sheet) => sheet.id !== sheetId),
-      );
-
-      if (activeSheetId === sheetId) {
-        setActiveSheetId(null);
-      }
-
-      setSheetToDelete(null);
-      setMessage("Attendance sheet deleted.");
-    } catch {
-      setMessage("Unable to delete attendance sheet.");
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  function getSheetSummary(sheet: AttendanceSheet) {
-    const present = sheet.records.filter(
-      (record) => record.status === "present",
-    ).length;
-
-    const absent = sheet.records.filter(
-      (record) => record.status === "absent",
-    ).length;
-
-    const late = sheet.records.filter(
-      (record) => record.status === "late",
-    ).length;
-
-    return { present, absent, late };
-  }
-
-  function getStudentAttendanceSummary() {
-    if (canEdit || !viewerStudentId || !sheets.length) {
-      return null;
-    }
-
-    let totalPresent = 0;
-    let totalConducted = 0;
-
-    for (const sheet of sheets) {
-      const record = sheet.records.find(
-        (item) => item.studentId === viewerStudentId,
-      );
-
-      if (!record) {
-        continue;
-      }
-
-      totalConducted += 1;
-
-      if (record.status === "present" || record.status === "late") {
-        totalPresent += 1;
-      }
-    }
-
-    if (!totalConducted) {
-      return null;
-    }
-
-    return { totalConducted, totalPresent };
-  }
-
-  const attendanceSummary = getStudentAttendanceSummary();
+    if (!total) return null;
+    return { total, present, pct: Math.round((present / total) * 100) };
+  }, [canEdit, attendanceSheets, userId]);
 
   return (
     <section className="space-y-6">
-      {attendanceSummary ? (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="surface rounded-[2rem] p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-              Lectures Conducted
-            </p>
-            <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-              {attendanceSummary.totalConducted}
-            </p>
-          </div>
-
-          <div className="surface rounded-[2rem] p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-              Lectures Attended
-            </p>
-            <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-              {attendanceSummary.totalPresent}
+      {/* Hero */}
+      <div className="surface rounded-[2rem] p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="section-label">Daily Attendance</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[var(--color-heading)]">
+              {role === "admin" ? "Institute Attendance" : "My Attendance"}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+              {canEdit
+                ? "Mark and track daily attendance"
+                : "View your attendance records"}
             </p>
           </div>
-
-          <div className="surface rounded-[2rem] p-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-              Attendance %
-            </p>
-            <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-              {Math.round(
-                (attendanceSummary.totalPresent /
-                  attendanceSummary.totalConducted) *
-                  100,
+          {canEdit ? (
+            <button
+              type="button"
+              onClick={saveAttendance}
+              disabled={isSaving || !hasUnsaved}
+              className="btn-action btn-md font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving ? (
+                <>Saving...</>
+              ) : (
+                <><svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m4-8l-4-4m0 0L8 8m4-4v12" /></svg> Save</>
               )}
-              %
-            </p>
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Student Viewer Summary */}
+      {viewerSummary ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="surface rounded-[1.25rem] p-4 sm:p-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">Lectures Conducted</p>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-heading)]">{viewerSummary.total}</p>
+          </div>
+          <div className="surface rounded-[1.25rem] p-4 sm:p-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">Lectures Attended</p>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-heading)]">{viewerSummary.present}</p>
+          </div>
+          <div className="surface rounded-[1.25rem] p-4 sm:p-5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">Attendance %</p>
+            <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-heading)]">{viewerSummary.pct}%</p>
           </div>
         </div>
       ) : null}
 
-      <div className="surface rounded-[2rem] p-6">
-        <div className="flex flex-col gap-2">
-          <p className="section-label">Attendance</p>
-
-          <h2 className="text-2xl font-black text-[var(--color-heading)]">
-            Batch Attendance
-          </h2>
-
-          <p className="text-sm text-[var(--color-muted)]">
-            {canEdit
-              ? "Select an assigned batch, link a lecture if needed, and mark attendance only for students in that batch."
-              : "View attendance records shared for your learning program."}
-          </p>
-        </div>
-
-        {message ? (
-          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
-            {message}
-          </div>
-        ) : null}
-
-        {canEdit ? (
-          <div className="mt-6">
-            {isLoadingSetup ? (
-              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4 text-sm text-[var(--color-muted)]">
-                Loading batches and lectures...
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
-                <label className="space-y-2">
-                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                    Title
-                  </span>
-
-                  <input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    placeholder="Daily Attendance"
-                    className={fieldClass}
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                    Date
-                  </span>
-
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(event) => setDate(event.target.value)}
-                    className={fieldClass}
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                    Batch
-                  </span>
-
-                  <select
-                    value={batchId}
-                    onChange={(event) =>
-                      handleBatchChange(event.target.value)
-                    }
-                    className={fieldClass}
-                  >
-                    <option value="">Select batch</option>
-
-                    {batches.map((batch) => (
-                      <option key={batch.id} value={batch.id}>
-                        {batch.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="space-y-2">
-                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                    Subject
-                  </span>
-
-                  <input
-                    value={subject}
-                    onChange={(event) => setSubject(event.target.value)}
-                    placeholder="Subject"
-                    className={fieldClass}
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                    Linked Lecture
-                  </span>
-
-                  <select
-                    value={lectureId}
-                    onChange={(event) => setLectureId(event.target.value)}
-                    disabled={!batchId}
-                    className={fieldClass}
-                  >
-                    <option value="">No linked lecture</option>
-
-                    {batchLectures.map((lecture) => (
-                      <option key={lecture.id} value={lecture.id}>
-                        {lecture.title} —{" "}
-                        {new Date(lecture.startsAt).toLocaleDateString(
-                          "en-IN",
-                        )}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <div className="flex items-end">
+      {/* Filter Bar */}
+      {canEdit ? (
+        <div className="surface rounded-2xl p-4 sm:p-5">
+          <div className="flex flex-wrap items-end gap-3">
+            {isAdmin ? (
+              <div className="min-w-[120px]">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Type</p>
+                <div className="flex rounded-lg border border-[var(--color-border)] overflow-hidden">
                   <button
                     type="button"
-                    onClick={() => void createSheet()}
-                    disabled={isSaving || !batchId || !batchStudents.length}
-                    className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => { setViewMode("students"); setActiveSheetId(null); setLocalRecords([]); setHasUnsaved(false); }}
+                    className={`px-3 py-2 text-xs font-bold transition ${
+                      viewMode === "students"
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "bg-[var(--color-panel)] text-[var(--color-muted)] hover:text-[var(--color-heading)]"
+                    }`}
                   >
-                    {isSaving ? "Creating..." : "Create Sheet"}
+                    Students
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setViewMode("faculty"); setActiveSheetId(null); setLocalRecords([]); setHasUnsaved(false); }}
+                    className={`px-3 py-2 text-xs font-bold transition ${
+                      viewMode === "faculty"
+                        ? "bg-[var(--color-primary)] text-white"
+                        : "bg-[var(--color-panel)] text-[var(--color-muted)] hover:text-[var(--color-heading)]"
+                    }`}
+                  >
+                    Faculty
                   </button>
                 </div>
               </div>
-            )}
-
-            {!isLoadingSetup && !batches.length ? (
-              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-700">
-                No active batches are assigned. Create a batch and assign
-                students and faculty first.
-              </p>
             ) : null}
-
-            {batchId && !batchStudents.length ? (
-              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-700">
-                This batch has no assigned students yet.
-              </p>
-            ) : null}
-
-            {batchStudents.length ? (
-              <p className="mt-4 text-xs font-semibold text-[var(--color-muted)]">
-                {batchStudents.length} student
-                {batchStudents.length === 1 ? "" : "s"} will be added to this
-                attendance sheet.
-              </p>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="surface rounded-[2rem] p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="section-label">Saved Sheets</p>
-
-            <h3 className="text-xl font-black text-[var(--color-heading)]">
-              Attendance Sheet List
-            </h3>
-          </div>
-
-          <span className="pill">{sheets.length} Sheets</span>
-        </div>
-
-        <div className="mt-5 space-y-3">
-          {sheets.length ? (
-            sheets.map((sheet) => {
-              const summary = getSheetSummary(sheet);
-              const isActive = activeSheetId === sheet.id;
-
-              return (
-                <div
-                  key={sheet.id}
-                  className={`rounded-2xl border p-4 transition ${
-                    isActive
-                      ? "border-blue-500 bg-blue-500/10"
-                      : "border-[var(--color-border)] bg-[var(--color-card)]"
-                  }`}
-                >
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <h4 className="font-black text-[var(--color-heading)]">
-                        {sheet.title}
-                      </h4>
-
-                      <p className="mt-1 text-sm text-[var(--color-muted)]">
-                        {sheet.date}
-                        {sheet.batchName ? ` • ${sheet.batchName}` : ""}
-                        {sheet.subject ? ` • ${sheet.subject}` : ""}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      {canEdit ? (
-                        <>
-                          <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-xs font-black text-green-600">
-                            Present {summary.present}
-                          </span>
-
-                          <span className="rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs font-black text-red-600">
-                            Absent {summary.absent}
-                          </span>
-
-                          <span className="rounded-full border border-yellow-400/30 bg-yellow-400/10 px-3 py-1 text-xs font-black text-yellow-700">
-                            Late {summary.late}
-                          </span>
-                        </>
-                      ) : null}
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setActiveSheetId(isActive ? null : sheet.id)
-                        }
-                        className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-black text-[var(--color-heading)] hover:bg-blue-500/10"
-                      >
-                        {isActive ? "Close" : "Open"}
-                      </button>
-
-                      {canEdit ? (
-                        <button
-                          type="button"
-                          onClick={() => setSheetToDelete(sheet)}
-                          disabled={deletingId === sheet.id}
-                          className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-xs font-black text-red-600 hover:bg-red-500/20 disabled:opacity-60"
-                        >
-                          {deletingId === sheet.id ? "Deleting..." : "Delete"}
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className="surface-soft rounded-[2rem] border border-[var(--color-border)] p-10 text-center">
-              <h3 className="text-lg font-black text-[var(--color-heading)]">
-                No attendance sheets yet
-              </h3>
-
-              <p className="mt-2 text-sm text-[var(--color-muted)]">
-                {canEdit
-                  ? "Create attendance from an assigned batch above."
-                  : "Attendance records will appear here once faculty updates them."}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {activeSheet ? (
-        <div className="surface rounded-[2rem] p-6">
-          <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="section-label">Open Sheet</p>
-
-              <h3 className="text-lg font-black text-[var(--color-heading)]">
-                {activeSheet.title}
-              </h3>
-
-              <p className="text-sm text-[var(--color-muted)]">
-                {activeSheet.date}
-                {activeSheet.batchName ? ` • ${activeSheet.batchName}` : ""}
-                {activeSheet.subject ? ` • ${activeSheet.subject}` : ""}
-              </p>
-            </div>
-
-            <span className="pill w-fit">
-              {getVisibleRecords(activeSheet).length} Student
-              {getVisibleRecords(activeSheet).length === 1 ? "" : "s"}
-            </span>
-          </div>
-
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-[var(--color-border)] text-xs uppercase tracking-[0.2em] text-[var(--color-muted)]">
-                  <th className="py-3">Student</th>
-                  <th className="py-3">Status</th>
-                  <th className="py-3">Remarks</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {getVisibleRecords(activeSheet).map((record) => (
-                  <tr
-                    key={record.studentId}
-                    className="border-b border-[var(--color-border)] last:border-0"
-                  >
-                    <td className="py-3 font-bold text-[var(--color-heading)]">
-                      {record.studentName}
-                    </td>
-
-                    <td className="py-3">
-                      {canEdit ? (
-                        <select
-                          value={record.status}
-                          onChange={(event) =>
-                            void updateStatus(
-                              activeSheet.id,
-                              record.studentId,
-                              event.target.value as AttendanceStatus,
-                            )
-                          }
-                          className={selectClass}
-                        >
-                          <option value="present">Present</option>
-                          <option value="absent">Absent</option>
-                          <option value="late">Late</option>
-                          <option value="excused">Excused</option>
-                        </select>
-                      ) : (
-                        <span className="pill capitalize">
-                          {record.status}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3 text-[var(--color-muted)]">
-                      {record.remarks || "—"}
-                    </td>
-                  </tr>
+            <div className="min-w-[180px] flex-[2]">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Batch</p>
+              <select
+                value={selectedBatchId}
+                onChange={(e) => { setSelectedBatchId(e.target.value); setActiveSheetId(null); setLocalRecords([]); setHasUnsaved(false); }}
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
+                disabled={isLoadingBatches}
+              >
+                <option value="">{isLoadingBatches ? "Loading..." : "— Select Batch —"}</option>
+                {batches.map((b) => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
                 ))}
-
-                {!getVisibleRecords(activeSheet).length ? (
-                  <tr>
-                    <td
-                      colSpan={3}
-                      className="py-8 text-center text-sm text-[var(--color-muted)]"
-                    >
-                      No attendance record is available for this account.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+              </select>
+            </div>
+            <div className="min-w-[150px] flex-1">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Date</p>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
+              />
+            </div>
+            <div className="min-w-[140px] flex-1">
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Subject</p>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="e.g. Mathematics"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] outline-none placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)]"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={loadAttendance}
+              disabled={!selectedBatchId}
+              className="btn-action btn-md font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              Load Attendance
+            </button>
           </div>
         </div>
       ) : null}
 
-      {sheetToDelete ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-red-400/30 bg-red-500/10 text-2xl">
-              ⚠️
+      {/* Stats */}
+      {localRecords.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="surface rounded-[1.25rem] p-4 text-center" style={{ borderLeft: "3px solid var(--color-success)" }}>
+            <p className="text-2xl font-bold tracking-tight text-[var(--color-success)]">{stats.present}</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Present</p>
+          </div>
+          <div className="surface rounded-[1.25rem] p-4 text-center" style={{ borderLeft: "3px solid var(--color-danger)" }}>
+            <p className="text-2xl font-bold tracking-tight text-[var(--color-danger)]">{stats.absent}</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Absent</p>
+          </div>
+          <div className="surface rounded-[1.25rem] p-4 text-center" style={{ borderLeft: "3px solid var(--color-amber)" }}>
+            <p className="text-2xl font-bold tracking-tight text-[var(--color-amber)]">{stats.late}</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Late</p>
+          </div>
+          <div className="surface rounded-[1.25rem] p-4 text-center" style={{ borderLeft: "3px solid var(--color-primary)" }}>
+            <p className="text-2xl font-bold tracking-tight text-[var(--color-primary)]">{stats.pct}%</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Rate</p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Message */}
+      {message ? (
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-background-strong)] px-4 py-3 text-sm font-semibold text-[var(--color-heading)]">
+          {message}
+        </div>
+      ) : null}
+
+      {/* Attendance Grid */}
+      {localRecords.length > 0 ? (
+        <div className="surface rounded-2xl overflow-hidden">
+          {/* Session header */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary-soft)]">
+                <svg className="h-4 w-4 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[var(--color-heading)]">
+                  {selectedBatch?.name || "Attendance"} — {viewMode === "faculty" ? "Faculty" : "Students"}
+                </p>
+                <p className="text-xs text-[var(--color-muted)]">
+                  {new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                </p>
+              </div>
             </div>
-
-            <h3 className="mt-5 text-2xl font-black text-[var(--color-heading)]">
-              Delete attendance sheet?
-            </h3>
-
-            <p className="mt-3 text-sm leading-relaxed text-[var(--color-muted)]">
-              Are you sure you want to delete{" "}
-              <span className="font-black text-[var(--color-heading)]">
-                {sheetToDelete.title}
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-success)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" /> {stats.present} Present
               </span>
-              ? This action cannot be undone.
-            </p>
-
-            <div className="mt-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-              <p className="text-sm font-bold text-[var(--color-heading)]">
-                {sheetToDelete.date}
-                {sheetToDelete.batchName
-                  ? ` • ${sheetToDelete.batchName}`
-                  : ""}
-                {sheetToDelete.subject ? ` • ${sheetToDelete.subject}` : ""}
-              </p>
-
-              <p className="mt-1 text-xs text-[var(--color-muted)]">
-                {sheetToDelete.records.length} students included
-              </p>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => setSheetToDelete(null)}
-                disabled={deletingId === sheetToDelete.id}
-                className="flex-1 rounded-full border border-[var(--color-border)] px-5 py-3 text-sm font-black text-[var(--color-heading)] hover:bg-blue-500/10 disabled:opacity-60"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={() => void deleteSheet(sheetToDelete.id)}
-                disabled={deletingId === sheetToDelete.id}
-                className="flex-1 rounded-full border border-red-400/30 bg-red-500 px-5 py-3 text-sm font-black text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {deletingId === sheetToDelete.id
-                  ? "Deleting..."
-                  : "Yes, Delete"}
-              </button>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-danger)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--color-danger)]" /> {stats.absent} Absent
+              </span>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-amber)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--color-amber)]" /> {stats.late} Late
+              </span>
+              {stats.unmarked > 0 ? (
+                <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-muted)]">
+                  <span className="h-2 w-2 rounded-full bg-[var(--color-border)]" /> {stats.unmarked} Unmarked
+                </span>
+              ) : null}
             </div>
           </div>
+
+          {/* Actions bar */}
+          {canEdit ? (
+            <div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-border)] px-5 py-3 sm:px-6">
+              <button
+                type="button"
+                onClick={() => markAll("present")}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-3 py-1.5 text-xs font-bold text-[var(--color-success)] transition hover:bg-[var(--color-success)]/20"
+              >
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                All Present
+              </button>
+              <button
+                type="button"
+                onClick={() => markAll("absent")}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/10 px-3 py-1.5 text-xs font-bold text-[var(--color-danger)] transition hover:bg-[var(--color-danger)]/20"
+              >
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                All Absent
+              </button>
+              <div className="relative ml-auto max-w-[200px] flex-1">
+                <svg className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--color-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search name..."
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-1.5 pl-9 pr-3 text-xs text-[var(--color-heading)] outline-none transition focus:border-[var(--color-primary)]"
+                />
+              </div>
+              {lastSaved ? (
+                <span className="text-[10px] text-[var(--color-muted)]">Saved: {lastSaved}</span>
+              ) : null}
+            </div>
+          ) : null}
+
+          {/* Person cards */}
+          <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:p-6">
+            {filteredPeople.map((person) => {
+              const record = localRecords.find((r) => r.personId === person.id);
+              const status = record?.status ?? "unmarked";
+              const cfg = STATUS_CONFIG[status];
+              return (
+                <button
+                  key={person.id}
+                  type="button"
+                  onClick={() => cycleStatus(person.id)}
+                  disabled={!canEdit || (viewMode === "faculty" && !isAdmin)}
+                  className={`relative flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
+                    !canEdit || (viewMode === "faculty" && !isAdmin)
+                      ? "cursor-default border-[var(--color-border)]"
+                      : status === "unmarked"
+                        ? "border-[var(--color-border)] hover:border-[var(--color-primary)] hover:shadow-sm cursor-pointer"
+                        : "border-transparent cursor-pointer"
+                  } ${cfg.bg}`}
+                >
+                  <div
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${getAvatarGradient(person.id)} text-sm font-bold text-white shadow-sm`}
+                  >
+                    {getInitials(person.name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[var(--color-heading)]">
+                      {person.name}
+                    </p>
+                    <p className="truncate text-[10px] text-[var(--color-muted)]">
+                      {viewMode === "faculty" ? "Faculty" : person.id}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />
+                    <span className={`text-[10px] font-bold ${cfg.color}`}>{cfg.label}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {filteredPeople.length === 0 && search ? (
+            <div className="px-6 pb-6 text-center text-sm text-[var(--color-muted)]">
+              No {viewMode} match &quot;{search}&quot;
+            </div>
+          ) : null}
+
+          {/* Footer */}
+          <div className="border-t border-[var(--color-border)] px-5 py-4 sm:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-bold text-[var(--color-heading)]">
+                {filteredPeople.length} {viewMode === "faculty" ? "faculty" : "student"}{filteredPeople.length !== 1 ? "s" : ""} · {stats.unmarked} unmarked
+              </p>
+              {canEdit && !(viewMode === "faculty" && !isAdmin) ? (
+                <button
+                  type="button"
+                  onClick={saveAttendance}
+                  disabled={isSaving || !hasUnsaved}
+                  className="btn-action btn-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? "Saving..." : hasUnsaved ? "Save Changes" : "No Changes"}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Empty state */}
+      {localRecords.length === 0 && canEdit && selectedBatchId ? (
+        <div className="surface rounded-2xl p-10 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary-soft)]">
+            <svg className="h-6 w-6 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <p className="mt-4 text-lg font-bold text-[var(--color-heading)]">No Attendance Loaded</p>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
+            Select a {isAdmin ? "type, " : ""}batch and date above, then click Load Attendance.
+          </p>
+        </div>
+      ) : null}
+
+      {/* No batches state */}
+      {canEdit && !isLoadingBatches && batches.length === 0 ? (
+        <div className="surface-soft rounded-2xl p-6 text-center">
+          <p className="text-sm font-bold text-[var(--color-heading)]">No batches available</p>
+          <p className="mt-1 text-xs text-[var(--color-muted)]">
+            Create a batch and assign students first.
+          </p>
         </div>
       ) : null}
     </section>

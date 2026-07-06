@@ -321,94 +321,10 @@ const testSubmissions: TestSubmission[] = [
 
 const dashboardStats: Record<Role, DashboardMetric[]> = {
   student: [],
-  educator: [
-    {
-      label: "Active batches",
-      value: "12",
-      detail: "",
-    },
-    {
-      label: "Tests to grade",
-      value: "18",
-      detail: "",
-    },
-    {
-      label: "Mentoring load",
-      value: "34",
-      detail: "",
-    },
-    {
-      label: "Resource reach",
-      value: "1.2k+",
-      detail: "",
-    },
-  ],
-  counsellor: [
-    {
-      label: "Assigned Leads",
-      value: "0",
-      detail: "Leads assigned to you",
-    },
-    {
-      label: "Follow-ups Today",
-      value: "0",
-      detail: "Calls and meetings due today",
-    },
-    {
-      label: "Demo Classes",
-      value: "0",
-      detail: "Demos scheduled by you",
-    },
-    {
-      label: "Admissions",
-      value: "0",
-      detail: "Converted admissions",
-    },
-  ],
-  admin: [
-    {
-      label: "Managed accounts",
-      value: "286",
-      detail: "",
-    },
-    {
-      label: "Open enquiries",
-      value: "42",
-      detail: "",
-    },
-    {
-      label: "Institute batches",
-      value: "24",
-      detail: "",
-    },
-    {
-      label: "Total visitors",
-      value: "5.5k+",
-      detail: "",
-    },
-  ],
-  parent: [
-    {
-      label: "Total students",
-      value: "2,500+",
-      detail: "",
-    },
-    {
-      label: "Success rate",
-      value: "96%",
-      detail: "",
-    },
-    {
-      label: "Expert faculty",
-      value: "40+",
-      detail: "",
-    },
-    {
-      label: "Years legacy",
-      value: "12+",
-      detail: "",
-    },
-  ],
+  educator: [],
+  counsellor: [],
+  admin: [],
+  parent: [],
 };
 
 const socialLinks: SocialLink[] = [
@@ -1285,13 +1201,24 @@ export function getTemplateSeedData() {
         },
       },
     ],
-    users: demoUsers.map((user) => ({
-      ...user,
-      status: "active",
-      permissions: rolePermissions[user.role],
-      createdAt: "2026-03-24T00:00:00.000Z",
-      updatedAt: "2026-03-24T00:00:00.000Z",
-    })),
+    users: demoUsers.map((user) => {
+      let assignedFacultyIds: string[] = [];
+      if (user.role === "student") {
+        if (user.id === "student-1" || user.id === "student-2") {
+          assignedFacultyIds = ["educator-1"];
+        } else if (user.id === "student-3") {
+          assignedFacultyIds = ["educator-2"];
+        }
+      }
+      return {
+        ...user,
+        status: "active",
+        permissions: rolePermissions[user.role],
+        createdAt: "2026-03-24T00:00:00.000Z",
+        updatedAt: "2026-03-24T00:00:00.000Z",
+        assignedFacultyIds,
+      };
+    }),
     courses,
     tests,
     messages,

@@ -48,11 +48,13 @@ function matchesActiveTab(course: CourseItem, activeTab: string) {
   }
 
   const TAB_SECTION_MAP: Record<string, string[]> = {
-    class6: ["class6", "class68"],
-    class7: ["class7", "class68"],
-    class8: ["class8", "class68"],
+    class6: ["class6"],
+    class7: ["class7"],
+    class8: ["class8"],
     class9: ["class9", "class910"],
     class10: ["class10", "class910"],
+    class11: ["class11", "class1112"],
+    class12: ["class12", "class1112"],
   };
 
   const allowedSections = TAB_SECTION_MAP[activeTabKey] ?? [activeTabKey];
@@ -155,20 +157,11 @@ const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
   "Class 8": "/spotlight/class-6-8.jpeg",
   "Class 9": "/spotlight/class-9-10.jpeg",
   "Class 10": "/spotlight/class-9-10.jpeg",
-  "Class 11-12": "/spotlight/class-11-12.jpeg",
+  "Class 11": "/spotlight/class11.png",
+  "Class 12": "/spotlight/class12.jpg",
   Skills: "/spotlight/skills.png",
   "Govt Exams": "/spotlight/govt-exams.jpeg",
 };
-
-function isPreferredClass1112Spotlight(course: CourseItem) {
-  const title = normaliseValue(course.title);
-  const stream = normaliseValue(course.stream);
-
-  return (
-    stream === "science" &&
-    title.includes("11th12thscienceboards")
-  );
-}
 
 export default function SpotlightSection({
   activeTab,
@@ -182,7 +175,8 @@ export default function SpotlightSection({
     { id: "Class 8", label: "Class 8", icon: BookOpen },
     { id: "Class 9", label: "Class 9", icon: School },
     { id: "Class 10", label: "Class 10", icon: School },
-    { id: "Class 11-12", label: "Class 11-12", icon: FlaskConical },
+    { id: "Class 11", label: "Class 11", icon: FlaskConical },
+    { id: "Class 12", label: "Class 12", icon: FlaskConical },
     { id: "Govt Exams", label: "Govt Exams", icon: FileText },
     { id: "Skills", label: "Skills Section", icon: Brain },
   ];
@@ -190,6 +184,11 @@ export default function SpotlightSection({
   const [tabCourses, setTabCourses] = useState<CourseItem[]>([]);
   const [spotlightIndex, setSpotlightIndex] = useState(0);
   const [activeStream, setActiveStream] = useState<StreamFilter>("All");
+  const [showAllCourses, setShowAllCourses] = useState(false);
+
+  useEffect(() => {
+    setShowAllCourses(false);
+  }, [activeTab]);
 
   useEffect(() => {
     const filteredCourses = allCourses.filter((course) => {
@@ -197,7 +196,7 @@ export default function SpotlightSection({
         return false;
       }
 
-      if (activeTab !== "Class 11-12") {
+      if (activeTab !== "Class 11" && activeTab !== "Class 12") {
         return true;
       }
 
@@ -205,11 +204,13 @@ export default function SpotlightSection({
     });
 
     const priorityKeys: Record<string, string> = {
-      "Class 6": "class-6-regular-academic",
+      "Class 6": "class-6-academic",
       "Class 7": "class-7-regular-academic",
       "Class 8": "class-8-regular-academic",
       "Class 9": "class-9-regular-academic",
       "Class 10": "class-10-regular-academic",
+      "Class 11": "class-11-boards",
+      "Class 12": "class-12-boards",
     };
 
     const priorityStandardKey = priorityKeys[activeTab] ?? null;
@@ -234,27 +235,7 @@ if (priorityStandardKey) {
   });
 }
 
-if (activeTab === "Class 11-12") {
-  filteredCourses.sort((firstCourse, secondCourse) => {
-    const isFirstPreferred =
-      isPreferredClass1112Spotlight(firstCourse);
-
-    const isSecondPreferred =
-      isPreferredClass1112Spotlight(secondCourse);
-
-    if (isFirstPreferred && !isSecondPreferred) {
-      return -1;
-    }
-
-    if (!isFirstPreferred && isSecondPreferred) {
-      return 1;
-    }
-
-    return 0;
-  });
-}
-
-if (activeTab === "Class 11-12" && activeStream === "Commerce") {
+if ((activeTab === "Class 11" || activeTab === "Class 12") && activeStream === "Commerce") {
   filteredCourses.sort((firstCourse, secondCourse) => {
     const firstIsPreferred =
       isPreferredCommerceSpotlight(firstCourse);
@@ -345,10 +326,18 @@ setTabCourses(filteredCourses);
           logo: School,
         };
 
-      case "Class 11-12":
+      case "Class 11":
         return {
-          title: "Class 11-12 Programs",
-          desc: "Advanced preparation for boards and professional entrances.",
+          title: "Class 11 Programs",
+          desc: "Build a strong foundation for Class 11 board exams and competitive entrances.",
+          logoBg: "bg-blue-50 text-blue-600",
+          logo: FlaskConical,
+        };
+
+      case "Class 12":
+        return {
+          title: "Class 12 Programs",
+          desc: "Final year prep for boards, entrances, and career pathways.",
           logoBg: "bg-blue-50 text-blue-600",
           logo: FlaskConical,
         };
@@ -625,7 +614,7 @@ setTabCourses(filteredCourses);
                     onClick={() => onSelectCourse(currentSpotlight)}
                     className="flex w-full cursor-pointer items-center justify-center space-x-2 rounded-md bg-blue-600 px-5 py-2.5 text-xs font-medium text-white shadow-sm transition-all hover:bg-blue-500 sm:w-auto"
                   >
-                    <span>View Full Selector</span>
+                    <span>Enroll Now</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </motion.button>
                 </div>
@@ -641,7 +630,7 @@ setTabCourses(filteredCourses);
         )}
       </AnimatePresence>
 
-      {activeTab === "Class 11-12" && (
+      {(activeTab === "Class 11" || activeTab === "Class 12") && (
         <div className="space-y-4 pt-4">
           <div className="flex items-center space-x-2">
             <span className="text-xs font-bold tracking-tight text-slate-800">
@@ -822,12 +811,20 @@ setTabCourses(filteredCourses);
             Additional Programs in {activeTab}
           </h4>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {tabCourses.map((course, courseIndex) => {
-              if (courseIndex === spotlightIndex) {
-                return null;
-              }
+          {(() => {
+            const threshold = activeTab === "Skills" ? 4 : 6;
+            const otherCourses = tabCourses.filter(
+              (_, i) => i !== spotlightIndex,
+            );
+            const visibleCourses = showAllCourses
+              ? otherCourses
+              : otherCourses.slice(0, threshold);
+            const hiddenCount = otherCourses.length - visibleCourses.length;
 
+            return (
+              <>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {visibleCourses.map((course) => {
               return (
                 <motion.div
                   key={course.id}
@@ -878,7 +875,7 @@ setTabCourses(filteredCourses);
                       onClick={() => onSelectCourse(course)}
                       className="flex cursor-pointer items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-700"
                     >
-                      <span>Explore</span>
+                      <span>Enroll Now</span>
                       <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -886,6 +883,30 @@ setTabCourses(filteredCourses);
               );
             })}
           </div>
+
+                {hiddenCount > 0 && activeTab !== "Skills" && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllCourses(!showAllCourses)}
+                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-blue-600 shadow-sm transition-all hover:bg-blue-50 hover:border-blue-200"
+                    >
+                      {showAllCourses ? (
+                        <>Show Less</>
+                      ) : (
+                        <>Show All {otherCourses.length} Courses</>
+                      )}
+                      <ChevronRight
+                        className={`h-3.5 w-3.5 transition-transform ${
+                          showAllCourses ? "rotate-90" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
     </div>

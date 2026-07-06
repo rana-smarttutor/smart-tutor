@@ -18,21 +18,74 @@ type BatchManagerProps = {
 
 type BatchForm = {
   name: string;
+  code: string;
   courseName: string;
   subject: string;
+  capacity: string;
   schedule: string;
+  startDate: string;
+  endDate: string;
   studentIds: string[];
   teacherIds: string[];
 };
 
 const emptyForm: BatchForm = {
   name: "",
+  code: "",
   courseName: "",
   subject: "",
+  capacity: "",
   schedule: "",
+  startDate: "",
+  endDate: "",
   studentIds: [],
   teacherIds: [],
 };
+
+function getInitials(name?: string) {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function formatDate(dateStr?: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function getFillPercent(batch: Batch): number {
+  const cap = batch.capacity ?? 0;
+  if (cap <= 0) return 0;
+  return Math.min(100, Math.round((batch.studentIds.length / cap) * 100));
+}
+
+function getBatchStatusMeta(batch: Batch) {
+  if (batch.status === "archived") {
+    return { label: "Inactive", bg: "bg-slate-100 text-slate-600" };
+  }
+  const now = new Date();
+  if (batch.endDate) {
+    const end = new Date(batch.endDate);
+    const diffDays = Math.ceil((end.getTime() - now.getTime()) / 86400000);
+    if (diffDays < 0) return { label: "Expired", bg: "bg-red-100 text-red-700" };
+    if (diffDays <= 30) return { label: "Ending soon", bg: "bg-amber-100 text-amber-700" };
+  }
+  return { label: "Active", bg: "bg-emerald-100 text-emerald-700" };
+}
+
+function getBatchTopColor(batch: Batch): string {
+  if (batch.status === "archived") return "bg-slate-300";
+  const fill = getFillPercent(batch);
+  if (fill >= 100) return "bg-red-400";
+  if (fill >= 80) return "bg-amber-400";
+  return "bg-[var(--color-primary)]";
+}
 
 export function BatchManager({ managedUsers }: BatchManagerProps) {
   const [batches, setBatches] = useState<Batch[]>([]);
@@ -41,6 +94,11 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const students = useMemo(
     () =>
@@ -64,24 +122,17 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
 
   async function loadBatches() {
     setIsLoading(true);
-
     try {
       const response = await fetch("/api/batches", {
         method: "GET",
         credentials: "same-origin",
         cache: "no-store",
       });
-
-      const payload = (await response.json()) as {
-        batches?: Batch[];
-        error?: string;
-      };
-
+      const payload = (await response.json()) as { batches?: Batch[]; error?: string };
       if (!response.ok) {
         setMessage(payload.error ?? "Unable to load batches.");
         return;
       }
-
       setBatches(payload.batches ?? []);
     } catch {
       setMessage("Unable to load batches.");
@@ -90,20 +141,81 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
     }
   }
 
-  function updateForm<Key extends keyof BatchForm>(
-    key: Key,
-    value: BatchForm[Key],
-  ) {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
+  const stats = useMemo(() => {
+    const total = batches.length;
+    const active = batches.filter((b) => b.status === "active").length;
+    const inactive = batches.filter((b) => b.status === "archived").length;
+    const totalStudents = batches.reduce((s, b) => s + b.studentIds.length, 0);
+    const now = new Date();
+    const expiring = batches.filter((b) => {
+      if (!b.endDate || b.status !== "active") return false;
+      const end = new Date(b.endDate);
+      const diff = Math.ceil((end.getTime() - now.getTime()) / 86400000);
+      return diff >= 0 && diff <= 30;
+    }).length;
+    return { total, active, inactive, totalStudents, expiring };
+  }, [batches]);
+
+  const filteredBatches = useMemo(() => {
+    let list = showInactive ? batches : batches.filter((b) => b.status === "active");
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (b) =>
+          b.name.toLowerCase().includes(q) ||
+          (b.code && b.code.toLowerCase().includes(q)) ||
+          (b.courseName && b.courseName.toLowerCase().includes(q)) ||
+          (b.subject && b.subject.toLowerCase().includes(q)),
+      );
+    }
+    return list;
+  }, [batches, showInactive, searchQuery]);
+
+  function getUserName(userId: string) {
+    return managedUsers.find((u) => u.id === userId)?.name;
   }
 
-  function toggleSelection(
-    key: "studentIds" | "teacherIds",
-    userId: string,
-  ) {
+  function getUserNames(userIds: string[]) {
+    return userIds
+      .map((id) => getUserName(id))
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  function resetForm() {
+    setForm(emptyForm);
+  }
+
+  function openAddModal() {
+    resetForm();
+    setEditingBatchId(null);
+    setShowAddModal(true);
+    setMessage("");
+  }
+
+  function openEditModal(batch: Batch) {
+    setEditingBatchId(batch.id);
+    setForm({
+      name: batch.name ?? "",
+      code: batch.code ?? "",
+      courseName: batch.courseName ?? "",
+      subject: batch.subject ?? "",
+      capacity: batch.capacity != null ? String(batch.capacity) : "",
+      schedule: batch.schedule ?? "",
+      startDate: batch.startDate ?? "",
+      endDate: batch.endDate ?? "",
+      studentIds: batch.studentIds ?? [],
+      teacherIds: batch.teacherIds ?? [],
+    });
+    setShowEditModal(true);
+    setMessage("");
+  }
+
+  function updateForm<Key extends keyof BatchForm>(key: Key, value: BatchForm[Key]) {
+    setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  function toggleSelection(key: "studentIds" | "teacherIds", userId: string) {
     setForm((current) => ({
       ...current,
       [key]: current[key].includes(userId)
@@ -112,40 +224,9 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
     }));
   }
 
-  function startEdit(batch: Batch) {
-    setEditingBatchId(batch.id);
-
-    setForm({
-      name: batch.name ?? "",
-      courseName: batch.courseName ?? "",
-      subject: batch.subject ?? "",
-      schedule: batch.schedule ?? "",
-      studentIds: batch.studentIds ?? [],
-      teacherIds: batch.teacherIds ?? [],
-    });
-
-    setMessage("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }
-
-  function cancelEdit() {
-    setEditingBatchId(null);
-    setForm(emptyForm);
-    setMessage("");
-  }
-
   async function saveBatch() {
     if (!form.name.trim()) {
       setMessage("Batch name is required.");
-      return;
-    }
-
-    if (!form.studentIds.length) {
-      setMessage("Select at least one student.");
       return;
     }
 
@@ -153,118 +234,49 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
     setMessage("");
 
     try {
+      const body = {
+        name: form.name,
+        code: form.code || undefined,
+        courseName: form.courseName || undefined,
+        subject: form.subject || undefined,
+        capacity: form.capacity ? parseInt(form.capacity, 10) : undefined,
+        schedule: form.schedule || undefined,
+        startDate: form.startDate || undefined,
+        endDate: form.endDate || undefined,
+        studentIds: form.studentIds,
+        teacherIds: form.teacherIds,
+      };
+
       if (!editingBatchId) {
         const response = await fetch("/api/batches", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(form),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
         });
-
-        const payload = (await response.json()) as {
-          batch?: Batch;
-          error?: string;
-        };
-
+        const payload = (await response.json()) as { batch?: Batch; error?: string };
         if (!response.ok || !payload.batch) {
           setMessage(payload.error ?? "Unable to create batch.");
           return;
         }
-
-        for (const teacherId of form.teacherIds) {
-          await fetch("/api/batches", {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              action: "assign-teacher",
-              batchId: payload.batch.id,
-              teacherId,
-              subject: form.subject,
-            }),
-          });
-        }
-
         setMessage("Batch created successfully.");
-        setForm(emptyForm);
-
-        await loadBatches();
-        return;
+      } else {
+        const response = await fetch("/api/batches", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ batchId: editingBatchId, ...body }),
+        });
+        const payload = (await response.json()) as { error?: string };
+        if (!response.ok) {
+          setMessage(payload.error ?? "Unable to update batch.");
+          return;
+        }
+        setMessage("Batch updated successfully.");
       }
 
-      const currentBatch = batches.find(
-        (batch) => batch.id === editingBatchId,
-      );
-
-      const response = await fetch("/api/batches", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          batchId: editingBatchId,
-          ...form,
-        }),
-      });
-
-      const payload = (await response.json()) as {
-        error?: string;
-      };
-
-      if (!response.ok) {
-        setMessage(payload.error ?? "Unable to update batch.");
-        return;
-      }
-
-      const previousTeacherIds = currentBatch?.teacherIds ?? [];
-
-      const addedTeachers = form.teacherIds.filter(
-        (teacherId) => !previousTeacherIds.includes(teacherId),
-      );
-
-      const removedTeachers = previousTeacherIds.filter(
-        (teacherId) => !form.teacherIds.includes(teacherId),
-      );
-
-      await Promise.all(
-        addedTeachers.map((teacherId) =>
-          fetch("/api/batches", {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              action: "assign-teacher",
-              batchId: editingBatchId,
-              teacherId,
-              subject: form.subject,
-            }),
-          }),
-        ),
-      );
-
-      await Promise.all(
-        removedTeachers.map((teacherId) =>
-          fetch("/api/batches", {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              action: "remove-teacher",
-              batchId: editingBatchId,
-              teacherId,
-            }),
-          }),
-        ),
-      );
-
-      setMessage("Batch updated successfully.");
+      setShowAddModal(false);
+      setShowEditModal(false);
+      resetForm();
       setEditingBatchId(null);
-      setForm(emptyForm);
-
       await loadBatches();
     } catch {
       setMessage("Something went wrong while saving the batch.");
@@ -274,328 +286,562 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
   }
 
   async function archiveBatch(batchId: string) {
-    const confirmed = window.confirm(
-      "Archive this batch? Students and teachers will no longer see it.",
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
+    if (!window.confirm("Archive this batch? Students and teachers will no longer see it.")) return;
     try {
       const response = await fetch("/api/batches", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          batchId,
-          status: "archived",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchId, status: "archived" }),
       });
-
       if (!response.ok) {
         setMessage("Unable to archive batch.");
         return;
       }
-
-      setMessage("Batch archived successfully.");
+      setMessage("Batch archived.");
       await loadBatches();
     } catch {
       setMessage("Unable to archive batch.");
     }
   }
 
-  function getUserNames(userIds: string[]) {
-    return userIds
-      .map((userId) => managedUsers.find((user) => user.id === userId)?.name)
-      .filter(Boolean)
-      .join(", ");
+  async function handleDelete(batchId: string) {
+    try {
+      const response = await fetch("/api/batches", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ batchId }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json()) as { error?: string };
+        setMessage(payload.error ?? "Unable to delete batch.");
+        setDeleteConfirmId(null);
+        return;
+      }
+      setBatches((current) => current.filter((b) => b.id !== batchId));
+      setDeleteConfirmId(null);
+      setMessage("Batch deleted.");
+    } catch {
+      setMessage("Unable to delete batch.");
+      setDeleteConfirmId(null);
+    }
   }
 
   return (
     <section className="space-y-6">
-      <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      {/* Header */}
+      <div className="surface rounded-[2rem] p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-              Academic Operations
-            </p>
-
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+            <p className="section-label">Academic Operations</p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[var(--color-heading)]">
               Batch Management
             </h2>
-
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Create batches, add students, and assign faculty members.
+            <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+              Create and manage student batches, assign faculty, and track capacity.
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-bold text-[var(--color-muted)]">
+              <input
+                type="checkbox"
+                checked={showInactive}
+                onChange={(e) => setShowInactive(e.target.checked)}
+                className="h-3.5 w-3.5 accent-[var(--color-primary)]"
+              />
+              Show Inactive
+            </label>
+            <button type="button" onClick={openAddModal} className="btn-action btn-md font-bold">
+              + Add Batch
+            </button>
+          </div>
+        </div>
 
-          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-            {batches.length} Batches
+        {/* Stats row */}
+        <div className="mt-6 flex flex-wrap gap-4 text-sm">
+          <div className="surface-soft rounded-2xl px-4 py-3 text-center min-w-[100px]">
+            <p className="text-2xl font-extrabold text-[var(--color-primary)]">{stats.total}</p>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Total</p>
+          </div>
+          <div className="surface-soft rounded-2xl px-4 py-3 text-center min-w-[100px]">
+            <p className="text-2xl font-extrabold text-[var(--color-success)]">{stats.active}</p>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Active</p>
+          </div>
+          <div className="surface-soft rounded-2xl px-4 py-3 text-center min-w-[100px]">
+            <p className="text-2xl font-extrabold text-[var(--color-warning)]">{stats.totalStudents}</p>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Students</p>
+          </div>
+          <div className="surface-soft rounded-2xl px-4 py-3 text-center min-w-[100px]">
+            <p className="text-2xl font-extrabold text-[var(--color-danger)]">{stats.expiring}</p>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Expiring</p>
+          </div>
+          <div className="surface-soft rounded-2xl px-4 py-3 text-center min-w-[100px]">
+            <p className="text-2xl font-extrabold text-slate-500">{stats.inactive}</p>
+            <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Inactive</p>
+          </div>
+        </div>
+
+        {/* Search/filter */}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name, code, course, or subject..."
+              className="surface-soft w-full rounded-xl border border-[var(--color-border)] px-4 py-2.5 pl-10 text-sm text-[var(--color-heading)] outline-none transition focus:border-[var(--color-primary)]"
+            />
+            <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <span className="text-xs font-bold text-[var(--color-muted)]">
+            {filteredBatches.length} batch{filteredBatches.length === 1 ? "" : "es"}
           </span>
         </div>
 
         {message ? (
-          <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
-            {message}
-          </div>
+          <p className="mt-4 text-sm font-semibold text-[var(--color-heading)]">{message}</p>
         ) : null}
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <label className="space-y-2">
-            <span className="block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              Batch Name
-            </span>
-
-            <input
-              value={form.name}
-              onChange={(event) => updateForm("name", event.target.value)}
-              placeholder="e.g. Class 10 CBSE Mathematics - Morning"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-          </label>
-
-          <label className="space-y-2">
-            <span className="block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              Course / Program
-            </span>
-
-            <input
-              value={form.courseName}
-              onChange={(event) =>
-                updateForm("courseName", event.target.value)
-              }
-              placeholder="e.g. Class 10 CBSE"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-          </label>
-
-          <label className="space-y-2">
-            <span className="block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              Subject
-            </span>
-
-            <input
-              value={form.subject}
-              onChange={(event) => updateForm("subject", event.target.value)}
-              placeholder="e.g. Mathematics"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-          </label>
-
-          <label className="space-y-2">
-            <span className="block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-              Schedule
-            </span>
-
-            <input
-              value={form.schedule}
-              onChange={(event) => updateForm("schedule", event.target.value)}
-              placeholder="e.g. Mon, Wed, Fri · 5:00 PM"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            />
-          </label>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-900">Students</p>
-
-              <span className="text-xs text-slate-500">
-                {form.studentIds.length} selected
-              </span>
-            </div>
-
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              {students.length ? (
-                students.map((student) => (
-                  <label
-                    key={student.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2 transition hover:bg-blue-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.studentIds.includes(student.id)}
-                      onChange={() =>
-                        toggleSelection("studentIds", student.id)
-                      }
-                      className="h-4 w-4 accent-blue-600"
-                    />
-
-                    <span className="text-sm font-medium text-slate-800">
-                      {student.name}
-                    </span>
-
-                    <span className="ml-auto text-[10px] text-slate-400">
-                      {student.program || "Student"}
-                    </span>
-                  </label>
-                ))
-              ) : (
-                <p className="p-3 text-sm text-slate-500">
-                  No active students found.
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-sm font-bold text-slate-900">Faculty</p>
-
-              <span className="text-xs text-slate-500">
-                {form.teacherIds.length} selected
-              </span>
-            </div>
-
-            <div className="max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              {teachers.length ? (
-                teachers.map((teacher) => (
-                  <label
-                    key={teacher.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl bg-white px-3 py-2 transition hover:bg-blue-50"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={form.teacherIds.includes(teacher.id)}
-                      onChange={() =>
-                        toggleSelection("teacherIds", teacher.id)
-                      }
-                      className="h-4 w-4 accent-blue-600"
-                    />
-
-                    <span className="text-sm font-medium text-slate-800">
-                      {teacher.name}
-                    </span>
-
-                    <span className="ml-auto text-[10px] text-slate-400">
-                      Faculty
-                    </span>
-                  </label>
-                ))
-              ) : (
-                <p className="p-3 text-sm text-slate-500">
-                  No active faculty accounts found.
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => void saveBatch()}
-            disabled={isSaving}
-            className="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white transition hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isSaving
-              ? "Saving..."
-              : editingBatchId
-                ? "Update Batch"
-                : "Create Batch"}
-          </button>
-
-          {editingBatchId ? (
-            <button
-              type="button"
-              onClick={cancelEdit}
-              className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
-            >
-              Cancel Edit
-            </button>
-          ) : null}
-        </div>
       </div>
 
-      <div className="grid gap-4">
-        {isLoading ? (
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 text-sm text-slate-500">
-            Loading batches...
-          </div>
-        ) : batches.length ? (
-          batches.map((batch) => (
-            <article
-              key={batch.id}
-              className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-            >
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-xl font-bold text-slate-900">
-                      {batch.name}
-                    </h3>
+      {/* Batch grid */}
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div key={n} className="surface rounded-2xl p-5 animate-pulse">
+              <div className="h-2 w-full rounded bg-slate-200" />
+              <div className="mt-4 h-5 w-3/4 rounded bg-slate-200" />
+              <div className="mt-3 h-3 w-1/2 rounded bg-slate-200" />
+              <div className="mt-4 flex gap-3">
+                <div className="h-10 w-10 rounded bg-slate-200" />
+                <div className="h-10 flex-1 rounded bg-slate-200" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredBatches.length ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredBatches.map((batch) => {
+            const statusMeta = getBatchStatusMeta(batch);
+            const fillPct = getFillPercent(batch);
+            const cap = batch.capacity ?? 0;
+            const teacherName = getUserName(batch.teacherIds[0]) || "To be assigned";
+            const teacherNames = batch.teacherIds.length > 1
+              ? `${teacherName} +${batch.teacherIds.length - 1}`
+              : teacherName;
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${
-                        batch.status === "active"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {batch.status}
+            return (
+              <div
+                key={batch.id}
+                className="surface rounded-2xl overflow-hidden transition-all hover:shadow-lg"
+              >
+                {/* Color top bar */}
+                <div className={`h-2 ${getBatchTopColor(batch)}`} />
+
+                <div className="p-5">
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-bold text-[var(--color-heading)] truncate">
+                        {batch.name}
+                      </h3>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        {batch.code ? (
+                          <code className="rounded-md bg-[var(--color-primary)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-primary)]">
+                            {batch.code}
+                          </code>
+                        ) : null}
+                        {batch.courseName ? (
+                          <span className="rounded-md bg-[var(--color-info)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-info)]">
+                            {batch.courseName}
+                          </span>
+                        ) : null}
+                        {batch.subject ? (
+                          <span className="rounded-md bg-[var(--color-purple)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-purple)]">
+                            {batch.subject}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${statusMeta.bg}`}>
+                      {statusMeta.label}
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm text-slate-500">
-                    {[batch.courseName, batch.subject, batch.schedule]
-                      .filter(Boolean)
-                      .join(" · ") || "No course details added"}
-                  </p>
-
-                  <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                        Students
+                  {/* Stats row */}
+                  <div className="mt-4 flex gap-4">
+                    <div className="text-center">
+                      <p className="text-lg font-extrabold text-[var(--color-primary)]">
+                        {batch.studentIds.length}
                       </p>
-
-                      <p className="mt-1 font-medium text-slate-800">
-                        {batch.studentIds.length} enrolled
-                      </p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Students</p>
                     </div>
-
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                        Faculty
+                    <div className="text-center">
+                      <p className="text-lg font-extrabold text-[var(--color-success)]">
+                        {cap || "—"}
                       </p>
-
-                      <p className="mt-1 font-medium text-slate-800">
-                        {getUserNames(batch.teacherIds) || "Not assigned"}
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Capacity</p>
+                    </div>
+                    <div className="text-center">
+                      <p className={`text-lg font-extrabold ${fillPct >= 100 ? "text-[var(--color-danger)]" : "text-[var(--color-success)]"}`}>
+                        {cap > 0 ? `${fillPct}%` : "—"}
                       </p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Fill</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => startEdit(batch)}
-                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
-                  >
-                    Edit
-                  </button>
+                  {/* Occupancy bar */}
+                  {cap > 0 ? (
+                    <div className="mt-3 h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          fillPct >= 100
+                            ? "bg-[var(--color-danger)]"
+                            : fillPct >= 80
+                              ? "bg-[var(--color-warning)]"
+                              : "bg-[var(--color-success)]"
+                        }`}
+                        style={{ width: `${fillPct}%` }}
+                      />
+                    </div>
+                  ) : null}
 
-                  {batch.status === "active" ? (
+                  {/* Teacher info */}
+                  <div className="mt-4 flex items-center gap-3 rounded-xl bg-[var(--color-background-strong)] p-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/20 text-xs font-bold text-[var(--color-primary)]">
+                      {getInitials(getUserName(batch.teacherIds[0]))}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-[var(--color-heading)] truncate">{teacherNames}</p>
+                      <p className="text-[10px] text-[var(--color-muted)]">Faculty</p>
+                    </div>
+                  </div>
+
+                  {/* Date range */}
+                  {batch.startDate || batch.endDate ? (
+                    <p className="mt-3 text-[11px] text-[var(--color-muted)]">
+                      {batch.startDate ? formatDate(batch.startDate) : "—"} → {batch.endDate ? formatDate(batch.endDate) : "—"}
+                    </p>
+                  ) : null}
+
+                  {/* Schedule */}
+                  {batch.schedule ? (
+                    <p className="mt-1 text-[11px] font-medium text-[var(--color-muted)]">
+                      {batch.schedule}
+                    </p>
+                  ) : null}
+
+                  {/* Action buttons */}
+                  <div className="mt-4 flex gap-2 border-t border-[var(--color-border)] pt-4">
                     <button
                       type="button"
-                      onClick={() => void archiveBatch(batch.id)}
-                      className="rounded-xl border border-rose-200 px-4 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-50"
+                      onClick={() => openEditModal(batch)}
+                      className="flex-1 rounded-xl border border-[var(--color-primary)]/30 px-3 py-2 text-xs font-bold text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)]/10"
                     >
-                      Archive
+                      Edit
                     </button>
-                  ) : null}
+                    {batch.status === "active" ? (
+                      <button
+                        type="button"
+                        onClick={() => void archiveBatch(batch.id)}
+                        className="flex-1 rounded-xl border border-[var(--color-warning)]/30 px-3 py-2 text-xs font-bold text-[var(--color-warning)] transition-colors hover:bg-[var(--color-warning)]/10"
+                      >
+                        Archive
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(batch.id)}
+                      className="flex-1 rounded-xl border border-[var(--color-danger)]/30 px-3 py-2 text-xs font-bold text-[var(--color-danger)] transition-colors hover:bg-[var(--color-danger)]/10"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </article>
-          ))
-        ) : (
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 text-sm text-slate-500">
-            No batches created yet.
+            );
+          })}
+        </div>
+      ) : (
+        <div className="surface rounded-[2rem] p-10 text-center">
+          <p className="text-sm text-[var(--color-muted)]">
+            {searchQuery || showInactive ? "No batches match your filters." : "No batches created yet. Click \"+ Add Batch\" to get started."}
+          </p>
+        </div>
+      )}
+
+      {/* Add Modal */}
+      {showAddModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm overflow-y-auto py-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl my-auto">
+            <div className="rounded-t-2xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-strong)] px-6 py-5">
+              <h3 className="text-lg font-bold text-white">Add Batch</h3>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-6 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Name <span className="text-[var(--color-danger)]">*</span>
+                  </label>
+                  <input
+                    value={form.name}
+                    onChange={(e) => updateForm("name", e.target.value)}
+                    placeholder="e.g. Class 10 CBSE - Morning"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Code
+                  </label>
+                  <input
+                    value={form.code}
+                    onChange={(e) => updateForm("code", e.target.value)}
+                    placeholder="e.g. X-CBSE-MORN"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Course / Program
+                  </label>
+                  <input
+                    value={form.courseName}
+                    onChange={(e) => updateForm("courseName", e.target.value)}
+                    placeholder="e.g. Class 10 CBSE"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Subject
+                  </label>
+                  <input
+                    value={form.subject}
+                    onChange={(e) => updateForm("subject", e.target.value)}
+                    placeholder="e.g. Mathematics"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Capacity
+                  </label>
+                  <input
+                    value={form.capacity}
+                    onChange={(e) => updateForm("capacity", e.target.value)}
+                    type="number"
+                    min="0"
+                    placeholder="e.g. 40"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Schedule
+                  </label>
+                  <input
+                    value={form.schedule}
+                    onChange={(e) => updateForm("schedule", e.target.value)}
+                    placeholder="e.g. Mon, Wed, Fri · 5:00 PM"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Start Date
+                  </label>
+                  <input
+                    value={form.startDate}
+                    onChange={(e) => updateForm("startDate", e.target.value)}
+                    type="date"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    End Date
+                  </label>
+                  <input
+                    value={form.endDate}
+                    onChange={(e) => updateForm("endDate", e.target.value)}
+                    type="date"
+                    className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Students */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Students</p>
+                  <span className="text-[10px] text-[var(--color-muted)]">{form.studentIds.length} selected</span>
+                </div>
+                <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background-strong)] p-2">
+                  {students.length ? students.map((s) => (
+                    <label key={s.id} className="flex cursor-pointer items-center gap-3 rounded-lg bg-[var(--color-panel)] px-3 py-2 text-sm transition hover:bg-[var(--color-primary)]/5">
+                      <input
+                        type="checkbox"
+                        checked={form.studentIds.includes(s.id)}
+                        onChange={() => toggleSelection("studentIds", s.id)}
+                        className="h-4 w-4 accent-[var(--color-primary)]"
+                      />
+                      <span className="font-medium text-[var(--color-heading)]">{s.name}</span>
+                      <span className="ml-auto text-[10px] text-[var(--color-muted)]">{s.program || "Student"}</span>
+                    </label>
+                  )) : (
+                    <p className="p-3 text-sm text-[var(--color-muted)]">No active students.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Teachers */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Faculty</p>
+                  <span className="text-[10px] text-[var(--color-muted)]">{form.teacherIds.length} selected</span>
+                </div>
+                <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background-strong)] p-2">
+                  {teachers.length ? teachers.map((t) => (
+                    <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg bg-[var(--color-panel)] px-3 py-2 text-sm transition hover:bg-[var(--color-primary)]/5">
+                      <input
+                        type="checkbox"
+                        checked={form.teacherIds.includes(t.id)}
+                        onChange={() => toggleSelection("teacherIds", t.id)}
+                        className="h-4 w-4 accent-[var(--color-primary)]"
+                      />
+                      <span className="font-medium text-[var(--color-heading)]">{t.name}</span>
+                      <span className="ml-auto text-[10px] text-[var(--color-muted)]">Faculty</span>
+                    </label>
+                  )) : (
+                    <p className="p-3 text-sm text-[var(--color-muted)]">No active faculty.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-[var(--color-border)] px-6 py-4">
+              <button type="button" onClick={() => { setShowAddModal(false); resetForm(); }} className="rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-bold text-[var(--color-heading)]">
+                Cancel
+              </button>
+              <button type="button" onClick={() => void saveBatch()} disabled={isSaving} className="rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                {isSaving ? "Saving..." : "Add Batch"}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : null}
+
+      {/* Edit Modal */}
+      {showEditModal ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm overflow-y-auto py-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl my-auto">
+            <div className="rounded-t-2xl bg-gradient-to-r from-[var(--color-warning)] to-[var(--color-warning-strong)] px-6 py-5">
+              <h3 className="text-lg font-bold text-white">Edit Batch</h3>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-6 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Name <span className="text-[var(--color-danger)]">*</span>
+                  </label>
+                  <input value={form.name} onChange={(e) => updateForm("name", e.target.value)} className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Code</label>
+                  <input value={form.code} onChange={(e) => updateForm("code", e.target.value)} className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Course / Program</label>
+                  <input value={form.courseName} onChange={(e) => updateForm("courseName", e.target.value)} className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Subject</label>
+                  <input value={form.subject} onChange={(e) => updateForm("subject", e.target.value)} className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Capacity</label>
+                  <input value={form.capacity} onChange={(e) => updateForm("capacity", e.target.value)} type="number" min="0" className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Schedule</label>
+                  <input value={form.schedule} onChange={(e) => updateForm("schedule", e.target.value)} className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Start Date</label>
+                  <input value={form.startDate} onChange={(e) => updateForm("startDate", e.target.value)} type="date" className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">End Date</label>
+                  <input value={form.endDate} onChange={(e) => updateForm("endDate", e.target.value)} type="date" className="surface-soft w-full rounded-xl px-4 py-3 text-sm text-[var(--color-heading)] outline-none" />
+                </div>
+              </div>
+
+              {/* Students */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Students</p>
+                  <span className="text-[10px] text-[var(--color-muted)]">{form.studentIds.length} selected</span>
+                </div>
+                <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background-strong)] p-2">
+                  {students.length ? students.map((s) => (
+                    <label key={s.id} className="flex cursor-pointer items-center gap-3 rounded-lg bg-[var(--color-panel)] px-3 py-2 text-sm transition hover:bg-[var(--color-primary)]/5">
+                      <input type="checkbox" checked={form.studentIds.includes(s.id)} onChange={() => toggleSelection("studentIds", s.id)} className="h-4 w-4 accent-[var(--color-primary)]" />
+                      <span className="font-medium text-[var(--color-heading)]">{s.name}</span>
+                      <span className="ml-auto text-[10px] text-[var(--color-muted)]">{s.program || "Student"}</span>
+                    </label>
+                  )) : (
+                    <p className="p-3 text-sm text-[var(--color-muted)]">No active students.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Teachers */}
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Faculty</p>
+                  <span className="text-[10px] text-[var(--color-muted)]">{form.teacherIds.length} selected</span>
+                </div>
+                <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background-strong)] p-2">
+                  {teachers.length ? teachers.map((t) => (
+                    <label key={t.id} className="flex cursor-pointer items-center gap-3 rounded-lg bg-[var(--color-panel)] px-3 py-2 text-sm transition hover:bg-[var(--color-primary)]/5">
+                      <input type="checkbox" checked={form.teacherIds.includes(t.id)} onChange={() => toggleSelection("teacherIds", t.id)} className="h-4 w-4 accent-[var(--color-primary)]" />
+                      <span className="font-medium text-[var(--color-heading)]">{t.name}</span>
+                      <span className="ml-auto text-[10px] text-[var(--color-muted)]">Faculty</span>
+                    </label>
+                  )) : (
+                    <p className="p-3 text-sm text-[var(--color-muted)]">No active faculty.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 border-t border-[var(--color-border)] px-6 py-4">
+              <button type="button" onClick={() => { setShowEditModal(false); resetForm(); setEditingBatchId(null); }} className="rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-bold text-[var(--color-heading)]">
+                Cancel
+              </button>
+              <button type="button" onClick={() => void saveBatch()} disabled={isSaving} className="rounded-xl bg-[var(--color-warning)] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+                {isSaving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Delete confirm */}
+      {deleteConfirmId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-[var(--color-heading)]">Delete batch?</h3>
+            <p className="mt-2 text-sm text-[var(--color-muted)]">This will also remove all teacher assignments. This cannot be undone.</p>
+            <div className="mt-6 flex gap-3">
+              <button type="button" onClick={() => setDeleteConfirmId(null)} className="flex-1 rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-bold text-[var(--color-heading)]">
+                Cancel
+              </button>
+              <button type="button" onClick={() => void handleDelete(deleteConfirmId)} className="flex-1 rounded-xl bg-[var(--color-danger)] px-4 py-2.5 text-sm font-bold text-white">
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

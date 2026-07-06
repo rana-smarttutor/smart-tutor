@@ -3,7 +3,7 @@ import { createHmac } from "node:crypto";
 
 import { RAZORPAY_KEY_SECRET } from "@/lib/razorpay-config";
 import { getSessionUser } from "@/lib/auth";
-import { updateFeeInvoice } from "@/lib/data-store";
+import { getFeeInvoiceById, updateFeeInvoice } from "@/lib/data-store";
 
 export async function POST(request: Request) {
   const session = await getSessionUser();
@@ -40,6 +40,13 @@ export async function POST(request: Request) {
   }
 
   if (invoiceId) {
+    const invoice = await getFeeInvoiceById(invoiceId);
+    if (!invoice) {
+      return NextResponse.json({ error: "Invoice not found." }, { status: 404 });
+    }
+    if (session.role === "student" && invoice.studentId !== session.id) {
+      return NextResponse.json({ error: "You can only pay your own invoices." }, { status: 403 });
+    }
     await updateFeeInvoice(invoiceId, {
       status: "paid",
       paidAmount: Number(amount) || 0,

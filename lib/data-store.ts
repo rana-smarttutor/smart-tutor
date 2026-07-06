@@ -49,6 +49,15 @@ import type {
   PlacementJob,
   PlacementApplicationStatus,
   DashboardAnalytics,
+  StudentStats,
+  StudentDirectoryEntry,
+  StudentRiskLevel,
+  BulkUpdateResult,
+  ImportResult,
+  HomeworkItem,
+  HomeworkSubmission,
+  AuthLogEntry,
+  AuthLogAction,
 } from "@/lib/types";
 
 import type {
@@ -84,6 +93,7 @@ type UserDocument = SessionUser & {
   createdAt?: string;
   updatedAt?: string;
   profile?: UserProfile;
+  assignedFacultyIds?: string[];
 };
 
 type MessageDocument = MessageItem & {
@@ -125,6 +135,10 @@ const COLLECTIONS = {
   crmStaff: "crmStaff",
 
   enquiries: "enquiries",
+  passwordResetRequests: "passwordResetRequests",
+  homework: "homework",
+  homeworkSubmissions: "homeworkSubmissions",
+  authLogs: "authLogs",
 } as const;
 // ... (existing code)
 
@@ -151,6 +165,36 @@ export async function createEnquiry(input: {
 export async function getAllEnquiries() {
   const collection = await getCollection(COLLECTIONS.enquiries);
   return await collection.find({}).sort({ createdAt: -1 }).toArray();
+}
+
+export async function createPasswordResetRequest(input: {
+  name: string;
+  email: string;
+  phone: string;
+  lastPassword: string;
+  role: string;
+}) {
+  const collection = await getCollection(COLLECTIONS.passwordResetRequests);
+  const request = {
+    ...input,
+    status: "new",
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(request);
+  return request;
+}
+
+export async function getAllPasswordResetRequests() {
+  const collection = await getCollection(COLLECTIONS.passwordResetRequests);
+  return await collection.find({}).sort({ createdAt: -1 }).toArray();
+}
+
+export async function updatePasswordResetRequest(
+  id: string,
+  update: { status?: string; adminNote?: string },
+) {
+  const collection = await getCollection(COLLECTIONS.passwordResetRequests);
+  await collection.updateOne({ id }, { $set: update });
 }
 
 export const DEFAULT_HEURISTICS: PerformanceHeuristics = {
@@ -258,6 +302,7 @@ function toManagedUser(user: UserDocument): ManagedUser {
     status: (user.status === "rejected" ? "pending" : user.status) ?? "active",
     passwordHint: user.password,
     linkedStudentId: user.linkedStudentId,
+    assignedFacultyIds: user.assignedFacultyIds,
   };
 }
 
@@ -328,7 +373,7 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
         })()
       : template.sections,
     statusLabel: document.statusLabel ?? template.statusLabel,
-    standardKey: templateKey,
+    standardKey: template.standardKey,
     tagline: document.tagline ?? template.tagline,
     title: template.title,
     schedule: document.schedule ?? template.schedule,
@@ -774,6 +819,15 @@ export async function updateCourse(input: {
   return hydrateCourse(stripMongoId(updated));
 }
 
+export async function deleteCourse(courseId: string) {
+  const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
+  const result = await collection.deleteOne({ id: courseId });
+  if (result.deletedCount === 0) {
+    throw new Error("Course not found.");
+  }
+  return { deleted: true };
+}
+
 export async function getAllDetailedCourses() {
   await ensureStandardCoursesBackfilled();
   const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
@@ -1125,12 +1179,24 @@ export async function deleteNotificationForUser(input: {
   return result.deletedCount > 0;
 }
 
+async function enrichWithFacultyNames(users: ManagedUser[]): Promise<ManagedUser[]> {
+  const collection = await getUsersCollection();
+  const allIds = [...new Set(users.flatMap((u) => u.assignedFacultyIds ?? []))];
+  if (!allIds.length) return users;
+  const facultyDocs = await collection.find({ id: { $in: allIds } }).toArray();
+  const facultyMap = new Map(facultyDocs.map((f) => [f.id, f.name]));
+  return users.map((u) => ({
+    ...u,
+    assignedFacultyNames: u.assignedFacultyIds?.map((id) => facultyMap.get(id) || "To be assigned soon"),
+  }));
+}
+
 export async function getUsersForAdmin() {
   const collection = await getUsersCollection();
 
   const users = await collection.find({}).sort({ name: 1 }).toArray();
 
-  return users.map(toManagedUser);
+  return enrichWithFacultyNames(users.map(toManagedUser));
 }
 
 export async function getPendingEducatorRequests() {
@@ -1259,13 +1325,39 @@ export async function toggleUserVerification(
   return result.matchedCount > 0;
 }
 
-export async function getStudentDirectory() {
+export async function getStudentDirectory(educatorId?: string) {
   const collection = await getUsersCollection();
+  const query: any = { role: "student" };
+  if (educatorId) {
+    query.assignedFacultyIds = { $in: [educatorId] };
+  }
   const students = await collection
-    .find({ role: "student" })
+    .find(query)
     .sort({ name: 1 })
     .toArray();
-  return students.map(toManagedUser);
+  const managed = students.map(toManagedUser);
+  if (!educatorId) {
+    return enrichWithFacultyNames(managed);
+  }
+  return managed;
+}
+
+export async function getEducators() {
+  const collection = await getUsersCollection();
+  const educators = await collection
+    .find({ role: "educator" })
+    .sort({ name: 1 })
+    .toArray();
+  return educators.map(toManagedUser);
+}
+
+export async function getEducatorsForStudent(studentId: string) {
+  const collection = await getUsersCollection();
+  const student = await collection.findOne({ id: studentId, role: "student" });
+  const facultyIds = student?.assignedFacultyIds ?? [];
+  if (!facultyIds.length) return [];
+  const educators = await collection.find({ id: { $in: facultyIds }, role: "educator" }).toArray();
+  return educators.map(toManagedUser);
 }
 
 export async function createUserRecord(input: {
@@ -1280,6 +1372,7 @@ export async function createUserRecord(input: {
   program: string;
   status?: "active" | "pending" | "rejected";
   profile?: UserProfile;
+  assignedFacultyIds?: string[];
 }) {
   const document: UserDocument = {
     id: randomUUID(),
@@ -1299,6 +1392,7 @@ export async function createUserRecord(input: {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     profile: input.profile,
+    assignedFacultyIds: input.assignedFacultyIds,
   };
 
   const collection = await getUsersCollection();
@@ -1315,6 +1409,7 @@ export async function updateUserRecord(input: {
   program: string;
   status?: "active" | "pending" | "rejected";
   verified?: boolean;
+  assignedFacultyIds?: string[] | null;
 }) {
   const collection = await getUsersCollection();
   const document: Partial<UserDocument> = {
@@ -1333,6 +1428,10 @@ export async function updateUserRecord(input: {
     document.verified = input.verified;
   }
 
+  if (input.assignedFacultyIds !== undefined) {
+    document.assignedFacultyIds = input.assignedFacultyIds ?? undefined;
+  }
+
   await collection.updateOne({ id: input.id }, { $set: document });
   const updated = await collection.findOne({ id: input.id });
 
@@ -1341,6 +1440,238 @@ export async function updateUserRecord(input: {
   }
 
   return toManagedUser(updated);
+}
+
+export async function assignStudentsToFaculty(
+  facultyId: string,
+  studentIds: string[],
+): Promise<number> {
+  const collection = await getUsersCollection();
+  const currentStudentDocs = await collection
+    .find({ assignedFacultyIds: facultyId, role: "student" })
+    .toArray();
+  const currentIds = new Set(currentStudentDocs.map((d) => d.id));
+  const targetIds = new Set(studentIds);
+
+  const toRemove = [...currentIds].filter((id) => !targetIds.has(id));
+  const toAdd = studentIds.filter((id) => !currentIds.has(id));
+
+  if (toRemove.length > 0) {
+    await collection.updateMany(
+      { id: { $in: toRemove }, role: "student" },
+      { $pull: { assignedFacultyIds: facultyId } },
+    );
+  }
+
+  if (toAdd.length > 0) {
+    await collection.updateMany(
+      { id: { $in: toAdd }, role: "student" },
+      { $addToSet: { assignedFacultyIds: facultyId } },
+    );
+  }
+
+  return toAdd.length + toRemove.length;
+}
+
+export async function getStudentStats(): Promise<StudentStats> {
+  const collection = await getUsersCollection();
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const students = await collection.find({ role: "student" }).toArray();
+  return {
+    total: students.length,
+    active: students.filter((s) => s.status === "active").length,
+    atRisk: 0,
+    dropped: students.filter((s) => (s as any).status === "inactive" || (s as any).status === "dropped").length,
+    newThisMonth: students.filter((s) => s.createdAt && s.createdAt >= monthStart).length,
+  };
+}
+
+export async function getStudentDirectoryV2(filters?: {
+  search?: string;
+  batchId?: string;
+  status?: string;
+}): Promise<StudentDirectoryEntry[]> {
+  const collection = await getUsersCollection();
+  const query: any = { role: "student" };
+  if (filters?.status && filters.status !== "all") {
+    if (filters.status === "active") query.status = "active";
+    else if (filters.status === "inactive") query.status = "inactive";
+    else if (filters.status === "at_risk") query.status = "at_risk";
+    else if (filters.status === "dropped") query.status = "dropped";
+    else if (filters.status === "graduated") query.status = "graduated";
+  }
+  if (filters?.batchId) {
+    query.batchIds = { $in: [filters.batchId] };
+  }
+  let students = await collection.find(query).sort({ name: 1 }).toArray();
+  if (filters?.search) {
+    const q = filters.search.toLowerCase();
+    students = students.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) ||
+        s.email.toLowerCase().includes(q) ||
+        (s as any).admissionNo?.toLowerCase().includes(q),
+    );
+  }
+  const managed = students.map((s) => ({
+    ...toManagedUser(s),
+    admissionNo: (s as any).admissionNo ?? String((s as any).admissionNumber ?? ""),
+    batchName: (s as any).batchName ?? "",
+    attendancePercent: (s as any).attendancePercent ?? 0,
+    feesStatus: ("none" as const),
+    riskLevel: ("low" as StudentRiskLevel),
+    photoUrl: (s as any).photoUrl ?? undefined,
+  })) satisfies StudentDirectoryEntry[];
+  return enrichWithFacultyNames(managed);
+}
+
+export async function computeStudentRiskScores(): Promise<{ studentId: string; riskLevel: StudentRiskLevel; score: number }[]> {
+  const collection = await getUsersCollection();
+  const students = await collection.find({ role: "student" }).toArray();
+  const results: { studentId: string; riskLevel: StudentRiskLevel; score: number }[] = [];
+  for (const student of students) {
+    let score = 50;
+    const attendance = (student as any).attendancePercent ?? -1;
+    if (attendance >= 0 && attendance < 50) score += 30;
+    else if (attendance >= 50 && attendance < 75) score += 15;
+    else if (attendance >= 75) score -= 10;
+    if ((student as any).status === "inactive" || (student as any).status === "dropped") score += 40;
+    const scoreClamped = Math.max(0, Math.min(100, score));
+    let riskLevel: StudentRiskLevel = "low";
+    if (scoreClamped >= 70) riskLevel = "high";
+    else if (scoreClamped >= 40) riskLevel = "medium";
+    results.push({ studentId: student.id, riskLevel, score: scoreClamped });
+    await collection.updateOne(
+      { id: student.id },
+      { $set: { riskLevel, riskScore: scoreClamped, updatedAt: new Date().toISOString() } },
+    );
+  }
+  return results;
+}
+
+export async function exportStudentsCsv(): Promise<string> {
+  const collection = await getUsersCollection();
+  const students = await collection.find({ role: "student" }).sort({ name: 1 }).toArray();
+  const headers = ["admission_number", "name", "email", "phone", "gender", "date_of_birth", "father_name", "guardian_phone", "address", "batch_code", "status", "photo", "documents"];
+  const rows = students.map((s) => {
+    const doc = s as any;
+    return [
+      doc.admissionNo ?? doc.admissionNumber ?? "",
+      s.name,
+      s.email,
+      doc.mobile ?? "",
+      doc.gender ?? "",
+      doc.dateOfBirth ?? "",
+      doc.fatherName ?? "",
+      doc.parentMobile ?? "",
+      doc.address ?? "",
+      doc.batchName ?? "",
+      s.status ?? "active",
+      doc.photoUrl ?? "",
+      (doc.documents ?? []).join(","),
+    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+  });
+  return [headers.join(","), ...rows].join("\n");
+}
+
+export async function importStudentsFromCsv(
+  rows: Record<string, string>[],
+  options: { sendWelcomeEmail?: boolean; skipDuplicates?: boolean; autoGeneratePassword?: boolean },
+): Promise<ImportResult> {
+  const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
+  for (const row of rows) {
+    try {
+      if (!row.name || !row.email || !row.phone) {
+        result.skipped++;
+        result.errors.push(`Row missing required fields: name=${row.name}, email=${row.email}, phone=${row.phone}`);
+        continue;
+      }
+      if (options.skipDuplicates) {
+        const existing = await findUserDocumentByEmail(row.email);
+        if (existing) {
+          result.skipped++;
+          continue;
+        }
+      }
+      const password = row.password ?? (options.autoGeneratePassword ? Math.random().toString(36).slice(-8) + "A1!" : "Pass@123");
+      await createUserRecord({
+        name: row.name,
+        email: row.email,
+        mobile: row.phone,
+        role: "student",
+        password,
+        program: row.batch_code ?? "General",
+        status: "active",
+        profile: {
+          dateOfBirth: row.date_of_birth,
+          gender: row.gender as any,
+          fatherName: row.father_name,
+          address: row.address,
+          guardianPhone: row.guardian_phone,
+        },
+      });
+      result.imported++;
+    } catch (err: any) {
+      result.errors.push(`Error importing ${row.email}: ${err.message}`);
+      result.skipped++;
+    }
+  }
+  return result;
+}
+
+export async function bulkUpdateStudentsFromCsv(
+  rows: Record<string, string>[],
+): Promise<BulkUpdateResult> {
+  const collection = await getUsersCollection();
+  const result: BulkUpdateResult = { updated: 0, skipped: 0, errors: [] };
+  for (const row of rows) {
+    try {
+      const admissionNo = row.admission_number;
+      if (!admissionNo) {
+        result.skipped++;
+        continue;
+      }
+      const student = await collection.findOne({
+        role: "student",
+        $or: [
+          { admissionNo },
+          { admissionNumber: admissionNo },
+        ],
+      });
+      if (!student) {
+        result.skipped++;
+        result.errors.push(`Student not found: admission_number=${admissionNo}`);
+        continue;
+      }
+      const update: any = {};
+      if (row.name) update.name = row.name;
+      if (row.email) { update.email = row.email; update.emailKey = row.email.toLowerCase(); }
+      if (row.phone) { update.mobile = row.phone; update.mobileKey = row.phone.replace(/[^\d]/g, "").slice(-10); }
+      if (row.gender) update["profile.gender"] = row.gender;
+      if (row.date_of_birth) update["profile.dateOfBirth"] = row.date_of_birth;
+      if (row.father_name) update["profile.fatherName"] = row.father_name;
+      if (row.guardian_phone) update.parentMobile = row.guardian_phone;
+      if (row.address) update["profile.address"] = row.address;
+      if (row.batch_code) update.batchName = row.batch_code;
+      if (row.status) update.status = row.status;
+      if (row.photo) update.photoUrl = row.photo;
+      if (row.documents) update.documents = row.documents.split(",").map((d: string) => d.trim()).filter(Boolean);
+      update.updatedAt = new Date().toISOString();
+      await collection.updateOne({ id: student.id }, { $set: update });
+      result.updated++;
+    } catch (err: any) {
+      result.errors.push(`Error updating ${row.admission_number}: ${err.message}`);
+      result.skipped++;
+    }
+  }
+  return result;
+}
+
+export async function deleteUserRecord(userId: string): Promise<boolean> {
+  const collection = await getUsersCollection();
+  const result = await collection.deleteOne({ id: userId });
+  return result.deletedCount > 0;
 }
 
 export async function findUserDocumentByEmail(email: string) {
@@ -1781,6 +2112,12 @@ export async function createFeeInvoice(input: {
   await collection.insertOne(invoice);
 
   return stripMongoId(invoice);
+}
+
+export async function getFeeInvoiceById(invoiceId: string) {
+  const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+  const invoice = await collection.findOne({ id: invoiceId });
+  return invoice ? stripMongoId(invoice) : null;
 }
 
 export async function updateFeeInvoice(
@@ -2549,11 +2886,34 @@ if (!template) {
     users,
   });
 
+  let assignedFacultyIds: string[] | undefined;
+  let assignedFacultyNames: string[] | undefined;
+  if (role === "student" && userDoc?.assignedFacultyIds?.length) {
+    assignedFacultyIds = userDoc.assignedFacultyIds;
+    const facultyDocs = await Promise.all(
+      userDoc.assignedFacultyIds.map((id) => findFullUserById(id)),
+    );
+    assignedFacultyNames = facultyDocs.map(
+      (d) => d?.name ?? "To be assigned soon",
+    );
+  } else if (role === "parent" && userDoc?.linkedStudentId) {
+    const linkedStudentDoc = await findFullUserById(userDoc.linkedStudentId);
+    if (linkedStudentDoc?.assignedFacultyIds?.length) {
+      assignedFacultyIds = linkedStudentDoc.assignedFacultyIds;
+      const facultyDocs = await Promise.all(
+        linkedStudentDoc.assignedFacultyIds.map((id) => findFullUserById(id)),
+      );
+      assignedFacultyNames = facultyDocs.map(
+        (d) => d?.name ?? "To be assigned soon",
+      );
+    }
+  }
+
   return {
     roleLabel: user?.label ?? template.roleLabel,
     heroTitle: buildHeroTitle(role, template, user),
     heroDescription: template.heroDescription,
-    stats: template.stats,
+    stats: analytics.metrics,
     primaryPanel: template.primaryPanel,
     permissions: template.permissions,
     courses: role === "admin" ? courses : courses.slice(0, 3),
@@ -2564,12 +2924,14 @@ if (!template) {
     feeInvoices,
     lectures,
     linkedStudentId: userDoc?.linkedStudentId,
+    assignedFacultyIds,
+    assignedFacultyNames,
     profile: userDoc?.profile,
     analytics,
   };
 }
 
-async function findFullUserById(id: string) {
+export async function findFullUserById(id: string) {
   const collection = await getUsersCollection();
   const user = await collection.findOne({ id });
   return user as UserDocument | null;
@@ -2723,12 +3085,16 @@ export async function getBatchesForRole(role: Role, userId?: string) {
 
 export async function createBatch(input: {
   name: string;
+  code?: string;
   courseId?: string;
   courseName?: string;
   subject?: string;
+  capacity?: number;
   schedule?: string;
   studentIds?: string[];
   teacherIds?: string[];
+  startDate?: string;
+  endDate?: string;
   createdBy: string;
 }) {
   const name = input.name.trim();
@@ -2743,12 +3109,16 @@ export async function createBatch(input: {
   const batch: Batch = {
     id: `batch-${randomUUID()}`,
     name,
+    code: input.code?.trim() || undefined,
     courseId: input.courseId?.trim() || undefined,
     courseName: input.courseName?.trim() || undefined,
     subject: input.subject?.trim() || undefined,
+    capacity: typeof input.capacity === "number" ? input.capacity : undefined,
     schedule: input.schedule?.trim() || undefined,
     studentIds: [...new Set(input.studentIds ?? [])],
     teacherIds: [...new Set(input.teacherIds ?? [])],
+    startDate: input.startDate?.trim() || undefined,
+    endDate: input.endDate?.trim() || undefined,
     status: "active",
     createdBy: input.createdBy,
     createdAt: now,
@@ -2764,12 +3134,16 @@ export async function updateBatch(
   batchId: string,
   input: Partial<{
     name: string;
+    code: string;
     courseId: string;
     courseName: string;
     subject: string;
+    capacity: number;
     schedule: string;
     studentIds: string[];
     teacherIds: string[];
+    startDate: string;
+    endDate: string;
     status: "active" | "archived";
   }>,
 ) {
@@ -2781,6 +3155,10 @@ export async function updateBatch(
 
   if (typeof input.name === "string") {
     updates.name = input.name.trim();
+  }
+
+  if (typeof input.code === "string") {
+    updates.code = input.code.trim() || undefined;
   }
 
   if (typeof input.courseId === "string") {
@@ -2795,8 +3173,20 @@ export async function updateBatch(
     updates.subject = input.subject.trim() || undefined;
   }
 
+  if (typeof input.capacity === "number") {
+    updates.capacity = input.capacity;
+  }
+
   if (typeof input.schedule === "string") {
     updates.schedule = input.schedule.trim() || undefined;
+  }
+
+  if (typeof input.startDate === "string") {
+    updates.startDate = input.startDate.trim() || undefined;
+  }
+
+  if (typeof input.endDate === "string") {
+    updates.endDate = input.endDate.trim() || undefined;
   }
 
   if (Array.isArray(input.studentIds)) {
@@ -2815,6 +3205,22 @@ export async function updateBatch(
 
   const updatedBatch = await collection.findOne({ id: batchId });
   return updatedBatch ? stripMongoId(updatedBatch) : null;
+}
+
+export async function deleteBatch(batchId: string) {
+  const collection = await getCollection<Batch>(COLLECTIONS.batches);
+  const assignmentCollection = await getCollection<TeacherBatchAssignment>(
+    COLLECTIONS.teacherBatchAssignments,
+  );
+
+  const batch = await collection.findOne({ id: batchId });
+
+  if (!batch) {
+    throw new Error("Batch not found.");
+  }
+
+  await assignmentCollection.deleteMany({ batchId });
+  await collection.deleteOne({ id: batchId });
 }
 
 export async function assignTeacherToBatch(input: {
@@ -5226,4 +5632,162 @@ export async function getAdminNotificationRecipientIds() {
     .toArray();
 
   return admins.map((admin) => admin.id);
+}
+
+// =========================
+// Homework Data-Store Functions
+// =========================
+
+export async function createHomework(input: {
+  title: string;
+  description?: string;
+  subject?: string;
+  hwType: string;
+  maxMarks: number;
+  dueDate: string;
+  batchId: string;
+  batchName?: string;
+  allowLateSubmission: boolean;
+  attachmentUrl?: string;
+  createdBy: string;
+  createdByName?: string;
+}) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  const homework: HomeworkItem = {
+    id: randomUUID(),
+    title: input.title,
+    description: input.description,
+    subject: input.subject,
+    hwType: input.hwType as HomeworkItem["hwType"],
+    maxMarks: input.maxMarks,
+    dueDate: input.dueDate,
+    batchId: input.batchId,
+    batchName: input.batchName,
+    allowLateSubmission: input.allowLateSubmission,
+    attachmentUrl: input.attachmentUrl,
+    createdBy: input.createdBy,
+    createdByName: input.createdByName,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(homework);
+  return homework;
+}
+
+export async function getHomeworkById(id: string) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  const hw = await collection.findOne({ id });
+  return hw ? stripMongoId(hw) : null;
+}
+
+export async function getHomeworkForBatch(batchId: string) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  const items = await collection.find({ batchId }).sort({ createdAt: -1 }).toArray();
+  return items.map(stripMongoId);
+}
+
+export async function getHomeworkForTeacher(teacherId: string) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  const items = await collection.find({ createdBy: teacherId }).sort({ createdAt: -1 }).toArray();
+  return items.map(stripMongoId);
+}
+
+export async function getHomeworkForStudent(studentBatchIds: string[]) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  const items = await collection
+    .find({ batchId: { $in: studentBatchIds } })
+    .sort({ createdAt: -1 })
+    .toArray();
+  return items.map(stripMongoId);
+}
+
+export async function updateHomework(
+  id: string,
+  updates: Partial<Omit<HomeworkItem, "id" | "createdBy" | "createdAt">>,
+) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  await collection.updateOne(
+    { id },
+    { $set: { ...updates, updatedAt: new Date().toISOString() } },
+  );
+  return getHomeworkById(id);
+}
+
+export async function deleteHomework(id: string) {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  await collection.deleteOne({ id });
+}
+
+export async function submitHomework(input: {
+  homeworkId: string;
+  studentId: string;
+  studentName: string;
+  content?: string;
+  attachmentUrl?: string;
+}) {
+  const subsCollection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+  const existing = await subsCollection.findOne({
+    homeworkId: input.homeworkId,
+    studentId: input.studentId,
+  });
+  if (existing) {
+    await subsCollection.updateOne(
+      { _id: existing._id },
+      {
+        $set: {
+          content: input.content,
+          attachmentUrl: input.attachmentUrl,
+          submittedAt: new Date().toISOString(),
+        },
+      },
+    );
+    const updated = await subsCollection.findOne({ _id: existing._id });
+    return updated ? stripMongoId(updated) : null;
+  }
+  const submission: HomeworkSubmission = {
+    id: randomUUID(),
+    homeworkId: input.homeworkId,
+    studentId: input.studentId,
+    studentName: input.studentName,
+    content: input.content,
+    attachmentUrl: input.attachmentUrl,
+    submittedAt: new Date().toISOString(),
+    status: "submitted",
+  };
+  await subsCollection.insertOne(submission);
+  return submission;
+}
+
+export async function getSubmissionsForHomework(homeworkId: string) {
+  const collection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+  const items = await collection.find({ homeworkId }).sort({ submittedAt: -1 }).toArray();
+  return items.map(stripMongoId);
+}
+
+export async function getSubmissionForStudent(homeworkId: string, studentId: string) {
+  const collection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+  const sub = await collection.findOne({ homeworkId, studentId });
+  return sub ? stripMongoId(sub) : null;
+}
+
+export async function gradeHomeworkSubmission(input: {
+  submissionId: string;
+  marks: number;
+  feedback?: string;
+  gradedBy: string;
+}) {
+  const collection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+  await collection.updateOne(
+    { id: input.submissionId },
+    {
+      $set: {
+        marks: input.marks,
+        feedback: input.feedback,
+        gradedBy: input.gradedBy,
+        status: "graded" as const,
+        gradedAt: new Date().toISOString(),
+      },
+    },
+  );
+  const updated = await collection.findOne({ id: input.submissionId });
+  return updated ? stripMongoId(updated) : null;
 }

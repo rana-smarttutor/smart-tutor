@@ -1105,6 +1105,12 @@ export function RegistrationForm() {
           </span>
         </button>
 
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+          <p className="text-[11px] font-medium text-amber-800">
+            Password reset is only available after administrator verification. Please remember your password or contact our team for assistance.
+          </p>
+        </div>
+
         <p className="text-center text-xs text-slate-400">
           Already have an account?{" "}
           <a
