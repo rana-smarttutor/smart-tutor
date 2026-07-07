@@ -154,7 +154,9 @@ export async function createEnquiry(input: {
   const collection = await getCollection(COLLECTIONS.enquiries);
   const enquiry = {
     ...input,
-    suggestedCourses: input.suggestedCourses?.length ? input.suggestedCourses : [],
+    suggestedCourses: input.suggestedCourses?.length
+      ? input.suggestedCourses
+      : [],
     createdAt: new Date().toISOString(),
     status: "new",
   };
@@ -339,9 +341,9 @@ function buildHeroTitle(
     return `Educator Console | ${user.name}`;
   }
 
-if (role === "counsellor") {
-  return `Counsellor CRM | ${user.name}`;
-}
+  if (role === "counsellor") {
+    return `Counsellor CRM | ${user.name}`;
+  }
 
   if (role === "admin") {
     return `Admin Command Center | ${user.name}`;
@@ -350,11 +352,22 @@ if (role === "counsellor") {
   return template.heroTitle;
 }
 
+const STANDARD_ADDITIONAL_COURSE_KEYS = new Set([
+  "class-6-additional",
+  "class-7-additional",
+  "class-8-additional",
+  "class-9-additional",
+  "class-10-additional",
+  "class-11-additional",
+  "class-12-additional",
+]);
+
 function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
   const templateKey =
     document.standardKey ??
     inferCourseTemplateKey(document.title) ??
     DEFAULT_COURSE_TEMPLATE_KEY;
+
   const template =
     getCourseTemplateByKey(templateKey) ??
     getCourseTemplateByKey(DEFAULT_COURSE_TEMPLATE_KEY);
@@ -363,16 +376,28 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
     throw new Error("Default course template could not be resolved.");
   }
 
+  // Class 6–12 programme pages must always use current library data.
+  // This prevents old MongoDB course information from appearing.
+  if (STANDARD_ADDITIONAL_COURSE_KEYS.has(template.standardKey)) {
+    return {
+      id: document.id,
+      ...template,
+    } satisfies CourseItem;
+  }
+
   return {
     id: document.id,
     category: document.category ?? template.category,
     stream: document.stream ?? template.stream ?? "General",
     sections: document.sections?.length
       ? (() => {
-          const valid = document.sections.filter((s) =>
-            template.sections.includes(s),
+          const validSections = document.sections.filter((section) =>
+            template.sections.includes(section),
           );
-          return valid.length ? valid : template.sections;
+
+          return validSections.length
+            ? validSections
+            : template.sections;
         })()
       : template.sections,
     statusLabel: document.statusLabel ?? template.statusLabel,
@@ -395,7 +420,9 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
       ? document.subjectsCovered
       : template.subjectsCovered,
     points: document.points?.length ? document.points : template.points,
-    audience: document.audience?.length ? document.audience : template.audience,
+    audience: document.audience?.length
+      ? document.audience
+      : template.audience,
   } satisfies CourseItem;
 }
 
@@ -972,10 +999,7 @@ export async function getNotificationsForUser(userId: string) {
   );
 
   return stripMongoIds(
-    await collection
-      .find({ userId })
-      .sort({ createdAt: -1 })
-      .toArray(),
+    await collection.find({ userId }).sort({ createdAt: -1 }).toArray(),
   );
 }
 
@@ -1182,7 +1206,9 @@ export async function deleteNotificationForUser(input: {
   return result.deletedCount > 0;
 }
 
-async function enrichWithFacultyNames(users: ManagedUser[]): Promise<ManagedUser[]> {
+async function enrichWithFacultyNames(
+  users: ManagedUser[],
+): Promise<ManagedUser[]> {
   const collection = await getUsersCollection();
   const allIds = [...new Set(users.flatMap((u) => u.assignedFacultyIds ?? []))];
   if (!allIds.length) return users;
@@ -1190,7 +1216,9 @@ async function enrichWithFacultyNames(users: ManagedUser[]): Promise<ManagedUser
   const facultyMap = new Map(facultyDocs.map((f) => [f.id, f.name]));
   return users.map((u) => ({
     ...u,
-    assignedFacultyNames: u.assignedFacultyIds?.map((id) => facultyMap.get(id) || "To be assigned soon"),
+    assignedFacultyNames: u.assignedFacultyIds?.map(
+      (id) => facultyMap.get(id) || "To be assigned soon",
+    ),
   }));
 }
 
@@ -1334,10 +1362,7 @@ export async function getStudentDirectory(educatorId?: string) {
   if (educatorId) {
     query.assignedFacultyIds = { $in: [educatorId] };
   }
-  const students = await collection
-    .find(query)
-    .sort({ name: 1 })
-    .toArray();
+  const students = await collection.find(query).sort({ name: 1 }).toArray();
   const managed = students.map(toManagedUser);
   if (!educatorId) {
     return enrichWithFacultyNames(managed);
@@ -1359,7 +1384,9 @@ export async function getEducatorsForStudent(studentId: string) {
   const student = await collection.findOne({ id: studentId, role: "student" });
   const facultyIds = student?.assignedFacultyIds ?? [];
   if (!facultyIds.length) return [];
-  const educators = await collection.find({ id: { $in: facultyIds }, role: "educator" }).toArray();
+  const educators = await collection
+    .find({ id: { $in: facultyIds }, role: "educator" })
+    .toArray();
   return educators.map(toManagedUser);
 }
 
@@ -1445,8 +1472,12 @@ export async function updateUserRecord(input: {
   if (input.profile !== undefined) {
     const existing = await collection.findOne({ id: input.id });
     if (existing) {
-      const mergedProfile = { ...(existing.profile || {}), ...(input.profile || {}) };
-      setFields.profile = Object.keys(mergedProfile).length > 0 ? mergedProfile : undefined;
+      const mergedProfile = {
+        ...(existing.profile || {}),
+        ...(input.profile || {}),
+      };
+      setFields.profile =
+        Object.keys(mergedProfile).length > 0 ? mergedProfile : undefined;
     } else {
       setFields.profile = input.profile;
     }
@@ -1496,14 +1527,23 @@ export async function assignStudentsToFaculty(
 export async function getStudentStats(): Promise<StudentStats> {
   const collection = await getUsersCollection();
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const monthStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1,
+  ).toISOString();
   const students = await collection.find({ role: "student" }).toArray();
   return {
     total: students.length,
     active: students.filter((s) => s.status === "active").length,
     atRisk: 0,
-    dropped: students.filter((s) => (s as any).status === "inactive" || (s as any).status === "dropped").length,
-    newThisMonth: students.filter((s) => s.createdAt && s.createdAt >= monthStart).length,
+    dropped: students.filter(
+      (s) =>
+        (s as any).status === "inactive" || (s as any).status === "dropped",
+    ).length,
+    newThisMonth: students.filter(
+      (s) => s.createdAt && s.createdAt >= monthStart,
+    ).length,
   };
 }
 
@@ -1536,27 +1576,38 @@ export async function getStudentDirectoryV2(filters?: {
   }
   const managed = students.map((s) => ({
     ...toManagedUser(s),
-    admissionNo: (s as any).admissionNo ?? String((s as any).admissionNumber ?? ""),
+    admissionNo:
+      (s as any).admissionNo ?? String((s as any).admissionNumber ?? ""),
     batchName: (s as any).batchName ?? "",
     attendancePercent: (s as any).attendancePercent ?? 0,
-    feesStatus: ("none" as const),
-    riskLevel: ("low" as StudentRiskLevel),
+    feesStatus: "none" as const,
+    riskLevel: "low" as StudentRiskLevel,
     photoUrl: (s as any).photoUrl ?? undefined,
   })) satisfies StudentDirectoryEntry[];
   return enrichWithFacultyNames(managed);
 }
 
-export async function computeStudentRiskScores(): Promise<{ studentId: string; riskLevel: StudentRiskLevel; score: number }[]> {
+export async function computeStudentRiskScores(): Promise<
+  { studentId: string; riskLevel: StudentRiskLevel; score: number }[]
+> {
   const collection = await getUsersCollection();
   const students = await collection.find({ role: "student" }).toArray();
-  const results: { studentId: string; riskLevel: StudentRiskLevel; score: number }[] = [];
+  const results: {
+    studentId: string;
+    riskLevel: StudentRiskLevel;
+    score: number;
+  }[] = [];
   for (const student of students) {
     let score = 50;
     const attendance = (student as any).attendancePercent ?? -1;
     if (attendance >= 0 && attendance < 50) score += 30;
     else if (attendance >= 50 && attendance < 75) score += 15;
     else if (attendance >= 75) score -= 10;
-    if ((student as any).status === "inactive" || (student as any).status === "dropped") score += 40;
+    if (
+      (student as any).status === "inactive" ||
+      (student as any).status === "dropped"
+    )
+      score += 40;
     const scoreClamped = Math.max(0, Math.min(100, score));
     let riskLevel: StudentRiskLevel = "low";
     if (scoreClamped >= 70) riskLevel = "high";
@@ -1564,7 +1615,13 @@ export async function computeStudentRiskScores(): Promise<{ studentId: string; r
     results.push({ studentId: student.id, riskLevel, score: scoreClamped });
     await collection.updateOne(
       { id: student.id },
-      { $set: { riskLevel, riskScore: scoreClamped, updatedAt: new Date().toISOString() } },
+      {
+        $set: {
+          riskLevel,
+          riskScore: scoreClamped,
+          updatedAt: new Date().toISOString(),
+        },
+      },
     );
   }
   return results;
@@ -1572,8 +1629,25 @@ export async function computeStudentRiskScores(): Promise<{ studentId: string; r
 
 export async function exportStudentsCsv(): Promise<string> {
   const collection = await getUsersCollection();
-  const students = await collection.find({ role: "student" }).sort({ name: 1 }).toArray();
-  const headers = ["admission_number", "name", "email", "phone", "gender", "date_of_birth", "father_name", "guardian_phone", "address", "batch_code", "status", "photo", "documents"];
+  const students = await collection
+    .find({ role: "student" })
+    .sort({ name: 1 })
+    .toArray();
+  const headers = [
+    "admission_number",
+    "name",
+    "email",
+    "phone",
+    "gender",
+    "date_of_birth",
+    "father_name",
+    "guardian_phone",
+    "address",
+    "batch_code",
+    "status",
+    "photo",
+    "documents",
+  ];
   const rows = students.map((s) => {
     const doc = s as any;
     return [
@@ -1590,21 +1664,29 @@ export async function exportStudentsCsv(): Promise<string> {
       s.status ?? "active",
       doc.photoUrl ?? "",
       (doc.documents ?? []).join(","),
-    ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(",");
   });
   return [headers.join(","), ...rows].join("\n");
 }
 
 export async function importStudentsFromCsv(
   rows: Record<string, string>[],
-  options: { sendWelcomeEmail?: boolean; skipDuplicates?: boolean; autoGeneratePassword?: boolean },
+  options: {
+    sendWelcomeEmail?: boolean;
+    skipDuplicates?: boolean;
+    autoGeneratePassword?: boolean;
+  },
 ): Promise<ImportResult> {
   const result: ImportResult = { imported: 0, skipped: 0, errors: [] };
   for (const row of rows) {
     try {
       if (!row.name || !row.email || !row.phone) {
         result.skipped++;
-        result.errors.push(`Row missing required fields: name=${row.name}, email=${row.email}, phone=${row.phone}`);
+        result.errors.push(
+          `Row missing required fields: name=${row.name}, email=${row.email}, phone=${row.phone}`,
+        );
         continue;
       }
       if (options.skipDuplicates) {
@@ -1614,7 +1696,11 @@ export async function importStudentsFromCsv(
           continue;
         }
       }
-      const password = row.password ?? (options.autoGeneratePassword ? Math.random().toString(36).slice(-8) + "A1!" : "Pass@123");
+      const password =
+        row.password ??
+        (options.autoGeneratePassword
+          ? Math.random().toString(36).slice(-8) + "A1!"
+          : "Pass@123");
       await createUserRecord({
         name: row.name,
         email: row.email,
@@ -1654,20 +1740,25 @@ export async function bulkUpdateStudentsFromCsv(
       }
       const student = await collection.findOne({
         role: "student",
-        $or: [
-          { admissionNo },
-          { admissionNumber: admissionNo },
-        ],
+        $or: [{ admissionNo }, { admissionNumber: admissionNo }],
       });
       if (!student) {
         result.skipped++;
-        result.errors.push(`Student not found: admission_number=${admissionNo}`);
+        result.errors.push(
+          `Student not found: admission_number=${admissionNo}`,
+        );
         continue;
       }
       const update: any = {};
       if (row.name) update.name = row.name;
-      if (row.email) { update.email = row.email; update.emailKey = row.email.toLowerCase(); }
-      if (row.phone) { update.mobile = row.phone; update.mobileKey = row.phone.replace(/[^\d]/g, "").slice(-10); }
+      if (row.email) {
+        update.email = row.email;
+        update.emailKey = row.email.toLowerCase();
+      }
+      if (row.phone) {
+        update.mobile = row.phone;
+        update.mobileKey = row.phone.replace(/[^\d]/g, "").slice(-10);
+      }
       if (row.gender) update["profile.gender"] = row.gender;
       if (row.date_of_birth) update["profile.dateOfBirth"] = row.date_of_birth;
       if (row.father_name) update["profile.fatherName"] = row.father_name;
@@ -1676,12 +1767,18 @@ export async function bulkUpdateStudentsFromCsv(
       if (row.batch_code) update.batchName = row.batch_code;
       if (row.status) update.status = row.status;
       if (row.photo) update.photoUrl = row.photo;
-      if (row.documents) update.documents = row.documents.split(",").map((d: string) => d.trim()).filter(Boolean);
+      if (row.documents)
+        update.documents = row.documents
+          .split(",")
+          .map((d: string) => d.trim())
+          .filter(Boolean);
       update.updatedAt = new Date().toISOString();
       await collection.updateOne({ id: student.id }, { $set: update });
       result.updated++;
     } catch (err: any) {
-      result.errors.push(`Error updating ${row.admission_number}: ${err.message}`);
+      result.errors.push(
+        `Error updating ${row.admission_number}: ${err.message}`,
+      );
       result.skipped++;
     }
   }
@@ -2024,9 +2121,7 @@ export async function getFeeInvoiceStudentDetails(
 
   const activeBatch = stripMongoIds(activeBatchDocuments)[0];
 
-  const selectedDate = dueDate
-    ? new Date(`${dueDate}T12:00:00`)
-    : new Date();
+  const selectedDate = dueDate ? new Date(`${dueDate}T12:00:00`) : new Date();
 
   const referenceDate = Number.isNaN(selectedDate.getTime())
     ? new Date()
@@ -2042,23 +2137,18 @@ export async function getFeeInvoiceStudentDetails(
     studentName: student.name,
     parentId: parent?.id,
 
-    parentName:
-      parent?.name ||
-      student.profile?.parentName ||
-      "",
+    parentName: parent?.name || student.profile?.parentName || "",
 
     classCourse:
-      activeBatch?.courseName?.trim() ||
-      student.program?.trim() ||
-      "",
+      activeBatch?.courseName?.trim() || student.program?.trim() || "",
 
     batch: activeBatch?.name?.trim() || "",
 
     rollNo: "",
 
-    academicYear: `${academicStartYear}-${String(
-      academicStartYear + 1,
-    ).slice(-2)}`,
+    academicYear: `${academicStartYear}-${String(academicStartYear + 1).slice(
+      -2,
+    )}`,
 
     mobileNo:
       student.mobile?.trim() ||
@@ -2336,8 +2426,7 @@ function buildDashboardAnalytics(input: {
   const attendanceRecords = input.attendanceSheets.flatMap((sheet) =>
     sheet.records
       .filter(
-        (record) =>
-          !targetStudentId || record.studentId === targetStudentId,
+        (record) => !targetStudentId || record.studentId === targetStudentId,
       )
       .map((record) => ({
         ...record,
@@ -2372,10 +2461,7 @@ function buildDashboardAnalytics(input: {
 
   const assessmentRows = input.weeklyTests.flatMap((weeklyTest) =>
     weeklyTest.results.flatMap((result) => {
-      if (
-        targetStudentId &&
-        result.studentId !== targetStudentId
-      ) {
+      if (targetStudentId && result.studentId !== targetStudentId) {
         return [];
       }
 
@@ -2438,18 +2524,15 @@ function buildDashboardAnalytics(input: {
   const subjectPerformance = [...subjectMap.entries()]
     .map(([subject, value]) => ({
       subject,
-      percentage: getAnalyticsPercent(
-        value.obtainedMarks,
-        value.totalMarks,
-      ) ?? 0,
+      percentage:
+        getAnalyticsPercent(value.obtainedMarks, value.totalMarks) ?? 0,
       resultCount: value.resultCount,
     }))
     .sort((left, right) => right.percentage - left.percentage)
     .slice(0, 4);
 
   const learningActivities = input.dailyActivities.filter(
-    (activity) =>
-      !targetStudentId || activity.studentId === targetStudentId,
+    (activity) => !targetStudentId || activity.studentId === targetStudentId,
   );
 
   const homeworkCompleted = learningActivities.filter(
@@ -2479,11 +2562,9 @@ function buildDashboardAnalytics(input: {
     learningActivities.length,
   );
 
-  const learningRates = [
-    homeworkRate,
-    assignmentRate,
-    revisionRate,
-  ].filter((value): value is number => value !== null);
+  const learningRates = [homeworkRate, assignmentRate, revisionRate].filter(
+    (value): value is number => value !== null,
+  );
 
   const completionRate = learningRates.length
     ? Math.round(
@@ -2496,9 +2577,7 @@ function buildDashboardAnalytics(input: {
     .map((activity) => activity.studyMinutes)
     .filter(
       (minutes): minutes is number =>
-        typeof minutes === "number" &&
-        Number.isFinite(minutes) &&
-        minutes >= 0,
+        typeof minutes === "number" && Number.isFinite(minutes) && minutes >= 0,
     );
 
   const averageStudyMinutes = studyMinuteEntries.length
@@ -2616,14 +2695,11 @@ function buildDashboardAnalytics(input: {
     0,
   );
 
-  const attendanceValue =
-    attendanceRate === null ? "—" : `${attendanceRate}%`;
+  const attendanceValue = attendanceRate === null ? "—" : `${attendanceRate}%`;
 
-  const assessmentValue =
-    averageScore === null ? "—" : `${averageScore}%`;
+  const assessmentValue = averageScore === null ? "—" : `${averageScore}%`;
 
-  const learningValue =
-    completionRate === null ? "—" : `${completionRate}%`;
+  const learningValue = completionRate === null ? "—" : `${completionRate}%`;
 
   let metrics: DashboardMetric[];
 
@@ -2867,14 +2943,14 @@ export async function getDashboardBundle(
   ]);
 
   const templates = config.templates as Partial<
-  Record<Role, DashboardTemplate>
->;
+    Record<Role, DashboardTemplate>
+  >;
 
-const template = templates[role] ?? templates.educator;
+  const template = templates[role] ?? templates.educator;
 
-if (!template) {
-  throw new Error("Dashboard template could not be resolved.");
-}
+  if (!template) {
+    throw new Error("Dashboard template could not be resolved.");
+  }
 
   const linkedStudentId =
     role === "student"
@@ -4096,11 +4172,10 @@ function normalizeInstallments(
       const amount = Number(installment.amount);
       const paidAmount = Number(installment.paidAmount ?? 0);
 
-      if (
-        !Number.isInteger(installmentNumber) ||
-        installmentNumber < 1
-      ) {
-        throw new Error("Each installment must have a valid installment number.");
+      if (!Number.isInteger(installmentNumber) || installmentNumber < 1) {
+        throw new Error(
+          "Each installment must have a valid installment number.",
+        );
       }
 
       if (usedNumbers.has(installmentNumber)) {
@@ -4144,11 +4219,7 @@ function normalizeInstallments(
           paidAmount > 0 && typeof installment.paidDate === "string"
             ? installment.paidDate
             : undefined,
-        status: getInstallmentStatus(
-          amount,
-          paidAmount,
-          installment.dueDate,
-        ),
+        status: getInstallmentStatus(amount, paidAmount, installment.dueDate),
         receiptNumber: installment.receiptNumber?.trim() || undefined,
         paymentMode: installment.paymentMode?.trim() || undefined,
         notes: installment.notes?.trim() || undefined,
@@ -4174,10 +4245,7 @@ function calculatePlanAmounts(installments: FeeInstallment[]) {
     totalFee,
     paidAmount,
     pendingAmount,
-    status:
-      pendingAmount === 0
-        ? ("completed" as const)
-        : ("active" as const),
+    status: pendingAmount === 0 ? ("completed" as const) : ("active" as const),
   };
 }
 
@@ -4191,10 +4259,7 @@ export async function getFeeInstallmentPlansForRole(
 
   if (role === "admin") {
     return stripMongoIds(
-      await collection
-        .find({})
-        .sort({ createdAt: -1 })
-        .toArray(),
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
   }
 
@@ -4385,17 +4450,11 @@ export async function updateFeeInstallmentPlan(
     updates.status = amounts.status;
   }
 
-  if (
-    input.status === "cancelled" &&
-    existingPlan.paidAmount === 0
-  ) {
+  if (input.status === "cancelled" && existingPlan.paidAmount === 0) {
     updates.status = "cancelled";
   }
 
-  await collection.updateOne(
-    { id: planId },
-    { $set: updates },
-  );
+  await collection.updateOne({ id: planId }, { $set: updates });
 
   const updatedPlan = await collection.findOne({ id: planId });
 
@@ -4481,20 +4540,14 @@ function calculateTeacherPayoutAmounts(input: {
   };
 }
 
-export async function getTeacherPayoutsForRole(
-  role: Role,
-  userId?: string,
-) {
+export async function getTeacherPayoutsForRole(role: Role, userId?: string) {
   const collection = await getCollection<TeacherPayout>(
     COLLECTIONS.teacherPayouts,
   );
 
   if (role === "admin") {
     return stripMongoIds(
-      await collection
-        .find({})
-        .sort({ month: -1, createdAt: -1 })
-        .toArray(),
+      await collection.find({}).sort({ month: -1, createdAt: -1 }).toArray(),
     );
   }
 
@@ -4632,8 +4685,7 @@ export async function updateTeacherPayout(
       typeof input.completedClasses === "number"
         ? input.completedClasses
         : existingPayout.completedClasses,
-    bonus:
-      typeof input.bonus === "number" ? input.bonus : existingPayout.bonus,
+    bonus: typeof input.bonus === "number" ? input.bonus : existingPayout.bonus,
     deductions:
       typeof input.deductions === "number"
         ? input.deductions
@@ -4719,11 +4771,7 @@ function getCrmSummary(leads: CrmLead[]): CrmDashboardSummary {
 
   const tomorrowStart = todayStart + 24 * 60 * 60 * 1000;
 
-  const monthStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1,
-  ).getTime();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
   const activeLeads = leads.filter(
     (lead) => lead.status !== "lost" && lead.status !== "admitted",
@@ -4756,8 +4804,7 @@ function getCrmSummary(leads: CrmLead[]): CrmDashboardSummary {
 
   const demoScheduled = leads.filter(
     (lead) =>
-      lead.demo.status === "scheduled" ||
-      lead.demo.status === "rescheduled",
+      lead.demo.status === "scheduled" || lead.demo.status === "rescheduled",
   ).length;
 
   const admissionsConfirmed = leads.filter(
@@ -4876,9 +4923,8 @@ function getCrmSummary(leads: CrmLead[]): CrmDashboardSummary {
         (total, lead) => total + (lead.admission.paidAmount || 0),
         0,
       ),
-      admissions: matchingLeads.filter(
-        (lead) => lead.status === "admitted",
-      ).length,
+      admissions: matchingLeads.filter((lead) => lead.status === "admitted")
+        .length,
     };
   });
 
@@ -4929,18 +4975,12 @@ export async function getCrmStaff() {
   const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
 
   return stripMongoIds(
-    await collection
-      .find({})
-      .sort({ active: -1, name: 1 })
-      .toArray(),
+    await collection.find({}).sort({ active: -1, name: 1 }).toArray(),
   );
 }
 
 export async function getCrmAdminWorkspace() {
-  const [leads, staff] = await Promise.all([
-    getCrmLeads(),
-    getCrmStaff(),
-  ]);
+  const [leads, staff] = await Promise.all([getCrmLeads(), getCrmStaff()]);
 
   return {
     leads,
@@ -4957,8 +4997,7 @@ export async function createCrmLead(
   const lead: CrmLead = {
     ...input,
     id: `crm-lead-${randomUUID()}`,
-    status:
-      input.interest === "not-interested" ? "lost" : input.status,
+    status: input.interest === "not-interested" ? "lost" : input.status,
     createdAt: now,
     updatedAt: now,
     activityLog: [
@@ -4986,12 +5025,7 @@ export async function updateCrmLead(input: {
   updates: Partial<
     Omit<
       CrmLead,
-      | "id"
-      | "createdAt"
-      | "updatedAt"
-      | "activityLog"
-      | "demo"
-      | "admission"
+      "id" | "createdAt" | "updatedAt" | "activityLog" | "demo" | "admission"
     >
   > & {
     demo?: Partial<CrmLead["demo"]>;
@@ -5015,7 +5049,7 @@ export async function updateCrmLead(input: {
   const nextStatus =
     nextInterest === "not-interested"
       ? "lost"
-      : input.updates.status ?? existing.status;
+      : (input.updates.status ?? existing.status);
 
   const updatedLead: CrmLead = {
     ...existing,
@@ -5134,7 +5168,6 @@ export async function deleteCrmStaff(staffId: string) {
   return deleted ? stripMongoId(deleted) : null;
 }
 
-
 export async function getCrmCounsellorStaff(userId: string) {
   const collection = await getCollection<CrmStaff>(COLLECTIONS.crmStaff);
 
@@ -5194,10 +5227,7 @@ export async function createOrLinkCrmCounsellor(input: {
 
   const existing = stripMongoId(existingDocument);
 
-  if (
-    existing.linkedUserId &&
-    existing.linkedUserId !== input.userId
-  ) {
+  if (existing.linkedUserId && existing.linkedUserId !== input.userId) {
     throw new Error(
       "This CRM staff profile is already linked to another counsellor account.",
     );
@@ -5213,10 +5243,7 @@ export async function createOrLinkCrmCounsellor(input: {
     updatedAt: new Date().toISOString(),
   };
 
-  await collection.updateOne(
-    { id: existing.id },
-    { $set: updated },
-  );
+  await collection.updateOne({ id: existing.id }, { $set: updated });
 
   return updated;
 }
@@ -5259,9 +5286,11 @@ async function ensurePlacementIndexes() {
   return placementIndexesPromise;
 }
 
-export async function getPlacementJobs(options: {
-  includeUnpublished?: boolean;
-} = {}) {
+export async function getPlacementJobs(
+  options: {
+    includeUnpublished?: boolean;
+  } = {},
+) {
   const collection = await getCollection<PlacementJob>(
     COLLECTIONS.placementJobs,
   );
@@ -5325,7 +5354,9 @@ export async function createPlacementJob(input: {
     jobType: input.jobType,
     deadline: input.deadline,
     description: input.description.trim(),
-    skills: [...new Set(input.skills.map((skill) => skill.trim()).filter(Boolean))],
+    skills: [
+      ...new Set(input.skills.map((skill) => skill.trim()).filter(Boolean)),
+    ],
     applicationQuestions: input.applicationQuestions,
     status: input.status,
     createdBy: input.createdBy,
@@ -5405,9 +5436,7 @@ export async function updatePlacementJob(
 
   if (Array.isArray(input.skills)) {
     updates.skills = [
-      ...new Set(
-        input.skills.map((skill) => skill.trim()).filter(Boolean),
-      ),
+      ...new Set(input.skills.map((skill) => skill.trim()).filter(Boolean)),
     ];
   }
 
@@ -5418,10 +5447,7 @@ export async function updatePlacementJob(
   if (input.status) {
     updates.status = input.status;
 
-    if (
-      input.status === "published" &&
-      existingJob.status !== "published"
-    ) {
+    if (input.status === "published" && existingJob.status !== "published") {
       updates.publishedAt = new Date().toISOString();
     }
   }
@@ -5443,9 +5469,7 @@ export async function updatePlacementJob(
 export async function deletePlacementJob(jobId: string) {
   const normalizedJobId = jobId.trim();
 
-  const jobs = await getCollection<PlacementJob>(
-    COLLECTIONS.placementJobs,
-  );
+  const jobs = await getCollection<PlacementJob>(COLLECTIONS.placementJobs);
 
   const applications = await getCollection<PlacementApplication>(
     COLLECTIONS.placementApplications,
@@ -5576,9 +5600,7 @@ export async function createPlacementApplication(input: {
     phone: input.phone.trim(),
     programme: input.programme.trim(),
     skills: [
-      ...new Set(
-        input.skills.map((skill) => skill.trim()).filter(Boolean),
-      ),
+      ...new Set(input.skills.map((skill) => skill.trim()).filter(Boolean)),
     ],
     resumeUrl: input.resumeUrl?.trim() || undefined,
     experience: input.experience?.trim() || undefined,
@@ -5692,13 +5714,19 @@ export async function getHomeworkById(id: string) {
 
 export async function getHomeworkForBatch(batchId: string) {
   const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
-  const items = await collection.find({ batchId }).sort({ createdAt: -1 }).toArray();
+  const items = await collection
+    .find({ batchId })
+    .sort({ createdAt: -1 })
+    .toArray();
   return items.map(stripMongoId);
 }
 
 export async function getHomeworkForTeacher(teacherId: string) {
   const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
-  const items = await collection.find({ createdBy: teacherId }).sort({ createdAt: -1 }).toArray();
+  const items = await collection
+    .find({ createdBy: teacherId })
+    .sort({ createdAt: -1 })
+    .toArray();
   return items.map(stripMongoId);
 }
 
@@ -5735,7 +5763,9 @@ export async function submitHomework(input: {
   content?: string;
   attachmentUrl?: string;
 }) {
-  const subsCollection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+  const subsCollection = await getCollection<HomeworkSubmission>(
+    COLLECTIONS.homeworkSubmissions,
+  );
   const existing = await subsCollection.findOne({
     homeworkId: input.homeworkId,
     studentId: input.studentId,
@@ -5769,13 +5799,23 @@ export async function submitHomework(input: {
 }
 
 export async function getSubmissionsForHomework(homeworkId: string) {
-  const collection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
-  const items = await collection.find({ homeworkId }).sort({ submittedAt: -1 }).toArray();
+  const collection = await getCollection<HomeworkSubmission>(
+    COLLECTIONS.homeworkSubmissions,
+  );
+  const items = await collection
+    .find({ homeworkId })
+    .sort({ submittedAt: -1 })
+    .toArray();
   return items.map(stripMongoId);
 }
 
-export async function getSubmissionForStudent(homeworkId: string, studentId: string) {
-  const collection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+export async function getSubmissionForStudent(
+  homeworkId: string,
+  studentId: string,
+) {
+  const collection = await getCollection<HomeworkSubmission>(
+    COLLECTIONS.homeworkSubmissions,
+  );
   const sub = await collection.findOne({ homeworkId, studentId });
   return sub ? stripMongoId(sub) : null;
 }
@@ -5786,7 +5826,9 @@ export async function gradeHomeworkSubmission(input: {
   feedback?: string;
   gradedBy: string;
 }) {
-  const collection = await getCollection<HomeworkSubmission>(COLLECTIONS.homeworkSubmissions);
+  const collection = await getCollection<HomeworkSubmission>(
+    COLLECTIONS.homeworkSubmissions,
+  );
   await collection.updateOne(
     { id: input.submissionId },
     {
