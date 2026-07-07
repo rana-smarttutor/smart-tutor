@@ -30,6 +30,11 @@ const RESULT_CATEGORIES = [
     label: "12TH HSC ARTS",
     image: "/hof/12th Hsc arts.png",
   },
+   {
+    id: "12-CBSE Science",
+    label: "12TH CBSE SCIENCE",
+    image: "/hof/12th CBSE science.jpg",
+  },
   {
     id: "jee",
     label: "JEE Main",
@@ -44,6 +49,16 @@ const RESULT_CATEGORIES = [
     id: "cet",
     label: "CET",
     image: "/hof/CET.png",
+  },
+   {
+    id: "MBA",
+    label: "MBA",
+    image: "/hof/MBA.jpg",
+  },
+   {
+    id: "IMU CET",
+    label: "IMU CET",
+    image: "/hof/IMU CET.jpg",
   },
   {
     id: "banking",
