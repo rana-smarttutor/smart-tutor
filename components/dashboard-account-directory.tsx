@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { ManagedUser, Role } from "@/lib/types";
 
@@ -33,6 +33,8 @@ export function DashboardAccountDirectory({
   const [pendingRequests, setPendingRequests] = useState<ManagedUser[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [createForm, setCreateForm] = useState<CreateAccountForm>({
     name: "",
     email: "",
@@ -141,21 +143,28 @@ export function DashboardAccountDirectory({
   async function handleSave(userId: string) {
     const draft = drafts[userId];
     if (!draft) return;
+    const payloadData: Record<string, unknown> = {
+      id: draft.id,
+      name: draft.name,
+      email: draft.email,
+      role: draft.role,
+      program: draft.program,
+      status: draft.status,
+      password: draft.passwordHint,
+      verified: draft.verified,
+      assignedFacultyIds: draft.assignedFacultyIds ?? null,
+    };
+    if (draft.profilePhoto !== undefined) {
+      payloadData.profilePhoto = draft.profilePhoto;
+    }
+    if (draft.profile?.chatDisabled !== undefined) {
+      payloadData.profile = { chatDisabled: draft.profile.chatDisabled };
+    }
     const response = await fetch("/api/users", {
       method: "PATCH",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: draft.id,
-        name: draft.name,
-        email: draft.email,
-        role: draft.role,
-        program: draft.program,
-        status: draft.status,
-        password: draft.passwordHint,
-        verified: draft.verified,
-        assignedFacultyIds: draft.assignedFacultyIds ?? null,
-      }),
+      body: JSON.stringify(payloadData),
     });
     const payload = (await response.json()) as { user?: ManagedUser; error?: string };
     if (!response.ok || !payload.user) {
@@ -533,122 +542,235 @@ export function DashboardAccountDirectory({
             ) : null}
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-[var(--color-border)] bg-[var(--color-panel)]">
-                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                    Person
-                  </th>
-                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                    Role
-                  </th>
-                  <th className="hidden px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)] sm:table-cell">
-                    Program
-                  </th>
-                  <th className="hidden px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)] md:table-cell">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                    Verified
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-sm text-[var(--color-muted)]">
-                      No accounts found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((user) => {
-                    const rc = getRoleColor(user.role);
-                    const ss = getStatusStyle(user.status);
-                    return (
-                      <tr
-                        key={user.id}
-                        className="border-b border-[var(--color-border)] last:border-b-0 hover:bg-[var(--color-panel)]/50"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-bold text-white"
-                              style={{ background: rc.color }}
-                            >
-                              {user.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-[var(--color-heading)]">{user.name}</div>
-                              <div className="text-xs text-[var(--color-muted)]">{user.email}</div>
-                            </div>
+          {/* ID Card Grid */}
+          {filteredUsers.length === 0 ? (
+            <div className="rounded-xl border border-[var(--color-border)] px-4 py-12 text-center text-sm text-[var(--color-muted)]">
+              No accounts found.
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredUsers.map((user) => {
+                const rc = getRoleColor(user.role);
+                const ss = getStatusStyle(user.status);
+                const p = user.profile;
+                return (
+                  <div
+                    key={user.id}
+                    className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm transition-all hover:shadow-md"
+                  >
+                    {/* Top accent bar */}
+                    <div className="h-2" style={{ background: rc.color }} />
+
+                    {/* Card header: photo + identity */}
+                    <div className="p-5 pb-3">
+                      <div className="flex items-start gap-4">
+                        {user.profilePhoto ? (
+                          <img src={user.profilePhoto} alt={user.name} className="h-16 w-16 rounded-xl object-cover ring-2 ring-white shadow-sm" />
+                        ) : (
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-xl font-bold text-white shadow-sm" style={{ background: rc.color }}>
+                            {user.name.charAt(0).toUpperCase()}
                           </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-                            style={{ background: rc.bg, color: rc.color }}
-                          >
-                            <i className={`bi ${getRoleIcon(user.role)}`} />
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="hidden px-4 py-3 text-sm text-[var(--color-heading)] sm:table-cell">
-                          {user.program || "—"}
-                        </td>
-                        <td className="hidden px-4 py-3 md:table-cell">
-                          <span
-                            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
-                            style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}
-                          >
-                            <span className="h-1.5 w-1.5 rounded-full" style={{ background: ss.color }} />
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {user.verified ? (
-                            <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600">
-                              <i className="bi bi-patch-check-fill" />
-                              Verified
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-base font-bold text-[var(--color-heading)] truncate">{user.name}</p>
+                          <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">ID: {user.id.slice(0, 8).toUpperCase()}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: rc.bg, color: rc.color }}>
+                              <i className={`bi ${getRoleIcon(user.role)}`} />
+                              {user.role}
                             </span>
-                          ) : (
-                            <span className="text-xs text-[var(--color-muted)]">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-center gap-1">
-                            <button
-                              onClick={() => setEditingUserId(isEditing(user.id) ? null : user.id)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-xs font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                              title="Edit"
-                            >
-                              <i className="bi bi-pencil" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(user.id)}
-                              className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-500/10"
-                              title="Delete"
-                            >
-                              <i className="bi bi-trash" />
-                            </button>
+                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
+                              <span className="h-1.5 w-1.5 rounded-full" style={{ background: ss.color }} />
+                              {user.status}
+                            </span>
+                            {user.verified ? (
+                              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-600">
+                                <i className="bi bi-patch-check-fill" />
+                                Verified
+                              </span>
+                            ) : null}
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contact row */}
+                    <div className="border-t border-[var(--color-border)] px-5 py-3">
+                      <div className="grid gap-1.5 text-xs">
+                        <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                          <i className="bi bi-envelope w-3.5" />
+                          <span className="truncate text-[var(--color-body)]">{user.email}</span>
+                        </div>
+                        {user.mobile && (
+                          <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                            <i className="bi bi-telephone w-3.5" />
+                            <span className="text-[var(--color-body)]">{user.mobile}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Profile details */}
+                    <div className="border-t border-[var(--color-border)] px-5 py-3">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                        {/* Shared fields */}
+                        {user.program ? (
+                          <div className="col-span-2">
+                            <span className="font-semibold text-[var(--color-muted)]">Program</span>
+                            <p className="text-[var(--color-heading)] font-medium">{user.program}</p>
+                          </div>
+                        ) : null}
+
+                        {p?.dob && (
+                          <div>
+                            <span className="font-semibold text-[var(--color-muted)]">DOB</span>
+                            <p className="text-[var(--color-heading)]">{p.dob}</p>
+                          </div>
+                        )}
+
+                        {p?.gender && (
+                          <div>
+                            <span className="font-semibold text-[var(--color-muted)]">Gender</span>
+                            <p className="text-[var(--color-heading)]">{p.gender}</p>
+                          </div>
+                        )}
+
+                        {/* Address */}
+                        {(p?.addressLine1 || p?.city || p?.state) && (
+                          <div className="col-span-2">
+                            <span className="font-semibold text-[var(--color-muted)]">Address</span>
+                            <p className="text-[var(--color-heading)]">
+                              {[p.addressLine1, p.addressLine2].filter(Boolean).join(", ")}
+                              {p.city ? `, ${p.city}` : ""}{p.state ? `, ${p.state}` : ""}{p.pincode ? ` - ${p.pincode}` : ""}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Student-specific */}
+                        {user.role === "student" && (
+                          <>
+                            {p?.parentName && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Parent</span>
+                                <p className="text-[var(--color-heading)]">{p.parentName}</p>
+                                {p.parentMobile && <p className="text-[var(--color-body)]">{p.parentMobile}</p>}
+                                {p.parentEmail && <p className="text-[var(--color-body)] truncate">{p.parentEmail}</p>}
+                              </div>
+                            )}
+                            {p?.courseWantedTitle && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Course</span>
+                                <p className="text-[var(--color-heading)]">{p.courseWantedTitle}</p>
+                              </div>
+                            )}
+                            {p?.studentType && (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">Type</span>
+                                <p className="text-[var(--color-heading)]">{p.studentType}</p>
+                              </div>
+                            )}
+                            {p?.latestQualification && (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
+                                <p className="text-[var(--color-heading)]">{p.latestQualification}{p.latestAcademicScore ? ` - ${p.latestAcademicScore}` : ""}</p>
+                              </div>
+                            )}
+                            {(p?.weakSubjects?.length ?? 0) > 0 && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Weak Subjects</span>
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                  {p!.weakSubjects!.map((s, i) => (
+                                    <span key={i} className="rounded-md bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">{s}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {(p?.strongSubjects?.length ?? 0) > 0 && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Strong Subjects</span>
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                  {p!.strongSubjects!.map((s, i) => (
+                                    <span key={i} className="rounded-md bg-green-50 px-1.5 py-0.5 text-[11px] font-medium text-green-600">{s}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {/* Educator-specific */}
+                        {user.role === "educator" && (
+                          <>
+                            {p?.qualification && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
+                                <p className="text-[var(--color-heading)]">{p.qualification}</p>
+                              </div>
+                            )}
+                            {p?.experience && (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">Experience</span>
+                                <p className="text-[var(--color-heading)]">{p.experience}</p>
+                              </div>
+                            )}
+                            {(p?.subjects?.length ?? 0) > 0 && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Subjects</span>
+                                <div className="flex flex-wrap gap-1 mt-0.5">
+                                  {p!.subjects!.map((s, i) => (
+                                    <span key={i} className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-600">{s}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {(p?.examQualifications?.length ?? 0) > 0 && (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">Exam Qualifications</span>
+                                <div className="mt-0.5 space-y-1">
+                                  {p!.examQualifications!.map((eq, i) => (
+                                    <div key={i} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-1.5 text-[11px]">
+                                      <span className="font-semibold text-[var(--color-heading)]">{eq.examName}</span>
+                                      {eq.score && <span className="ml-2 text-[var(--color-body)]">Score: {eq.score}</span>}
+                                      {eq.year && <span className="ml-2 text-[var(--color-muted)]">({eq.year})</span>}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="border-t border-[var(--color-border)] px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setEditingUserId(isEditing(user.id) ? null : user.id)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)] transition-colors"
+                        >
+                          <i className="bi bi-pencil" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user.id)}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors"
+                        >
+                          <i className="bi bi-trash" />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Edit Modal */}
           {editingUserId ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm">
-              <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+              <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-[1.5rem] border border-[var(--color-border)] bg-white shadow-2xl">
                 <div
                   className="flex-shrink-0 rounded-t-[1.5rem] px-6 py-4 text-white"
                   style={{
@@ -659,12 +781,80 @@ export function DashboardAccountDirectory({
                     <i className="bi bi-pencil-square me-2" />
                     Edit Account
                   </h3>
+                  {filteredUsers.find((u) => u.id === editingUserId) && (
+                    <p className="mt-0.5 text-sm text-white/70">
+                      {filteredUsers.find((u) => u.id === editingUserId)!.name}
+                    </p>
+                  )}
                 </div>
                 <div className="flex-1 overflow-y-auto px-6 py-5">
                   {filteredUsers.filter((u) => u.id === editingUserId).map((user) => {
                     const d = drafts[user.id] ?? user;
+                    async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setUploadingPhoto(true);
+                      try {
+                        const formData = new FormData();
+                        formData.append("file", file);
+                        formData.append("field", "photo");
+                        const res = await fetch("/api/upload/signup", { method: "POST", body: formData });
+                        const data = await res.json();
+                        if (data.success) {
+                          setDrafts((c) => ({ ...c, [user.id]: { ...d, profilePhoto: data.url } }));
+                        }
+                      } catch {
+                        // ignore
+                      } finally {
+                        setUploadingPhoto(false);
+                      }
+                    }
                     return (
                       <div key={user.id} className="grid gap-3">
+                        {/* Profile Photo */}
+                        <div className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
+                          {(d.profilePhoto || user.profilePhoto) ? (
+                            <img
+                              src={d.profilePhoto || user.profilePhoto}
+                              alt={user.name}
+                              className="h-16 w-16 rounded-xl object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl font-bold text-white"
+                              style={{ background: getRoleColor(user.role).color }}
+                            >
+                              {user.name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-black text-[var(--color-heading)]">{user.name}</p>
+                            <p className="text-xs text-[var(--color-muted)]">{user.email}</p>
+                            {user.mobile && (
+                              <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                                <i className="bi bi-telephone me-1" />
+                                {user.mobile}
+                              </p>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => photoInputRef.current?.click()}
+                              disabled={uploadingPhoto}
+                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                            >
+                              <i className="bi bi-camera" />
+                              {uploadingPhoto ? "Uploading..." : "Change Photo"}
+                            </button>
+                            <input
+                              ref={photoInputRef}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              className="hidden"
+                              onChange={handlePhotoUpload}
+                            />
+                          </div>
+                        </div>
+
                         <input
                           value={d.name}
                           onChange={(e) =>
@@ -735,6 +925,23 @@ export function DashboardAccountDirectory({
                             className="h-5 w-5 text-[var(--color-primary)]"
                           />
                           Verified Badge
+                        </label>
+                        <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
+                          <input
+                            type="checkbox"
+                            checked={d.profile?.chatDisabled ?? false}
+                            onChange={(e) =>
+                              setDrafts((c) => ({
+                                ...c,
+                                [user.id]: {
+                                  ...d,
+                                  profile: { ...(d.profile || {}), chatDisabled: e.target.checked },
+                                },
+                              }))
+                            }
+                            className="h-5 w-5 text-[var(--color-primary)]"
+                          />
+                          Disable Chat
                         </label>
                         {d.role === "student" && educatorOptions.length > 0 ? (
                           <div className="rounded-xl border border-[var(--color-border)] p-4">

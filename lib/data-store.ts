@@ -303,6 +303,9 @@ function toManagedUser(user: UserDocument): ManagedUser {
     passwordHint: user.password,
     linkedStudentId: user.linkedStudentId,
     assignedFacultyIds: user.assignedFacultyIds,
+    mobile: user.mobile,
+    profilePhoto: user.profile?.profilePhoto,
+    profile: user.profile,
   };
 }
 
@@ -1410,9 +1413,12 @@ export async function updateUserRecord(input: {
   status?: "active" | "pending" | "rejected";
   verified?: boolean;
   assignedFacultyIds?: string[] | null;
+  profilePhoto?: string | null;
+  profile?: Partial<UserProfile> | null;
 }) {
   const collection = await getUsersCollection();
-  const document: Partial<UserDocument> = {
+
+  const setFields: Record<string, unknown> = {
     name: input.name,
     email: input.email,
     emailKey: input.email.toLowerCase(),
@@ -1425,14 +1431,28 @@ export async function updateUserRecord(input: {
   };
 
   if (input.verified !== undefined) {
-    document.verified = input.verified;
+    setFields.verified = input.verified;
   }
 
   if (input.assignedFacultyIds !== undefined) {
-    document.assignedFacultyIds = input.assignedFacultyIds ?? undefined;
+    setFields.assignedFacultyIds = input.assignedFacultyIds ?? null;
   }
 
-  await collection.updateOne({ id: input.id }, { $set: document });
+  if (input.profilePhoto !== undefined) {
+    setFields["profile.profilePhoto"] = input.profilePhoto || null;
+  }
+
+  if (input.profile !== undefined) {
+    const existing = await collection.findOne({ id: input.id });
+    if (existing) {
+      const mergedProfile = { ...(existing.profile || {}), ...(input.profile || {}) };
+      setFields.profile = Object.keys(mergedProfile).length > 0 ? mergedProfile : undefined;
+    } else {
+      setFields.profile = input.profile;
+    }
+  }
+
+  await collection.updateOne({ id: input.id }, { $set: setFields });
   const updated = await collection.findOne({ id: input.id });
 
   if (!updated) {
@@ -1842,22 +1862,9 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
     COLLECTIONS.attendanceSheets,
   );
 
-  if (role === "admin") {
+  if (role === "admin" || role === "educator") {
     return stripMongoIds(
       await collection.find({}).sort({ date: -1, createdAt: -1 }).toArray(),
-    );
-  }
-
-  if (role === "educator") {
-    if (!userId) {
-      return [];
-    }
-
-    return stripMongoIds(
-      await collection
-        .find({ createdBy: userId })
-        .sort({ date: -1, createdAt: -1 })
-        .toArray(),
     );
   }
 
@@ -1951,10 +1958,14 @@ export async function deleteAttendanceSheet(attendanceId: string) {
 export async function getFeeInvoicesForRole(role: Role, userId?: string) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
 
-  if (role === "admin" || role === "educator") {
+  if (role === "admin") {
     return stripMongoIds(
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
+  }
+
+  if (role === "educator" || role === "counsellor") {
+    return [];
   }
 
   const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);

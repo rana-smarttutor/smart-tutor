@@ -12,8 +12,28 @@ type TimetableManagerProps = {
   onCreateLecture: () => void;
 };
 
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7); // 07:00–21:00
+const SLOTS = [
+  { startHour: 8, startMin: 30 },
+  { startHour: 10, startMin: 0 },
+  { startHour: 11, startMin: 30 },
+  { startHour: 13, startMin: 0 },
+  { startHour: 14, startMin: 30 },
+  { startHour: 16, startMin: 0 },
+  { startHour: 17, startMin: 30 },
+  { startHour: 19, startMin: 0 },
+];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function slotLabel(slot: { startHour: number; startMin: number }) {
+  return `${String(slot.startHour).padStart(2, "0")}:${String(slot.startMin).padStart(2, "0")}`;
+}
+
+function slotEndLabel(slot: { startHour: number; startMin: number }) {
+  const total = slot.startHour * 60 + slot.startMin + 90;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
   lecture: { bg: "rgba(79,70,229,0.12)", color: "var(--color-primary)" },
@@ -52,11 +72,18 @@ function getLectureDay(startsAt?: string): number {
   return (date.getDay() + 6) % 7; // Mon=0, Sun=6
 }
 
-function getLectureHour(startsAt?: string): number {
+function getLectureSlotIndex(startsAt?: string): number {
   if (!startsAt) return -1;
   const date = new Date(startsAt);
   if (isNaN(date.getTime())) return -1;
-  return date.getHours();
+  const totalMins = date.getHours() * 60 + date.getMinutes();
+  for (let i = 0; i < SLOTS.length; i++) {
+    const s = SLOTS[i];
+    const startMins = s.startHour * 60 + s.startMin;
+    const endMins = startMins + 90;
+    if (totalMins >= startMins && totalMins < endMins) return i;
+  }
+  return -1;
 }
 
 function formatTime(value?: string) {
@@ -138,12 +165,10 @@ export function TimetableManager({
 
   const todayIndex = (new Date().getDay() + 6) % 7;
 
-  function getLectureForCell(dayIndex: number, hour: number): LectureItem | undefined {
+  function getLectureForCell(dayIndex: number, slotIndex: number): LectureItem | undefined {
     return visibleLectures.find((l) => {
       if (!l.startsAt) return false;
-      const lDay = getLectureDay(l.startsAt);
-      const lHour = getLectureHour(l.startsAt);
-      return lDay === dayIndex && lHour === hour;
+      return getLectureDay(l.startsAt) === dayIndex && getLectureSlotIndex(l.startsAt) === slotIndex;
     });
   }
 
@@ -299,20 +324,21 @@ export function TimetableManager({
             ))}
 
             {/* Time rows */}
-            {HOURS.map((hour) => (
-              <React.Fragment key={`h-${hour}`}>
-                <div className="border-t border-[var(--color-border)] p-2 text-[11px] font-bold text-[var(--color-muted)]">
-                  {String(hour).padStart(2, "0")}:00
+            {SLOTS.map((slot, si) => (
+              <React.Fragment key={`s-${si}`}>
+                <div className="border-t border-[var(--color-border)] p-2 text-[11px] font-bold text-[var(--color-muted)] leading-tight">
+                  <span className="block">{slotLabel(slot)}</span>
+                  <span className="block text-[9px] opacity-60">– {slotEndLabel(slot)}</span>
                 </div>
                 {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
-                  const lecture = getLectureForCell(dayIndex, hour);
+                  const lecture = getLectureForCell(dayIndex, si);
                   const isToday = dayIndex === todayIndex;
                   return (
-                    <div
-                      key={`c-${hour}-${dayIndex}`}
-                      className={`border-t border-[var(--color-border)] border-l border-[var(--color-border)] p-1 min-h-[52px] relative ${
-                        isToday ? "bg-[var(--color-highlight)]" : ""
-                      }`}
+                      <div
+                        key={`c-${si}-${dayIndex}`}
+                        className={`border-t border-[var(--color-border)] border-l border-[var(--color-border)] p-1 min-h-[72px] relative ${
+                          isToday ? "bg-[var(--color-highlight)]" : ""
+                        }`}
                     >
                       {lecture ? (
                         <div

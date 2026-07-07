@@ -571,8 +571,8 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
 
       {/* Add Modal */}
       {showAddModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm overflow-y-auto py-8">
-          <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 overflow-y-auto py-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-white shadow-2xl my-auto">
             <div className="rounded-t-2xl bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-strong)] px-6 py-5">
               <h3 className="text-lg font-bold text-white">Add Batch</h3>
             </div>
@@ -732,8 +732,8 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
 
       {/* Edit Modal */}
       {showEditModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm overflow-y-auto py-8">
-          <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] shadow-2xl my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 overflow-y-auto py-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-[var(--color-border)] bg-white shadow-2xl my-auto">
             <div className="rounded-t-2xl bg-gradient-to-r from-[var(--color-warning)] to-[var(--color-warning-strong)] px-6 py-5">
               <h3 className="text-lg font-bold text-white">Edit Batch</h3>
             </div>
@@ -827,8 +827,8 @@ export function BatchManager({ managedUsers }: BatchManagerProps) {
 
       {/* Delete confirm */}
       {deleteConfirmId ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-2xl">
             <h3 className="text-lg font-bold text-[var(--color-heading)]">Delete batch?</h3>
             <p className="mt-2 text-sm text-[var(--color-muted)]">This will also remove all teacher assignments. This cannot be undone.</p>
             <div className="mt-6 flex gap-3">

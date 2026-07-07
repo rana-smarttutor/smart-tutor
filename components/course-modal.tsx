@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useMemo } from "react";
+import { useState, FormEvent } from "react";
 import {
   X,
   Clock,
@@ -15,7 +15,6 @@ import {
 } from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 import { CourseItem } from "@/lib/types";
-import { getSuggestibleCourses } from "@/lib/course-library";
 
 interface CourseModalProps {
   course: CourseItem | null;
@@ -28,28 +27,22 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
   const [role, setRole] = useState("student");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
+  const [selectedCourseName, setSelectedCourseName] = useState("");
+  const [mhtCetSubExam, setMhtCetSubExam] = useState("");
 
-  const isYearLong = course?.duration?.toLowerCase().includes("full academic year") ?? false;
+  const isMhtCet = selectedCourseName === "All MHT CET Exam";
 
-  const suggestionOptions = useMemo(() => {
-    if (!isYearLong || !course) return [];
-    return getSuggestibleCourses()
-      .filter((s) => s.standardKey !== course.standardKey)
-      .slice(0, 8);
-  }, [isYearLong, course]);
+  const MHT_CET_EXAMS = [
+    "Engineering (B.E./B.Tech)",
+    "Pharmacy (B.Pharm)",
+    "BBA / BCA / BMS",
+    "Law (LLB - 3 year / 5 year)",
+    "Design (B.Des)",
+    "Hotel Management (B.HMCT)",
+    "Nursing",
+    "B.Ed / B.P.Ed",
+  ];
 
-  const toggleSuggestion = (standardKey: string) => {
-    setSelectedSuggestions((prev) => {
-      const next = new Set(prev);
-      if (next.has(standardKey)) {
-        next.delete(standardKey);
-      } else {
-        next.add(standardKey);
-      }
-      return next;
-    });
-  };
 
   if (!course) return null;
 
@@ -59,12 +52,20 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
       alert("Please fill out your name and phone/email to continue.");
       return;
     }
+    if (course!.courseNamesIncluded.length > 0 && !selectedCourseName) {
+      alert("Please select a specific course to enroll in.");
+      return;
+    }
+    if (isMhtCet && !mhtCetSubExam) {
+      alert("Please select the MHT CET exam category you're interested in.");
+      return;
+    }
 
     setIsSubmitting(true);
-    
-    const suggestedCourses = suggestionOptions
-      .filter((s) => selectedSuggestions.has(s.standardKey))
-      .map((s) => ({ standardKey: s.standardKey, title: s.title }));
+
+    const courseDetail = isMhtCet
+      ? `${selectedCourseName} – ${mhtCetSubExam}`
+      : selectedCourseName || course!.title;
 
     try {
       const response = await fetch("/api/enquiries", {
@@ -74,10 +75,9 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
           name,
           contact,
           role,
-          courseTitle: course.title,
-          courseKey: course.standardKey,
-          message: `Hi Smart Tutors, I am interested in joining the course: **${course.title}** (${course.standardKey}) as a ${role}. Let's setup a counseling demo.`,
-          suggestedCourses: suggestedCourses.length > 0 ? suggestedCourses : undefined,
+          courseTitle: course!.title,
+          courseKey: course!.standardKey,
+          message: `Hi Smart Tutors, I am interested in enrolling for: **${courseDetail}** (${course!.standardKey}) as a ${role}. Let's setup a counseling demo.`,
         }),
       });
 
@@ -217,6 +217,51 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       </div>
 
                       <div className="space-y-3">
+                        {/* Course name selection */}
+                        {course.courseNamesIncluded.length > 0 && (
+                          <div className="space-y-2">
+                            <label className="text-[9px] text-slate-400 font-bold block uppercase leading-none">
+                              Select Course
+                            </label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {course.courseNamesIncluded.map((cn) => (
+                                <button
+                                  key={cn}
+                                  type="button"
+                                  onClick={() => { setSelectedCourseName(cn); setMhtCetSubExam(""); }}
+                                  className={`text-[10px] font-bold px-2.5 py-1.5 rounded-full border transition-all cursor-pointer ${
+                                    selectedCourseName === cn
+                                      ? "bg-blue-100 text-blue-800 border-blue-300 shadow-xs"
+                                      : "bg-white text-slate-500 border-slate-200 hover:border-blue-200 hover:text-blue-600"
+                                  }`}
+                                >
+                                  {selectedCourseName === cn && <span className="mr-1">✓</span>}
+                                  {cn}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* MHT CET sub-exam dropdown */}
+                        {isMhtCet && (
+                          <div className="space-y-1">
+                            <label className="text-[9px] text-purple-600 font-bold block uppercase leading-none">
+                              MHT CET Exam Category
+                            </label>
+                            <select
+                              value={mhtCetSubExam}
+                              onChange={(e) => setMhtCetSubExam(e.target.value)}
+                              className="w-full bg-white text-xs text-slate-800 p-2.5 rounded border border-purple-200 focus:outline-hidden focus:border-purple-500 transition-all font-semibold font-sans"
+                            >
+                              <option value="">-- Select your exam --</option>
+                              {MHT_CET_EXAMS.map((ex) => (
+                                <option key={ex} value={ex}>{ex}</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
                         <div className="space-y-1">
                           <label className="text-[9px] text-slate-400 font-bold block uppercase leading-none">
                             Your Full Name
@@ -267,49 +312,10 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                         </div>
                       </div>
 
-                      {suggestionOptions.length > 0 && (
-                        <div className="space-y-2 pt-1">
-                          <label className="text-[9px] text-purple-600 font-bold block uppercase leading-none">
-                            Also interested in (Optional):
-                          </label>
-                          <p className="text-[10px] text-slate-400 font-medium leading-snug">
-                            Add short-term skill courses alongside your main program
-                          </p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {suggestionOptions.map((s) => {
-                              const isSelected = selectedSuggestions.has(s.standardKey);
-                              return (
-                                <button
-                                  key={s.standardKey}
-                                  type="button"
-                                  onClick={() => toggleSuggestion(s.standardKey)}
-                                  className={`text-[10px] font-bold px-2.5 py-1.5 rounded-full border transition-all cursor-pointer ${
-                                    isSelected
-                                      ? "bg-purple-100 text-purple-800 border-purple-300 shadow-xs"
-                                      : "bg-white text-slate-500 border-slate-200 hover:border-purple-200 hover:text-purple-600"
-                                  }`}
-                                >
-                                  {isSelected && <span className="mr-1">✓</span>}
-                                  {s.title.length > 35 ? s.title.slice(0, 35) + "..." : s.title}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          {selectedSuggestions.size > 0 && (
-                            <p className="text-[9px] text-purple-500 font-semibold">
-                              {selectedSuggestions.size} course{selectedSuggestions.size > 1 ? "s" : ""} selected
-                            </p>
-                          )}
-                        </div>
-                      )}
-
                       <div className="bg-slate-100 p-2.5 rounded border border-slate-200/50 space-y-1">
                         <span className="text-[9px] text-slate-400 font-bold block leading-none">Auto-generated message:</span>
                         <p className="text-slate-500 text-[10px] font-medium leading-normal italic">
-                          "Hi Smart Tutors, I am interested in joining the course: **{course.title}** ({course.standardKey}) as a {role}. Let's setup a counseling demo."
-                          {selectedSuggestions.size > 0 && (
-                            <> Also interested in: {suggestionOptions.filter((s) => selectedSuggestions.has(s.standardKey)).map((s) => s.title).join(", ")}.</>
-                          )}
+                          "Hi Smart Tutors, I am interested in enrolling for: **{isMhtCet ? `${selectedCourseName} – ${mhtCetSubExam || "..."}` : selectedCourseName || course.title}** ({course.standardKey}) as a {role}. Let's setup a counseling demo."
                         </p>
                       </div>
 
@@ -337,18 +343,9 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       <div className="space-y-1">
                         <h4 className="font-display font-bold text-sm text-slate-950">Seat Locked Successfully!</h4>
                         <p className="text-slate-500 text-[11px] font-semibold leading-relaxed">
-                          Thank you, <span className="text-blue-600">{name}</span>! Our counselor team will call you within 24 hours on <span className="text-blue-600">{contact}</span> to book your individual free demo session.
+                          Thank you, <span className="text-blue-600">{name}</span>! Our counselor team will call you within 24 hours on <span className="text-blue-600">{contact}</span> to book your individual free demo session{selectedCourseName ? ` for ${isMhtCet ? `${selectedCourseName} – ${mhtCetSubExam}` : selectedCourseName}` : ""}.
                         </p>
                       </div>
-
-                      {selectedSuggestions.size > 0 && (
-                        <div className="bg-purple-50 text-purple-700 text-[9px] font-bold p-2 rounded border border-purple-100/50 space-y-1">
-                          <span className="block uppercase tracking-wider">Also Selected</span>
-                          <span className="block font-semibold">
-                            {suggestionOptions.filter((s) => selectedSuggestions.has(s.standardKey)).map((s) => s.title).join(", ")}
-                          </span>
-                        </div>
-                      )}
 
                       <div className="bg-emerald-50 text-emerald-700 text-[9px] font-bold p-2 rounded border border-emerald-100/50 inline-flex items-center gap-1 uppercase">
                         <Sparkles className="w-3.5 h-3.5" /> Reference: {Math.floor(100000 + Math.random() * 900000)}
@@ -360,7 +357,8 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                             setIsSuccess(false);
                             setName("");
                             setContact("");
-                            setSelectedSuggestions(new Set());
+                            setSelectedCourseName("");
+                            setMhtCetSubExam("");
                           }}
                           className="text-[10px] text-slate-400 font-bold hover:text-indigo-600 transition-colors mt-2 uppercase tracking-wide"
                         >

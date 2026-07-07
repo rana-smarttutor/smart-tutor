@@ -204,6 +204,33 @@ export function RegistrationForm() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
 
+  const [examQualifications, setExamQualifications] = useState<
+    { examName: string; score: string; year: string }[]
+  >([]);
+
+  function addExamQualification() {
+    setExamQualifications((prev) => [
+      ...prev,
+      { examName: "", score: "", year: "" },
+    ]);
+  }
+
+  function removeExamQualification(index: number) {
+    setExamQualifications((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateExamQualification(
+    index: number,
+    field: "examName" | "score" | "year",
+    value: string,
+  ) {
+    setExamQualifications((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item,
+      ),
+    );
+  }
+
   const courseDropdownRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -476,6 +503,14 @@ export function RegistrationForm() {
               .map((subject) => subject.trim())
               .filter(Boolean)
           : [];
+
+        body.examQualifications = examQualifications
+          .filter((eq) => eq.examName.trim())
+          .map((eq) => ({
+            examName: eq.examName.trim(),
+            score: eq.score.trim(),
+            year: eq.year.trim(),
+          }));
       }
 
       const response = await fetch("/api/auth/signup", {
@@ -983,6 +1018,92 @@ export function RegistrationForm() {
                 onChange={(value) => updateField("subjects", value)}
                 placeholder="e.g. Mathematics, Physics, Chemistry"
               />
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                    Exam Qualifications
+                  </label>
+
+                  <button
+                    type="button"
+                    onClick={addExamQualification}
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[10px] font-bold text-blue-600 transition-all hover:bg-blue-100"
+                  >
+                    + Add Exam
+                  </button>
+                </div>
+
+                {examQualifications.length > 0 && (
+                  <div className="space-y-2">
+                    {examQualifications.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/50 p-3"
+                      >
+                        <div className="flex-1 space-y-2">
+                          <input
+                            type="text"
+                            value={item.examName}
+                            onChange={(e) =>
+                              updateExamQualification(
+                                index,
+                                "examName",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Exam name (e.g. NEET, JEE Mains)"
+                            className="w-full rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                          />
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={item.score}
+                              onChange={(e) =>
+                                updateExamQualification(
+                                  index,
+                                  "score",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Score / Rank"
+                              className="w-full rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                            />
+
+                            <input
+                              type="text"
+                              value={item.year}
+                              onChange={(e) =>
+                                updateExamQualification(
+                                  index,
+                                  "year",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Attempt year"
+                              className="w-full rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeExamQualification(index)}
+                          className="mt-1 shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-500 transition-all hover:bg-rose-100"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-slate-400">
+                  Add any competitive exam qualifications (NEET, JEE, MHTCET,
+                  GATE, etc.) to strengthen your profile.
+                </p>
+              </div>
 
               <div>
                 <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">

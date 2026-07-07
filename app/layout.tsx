@@ -10,6 +10,7 @@ import SmartTutorsAIChatbot from "@/components/SmartTutorsAIChatbot";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ConditionalLayout } from "@/components/conditional-layout";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -502,21 +503,27 @@ export default function RootLayout({
 </Script>
 <ThemeProvider>
   <div className="relative z-10">
-  <div className="no-report-chrome">
-    <SiteHeader />
-  </div>
+  <ConditionalLayout>
+    <div className="no-report-chrome">
+      <SiteHeader />
+    </div>
+  </ConditionalLayout>
 
   {children}
 
-  <div className="no-report-chrome">
-    <SiteFooter />
-  </div>
+  <ConditionalLayout>
+    <div className="no-report-chrome">
+      <SiteFooter />
+    </div>
+  </ConditionalLayout>
 
-  <div className="no-report-chrome">
-  <FloatingWhatsApp />
-  <PWAInstallButton />
-  <SmartTutorsAIChatbot />
-</div>
+  <ConditionalLayout>
+    <div className="no-report-chrome">
+      <FloatingWhatsApp />
+      <PWAInstallButton />
+      <SmartTutorsAIChatbot />
+    </div>
+  </ConditionalLayout>
 </div>
 </ThemeProvider>
 

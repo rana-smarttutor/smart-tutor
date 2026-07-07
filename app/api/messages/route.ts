@@ -36,6 +36,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // Check if chat is disabled for this user
+  const senderRecord = await findFullUserById(session.id);
+  if (senderRecord?.profile?.chatDisabled) {
+    return NextResponse.json(
+      { error: "Your chat access has been disabled by the institute." },
+      { status: 403 },
+    );
+  }
+
   let body: {
     title?: string;
     body?: string;

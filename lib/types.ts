@@ -37,6 +37,9 @@ export type ManagedUser = SessionUser & {
   linkedStudentId?: string;
   assignedFacultyIds?: string[];
   assignedFacultyNames?: string[];
+  profilePhoto?: string;
+  mobile?: string;
+  profile?: UserProfile;
 };
 
 export type DashboardMetric = {
@@ -62,6 +65,7 @@ export type DashboardAnalytics = {
     absent: number;
     late: number;
     excused: number;
+    dailyRecords?: Array<{ date: string; rate: number; present: number; total: number }>;
   };
 
   assessments: {
@@ -97,6 +101,8 @@ export type DashboardAnalytics = {
     completedLectures: number;
     scheduledLectures: number;
   };
+
+  activeStudents?: number;
 
   insights: DashboardInsight[];
 };
@@ -143,6 +149,9 @@ export type TestItem = {
   assignedUserIds?: string[];
   createdBy?: string;
   questions?: TestQuestion[];
+  total?: number;
+  subject?: string;
+  duration?: number;
 };
 
 export type MessageItem = {
@@ -452,6 +461,8 @@ export type LectureItem = {
   description?: string;
   startsAt: string;
   endsAt?: string;
+  date?: string;
+  duration?: number;
   meetingLink?: string;
   recordingLink?: string;
   materialLink?: string;
@@ -531,6 +542,17 @@ export type UserProfile = {
   cvUrl?: string;
   experience?: string;
   subjects?: string[];
+  examQualifications?: ExamQualification[];
+
+  // Permissions
+  chatDisabled?: boolean;
+};
+
+export type ExamQualification = {
+  examName: string;
+  score?: string;
+  year?: string;
+  rank?: string;
 };
 
 export type DashboardBundle = {
@@ -625,6 +647,8 @@ export type WeeklyTest = {
   results: WeeklyTestResult[];
   createdAt: string;
   updatedAt?: string;
+  status?: string;
+  duration?: number;
 };
 
 // =========================

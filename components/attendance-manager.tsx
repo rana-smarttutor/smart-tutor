@@ -92,7 +92,7 @@ export function AttendanceManager({
   userId,
 }: AttendanceManagerProps) {
   const canEdit = role === "admin" || role === "educator";
-  const isAdmin = role === "admin";
+  const isAdmin = role === "admin" || role === "educator";
 
   const [batches, setBatches] = useState<Batch[]>([]);
   const [isLoadingBatches, setIsLoadingBatches] = useState(true);

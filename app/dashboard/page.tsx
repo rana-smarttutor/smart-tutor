@@ -30,8 +30,8 @@ export default async function DashboardPage() {
 
   const [dashboard, educatorStudentDirectory, managedUsers] = await Promise.all([
     getDashboardBundle(role, session.id),
-    role === "educator" ? getStudentDirectory(session.id) : Promise.resolve([]),
-    role === "admin" ? getUsersForAdmin() : Promise.resolve([]),
+    role === "educator" ? getStudentDirectory() : Promise.resolve([]),
+    role === "admin" || role === "educator" ? getUsersForAdmin() : Promise.resolve([]),
   ]);
 
   const studentDirectory =

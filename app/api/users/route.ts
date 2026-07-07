@@ -189,6 +189,8 @@ export async function PATCH(request: Request) {
     status?: "active" | "pending";
     verified?: boolean;
     assignedFacultyIds?: string[] | null;
+    profilePhoto?: string | null;
+    profile?: Record<string, unknown>;
   };
 
   try {
@@ -202,6 +204,8 @@ export async function PATCH(request: Request) {
       status?: "active" | "pending";
       verified?: boolean;
       assignedFacultyIds?: string[] | null;
+      profilePhoto?: string | null;
+      profile?: Record<string, unknown>;
     };
   } catch {
     return NextResponse.json({ error: "Invalid update payload." }, { status: 400 });
@@ -243,6 +247,8 @@ export async function PATCH(request: Request) {
     status: body.status,
     verified: body.verified,
     assignedFacultyIds: body.assignedFacultyIds === null ? null : (body.assignedFacultyIds ?? undefined),
+    profilePhoto: body.profilePhoto,
+    profile: body.profile as any,
   });
 
 if (role === "counsellor") {

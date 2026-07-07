@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
@@ -43,6 +44,9 @@ function SectionLoading() {
     </div>
   );
 }
+
+import { DashboardOverview } from "@/components/dashboard-overview";
+import { DashboardProfileSettings } from "@/components/dashboard-profile-settings";
 
 const DashboardAccountDirectory = dynamic(
   () =>
@@ -231,6 +235,7 @@ type Props = {
 const sidebarByRole = {
   student: [
     { id: "overview", label: "Overview" },
+    { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "messages", label: "Messages" },
@@ -249,6 +254,7 @@ const sidebarByRole = {
 
   educator: [
     { id: "overview", label: "Overview" },
+    { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "messages", label: "Messages" },
@@ -260,7 +266,6 @@ const sidebarByRole = {
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Activities" },
     { id: "results", label: "Results" },
-    { id: "fees", label: "Invoices" },
     { id: "teacher-payouts", label: "My Earnings" },
     { id: "library", label: "Library" },
   ],
@@ -268,7 +273,6 @@ const sidebarByRole = {
   counsellor: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
-    { id: "fees", label: "Invoices" },
     { id: "fee-installments", label: "Fee Plans" },
     { id: "notifications", label: "Notifications" },
     { id: "sales-crm", label: "Sales CRM" },
@@ -344,10 +348,9 @@ function getInitials(name?: string) {
 }
 
 const menuSections = [
-  { label: "Overview", items: ["overview", "lectures", "timetable", "messages", "attendance", "notifications"] },
-  { label: "Academics", items: ["tests", "weekly-tests", "results", "daily-activities", "student-feedback"] },
+  { label: "Overview", items: ["overview", "messages", "attendance", "notifications"] },
+  { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance"] },
   { label: "People", items: ["accounts", "enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
-  { label: "Curriculum", items: ["courses", "batches", "library", "performance"] },
   { label: "Finance", items: ["fees", "fee-installments", "teacher-payouts"] },
 ];
 
@@ -372,6 +375,7 @@ const navIcons: Record<string, React.ReactNode> = {
   batches: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
   library: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
   performance: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
+  profile: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
   fees: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   "fee-installments": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   "teacher-payouts": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
@@ -387,6 +391,7 @@ export function DashboardShell({
   supportContact,
 }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState<string>(
     sidebarByRole[role][0]?.id ?? "overview",
   );
@@ -437,6 +442,7 @@ export function DashboardShell({
   const showDailyActivities = activeSection === "daily-activities";
   const showFeeInstallments = activeSection === "fee-installments";
   const showTeacherPayouts = activeSection === "teacher-payouts";
+  const showProfile = activeSection === "profile";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
@@ -644,573 +650,192 @@ export function DashboardShell({
   }, [showMessages, session?.id]);
 
   return (
-    <main className="section-shell min-h-screen overflow-x-hidden pb-10 pt-8">
+    <div className="h-screen flex overflow-hidden bg-[#F4F7FB]">
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 xl:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <div className="xl:grid xl:grid-cols-[280px_minmax(0,1fr)] xl:gap-6">
-        {/* Sidebar - fixed drawer on mobile, static column on desktop */}
-        <aside
-          className={`fixed top-0 left-0 z-50 flex h-full w-[280px] flex-col overflow-y-auto dashboard-sidebar transition-transform duration-300 xl:static xl:z-auto xl:h-fit xl:rounded-[2rem] xl:translate-x-0 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full xl:translate-x-0"
-          }`}
-        >
+      {/* Sidebar */}
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 flex flex-col bg-[#0A1637] transition-all duration-300 ease-in-out ${
+          sidebarCollapsed ? "lg:w-[72px]" : "lg:w-[260px]"
+        } ${
+          sidebarOpen ? "translate-x-0 w-[260px]" : "-translate-x-full w-[260px] lg:translate-x-0"
+        }`}
+      >
+        {/* Brand */}
+        <div className={`flex items-center h-16 shrink-0 border-b border-white/5 ${sidebarCollapsed ? "justify-center px-2" : "justify-between px-5"}`}>
+          <Link href="/" className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-3"}`}>
+            {sidebarCollapsed ? (
+              <Image src="/image2.png" alt="Smart Tutors" width={32} height={32} className="h-8 w-auto object-contain" priority />
+            ) : (
+              <Image src="/image2.png" alt="Smart Tutors" width={140} height={36} className="h-9 w-auto object-contain" priority />
+            )}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 lg:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
 
-          {/* Brand + close */}
-          <div className="flex items-center justify-between gap-4 px-5 pt-5 sm:px-6 sm:pt-6">
-            <Link
-              href="/"
-              className="truncate text-2xl font-bold tracking-[-0.04em] text-[var(--color-heading)]"
-            >
-              Smart Tutors
-            </Link>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-background-strong)] xl:hidden"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="px-5 sm:px-6 mt-5">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search menu..."
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-xs text-[var(--color-heading)] outline-none transition focus:border-[var(--color-primary)]"
-                onInput={(e) => {
-                  const q = (e.target as HTMLInputElement).value.toLowerCase();
-                  document.querySelectorAll(".sb-nav-item").forEach((el) => {
-                    const parent = el.closest(".sb-group");
-                    const label = el.getAttribute("data-label") || "";
-                    const match = label.includes(q);
-                    (el as HTMLElement).style.display = match || !q ? "" : "none";
-                    if (parent) (parent as HTMLElement).style.display = match || !q ? "" : "none";
-                  });
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Nav */}
-          <nav className="mt-4 flex-1 overflow-y-auto px-3 sm:px-4 space-y-1">
-            {menuSections.map((section) => {
-              const sectionItems = sidebarByRole[role].filter((item) =>
-                section.items.includes(item.id),
-              );
-              if (!sectionItems.length) return null;
-              return (
-                <div key={section.label} className="sb-group">
-                  <div className="sb-section-label">
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-none">
+          {menuSections.map((section) => {
+            const sectionItems = sidebarByRole[role].filter((item) =>
+              section.items.includes(item.id),
+            );
+            if (!sectionItems.length) return null;
+            return (
+              <div key={section.label} className="sb-group">
+                {!sidebarCollapsed && (
+                  <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
                     {section.label}
                   </div>
-                  {sectionItems.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-label={item.label.toLowerCase()}
-                      className={`sb-nav-item flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                        activeSection === item.id
-                          ? "bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-bold"
-                          : "text-[var(--color-muted)] hover:bg-[var(--color-background-strong)] hover:text-[var(--color-heading)]"
-                      }`}
-                      onClick={() => setActiveSection(item.id)}
-                    >
-                      {navIcons[item.id] || (
-                        <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                        </svg>
-                      )}
-                      <span className="truncate">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              );
-            })}
-          </nav>
+                )}
+                {sectionItems.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    data-label={item.label.toLowerCase()}
+                    className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                      sidebarCollapsed ? "justify-center" : ""
+                    } ${
+                      activeSection === item.id
+                        ? "bg-[#0B40A1] text-white shadow-md"
+                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                    }`}
+                    onClick={() => setActiveSection(item.id)}
+                    title={sidebarCollapsed ? item.label : undefined}
+                  >
+                    {navIcons[item.id] || (
+                      <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    )}
+                    {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+        </nav>
 
-          {/* Footer */}
-          <div className="border-t border-[var(--color-border)] px-4 sm:px-5 py-4">
+        {/* Collapse toggle */}
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          className="hidden lg:flex items-center justify-center h-10 text-slate-400 hover:text-white hover:bg-white/5 border-t border-white/5 transition-colors"
+        >
+          <svg className={`h-5 w-5 transition-transform ${sidebarCollapsed ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Footer */}
+        {!sidebarCollapsed && (
+          <div className="border-t border-white/5 px-4 py-4">
             <div className="flex items-center gap-3">
               {dashboard.profile?.profilePhoto ? (
-                <img
-                  src={dashboard.profile.profilePhoto}
-                  alt={session?.name ?? "User"}
-                  className="h-9 w-9 shrink-0 rounded-full border border-[var(--color-border)] object-cover"
-                />
+                <img src={dashboard.profile.profilePhoto} alt={session?.name ?? "User"} className="h-9 w-9 shrink-0 rounded-full border border-white/10 object-cover" />
               ) : (
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/15 text-xs font-bold text-[var(--color-primary)]">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0B40A1] text-xs font-bold text-white">
                   {getInitials(session?.name)}
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-[var(--color-heading)]">
+                <p className="truncate text-sm font-bold text-white">
                   {session?.name ?? "Smart Tutors"}
-                  {session?.verified ? (
-                    <span className="ml-1 text-[10px] text-[var(--color-success)]">✓</span>
-                  ) : null}
+                  {session?.verified ? <span className="ml-1 text-[10px] text-emerald-400">✓</span> : null}
                 </p>
-                <p className="truncate text-[11px] text-[var(--color-muted)]">
-                  {dashboard.roleLabel}
-                </p>
+                <p className="truncate text-[11px] text-slate-400">{dashboard.roleLabel}</p>
               </div>
               <LogoutButton />
             </div>
           </div>
-        </aside>
+        )}
+      </aside>
 
-        <section className="flex min-w-0 flex-1 flex-col gap-6">
-          <header className="surface flex items-center justify-between gap-4 rounded-[1.5rem] px-5 py-4 sm:px-6">
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                type="button"
-                onClick={() => setSidebarOpen(true)}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-background-strong)] xl:hidden"
-              >
-                <Menu className="h-4 w-4" />
-              </button>
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  {dashboard.roleLabel}
-                </p>
-                <p className="mt-1 truncate text-sm font-semibold text-[var(--color-heading)]">
-                  {session?.name ?? "Smart Tutors"}
-                </p>
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#F4F7FB]">
+          {/* Top bar with nav links + user controls */}
+          <header className="bg-white flex items-center gap-2 px-3 sm:px-5 shadow-sm border-b border-slate-100 shrink-0 min-h-14">
+            {/* Mobile menu toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 lg:hidden"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            {/* Desktop collapse toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="hidden lg:flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+            >
+              <svg className={`h-5 w-5 transition-transform ${sidebarCollapsed ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+
+            {/* Nav links - horizontally scrollable */}
+            <nav className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-none text-sm whitespace-nowrap min-w-0">
+              <Link href="/" className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0">Home</Link>
+              <Link href="/courses" className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0">Courses</Link>
+              <Link href="/mock-test" className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0">Mock Test</Link>
+              <Link href="/digital-library" className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0">Library</Link>
+              <Link href="/placements" className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0">Placements</Link>
+              {(role === "admin" || role === "educator") && (
+                <Link href="/student-performance" className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0">Performance</Link>
+              )}
+            </nav>
+
+            {/* User controls */}
+            <div className="flex items-center gap-3 shrink-0">
+              <NotificationBell
+                onOpenNotifications={() => setActiveSection("notifications")}
+              />
+              <div className="flex items-center gap-2 cursor-pointer group">
+                <div className="h-8 w-8 rounded-full bg-slate-100 overflow-hidden border border-slate-200 group-hover:border-[#0B40A1] transition-colors">
+                  {dashboard.profile?.profilePhoto ? (
+                    <img src={dashboard.profile.profilePhoto} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#0B40A1]">
+                      {getInitials(session?.name)}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-
-            <NotificationBell
-              onOpenNotifications={() => setActiveSection("notifications")}
-            />
           </header>
 
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto px-5 py-6 sm:px-6 sm:py-8">
+
           {showOverview ? (
-            <header className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 max-w-4xl">
-                  <p className="section-label">Post-Login Workspace</p>
-                  <h1 className="mt-3 break-words text-3xl font-semibold tracking-[-0.05em] text-[var(--color-heading)] sm:text-4xl">
-                    {dashboard.heroTitle}
-                  </h1>
-                  <p className="mt-4 text-sm leading-7 text-[var(--color-muted)]">
-                    {dashboard.heroDescription}
-                  </p>
-                </div>
-                {role === "student" || role === "parent" ? (
-                  <div className="grid gap-3 sm:grid-cols-1 min-w-[200px]">
-                    <div className="surface-soft rounded-3xl p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--color-primary-soft)]">
-                          <svg className="h-3.5 w-3.5 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                        </div>
-                        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                          Assigned Faculty
-                        </p>
-                      </div>
-                      <div className="mt-3">
-                        {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 ? (
-                          <div className="flex flex-col gap-2">
-                            {dashboard.assignedFacultyNames.map((name, i) => (
-                              <div key={i} className="flex items-center gap-2.5 rounded-xl bg-[var(--color-panel)] px-3 py-2">
-                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary-soft)] text-[10px] font-bold text-[var(--color-primary)]">
-                                  {name.charAt(0)}
-                                </div>
-                                <span className="text-sm font-semibold text-[var(--color-heading)]">{name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm leading-6 text-[var(--color-muted)]">To be assigned soon</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <LiveClock label="Campus Time" />
-                    <div className="surface-soft rounded-3xl p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-muted)]">
-                        API Scope
-                      </p>
-                      <p className="mt-2 text-sm leading-7 text-[var(--color-heading)]">
-                        Auth, dashboard, courses, users, tests, and messages are
-                        wired.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </header>
+            <DashboardOverview
+              session={session}
+              role={role}
+              dashboard={dashboard}
+              messages={messages}
+              supportContact={supportContact}
+              onSetActiveSection={setActiveSection}
+            />
           ) : null}
 
-          {showOverview ? (
-            <>
-              <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {dashboard.stats.map((item) => (
-                  <article
-                    key={item.label}
-                    className="surface overflow-hidden rounded-[1.25rem] p-4 sm:p-5"
-                  >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                      {item.label}
-                    </p>
-                    <p className="mt-3 break-words text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)] sm:text-3xl">
-                      {item.value}
-                    </p>
-                    <p className="mt-2 text-xs leading-5 text-[var(--color-muted)]">
-                      {item.detail}
-                    </p>
-                  </article>
-                ))}
-              </section>
-
-              {dashboard.analytics ? (
-                <DashboardAnalytics
-                  role={role}
-                  analytics={dashboard.analytics}
-                />
-              ) : null}
-
-              <section className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-                <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="section-label">Message Board</p>
-                      <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                        Recent Updates
-                      </h2>
-                    </div>
-                    <span className="pill">{messages.length} messages</span>
-                  </div>
-                  <div className="mt-6 grid gap-4">
-                    {messages.length ? (
-                      messages.slice(0, 4).map((message) => (
-                        <div
-                          key={message.id}
-                          className="surface-soft rounded-3xl p-5"
-                        >
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-start justify-between gap-3">
-                              <p className="text-lg font-semibold text-[var(--color-heading)]">
-                                {message.title}
-                              </p>
-                              <span className="pill shrink-0">
-                                {message.channel}
-                              </span>
-                            </div>
-                            <p className="text-sm leading-6 text-[var(--color-muted)]">
-                              {message.body}
-                            </p>
-                            {message.author ? (
-                              <p className="text-xs font-medium text-[var(--color-muted)] opacity-60">
-                                — {message.author}
-                              </p>
-                            ) : null}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-sm leading-6 text-[var(--color-muted)]">
-                          No messages yet.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </article>
-
-                <div className="grid gap-6">
-                  <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-                      {dashboard.profile?.profilePhoto ? (
-                        <img
-                          src={dashboard.profile.profilePhoto}
-                          alt={session?.name ?? "User"}
-                          className="h-20 w-20 shrink-0 rounded-[1.6rem] border-2 border-[var(--color-border)] object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.6rem] bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-strong)] text-2xl font-bold text-white shadow-md">
-                          {getInitials(session?.name)}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-3">
-                          <p className="section-label" style={{ marginBottom: 0 }}>Profile</p>
-                          {session?.verified ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-success)]/10 text-[var(--color-success)] text-[10px] font-bold leading-none">
-                              ✓ Verified
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--color-muted)]/10 text-[var(--color-muted)] text-[10px] font-bold leading-none">
-                              Unverified
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-2 break-words text-xl font-bold tracking-tight text-[var(--color-heading)]">
-                          {session ? session.name : "Smart Tutors User"}
-                        </p>
-                        <p className="mt-1.5 break-all text-sm leading-6 text-[var(--color-muted)]">
-                          {session ? session.email : "Login required"}
-                        </p>
-                        <span className="mt-2.5 inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[11px] font-bold text-[var(--color-primary)]">
-                          <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                          {getRoleFocus(role)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 grid gap-2.5">
-                      {profileHighlights.map((item, idx) => {
-                        const accentColor = idx === 0
-                          ? "var(--color-primary)"
-                          : idx === 1
-                            ? "var(--color-secondary)"
-                            : idx === 2
-                              ? "var(--color-purple)"
-                              : idx === 3
-                                ? "var(--color-amber)"
-                                : "var(--color-muted)";
-                        return (
-                          <div
-                            key={item.label}
-                            className="flex items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 transition hover:shadow-sm"
-                          >
-                            <div
-                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white"
-                              style={{ background: accentColor }}
-                            >
-                              {item.label.charAt(0)}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                                {item.label}
-                              </p>
-                              <p className="mt-0.5 truncate text-sm font-semibold text-[var(--color-heading)]">
-                                {item.value}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {role === "student" && dashboard.profile ? (
-                      <div className="mt-5">
-                        <div className="surface-soft rounded-[1.5rem] p-5">
-                          <div className="flex items-center gap-2 mb-4">
-                            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--color-primary-soft)]">
-                              <svg className="h-3.5 w-3.5 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                              </svg>
-                            </div>
-                            <p className="text-sm font-bold text-[var(--color-heading)]">
-                              Academic Profile
-                            </p>
-                          </div>
-                          <div className="grid gap-3">
-                            {dashboard.profile.courseWantedTitle ? (
-                              <div className="flex items-center gap-3 rounded-xl bg-[var(--color-panel)] px-4 py-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-xs font-bold text-[var(--color-primary)]">
-                                  C
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Course</p>
-                                  <p className="text-sm font-semibold text-[var(--color-heading)]">{dashboard.profile.courseWantedTitle}</p>
-                                </div>
-                              </div>
-                            ) : null}
-                            {dashboard.profile.studentType ? (
-                              <div className="flex items-center gap-3 rounded-xl bg-[var(--color-panel)] px-4 py-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-secondary-soft)] text-xs font-bold text-[var(--color-secondary)]">
-                                  T
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Type</p>
-                                  <p className="text-sm font-semibold text-[var(--color-heading)]">
-                                    {dashboard.profile.studentType === "on-campus"
-                                      ? "On Campus"
-                                      : "Home Student"}
-                                  </p>
-                                </div>
-                              </div>
-                            ) : null}
-                            {dashboard.profile.weakSubjects &&
-                            dashboard.profile.weakSubjects.length > 0 ? (
-                              <div className="flex items-center gap-3 rounded-xl bg-[var(--color-panel)] px-4 py-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-purple-soft)] text-xs font-bold text-[var(--color-purple)]">
-                                  F
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Focus Areas</p>
-                                  <div className="mt-1 flex flex-wrap gap-1.5">
-                                    {dashboard.profile.weakSubjects.map((s) => (
-                                      <span key={s} className="rounded-md bg-[var(--color-amber-soft)] px-2 py-0.5 text-[11px] font-semibold text-[var(--color-amber-strong)]">
-                                        {s}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            ) : null}
-                            {dashboard.profile.latestQualification ? (
-                              <div className="flex items-center gap-3 rounded-xl bg-[var(--color-panel)] px-4 py-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary-soft)] text-xs font-bold text-[var(--color-primary)]">
-                                  Q
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Qualification</p>
-                                  <p className="text-sm font-semibold text-[var(--color-heading)]">{dashboard.profile.latestQualification}</p>
-                                </div>
-                              </div>
-                            ) : null}
-                            {dashboard.profile.latestAcademicScore ? (
-                              <div className="flex items-center gap-3 rounded-xl bg-[var(--color-panel)] px-4 py-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-success)]/10 text-xs font-bold text-[var(--color-success)]">
-                                  S
-                                </span>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Latest Score</p>
-                                  <p className="text-sm font-semibold text-[var(--color-heading)]">{dashboard.profile.latestAcademicScore}</p>
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {role === "educator" && dashboard.profile ? (
-                      <div className="mt-5">
-                        <div className="surface-soft rounded-3xl p-5">
-                          <p className="text-sm font-semibold text-[var(--color-heading)]">
-                            Professional Profile
-                          </p>
-                          <div className="mt-3 grid gap-2">
-                            {dashboard.profile.qualification ? (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
-                                  Qualification
-                                </span>
-                                <span className="font-medium text-[var(--color-heading)]">
-                                  {dashboard.profile.qualification}
-                                </span>
-                              </div>
-                            ) : null}
-                            {dashboard.profile.experience ? (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
-                                  Experience
-                                </span>
-                                <span className="font-medium text-[var(--color-heading)]">
-                                  {dashboard.profile.experience}
-                                </span>
-                              </div>
-                            ) : null}
-                            {dashboard.profile.subjects &&
-                            dashboard.profile.subjects.length > 0 ? (
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)] w-20 shrink-0">
-                                  Subjects
-                                </span>
-                                <span className="font-medium text-[var(--color-heading)]">
-                                  {dashboard.profile.subjects.join(", ")}
-                                </span>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    <div className="mt-5 grid gap-3">
-                      <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-sm font-semibold text-[var(--color-heading)]">
-                          Workspace checklist
-                        </p>
-                        <div className="mt-4 grid gap-3">
-                          {workspaceChecklist.map((item) => (
-                            <div key={item} className="flex items-start gap-3">
-                              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--color-accent)]" />
-                              <p className="min-w-0 text-sm leading-6 text-[var(--color-muted)]">
-                                {item}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-sm font-semibold text-[var(--color-heading)]">
-                          Support contact
-                        </p>
-                        <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">
-                          {supportContact}
-                        </p>
-                      </div>
-                    </div>
-                  </article>
-
-                  <article className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
-                    <p className="section-label">Permissions + Notices</p>
-                    <div className="mt-5 grid gap-4">
-                      <div className="surface-soft rounded-3xl p-5">
-                        <p className="text-lg font-semibold text-[var(--color-heading)]">
-                          Permissions
-                        </p>
-                        <div className="mt-4 space-y-3">
-                          {dashboard.permissions.map((group) => (
-                            <div key={group.title}>
-                              <p className="text-sm font-semibold text-[var(--color-heading)]">
-                                {group.title}
-                              </p>
-                              <p className="mt-1 text-sm leading-7 text-[var(--color-muted)]">
-                                {group.description}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      {messages.length ? (
-                        <div className="surface-soft rounded-3xl p-5">
-                          <p className="text-lg font-semibold text-[var(--color-heading)]">
-                            Recent notices
-                          </p>
-                          <div className="mt-4 space-y-3">
-                            {messages.slice(0, 3).map((message) => (
-                              <div key={message.id}>
-                                <p className="text-sm font-semibold text-[var(--color-heading)]">
-                                  {message.title}
-                                </p>
-                                <p className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
-                                  {message.body}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  </article>
-                </div>
-              </section>
-            </>
+          {showProfile && (role === "student" || role === "educator" || role === "parent") ? (
+            <DashboardProfileSettings
+              session={session}
+              role={role}
+              dashboard={dashboard}
+            />
           ) : null}
 
           {showMessages ? (
@@ -1654,8 +1279,8 @@ export function DashboardShell({
               )}
             </article>
           ) : null}
-        </section>
+        </div>
       </div>
-    </main>
+    </div>
   );
 }

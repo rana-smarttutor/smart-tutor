@@ -153,9 +153,9 @@ export async function SiteFooter() {
             </nav>
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} Smart Tutors Academy. All rights
-              reserved. Results may differ between users. Promotional claims may
-              be stylized.
+              © {new Date().getFullYear()} Smart Tutors Academy. In operations
+              since 2018. All rights reserved. Results may differ between users.
+              Promotional claims may be stylized.
             </p>
           </div>
         </div>

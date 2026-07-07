@@ -52,6 +52,7 @@ export async function POST(request: Request) {
       cvUrl?: string;
       experience?: string;
       subjects?: string[];
+      examQualifications?: { examName: string; score?: string; year?: string }[];
     };
 
     const role = body.role === "educator" ? "educator" : "student";
@@ -244,6 +245,18 @@ export async function POST(request: Request) {
           .slice(0, 20)
           .map((subject) => sanitizeTextInput(subject, 80))
           .filter(Boolean);
+      }
+
+      if (body.examQualifications?.length) {
+        profile.examQualifications = body.examQualifications
+          .slice(0, 20)
+          .filter((eq) => eq.examName)
+          .map((eq) => ({
+            examName: sanitizeTextInput(eq.examName, 100) || "",
+            score: eq.score ? sanitizeTextInput(eq.score, 50) : "",
+            year: eq.year ? sanitizeTextInput(eq.year, 10) : "",
+          }))
+          .filter((eq) => eq.examName);
       }
     }
 
