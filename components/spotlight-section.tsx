@@ -152,13 +152,13 @@ function isPreferredCommerceSpotlight(course: CourseItem) {
 }
 
 const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
-  "Class 6": "/spotlight/class-6-8.jpeg",
-  "Class 7": "/spotlight/class-6-8.jpeg",
-  "Class 8": "/spotlight/class-6-8.jpeg",
-  "Class 9": "/spotlight/class-9-10.jpeg",
-  "Class 10": "/spotlight/class-9-10.jpeg",
-  "Class 11": "/spotlight/class11.png",
-  "Class 12": "/spotlight/class12.jpg",
+  "Class 6": "/spotlight/class 6 new.png",
+  "Class 7": "/spotlight/class 7 new.png",
+  "Class 8": "/spotlight/class 8 new.png",
+  "Class 9": "/spotlight/class 9 new.png",
+  "Class 10": "/spotlight/class 10 new.png",
+  "Class 11": "/spotlight/class 11 new.png",
+  "Class 12": "/spotlight/class 12 new.png",
   Skills: "/spotlight/skills.png",
   "Govt Exams": "/spotlight/govt-exams.jpeg",
 };
