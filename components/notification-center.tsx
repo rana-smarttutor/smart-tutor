@@ -18,6 +18,7 @@ import type {
 type NotificationCenterProps = {
   role: Role;
   managedUsers: ManagedUser[];
+  onMarkAsRead?: () => void;
 };
 
 type NotificationForm = {
@@ -103,6 +104,7 @@ async function getApiError(response: Response) {
 export function NotificationCenter({
   role,
   managedUsers,
+  onMarkAsRead,
 }: NotificationCenterProps) {
   const canSendNotifications = role === "admin" || role === "educator";
 
@@ -315,6 +317,7 @@ export function NotificationCenter({
               : item,
           ),
         );
+        onMarkAsRead?.();
       }
     } catch (updateError) {
       setError(
@@ -404,6 +407,7 @@ export function NotificationCenter({
         })),
       );
 
+      onMarkAsRead?.();
       setNotice("All notifications marked as read.");
     } catch (markAllError) {
       setError(

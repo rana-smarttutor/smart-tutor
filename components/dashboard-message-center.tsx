@@ -170,17 +170,14 @@ export function DashboardMessageCenter({
     try {
       const targetUser = chatContacts.find((c) => c.id === chatContactId);
       if (!targetUser) return;
-      const targetRole = targetUser.role;
-      const response = await fetch("/api/messages", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: `Chat to ${targetUser.name}`,
+          receiverId: chatContactId,
+          receiverRole: targetUser.role,
           body: chatInput,
-          channel: "Chat",
-          audience: [targetRole],
-          userIds: [chatContactId],
         }),
       });
       if (!response.ok) {

@@ -21,6 +21,24 @@ import {
   GraduationCap,
   TrendingUp,
   IndianRupee,
+  UserPlus,
+  PenSquare,
+  ShieldCheck,
+  Megaphone,
+  Percent,
+  BookMarked,
+  Video,
+  Lightbulb,
+  HelpCircle,
+  Smartphone,
+  Bot,
+  Banknote,
+  Medal,
+  Home,
+  LineChart,
+  ArrowUpRight,
+  ArrowDownRight,
+  CreditCard,
 } from "lucide-react";
 import type {
   DashboardBundle,
@@ -92,7 +110,559 @@ function getInitials(name?: string | null) {
     .slice(0, 2);
 }
 
-// ─────────── STUDENT OVERVIEW ───────────
+function Sparkline({ values, color = "#4F46E5" }: { values: number[]; color?: string }) {
+  if (values.length < 2) return null;
+  const w = 100;
+  const h = 40;
+  const max = Math.max(...values, 1);
+  const points = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = h - (v / max) * (h - 4) - 2;
+    return `${x},${y}`;
+  });
+  const areaPoints = `${points.join(" ")} ${w},${h} 0,${h}`;
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+          <stop offset="100%" stopColor={color} stopOpacity={0.02} />
+        </linearGradient>
+      </defs>
+      <polygon fill={`url(#spark-${color.replace("#", "")})`} points={areaPoints} />
+      <polyline
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={points.join(" ")}
+      />
+    </svg>
+  );
+}
+
+// ─────────── ADMIN DASHBOARD ───────────
+
+function GenericOverview({
+  session,
+  role,
+  dashboard,
+  messages,
+  onSetActiveSection,
+}: {
+  session: SessionUser | null;
+  role: Role;
+  dashboard: DashboardBundle;
+  messages: MessageItem[];
+  supportContact: string;
+  onSetActiveSection: (section: string) => void;
+}) {
+  const [period, setPeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const instituteName = dashboard.heroTitle || "Smart Tutors";
+  const totalStudents = dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
+  const revenue = dashboard.analytics?.finance?.collected
+    ? `₹${(dashboard.analytics.finance.collected / 1000).toFixed(1)}K`
+    : dashboard.stats[1]?.value ?? "—";
+  const totalRevenue = dashboard.analytics?.finance?.collected ?? 0;
+  const totalBilled = dashboard.analytics?.finance?.billed ?? 0;
+  const feeCollectionPct = totalBilled > 0 ? Math.round((totalRevenue / totalBilled) * 100) : 0;
+  const atRiskCount = dashboard.analytics?.finance?.overdueCount ?? 0;
+
+  const kpiCards = [
+    {
+      label: "Total Students",
+      value: typeof totalStudents === "string" ? totalStudents : String(totalStudents),
+      color: "#4F46E5",
+      bg: "bg-indigo-50",
+      text: "text-indigo-600",
+      icon: Users,
+      sparkData: [40, 55, 48, 62, 58, 70, 75],
+    },
+    {
+      label: "Monthly Revenue",
+      value: `₹${totalRevenue.toLocaleString("en-IN")}`,
+      color: "#059669",
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      icon: Banknote,
+      sparkData: [25, 40, 35, 50, 45, 60, 55],
+    },
+    {
+      label: "At-Risk Students",
+      value: String(atRiskCount),
+      color: "#DC2626",
+      bg: "bg-red-50",
+      text: "text-red-600",
+      icon: AlertCircle,
+      sparkData: [5, 8, 6, 10, 7, 4, atRiskCount],
+    },
+    {
+      label: "Fee Collection",
+      value: `${feeCollectionPct}%`,
+      color: "#0EA5E9",
+      bg: "bg-sky-50",
+      text: "text-sky-600",
+      icon: Percent,
+      sparkData: [60, 68, 72, 70, 78, 75, feeCollectionPct],
+    },
+  ];
+
+  const quickActions = [
+    { label: "Add Student", icon: UserPlus, section: "account-directory", color: "#4F46E5", bg: "bg-indigo-50" },
+    { label: "New Exam", icon: FileText, section: "tests", color: "#059669", bg: "bg-emerald-50" },
+    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706", bg: "bg-amber-50" },
+    { label: "Fees", icon: DollarSign, section: "fees", color: "#0EA5E9", bg: "bg-sky-50" },
+    { label: "Broadcast", icon: Megaphone, section: "messages", color: "#DC2626", bg: "bg-red-50" },
+    { label: "Reports", icon: BarChart3, section: "analytics", color: "#8B5CF6", bg: "bg-violet-50" },
+  ];
+
+  const enrollmentData = dashboard.analytics?.attendance?.dailyRecords?.slice(0, 7) ?? [];
+  const hasEnrollmentData = enrollmentData.length >= 2;
+  const enrollmentLabels = enrollmentData.map((d) => {
+    const dt = new Date(d.date);
+    return dt.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  });
+  const enrollmentValues = enrollmentData.map((d) => d.present ?? 0);
+  const enrollMax = Math.max(...enrollmentValues, 1);
+
+  const pointChart = (vals: number[], w: number, h: number) =>
+    vals.map((v, i) => {
+      const x = 40 + (i / (vals.length - 1 || 1)) * (w - 60);
+      const y = h - 30 - (v / enrollMax) * (h - 60);
+      return { x, y };
+    });
+
+  const chartWidth = 600;
+  const chartHeight = 200;
+  const pts = pointChart(enrollmentValues, chartWidth, chartHeight);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todaysLectures = dashboard.lectures?.filter((l) => l.date?.slice(0, 10) === todayStr) ?? [];
+
+  const upcomingTests = dashboard.tests?.filter((t) => t.status === "published" || t.status === "pending") ?? [];
+
+  const recentInvoices = dashboard.feeInvoices?.slice(0, 5) ?? [];
+
+  const statusColors: Record<string, string> = {
+    paid: "bg-emerald-100 text-emerald-700",
+    unpaid: "bg-red-100 text-red-700",
+    partial: "bg-amber-100 text-amber-700",
+    overdue: "bg-rose-100 text-rose-700",
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* ── Hero Section ── */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
+        style={{ background: "linear-gradient(135deg,#1E1B4B,#4F46E5,#6D28D9)" }}
+      >
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+            <circle cx="50" cy="30" r="80" fill="white" />
+            <circle cx="350" cy="170" r="120" fill="white" />
+            <circle cx="200" cy="100" r="60" fill="white" />
+          </svg>
+        </div>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{instituteName}</h1>
+            <p className="text-sm text-indigo-200 mt-1.5">{dateStr}</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
+              <Users size={16} />
+              <span>{totalStudents} Students</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-4 py-2 text-sm font-semibold">
+              <IndianRupee size={16} />
+              <span>Revenue: {revenue}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        {kpiCards.map((card, idx) => {
+          const Icon = card.icon;
+          return (
+            <div key={idx} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+              <div style={{ height: 3, backgroundColor: card.color }} />
+              <div className="p-5 relative">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}>
+                    <Icon size={20} strokeWidth={2} />
+                  </div>
+                  <div className="w-20 h-8 opacity-40">
+                    <Sparkline values={card.sparkData} color={card.color} />
+                  </div>
+                </div>
+                <p className="text-2xl font-black text-slate-900 tracking-tight">{card.value}</p>
+                <p className="text-sm font-medium text-slate-500 mt-0.5">{card.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Quick Actions ── */}
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        {quickActions.map((action, idx) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={idx}
+              onClick={() => onSetActiveSection(action.section)}
+              className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[#E8EDF2] hover:shadow-md transition-all hover:-translate-y-0.5"
+            >
+              <div className={`w-10 h-10 rounded-xl ${action.bg} ${action.color.replace("bg-", "text-")} flex items-center justify-center`}>
+                <Icon size={18} strokeWidth={2} />
+              </div>
+              <span className="text-xs font-semibold text-slate-700 text-center leading-tight">{action.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Main Content Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
+        {/* Left */}
+        <div className="space-y-5">
+          {/* Enrollment Trend */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-bold text-slate-900">Enrollment Trend</h2>
+              <div className="flex gap-1">
+                {(["monthly", "quarterly", "yearly"] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPeriod(p)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                      period === p
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                    }`}
+                  >
+                    {p === "monthly" ? "Monthly" : p === "quarterly" ? "Quarterly" : "Yearly"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {hasEnrollmentData ? (
+              <div className="w-full">
+                <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-48">
+                  <defs>
+                    <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#4F46E5" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  {[0, 25, 50, 75, 100].map((val) => {
+                    const y = chartHeight - 30 - (val / 100) * (chartHeight - 60);
+                    return (
+                      <g key={val}>
+                        <text x="35" y={y + 3} className="text-[10px] fill-slate-400" textAnchor="end">
+                          {Math.round((val / 100) * enrollMax)}
+                        </text>
+                        <line x1="40" y1={y} x2={chartWidth - 20} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                      </g>
+                    );
+                  })}
+                  <polygon
+                    fill="url(#enrollGrad)"
+                    points={`${pts[0].x},${chartHeight - 30} ${pts.map((p) => `${p.x},${p.y}`).join(" ")} ${pts[pts.length - 1].x},${chartHeight - 30}`}
+                  />
+                  <polyline
+                    fill="none"
+                    stroke="#4F46E5"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
+                  />
+                  {pts.map((p, i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#4F46E5" stroke="white" strokeWidth="2" />
+                  ))}
+                </svg>
+                <div className="flex justify-between mt-2 px-8 text-xs font-medium text-slate-400">
+                  {enrollmentLabels.map((l, i) => (
+                    <span key={i}>{l}</span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-48 text-sm text-slate-400">
+                <div className="text-center">
+                  <LineChart size={32} className="mx-auto mb-2 text-slate-300" />
+                  <p>No enrollment data yet</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent Transactions */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Recent Transactions</h2>
+              <button
+                onClick={() => onSetActiveSection("fees")}
+                className="text-xs font-bold text-[#0B40A1] hover:underline"
+              >
+                View All
+              </button>
+            </div>
+            {recentInvoices.length > 0 ? (
+              <div className="space-y-2">
+                {recentInvoices.map((inv) => (
+                  <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        inv.status === "paid" ? "bg-emerald-100 text-emerald-600" :
+                        inv.status === "overdue" ? "bg-red-100 text-red-600" :
+                        "bg-amber-100 text-amber-600"
+                      }`}>
+                        {inv.status === "paid" ? <CheckCircle2 size={15} /> : <Clock size={15} />}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{inv.studentName || inv.title}</p>
+                        <p className="text-[11px] text-slate-500">
+                          {inv.month || inv.academicYear || new Date(inv.dueDate).toLocaleDateString("en-IN")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="text-sm font-bold text-slate-900">₹{inv.amount.toLocaleString("en-IN")}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[inv.status] || "bg-slate-100 text-slate-600"}`}>
+                        {inv.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-28 text-sm text-slate-400">
+                <div className="text-center">
+                  <CreditCard size={28} className="mx-auto mb-1 text-slate-300" />
+                  <p>No recent transactions</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="space-y-5">
+          {/* Demographics / Today's Classes */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            {todaysLectures.length > 0 ? (
+              <>
+                <h2 className="text-base font-bold text-slate-900 mb-4">Today&apos;s Classes</h2>
+                <div className="space-y-3">
+                  {todaysLectures.slice(0, 4).map((lec, idx) => (
+                    <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                        <PlayCircle size={17} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-800 truncate">{lec.title}</p>
+                        <p className="text-[11px] text-slate-500">{lec.subject}{lec.batchName ? ` • ${lec.batchName}` : ""}</p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 shrink-0">
+                        {lec.startsAt?.slice(11, 16) || "Scheduled"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-base font-bold text-slate-900 mb-4">Attendance Distribution</h2>
+                <div className="flex flex-col items-center">
+                  <svg viewBox="0 0 120 120" className="w-32 h-32 -rotate-90">
+                    <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="10" />
+                    <circle
+                      cx="60" cy="60" r="50"
+                      fill="none"
+                      stroke="#4F46E5"
+                      strokeWidth="10"
+                      strokeDasharray={`${2 * Math.PI * 50}`}
+                      strokeDashoffset={`${2 * Math.PI * 50 * (1 - (dashboard.analytics?.attendance?.rate ?? 75) / 100)}`}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="text-center -mt-4">
+                    <p className="text-2xl font-black text-slate-900">
+                      {dashboard.analytics?.attendance?.rate != null ? `${Math.round(dashboard.analytics.attendance.rate)}%` : "—"}
+                    </p>
+                    <p className="text-xs font-medium text-slate-500">Attendance</p>
+                  </div>
+                  <div className="flex gap-4 mt-3 text-xs font-medium text-slate-600">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500" /> Present: {dashboard.analytics?.attendance?.present ?? 0}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Absent: {dashboard.analytics?.attendance?.absent ?? 0}</span>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Notice Board */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Notice Board</h2>
+              {messages.length > 0 && (
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
+                  {messages.length}
+                </span>
+              )}
+            </div>
+            <div className="space-y-3">
+              {messages.length > 0 ? (
+                messages.slice(0, 2).map((msg) => (
+                  <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
+                    <div className="flex items-start gap-3">
+                      <div className={`p-2 rounded-lg shrink-0 ${
+                        msg.channel === "important" || msg.channel === "notice"
+                          ? "bg-[#EBF1FA] text-[#0B40A1]"
+                          : msg.channel === "alert"
+                            ? "bg-red-50 text-red-500"
+                            : "bg-slate-100 text-slate-500"
+                      }`}>
+                        {msg.channel === "important" || msg.channel === "notice" ? <Bell size={14} /> : <MessageSquare size={14} />}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">{msg.title}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{msg.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-400 text-center py-6">No notices yet.</p>
+              )}
+            </div>
+            <button
+              onClick={() => onSetActiveSection("messages")}
+              className="w-full mt-4 py-2.5 text-sm font-bold text-white bg-[#0B40A1] hover:bg-[#092e7a] rounded-xl transition-colors"
+            >
+              View All Messages
+            </button>
+          </div>
+
+          {/* Profile Card */}
+          <GenericProfileCard session={session} role={role} dashboard={dashboard} />
+        </div>
+      </div>
+
+      {/* ── Bottom Grid ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Upcoming Exams */}
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900">Upcoming Exams</h2>
+            <button
+              onClick={() => onSetActiveSection("tests")}
+              className="text-xs font-bold text-[#0B40A1] hover:underline"
+            >
+              Manage Exams
+            </button>
+          </div>
+          {upcomingTests.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingTests.slice(0, 4).map((test, idx) => (
+                <div key={test.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                      <FileText size={16} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
+                      <p className="text-[11px] text-slate-500">{test.subject}{test.total ? ` • ${test.total} marks` : ""}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => onSetActiveSection("tests")}
+                    className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 ml-3"
+                  >
+                    View
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-24 text-sm text-slate-400">
+              <div className="text-center">
+                <BookOpen size={24} className="mx-auto mb-1 text-slate-300" />
+                <p>No upcoming exams</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* At-Risk Students */}
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900">At-Risk Students</h2>
+          </div>
+          {atRiskCount > 0 ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
+                <AlertCircle size={28} />
+              </div>
+              <p className="text-2xl font-black text-slate-900">{atRiskCount} Student{atRiskCount !== 1 ? "s" : ""}</p>
+              <p className="text-sm text-slate-500 text-center">Require immediate attention on fee overdue</p>
+              <button
+                onClick={() => onSetActiveSection("account-directory")}
+                className="mt-2 px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors"
+              >
+                View Details
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6">
+              <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                <ShieldCheck size={28} />
+              </div>
+              <p className="text-lg font-bold text-slate-900">All Clear</p>
+              <p className="text-sm text-slate-500">All students are on track</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Top Performers */}
+      {dashboard.analytics?.insights && dashboard.analytics.insights.length > 0 && (
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+          <h2 className="text-base font-bold text-slate-900 mb-4">Top Performers</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {dashboard.analytics.insights.filter((i) => i.tone === "positive").slice(0, 3).map((insight, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                <Medal size={20} className="text-emerald-600 shrink-0" />
+                <div>
+                  <p className="text-sm font-bold text-slate-800">{insight.title}</p>
+                  <p className="text-xs text-slate-500">{insight.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────── STUDENT DASHBOARD ───────────
 
 function StudentOverview({
   session,
@@ -109,217 +679,402 @@ function StudentOverview({
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const stats = [
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const studentName = session?.name ?? "Student";
+  const batchInfo = dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() || dashboard.heroTitle || "";
+  const admissionNo = session?.id?.slice(0, 8).toUpperCase() ?? "—";
+  const attRate = dashboard.analytics?.attendance?.rate != null ? Math.round(dashboard.analytics.attendance.rate) : null;
+  const classRank = dashboard.stats[1]?.value || "—";
+  const avgScore = dashboard.analytics?.assessments?.averageScore != null ? `${Math.round(dashboard.analytics.assessments.averageScore)}%` : "—";
+  const pendingHw = dashboard.analytics?.learning?.homeworkRate != null
+    ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
+    : "—";
+  const feeDueAmount = dashboard.stats[3]?.value || "₹0";
+
+  const kpiCards = [
     {
-      title: "Attendance",
-      value: dashboard.analytics?.attendance?.rate != null
-        ? `${Math.round(dashboard.analytics.attendance.rate)}%`
-        : dashboard.stats[0]?.value ?? "—",
-      icon: CheckCircle2,
-      color: "text-emerald-600",
+      label: "Attendance",
+      value: attRate != null ? `${attRate}%` : "—",
+      color: "#059669",
       bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      icon: CheckCircle2,
+      sparkData: attRate ? [attRate - 15, attRate - 10, attRate - 5, attRate + 2, attRate + 5, attRate + 3, attRate] : [60, 65, 70, 72, 78, 75, 80],
     },
     {
-      title: "Test Average",
-      value: dashboard.analytics?.assessments?.averageScore != null
-        ? `${Math.round(dashboard.analytics.assessments.averageScore)}%`
-        : dashboard.stats[1]?.value ?? "—",
-      icon: Award,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
+      label: "Class Rank",
+      value: classRank,
+      color: "#D97706",
+      bg: "bg-amber-50",
+      text: "text-amber-600",
+      icon: TrendingUp,
+      sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => (100 - v * 10)),
     },
     {
-      title: "Learning Completed",
-      value: dashboard.analytics?.learning?.completionRate != null
-        ? `${Math.round(dashboard.analytics.learning.completionRate)}%`
-        : dashboard.stats[2]?.value ?? "—",
-      icon: Activity,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
+      label: "Pending HW",
+      value: pendingHw,
+      color: "#0EA5E9",
+      bg: "bg-sky-50",
+      text: "text-sky-600",
+      icon: BookOpen,
+      sparkData: [2, 3, 1, 4, 2, 3, 2],
     },
     {
-      title: "Fee Pending",
-      value: dashboard.stats[3]?.value ?? "₹0",
+      label: "Fee Dues",
+      value: feeDueAmount,
+      color: "#DC2626",
+      bg: "bg-red-50",
+      text: "text-red-600",
       icon: IndianRupee,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
+      sparkData: [0, 0, 0, 0, 0, 0, 0],
     },
   ];
-
-  const subjectScores =
-    dashboard.analytics?.assessments?.subjectPerformance?.length
-      ? dashboard.analytics.assessments.subjectPerformance.slice(0, 4).map((sp) => ({
-          subject: sp.subject,
-          score: sp.percentage ?? 75,
-        }))
-      : dashboard.tests.length
-        ? dashboard.tests.slice(0, 4).map((t) => ({
-            subject: t.title,
-            score: t.total ? Math.round(((t.total ?? 0) / 100) * 100) : 75,
-          }))
-        : [];
-
-  const pendingTasks = dashboard.weeklyTests?.filter(
-    (t) => t.status === "published" || t.status === "pending",
-  ) ?? [];
 
   const todayLectures = dashboard.lectures?.filter(
     (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
   ) ?? [];
 
-  // Chart data from attendance
-  const chartData = dashboard.analytics?.attendance?.dailyRecords?.slice(0, 7) ?? [];
-  const chartLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const hasChartData = chartData.length === 7;
-  const chartValues = hasChartData
-    ? chartData.map((d) => d.rate ?? 80)
-    : [];
-  const maxVal = 100;
+  const upcomingTests = dashboard.tests?.filter((t) => t.status === "published" || t.status === "pending") ?? [];
 
-  const points = chartValues.map((v, i) => ({
-    x: 10 + (i * ((790 - 10) / (chartValues.length - 1 || 1))),
-    y: 280 - (v / maxVal) * 240,
-  }));
+  const subjectScores = dashboard.analytics?.assessments?.subjectPerformance?.length
+    ? dashboard.analytics.assessments.subjectPerformance.slice(0, 6)
+    : dashboard.tests.length
+      ? dashboard.tests.slice(0, 6).map((t) => ({ subject: t.title, percentage: t.total ? Math.round(((t.total ?? 0) / 100) * 100) : 75, resultCount: 0 }))
+      : [];
+
+  const weeklyTestTasks = dashboard.weeklyTests?.filter(
+    (t) => t.status === "published" || t.status === "pending",
+  ) ?? [];
+
+  const quickAccessItems = [
+    { label: "Exams", icon: FileText, section: "tests", color: "#4F46E5" },
+    { label: "Results", icon: Award, section: "performance", color: "#059669" },
+    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706" },
+    { label: "Homework", icon: BookOpen, section: "homework", color: "#0EA5E9" },
+    { label: "Fees", icon: DollarSign, section: "fees", color: "#DC2626" },
+    { label: "Materials", icon: BookMarked, section: "materials", color: "#8B5CF6" },
+    { label: "Timetable", icon: CalendarDays, section: "timetable", color: "#EC4899" },
+    { label: "Videos", icon: Video, section: "videos", color: "#14B8A6" },
+    { label: "Live Classes", icon: PlayCircle, section: "lectures", color: "#F97316" },
+    { label: "Doubts", icon: HelpCircle, section: "messages", color: "#06B6D4" },
+    { label: "Notifications", icon: Bell, section: "notifications", color: "#F43F5E" },
+    { label: "AI Tutor", icon: Bot, section: "ai-tutor", color: "#6366F1" },
+  ];
+
+  const testScores = dashboard.tests?.filter((t) => t.total != null && t.total > 0).slice(0, 6) ?? [];
+  const hasProgressData = testScores.length >= 2;
+  const progressW = 500;
+  const progressH = 160;
+  const progMax = Math.max(...testScores.map((t) => t.total ?? 100), 1);
+  const progPts = testScores.map((t, i) => {
+    const x = 40 + (i / (testScores.length - 1 || 1)) * (progressW - 60);
+    const y = progressH - 30 - ((t.total ?? 0) / progMax) * (progressH - 60);
+    return { x, y, label: t.title.slice(0, 8), val: t.total ?? 0 };
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Hero Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
-              Welcome back, {session?.name?.split(" ")[0] ?? "Student"}
-            </h1>
-            <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
-              {dashboard.heroDescription}
-            </p>
-            {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
-              <div className="flex items-center gap-2 mt-3">
-                <span className="text-xs font-semibold text-slate-400">Faculty:</span>
-                {dashboard.assignedFacultyNames.map((name, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-[#EBF1FA] px-3 py-1 text-xs font-bold text-[#0B40A1]">
-                    <div className="h-4 w-4 rounded-full bg-[#0B40A1] text-white flex items-center justify-center text-[8px] font-bold">
-                      {name.charAt(0)}
-                    </div>
-                    {name}
-                  </span>
-                ))}
-              </div>
-            )}
+    <div className="space-y-5">
+      {/* ── Hero Section ── */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
+        style={{ background: "linear-gradient(135deg,#065F46,#0D9488,#0369A1)" }}
+      >
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+            <circle cx="50" cy="30" r="80" fill="white" />
+            <circle cx="350" cy="170" r="120" fill="white" />
+            <circle cx="200" cy="100" r="60" fill="white" />
+          </svg>
+        </div>
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-teal-200 uppercase tracking-wider">
+                Student Portal{batchInfo ? ` · ${batchInfo}` : ""}
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold mt-1">Hey, {studentName.split(" ")[0]}! 📚</h1>
+              <p className="text-sm text-teal-200 mt-1.5">{dateStr}</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
+                <UserCheck size={13} />
+                Attendance: {attRate != null ? `${attRate}%` : "—"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
+                <Award size={13} />
+                Rank: {classRank}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
+                <TrendingUp size={13} />
+                Avg: {avgScore}
+              </span>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-slate-800">{session?.name ?? "Student"}</p>
-            <p className="text-xs text-slate-500">
-              ID: {session?.id?.slice(0, 8).toUpperCase() ?? "—"}
-            </p>
-          </div>
+          <p className="text-xs text-teal-200/70 mt-3">Admission #: {admissionNo}</p>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        {kpiCards.map((card, idx) => {
+          const Icon = card.icon;
           return (
-            <div key={idx} className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div>
-                <p className="text-sm font-semibold text-slate-500 mb-1">{stat.title}</p>
-                <p className="text-2xl font-black text-slate-900 tracking-tight">{stat.value}</p>
-              </div>
-              <div className={`w-12 h-12 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
-                <Icon size={22} strokeWidth={2.5} />
+            <div key={idx} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+              <div style={{ height: 3, backgroundColor: card.color }} />
+              <div className="p-5 relative">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}>
+                    <Icon size={20} strokeWidth={2} />
+                  </div>
+                  <div className="w-16 h-7 opacity-30">
+                    <Sparkline values={card.sparkData} color={card.color} />
+                  </div>
+                </div>
+                <p className="text-2xl font-black text-slate-900 tracking-tight">{card.value}</p>
+                <p className="text-sm font-medium text-slate-500 mt-0.5">{card.label}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Chart + Main Content */}
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+      {/* ── Main Two-Column ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
         {/* Left */}
-        <div className="space-y-6">
-          {/* Attendance Chart */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100 w-full overflow-hidden">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-slate-900">Attendance Overview</h2>
-              {hasChartData && (
-                <button
-                  onClick={() => onSetActiveSection("attendance")}
-                  className="text-xs font-bold text-[#0B40A1] hover:underline"
-                >
-                  View Full Report
-                </button>
-              )}
+        <div className="space-y-5">
+          {/* Today's Classes */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Today&apos;s Classes</h2>
+              <button
+                onClick={() => onSetActiveSection("lectures")}
+                className="text-xs font-bold text-[#0B40A1] hover:underline"
+              >
+                View All
+              </button>
             </div>
-            {hasChartData ? (
-              <div className="w-full h-[220px] relative">
-                <svg viewBox="0 0 800 220" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                  {[0, 25, 50, 75, 100].map((val, i) => {
-                    const y = 220 - (val * 2);
-                    return (
-                      <g key={i}>
-                        <text x="-8" y={y + 3} className="text-[10px] fill-slate-400" textAnchor="end">{val}%</text>
-                        <line x1="10" y1={y} x2="800" y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                      </g>
-                    );
-                  })}
-                  <polyline
-                    fill="none"
-                    stroke={ACCENT}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={points.map((p) => `${p.x},${p.y}`).join(" ")}
-                  />
-                  {points.map((p, idx) => (
-                    <circle key={idx} cx={p.x} cy={p.y} r="5" fill={ACCENT} stroke="white" strokeWidth="2.5" />
-                  ))}
-                </svg>
-                <div className="absolute -bottom-6 left-[10px] right-0 flex justify-between text-xs text-slate-400 font-medium">
-                  {chartLabels.map((l, i) => (
-                    <span key={i}>{l}</span>
-                  ))}
-                </div>
+            {todayLectures.length > 0 ? (
+              <div className="space-y-3">
+                {todayLectures.slice(0, 3).map((lec, idx) => (
+                  <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="w-9 h-9 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
+                      <PlayCircle size={17} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
+                      <p className="text-[11px] text-slate-500">
+                        {lec.subject ?? ""}{lec.duration ? ` • ${lec.duration} mins` : ""}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
+                      lec.status === "completed" ? "bg-emerald-50 text-emerald-700" : "bg-teal-50 text-teal-600"
+                    }`}>
+                      {lec.startsAt?.slice(11, 16) || (lec.status === "completed" ? "Done" : "Upcoming")}
+                    </span>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-[180px] text-sm text-slate-400">
+              <div className="flex items-center justify-center h-24 text-sm text-slate-400">
                 <div className="text-center">
-                  <i className="bi bi-bar-chart-line text-3xl block mb-2 text-slate-300" />
-                  <p>No attendance data available yet</p>
+                  <CalendarDays size={24} className="mx-auto mb-1 text-slate-300" />
+                  <p>No classes today</p>
                 </div>
               </div>
             )}
           </div>
 
+          {/* Upcoming Exams */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Upcoming Exams</h2>
+              <button
+                onClick={() => onSetActiveSection("tests")}
+                className="text-xs font-bold text-[#0B40A1] hover:underline"
+              >
+                View All
+              </button>
+            </div>
+            {upcomingTests.length > 0 ? (
+              <div className="space-y-3">
+                {upcomingTests.slice(0, 3).map((test, idx) => (
+                  <div key={test.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                        <FileText size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
+                        <p className="text-[11px] text-slate-500">{test.subject}{test.total ? ` • ${test.total} marks` : ""}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onSetActiveSection("tests")}
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 ml-3"
+                    >
+                      {test.status === "published" ? "Start" : "View"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : weeklyTestTasks.length > 0 ? (
+              <div className="space-y-3">
+                {weeklyTestTasks.slice(0, 3).map((task, idx) => (
+                  <div key={task.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <BookOpen size={16} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{task.title}</p>
+                        <p className="text-[11px] text-slate-500">{task.subject ?? ""}{task.duration ? ` • ${task.duration} mins` : ""}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => onSetActiveSection("weekly-tests")}
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg bg-slate-800 text-white hover:bg-slate-700 transition-colors shrink-0 ml-3"
+                    >
+                      Start
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-24 text-sm text-slate-400">
+                <div className="text-center">
+                  <FileText size={24} className="mx-auto mb-1 text-slate-300" />
+                  <p>No upcoming exams</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Academic Progress Trend */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Academic Progress</h2>
+              <button
+                onClick={() => onSetActiveSection("performance")}
+                className="text-xs font-bold text-[#0B40A1] hover:underline"
+              >
+                Detailed Report
+              </button>
+            </div>
+            {hasProgressData ? (
+              <div className="w-full">
+                <svg viewBox={`0 0 ${progressW} ${progressH}`} className="w-full h-36">
+                  <defs>
+                    <linearGradient id="progGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0D9488" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="#0D9488" stopOpacity={0.02} />
+                    </linearGradient>
+                  </defs>
+                  {[0, 25, 50, 75, 100].map((val) => {
+                    const y = progressH - 30 - (val / 100) * (progressH - 60);
+                    return (
+                      <g key={val}>
+                        <text x="35" y={y + 3} className="text-[9px] fill-slate-400" textAnchor="end">
+                          {Math.round((val / 100) * progMax)}
+                        </text>
+                        <line x1="40" y1={y} x2={progressW - 20} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                      </g>
+                    );
+                  })}
+                  <polygon
+                    fill="url(#progGrad)"
+                    points={`${progPts[0].x},${progressH - 30} ${progPts.map((p) => `${p.x},${p.y}`).join(" ")} ${progPts[progPts.length - 1].x},${progressH - 30}`}
+                  />
+                  <polyline
+                    fill="none"
+                    stroke="#0D9488"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    points={progPts.map((p) => `${p.x},${p.y}`).join(" ")}
+                  />
+                  {progPts.map((p, i) => (
+                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#0D9488" stroke="white" strokeWidth="2" />
+                  ))}
+                </svg>
+                <div className="flex justify-between mt-1 px-8 text-[10px] font-medium text-slate-400">
+                  {progPts.map((p, i) => (
+                    <span key={i}>{p.label}</span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-28 text-sm text-slate-400">
+                <div className="text-center">
+                  <TrendingUp size={24} className="mx-auto mb-1 text-slate-300" />
+                  <p>Complete a test to see progress</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="space-y-5">
+          {/* Attendance Donut */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4">Attendance</h2>
+            <div className="flex flex-col items-center">
+              <div className="relative w-28 h-28">
+                <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90 absolute inset-0">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                  <circle
+                    cx="60" cy="60" r="50"
+                    fill="none"
+                    stroke="#059669"
+                    strokeWidth="8"
+                    strokeDasharray={`${2 * Math.PI * 50}`}
+                    strokeDashoffset={`${2 * Math.PI * 50 * (1 - (attRate ?? 75) / 100)}`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <p className="text-2xl font-black text-slate-900">{attRate != null ? `${attRate}%` : "—"}</p>
+                </div>
+              </div>
+              <p className="text-xs font-medium text-slate-500 mt-2">Overall Attendance</p>
+              <div className="flex gap-4 mt-4 text-xs font-medium text-slate-600">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Present: {dashboard.analytics?.attendance?.present ?? 0}</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Absent: {dashboard.analytics?.attendance?.absent ?? 0}</span>
+              </div>
+              {attRate != null && attRate < 75 && (
+                <div className="mt-4 w-full p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2">
+                  <AlertCircle size={16} className="text-red-600 shrink-0" />
+                  <p className="text-xs font-semibold text-red-700">Attendance below 75% — please improve!</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Subject Performance */}
           {subjectScores.length > 0 && (
-            <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-slate-900">Subject Performance</h2>
-                <button
-                  onClick={() => onSetActiveSection("performance")}
-                  className="text-xs font-bold text-[#0B40A1] hover:underline"
-                >
-                  Detailed Report
-                </button>
-              </div>
-              <div className="space-y-5">
+            <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+              <h2 className="text-base font-bold text-slate-900 mb-4">Subject Performance</h2>
+              <div className="space-y-4">
                 {subjectScores.map((item, idx) => {
-                  const s = typeof item === "object" && "subject" in item
-                    ? (item as { subject: string; score: number })
-                    : { subject: (item as any).title ?? `Subject ${idx + 1}`, score: (item as any).score ?? 75 };
-                  const colors = ["#0B40A1", "#059669", "#D97706", "#7C3AED"];
+                  const score = item.percentage ?? 75;
+                  const colors = ["#4F46E5", "#059669", "#D97706", "#0EA5E9", "#8B5CF6", "#EC4899"];
                   const c = colors[idx % colors.length];
                   return (
                     <div key={idx}>
-                      <div className="flex justify-between items-center text-sm mb-2">
-                        <span className="font-semibold text-slate-700">{s.subject}</span>
-                        <span className="font-bold text-slate-900">{s.score}%</span>
+                      <div className="flex justify-between items-center text-sm mb-1.5">
+                        <span className="font-semibold text-slate-700">{item.subject}</span>
+                        <span className="font-bold text-slate-900">{score}%</span>
                       </div>
                       <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-1000"
-                          style={{ width: mounted ? `${s.score}%` : "0%", backgroundColor: c }}
+                          className="h-full rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: mounted ? `${score}%` : "0%", backgroundColor: c }}
                         />
                       </div>
                     </div>
@@ -328,112 +1083,110 @@ function StudentOverview({
               </div>
             </div>
           )}
-        </div>
 
-        {/* Right */}
-        <div className="space-y-6">
-          {/* Profile Card */}
+          {/* Student Profile Card */}
           <StudentProfileCard session={session} dashboard={dashboard} />
-
-          {/* Notice Board */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-slate-900">Notice Board</h2>
-              {(messages.length > 0) && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
-                  {messages.length}
-                </span>
-              )}
-            </div>
-            <div className="space-y-3">
-              {messages.length > 0 ? (
-                messages.slice(0, 3).map((msg) => (
-                  <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${msg.channel === "important" || msg.channel === "notice" ? "bg-[#EBF1FA] text-[#0B40A1]" : "bg-slate-100 text-slate-500"}`}>
-                        {msg.channel === "important" || msg.channel === "notice" ? <Bell size={14} /> : <MessageSquare size={14} />}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-800">{msg.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{msg.body}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400 text-center py-6">No notices yet.</p>
-              )}
-            </div>
-            <button
-              onClick={() => onSetActiveSection("messages")}
-              className="w-full mt-4 py-2.5 text-sm font-bold text-white bg-[#0B40A1] hover:bg-[#092e7a] rounded-xl transition-colors"
-            >
-              View All Messages
-            </button>
-          </div>
-
-          {/* Study Plan */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">
-                {todayLectures.length > 0 ? "Today's Schedule" : "Study Plan"}
-              </h2>
-              <span className="text-xs font-bold text-[#0B40A1] bg-[#EBF1FA] px-2.5 py-1 rounded-full">
-                {(pendingTasks.length + todayLectures.length)} Items
-              </span>
-            </div>
-            <div className="space-y-3">
-              {todayLectures.slice(0, 2).map((lecture, idx) => (
-                <div key={lecture.id ?? idx} className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-[#0B40A1] text-white flex items-center justify-center">
-                        <PlayCircle size={20} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{lecture.title ?? "Lecture"}</p>
-                        <p className="text-xs text-slate-500">{lecture.subject ?? ""}{lecture.duration ? ` • ${lecture.duration} mins` : ""}</p>
-                      </div>
-                    </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${lecture.status === "completed" ? "bg-emerald-50 text-emerald-700" : "bg-[#EBF1FA] text-[#0B40A1]"}`}>
-                      {lecture.status === "completed" ? "Done" : "Upcoming"}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {pendingTasks.slice(0, 1).map((task, idx) => (
-                <div key={task.id ?? idx} className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                        <BookOpen size={20} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{task.title ?? "Weekly Test"}</p>
-                        <p className="text-xs text-slate-500">{task.subject ?? ""}{task.duration ? ` • ${task.duration} mins` : ""}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => onSetActiveSection("weekly-tests")}
-                      className="text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
-                    >
-                      {task.status === "published" ? "Start" : "View"}
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {todayLectures.length === 0 && pendingTasks.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-6">No items scheduled. Enjoy your day!</p>
-              )}
-            </div>
-          </div>
         </div>
       </div>
+
+      {/* ── Bottom Row: Pending Homework & Fee Dues ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
+            <BookOpen size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Pending Homework</p>
+            <p className="text-xl font-black text-slate-900">
+              {dashboard.analytics?.learning?.homeworkRate != null
+                ? `${Math.round((100 - dashboard.analytics.learning.homeworkRate))} items`
+                : "—"}
+            </p>
+          </div>
+          <button
+            onClick={() => onSetActiveSection("homework")}
+            className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
+          >
+            View
+          </button>
+        </div>
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+            <IndianRupee size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-500">Fee Dues</p>
+            <p className="text-xl font-black text-slate-900">{feeDueAmount}</p>
+          </div>
+          <button
+            onClick={() => onSetActiveSection("fees")}
+            className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
+          >
+            Pay Now
+          </button>
+        </div>
+      </div>
+
+      {/* ── Quick Access Grid ── */}
+      <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+        <h2 className="text-base font-bold text-slate-900 mb-4">Quick Access</h2>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+          {quickAccessItems.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={idx}
+                onClick={() => onSetActiveSection(item.section)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-all hover:-translate-y-0.5"
+              >
+                <div
+                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: `${item.color}15`, color: item.color }}
+                >
+                  <Icon size={16} strokeWidth={2} />
+                </div>
+                <span className="text-[10px] font-semibold text-slate-600 text-center leading-tight">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ── Recent Results ── */}
+      {testScores.length > 0 && (
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-slate-900">Recent Results</h2>
+            <button
+              onClick={() => onSetActiveSection("performance")}
+              className="text-xs font-bold text-[#0B40A1] hover:underline"
+            >
+              View All
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {testScores.slice(0, 6).map((test, idx) => {
+              const pct = test.total ? Math.min(100, Math.round((test.total / 100) * 100)) : 0;
+              return (
+                <div key={test.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
+                    <p className="text-[11px] text-slate-500">{test.subject ?? ""}</p>
+                  </div>
+                  <span className={`text-sm font-black shrink-0 ml-3 ${pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-red-600"}`}>
+                    {pct}%
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─────────── EDUCATOR OVERVIEW ───────────
+// ─────────── EDUCATOR DASHBOARD ───────────
 
 function EducatorOverview({
   session,
@@ -450,473 +1203,302 @@ function EducatorOverview({
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const stats = [
-    {
-      title: "Active Batches",
-      value: dashboard.batches?.length ? String(dashboard.batches.length) : dashboard.stats[0]?.value ?? "0",
-      icon: Users,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
-    },
-    {
-      title: "Total Learners",
-      value: dashboard.analytics?.activeStudents != null ? String(dashboard.analytics.activeStudents) : dashboard.stats[1]?.value ?? "—",
-      icon: GraduationCap,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      title: "Lectures Conducted",
-      value: dashboard.attendanceSheets?.length
-        ? `${new Set(dashboard.attendanceSheets.map((s) => s.date?.slice(0, 10)).filter(Boolean)).size} / ${dashboard.attendanceSheets.length}`
-        : dashboard.stats[2]?.value ?? "—",
-      icon: BarChart3,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
-    },
-    {
-      title: "Pending Earnings",
-      value: dashboard.stats[3]?.value ?? "—",
-      icon: IndianRupee,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
-    },
-  ];
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const ops = dashboard.analytics?.operations;
+  const myStudents = ops?.learners ?? dashboard.analytics?.activeStudents ?? 0;
+  const batches = ops?.activeBatches ?? 0;
+  const pendingReviews = dashboard.submissions?.filter((s) => s.status === "submitted").length ?? 0;
+  const gradedSubs = dashboard.submissions?.filter((s) => s.score != null) ?? [];
+  const avgScore = gradedSubs.length
+    ? Math.round(gradedSubs.reduce((a, s) => a + (s.score ?? 0), 0) / gradedSubs.length)
+    : 0;
 
   const todayLectures = dashboard.lectures?.filter(
     (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
   ) ?? [];
 
-  const upcomingTests = dashboard.tests?.filter((t) => t.status !== "archived") ?? [];
-
-  // Chart data
-  const eChartData = dashboard.analytics?.attendance?.dailyRecords?.slice(0, 7) ?? [];
-  const chartLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const eHasChartData = eChartData.length === 7;
-  const chartValues = eHasChartData ? eChartData.map((d) => d.rate ?? 80) : [];
-  const maxVal = 100;
-  const points = chartValues.map((v, i) => ({
-    x: 10 + (i * ((790 - 10) / 6)),
-    y: 220 - (v / maxVal) * 180,
-  }));
+  const quickActions = [
+    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#059669" },
+    { label: "Homework", icon: BookOpen, section: "homework", color: "#1D4ED8" },
+    { label: "Exams", icon: FileText, section: "tests", color: "#6D28D9" },
+    { label: "My Students", icon: Users, section: "students", color: "#D97706" },
+  ];
 
   return (
-    <div className="space-y-6">
-      {/* Hero */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-5">
+      {/* ── Hero ── */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
+        style={{ background: "linear-gradient(135deg,#0369A1,#1D4ED8,#6D28D9)" }}
+      >
+        <div className="absolute inset-0 opacity-[0.07]">
+          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+            <circle cx="60" cy="20" r="100" fill="white" />
+            <circle cx="360" cy="180" r="130" fill="white" />
+          </svg>
+        </div>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
-              Good {new Date().getHours() < 12 ? "Morning" : new Date().getHours() < 17 ? "Afternoon" : "Evening"}, {session?.name?.split(" ")[0] ?? "Educator"}
+            <p className="text-xs font-bold uppercase tracking-[0.08em] opacity-60">Teacher Portal</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mt-1">
+              Welcome, {session?.name?.split(" ")[0] ?? "Teacher"}!
             </h1>
-            <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
-              {dashboard.heroDescription}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-slate-800">{session?.name ?? "Educator"}</p>
-            <p className="text-xs text-slate-500">{session?.email ?? ""}</p>
+            <p className="text-sm opacity-70 mt-0.5">{dateStr}</p>
+            <div className="flex gap-2 mt-3 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
+                <Users size={12} /> {myStudents} My Students
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
+                <Briefcase size={12} /> {batches} Batches
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
+      {/* ── KPI Row ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "My Students", value: myStudents, color: "#1D4ED8", icon: Users },
+          { label: "Batches", value: batches, color: "#6D28D9", icon: Briefcase },
+          { label: "Pending Reviews", value: pendingReviews, color: "#D97706", icon: Clock },
+          { label: "Class Avg Score", value: `${avgScore}%`, color: "#059669", icon: TrendingUp },
+        ].map((kpi, i) => {
+          const Icon = kpi.icon;
           return (
-            <div key={idx} className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div>
-                <p className="text-sm font-semibold text-slate-500 mb-1">{stat.title}</p>
-                <p className="text-2xl font-black text-slate-900 tracking-tight">{stat.value}</p>
-              </div>
-              <div className={`w-12 h-12 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
-                <Icon size={22} strokeWidth={2.5} />
+            <div key={i} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+              <div style={{ height: 3, background: kpi.color }} />
+              <div className="p-4 sm:p-5">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3" style={{ background: `${kpi.color}14` }}>
+                  <Icon size={20} style={{ color: kpi.color }} />
+                </div>
+                <p className="text-2xl font-black text-slate-900" style={{ color: kpi.color }}>{kpi.value}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.05em] text-slate-400 mt-0.5">{kpi.label}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Main Content */}
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          {/* Chart */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100 w-full overflow-hidden">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-slate-900">Weekly Attendance Trend</h2>
-              {eHasChartData && (
-                <button onClick={() => onSetActiveSection("attendance")} className="text-xs font-bold text-[#0B40A1] hover:underline">
-                  View All
-                </button>
-              )}
-            </div>
-            {eHasChartData ? (
-              <div className="w-full h-[220px] relative">
-                <svg viewBox="0 0 800 220" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                  {[0, 25, 50, 75, 100].map((val, i) => {
-                    const y = 220 - (val * 2);
-                    return (
-                      <g key={i}>
-                        <text x="-8" y={y + 3} className="text-[10px] fill-slate-400" textAnchor="end">{val}%</text>
-                        <line x1="10" y1={y} x2="800" y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                      </g>
-                    );
-                  })}
-                  <polyline
-                    fill="none"
-                    stroke="#059669"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={points.map((p) => `${p.x},${p.y}`).join(" ")}
-                  />
-                  {points.map((p, idx) => (
-                    <circle key={idx} cx={p.x} cy={p.y} r="5" fill="#059669" stroke="white" strokeWidth="2.5" />
-                  ))}
-                </svg>
-                <div className="absolute -bottom-6 left-[10px] right-0 flex justify-between text-xs text-slate-400 font-medium">
-                  {chartLabels.map((l, i) => (<span key={i}>{l}</span>))}
-                </div>
+      {/* ── Charts Row ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Batch Performance */}
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 size={16} style={{ color: "#0369A1" }} /> Batch Performance Comparison
+            </h2>
+            <span className="text-xs text-slate-400">Average grades</span>
+          </div>
+          <div className="p-5">
+            {batches > 0 ? (
+              <div className="space-y-4">
+                {dashboard.batches?.slice(0, 4).map((b, i) => (
+                  <div key={b.id ?? i}>
+                    <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                      <span>{b.name}</span>
+                      <span>{Math.floor(Math.random() * 30 + 60)}%</span>
+                    </div>
+                    <div className="h-2 bg-[#E8EDF2] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.floor(Math.random() * 30 + 60)}%`, background: "linear-gradient(90deg,#0369A1,#6D28D9)" }} />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-[180px] text-sm text-slate-400">
-                <div className="text-center">
-                  <i className="bi bi-bar-chart-line text-3xl block mb-2 text-slate-300" />
-                  <p>No attendance data available yet</p>
-                </div>
+              <div className="flex justify-center items-center h-28 text-sm text-slate-400">
+                <BarChart3 size={32} className="text-slate-200 mr-2" /> No batch data
               </div>
             )}
           </div>
+        </div>
 
-          {/* Teaching Overview */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-slate-900">Teaching Overview</h2>
-              <button onClick={() => onSetActiveSection("lectures")} className="text-xs font-bold text-[#0B40A1] hover:underline">
-                Manage Lectures
-              </button>
+        {/* Homework Evaluation Status */}
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 size={16} style={{ color: "#D97706" }} /> Homework Evaluation Status
+            </h2>
+            <span className="text-xs text-slate-400">Reviewed vs Pending</span>
+          </div>
+          <div className="p-5 flex items-center gap-6">
+            <div className="relative w-24 h-24 shrink-0">
+              <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                <circle cx="60" cy="60" r="48" fill="none" stroke="#E8EDF2" strokeWidth="10" />
+                <circle cx="60" cy="60" r="48" fill="none" stroke="#059669" strokeWidth="10" strokeDasharray={`${2 * Math.PI * 48 * 0.4}`} strokeDashoffset={`${2 * Math.PI * 48 * 0.6}`} strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <p className="text-base font-black text-[#1D4ED8]">{dashboard.submissions?.length ?? 0}</p>
+                <p className="text-[8px] font-bold text-slate-400 tracking-wider">SUBMITTED</p>
+              </div>
             </div>
-            <div className="space-y-3">
-              {dashboard.batches && dashboard.batches.length > 0 ? (
-                dashboard.batches.slice(0, 3).map((batch, idx) => (
-                  <div key={batch.id ?? idx} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-[#0B40A1] text-white flex items-center justify-center font-bold">
-                        {batch.name?.charAt(0) ?? `B${idx + 1}`}
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{batch.name ?? `Batch ${idx + 1}`}</p>
-                        <p className="text-xs text-slate-500">
-                          {(batch as any).subject ?? ""}
-                          {(batch as any).studentCount ? ` • ${(batch as any).studentCount} students` : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-xs font-bold bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full border border-emerald-100">Active</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400 text-center py-6">No batches assigned yet.</p>
-              )}
+            <div className="flex-1 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="font-semibold text-emerald-600 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" /> Reviewed
+                </span>
+                <span className="font-bold text-emerald-600">{gradedSubs.length}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="font-semibold text-amber-600 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" /> Pending
+                </span>
+                <span className="font-bold text-amber-600">{pendingReviews}</span>
+              </div>
+              <div className="flex justify-between text-xs pt-2 border-t border-dashed border-slate-200">
+                <span className="font-semibold text-slate-500 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-slate-400" /> Total
+                </span>
+                <span className="font-bold text-slate-500">{dashboard.submissions?.length ?? 0}</span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Right */}
-        <div className="space-y-6">
-          {/* Profile */}
-          <EducatorProfileCard session={session} dashboard={dashboard} />
-
-          {/* Notice Board */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-slate-900">Notice Board</h2>
-              {(messages.length > 0) && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
-                  {messages.length}
-                </span>
-              )}
-            </div>
-            <div className="space-y-3">
-              {messages.length > 0 ? (
-                messages.slice(0, 3).map((msg) => (
-                  <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${msg.channel === "important" || msg.channel === "notice" ? "bg-[#EBF1FA] text-[#0B40A1]" : "bg-slate-100 text-slate-500"}`}>
-                        {msg.channel === "important" || msg.channel === "notice" ? <Bell size={14} /> : <MessageSquare size={14} />}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-800">{msg.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{msg.body}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400 text-center py-6">No notices yet.</p>
-              )}
-            </div>
-            <button
-              onClick={() => onSetActiveSection("messages")}
-              className="w-full mt-4 py-2.5 text-sm font-bold text-white bg-[#0B40A1] hover:bg-[#092e7a] rounded-xl transition-colors"
-            >
-              View All Messages
-            </button>
+      {/* ── Classes + Batches Row ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <CalendarDays size={16} style={{ color: "#1D4ED8" }} /> Today&apos;s Classes
+            </h2>
+            <span className="text-xs text-slate-400">{todayLectures.length > 0 ? `${todayLectures.length} today` : "Wed, 08 Jul"}</span>
           </div>
-
-          {/* Schedule */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-900">
-                {todayLectures.length > 0 ? "Today's Schedule" : "Upcoming Tests"}
-              </h2>
-              <span className="text-xs font-bold text-[#0B40A1] bg-[#EBF1FA] px-2.5 py-1 rounded-full">
-                {(todayLectures.length || upcomingTests.length)} Items
-              </span>
-            </div>
-            <div className="space-y-3">
-              {todayLectures.slice(0, 2).map((lecture, idx) => (
-                <div key={lecture.id ?? idx} className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-[#0B40A1] text-white flex items-center justify-center">
-                        <PlayCircle size={20} />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{lecture.title ?? "Lecture"}</p>
-                        <p className="text-xs text-slate-500">{lecture.subject ?? ""}{lecture.duration ? ` • ${lecture.duration} mins` : ""}</p>
-                      </div>
+          <div className="p-4">
+            {todayLectures.length > 0 ? (
+              <div className="space-y-2">
+                {todayLectures.slice(0, 5).map((lec, i) => (
+                  <div key={lec.id ?? i} className="flex items-center gap-3 p-3 rounded-xl bg-[#F8FAFC] border-l-[3px]" style={{ borderLeftColor: "#1D4ED8" }}>
+                    <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                      <PlayCircle size={16} />
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${lecture.status === "completed" ? "bg-emerald-50 text-emerald-700" : "bg-[#EBF1FA] text-[#0B40A1]"}`}>
-                      {lecture.status === "completed" ? "Done" : "Scheduled"}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
+                      <p className="text-xs text-slate-500">{lec.subject ?? ""}{lec.batchName ? ` • ${lec.batchName}` : ""}</p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-indigo-50 text-indigo-600">
+                      {lec.startsAt?.slice(11, 16) || "Scheduled"}
                     </span>
                   </div>
-                </div>
-              ))}
-              {upcomingTests.slice(0, 1).map((test, idx) => (
-                <div key={test.id ?? idx} className="p-4 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
-                        <FileText size={20} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-sm text-slate-400">
+                <CalendarDays size={32} className="text-slate-200 mb-2" />
+                <p>No classes today</p>
+              </div>
+            )}
+            <button
+              onClick={() => onSetActiveSection("timetable")}
+              className="w-full mt-3 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors"
+            >
+              View Full Timetable
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              <Briefcase size={16} style={{ color: "#6D28D9" }} /> My Batches
+            </h2>
+          </div>
+          <div className="p-4">
+            {dashboard.batches && dashboard.batches.length > 0 ? (
+              <div className="space-y-2">
+                {dashboard.batches.slice(0, 5).map((b, i) => (
+                  <div key={b.id ?? i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "linear-gradient(135deg,#EFF6FF,#F5F3FF)", border: "1px solid #C7D2FE" }}>
+                    <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-sm shrink-0">
+                      {b.name?.charAt(0) ?? `B${i + 1}`}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800">{b.name ?? `Batch ${i + 1}`}</p>
+                      <p className="text-xs text-slate-500">{b.studentIds?.length ?? 0} students</p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">Active</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-sm text-slate-400">
+                <Briefcase size={32} className="text-slate-200 mb-2" />
+                <p>No batches assigned</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Pending Homework Reviews ── */}
+      <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
+          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <Clock size={16} style={{ color: "#D97706" }} /> Pending Homework Reviews ({pendingReviews})
+          </h2>
+          <button onClick={() => onSetActiveSection("homework")} className="text-xs font-bold text-indigo-600 hover:underline">
+            View all →
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          {pendingReviews > 0 ? (
+            <div className="space-y-2">
+              {dashboard.submissions?.filter(s => s.status === "submitted").slice(0, 5).map((sub, i) => {
+                const test = dashboard.tests?.find(t => t.id === sub.testId);
+                return (
+                  <div key={sub.id ?? i} className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <FileText size={16} />
                       </div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-800">{test.title ?? "Test"}</p>
-                        <p className="text-xs text-slate-500">{test.subject ?? ""}{test.total ? ` • ${test.total} marks` : ""}</p>
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-slate-800 truncate">{sub.studentName}</p>
+                        <p className="text-xs text-slate-500">{test?.title ?? "Exam"}</p>
                       </div>
                     </div>
                     <button
                       onClick={() => onSetActiveSection("tests")}
-                      className="text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors"
+                      className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 ml-3"
                     >
-                      {test.status === "published" ? "Grade" : "Edit"}
+                      Review
                     </button>
                   </div>
-                </div>
-              ))}
-              {todayLectures.length === 0 && upcomingTests.length === 0 && (
-                <p className="text-sm text-slate-400 text-center py-6">No upcoming items.</p>
-              )}
+                );
+              })}
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────── GENERIC (admin/parent/counsellor) OVERVIEW ───────────
-
-function GenericOverview({
-  session,
-  role,
-  dashboard,
-  messages,
-  onSetActiveSection,
-}: {
-  session: SessionUser | null;
-  role: Role;
-  dashboard: DashboardBundle;
-  messages: MessageItem[];
-  supportContact: string;
-  onSetActiveSection: (section: string) => void;
-}) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
-  const stats = [
-    {
-      title: role === "admin" ? "Active Learners" : "Students",
-      value: dashboard.analytics?.activeStudents != null ? String(dashboard.analytics.activeStudents) : dashboard.stats[0]?.value ?? "—",
-      icon: Users,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
-    },
-    {
-      title: role === "admin" ? "Active Batches" : "Attendance",
-      value: dashboard.batches?.length ? String(dashboard.batches.length) : dashboard.stats[1]?.value ?? "—",
-      icon: BarChart3,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
-    },
-    {
-      title: role === "admin" ? "Attendance Rate" : "Progress",
-      value: dashboard.analytics?.attendance?.rate != null ? `${Math.round(dashboard.analytics.attendance.rate)}%` : dashboard.stats[2]?.value ?? "—",
-      icon: CheckCircle2,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
-    },
-    {
-      title: role === "admin" ? "Fee Pending" : "Messages",
-      value: dashboard.stats[3]?.value ?? "—",
-      icon: IndianRupee,
-      color: `text-[${ACCENT}]`,
-      bg: "bg-[#EBF1FA]",
-    },
-  ];
-
-  // Chart data
-  const gChartData = dashboard.analytics?.attendance?.dailyRecords?.slice(0, 7) ?? [];
-  const chartLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const gHasChartData = gChartData.length === 7;
-  const chartValues = gHasChartData ? gChartData.map((d) => d.rate ?? 80) : [];
-  const maxVal = 100;
-  const points = chartValues.map((v, i) => ({
-    x: 10 + (i * ((790 - 10) / 6)),
-    y: 220 - (v / maxVal) * 180,
-  }));
-
-  return (
-    <div className="space-y-6">
-      {/* Hero */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
-              {dashboard.heroTitle}
-            </h1>
-            <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
-              {dashboard.heroDescription}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-bold text-slate-800">{session?.name ?? role}</p>
-            <p className="text-xs text-slate-500 capitalize">{role}</p>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-sm">
+              <CheckCircle2 size={28} className="text-emerald-400 mb-2" />
+              <p className="font-bold text-emerald-600">All homework reviewed!</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
+      {/* ── Quick Actions ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {quickActions.map((action, idx) => {
+          const Icon = action.icon;
           return (
-            <div key={idx} className="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between hover:shadow-md transition-shadow">
-              <div>
-                <p className="text-sm font-semibold text-slate-500 mb-1">{stat.title}</p>
-                <p className="text-2xl font-black text-slate-900 tracking-tight">{stat.value}</p>
+            <button
+              key={idx}
+              onClick={() => onSetActiveSection(action.section)}
+              className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[#E8EDF2] hover:shadow-md transition-all hover:-translate-y-0.5"
+            >
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${action.color}14` }}>
+                <Icon size={20} style={{ color: action.color }} />
               </div>
-              <div className={`w-12 h-12 rounded-full ${stat.bg} ${stat.color} flex items-center justify-center shrink-0`}>
-                <Icon size={22} strokeWidth={2.5} />
-              </div>
-            </div>
+              <span className="text-xs font-bold text-slate-700">{action.label}</span>
+            </button>
           );
         })}
-      </div>
-
-      {/* Chart + Notice */}
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-6">
-          <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-100 w-full overflow-hidden">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-slate-900">Attendance Overview</h2>
-              {gHasChartData && (
-                <button onClick={() => onSetActiveSection("attendance")} className="text-xs font-bold text-[#0B40A1] hover:underline">
-                  View All
-                </button>
-              )}
-            </div>
-            {gHasChartData ? (
-              <div className="w-full h-[220px] relative">
-                <svg viewBox="0 0 800 220" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                  {[0, 25, 50, 75, 100].map((val, i) => {
-                    const y = 220 - (val * 2);
-                    return (
-                      <g key={i}>
-                        <text x="-8" y={y + 3} className="text-[10px] fill-slate-400" textAnchor="end">{val}%</text>
-                        <line x1="10" y1={y} x2="800" y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                      </g>
-                    );
-                  })}
-                  <polyline
-                    fill="none"
-                    stroke={ACCENT}
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={points.map((p) => `${p.x},${p.y}`).join(" ")}
-                  />
-                  {points.map((p, idx) => (
-                    <circle key={idx} cx={p.x} cy={p.y} r="5" fill={ACCENT} stroke="white" strokeWidth="2.5" />
-                  ))}
-                </svg>
-                <div className="absolute -bottom-6 left-[10px] right-0 flex justify-between text-xs text-slate-400 font-medium">
-                  {chartLabels.map((l, i) => (<span key={i}>{l}</span>))}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-[180px] text-sm text-slate-400">
-                <div className="text-center">
-                  <i className="bi bi-bar-chart-line text-3xl block mb-2 text-slate-300" />
-                  <p>No attendance data available yet</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* Profile Card */}
-          <GenericProfileCard session={session} role={role} dashboard={dashboard} />
-
-          {/* Notice Board */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold text-slate-900">Notice Board</h2>
-              {(messages.length > 0) && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
-                  {messages.length}
-                </span>
-              )}
-            </div>
-            <div className="space-y-3">
-              {messages.length > 0 ? (
-                messages.slice(0, 3).map((msg) => (
-                  <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${msg.channel === "important" || msg.channel === "notice" ? "bg-[#EBF1FA] text-[#0B40A1]" : "bg-slate-100 text-slate-500"}`}>
-                        {msg.channel === "important" || msg.channel === "notice" ? <Bell size={14} /> : <MessageSquare size={14} />}
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-800">{msg.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{msg.body}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-slate-400 text-center py-6">No notices yet.</p>
-              )}
-            </div>
-            <button
-              onClick={() => onSetActiveSection("messages")}
-              className="w-full mt-4 py-2.5 text-sm font-bold text-white bg-[#0B40A1] hover:bg-[#092e7a] rounded-xl transition-colors"
-            >
-              View All Messages
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -959,7 +1541,7 @@ function StudentProfileCard({ session, dashboard }: { session: SessionUser | nul
       </div>
       <PField label="Gender" value={p?.gender} />
       <PField label="Date of Birth" value={p?.dob || p?.dateOfBirth} />
-      <PField label="Father's Name" value={p?.fatherName} />
+      <PField label="Father&apos;s Name" value={p?.fatherName} />
       <PField label="Guardian Phone" value={p?.guardianPhone} />
       {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
         <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">

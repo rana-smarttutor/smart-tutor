@@ -67,7 +67,15 @@ export async function POST(request: Request) {
   }
 
   const title = sanitizeTextInput(body.title as string, 120);
-  const description = sanitizeTextareaInput(body.description as string, 2000);
+  const description = sanitizeTextareaInput(body.description as string, 5000);
+  const objective = sanitizeTextareaInput(body.objective as string, 2000);
+  const keySteps = Array.isArray(body.keySteps)
+    ? (body.keySteps as string[]).map((s) => sanitizeTextInput(s, 500)).filter(Boolean)
+    : undefined;
+  const deliverables = sanitizeTextareaInput(body.deliverables as string, 2000);
+  const evaluationCriteria = sanitizeTextareaInput(body.evaluationCriteria as string, 2000);
+  const estimatedHours = Math.max(1, Math.min(200, Number(body.estimatedHours) || 0)) || undefined;
+  const taskNumber = body.taskNumber != null ? Math.max(1, Math.min(52, Number(body.taskNumber))) : undefined;
   const subject = sanitizeTextInput(body.subject as string, 60);
   const hwType = (body.hwType as string) ?? "homework";
   const maxMarks = Math.max(1, Math.min(1000, Number(body.maxMarks) || 10));
@@ -101,6 +109,12 @@ export async function POST(request: Request) {
   const homework = await createHomework({
     title,
     description: description || undefined,
+    objective: objective || undefined,
+    keySteps,
+    deliverables: deliverables || undefined,
+    evaluationCriteria: evaluationCriteria || undefined,
+    estimatedHours,
+    taskNumber,
     subject: subject || undefined,
     hwType,
     maxMarks,

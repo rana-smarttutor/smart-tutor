@@ -40,7 +40,8 @@ const labels: Record<AppNotification["type"], string> = {
 
 export function NotificationBell({
   onOpenNotifications,
-}: NotificationBellProps) {
+  refreshKey,
+}: NotificationBellProps & { refreshKey?: number }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -86,10 +87,14 @@ export function NotificationBell({
 
   useEffect(() => {
     void loadNotifications();
+  }, [refreshKey]);
+
+  useEffect(() => {
+    void loadNotifications();
 
     const interval = window.setInterval(() => {
       void loadNotifications();
-    }, 30000);
+    }, 15000);
 
     function handleFocus() {
       if (document.visibilityState === "visible") {

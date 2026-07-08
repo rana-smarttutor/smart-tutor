@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type { ManagedUser, Role } from "@/lib/types";
+import type { Enquiry, ManagedUser, Role } from "@/lib/types";
 
 type DashboardAccountDirectoryProps = {
   initialUsers: ManagedUser[];
@@ -29,7 +29,7 @@ export function DashboardAccountDirectory({
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, ManagedUser>>({});
   const [status, setStatus] = useState("");
-  const [activeTab, setActiveTab] = useState<"register" | "directory" | "verification">("register");
+  const [activeTab, setActiveTab] = useState<"register" | "directory" | "verification" | null>(null);
   const [pendingRequests, setPendingRequests] = useState<ManagedUser[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,6 +48,8 @@ export function DashboardAccountDirectory({
     parentMobile: "",
     assignedFacultyIds: [],
   });
+
+  const [mainTab, setMainTab] = useState<"students" | "faculty" | "parents" | "other">("students");
 
   const accountCounts = useMemo(
     () => ({
@@ -100,6 +102,62 @@ export function DashboardAccountDirectory({
     return list;
   }, [sortedUsers, roleFilter, searchQuery]);
 
+  const tabStudents = useMemo(() => {
+    let list = users.filter((u) => u.role === "student");
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.program.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [users, searchQuery]);
+
+  const tabEducators = useMemo(() => {
+    let list = users.filter((u) => u.role === "educator");
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.program.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [users, searchQuery]);
+
+  const tabParents = useMemo(() => {
+    let list = users.filter((u) => u.role === "parent");
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.program.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [users, searchQuery]);
+
+  const tabOther = useMemo(() => {
+    let list = users.filter((u) => u.role !== "student" && u.role !== "educator" && u.role !== "parent");
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.program.toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [users, searchQuery]);
+
   useEffect(() => {
     if (activeTab !== "verification") return;
     fetch("/api/admin/user-requests", { credentials: "same-origin" })
@@ -136,7 +194,8 @@ export function DashboardAccountDirectory({
       parentMobile: "",
       assignedFacultyIds: [],
     });
-    setActiveTab("directory");
+    setActiveTab(null);
+    setMainTab("students");
     setStatus("New registered account draft created.");
   }
 
@@ -227,97 +286,319 @@ export function DashboardAccountDirectory({
 
   const isEditing = (userId: string) => editingUserId === userId;
 
-  return (
-    <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
-      {/* ── Gradient Header ── */}
-      <div
-        className="px-6 py-5 text-white"
-        style={{
-          background: "linear-gradient(135deg, #1E1B4B, var(--color-primary), #6D28D9)",
-        }}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-white/60">
-              Academics / <strong className="text-white">Accounts</strong>
-            </p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight">
-              Accounts
-            </h1>
-            <p className="mt-1 text-sm text-white/65">
-              Register and manage all people across the institute
-            </p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-4 py-1.5 text-sm font-bold text-white backdrop-blur-sm">
-            <i className="bi bi-people-fill" />
-            {accountCounts.total} accounts
-          </span>
-        </div>
+  const renderUserGrid = (userList: ManagedUser[]) =>
+    userList.length === 0 ? (
+      <div className="rounded-xl border border-[var(--color-border)] px-4 py-12 text-center text-sm text-[var(--color-muted)]">
+        No accounts found.
       </div>
-
-      {status ? (
-        <div className="mx-6 mt-4 rounded-xl bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-heading)] border border-[var(--color-border)]">
-          {status}
-        </div>
-      ) : null}
-
-      {/* ── Tab Buttons ── */}
-      <div className="flex flex-wrap gap-2 px-6 pt-5">
-        {[
-          { id: "register" as const, label: "Register Account", icon: "bi-person-plus-fill" },
-          { id: "directory" as const, label: "Registered Directory", icon: "bi-people-fill" },
-          { id: "verification" as const, label: "Verification Requests", icon: "bi-shield-check" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition ${
-              activeTab === tab.id
-                ? "bg-[var(--color-primary)] text-white shadow-sm"
-                : "border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
-            }`}
-          >
-            <i className={`bi ${tab.icon}`} />
-            {tab.label}
-          </button>
-        ))}
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {userList.map((user) => {
+          const rc = getRoleColor(user.role);
+          const ss = getStatusStyle(user.status);
+          const p = user.profile;
+          return (
+            <div
+              key={user.id}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm transition-all hover:shadow-md"
+            >
+              <div className="h-2" style={{ background: rc.color }} />
+              <div className="p-5 pb-3">
+                <div className="flex items-start gap-4">
+                  {user.profilePhoto ? (
+                    <img src={user.profilePhoto} alt={user.name} className="h-16 w-16 rounded-xl object-cover ring-2 ring-white shadow-sm" />
+                  ) : (
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-xl font-bold text-white shadow-sm" style={{ background: rc.color }}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-[var(--color-heading)] truncate">{user.name}</p>
+                    <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">ID: {user.id.slice(0, 8).toUpperCase()}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: rc.bg, color: rc.color }}>
+                        <i className={`bi ${getRoleIcon(user.role)}`} />
+                        {user.role}
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: ss.color }} />
+                        {user.status}
+                      </span>
+                      {user.verified ? (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-600">
+                          <i className="bi bi-patch-check-fill" />
+                          Verified
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="border-t border-[var(--color-border)] px-5 py-3">
+                <div className="grid gap-1.5 text-xs">
+                  <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                    <i className="bi bi-envelope w-3.5" />
+                    <span className="truncate text-[var(--color-body)]">{user.email}</span>
+                  </div>
+                  {user.mobile && (
+                    <div className="flex items-center gap-2 text-[var(--color-muted)]">
+                      <i className="bi bi-telephone w-3.5" />
+                      <span className="text-[var(--color-body)]">{user.mobile}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="border-t border-[var(--color-border)] px-5 py-3">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                  {user.program ? (
+                    <div className="col-span-2">
+                      <span className="font-semibold text-[var(--color-muted)]">Program</span>
+                      <p className="text-[var(--color-heading)] font-medium">{user.program}</p>
+                    </div>
+                  ) : null}
+                  {p?.dob && (
+                    <div>
+                      <span className="font-semibold text-[var(--color-muted)]">DOB</span>
+                      <p className="text-[var(--color-heading)]">{p.dob}</p>
+                    </div>
+                  )}
+                  {p?.gender && (
+                    <div>
+                      <span className="font-semibold text-[var(--color-muted)]">Gender</span>
+                      <p className="text-[var(--color-heading)]">{p.gender}</p>
+                    </div>
+                  )}
+                  {(p?.addressLine1 || p?.city || p?.state) && (
+                    <div className="col-span-2">
+                      <span className="font-semibold text-[var(--color-muted)]">Address</span>
+                      <p className="text-[var(--color-heading)]">
+                        {[p.addressLine1, p.addressLine2].filter(Boolean).join(", ")}
+                        {p.city ? `, ${p.city}` : ""}{p.state ? `, ${p.state}` : ""}{p.pincode ? ` - ${p.pincode}` : ""}
+                      </p>
+                    </div>
+                  )}
+                  {user.role === "student" && (
+                    <>
+                      {p?.parentName && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Parent</span>
+                          <p className="text-[var(--color-heading)]">{p.parentName}</p>
+                          {p.parentMobile && <p className="text-[var(--color-body)]">{p.parentMobile}</p>}
+                          {p.parentEmail && <p className="text-[var(--color-body)] truncate">{p.parentEmail}</p>}
+                        </div>
+                      )}
+                      {p?.courseWantedTitle && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Course</span>
+                          <p className="text-[var(--color-heading)]">{p.courseWantedTitle}</p>
+                        </div>
+                      )}
+                      {p?.studentType && (
+                        <div>
+                          <span className="font-semibold text-[var(--color-muted)]">Type</span>
+                          <p className="text-[var(--color-heading)]">{p.studentType}</p>
+                        </div>
+                      )}
+                      {p?.latestQualification && (
+                        <div>
+                          <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
+                          <p className="text-[var(--color-heading)]">{p.latestQualification}{p.latestAcademicScore ? ` - ${p.latestAcademicScore}` : ""}</p>
+                        </div>
+                      )}
+                      {(p?.weakSubjects?.length ?? 0) > 0 && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Weak Subjects</span>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {p!.weakSubjects!.map((s, i) => (
+                              <span key={i} className="rounded-md bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(p?.strongSubjects?.length ?? 0) > 0 && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Strong Subjects</span>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {p!.strongSubjects!.map((s, i) => (
+                              <span key={i} className="rounded-md bg-green-50 px-1.5 py-0.5 text-[11px] font-medium text-green-600">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {user.role === "educator" && (
+                    <>
+                      {p?.qualification && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
+                          <p className="text-[var(--color-heading)]">{p.qualification}</p>
+                        </div>
+                      )}
+                      {p?.experience && (
+                        <div>
+                          <span className="font-semibold text-[var(--color-muted)]">Experience</span>
+                          <p className="text-[var(--color-heading)]">{p.experience}</p>
+                        </div>
+                      )}
+                      {(p?.subjects?.length ?? 0) > 0 && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Subjects</span>
+                          <div className="flex flex-wrap gap-1 mt-0.5">
+                            {p!.subjects!.map((s, i) => (
+                              <span key={i} className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-600">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {(p?.examQualifications?.length ?? 0) > 0 && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Exam Qualifications</span>
+                          <div className="mt-0.5 space-y-1">
+                            {p!.examQualifications!.map((eq, i) => (
+                              <div key={i} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-1.5 text-[11px]">
+                                <span className="font-semibold text-[var(--color-heading)]">{eq.examName}</span>
+                                {eq.score && <span className="ml-2 text-[var(--color-body)]">Score: {eq.score}</span>}
+                                {eq.year && <span className="ml-2 text-[var(--color-muted)]">({eq.year})</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="border-t border-[var(--color-border)] px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setEditingUserId(isEditing(user.id) ? null : user.id)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)] transition-colors"
+                  >
+                    <i className="bi bi-pencil" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user.id)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors"
+                  >
+                    <i className="bi bi-trash" />
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+    );
 
-      <div className="p-6">
-        {activeTab === "register" ? (
-          /* ── REGISTER TAB ── */
-          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
-              <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
-                <i className="bi bi-person-plus-fill me-2 text-[var(--color-primary)]" />
-                Add a new registered person
-              </p>
-              <div className="grid gap-3">
+  const editModal = editingUserId ? (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-[1.5rem] border border-[var(--color-border)] bg-white shadow-2xl">
+        <div
+          className="flex-shrink-0 rounded-t-[1.5rem] px-6 py-4 text-white"
+          style={{
+            background: "linear-gradient(135deg,#1E1B4B,var(--color-primary),#6D28D9)",
+          }}
+        >
+          <h3 className="text-lg font-black">
+            <i className="bi bi-pencil-square me-2" />
+            Edit Account
+          </h3>
+          {users.find((u) => u.id === editingUserId) && (
+            <p className="mt-0.5 text-sm text-white/70">
+              {users.find((u) => u.id === editingUserId)!.name}
+            </p>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {users.filter((u) => u.id === editingUserId).map((user) => {
+            const d = drafts[user.id] ?? user;
+            async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUploadingPhoto(true);
+              try {
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("field", "photo");
+                const res = await fetch("/api/upload/signup", { method: "POST", body: formData });
+                const data = await res.json();
+                if (data.success) {
+                  setDrafts((c) => ({ ...c, [user.id]: { ...d, profilePhoto: data.url } }));
+                }
+              } catch {
+                // ignore
+              } finally {
+                setUploadingPhoto(false);
+              }
+            }
+            return (
+              <div key={user.id} className="grid gap-3">
+                <div className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
+                  {(d.profilePhoto || user.profilePhoto) ? (
+                    <img
+                      src={d.profilePhoto || user.profilePhoto}
+                      alt={user.name}
+                      className="h-16 w-16 rounded-xl object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl font-bold text-white"
+                      style={{ background: getRoleColor(user.role).color }}
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-black text-[var(--color-heading)]">{user.name}</p>
+                    <p className="text-xs text-[var(--color-muted)]">{user.email}</p>
+                    {user.mobile && (
+                      <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                        <i className="bi bi-telephone me-1" />
+                        {user.mobile}
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                    >
+                      <i className="bi bi-camera" />
+                      {uploadingPhoto ? "Uploading..." : "Change Photo"}
+                    </button>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                    />
+                  </div>
+                </div>
                 <input
-                  value={createForm.name}
-                  onChange={(e) => setCreateForm((c) => ({ ...c, name: e.target.value.slice(0, 48) }))}
+                  value={d.name}
+                  onChange={(e) =>
+                    setDrafts((c) => ({ ...c, [user.id]: { ...d, name: e.target.value.slice(0, 48) } }))
+                  }
                   placeholder="Full name"
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <input
-                  value={createForm.email}
-                  onChange={(e) => setCreateForm((c) => ({ ...c, email: e.target.value.slice(0, 60) }))}
-                  placeholder="Email address"
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  value={d.email}
+                  onChange={(e) =>
+                    setDrafts((c) => ({ ...c, [user.id]: { ...d, email: e.target.value.slice(0, 60) } }))
+                  }
+                  placeholder="Email"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
                 <div className="grid gap-3 sm:grid-cols-2">
                   <select
-                    value={createForm.role}
+                    value={d.role}
                     onChange={(e) =>
-                      setCreateForm((c) => ({
-                        ...c,
-                        role: e.target.value as Role,
-                        password:
-                          e.target.value === "admin" ? "Admin@123"
-                          : e.target.value === "educator" ? "Educator@123"
-                          : e.target.value === "parent" ? "Parent@123"
-                          : "Student@123",
-                      }))
+                      setDrafts((c) => ({ ...c, [user.id]: { ...d, role: e.target.value as Role } }))
                     }
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   >
@@ -327,761 +608,718 @@ export function DashboardAccountDirectory({
                     <option value="parent">Parent</option>
                     <option value="admin">Admin</option>
                   </select>
-                  {createForm.role !== "parent" ? (
-                    <input
-                      value={createForm.program}
-                      onChange={(e) => setCreateForm((c) => ({ ...c, program: e.target.value.slice(0, 60) }))}
-                      placeholder="Program / responsibility"
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                    />
-                  ) : null}
+                  <input
+                    value={d.program}
+                    onChange={(e) =>
+                      setDrafts((c) => ({ ...c, [user.id]: { ...d, program: e.target.value.slice(0, 60) } }))
+                    }
+                    placeholder="Program"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
                 </div>
-
-                {createForm.role === "parent" ? (
+                <div className="grid gap-3 sm:grid-cols-2">
                   <select
-                    value={createForm.linkedStudentId}
-                    onChange={(e) => setCreateForm((c) => ({ ...c, linkedStudentId: e.target.value }))}
+                    value={d.status}
+                    onChange={(e) =>
+                      setDrafts((c) => ({ ...c, [user.id]: { ...d, status: e.target.value as any } }))
+                    }
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   >
-                    <option value="">Select student to link...</option>
-                    {studentOptions.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name} — {s.email}</option>
-                    ))}
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
                   </select>
-                ) : null}
-
-                {createForm.role === "student" ? (
-                  <>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <input
-                        value={createForm.parentName}
-                        onChange={(e) => setCreateForm((c) => ({ ...c, parentName: e.target.value.slice(0, 60) }))}
-                        placeholder="Parent name"
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                      />
-                      <input
-                        value={createForm.parentEmail}
-                        onChange={(e) => setCreateForm((c) => ({ ...c, parentEmail: e.target.value.slice(0, 60) }))}
-                        placeholder="Parent email"
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                      />
-                      <input
-                        value={createForm.parentMobile}
-                        onChange={(e) => setCreateForm((c) => ({ ...c, parentMobile: e.target.value.slice(0, 15) }))}
-                        placeholder="Parent mobile"
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                      />
-                    </div>
-                    {educatorOptions.length > 0 ? (
-                      <div className="rounded-xl border border-[var(--color-border)] p-4">
-                        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                          Assign Faculty Members
-                        </p>
-                        <div className="grid gap-2 sm:grid-cols-2">
-                          {educatorOptions.map((edu) => (
-                            <label
-                              key={edu.id}
-                              className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={createForm.assignedFacultyIds.includes(edu.id)}
-                                onChange={(e) =>
-                                  setCreateForm((c) => ({
-                                    ...c,
-                                    assignedFacultyIds: e.target.checked
-                                      ? [...c.assignedFacultyIds, edu.id]
-                                      : c.assignedFacultyIds.filter((id) => id !== edu.id),
-                                  }))
-                                }
-                                className="h-4 w-4 text-[var(--color-primary)]"
-                              />
-                              {edu.name}
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
-
-                <input
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm((c) => ({ ...c, password: e.target.value.slice(0, 24) }))}
-                  placeholder="Temporary password"
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                />
-                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]">
+                  <input
+                    value={d.passwordHint ?? ""}
+                    onChange={(e) =>
+                      setDrafts((c) => ({ ...c, [user.id]: { ...d, passwordHint: e.target.value.slice(0, 24) } }))
+                    }
+                    placeholder="Password"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                </div>
+                <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
                   <input
                     type="checkbox"
-                    checked={createForm.confirm}
-                    onChange={(e) => setCreateForm((c) => ({ ...c, confirm: e.target.checked }))}
-                    className="h-4 w-4 text-[var(--color-primary)]"
-                  />
-                  Confirm and finalize this new entry
-                </label>
-                <button
-                  type="button"
-                  onClick={handleCreate}
-                  className="w-full rounded-xl bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white hover:opacity-90"
-                >
-                  <i className="bi bi-person-plus-fill me-2" />
-                  Register New Account
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
-                <p className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
-                  Current Registered Mix
-                </p>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {[
-                    { label: "Students", value: accountCounts.students, icon: "bi-mortarboard-fill", color: "#16A34A" },
-                    { label: "Faculty", value: accountCounts.educators, icon: "bi-person-workspace", color: "#0284C7" },
-                    { label: "Parents", value: accountCounts.parents, icon: "bi-people-fill", color: "#D97706" },
-                    { label: "Admins", value: accountCounts.admins, icon: "bi-shield-fill-check", color: "#4F46E5" },
-                    { label: "Counsellors", value: accountCounts.counsellors, icon: "bi-chat-dots-fill", color: "#7C3AED" },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center"
-                    >
-                      <i className={`bi ${item.icon} text-xl`} style={{ color: item.color }} />
-                      <p className="mt-1 text-2xl font-black text-[var(--color-heading)]">{item.value}</p>
-                      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                        {item.label}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
-                <p className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                  Creation Checklist
-                </p>
-                <div className="space-y-2">
-                  {[
-                    "Admin-only registration authority.",
-                    "Mandatory confirmation before API commit.",
-                    "Draft payload includes temporary credentials.",
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : activeTab === "directory" ? (          
-          <>
-          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-            {[
-              { label: "Total", value: accountCounts.total, icon: "bi-people-fill", color: "var(--color-primary)" },
-              { label: "Active", value: users.filter((u) => u.status === "active").length, icon: "bi-person-check-fill", color: "#10B981" },
-              { label: "Faculty", value: accountCounts.educators, icon: "bi-person-workspace", color: "#0EA5E9" },
-              { label: "Students", value: accountCounts.students, icon: "bi-mortarboard-fill", color: "#8B5CF6" },
-              { label: "Pending", value: users.filter((u) => u.status === "pending").length, icon: "bi-hourglass-split", color: "#F59E0B" },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                className="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 items-center justify-center rounded-lg"
-                    style={{ background: `${stat.color}15` }}
-                  >
-                    <i className={`bi ${stat.icon}`} style={{ color: stat.color, fontSize: 16 }} />
-                  </div>
-                  <div>
-                    <div className="text-xl font-black text-[var(--color-heading)]">{stat.value}</div>
-                    <div className="text-xs font-semibold text-[var(--color-muted)]">{stat.label}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <div className="relative flex-1" style={{ minWidth: 200 }}>
-              <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
-              <input
-                type="text"
-                placeholder="Search name, email, program…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-              />
-            </div>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value as "all" | Role)}
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-              style={{ minWidth: 140 }}
-            >
-              <option value="all">All Roles ({accountCounts.total})</option>
-              <option value="student">Students ({accountCounts.students})</option>
-              <option value="educator">Faculty ({accountCounts.educators})</option>
-              <option value="admin">Admins ({accountCounts.admins})</option>
-              <option value="parent">Parents ({accountCounts.parents})</option>
-              <option value="counsellor">Counsellors ({accountCounts.counsellors})</option>
-            </select>
-            {(roleFilter !== "all" || searchQuery) ? (
-              <button
-                onClick={() => { setRoleFilter("all"); setSearchQuery(""); }}
-                className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
-              >
-                Clear
-              </button>
-            ) : null}
-          </div>
-
-          {/* ID Card Grid */}
-          {filteredUsers.length === 0 ? (
-            <div className="rounded-xl border border-[var(--color-border)] px-4 py-12 text-center text-sm text-[var(--color-muted)]">
-              No accounts found.
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredUsers.map((user) => {
-                const rc = getRoleColor(user.role);
-                const ss = getStatusStyle(user.status);
-                const p = user.profile;
-                return (
-                  <div
-                    key={user.id}
-                    className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm transition-all hover:shadow-md"
-                  >
-                    {/* Top accent bar */}
-                    <div className="h-2" style={{ background: rc.color }} />
-
-                    {/* Card header: photo + identity */}
-                    <div className="p-5 pb-3">
-                      <div className="flex items-start gap-4">
-                        {user.profilePhoto ? (
-                          <img src={user.profilePhoto} alt={user.name} className="h-16 w-16 rounded-xl object-cover ring-2 ring-white shadow-sm" />
-                        ) : (
-                          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-xl font-bold text-white shadow-sm" style={{ background: rc.color }}>
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-base font-bold text-[var(--color-heading)] truncate">{user.name}</p>
-                          <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">ID: {user.id.slice(0, 8).toUpperCase()}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: rc.bg, color: rc.color }}>
-                              <i className={`bi ${getRoleIcon(user.role)}`} />
-                              {user.role}
-                            </span>
-                            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
-                              <span className="h-1.5 w-1.5 rounded-full" style={{ background: ss.color }} />
-                              {user.status}
-                            </span>
-                            {user.verified ? (
-                              <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-600">
-                                <i className="bi bi-patch-check-fill" />
-                                Verified
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Contact row */}
-                    <div className="border-t border-[var(--color-border)] px-5 py-3">
-                      <div className="grid gap-1.5 text-xs">
-                        <div className="flex items-center gap-2 text-[var(--color-muted)]">
-                          <i className="bi bi-envelope w-3.5" />
-                          <span className="truncate text-[var(--color-body)]">{user.email}</span>
-                        </div>
-                        {user.mobile && (
-                          <div className="flex items-center gap-2 text-[var(--color-muted)]">
-                            <i className="bi bi-telephone w-3.5" />
-                            <span className="text-[var(--color-body)]">{user.mobile}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Profile details */}
-                    <div className="border-t border-[var(--color-border)] px-5 py-3">
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                        {/* Shared fields */}
-                        {user.program ? (
-                          <div className="col-span-2">
-                            <span className="font-semibold text-[var(--color-muted)]">Program</span>
-                            <p className="text-[var(--color-heading)] font-medium">{user.program}</p>
-                          </div>
-                        ) : null}
-
-                        {p?.dob && (
-                          <div>
-                            <span className="font-semibold text-[var(--color-muted)]">DOB</span>
-                            <p className="text-[var(--color-heading)]">{p.dob}</p>
-                          </div>
-                        )}
-
-                        {p?.gender && (
-                          <div>
-                            <span className="font-semibold text-[var(--color-muted)]">Gender</span>
-                            <p className="text-[var(--color-heading)]">{p.gender}</p>
-                          </div>
-                        )}
-
-                        {/* Address */}
-                        {(p?.addressLine1 || p?.city || p?.state) && (
-                          <div className="col-span-2">
-                            <span className="font-semibold text-[var(--color-muted)]">Address</span>
-                            <p className="text-[var(--color-heading)]">
-                              {[p.addressLine1, p.addressLine2].filter(Boolean).join(", ")}
-                              {p.city ? `, ${p.city}` : ""}{p.state ? `, ${p.state}` : ""}{p.pincode ? ` - ${p.pincode}` : ""}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Student-specific */}
-                        {user.role === "student" && (
-                          <>
-                            {p?.parentName && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Parent</span>
-                                <p className="text-[var(--color-heading)]">{p.parentName}</p>
-                                {p.parentMobile && <p className="text-[var(--color-body)]">{p.parentMobile}</p>}
-                                {p.parentEmail && <p className="text-[var(--color-body)] truncate">{p.parentEmail}</p>}
-                              </div>
-                            )}
-                            {p?.courseWantedTitle && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Course</span>
-                                <p className="text-[var(--color-heading)]">{p.courseWantedTitle}</p>
-                              </div>
-                            )}
-                            {p?.studentType && (
-                              <div>
-                                <span className="font-semibold text-[var(--color-muted)]">Type</span>
-                                <p className="text-[var(--color-heading)]">{p.studentType}</p>
-                              </div>
-                            )}
-                            {p?.latestQualification && (
-                              <div>
-                                <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
-                                <p className="text-[var(--color-heading)]">{p.latestQualification}{p.latestAcademicScore ? ` - ${p.latestAcademicScore}` : ""}</p>
-                              </div>
-                            )}
-                            {(p?.weakSubjects?.length ?? 0) > 0 && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Weak Subjects</span>
-                                <div className="flex flex-wrap gap-1 mt-0.5">
-                                  {p!.weakSubjects!.map((s, i) => (
-                                    <span key={i} className="rounded-md bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">{s}</span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {(p?.strongSubjects?.length ?? 0) > 0 && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Strong Subjects</span>
-                                <div className="flex flex-wrap gap-1 mt-0.5">
-                                  {p!.strongSubjects!.map((s, i) => (
-                                    <span key={i} className="rounded-md bg-green-50 px-1.5 py-0.5 text-[11px] font-medium text-green-600">{s}</span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {/* Educator-specific */}
-                        {user.role === "educator" && (
-                          <>
-                            {p?.qualification && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
-                                <p className="text-[var(--color-heading)]">{p.qualification}</p>
-                              </div>
-                            )}
-                            {p?.experience && (
-                              <div>
-                                <span className="font-semibold text-[var(--color-muted)]">Experience</span>
-                                <p className="text-[var(--color-heading)]">{p.experience}</p>
-                              </div>
-                            )}
-                            {(p?.subjects?.length ?? 0) > 0 && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Subjects</span>
-                                <div className="flex flex-wrap gap-1 mt-0.5">
-                                  {p!.subjects!.map((s, i) => (
-                                    <span key={i} className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-600">{s}</span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {(p?.examQualifications?.length ?? 0) > 0 && (
-                              <div className="col-span-2">
-                                <span className="font-semibold text-[var(--color-muted)]">Exam Qualifications</span>
-                                <div className="mt-0.5 space-y-1">
-                                  {p!.examQualifications!.map((eq, i) => (
-                                    <div key={i} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-1.5 text-[11px]">
-                                      <span className="font-semibold text-[var(--color-heading)]">{eq.examName}</span>
-                                      {eq.score && <span className="ml-2 text-[var(--color-body)]">Score: {eq.score}</span>}
-                                      {eq.year && <span className="ml-2 text-[var(--color-muted)]">({eq.year})</span>}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="border-t border-[var(--color-border)] px-5 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setEditingUserId(isEditing(user.id) ? null : user.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)] transition-colors"
-                        >
-                          <i className="bi bi-pencil" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user.id)}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors"
-                        >
-                          <i className="bi bi-trash" />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Edit Modal */}
-          {editingUserId ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-              <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-[1.5rem] border border-[var(--color-border)] bg-white shadow-2xl">
-                <div
-                  className="flex-shrink-0 rounded-t-[1.5rem] px-6 py-4 text-white"
-                  style={{
-                    background: "linear-gradient(135deg,#1E1B4B,var(--color-primary),#6D28D9)",
-                  }}
-                >
-                  <h3 className="text-lg font-black">
-                    <i className="bi bi-pencil-square me-2" />
-                    Edit Account
-                  </h3>
-                  {filteredUsers.find((u) => u.id === editingUserId) && (
-                    <p className="mt-0.5 text-sm text-white/70">
-                      {filteredUsers.find((u) => u.id === editingUserId)!.name}
-                    </p>
-                  )}
-                </div>
-                <div className="flex-1 overflow-y-auto px-6 py-5">
-                  {filteredUsers.filter((u) => u.id === editingUserId).map((user) => {
-                    const d = drafts[user.id] ?? user;
-                    async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      setUploadingPhoto(true);
-                      try {
-                        const formData = new FormData();
-                        formData.append("file", file);
-                        formData.append("field", "photo");
-                        const res = await fetch("/api/upload/signup", { method: "POST", body: formData });
-                        const data = await res.json();
-                        if (data.success) {
-                          setDrafts((c) => ({ ...c, [user.id]: { ...d, profilePhoto: data.url } }));
-                        }
-                      } catch {
-                        // ignore
-                      } finally {
-                        setUploadingPhoto(false);
-                      }
+                    checked={d.verified ?? false}
+                    onChange={(e) =>
+                      setDrafts((c) => ({ ...c, [user.id]: { ...d, verified: e.target.checked } }))
                     }
-                    return (
-                      <div key={user.id} className="grid gap-3">
-                        {/* Profile Photo */}
-                        <div className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
-                          {(d.profilePhoto || user.profilePhoto) ? (
-                            <img
-                              src={d.profilePhoto || user.profilePhoto}
-                              alt={user.name}
-                              className="h-16 w-16 rounded-xl object-cover"
-                            />
-                          ) : (
-                            <div
-                              className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl font-bold text-white"
-                              style={{ background: getRoleColor(user.role).color }}
-                            >
-                              {user.name.charAt(0).toUpperCase()}
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-black text-[var(--color-heading)]">{user.name}</p>
-                            <p className="text-xs text-[var(--color-muted)]">{user.email}</p>
-                            {user.mobile && (
-                              <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                                <i className="bi bi-telephone me-1" />
-                                {user.mobile}
-                              </p>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => photoInputRef.current?.click()}
-                              disabled={uploadingPhoto}
-                              className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                            >
-                              <i className="bi bi-camera" />
-                              {uploadingPhoto ? "Uploading..." : "Change Photo"}
-                            </button>
-                            <input
-                              ref={photoInputRef}
-                              type="file"
-                              accept="image/png,image/jpeg,image/webp"
-                              className="hidden"
-                              onChange={handlePhotoUpload}
-                            />
-                          </div>
-                        </div>
-
-                        <input
-                          value={d.name}
-                          onChange={(e) =>
-                            setDrafts((c) => ({ ...c, [user.id]: { ...d, name: e.target.value.slice(0, 48) } }))
-                          }
-                          placeholder="Full name"
-                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                        />
-                        <input
-                          value={d.email}
-                          onChange={(e) =>
-                            setDrafts((c) => ({ ...c, [user.id]: { ...d, email: e.target.value.slice(0, 60) } }))
-                          }
-                          placeholder="Email"
-                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                        />
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <select
-                            value={d.role}
-                            onChange={(e) =>
-                              setDrafts((c) => ({ ...c, [user.id]: { ...d, role: e.target.value as Role } }))
-                            }
-                            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                          >
-                            <option value="student">Student</option>
-                            <option value="educator">Faculty</option>
-                            <option value="counsellor">Counsellor</option>
-                            <option value="parent">Parent</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          <input
-                            value={d.program}
-                            onChange={(e) =>
-                              setDrafts((c) => ({ ...c, [user.id]: { ...d, program: e.target.value.slice(0, 60) } }))
-                            }
-                            placeholder="Program"
-                            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                          />
-                        </div>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <select
-                            value={d.status}
-                            onChange={(e) =>
-                              setDrafts((c) => ({ ...c, [user.id]: { ...d, status: e.target.value as any } }))
-                            }
-                            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                          >
-                            <option value="active">Active</option>
-                            <option value="pending">Pending</option>
-                            <option value="rejected">Rejected</option>
-                          </select>
-                          <input
-                            value={d.passwordHint ?? ""}
-                            onChange={(e) =>
-                              setDrafts((c) => ({ ...c, [user.id]: { ...d, passwordHint: e.target.value.slice(0, 24) } }))
-                            }
-                            placeholder="Password"
-                            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                          />
-                        </div>
-                        <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
+                    className="h-5 w-5 text-[var(--color-primary)]"
+                  />
+                  Verified Badge
+                </label>
+                <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
+                  <input
+                    type="checkbox"
+                    checked={d.profile?.chatDisabled ?? false}
+                    onChange={(e) =>
+                      setDrafts((c) => ({
+                        ...c,
+                        [user.id]: {
+                          ...d,
+                          profile: { ...(d.profile || {}), chatDisabled: e.target.checked },
+                        },
+                      }))
+                    }
+                    className="h-5 w-5 text-[var(--color-primary)]"
+                  />
+                  Disable Chat
+                </label>
+                {d.role === "student" && educatorOptions.length > 0 ? (
+                  <div className="rounded-xl border border-[var(--color-border)] p-4">
+                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                      Assign Faculty Members
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {educatorOptions.map((edu) => (
+                        <label
+                          key={edu.id}
+                          className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                        >
                           <input
                             type="checkbox"
-                            checked={d.verified ?? false}
-                            onChange={(e) =>
-                              setDrafts((c) => ({ ...c, [user.id]: { ...d, verified: e.target.checked } }))
-                            }
-                            className="h-5 w-5 text-[var(--color-primary)]"
-                          />
-                          Verified Badge
-                        </label>
-                        <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
-                          <input
-                            type="checkbox"
-                            checked={d.profile?.chatDisabled ?? false}
+                            checked={(d.assignedFacultyIds ?? []).includes(edu.id)}
                             onChange={(e) =>
                               setDrafts((c) => ({
                                 ...c,
                                 [user.id]: {
                                   ...d,
-                                  profile: { ...(d.profile || {}), chatDisabled: e.target.checked },
+                                  assignedFacultyIds: e.target.checked
+                                    ? [...(d.assignedFacultyIds ?? []), edu.id]
+                                    : (d.assignedFacultyIds ?? []).filter((id) => id !== edu.id),
                                 },
                               }))
                             }
-                            className="h-5 w-5 text-[var(--color-primary)]"
+                            className="h-4 w-4 text-[var(--color-primary)]"
                           />
-                          Disable Chat
+                          {edu.name}
                         </label>
-                        {d.role === "student" && educatorOptions.length > 0 ? (
-                          <div className="rounded-xl border border-[var(--color-border)] p-4">
-                            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                              Assign Faculty Members
-                            </p>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              {educatorOptions.map((edu) => (
-                                <label
-                                  key={edu.id}
-                                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={(d.assignedFacultyIds ?? []).includes(edu.id)}
-                                    onChange={(e) =>
-                                      setDrafts((c) => ({
-                                        ...c,
-                                        [user.id]: {
-                                          ...d,
-                                          assignedFacultyIds: e.target.checked
-                                            ? [...(d.assignedFacultyIds ?? []), edu.id]
-                                            : (d.assignedFacultyIds ?? []).filter((id) => id !== edu.id),
-                                        },
-                                      }))
-                                    }
-                                    className="h-4 w-4 text-[var(--color-primary)]"
-                                  />
-                                  {edu.name}
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex-shrink-0 border-t border-[var(--color-border)] px-6 py-4">
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setEditingUserId(null)}
+              className="rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => editingUserId && handleSave(editingUserId)}
+              className="rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+            >
+              <i className="bi bi-check-circle-fill me-2" />
+              Update Account
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
+      {/* ── Clean CoachSutra-style Header ── */}
+      <div
+        style={{
+          padding: "24px 28px 0",
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "16px",
+        }}
+      >
+        <div>
+          <h1 style={{ fontSize: "24px", fontWeight: 900, color: "#1A2035", letterSpacing: "-0.02em", margin: 0 }}>
+            Accounts
+          </h1>
+          <p style={{ fontSize: "14px", color: "#64748B", marginTop: "4px" }}>
+            Manage all registered users across the institute
+          </p>
+        </div>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "8px 16px",
+            borderRadius: "10px",
+            background: "#4F46E5",
+            color: "#fff",
+            fontSize: "13px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <i className="bi bi-people-fill" />
+          {accountCounts.total} accounts
+        </span>
+      </div>
+
+      {status ? (
+        <div className="mx-6 mt-4 rounded-xl bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-heading)] border border-[var(--color-border)]">
+          {status}
+        </div>
+      ) : null}
+
+      {/* ── Main Tab Bar (CoachSutra-style) ── */}
+      <div className="flex flex-wrap gap-2 px-6 pt-5">
+        {[
+          { id: "students" as const, label: "Students", count: accountCounts.students },
+          { id: "faculty" as const, label: "Faculty", count: accountCounts.educators },
+          { id: "parents" as const, label: "Parents", count: accountCounts.parents },
+          { id: "other" as const, label: "Other Accounts", count: users.filter((u) => u.role !== "student" && u.role !== "educator" && u.role !== "parent").length },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => {
+              setMainTab(tab.id);
+              setActiveTab(null);
+              setSearchQuery("");
+              setRoleFilter("all");
+            }}
+            style={{
+              padding: "8px 18px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              background: mainTab === tab.id ? "#4F46E5" : "#F1F5F9",
+              color: mainTab === tab.id ? "#fff" : "#1A2035",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
+      </div>
+
+      {/* ── Secondary Tab Pills (Register / Directory / Verification) ── */}
+      <div className="flex flex-wrap gap-1.5 px-6 pt-3">
+        {[
+          { id: "register" as const, label: "Register Account", icon: "bi-person-plus-fill" },
+          { id: "directory" as const, label: "Directory", icon: "bi-people-fill" },
+          { id: "verification" as const, label: "Verification Requests", icon: "bi-shield-check" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(activeTab === tab.id ? null : tab.id)}
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition ${
+              activeTab === tab.id
+                ? "bg-[var(--color-primary)] text-white shadow-sm"
+                : "border border-[var(--color-border)] text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
+            }`}
+          >
+            <i className={`bi ${tab.icon} text-[10px]`} />
+            {tab.label}
+          </button>
+        ))}
+        {activeTab !== null ? (
+          <button
+            onClick={() => setActiveTab(null)}
+            className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold text-[var(--color-muted)] hover:text-[var(--color-heading)]"
+          >
+            <i className="bi bi-arrow-left" />
+            Back
+          </button>
+        ) : null}
+      </div>
+
+      <div className="p-6">
+        {activeTab !== null ? (
+          activeTab === "register" ? (
+            /* ── REGISTER TAB (preserved) ── */
+            <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
+                <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
+                  <i className="bi bi-person-plus-fill me-2 text-[var(--color-primary)]" />
+                  Add a new registered person
+                </p>
+                <div className="grid gap-3">
+                  <input
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm((c) => ({ ...c, name: e.target.value.slice(0, 48) }))}
+                    placeholder="Full name"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                  <input
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm((c) => ({ ...c, email: e.target.value.slice(0, 60) }))}
+                    placeholder="Email address"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select
+                      value={createForm.role}
+                      onChange={(e) =>
+                        setCreateForm((c) => ({
+                          ...c,
+                          role: e.target.value as Role,
+                          password:
+                            e.target.value === "admin" ? "Admin@123"
+                            : e.target.value === "educator" ? "Educator@123"
+                            : e.target.value === "parent" ? "Parent@123"
+                            : "Student@123",
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
+                      <option value="student">Student</option>
+                      <option value="educator">Faculty</option>
+                      <option value="counsellor">Counsellor</option>
+                      <option value="parent">Parent</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    {createForm.role !== "parent" ? (
+                      <input
+                        value={createForm.program}
+                        onChange={(e) => setCreateForm((c) => ({ ...c, program: e.target.value.slice(0, 60) }))}
+                        placeholder="Program / responsibility"
+                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      />
+                    ) : null}
+                  </div>
+
+                  {createForm.role === "parent" ? (
+                    <select
+                      value={createForm.linkedStudentId}
+                      onChange={(e) => setCreateForm((c) => ({ ...c, linkedStudentId: e.target.value }))}
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
+                      <option value="">Select student to link...</option>
+                      {studentOptions.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name} — {s.email}</option>
+                      ))}
+                    </select>
+                  ) : null}
+
+                  {createForm.role === "student" ? (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <input
+                          value={createForm.parentName}
+                          onChange={(e) => setCreateForm((c) => ({ ...c, parentName: e.target.value.slice(0, 60) }))}
+                          placeholder="Parent name"
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        />
+                        <input
+                          value={createForm.parentEmail}
+                          onChange={(e) => setCreateForm((c) => ({ ...c, parentEmail: e.target.value.slice(0, 60) }))}
+                          placeholder="Parent email"
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        />
+                        <input
+                          value={createForm.parentMobile}
+                          onChange={(e) => setCreateForm((c) => ({ ...c, parentMobile: e.target.value.slice(0, 15) }))}
+                          placeholder="Parent mobile"
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        />
                       </div>
-                    );
-                  })}
+                      {educatorOptions.length > 0 ? (
+                        <div className="rounded-xl border border-[var(--color-border)] p-4">
+                          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                            Assign Faculty Members
+                          </p>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {educatorOptions.map((edu) => (
+                              <label
+                                key={edu.id}
+                                className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={createForm.assignedFacultyIds.includes(edu.id)}
+                                  onChange={(e) =>
+                                    setCreateForm((c) => ({
+                                      ...c,
+                                      assignedFacultyIds: e.target.checked
+                                        ? [...c.assignedFacultyIds, edu.id]
+                                        : c.assignedFacultyIds.filter((id) => id !== edu.id),
+                                    }))
+                                  }
+                                  className="h-4 w-4 text-[var(--color-primary)]"
+                                />
+                                {edu.name}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
+
+                  <input
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm((c) => ({ ...c, password: e.target.value.slice(0, 24) }))}
+                    placeholder="Temporary password"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]">
+                    <input
+                      type="checkbox"
+                      checked={createForm.confirm}
+                      onChange={(e) => setCreateForm((c) => ({ ...c, confirm: e.target.checked }))}
+                      className="h-4 w-4 text-[var(--color-primary)]"
+                    />
+                    Confirm and finalize this new entry
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleCreate}
+                    className="w-full rounded-xl bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white hover:opacity-90"
+                  >
+                    <i className="bi bi-person-plus-fill me-2" />
+                    Register New Account
+                  </button>
                 </div>
-                <div className="flex-shrink-0 border-t border-[var(--color-border)] px-6 py-4">
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={() => setEditingUserId(null)}
-                      className="rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => editingUserId && handleSave(editingUserId)}
-                      className="rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
-                    >
-                      <i className="bi bi-check-circle-fill me-2" />
-                      Update Account
-                    </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
+                  <p className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
+                    Current Registered Mix
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {[
+                      { label: "Students", value: accountCounts.students, icon: "bi-mortarboard-fill", color: "#16A34A" },
+                      { label: "Faculty", value: accountCounts.educators, icon: "bi-person-workspace", color: "#0284C7" },
+                      { label: "Parents", value: accountCounts.parents, icon: "bi-people-fill", color: "#D97706" },
+                      { label: "Admins", value: accountCounts.admins, icon: "bi-shield-fill-check", color: "#4F46E5" },
+                      { label: "Counsellors", value: accountCounts.counsellors, icon: "bi-chat-dots-fill", color: "#7C3AED" },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center"
+                      >
+                        <i className={`bi ${item.icon} text-xl`} style={{ color: item.color }} />
+                        <p className="mt-1 text-2xl font-black text-[var(--color-heading)]">{item.value}</p>
+                        <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                          {item.label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
+                  <p className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                    Creation Checklist
+                  </p>
+                  <div className="space-y-2">
+                    {[
+                      "Admin-only registration authority.",
+                      "Mandatory confirmation before API commit.",
+                      "Draft payload includes temporary credentials.",
+                    ].map((item) => (
+                      <div key={item} className="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
+                        {item}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          ) : null}
-          </>
-        ) : (
-          /* ── VERIFICATION TAB ── */
-          <div>
-            <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
-              <i className="bi bi-shield-check me-2 text-[var(--color-primary)]" />
-              Pending Approval Requests
-            </p>
-            {pendingRequests.length === 0 ? (
-              <p className="text-sm text-[var(--color-muted)]">No pending requests.</p>
-            ) : (
-              <div className="space-y-3">
-                {pendingRequests.map((req) => (
+          ) : activeTab === "directory" ? (
+            /* ── DIRECTORY TAB (preserved) ── */
+            <>
+              <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                {[
+                  { label: "Total", value: accountCounts.total, icon: "bi-people-fill", color: "var(--color-primary)" },
+                  { label: "Active", value: users.filter((u) => u.status === "active").length, icon: "bi-person-check-fill", color: "#10B981" },
+                  { label: "Faculty", value: accountCounts.educators, icon: "bi-person-workspace", color: "#0EA5E9" },
+                  { label: "Students", value: accountCounts.students, icon: "bi-mortarboard-fill", color: "#8B5CF6" },
+                  { label: "Pending", value: users.filter((u) => u.status === "pending").length, icon: "bi-hourglass-split", color: "#F59E0B" },
+                ].map((stat) => (
                   <div
-                    key={req.id}
-                    className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/10"
+                    key={stat.label}
+                    className="relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4"
                   >
-                    <div>
-                      <p className="font-bold text-[var(--color-heading)]">{req.name}</p>
-                      <p className="mt-0.5 text-xs text-[var(--color-muted)]">{req.email}</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
-                          <i className="bi bi-person-badge" />
-                          {req.role}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 dark:bg-violet-900/20 dark:text-violet-400">
-                          <i className="bi bi-book" />
-                          {req.program}
-                        </span>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex h-9 w-9 items-center justify-center rounded-lg"
+                        style={{ background: `${stat.color}15` }}
+                      >
+                        <i className={`bi ${stat.icon}`} style={{ color: stat.color, fontSize: 16 }} />
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={async () => {
-                          const res = await fetch("/api/admin/user-requests/approve", {
-                            method: "POST",
-                            credentials: "same-origin",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ userId: req.id }),
-                          });
-                          const data = await res.json();
-                          if (data.ok) {
-                            setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
-                            setStatus(`Approved: ${req.name}`);
-                          } else {
-                            setStatus(data.error ?? "Failed to approve.");
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-                      >
-                        <i className="bi bi-check-lg" />
-                        Approve
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const res = await fetch("/api/admin/user-requests/reject", {
-                            method: "POST",
-                            credentials: "same-origin",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ userId: req.id }),
-                          });
-                          const data = await res.json();
-                          if (data.ok) {
-                            setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
-                            setStatus(`Rejected: ${req.name}`);
-                          } else {
-                            setStatus(data.error ?? "Failed to reject.");
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700"
-                      >
-                        <i className="bi bi-x-lg" />
-                        Reject
-                      </button>
+                      <div>
+                        <div className="text-xl font-black text-[var(--color-heading)]">{stat.value}</div>
+                        <div className="text-xs font-semibold text-[var(--color-muted)]">{stat.label}</div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <div className="relative flex-1" style={{ minWidth: 200 }}>
+                  <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
+                  <input
+                    type="text"
+                    placeholder="Search name, email, program…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                </div>
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value as "all" | Role)}
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  style={{ minWidth: 140 }}
+                >
+                  <option value="all">All Roles ({accountCounts.total})</option>
+                  <option value="student">Students ({accountCounts.students})</option>
+                  <option value="educator">Faculty ({accountCounts.educators})</option>
+                  <option value="admin">Admins ({accountCounts.admins})</option>
+                  <option value="parent">Parents ({accountCounts.parents})</option>
+                  <option value="counsellor">Counsellors ({accountCounts.counsellors})</option>
+                </select>
+                {(roleFilter !== "all" || searchQuery) ? (
+                  <button
+                    onClick={() => { setRoleFilter("all"); setSearchQuery(""); }}
+                    className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+
+              {renderUserGrid(filteredUsers)}
+            </>
+          ) : (
+            /* ── VERIFICATION TAB (preserved) ── */
+            <div>
+              <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
+                <i className="bi bi-shield-check me-2 text-[var(--color-primary)]" />
+                Pending Approval Requests
+              </p>
+              {pendingRequests.length === 0 ? (
+                <p className="text-sm text-[var(--color-muted)]">No pending requests.</p>
+              ) : (
+                <div className="space-y-3">
+                  {pendingRequests.map((req) => (
+                    <div
+                      key={req.id}
+                      className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/10"
+                    >
+                      <div>
+                        <p className="font-bold text-[var(--color-heading)]">{req.name}</p>
+                        <p className="mt-0.5 text-xs text-[var(--color-muted)]">{req.email}</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+                            <i className="bi bi-person-badge" />
+                            {req.role}
+                          </span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 dark:bg-violet-900/20 dark:text-violet-400">
+                            <i className="bi bi-book" />
+                            {req.program}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={async () => {
+                            const res = await fetch("/api/admin/user-requests/approve", {
+                              method: "POST",
+                              credentials: "same-origin",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ userId: req.id }),
+                            });
+                            const data = await res.json();
+                            if (data.ok) {
+                              setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                              setStatus(`Approved: ${req.name}`);
+                            } else {
+                              setStatus(data.error ?? "Failed to approve.");
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                        >
+                          <i className="bi bi-check-lg" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={async () => {
+                            const res = await fetch("/api/admin/user-requests/reject", {
+                              method: "POST",
+                              credentials: "same-origin",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ userId: req.id }),
+                            });
+                            const data = await res.json();
+                            if (data.ok) {
+                              setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                              setStatus(`Rejected: ${req.name}`);
+                            } else {
+                              setStatus(data.error ?? "Failed to reject.");
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700"
+                        >
+                          <i className="bi bi-x-lg" />
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        ) : mainTab === "students" ? (
+          /* ── STUDENTS TAB ── */
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="relative flex-1" style={{ minWidth: 200 }}>
+                <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
+                <input
+                  type="text"
+                  placeholder="Search students by name, email, program…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setCreateForm((c) => ({ ...c, role: "student" }));
+                  setActiveTab("register");
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+              >
+                <i className="bi bi-person-plus-fill" />
+                Admit Student
+              </button>
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            {renderUserGrid(tabStudents)}
+          </>
+        ) : mainTab === "faculty" ? (
+          /* ── FACULTY TAB ── */
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="relative flex-1" style={{ minWidth: 200 }}>
+                <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
+                <input
+                  type="text"
+                  placeholder="Search faculty by name, email, program…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setCreateForm((c) => ({ ...c, role: "educator" }));
+                  setActiveTab("register");
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+              >
+                <i className="bi bi-person-plus-fill" />
+                Add Teacher
+              </button>
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            {renderUserGrid(tabEducators)}
+          </>
+        ) : mainTab === "parents" ? (
+          /* ── PARENTS TAB ── */
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="relative flex-1" style={{ minWidth: 200 }}>
+                <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
+                <input
+                  type="text"
+                  placeholder="Search parents by name, email…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setCreateForm((c) => ({ ...c, role: "parent" }));
+                  setActiveTab("register");
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+              >
+                <i className="bi bi-person-plus-fill" />
+                Add Parent
+              </button>
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            {renderUserGrid(tabParents)}
+          </>
+        ) : (
+          /* ── OTHER ACCOUNTS TAB (admin, counsellor, etc.) ── */
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <div className="relative flex-1" style={{ minWidth: 200 }}>
+                <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
+                <input
+                  type="text"
+                  placeholder="Search by name, email, role…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  setCreateForm((c) => ({ ...c, role: "admin" }));
+                  setActiveTab("register");
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
+              >
+                <i className="bi bi-person-plus-fill" />
+                Add Account
+              </button>
+              {searchQuery ? (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+            {renderUserGrid(tabOther)}
+          </>
         )}
       </div>
+
+      {editModal}
     </section>
   );
 }

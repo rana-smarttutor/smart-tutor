@@ -58,6 +58,16 @@ import type {
   HomeworkSubmission,
   AuthLogEntry,
   AuthLogAction,
+  GamificationActivity,
+  GamificationPointEntry,
+  GamificationBadge,
+  GamificationStudentBadge,
+  GamificationLevel,
+  GamificationAutoAwardRule,
+  GamificationStats,
+  GamificationLeaderboardEntry,
+  BadgeCriteriaType,
+  AutoAwardTrigger,
 } from "@/lib/types";
 
 import type {
@@ -139,6 +149,10 @@ const COLLECTIONS = {
   homework: "homework",
   homeworkSubmissions: "homeworkSubmissions",
   authLogs: "authLogs",
+  gamificationPoints: "gamification_points",
+  gamificationBadges: "gamification_badges",
+  gamificationStudentBadges: "gamification_student_badges",
+  gamificationRules: "gamification_rules",
 } as const;
 // ... (existing code)
 
@@ -910,6 +924,40 @@ export async function createTest(input: {
   return test;
 }
 
+export async function updateTest(
+  testId: string,
+  input: {
+    title?: string;
+    status?: string;
+    summary?: string;
+    assignedUserIds?: string[];
+    questions?: TestQuestion[];
+  },
+) {
+  const collection = await getCollection(COLLECTIONS.tests);
+  const update: Record<string, unknown> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (input.title !== undefined) update.title = input.title;
+  if (input.status !== undefined) update.status = input.status;
+  if (input.summary !== undefined) update.summary = input.summary;
+  if (input.assignedUserIds !== undefined) update.assignedUserIds = input.assignedUserIds;
+  if (input.questions !== undefined) update.questions = input.questions;
+
+  const result = await collection.updateOne({ id: testId }, { $set: update });
+  if (result.matchedCount === 0) return null;
+
+  const updated = await collection.findOne({ id: testId });
+  return updated ? stripMongoId(updated) : null;
+}
+
+export async function deleteTest(testId: string) {
+  const collection = await getCollection(COLLECTIONS.tests);
+  const result = await collection.deleteOne({ id: testId });
+  return result.deletedCount > 0;
+}
+
 export async function getMessagesForRole(role: Role, userId?: string) {
   const collection = await getCollection<MessageDocument>(COLLECTIONS.messages);
   const now = Date.now();
@@ -953,6 +1001,43 @@ export async function createMessage(input: {
 
   const collection = await getCollection<typeof message>(COLLECTIONS.messages);
   await collection.insertOne(message);
+  return message;
+}
+
+export async function createChatMessage(input: {
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  receiverRole: Role;
+  body: string;
+}) {
+  const message: MessageItem & { createdAt: string } = {
+    id: randomUUID(),
+    title: `Chat to ${input.receiverId}`,
+    body: input.body,
+    channel: "Chat",
+    author: input.senderName,
+    audience: [input.receiverRole, "admin"],
+    userIds: [input.receiverId, input.senderId],
+    createdAt: new Date().toISOString(),
+    expiresAt: null,
+  };
+
+  const collection = await getCollection<MessageItem>(COLLECTIONS.messages);
+  await collection.insertOne(message);
+
+  // Create a notification for the receiver
+  try {
+    await createNotifications({
+      userIds: [input.receiverId],
+      title: `New message from ${input.senderName}`,
+      message: input.body.slice(0, 120),
+      type: "feedback",
+    });
+  } catch {
+    // Notification is optional; don't block the message
+  }
+
   return message;
 }
 
@@ -5674,6 +5759,12 @@ export async function getAdminNotificationRecipientIds() {
 export async function createHomework(input: {
   title: string;
   description?: string;
+  objective?: string;
+  keySteps?: string[];
+  deliverables?: string;
+  evaluationCriteria?: string;
+  estimatedHours?: number;
+  taskNumber?: number;
   subject?: string;
   hwType: string;
   maxMarks: number;
@@ -5690,6 +5781,12 @@ export async function createHomework(input: {
     id: randomUUID(),
     title: input.title,
     description: input.description,
+    objective: input.objective,
+    keySteps: input.keySteps,
+    deliverables: input.deliverables,
+    evaluationCriteria: input.evaluationCriteria,
+    estimatedHours: input.estimatedHours,
+    taskNumber: input.taskNumber,
     subject: input.subject,
     hwType: input.hwType as HomeworkItem["hwType"],
     maxMarks: input.maxMarks,
@@ -5843,4 +5940,191 @@ export async function gradeHomeworkSubmission(input: {
   );
   const updated = await collection.findOne({ id: input.submissionId });
   return updated ? stripMongoId(updated) : null;
+}
+
+export const DEFAULT_GAMIFICATION_LEVELS: GamificationLevel[] = [
+  { level: 1, name: "Beginner", pointsRequired: 0 },
+  { level: 2, name: "Explorer", pointsRequired: 500 },
+  { level: 3, name: "Scholar", pointsRequired: 1000 },
+  { level: 4, name: "Expert", pointsRequired: 2000 },
+  { level: 5, name: "Champion", pointsRequired: 5000 },
+];
+
+export function computeLevel(totalPoints: number): GamificationLevel {
+  let current = DEFAULT_GAMIFICATION_LEVELS[0];
+  for (const lvl of DEFAULT_GAMIFICATION_LEVELS) {
+    if (totalPoints >= lvl.pointsRequired) current = lvl;
+  }
+  return current;
+}
+
+export async function awardGamificationPoints(input: {
+  studentId: string;
+  points: number;
+  activity: GamificationActivity;
+  description?: string;
+  awardedBy: string;
+  awardedByName?: string;
+}) {
+  const collection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const entry: GamificationPointEntry = {
+    id: randomUUID(),
+    studentId: input.studentId,
+    points: input.points,
+    activity: input.activity,
+    description: input.description,
+    awardedBy: input.awardedBy,
+    awardedByName: input.awardedByName,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(entry);
+  return entry;
+}
+
+export async function getStudentTotalPoints(studentId: string) {
+  const collection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const entries = await collection.find({ studentId }).toArray();
+  return entries.reduce((sum, e) => sum + e.points, 0);
+}
+
+export async function getAllStudentsPoints() {
+  const collection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const entries = await collection.find({}).toArray();
+  const map = new Map<string, number>();
+  for (const e of entries) {
+    map.set(e.studentId, (map.get(e.studentId) || 0) + e.points);
+  }
+  return map;
+}
+
+export async function getGamificationLeaderboard(batchId?: string) {
+  const usersCollection = await getUsersCollection();
+  const studentQuery: any = { role: "student" };
+  if (batchId) studentQuery.program = batchId;
+  const students = await usersCollection.find(studentQuery).toArray();
+  const pointsMap = await getAllStudentsPoints();
+  const badgesCollection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const allBadges = await badgesCollection.find({}).toArray();
+  const badgeCountMap = new Map<string, number>();
+  for (const b of allBadges) {
+    badgeCountMap.set(b.studentId, (badgeCountMap.get(b.studentId) || 0) + 1);
+  }
+  const entries: GamificationLeaderboardEntry[] = students.map((s) => {
+    const totalPoints = pointsMap.get(s.id) || 0;
+    const level = computeLevel(totalPoints);
+    return {
+      studentId: s.id,
+      studentName: s.name,
+      studentPhoto: (s as any).profilePhoto,
+      points: totalPoints,
+      badges: badgeCountMap.get(s.id) || 0,
+      level: level.level,
+      levelName: level.name,
+      rank: 0,
+    };
+  });
+  entries.sort((a, b) => b.points - a.points);
+  entries.forEach((e, i) => { e.rank = i + 1; });
+  return entries;
+}
+
+export async function createGamificationBadge(input: {
+  name: string;
+  icon: string;
+  description?: string;
+  criteriaType: BadgeCriteriaType;
+  criteriaValue: number;
+  color: string;
+}) {
+  const collection = await getCollection<GamificationBadge>(COLLECTIONS.gamificationBadges);
+  const badge: GamificationBadge = {
+    id: randomUUID(),
+    name: input.name,
+    icon: input.icon,
+    description: input.description,
+    criteriaType: input.criteriaType,
+    criteriaValue: input.criteriaValue,
+    color: input.color,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(badge);
+  return badge;
+}
+
+export async function getAllGamificationBadges() {
+  const collection = await getCollection<GamificationBadge>(COLLECTIONS.gamificationBadges);
+  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+}
+
+export async function awardBadgeToStudent(input: {
+  studentId: string;
+  badgeId: string;
+  reason?: string;
+  awardedBy: string;
+}) {
+  const badgesCollection = await getCollection<GamificationBadge>(COLLECTIONS.gamificationBadges);
+  const badge = await badgesCollection.findOne({ id: input.badgeId });
+  if (!badge) throw new Error("Badge not found");
+  const collection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const sb: GamificationStudentBadge = {
+    id: randomUUID(),
+    studentId: input.studentId,
+    badgeId: input.badgeId,
+    badgeName: badge.name,
+    badgeIcon: badge.icon,
+    badgeColor: badge.color,
+    reason: input.reason,
+    awardedBy: input.awardedBy,
+    awardedAt: new Date().toISOString(),
+  };
+  await collection.insertOne(sb);
+  return sb;
+}
+
+export async function getStudentBadges(studentId: string) {
+  const collection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  return stripMongoIds(await collection.find({ studentId }).toArray());
+}
+
+export async function getAllStudentBadges() {
+  const collection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  return stripMongoIds(await collection.find({}).toArray());
+}
+
+export async function createGamificationAutoAwardRule(input: {
+  name: string;
+  trigger: AutoAwardTrigger;
+  points: number;
+  badgeId?: string;
+}) {
+  const collection = await getCollection<GamificationAutoAwardRule>(COLLECTIONS.gamificationRules);
+  const rule: GamificationAutoAwardRule = {
+    id: randomUUID(),
+    name: input.name,
+    trigger: input.trigger,
+    points: input.points,
+    badgeId: input.badgeId,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(rule);
+  return rule;
+}
+
+export async function getAllGamificationAutoAwardRules() {
+  const collection = await getCollection<GamificationAutoAwardRule>(COLLECTIONS.gamificationRules);
+  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+}
+
+export async function getGamificationStats() {
+  const pointsCollection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const totalPointsAgg = await pointsCollection.aggregate([
+    { $group: { _id: null, total: { $sum: "$points" } } },
+  ]).toArray();
+  const totalPointsAwarded = totalPointsAgg[0]?.total || 0;
+  const usersCollection = await getUsersCollection();
+  const activeStudents = await usersCollection.countDocuments({ role: "student", status: "active" });
+  const badgesCollection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const totalBadgesGiven = await badgesCollection.countDocuments({});
+  const stats: GamificationStats = { totalPointsAwarded, activeStudents, totalBadgesGiven };
+  return stats;
 }

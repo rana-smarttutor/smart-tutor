@@ -83,17 +83,17 @@ export async function POST(request: Request) {
   }
 
   // ---- Role-based audience restrictions ----
-  const allowedRoles = body.audience ?? [];
+  let audience = body.audience ?? [];
 
   if (session.role === "student") {
     // Students may only send to "educator" (their assigned faculty) or "admin"
     const canSendToEducator =
-      allowedRoles.length === 1 &&
-      allowedRoles[0] === "educator" &&
+      audience.length === 1 &&
+      audience[0] === "educator" &&
       userIds.length > 0;
     const canSendToAdmin =
-      allowedRoles.length === 1 &&
-      allowedRoles[0] === "admin" &&
+      audience.length === 1 &&
+      audience[0] === "admin" &&
       userIds.length > 0;
 
     if (!canSendToEducator && !canSendToAdmin) {
@@ -120,13 +120,13 @@ export async function POST(request: Request) {
   if (session.role === "educator") {
     // Educators may send to "admin" or to "student" (their assigned students)
     const canSendToAdmin =
-      allowedRoles.length === 1 &&
-      allowedRoles[0] === "admin" &&
+      audience.length === 1 &&
+      audience[0] === "admin" &&
       userIds.length > 0;
 
     const canSendToStudent =
-      allowedRoles.length === 1 &&
-      allowedRoles[0] === "student";
+      audience.length === 1 &&
+      audience[0] === "student";
 
     if (!canSendToAdmin && !canSendToStudent) {
       return NextResponse.json(
@@ -143,13 +143,18 @@ export async function POST(request: Request) {
     }
   }
 
-  if (session.role !== "admin" && allowedRoles.includes("student") && allowedRoles.includes("educator") && allowedRoles.includes("admin")) {
+  if (session.role !== "admin" && audience.includes("student") && audience.includes("educator") && audience.includes("admin")) {
     return NextResponse.json(
       { error: "Only admins can send messages to all roles." },
       { status: 403 },
     );
   }
   // ---- End role-based restrictions ----
+
+  // Sender must always be able to see their own messages
+  if (!audience.includes(session.role as "student" | "educator" | "admin")) {
+    audience.push(session.role as "student" | "educator" | "admin");
+  }
 
   if (userIds.length === 0 && body.targetMode === "selected-students") {
     return NextResponse.json(
@@ -159,9 +164,14 @@ export async function POST(request: Request) {
   }
 
   let resolvedUserIds = userIds;
-  if (session.role === "educator" && allowedRoles.includes("student") && !userIds.length) {
+  if (session.role === "educator" && audience.includes("student") && !userIds.length) {
     const assignedStudents = await getStudentDirectory(session.id);
     resolvedUserIds = assignedStudents.map((s) => s.id);
+  }
+
+  // Sender must always see their own messages
+  if (!resolvedUserIds.includes(session.id)) {
+    resolvedUserIds.push(session.id);
   }
 
   if (expiresAt && Number.isNaN(expiresAt.getTime())) {
@@ -177,7 +187,7 @@ export async function POST(request: Request) {
     body: content,
     channel,
     author: session.name,
-    audience: body.audience,
+    audience,
     userIds: resolvedUserIds,
     expiresAt: expiresAt ? expiresAt.toISOString() : null,
   });

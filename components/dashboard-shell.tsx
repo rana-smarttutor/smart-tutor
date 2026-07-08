@@ -83,10 +83,32 @@ const DashboardMessageCenter = dynamic(
   },
 );
 
-const DashboardTestStudio = dynamic(
+const ChatView = dynamic(
   () =>
-    import("@/components/dashboard-test-studio").then(
-      (module) => module.DashboardTestStudio,
+    import("@/components/dashboard-chat").then(
+      (module) => module.ChatView,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DashboardExamManager = dynamic(
+  () =>
+    import("@/components/dashboard-exam-manager").then(
+      (module) => module.DashboardExamManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DashboardPtmManager = dynamic(
+  () =>
+    import("@/components/dashboard-ptm-manager").then(
+      (module) => module.DashboardPtmManager,
     ),
   {
     loading: () => <SectionLoading />,
@@ -213,6 +235,17 @@ const TimetableManager = dynamic(
   },
 );
 
+const GamificationSection = dynamic(
+  () =>
+    import("@/components/dashboard-gamification").then(
+      (module) => module.GamificationManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 type StandaloneStudentReport = {
   id: string;
   title: string;
@@ -239,10 +272,11 @@ const sidebarByRole = {
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "messages", label: "Messages" },
+    { id: "chat", label: "Chat" },
     { id: "homework", label: "Homework" },
     { id: "attendance", label: "Attendance" },
     { id: "notifications", label: "Notifications" },
-    { id: "tests", label: "My Tests" },
+    { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Learning" },
@@ -258,10 +292,13 @@ const sidebarByRole = {
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "messages", label: "Messages" },
+    { id: "chat", label: "Chat" },
+    { id: "gamification", label: "Gamification" },
+    { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
     { id: "attendance", label: "Attendance" },
     { id: "notifications", label: "Notifications" },
-    { id: "tests", label: "Test Studio" },
+    { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Activities" },
@@ -273,27 +310,31 @@ const sidebarByRole = {
   counsellor: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
-    { id: "fee-installments", label: "Fee Plans" },
+    { id: "chat", label: "Chat" },
+    { id: "ptm", label: "PTM" },
     { id: "notifications", label: "Notifications" },
     { id: "sales-crm", label: "Sales CRM" },
   ],
 
   admin: [
+    { id: "accounts", label: "Accounts" },
     { id: "overview", label: "Overview" },
+    { id: "gamification", label: "Gamification" },
     { id: "messages", label: "Messages" },
+    { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
     { id: "enquiries", label: "Enquiries" },
+    { id: "ptm", label: "PTM" },
     { id: "password-reset-requests", label: "Password Reset Requests" },
     { id: "sales-crm", label: "Sales CRM" },
     { id: "placement-jobs", label: "Placement Jobs" },
-    { id: "tests", label: "Test Studio" },
+    { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Activities" },
     { id: "performance", label: "Analytics Hub" },
     { id: "courses", label: "Courses" },
     { id: "students", label: "Students" },
-    { id: "accounts", label: "Accounts" },
     { id: "attendance", label: "Attendance" },
     { id: "fees", label: "Invoices" },
     { id: "fee-installments", label: "Fee Plans" },
@@ -307,6 +348,7 @@ const sidebarByRole = {
   parent: [
     { id: "overview", label: "Overview" },
     { id: "messages", label: "Messages" },
+    { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
@@ -348,17 +390,20 @@ function getInitials(name?: string) {
 }
 
 const menuSections = [
-  { label: "Overview", items: ["overview", "messages", "attendance", "notifications"] },
+  { label: "Overview", items: ["accounts", "overview", "gamification", "messages", "chat", "ptm", "attendance", "notifications"] },
   { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance"] },
-  { label: "People", items: ["accounts", "enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
+  { label: "People", items: ["enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
   { label: "Finance", items: ["fees", "fee-installments", "teacher-payouts"] },
 ];
 
 const navIcons: Record<string, React.ReactNode> = {
   overview: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
+  gamification: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>,
   lectures: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>,
   timetable: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
   messages: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
+  chat: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
+  ptm: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   attendance: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
   notifications: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
   tests: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
@@ -400,6 +445,7 @@ export function DashboardShell({
     setSidebarOpen(false);
   }, [activeSection]);
   const [messages, setMessages] = useState<MessageItem[]>(dashboard.messages);
+  const [notifRefreshKey, setNotifRefreshKey] = useState(0);
   const [submissions, setSubmissions] = useState<TestSubmission[]>(
     dashboard.submissions,
   );
@@ -419,6 +465,8 @@ export function DashboardShell({
 
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
+  const showChat = activeSection === "chat";
+  const showGamification = activeSection === "gamification";
   const showHomework = activeSection === "homework";
   const showNotifications = activeSection === "notifications";
   const showEnquiries = activeSection === "enquiries";
@@ -426,6 +474,7 @@ export function DashboardShell({
   const showSalesCrm = activeSection === "sales-crm";
   const showPlacementJobs = activeSection === "placement-jobs";
   const showTests = activeSection === "tests";
+  const showPtm = activeSection === "ptm";
   const showResults = activeSection === "results";
   const showCourses = activeSection === "courses";
   const showStudents = activeSection === "students";
@@ -596,10 +645,6 @@ export function DashboardShell({
           ];
 
   useEffect(() => {
-    if (!showMessages) {
-      return;
-    }
-
     let isMounted = true;
 
     async function refreshMessages() {
@@ -647,7 +692,7 @@ export function DashboardShell({
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleFocus);
     };
-  }, [showMessages, session?.id]);
+  }, [session?.id]);
 
   return (
     <div className="h-screen flex overflow-hidden bg-[#F4F7FB]">
@@ -801,13 +846,14 @@ export function DashboardShell({
             <div className="flex items-center gap-3 shrink-0">
               <NotificationBell
                 onOpenNotifications={() => setActiveSection("notifications")}
+                refreshKey={notifRefreshKey}
               />
               <div className="flex items-center gap-2 cursor-pointer group">
-                <div className="h-8 w-8 rounded-full bg-slate-100 overflow-hidden border border-slate-200 group-hover:border-[#0B40A1] transition-colors">
+                <div className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-slate-200 group-hover:border-[#0B40A1] transition-colors">
                   {dashboard.profile?.profilePhoto ? (
                     <img src={dashboard.profile.profilePhoto} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#0B40A1]">
+                    <div className="w-full h-full flex items-center justify-center text-sm font-bold text-[#0B40A1]">
                       {getInitials(session?.name)}
                     </div>
                   )}
@@ -851,6 +897,26 @@ export function DashboardShell({
             />
           ) : null}
 
+          {showChat ? (
+            <ChatView
+              session={session}
+              role={role}
+              messages={messages}
+              studentDirectory={studentDirectory}
+              onMessagesChange={setMessages}
+              managedUsers={managedUsers}
+              assignedFacultyIds={dashboard.assignedFacultyIds}
+              assignedFacultyNames={dashboard.assignedFacultyNames}
+            />
+          ) : null}
+
+          {showPtm && (role === "admin" || role === "educator" || role === "parent" || role === "counsellor") ? (
+            <DashboardPtmManager
+              session={session}
+              role={role}
+            />
+          ) : null}
+
           {showHomework && (role === "student" || role === "educator") ? (
             <HomeworkSection
               session={session}
@@ -859,8 +925,12 @@ export function DashboardShell({
             />
           ) : null}
 
+          {showGamification && (role === "admin" || role === "educator") ? (
+            <GamificationSection session={session} />
+          ) : null}
+
           {showNotifications ? (
-            <NotificationCenter role={role} managedUsers={managedUsers} />
+            <NotificationCenter role={role} managedUsers={managedUsers} onMarkAsRead={() => setNotifRefreshKey((k) => k + 1)} />
           ) : null}
 
           {showEnquiries && role === "admin" ? (
@@ -881,7 +951,7 @@ export function DashboardShell({
 
           {showTests ? (
             <>
-              <DashboardTestStudio
+              <DashboardExamManager
                 session={session}
                 role={role}
                 initialTests={dashboard.tests}

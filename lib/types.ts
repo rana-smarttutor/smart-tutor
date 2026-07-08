@@ -1035,6 +1035,12 @@ export type HomeworkItem = {
   id: string;
   title: string;
   description?: string;
+  objective?: string;
+  keySteps?: string[];
+  deliverables?: string;
+  evaluationCriteria?: string;
+  estimatedHours?: number;
+  taskNumber?: number;
   subject?: string;
   hwType: HomeworkType;
   maxMarks: number;
@@ -1064,4 +1070,95 @@ export type HomeworkSubmission = {
   feedback?: string;
   gradedBy?: string;
   gradedAt?: string;
+};
+
+export type GamificationActivity =
+  | "exam_pass"
+  | "full_attendance"
+  | "homework_submit"
+  | "top_performer"
+  | "good_conduct"
+  | "participation"
+  | "manual";
+
+export type BadgeCriteriaType =
+  | "points_threshold"
+  | "exam_score"
+  | "attendance_streak"
+  | "homework_count";
+
+export type AutoAwardTrigger =
+  | "attendance_100_week"
+  | "attendance_above_90"
+  | "exam_score_above_90"
+  | "exam_score_above_75"
+  | "homework_submitted"
+  | "homework_on_time"
+  | "rank_1_class"
+  | "rank_top3_class";
+
+export type GamificationPointEntry = {
+  id: string;
+  studentId: string;
+  points: number;
+  activity: GamificationActivity;
+  description?: string;
+  awardedBy: string;
+  awardedByName?: string;
+  createdAt: string;
+};
+
+export type GamificationBadge = {
+  id: string;
+  name: string;
+  icon: string;
+  description?: string;
+  criteriaType: BadgeCriteriaType;
+  criteriaValue: number;
+  color: string;
+  createdAt: string;
+};
+
+export type GamificationStudentBadge = {
+  id: string;
+  studentId: string;
+  badgeId: string;
+  badgeName: string;
+  badgeIcon: string;
+  badgeColor: string;
+  reason?: string;
+  awardedBy: string;
+  awardedAt: string;
+};
+
+export type GamificationLevel = {
+  level: number;
+  name: string;
+  pointsRequired: number;
+};
+
+export type GamificationAutoAwardRule = {
+  id: string;
+  name: string;
+  trigger: AutoAwardTrigger;
+  points: number;
+  badgeId?: string;
+  createdAt: string;
+};
+
+export type GamificationStats = {
+  totalPointsAwarded: number;
+  activeStudents: number;
+  totalBadgesGiven: number;
+};
+
+export type GamificationLeaderboardEntry = {
+  studentId: string;
+  studentName: string;
+  studentPhoto?: string;
+  points: number;
+  badges: number;
+  level: number;
+  levelName: string;
+  rank: number;
 };
