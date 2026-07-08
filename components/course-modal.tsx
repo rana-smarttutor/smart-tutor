@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
   X,
@@ -20,6 +20,7 @@ import type { CourseItem } from "@/lib/types";
 interface CourseModalProps {
   course: CourseItem | null;
   onClose: () => void;
+  initialAdditionalCourse?: string;
 }
 
 const MHT_CET_EXAMS = [
@@ -424,7 +425,7 @@ const ADDITIONAL_COURSES_BY_CLASS: Record<string, string[]> = {
     "IPMAT",
     "NPAT",
     "UPSC Foundation",
-    "SSC CHSL",
+    "SSC",
     "Railway",
     "Video Editing",
     "Spoken English",
@@ -447,7 +448,7 @@ const ADDITIONAL_COURSES_BY_CLASS: Record<string, string[]> = {
     "NPAT",
     "UPSC Foundation",
     "Railway",
-    "SSC CHSL",
+    "SSC",
     "Video Editing",
     "Spoken English",
     "Interview & Personality Development",
@@ -488,7 +489,11 @@ function getRegularSubjectOptions(
   return [...subjectOptions, OTHER_SUBJECT_OPTION];
 }
 
-export default function CourseModal({ course, onClose }: CourseModalProps) {
+export default function CourseModal({
+  course,
+  onClose,
+  initialAdditionalCourse,
+}: CourseModalProps) {
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [role, setRole] = useState("student");
@@ -504,6 +509,22 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
     string[]
   >([]);
   const [selectedSlot, setSelectedSlot] = useState("");
+  useEffect(() => {
+    setIsSuccess(false);
+    setSelectedCourseName("");
+    setMhtCetSubExam("");
+    setSelectedBoard("");
+    setSelectedStream("");
+    setSelectedSubjects([]);
+    setOtherSubject("");
+    setSelectedSlot("");
+
+    if (initialAdditionalCourse) {
+      setSelectedAdditionalCourses([initialAdditionalCourse]);
+    } else {
+      setSelectedAdditionalCourses([]);
+    }
+  }, [course?.standardKey, initialAdditionalCourse]);
 
   if (!course) {
     return null;
@@ -526,6 +547,11 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
 
   const additionalCourseOptions =
     ADDITIONAL_COURSES_BY_CLASS[course.standardKey] ?? [];
+  const visibleAdditionalCourseOptions = initialAdditionalCourse
+    ? additionalCourseOptions.filter(
+        (additionalCourse) => additionalCourse === initialAdditionalCourse,
+      )
+    : additionalCourseOptions;
 
   const isMhtCet =
     !isRegularAcademic && selectedCourseName === "All MHT CET Exam";
@@ -978,8 +1004,8 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                                 </span>
                               </div>
                               <div className="flex flex-wrap gap-2.5">
-                                {additionalCourseOptions.map(
-                                  (additionalCourse) => {
+                                {visibleAdditionalCourseOptions.map(
+                                  (additionalCourse: string) => {
                                     const isSelected =
                                       selectedAdditionalCourses.includes(
                                         additionalCourse,

@@ -21,11 +21,14 @@ import { AnimatePresence, motion } from "motion/react";
 import type { CourseItem } from "@/lib/types";
 import LocalGraphic from "@/components/local-graphic";
 
+type SeniorClassSelection = "Class 11" | "Class 12";
+
 interface SpotlightSectionProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onSelectCourse: (course: CourseItem) => void;
   allCourses: CourseItem[];
+  onSeniorClassChange?: (seniorClass: SeniorClassSelection) => void;
 }
 
 type StreamFilter = "Science" | "Commerce" | "Arts" | "All";
@@ -157,7 +160,7 @@ const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
   "Class 8": "/spotlight/class 8 new.png",
   "Class 9": "/spotlight/class 9 new.png",
   "Class 10": "/spotlight/class 10 new.png",
-  "Class 11": "/spotlight/class 11 new.png",
+  "Class 11": "/spotlight/class 11.png",
   "Class 12": "/spotlight/class 12 new.png",
   Skills: "/spotlight/skills.png",
   "Govt Exams": "/spotlight/govt-exams.jpeg",
@@ -168,6 +171,7 @@ export default function SpotlightSection({
   setActiveTab,
   onSelectCourse,
   allCourses,
+  onSeniorClassChange,
 }: SpotlightSectionProps) {
   const tabs = [
     { id: "Class 6", label: "Class 6", icon: BookOpen },
@@ -266,6 +270,28 @@ setTabCourses(filteredCourses);
   };
 
   const currentSpotlight = tabCourses[spotlightIndex];
+  useEffect(() => {
+  if (activeTab !== "Class 11-12" || !currentSpotlight) {
+    return;
+  }
+
+  const text = [
+    currentSpotlight.standardKey,
+    currentSpotlight.title,
+    currentSpotlight.audienceLabel,
+    ...(currentSpotlight.sections ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  const isClass12 =
+    text.includes("class-12") ||
+    text.includes("class 12") ||
+    text.includes("class12");
+
+  onSeniorClassChange?.(isClass12 ? "Class 12" : "Class 11");
+}, [activeTab, currentSpotlight, onSeniorClassChange]);
 
   const nextSpotlight = () => {
     if (tabCourses.length > 1) {
@@ -666,182 +692,9 @@ setTabCourses(filteredCourses);
         </div>
       )}
 
-      {(activeTab === "Class 11" || activeTab === "Class 12") && (
-        <div className="space-y-4 pt-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-bold tracking-tight text-slate-800">
-              Browse Stream Majors:
-            </span>
+ 
 
-            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[9px] font-bold uppercase text-slate-500">
-              Click to Filter Spotlight
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <motion.div
-              whileHover={{ y: -3, border: "1px solid #6366f1" }}
-              onClick={() => handleStreamClick("Science")}
-              className={`flex cursor-pointer flex-col justify-between space-y-4 rounded-xl border p-4 shadow-xs transition-all ${
-                activeStream === "Science"
-                  ? "border-blue-500 bg-blue-50/40"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center rounded-lg bg-blue-50 p-2 text-blue-600">
-                    <FlaskConical className="h-4 w-4" />
-                  </div>
-
-                  <div>
-                    <h4 className="font-display text-xs font-bold text-slate-900">
-                      Science Stream
-                    </h4>
-
-                    <span className="mt-0.5 block text-[9px] leading-none text-slate-400">
-                      IIT-JEE / NEET / Boards
-                    </span>
-                  </div>
-                </div>
-
-                <div className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
-                  HSC/CBSE
-                </div>
-              </div>
-
-              <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
-                Physics, Chemistry, Mathematics, Biology & Specialized Computer
-                Science labs.
-              </p>
-
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[9px] font-bold uppercase text-blue-600">
-                  Highly Popular
-                </span>
-
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-md shadow-xs transition-colors ${
-                    activeStream === "Science"
-                      ? "bg-blue-600 text-white"
-                      : "bg-slate-200 text-slate-400"
-                  }`}
-                >
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ y: -3, border: "1px solid #6366f1" }}
-              onClick={() => handleStreamClick("Commerce")}
-              className={`flex cursor-pointer flex-col justify-between space-y-4 rounded-xl border p-4 shadow-xs transition-all ${
-                activeStream === "Commerce"
-                  ? "border-blue-500 bg-blue-50/40"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center rounded-lg bg-blue-50 p-2 text-blue-600">
-                    <Coins className="h-4 w-4" />
-                  </div>
-
-                  <div>
-                    <h4 className="font-display text-xs font-bold text-slate-900">
-                      Commerce Stream
-                    </h4>
-
-                    <span className="mt-0.5 block text-[9px] leading-none text-slate-400">
-                      CA/CS Base & Audit
-                    </span>
-                  </div>
-                </div>
-
-                <div className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
-                  HSC/CBSE
-                </div>
-              </div>
-
-              <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
-                Advanced Accountancy, Business Studies, Economics & Professional
-                Math tracks.
-              </p>
-
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[9px] font-bold uppercase text-blue-600">
-                  Corporate Path
-                </span>
-
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-md shadow-xs transition-colors ${
-                    activeStream === "Commerce"
-                      ? "bg-blue-600 text-white"
-                      : "bg-slate-200 text-slate-400"
-                  }`}
-                >
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ y: -3, border: "1px solid #6366f1" }}
-              onClick={() => handleStreamClick("Arts")}
-              className={`flex cursor-pointer flex-col justify-between space-y-4 rounded-xl border p-4 shadow-xs transition-all ${
-                activeStream === "Arts"
-                  ? "border-blue-500 bg-blue-50/40"
-                  : "border-slate-200 bg-white"
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center justify-center rounded-lg bg-blue-50 p-2 text-blue-600">
-                    <History className="h-4 w-4" />
-                  </div>
-
-                  <div>
-                    <h4 className="font-display text-xs font-bold text-slate-900">
-                      Arts Stream
-                    </h4>
-
-                    <span className="mt-0.5 block text-[9px] leading-none text-slate-400">
-                      CLAT & Administrative
-                    </span>
-                  </div>
-                </div>
-
-                <div className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
-                  HSC/State
-                </div>
-              </div>
-
-              <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
-                Drawing, Applied Arts, Fine Arts, Design sensitivity &
-                Literature foundations.
-              </p>
-
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-[9px] font-bold uppercase text-blue-600">
-                  Creative Lead
-                </span>
-
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-md shadow-xs transition-colors ${
-                    activeStream === "Arts"
-                      ? "bg-blue-600 text-white"
-                      : "bg-slate-200 text-slate-400"
-                  }`}
-                >
-                  <ArrowRight className="h-3 w-3" />
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      )}
-
-      {tabCourses.length > 1 && (
+      {activeTab !== "Class 11-12" && tabCourses.length > 1 && (
         <div className="space-y-4 pt-4">
           <h4 className="font-display text-xs font-semibold uppercase tracking-tight text-slate-900">
             Additional Programs in {activeTab}

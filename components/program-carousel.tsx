@@ -46,7 +46,7 @@ const HOME_PROGRAMS: Program[] = [
   },
   {
     category: "Entrance Exams",
-    title: "ENTRANCE & COMPETITIVE EXAMS",
+    title: "COMPETITIVE EXAMS",
     duration: "Batch-Based",
     description:
       "JEE, NEET, CET, CUET, CLAT, IPMAT, CA Foundation.",
