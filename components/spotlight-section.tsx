@@ -608,6 +608,64 @@ setTabCourses(filteredCourses);
         )}
       </AnimatePresence>
 
+      {activeTab === "Skills" && tabCourses.length > 0 && (
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {tabCourses.map((course) => (
+            <motion.div
+              key={course.id}
+              whileHover={{ y: -2 }}
+              className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <span className="rounded bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                  {course.duration}
+                </span>
+                <span className="rounded bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                  {course.mode.split("/")[0]}
+                </span>
+              </div>
+
+              <h5 className="font-display text-sm font-bold leading-snug text-slate-900">
+                {course.title}
+              </h5>
+
+              <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
+                {course.summary}
+              </p>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {course.courseNamesIncluded.map((name) => (
+                  <motion.button
+                    key={name}
+                    type="button"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => onSelectCourse(course)}
+                    className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 shadow-sm transition-all hover:bg-blue-100 hover:border-blue-300"
+                  >
+                    {name}
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+                <span className="rounded bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
+                  {course.mode}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onSelectCourse(course)}
+                  className="inline-flex cursor-pointer items-center gap-1 text-xs font-bold text-blue-600 transition-colors hover:text-blue-800"
+                >
+                  Enroll Now
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
       {(activeTab === "Class 11" || activeTab === "Class 12") && (
         <div className="space-y-4 pt-4">
           <div className="flex items-center space-x-2">
@@ -888,6 +946,7 @@ setTabCourses(filteredCourses);
           })()}
         </div>
       )}
+
     </div>
   );
 }
