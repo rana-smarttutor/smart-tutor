@@ -38,7 +38,8 @@ const COURSE_TABS = [
   "Class 8",
   "Class 9",
   "Class 10",
-  "Class 11-12",
+  "Class 11",
+  "Class 12",
   "Govt Exams",
   "Skills",
 ] as const;
@@ -77,7 +78,40 @@ const TECHNOLOGY_FUTURE_SKILLS_COURSE: CourseItem = {
   audience: ["student", "parent", "admin"],
 };
 
-
+const CREATIVE_DIGITAL_SKILLS_COURSE: CourseItem = {
+  id: "fallback-skills-creative-digital",
+  category: "Skills Development",
+  sections: ["skills"],
+  stream: "General",
+  statusLabel: "Enroll Now",
+  standardKey: "skills-creative-digital",
+  title: "Creative & Digital Skills",
+  tagline: "Create, Design, Innovate",
+  schedule: "Flexible Timing",
+  summary:
+    "Master digital tools and creative technologies for modern careers.",
+  description:
+    "Learn industry-relevant creative and digital skills including graphic design, video production, animation, game development, UI design, motion graphics, photography, videography, and content creation.",
+  duration: "3-6 Months",
+  mode: "Online / Home Tutors",
+  audienceLabel: "Teens & Adults",
+  courseNamesIncluded: [
+    "Graphic Designing",
+    "Video Editing",
+    "Animation",
+    "Game Design & Development",
+    "Game Development with AI",
+    "UI Design Basics",
+    "Motion Graphics",
+    "Photography",
+    "Videography",
+    "Content Creation (YouTube & Social Media)",
+  ],
+  branchesIncluded: [],
+  subjectsCovered: [],
+  points: [],
+  audience: ["student", "parent", "admin"],
+};
 
 const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   {
@@ -351,6 +385,51 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   },
 ];
 
+function getAdditionalProgramDuration(title: string) {
+  const fullYearPrograms = [
+    "JEE",
+    "NEET",
+    "All MHT CET Exam",
+    "CUET",
+    "NDA",
+    "CLAT",
+    "CA Foundation",
+    "CS Foundation",
+    "CMA Foundation",
+    "IPMAT",
+    "NPAT",
+    "UPSC Foundation",
+  ];
+
+  const sixToTwelveMonthPrograms = [
+    "Police/Army Bharti",
+    "IMU CET",
+    "NCHMCT JEE",
+    "SSC CHSL",
+    "Railway",
+  ];
+
+  const shortSkillPrograms = [
+    "Video Editing",
+    "Spoken English",
+    "Interview & Personality Development",
+  ];
+
+  if (fullYearPrograms.includes(title)) {
+    return "12 Months";
+  }
+
+  if (sixToTwelveMonthPrograms.includes(title)) {
+    return "6-12 Months";
+  }
+
+  if (shortSkillPrograms.includes(title)) {
+    return "3-6 Months";
+  }
+
+  return "6-12 Months";
+}
+
 const CLASS_11_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   "JEE",
   "NEET",
@@ -375,7 +454,7 @@ const CLASS_11_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
 ].map((title) => ({
   title,
   streamLabel: getProgramStreamLabel(title),
-  duration: "3-6 Months",
+  duration: getAdditionalProgramDuration(title),
   summary: getProgramSummary(title),
   mode: "Home / Online Tutoring",
 }));
@@ -404,7 +483,7 @@ const CLASS_12_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
 ].map((title) => ({
   title,
   streamLabel: getProgramStreamLabel(title),
-  duration: "3-6 Months",
+  duration: getAdditionalProgramDuration(title),
   summary: getProgramSummary(title),
   mode: "Home / Online Tutoring",
 }));
@@ -441,7 +520,7 @@ function getProgramStreamLabel(title: string) {
       "NDA",
       "Police/Army Bharti",
       "UPSC Foundation",
-      "SSC CHSL",
+      "SSC",
       "Railway",
     ].includes(title)
   ) {
@@ -487,7 +566,7 @@ function getProgramSummary(title: string) {
     NPAT: "Management and commerce entrance preparation with aptitude, English, and reasoning.",
     "UPSC Foundation":
       "Early UPSC foundation with history, polity, geography, economics, and current affairs.",
-    "SSC CHSL":
+    "SSC":
       "Government exam preparation with reasoning, maths, English, and general awareness.",
     Railway:
       "Railway exam foundation with maths, reasoning, general science, and general awareness.",
@@ -505,34 +584,7 @@ function getProgramSummary(title: string) {
   );
 }
 
-function getAdditionalProgramGroups(
-  activeTab: string,
-): AdditionalProgramGroup[] {
-  const normalizedTab = activeTab.trim().toLowerCase();
-
-  const isClass1112Tab =
-    normalizedTab === "class 11-12" ||
-    normalizedTab === "class 11" ||
-    normalizedTab === "class 12" ||
-    normalizedTab.includes("class 11") ||
-    normalizedTab.includes("class 12") ||
-    normalizedTab.includes("11-12");
-
-  if (isClass1112Tab) {
-    return [
-      {
-        heading: "Additional Programs in Class 11",
-        standardKey: "class-11-additional",
-        programs: CLASS_11_ADDITIONAL_PROGRAMS,
-      },
-      {
-        heading: "Additional Programs in Class 12",
-        standardKey: "class-12-additional",
-        programs: CLASS_12_ADDITIONAL_PROGRAMS,
-      },
-    ];
-  }
-
+function getAdditionalProgramGroups(activeTab: string): AdditionalProgramGroup[] {
   switch (activeTab) {
     case "Class 6":
       return [
@@ -579,6 +631,24 @@ function getAdditionalProgramGroups(
         },
       ];
 
+    case "Class 11":
+      return [
+        {
+          heading: "Additional Programs in Class 11",
+          standardKey: "class-11-additional",
+          programs: CLASS_11_ADDITIONAL_PROGRAMS,
+        },
+      ];
+
+    case "Class 12":
+      return [
+        {
+          heading: "Additional Programs in Class 12",
+          standardKey: "class-12-additional",
+          programs: CLASS_12_ADDITIONAL_PROGRAMS,
+        },
+      ];
+
     default:
       return [];
   }
@@ -593,7 +663,7 @@ function AdditionalProgramsSection({
   activeTab: string;
   searchQuery: string;
   allCourses: CourseItem[];
-  onSelectCourse: (course: CourseItem) => void;
+  onSelectCourse: (course: CourseItem, additionalProgram?: string) => void;
 }) {
   const groups = useMemo(() => {
     const baseGroups = getAdditionalProgramGroups(activeTab);
@@ -620,15 +690,15 @@ function AdditionalProgramsSection({
     return null;
   }
 
-  function openEnrollment(standardKey: string) {
-    const matchingCourse = allCourses.find(
-      (course) => course.standardKey === standardKey,
-    );
+function openEnrollment(standardKey: string, programTitle: string) {
+  const matchingCourse = allCourses.find(
+    (course) => course.standardKey === standardKey,
+  );
 
-    if (matchingCourse) {
-      onSelectCourse(matchingCourse);
-    }
+  if (matchingCourse) {
+    onSelectCourse(matchingCourse, programTitle);
   }
+}
 
   return (
     <section className="space-y-8">
@@ -682,7 +752,7 @@ function AdditionalProgramsSection({
 
                   <button
                     type="button"
-                    onClick={() => openEnrollment(group.standardKey)}
+                    onClick={() => openEnrollment(group.standardKey, program.title)}
                     className="inline-flex items-center gap-1 text-[11px] font-black text-blue-600 transition-colors hover:text-blue-800"
                   >
                     Enroll Now
@@ -706,8 +776,10 @@ export default function CoursesRedesignClient({
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
 
-  const [activeTab, setActiveTab] = useState("Class 6");
-  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
+const [activeTab, setActiveTab] = useState("Class 6");
+const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
+const [selectedAdditionalProgram, setSelectedAdditionalProgram] =
+  useState<string>("");
 
   useEffect(() => {
     if (isCourseTab(requestedTab)) {
@@ -718,25 +790,29 @@ export default function CoursesRedesignClient({
   const searchQuery = searchParams.get("search") ?? "";
 
   const coursesWithRequiredSkills = useMemo<CourseItem[]>(() => {
-    const coursesWithoutTechnologySkill = allCourses.filter(
-      (course: CourseItem) => course.standardKey !== "skills-tech-future",
+    const coursesWithoutForcedSkills = allCourses.filter(
+      (course: CourseItem) =>
+        course.standardKey !== "skills-tech-future" &&
+        course.standardKey !== "skills-creative-digital",
     );
 
-    const communicationIndex = coursesWithoutTechnologySkill.findIndex(
+    const communicationIndex = coursesWithoutForcedSkills.findIndex(
       (course: CourseItem) => course.standardKey === "skills-communication",
     );
 
     if (communicationIndex === -1) {
       return [
         TECHNOLOGY_FUTURE_SKILLS_COURSE,
-        ...coursesWithoutTechnologySkill,
+        CREATIVE_DIGITAL_SKILLS_COURSE,
+        ...coursesWithoutForcedSkills,
       ];
     }
 
     return [
-      ...coursesWithoutTechnologySkill.slice(0, communicationIndex + 1),
+      ...coursesWithoutForcedSkills.slice(0, communicationIndex + 1),
       TECHNOLOGY_FUTURE_SKILLS_COURSE,
-      ...coursesWithoutTechnologySkill.slice(communicationIndex + 1),
+      ...coursesWithoutForcedSkills.slice(communicationIndex + 1),
+      CREATIVE_DIGITAL_SKILLS_COURSE,
     ];
   }, [allCourses]);
 
@@ -768,23 +844,27 @@ export default function CoursesRedesignClient({
       className="flex min-h-screen flex-col bg-slate-50/50 font-sans selection:bg-indigo-100 selection:text-indigo-950"
     >
       <main className="mx-auto flex-1 w-full max-w-7xl space-y-12 px-4 pb-8 pt-4 sm:space-y-16 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8">
-        <SpotlightSection
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onSelectCourse={setSelectedCourse}
-          allCourses={filteredCourses}
-        />
+<SpotlightSection
+  activeTab={activeTab}
+  setActiveTab={setActiveTab}
+  onSelectCourse={(course) => {
+    setSelectedAdditionalProgram("");
+    setSelectedCourse(course);
+  }}
+  allCourses={filteredCourses}
+/>
 
-        <AdditionalProgramsSection
-          activeTab={activeTab}
-          searchQuery={searchQuery}
-          allCourses={coursesWithRequiredSkills}
-          onSelectCourse={setSelectedCourse}
-        />
+<AdditionalProgramsSection
+  activeTab={activeTab}
+  searchQuery={searchQuery}
+  allCourses={coursesWithRequiredSkills}
+  onSelectCourse={(course, additionalProgram) => {
+    setSelectedAdditionalProgram(additionalProgram ?? "");
+    setSelectedCourse(course);
+  }}
+/>
 
-        <section>
-          <ToppersSection activeTab={activeTab} />
-        </section>
+
 
         <section>
           <WhyChooseSmartTutors />
@@ -828,7 +908,7 @@ export default function CoursesRedesignClient({
                 }}
                 className="w-full cursor-pointer rounded bg-indigo-600 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-indigo-500 sm:w-auto"
               >
-                Register for Free Demo session
+                Book a Free Counseling Session
               </motion.button>
 
               <button
@@ -848,10 +928,14 @@ export default function CoursesRedesignClient({
         </section>
       </main>
 
-      <CourseModal
-        course={selectedCourse}
-        onClose={() => setSelectedCourse(null)}
-      />
+<CourseModal
+  course={selectedCourse}
+  initialAdditionalCourse={selectedAdditionalProgram}
+  onClose={() => {
+    setSelectedCourse(null);
+    setSelectedAdditionalProgram("");
+  }}
+/>
 
       <SmartTutorsAIChatbot />
       <WhatsAppFAB currentCourseTitle={selectedCourse?.title} />
