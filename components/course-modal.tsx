@@ -480,7 +480,7 @@ function getRegularSubjectOptions(
   const isSeniorSecondary = classNumber >= 11;
 
   const subjectOptions = isSeniorSecondary
-    ? boardSubjects.senior[selectedStream as SeniorSecondaryStream] ?? []
+    ? (boardSubjects.senior[selectedStream as SeniorSecondaryStream] ?? [])
     : classNumber >= 9
       ? boardSubjects.secondary
       : boardSubjects.middle;
@@ -529,9 +529,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
 
   const isMhtCet =
     !isRegularAcademic && selectedCourseName === "All MHT CET Exam";
-  const hasMhtCetAddOn = selectedAdditionalCourses.includes(
-    "All MHT CET Exam",
-  );
+  const hasMhtCetAddOn = selectedAdditionalCourses.includes("All MHT CET Exam");
   const shouldShowMhtCetCategory = isMhtCet || hasMhtCetAddOn;
 
   const requiresOtherSubjectName =
@@ -539,9 +537,9 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
 
   const hasRequiredAcademicSelection = Boolean(
     selectedBoard &&
-      selectedSubjects.length > 0 &&
-      hasSelectedStream &&
-      !requiresOtherSubjectName,
+    selectedSubjects.length > 0 &&
+    hasSelectedStream &&
+    !requiresOtherSubjectName,
   );
 
   const canSelectSlot = isRegularAcademic
@@ -571,9 +569,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
         isSeniorSecondary ? ` — ${selectedStream}` : ""
       } — ${selectedSubjectText}`
     : isMhtCet
-      ? `${selectedCourseName}${
-          mhtCetSubExam ? ` – ${mhtCetSubExam}` : ""
-        }`
+      ? `${selectedCourseName}${mhtCetSubExam ? ` – ${mhtCetSubExam}` : ""}`
       : selectedCourseName || course.title;
 
   function toggleSubject(subject: string) {
@@ -727,7 +723,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                 <BookOpen className="h-4 w-4" />
               </div>
               <div>
-                <span className="rounded bg-blue-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-blue-700">
+                <span className="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
                   {course.category}
                 </span>
                 <h4 className="mt-0.5 font-display text-xs font-bold tracking-tight">
@@ -763,7 +759,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
                   <Clock className="mx-auto h-4 w-4 text-blue-600" />
-                  <span className="mt-2 block text-[9px] font-bold uppercase text-slate-400">
+                  <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
                     Duration
                   </span>
                   <span className="mt-0.5 block text-xs font-bold text-slate-700">
@@ -772,7 +768,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
                   <Laptop className="mx-auto h-4 w-4 text-emerald-600" />
-                  <span className="mt-2 block text-[9px] font-bold uppercase text-slate-400">
+                  <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
                     Mode
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-bold text-slate-700">
@@ -781,7 +777,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                 </div>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
                   <Calendar className="mx-auto h-4 w-4 text-amber-600" />
-                  <span className="mt-2 block text-[9px] font-bold uppercase text-slate-400">
+                  <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
                     Schedule
                   </span>
                   <span className="mt-0.5 block truncate text-xs font-bold text-slate-700">
@@ -794,7 +790,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                 <h5 className="text-[10px] font-bold uppercase tracking-wider leading-none text-slate-400">
                   Syllabus Domains & Chapters Covered:
                 </h5>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2.5">
                   {course.subjectsCovered.map((subject) => (
                     <span
                       key={subject}
@@ -838,9 +834,9 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                   >
                     <div className="space-y-1 border-b border-slate-200/60 pb-3">
                       <h4 className="font-display text-sm font-bold text-slate-900">
-                        Enroll Now
+                        Submit your details
                       </h4>
-                      <p className="text-[11px] font-medium leading-normal text-slate-500">
+                      <p className="text-xs font-medium leading-relaxed text-slate-500">
                         {isRegularAcademic
                           ? "Select your board, subjects, optional add-ons, and preferred class slot."
                           : "Choose your course and preferred learning session. Our counsellor will contact you for confirmation."}
@@ -851,10 +847,10 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       {isRegularAcademic ? (
                         <>
                           <div className="space-y-2">
-                            <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                            <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                               Select Your Board
                             </label>
-                            <div className="flex flex-wrap gap-1.5">
+                            <div className="flex flex-wrap gap-2.5">
                               {BOARD_OPTIONS.map((board) => (
                                 <button
                                   key={board}
@@ -866,7 +862,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                                     setOtherSubject("");
                                     setSelectedSlot("");
                                   }}
-                                  className={`cursor-pointer rounded-full border px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                                  className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
                                     selectedBoard === board
                                       ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
                                       : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
@@ -883,10 +879,10 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
 
                           {isSeniorSecondary && hasSelectedBoard ? (
                             <div className="space-y-2">
-                              <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                              <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                                 Select Stream
                               </label>
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="flex flex-wrap gap-2.5">
                                 {SENIOR_SECONDARY_STREAMS.map((stream) => (
                                   <button
                                     key={stream}
@@ -897,7 +893,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                                       setOtherSubject("");
                                       setSelectedSlot("");
                                     }}
-                                    className={`cursor-pointer rounded-full border px-3 py-1.5 text-[10px] font-bold transition-all ${
+                                    className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
                                       selectedStream === stream
                                         ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
                                         : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
@@ -916,36 +912,41 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                           {canShowSubjects ? (
                             <div className="space-y-2">
                               <div className="flex items-center justify-between gap-3">
-                                <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                                <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                                   Select Regular Subjects
                                 </label>
-                                <span className="text-[9px] font-bold text-blue-600">
+                                <span className="text-[10px] font-bold text-blue-600">
                                   Multiple selection allowed
                                 </span>
                               </div>
-                              <div className="flex flex-wrap gap-1.5">
+                              <div className="flex flex-wrap gap-2.5">
                                 {regularSubjectOptions.map((subject) => {
-                                  const isSelected = selectedSubjects.includes(subject);
+                                  const isSelected =
+                                    selectedSubjects.includes(subject);
 
                                   return (
                                     <button
                                       key={subject}
                                       type="button"
                                       onClick={() => toggleSubject(subject)}
-                                      className={`cursor-pointer rounded-full border px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                                      className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
                                         isSelected
                                           ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
                                           : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
                                       }`}
                                     >
-                                      {isSelected ? <span className="mr-1">✓</span> : null}
+                                      {isSelected ? (
+                                        <span className="mr-1">✓</span>
+                                      ) : null}
                                       {subject}
                                     </button>
                                   );
                                 })}
                               </div>
 
-                              {selectedSubjects.includes(OTHER_SUBJECT_OPTION) ? (
+                              {selectedSubjects.includes(
+                                OTHER_SUBJECT_OPTION,
+                              ) ? (
                                 <input
                                   type="text"
                                   value={otherSubject}
@@ -954,12 +955,12 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                                     setSelectedSlot("");
                                   }}
                                   placeholder="Type the school subject name"
-                                  className="w-full rounded border border-blue-200 bg-white p-2.5 font-sans text-xs font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                                  className="w-full rounded border border-blue-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
                                 />
                               ) : null}
                             </div>
                           ) : (
-                            <div className="rounded border border-dashed border-slate-200 bg-white p-2 text-[9px] font-medium text-slate-400">
+                            <div className="rounded border border-dashed border-slate-200 bg-white p-3 text-[10px] font-medium text-slate-400">
                               {isSeniorSecondary && hasSelectedBoard
                                 ? "Select your stream to view board-specific subjects."
                                 : "Select your board to view board-specific subjects."}
@@ -969,43 +970,54 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                           {canShowSubjects ? (
                             <div className="space-y-2 border-t border-slate-200/70 pt-3">
                               <div className="flex items-center justify-between gap-3">
-                                <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                                <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                                   Optional Additional Courses
                                 </label>
-                                <span className="text-[9px] font-bold text-slate-400">
+                                <span className="text-[10px] font-bold text-slate-400">
                                   Optional
                                 </span>
                               </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {additionalCourseOptions.map((additionalCourse) => {
-                                  const isSelected = selectedAdditionalCourses.includes(additionalCourse);
+                              <div className="flex flex-wrap gap-2.5">
+                                {additionalCourseOptions.map(
+                                  (additionalCourse) => {
+                                    const isSelected =
+                                      selectedAdditionalCourses.includes(
+                                        additionalCourse,
+                                      );
 
-                                  return (
-                                    <button
-                                      key={additionalCourse}
-                                      type="button"
-                                      onClick={() => toggleAdditionalCourse(additionalCourse)}
-                                      className={`cursor-pointer rounded-full border px-2.5 py-1.5 text-[10px] font-bold transition-all ${
-                                        isSelected
-                                          ? "border-emerald-300 bg-emerald-50 text-emerald-800 shadow-xs"
-                                          : "border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700"
-                                      }`}
-                                    >
-                                      {isSelected ? <span className="mr-1">✓</span> : null}
-                                      {additionalCourse}
-                                    </button>
-                                  );
-                                })}
+                                    return (
+                                      <button
+                                        key={additionalCourse}
+                                        type="button"
+                                        onClick={() =>
+                                          toggleAdditionalCourse(
+                                            additionalCourse,
+                                          )
+                                        }
+                                        className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
+                                          isSelected
+                                            ? "border-emerald-300 bg-emerald-50 text-emerald-800 shadow-xs"
+                                            : "border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700"
+                                        }`}
+                                      >
+                                        {isSelected ? (
+                                          <span className="mr-1">✓</span>
+                                        ) : null}
+                                        {additionalCourse}
+                                      </button>
+                                    );
+                                  },
+                                )}
                               </div>
                             </div>
                           ) : null}
                         </>
                       ) : hasCourseOptions ? (
                         <div className="space-y-2">
-                          <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                          <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                             Select Course
                           </label>
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-2.5">
                             {course.courseNamesIncluded.map((courseName) => (
                               <button
                                 key={courseName}
@@ -1015,7 +1027,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                                   setMhtCetSubExam("");
                                   setSelectedSlot("");
                                 }}
-                                className={`cursor-pointer rounded-full border px-2.5 py-1.5 text-[10px] font-bold transition-all ${
+                                className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
                                   selectedCourseName === courseName
                                     ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
                                     : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
@@ -1033,13 +1045,15 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
 
                       {shouldShowMhtCetCategory ? (
                         <div className="space-y-1">
-                          <label className="block text-[9px] font-bold uppercase leading-none text-purple-600">
+                          <label className="block text-[10px] font-bold uppercase leading-none text-purple-600">
                             MHT CET Exam Category
                           </label>
                           <select
                             value={mhtCetSubExam}
-                            onChange={(event) => setMhtCetSubExam(event.target.value)}
-                            className="w-full rounded border border-purple-200 bg-white p-2.5 font-sans text-xs font-semibold text-slate-800 transition-all focus:border-purple-500 focus:outline-hidden"
+                            onChange={(event) =>
+                              setMhtCetSubExam(event.target.value)
+                            }
+                            className="w-full rounded border border-purple-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-purple-500 focus:outline-hidden"
                           >
                             <option value="">-- Select your exam --</option>
                             {MHT_CET_EXAMS.map((exam) => (
@@ -1054,41 +1068,44 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       {canSelectSlot ? (
                         <div className="space-y-2 border-t border-slate-200/70 pt-3">
                           <div className="flex items-center justify-between gap-3">
-                            <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                            <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                               Preferred Session Slot
                             </label>
-                            <span className="text-[9px] font-bold text-blue-600">
+                            <span className="text-[10px] font-bold text-blue-600">
                               1 hr 30 min
                             </span>
                           </div>
-                          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                             {SESSION_SLOTS.map((slot, index) => (
                               <button
                                 key={slot}
                                 type="button"
                                 onClick={() => setSelectedSlot(slot)}
-                                className={`cursor-pointer rounded-lg border px-2.5 py-2 text-left transition-all ${
+                                className={`cursor-pointer rounded-lg border px-4 py-3 text-left transition-all ${
                                   selectedSlot === slot
                                     ? "border-blue-400 bg-blue-100 text-blue-800 shadow-xs"
                                     : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700"
                                 }`}
                               >
-                                <span className="block text-[9px] font-bold uppercase tracking-wide opacity-65">
+                                <span className="block text-[10px] font-bold uppercase tracking-wide opacity-70">
                                   Slot {index + 1}
                                 </span>
-                                <span className="mt-0.5 flex items-center gap-1.5 text-[10px] font-bold">
-                                  {selectedSlot === slot ? <span>✓</span> : null}
+                                <span className="mt-1 flex items-center gap-2 text-[12px] font-bold leading-snug">
+                                  {selectedSlot === slot ? (
+                                    <span>✓</span>
+                                  ) : null}
                                   {slot}
                                 </span>
                               </button>
                             ))}
                           </div>
                           <p className="text-[9px] font-medium leading-relaxed text-slate-400">
-                            Every session is 1 hour 30 minutes. There is a 30-minute break between sessions.
+                            Every session is 1 hour 30 minutes. There is a
+                            30-minute break between sessions.
                           </p>
                         </div>
                       ) : (
-                        <div className="rounded border border-dashed border-slate-200 bg-white p-2 text-[9px] font-medium text-slate-400">
+                        <div className="rounded border border-dashed border-slate-200 bg-white p-3 text-[10px] font-medium text-slate-400">
                           {isRegularAcademic
                             ? isSeniorSecondary
                               ? "Select your board, stream, and at least one subject to view session slots."
@@ -1098,7 +1115,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       )}
 
                       <div className="space-y-1">
-                        <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                        <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                           Your Full Name
                         </label>
                         <div className="relative">
@@ -1108,14 +1125,14 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                             placeholder="John Doe"
                             value={name}
                             onChange={(event) => setName(event.target.value)}
-                            className="w-full rounded border border-slate-200 bg-white p-2.5 pl-9 font-sans text-xs font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                            className="w-full rounded border border-slate-200 bg-white p-2.5 pl-10 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
                           />
-                          <User className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
+                          <User className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                        <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                           Phone / Email Address
                         </label>
                         <div className="relative">
@@ -1125,24 +1142,26 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                             placeholder="e.g. +91 9876543210"
                             value={contact}
                             onChange={(event) => setContact(event.target.value)}
-                            className="w-full rounded border border-slate-200 bg-white p-2.5 pl-9 font-sans text-xs font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                            className="w-full rounded border border-slate-200 bg-white p-2.5 pl-10 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
                           />
-                          <Phone className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
+                          <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <label className="block text-[9px] font-bold uppercase leading-none text-slate-400">
+                        <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
                           Enrolling As:
                         </label>
                         <select
                           value={role}
                           onChange={(event) => setRole(event.target.value)}
-                          className="w-full rounded border border-slate-200 bg-white p-2.5 font-sans text-xs font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                          className="w-full rounded border border-slate-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
                         >
                           <option value="student">Student</option>
                           <option value="parent">Parent / Guardian</option>
-                          <option value="corporate">Working Professional</option>
+                          <option value="corporate">
+                            Working Professional
+                          </option>
                         </select>
                       </div>
                     </div>
@@ -1151,7 +1170,7 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       <span className="block text-[9px] font-bold leading-none text-slate-400">
                         Auto-generated message:
                       </span>
-                      <p className="text-[10px] font-medium leading-normal italic text-slate-500">
+                      <p className="text-xs font-medium leading-relaxed italic text-slate-500">
                         {isRegularAcademic
                           ? `"Hi Smart Tutors, I am interested in ${course.title}. Board: ${
                               selectedBoard || "..."
@@ -1178,7 +1197,9 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                       className="flex w-full cursor-pointer items-center justify-center space-x-2 rounded bg-blue-600 py-2.5 text-xs font-medium text-white shadow-sm hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Send className="h-3.5 w-3.5" />
-                      <span>{isSubmitting ? "Submitting..." : "Submit My Details"}</span>
+                      <span>
+                        {isSubmitting ? "Submitting..." : "Enroll Now"}
+                      </span>
                     </motion.button>
                   </motion.form>
                 ) : (
@@ -1196,13 +1217,19 @@ export default function CourseModal({ course, onClose }: CourseModalProps) {
                         Enquiry Submitted Successfully!
                       </h4>
                       <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
-                        Thank you, <span className="text-blue-600">{name}</span>! Our counsellor will call you within 24 hours on{" "}
-                        <span className="text-blue-600">{contact}</span> to confirm your preferred{" "}
-                        <span className="text-blue-600">{selectedSlot}</span> session for{" "}
-                        <span className="text-blue-600">{readableCourseDetail}</span>.
+                        Thank you, <span className="text-blue-600">{name}</span>
+                        ! Our counsellor will call you within 24 hours on{" "}
+                        <span className="text-blue-600">{contact}</span> to
+                        confirm your preferred{" "}
+                        <span className="text-blue-600">{selectedSlot}</span>{" "}
+                        session for{" "}
+                        <span className="text-blue-600">
+                          {readableCourseDetail}
+                        </span>
+                        .
                       </p>
                     </div>
-                    <div className="inline-flex items-center gap-1 rounded border border-emerald-100/50 bg-emerald-50 p-2 text-[9px] font-bold uppercase text-emerald-700">
+                    <div className="inline-flex items-center gap-1 rounded border border-emerald-100/50 bg-emerald-50 p-2 text-[10px] font-bold uppercase text-emerald-700">
                       <Sparkles className="h-3.5 w-3.5" />
                       Reference: {Math.floor(100000 + Math.random() * 900000)}
                     </div>
