@@ -27,20 +27,24 @@ export function ChatView({
   const [chatContactId, setChatContactId] = useState<string | null>(null);
   const [chatInput, setChatInput] = useState("");
   const [sendingChat, setSendingChat] = useState(false);
-  const [lastReadTimestamps, setLastReadTimestamps] = useState<Record<string, number>>({});
+  const [lastReadTimestamps, setLastReadTimestamps] = useState<
+    Record<string, number>
+  >({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const studentEducators = useMemo(() => {
     if (role !== "student" || !managedUsers || !assignedFacultyIds) return [];
     return managedUsers.filter(
-      (u) => u.role === "educator" && assignedFacultyIds.includes(u.id)
+      (u) => u.role === "educator" && assignedFacultyIds.includes(u.id),
     );
   }, [role, managedUsers, assignedFacultyIds]);
 
   const chatContacts = useMemo(() => {
     if (role === "admin") {
-      const educators = (managedUsers ?? []).filter((u) => u.role === "educator");
+      const educators = (managedUsers ?? []).filter(
+        (u) => u.role === "educator",
+      );
       const students = studentDirectory.filter((u) => u.role === "student");
       return [...educators, ...students];
     }
@@ -61,14 +65,18 @@ export function ChatView({
     return [...chatContacts].sort((a, b) => {
       const aMsgs = messages.filter((m) => {
         if (m.channel !== "Chat") return false;
-        const involvesMe = Array.isArray(m.userIds) && m.userIds.includes(session?.id ?? "");
-        const involvesContact = Array.isArray(m.userIds) && m.userIds.includes(a.id);
+        const involvesMe =
+          Array.isArray(m.userIds) && m.userIds.includes(session?.id ?? "");
+        const involvesContact =
+          Array.isArray(m.userIds) && m.userIds.includes(a.id);
         return involvesMe && involvesContact;
       });
       const bMsgs = messages.filter((m) => {
         if (m.channel !== "Chat") return false;
-        const involvesMe = Array.isArray(m.userIds) && m.userIds.includes(session?.id ?? "");
-        const involvesContact = Array.isArray(m.userIds) && m.userIds.includes(b.id);
+        const involvesMe =
+          Array.isArray(m.userIds) && m.userIds.includes(session?.id ?? "");
+        const involvesContact =
+          Array.isArray(m.userIds) && m.userIds.includes(b.id);
         return involvesMe && involvesContact;
       });
       const aLatest = aMsgs.reduce((latest, m) => {
@@ -101,9 +109,13 @@ export function ChatView({
       const lastRead = lastReadTimestamps[contact.id] ?? 0;
       counts[contact.id] = messages.filter((m) => {
         if (m.channel !== "Chat") return false;
-        const involvesUser = Array.isArray(m.userIds) && m.userIds.includes(session.id);
-        const involvesContact = Array.isArray(m.userIds) && m.userIds.includes(contact.id);
-        const isNew = m.createdAt ? new Date(m.createdAt).getTime() > lastRead : false;
+        const involvesUser =
+          Array.isArray(m.userIds) && m.userIds.includes(session.id);
+        const involvesContact =
+          Array.isArray(m.userIds) && m.userIds.includes(contact.id);
+        const isNew = m.createdAt
+          ? new Date(m.createdAt).getTime() > lastRead
+          : false;
         return involvesUser && involvesContact && isNew;
       }).length;
     }
@@ -112,12 +124,20 @@ export function ChatView({
 
   const conversationMessages = useMemo(() => {
     if (!chatContactId || !session) return [];
-    return messages.filter((m) => {
-      if (m.channel !== "Chat") return false;
-      const involvesMe = Array.isArray(m.userIds) && m.userIds.includes(session.id);
-      const involvesContact = Array.isArray(m.userIds) && m.userIds.includes(chatContactId);
-      return involvesMe && involvesContact;
-    }).sort((a, b) => new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime());
+    return messages
+      .filter((m) => {
+        if (m.channel !== "Chat") return false;
+        const involvesMe =
+          Array.isArray(m.userIds) && m.userIds.includes(session.id);
+        const involvesContact =
+          Array.isArray(m.userIds) && m.userIds.includes(chatContactId);
+        return involvesMe && involvesContact;
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.createdAt ?? 0).getTime() -
+          new Date(b.createdAt ?? 0).getTime(),
+      );
   }, [messages, chatContactId, session]);
 
   const selectedContact = useMemo(() => {
@@ -125,14 +145,24 @@ export function ChatView({
   }, [chatContacts, chatContactId]);
 
   const lastMessageForContact = (contactId: string): string | null => {
-    const msgs = messages.filter((m) => {
-      if (m.channel !== "Chat") return false;
-      const involvesMe = Array.isArray(m.userIds) && m.userIds.includes(session?.id ?? "");
-      const involvesContact = Array.isArray(m.userIds) && m.userIds.includes(contactId);
-      return involvesMe && involvesContact;
-    }).sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+    const msgs = messages
+      .filter((m) => {
+        if (m.channel !== "Chat") return false;
+        const involvesMe =
+          Array.isArray(m.userIds) && m.userIds.includes(session?.id ?? "");
+        const involvesContact =
+          Array.isArray(m.userIds) && m.userIds.includes(contactId);
+        return involvesMe && involvesContact;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime(),
+      );
     if (msgs.length === 0) return null;
-    return msgs[0].body.length > 40 ? msgs[0].body.slice(0, 40) + "..." : msgs[0].body;
+    return msgs[0].body.length > 40
+      ? msgs[0].body.slice(0, 40) + "..."
+      : msgs[0].body;
   };
 
   function handleSelectContact(contactId: string) {
@@ -219,7 +249,9 @@ export function ChatView({
                       <div className="flex items-center justify-between gap-2">
                         <p
                           className={`text-sm font-bold truncate ${
-                            isSelected ? "text-white" : "text-[var(--color-heading)]"
+                            isSelected
+                              ? "text-white"
+                              : "text-[var(--color-heading)]"
                           }`}
                         >
                           {contact.name}
@@ -234,14 +266,16 @@ export function ChatView({
                           {contact.role === "admin"
                             ? "Admin"
                             : contact.role === "educator"
-                            ? "Faculty"
-                            : "Student"}
+                              ? "Faculty"
+                              : "Student"}
                         </span>
                       </div>
                       {lastMsg ? (
                         <p
                           className={`text-xs mt-0.5 truncate ${
-                            isSelected ? "text-white/70" : "text-[var(--color-muted)]"
+                            isSelected
+                              ? "text-white/70"
+                              : "text-[var(--color-muted)]"
                           }`}
                         >
                           {lastMsg}
@@ -249,7 +283,9 @@ export function ChatView({
                       ) : (
                         <p
                           className={`text-xs mt-0.5 italic ${
-                            isSelected ? "text-white/50" : "text-[var(--color-muted)]"
+                            isSelected
+                              ? "text-white/50"
+                              : "text-[var(--color-muted)]"
                           }`}
                         >
                           No messages yet
@@ -297,8 +333,8 @@ export function ChatView({
                     {selectedContact.role === "admin"
                       ? "Admin"
                       : selectedContact.role === "educator"
-                      ? "Faculty"
-                      : "Student"}
+                        ? "Faculty"
+                        : "Student"}
                   </span>
                 </div>
               </div>
@@ -328,10 +364,14 @@ export function ChatView({
                               {msg.author}
                             </p>
                           ) : null}
-                          <p className="break-words whitespace-pre-wrap">{msg.body}</p>
+                          <p className="break-words whitespace-pre-wrap">
+                            {msg.body}
+                          </p>
                           <p
                             className={`text-[10px] mt-1 ${
-                              isMine ? "text-[#64748b]" : "text-[var(--color-muted)]"
+                              isMine
+                                ? "text-[#64748b]"
+                                : "text-[var(--color-muted)]"
                             }`}
                           >
                             {msg.createdAt
@@ -374,9 +414,22 @@ export function ChatView({
                     type="button"
                     onClick={handleSendChat}
                     disabled={sendingChat || !chatInput.trim()}
-                    className="shrink-0 rounded-xl bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white hover:opacity-90 disabled:opacity-50"
+                    aria-label="Send message"
+                    title="Send message"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-sm transition-all hover:scale-[1.03] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <i className="bi bi-send-fill" />
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4.5 4.5L20 12L4.5 19.5L7.2 12L4.5 4.5Z"
+                        fill="currentColor"
+                      />
+                    </svg>
                   </button>
                 </div>
               </div>

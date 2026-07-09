@@ -5,8 +5,9 @@ import type { SessionUser } from "@/lib/types";
 
 type MongoStudentPerformanceReport = Record<string, unknown> & {
   _id: ObjectId;
-  studentId?: string;
-  createdBy?: string;
+  studentId?: string | null;
+  linkedStudentId?: string | null;
+  createdBy?: string | null;
 };
 
 export type PrintableStudentPerformanceReport = Omit<
@@ -63,31 +64,52 @@ export async function getAccessibleStudentPerformanceReport(
     };
   }
 
-  if (session.role === "student" && report.studentId === session.id) {
-    return {
-      status: "ok",
-      report: serializeReport(report),
-    };
+  if (session.role === "educator") {
+    const wasCreatedByCurrentEducator =
+      report.createdBy === session.id;
+
+    const isLegacyReportWithoutCreator =
+      !report.createdBy;
+
+    if (
+      wasCreatedByCurrentEducator ||
+      isLegacyReportWithoutCreator
+    ) {
+      return {
+        status: "ok",
+        report: serializeReport(report),
+      };
+    }
   }
 
-  if (session.role === "educator" && report.createdBy === session.id) {
-    return {
-      status: "ok",
-      report: serializeReport(report),
-    };
+  if (session.role === "student") {
+    const linkedStudentId =
+      report.linkedStudentId || report.studentId;
+
+    if (linkedStudentId === session.id) {
+      return {
+        status: "ok",
+        report: serializeReport(report),
+      };
+    }
   }
 
   if (session.role === "parent") {
     const parent = await db
-      .collection<{ linkedStudentId?: string }>("users")
+      .collection<{
+        linkedStudentId?: string;
+      }>("users")
       .findOne({
         id: session.id,
         role: "parent",
       });
 
+    const reportStudentId =
+      report.linkedStudentId || report.studentId;
+
     if (
       parent?.linkedStudentId &&
-      report.studentId === parent.linkedStudentId
+      reportStudentId === parent.linkedStudentId
     ) {
       return {
         status: "ok",
