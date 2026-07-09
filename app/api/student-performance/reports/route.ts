@@ -68,16 +68,23 @@ export async function POST(request: Request) {
 
     const db = await getMongoDatabase();
 
-    const report = {
-      ...body,
-      title: periodLabel,
-      period: periodLabel,
-      periodLabel,
-      linkedStudentId,
-      student: studentSnapshot,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+const report = {
+  ...body,
+  title: periodLabel,
+  period: periodLabel,
+  periodLabel,
+
+  linkedStudentId,
+  studentId: linkedStudentId,
+
+  createdBy: session.id,
+  createdByRole: session.role,
+
+  student: studentSnapshot,
+
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
     const result = await db.collection("performanceReports").insertOne(report);
 

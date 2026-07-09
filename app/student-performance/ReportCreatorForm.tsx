@@ -564,29 +564,19 @@ export default function ReportCreatorForm() {
   return (
     <main className="spr-page">
       <form className="spr-shell" onSubmit={handleSubmit}>
-        <div className="spr-report-header">
-          <div className="spr-report-logo-wrap">
-            <img
-              src="/smart-tutors-logo.png"
-              alt="Smart Tutors"
-              className="spr-report-logo"
-            />
-          </div>
 
-          <div>
-            <p className="spr-report-kicker">Smart Tutors</p>
-            <h1>{reportTitle}</h1>
-            <p>
-              Analytics report with graphs, charts, AI insights and teacher
-              feedback
-            </p>
-          </div>
-        </div>
 
         <div className="spr-top">
           <div>
             <p className="spr-eyebrow">Analytics Hub</p>
-            <h1>Report Creator</h1>
+            <h1
+              style={{
+                fontSize: "clamp(2rem, 4vw, 3rem)",
+                lineHeight: "1.05",
+              }}
+            >
+              Report Creator
+            </h1>
             <p>
               Create detailed performance reports for students. On submit, the
               data will save in MongoDB and open the final report.
