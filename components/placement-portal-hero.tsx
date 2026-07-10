@@ -2,110 +2,210 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { BriefcaseBusiness, Building2, UsersRound } from "lucide-react";
+import {
+  BellRing,
+  BriefcaseBusiness,
+  Building2,
+  FileText,
+  FileUp,
+  GraduationCap,
+  Search,
+  UsersRound,
+} from "lucide-react";
+
+const companyFeatures = [
+  {
+    icon: FileUp,
+    title: "Upload Jobs",
+    description: "Post job openings in minutes",
+  },
+  {
+    icon: FileText,
+    title: "Manage Applications",
+    description: "Track and manage applications",
+  },
+  {
+    icon: UsersRound,
+    title: "Campus Hiring",
+    description: "Connect with skilled students",
+  },
+  {
+    icon: BriefcaseBusiness,
+    title: "Internship Hiring",
+    description: "Hire interns for projects",
+  },
+];
+
+const studentFeatures = [
+  {
+    icon: BriefcaseBusiness,
+    title: "Job Opportunities",
+    description: "Explore internships and jobs",
+  },
+  {
+    icon: GraduationCap,
+    title: "Fresher Jobs",
+    description: "Find jobs for fresh graduates",
+  },
+  {
+    icon: FileText,
+    title: "Resume Builder",
+    description: "Create a professional resume",
+  },
+  {
+    icon: BellRing,
+    title: "Job Alerts",
+    description: "Get notified about new jobs",
+  },
+];
 
 export function PlacementPortalHero() {
   return (
-    <section className="relative overflow-hidden py-8 md:py-12">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.08),_transparent_40%),linear-gradient(to_bottom,_rgba(37,99,235,0.03),_transparent)]" />
-
-      <div className="container mx-auto px-4">
-        <div className="rounded-[2rem] border border-slate-200/80 bg-white/95 p-4 shadow-[0_12px_50px_rgba(15,23,42,0.05)] backdrop-blur md:p-6 lg:p-7">
-          <div className="rounded-[1.8rem] border border-blue-100 bg-[#f8fbff] p-6 md:p-8">
-            <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+    <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
+        <div className="grid lg:grid-cols-2">
+          {/* COMPANY SIDE */}
+          <div className="relative border-b border-slate-200 bg-[#f7faff] p-6 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="grid items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
               <div>
-                <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-blue-700">
-                  <UsersRound className="h-4 w-4 stroke-[2.4]" />
+                <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-blue-700">
+                  <Building2 className="h-3.5 w-3.5" />
                   For Companies
                 </span>
 
-                <h2 className="mt-5 max-w-xl text-4xl font-black leading-tight tracking-tight text-slate-900 md:text-5xl">
+                <h1 className="mt-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-[38px]">
                   Hire Talent from{" "}
                   <span className="text-blue-600">Smart Tutors</span>
-                </h2>
+                </h1>
 
-                <p className="mt-5 max-w-xl text-base leading-8 text-slate-600">
-                  Connect with skilled students, interns, fresh graduates, and
-                  placement-ready candidates from Smart Tutors.
+                <p className="mt-4 max-w-md text-sm font-medium leading-6 text-slate-600">
+                  Find skilled students, interns, and fresh graduates for your
+                  organisation.
                 </p>
 
-                <div className="mt-7 flex flex-wrap gap-3">
+                <div className="mt-5 flex flex-wrap gap-2.5">
                   <Link
                     href="/contact"
-                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-black text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-[11px] font-black text-white shadow-sm transition hover:bg-blue-700"
                   >
-                    <BriefcaseBusiness className="h-4 w-4" />
+                    <BriefcaseBusiness className="h-3.5 w-3.5" />
                     Post a Vacancy
                   </Link>
 
                   <Link
                     href="/contact"
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-black text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+                    className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-[11px] font-black text-blue-700 transition hover:bg-blue-50"
                   >
-                    <UsersRound className="h-4 w-4 stroke-[2.4]" />
+                    <UsersRound className="h-3.5 w-3.5" />
                     Become a Hiring Partner
                   </Link>
                 </div>
+              </div>
 
-                <div className="mt-7 grid grid-cols-2 gap-3 md:grid-cols-4">
-                  {[
-                    {
-                      icon: "/placement-icons/upload-jobs.png",
-                      title: "Upload Jobs",
-                      desc: "Post job openings in minutes",
-                    },
-                    {
-                      icon: "/placement-icons/manage-applications.png",
-                      title: "Manage Applications",
-                      desc: "Track applications easily",
-                    },
-                    {
-                      icon: "/placement-icons/campus-hiring.png",
-                      title: "Campus Hiring",
-                      desc: "Connect with top students",
-                    },
-                    {
-                      icon: "/placement-icons/internship-hiring.png",
-                      title: "Internship Hiring",
-                      desc: "Hire interns for projects",
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.title}
-                      className="rounded-2xl border border-slate-100 bg-white px-3 py-4 text-center shadow-sm"
-                    >
-                      <div className="mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                        <Image
-                          src={item.icon}
-                          alt={item.title}
-                          width={28}
-                          height={28}
-                          className="h-7 w-7 object-contain"
-                        />
-                      </div>
+              <div className="flex items-center justify-center">
+                <Image
+                  src="/hero-company.png"
+                  alt="Smart Tutors hiring portal"
+                  width={310}
+                  height={310}
+                  priority
+                  className="h-auto w-full max-w-[245px] object-contain"
+                />
+              </div>
+            </div>
 
-                      <p className="text-sm font-black text-slate-900">
-                        {item.title}
-                      </p>
+            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {companyFeatures.map((feature) => {
+                const Icon = feature.icon;
 
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
-                        {item.desc}
-                      </p>
+                return (
+                  <div
+                    key={feature.title}
+                    className="rounded-xl border border-blue-100 bg-white px-3 py-3.5 text-center shadow-sm"
+                  >
+                    <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                      <Icon className="h-4 w-4" />
                     </div>
-                  ))}
+
+                    <p className="mt-2 text-[11px] font-black leading-tight text-slate-900">
+                      {feature.title}
+                    </p>
+
+                    <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                      {feature.description}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* STUDENT SIDE */}
+          <div className="relative bg-[#f7fff9] p-6 sm:p-8">
+            <div className="grid items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-emerald-700">
+                  <GraduationCap className="h-3.5 w-3.5" />
+                  For Students
+                </span>
+
+                <h2 className="mt-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-[38px]">
+                  Find Your{" "}
+                  <span className="text-emerald-600">Dream Job</span>
+                </h2>
+
+                <p className="mt-4 max-w-md text-sm font-medium leading-6 text-slate-600">
+                  Explore internships, part-time jobs, fresher opportunities,
+                  and full-time placements.
+                </p>
+
+                <div className="mt-5 flex flex-wrap gap-2.5">
+<a
+  href="#find-jobs"
+  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-[11px] font-black text-white shadow-sm transition hover:bg-emerald-700"
+>
+  <Search className="h-3.5 w-3.5" />
+  Find Jobs
+</a>
+
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex items-center justify-center">
                 <Image
-                  src="/hero-company.png"
-                  alt="Recruitment illustration"
-                  width={420}
-                  height={420}
-                  className="h-auto w-full max-w-[360px] object-contain"
+                  src="/hero-student.png"
+                  alt="Smart Tutors student job portal"
+                  width={310}
+                  height={310}
                   priority
+                  className="h-auto w-full max-w-[245px] object-contain"
                 />
               </div>
+            </div>
+
+            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {studentFeatures.map((feature) => {
+                const Icon = feature.icon;
+
+                return (
+                  <div
+                    key={feature.title}
+                    className="rounded-xl border border-emerald-100 bg-white px-3 py-3.5 text-center shadow-sm"
+                  >
+                    <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                      <Icon className="h-4 w-4" />
+                    </div>
+
+                    <p className="mt-2 text-[11px] font-black leading-tight text-slate-900">
+                      {feature.title}
+                    </p>
+
+                    <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                      {feature.description}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
