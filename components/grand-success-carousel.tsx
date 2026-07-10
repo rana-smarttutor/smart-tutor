@@ -55,10 +55,15 @@ const RESULT_CATEGORIES = [
     label: "MBA",
     image: "/hof/MBA.jpg",
   },
+    {
+    id: "NCHMCT",
+    label: "NCHMCT",
+    image: "/hof/NCHMCT.jpg",
+  },
    {
     id: "IMU CET",
     label: "IMU CET",
-    image: "/hof/IMU CET.jpg",
+    image: "/hof/IMU CET new.jpg",
   },
   {
     id: "banking",
