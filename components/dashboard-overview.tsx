@@ -39,9 +39,11 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   CreditCard,
+  X,
 } from "lucide-react";
 import type {
   DashboardBundle,
+  ManagedUser,
   SessionUser,
   Role,
   MessageItem,
@@ -54,6 +56,7 @@ type Props = {
   messages: MessageItem[];
   supportContact: string;
   onSetActiveSection: (section: string) => void;
+  managedUsers?: ManagedUser[];
 };
 
 const ACCENT = "#0B40A1";
@@ -65,6 +68,7 @@ export function DashboardOverview({
   messages,
   supportContact,
   onSetActiveSection,
+  managedUsers,
 }: Props) {
   if (role === "student") {
     return (
@@ -74,6 +78,7 @@ export function DashboardOverview({
         messages={messages}
         supportContact={supportContact}
         onSetActiveSection={onSetActiveSection}
+        managedUsers={managedUsers}
       />
     );
   }
@@ -85,6 +90,18 @@ export function DashboardOverview({
         messages={messages}
         supportContact={supportContact}
         onSetActiveSection={onSetActiveSection}
+      />
+    );
+  }
+  if (role === "parent") {
+    return (
+      <ParentOverview
+        session={session}
+        dashboard={dashboard}
+        messages={messages}
+        supportContact={supportContact}
+        onSetActiveSection={onSetActiveSection}
+        managedUsers={managedUsers}
       />
     );
   }
@@ -171,12 +188,12 @@ function GenericOverview({
   });
   const instituteName = dashboard.heroTitle || "Smart Tutors";
   const totalStudents = dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
-  const revenue = dashboard.analytics?.finance?.collected
-    ? `₹${(dashboard.analytics.finance.collected / 1000).toFixed(1)}K`
-    : dashboard.stats[1]?.value ?? "—";
-  const totalRevenue = dashboard.analytics?.finance?.collected ?? 0;
+  const rawRevenue = dashboard.analytics?.finance?.collected ?? 0;
+  const revenue = rawRevenue > 0
+    ? `₹${(rawRevenue / 1000).toFixed(1)}K`
+    : "—";
   const totalBilled = dashboard.analytics?.finance?.billed ?? 0;
-  const feeCollectionPct = totalBilled > 0 ? Math.round((totalRevenue / totalBilled) * 100) : 0;
+  const feeCollectionPct = totalBilled > 0 ? Math.round((rawRevenue / totalBilled) * 100) : 0;
   const atRiskCount = dashboard.analytics?.finance?.overdueCount ?? 0;
 
   const kpiCards = [
@@ -191,7 +208,7 @@ function GenericOverview({
     },
     {
       label: "Monthly Revenue",
-      value: `₹${totalRevenue.toLocaleString("en-IN")}`,
+      value: `₹${rawRevenue.toLocaleString("en-IN")}`,
       color: "#059669",
       bg: "bg-emerald-50",
       text: "text-emerald-600",
@@ -468,7 +485,7 @@ function GenericOverview({
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             {todaysLectures.length > 0 ? (
               <>
-                <h2 className="text-base font-bold text-slate-900 mb-4">Today&apos;s Classes</h2>
+                <h2 className="text-base font-bold text-slate-900 mb-4" suppressHydrationWarning>Today&apos;s Classes</h2>
                 <div className="space-y-3">
                   {todaysLectures.slice(0, 4).map((lec, idx) => (
                     <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
@@ -669,12 +686,14 @@ function StudentOverview({
   dashboard,
   messages,
   onSetActiveSection,
+  managedUsers,
 }: {
   session: SessionUser | null;
   dashboard: DashboardBundle;
   messages: MessageItem[];
   supportContact: string;
   onSetActiveSection: (section: string) => void;
+  managedUsers?: ManagedUser[];
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
@@ -800,6 +819,16 @@ function StudentOverview({
               </p>
               <h1 className="text-2xl sm:text-3xl font-bold mt-1">Hey, {studentName.split(" ")[0]}! 📚</h1>
               <p className="text-sm text-teal-200 mt-1.5">{dateStr}</p>
+              {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {dashboard.assignedFacultyNames.map((name, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2.5 py-1 text-[11px] font-semibold">
+                      <span className="h-4 w-4 rounded-full bg-white/25 flex items-center justify-center text-[8px] font-bold">{name.charAt(0)}</span>
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
@@ -851,7 +880,7 @@ function StudentOverview({
           {/* Today's Classes */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Today&apos;s Classes</h2>
+              <h2 className="text-base font-bold text-slate-900" suppressHydrationWarning>Today&apos;s Classes</h2>
               <button
                 onClick={() => onSetActiveSection("lectures")}
                 className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -1085,7 +1114,7 @@ function StudentOverview({
           )}
 
           {/* Student Profile Card */}
-          <StudentProfileCard session={session} dashboard={dashboard} />
+          <StudentProfileCard session={session} dashboard={dashboard} managedUsers={managedUsers} />
         </div>
       </div>
 
@@ -1186,6 +1215,283 @@ function StudentOverview({
   );
 }
 
+// ─────────── PARENT DASHBOARD (View-only mirror of Student) ───────────
+
+function ParentOverview({
+  session,
+  dashboard,
+  messages,
+  onSetActiveSection,
+  managedUsers,
+}: {
+  session: SessionUser | null;
+  dashboard: DashboardBundle;
+  messages: MessageItem[];
+  supportContact: string;
+  onSetActiveSection: (section: string) => void;
+  managedUsers?: ManagedUser[];
+}) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const parentName = session?.name ?? "Parent";
+  const childName = dashboard.profile?.fatherName ? `${dashboard.profile.fatherName}'s Child` : "Your Child";
+  const batchInfo = dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() || dashboard.heroTitle || "";
+  const attRate = dashboard.analytics?.attendance?.rate != null ? Math.round(dashboard.analytics.attendance.rate) : null;
+  const avgScore = dashboard.analytics?.assessments?.averageScore != null ? `${Math.round(dashboard.analytics.assessments.averageScore)}%` : "—";
+  const feeDueAmount = dashboard.stats[3]?.value || "₹0";
+  const pendingHw = dashboard.analytics?.learning?.homeworkRate != null
+    ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
+    : "—";
+
+  const kpiCards = [
+    {
+      label: "Attendance",
+      value: attRate != null ? `${attRate}%` : "—",
+      color: "#059669",
+      bg: "bg-emerald-50",
+      text: "text-emerald-600",
+      icon: CheckCircle2,
+      sparkData: attRate ? [attRate - 15, attRate - 10, attRate - 5, attRate + 2, attRate + 5, attRate + 3, attRate] : [60, 65, 70, 72, 78, 75, 80],
+    },
+    {
+      label: "Avg Score",
+      value: avgScore,
+      color: "#D97706",
+      bg: "bg-amber-50",
+      text: "text-amber-600",
+      icon: TrendingUp,
+      sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => (100 - v * 10)),
+    },
+    {
+      label: "Pending HW",
+      value: pendingHw,
+      color: "#0EA5E9",
+      bg: "bg-sky-50",
+      text: "text-sky-600",
+      icon: BookOpen,
+      sparkData: [2, 3, 1, 4, 2, 3, 2],
+    },
+    {
+      label: "Fee Dues",
+      value: feeDueAmount,
+      color: "#DC2626",
+      bg: "bg-red-50",
+      text: "text-red-600",
+      icon: IndianRupee,
+      sparkData: [0, 0, 0, 0, 0, 0, 0],
+    },
+  ];
+
+  const todayLectures = dashboard.lectures?.filter(
+    (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
+  ) ?? [];
+
+  const upcomingTests = dashboard.tests?.filter((t) => t.status === "published" || t.status === "pending") ?? [];
+
+  const quickAccessItems = [
+    { label: "Exams", icon: FileText, section: "tests", color: "#4F46E5" },
+    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706" },
+    { label: "Fees", icon: DollarSign, section: "fees", color: "#DC2626" },
+    { label: "Timetable", icon: CalendarDays, section: "timetable", color: "#EC4899" },
+    { label: "Lectures", icon: PlayCircle, section: "lectures", color: "#F97316" },
+    { label: "Messages", icon: MessageSquare, section: "messages", color: "#06B6D4" },
+  ];
+
+  return (
+    <div className="space-y-5">
+      {/* Hero Section */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
+        style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9,#4F46E5)" }}
+      >
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+            <circle cx="50" cy="30" r="80" fill="white" />
+            <circle cx="350" cy="170" r="120" fill="white" />
+          </svg>
+        </div>
+        <div className="relative z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-violet-200 uppercase tracking-wider">
+                Parent Portal{batchInfo ? ` · ${batchInfo}` : ""}
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold mt-1">Welcome, {parentName.split(" ")[0]}!</h1>
+              <p className="text-sm text-violet-200 mt-1.5">{dateStr}</p>
+              {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {dashboard.assignedFacultyNames.map((name, i) => (
+                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2.5 py-1 text-[11px] font-semibold">
+                      <span className="h-4 w-4 rounded-full bg-white/25 flex items-center justify-center text-[8px] font-bold">{name.charAt(0)}</span>
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
+                <UserCheck size={13} />
+                Attendance: {attRate != null ? `${attRate}%` : "—"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
+                <TrendingUp size={13} />
+                Avg: {avgScore}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        {kpiCards.map((card, idx) => {
+          const Icon = card.icon;
+          return (
+            <div key={idx} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+              <div style={{ height: 3, backgroundColor: card.color }} />
+              <div className="p-5 relative">
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}>
+                    <Icon size={20} strokeWidth={2} />
+                  </div>
+                  <div className="w-16 h-7 opacity-30">
+                    <Sparkline values={card.sparkData} color={card.color} />
+                  </div>
+                </div>
+                <p className="text-2xl font-black text-slate-900 tracking-tight">{card.value}</p>
+                <p className="text-sm font-medium text-slate-500 mt-0.5">{card.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Main Two-Column */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
+        {/* Left */}
+        <div className="space-y-5">
+          {/* Today's Classes */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900" suppressHydrationWarning>Today&apos;s Classes</h2>
+              <button
+                onClick={() => onSetActiveSection("lectures")}
+                className="text-xs font-bold text-[#0B40A1] hover:underline"
+              >
+                View All
+              </button>
+            </div>
+            {todayLectures.length > 0 ? (
+              <div className="space-y-3">
+                {todayLectures.slice(0, 3).map((lec, idx) => (
+                  <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
+                      <PlayCircle size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
+                      <p className="text-xs text-slate-500">{lec.subject ?? ""}{lec.batchName ? ` · ${lec.batchName}` : ""}</p>
+                    </div>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-violet-50 text-violet-600">
+                      {lec.startsAt?.slice(11, 16) || "Scheduled"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-sm text-slate-400">
+                <CalendarDays size={32} className="text-slate-200 mb-2" />
+                <p>No classes scheduled today</p>
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Tests */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-bold text-slate-900">Upcoming Exams</h2>
+              <button onClick={() => onSetActiveSection("tests")} className="text-xs font-bold text-[#0B40A1] hover:underline">
+                View All
+              </button>
+            </div>
+            {upcomingTests.length > 0 ? (
+              <div className="space-y-2">
+                {upcomingTests.slice(0, 3).map((test, idx) => (
+                  <div key={test.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                      <FileText size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
+                      <p className="text-xs text-slate-500">{test.subject ?? ""} · {test.total ?? 0} marks</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-sm text-slate-400">
+                <FileText size={32} className="text-slate-200 mb-2" />
+                <p>No upcoming exams</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-5">
+          {/* Fee Dues Card */}
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6 flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+              <IndianRupee size={24} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-500">Fee Dues</p>
+              <p className="text-xl font-black text-slate-900">{feeDueAmount}</p>
+            </div>
+            <button
+              onClick={() => onSetActiveSection("fees")}
+              className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
+            >
+              Pay Now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Access Grid */}
+      <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+        <h2 className="text-base font-bold text-slate-900 mb-4">Quick Access</h2>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          {quickAccessItems.map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={idx}
+                onClick={() => onSetActiveSection(item.section)}
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-[#E8EDF2] transition-all"
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${item.color}14` }}>
+                  <Icon size={18} style={{ color: item.color }} />
+                </div>
+                <span className="text-[11px] font-bold text-slate-600">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────── EDUCATOR DASHBOARD ───────────
 
 function EducatorOverview({
@@ -1216,8 +1522,10 @@ function EducatorOverview({
   const batches = ops?.activeBatches ?? 0;
   const pendingReviews = dashboard.submissions?.filter((s) => s.status === "submitted").length ?? 0;
   const gradedSubs = dashboard.submissions?.filter((s) => s.score != null) ?? [];
+  const totalSubmissions = dashboard.submissions?.length ?? 0;
+  const reviewedFraction = totalSubmissions > 0 ? gradedSubs.length / totalSubmissions : 0;
   const avgScore = gradedSubs.length
-    ? Math.round(gradedSubs.reduce((a, s) => a + (s.score ?? 0), 0) / gradedSubs.length)
+    ? Math.round(gradedSubs.reduce((a, s) => a + ((s.score ?? 0) / s.total) * 100, 0) / gradedSubs.length)
     : 0;
 
   const todayLectures = dashboard.lectures?.filter(
@@ -1253,10 +1561,10 @@ function EducatorOverview({
             <p className="text-sm opacity-70 mt-0.5">{dateStr}</p>
             <div className="flex gap-2 mt-3 flex-wrap">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
-                <Users size={12} /> {myStudents} My Students
+                <Users size={12} /> <span className="text-sm font-black">{myStudents}</span> My Students
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
-                <Briefcase size={12} /> {batches} Batches
+                <Briefcase size={12} /> <span className="text-sm font-black">{batches}</span> Batches
               </span>
             </div>
           </div>
@@ -1330,9 +1638,9 @@ function EducatorOverview({
           </div>
           <div className="p-5 flex items-center gap-6">
             <div className="relative w-24 h-24 shrink-0">
-              <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+              <svg viewBox="0 0 120 120" className="w-full h-full" transform="rotate(-90 60 60)">
                 <circle cx="60" cy="60" r="48" fill="none" stroke="#E8EDF2" strokeWidth="10" />
-                <circle cx="60" cy="60" r="48" fill="none" stroke="#059669" strokeWidth="10" strokeDasharray={`${2 * Math.PI * 48 * 0.4}`} strokeDashoffset={`${2 * Math.PI * 48 * 0.6}`} strokeLinecap="round" />
+                <circle cx="60" cy="60" r="48" fill="none" stroke="#059669" strokeWidth="10" strokeDasharray={`${2 * Math.PI * 48 * reviewedFraction}`} strokeDashoffset="0" strokeLinecap="round" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <p className="text-base font-black text-[#1D4ED8]">{dashboard.submissions?.length ?? 0}</p>
@@ -1367,7 +1675,7 @@ function EducatorOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2" suppressHydrationWarning>
               <CalendarDays size={16} style={{ color: "#1D4ED8" }} /> Today&apos;s Classes
             </h2>
             <span className="text-xs text-slate-400">{todayLectures.length > 0 ? `${todayLectures.length} today` : "Wed, 08 Jul"}</span>
@@ -1530,9 +1838,15 @@ function PTags({ label, values }: { label: string; values: string[] | undefined 
   );
 }
 
-function StudentProfileCard({ session, dashboard }: { session: SessionUser | null; dashboard: DashboardBundle }) {
+function StudentProfileCard({ session, dashboard, managedUsers }: { session: SessionUser | null; dashboard: DashboardBundle; managedUsers?: ManagedUser[] }) {
   const [showAll, setShowAll] = useState(false);
+  const [profilePopup, setProfilePopup] = useState<ManagedUser | null>(null);
   const p = dashboard.profile;
+
+  function getUserById(id: string): ManagedUser | undefined {
+    return managedUsers?.find((u) => u.id === id);
+  }
+
   const basicFields = (
     <>
       <div className="grid grid-cols-2 gap-3">
@@ -1546,12 +1860,21 @@ function StudentProfileCard({ session, dashboard }: { session: SessionUser | nul
       {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
         <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Assigned Faculty</p>
-          {dashboard.assignedFacultyNames.map((name, i) => (
-            <div key={i} className="flex items-center gap-2 py-1">
-              <div className="h-6 w-6 rounded-full bg-[#0B40A1] text-white flex items-center justify-center text-[9px] font-bold">{name.charAt(0)}</div>
-              <span className="text-sm font-semibold text-slate-800">{name}</span>
-            </div>
-          ))}
+          {dashboard.assignedFacultyIds?.map((id, i) => {
+            const faculty = getUserById(id);
+            const name = dashboard.assignedFacultyNames?.[i] ?? "Unknown";
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => faculty && setProfilePopup(faculty)}
+                className="flex w-full items-center gap-2 py-1 text-left hover:bg-white/60 rounded-lg px-1 transition"
+              >
+                <div className="h-6 w-6 rounded-full bg-[#0B40A1] text-white flex items-center justify-center text-[9px] font-bold">{name.charAt(0)}</div>
+                <span className="text-sm font-semibold text-slate-800">{name}</span>
+              </button>
+            );
+          })}
         </div>
       )}
       <PTags label="Focus Areas" values={p?.weakSubjects} />
@@ -1570,34 +1893,74 @@ function StudentProfileCard({ session, dashboard }: { session: SessionUser | nul
   );
   const hasExtra = !!(p?.strongSubjects?.length || p?.parentName || p?.parentEmail || p?.parentMobile || p?.latestQualification || p?.latestAcademicScore || p?.addressLine1);
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="h-20 bg-[#0B40A1] relative" />
-      <div className="px-6 pb-6 relative">
-        <div className="flex -mt-10 mb-4">
-          <div className="h-20 w-20 rounded-xl bg-white p-1 shadow-md">
-            <div className="h-full w-full rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-              {p?.profilePhoto ? <img src={p.profilePhoto} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-slate-500">{getInitials(session?.name)}</span>}
+    <div className="relative">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="h-20 bg-[#0B40A1] relative" />
+        <div className="px-6 pb-6 relative">
+          <div className="flex -mt-10 mb-4">
+            <div className="h-20 w-20 rounded-xl bg-white p-1 shadow-md">
+              <div className="h-full w-full rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
+                {p?.profilePhoto ? <img src={p.profilePhoto} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-slate-500">{getInitials(session?.name)}</span>}
+              </div>
+            </div>
+            <div className="ml-4 mt-6">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
+                <CheckCircle2 size={10} />
+                {session?.status === "active" ? "Active" : "Pending"}
+              </span>
             </div>
           </div>
-          <div className="ml-4 mt-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
-              <CheckCircle2 size={10} />
-              {session?.status === "active" ? "Active" : "Pending"}
-            </span>
+          <h2 className="text-xl font-bold text-slate-900">{session?.name ?? "Student"}</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{session?.email ?? ""}</p>
+          <div className="mt-5 space-y-3">
+            {basicFields}
+            {showAll && hasExtra && extraFields}
+          </div>
+          {hasExtra && (
+            <button type="button" onClick={() => setShowAll((s) => !s)} className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors">
+              {showAll ? "View Less ↑" : "View More ↓"}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {profilePopup ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setProfilePopup(null)}>
+          <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-slate-900">Profile</h3>
+              <button type="button" onClick={() => setProfilePopup(null)} className="text-slate-400 hover:text-slate-700">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-16 w-16 rounded-full bg-[#0B40A1] text-white flex items-center justify-center text-xl font-bold">
+                {profilePopup.name.charAt(0)}
+              </div>
+              <div className="text-center">
+                <p className="text-base font-bold text-slate-900">{profilePopup.name}</p>
+                <p className="text-xs font-semibold text-slate-500 capitalize">{profilePopup.role}</p>
+              </div>
+              <div className="w-full space-y-2 border-t border-slate-100 pt-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Program</span>
+                  <span className="font-semibold text-slate-800">{profilePopup.program || "—"}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-500">Qualification</span>
+                  <span className="font-semibold text-slate-800">{profilePopup.profile?.qualification || profilePopup.profile?.latestQualification || "—"}</span>
+                </div>
+                {profilePopup.profile?.experience ? (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Experience</span>
+                    <span className="font-semibold text-slate-800">{profilePopup.profile.experience}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">{session?.name ?? "Student"}</h2>
-        <p className="text-xs text-slate-500 mt-0.5">{session?.email ?? ""}</p>
-        <div className="mt-5 space-y-3">
-          {basicFields}
-          {showAll && hasExtra && extraFields}
-        </div>
-        {hasExtra && (
-          <button type="button" onClick={() => setShowAll((s) => !s)} className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors">
-            {showAll ? "View Less ↑" : "View More ↓"}
-          </button>
-        )}
-      </div>
+      ) : null}
     </div>
   );
 }

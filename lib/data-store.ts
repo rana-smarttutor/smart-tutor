@@ -68,6 +68,25 @@ import type {
   GamificationLeaderboardEntry,
   BadgeCriteriaType,
   AutoAwardTrigger,
+  ChatAttachment,
+  ChatFlag,
+  ChatBlock,
+  LeaveRequest,
+  LeaveTypeItem,
+  HolidayItem,
+  LeaveBalanceItem,
+  LeaveStatus,
+  CustomRole,
+  CustomRoleAssignment,
+  AvailableModule,
+  StaffAttendanceRecord,
+  StaffAttendanceStatus,
+  StaffAttendanceSummary,
+  StaffCategory,
+  EmploymentType,
+  BiometricDevice,
+  BiometricPunchLog,
+  RegularisationRequest,
 } from "@/lib/types";
 
 import type {
@@ -153,6 +172,29 @@ const COLLECTIONS = {
   gamificationBadges: "gamification_badges",
   gamificationStudentBadges: "gamification_student_badges",
   gamificationRules: "gamification_rules",
+  chatFlags: "chat_flags",
+  chatBlocks: "chat_blocks",
+  chatAttachments: "chat_attachments",
+
+  // Leave Management
+  leaveRequests: "leaveRequests",
+  leaveTypes: "leaveTypes",
+  holidays: "holidays",
+  leaveBalances: "leaveBalances",
+
+  // Roles & Permissions
+  customRoles: "customRoles",
+  roleAssignments: "roleAssignments",
+
+  // Staff Attendance
+  staffAttendance: "staffAttendance",
+
+  // Attendance Regularisation
+  regularisationRequests: "regularisationRequests",
+
+  // Biometric Integration
+  biometricDevices: "biometricDevices",
+  biometricPunchLogs: "biometricPunchLogs",
 } as const;
 // ... (existing code)
 
@@ -1007,6 +1049,7 @@ export async function createMessage(input: {
 export async function createChatMessage(input: {
   senderId: string;
   senderName: string;
+  senderRole: Role;
   receiverId: string;
   receiverRole: Role;
   body: string;
@@ -1017,7 +1060,7 @@ export async function createChatMessage(input: {
     body: input.body,
     channel: "Chat",
     author: input.senderName,
-    audience: [input.receiverRole, "admin"],
+    audience: [input.senderRole, input.receiverRole, "admin"],
     userIds: [input.receiverId, input.senderId],
     createdAt: new Date().toISOString(),
     expiresAt: null,
@@ -1039,6 +1082,144 @@ export async function createChatMessage(input: {
   }
 
   return message;
+}
+
+export async function createChatFlag(input: {
+  messageId: string;
+  senderId: string;
+  receiverId: string;
+  flaggedBy: string;
+  reason: "phone" | "email" | "link" | "other";
+  reasonDetail: string;
+}) {
+  const collection = await getCollection<ChatFlag>("chat_flags");
+  const flag: ChatFlag = {
+    id: randomUUID(),
+    ...input,
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(flag);
+  return flag;
+}
+
+export async function getChatFlags(status?: string) {
+  const collection = await getCollection<ChatFlag>("chat_flags");
+  const query: any = {};
+  if (status) query.status = status;
+  return stripMongoIds(
+    await collection.find(query).sort({ createdAt: -1 }).toArray(),
+  ) as ChatFlag[];
+}
+
+export async function resolveChatFlag(
+  flagId: string,
+  resolution: { status: "allowed" | "blocked"; resolvedBy: string },
+) {
+  const collection = await getCollection<ChatFlag>("chat_flags");
+  await collection.updateOne(
+    { id: flagId },
+    {
+      $set: {
+        status: resolution.status,
+        resolvedAt: new Date().toISOString(),
+        resolvedBy: resolution.resolvedBy,
+      },
+    },
+  );
+  const updated = await collection.findOne({ id: flagId });
+  return updated ? (stripMongoId(updated) as ChatFlag) : null;
+}
+
+export async function blockChat(input: {
+  participantIds: string[];
+  blockedBy: string;
+  reason?: string;
+}) {
+  const collection = await getCollection<ChatBlock>("chat_blocks");
+  const sortedIds = [...input.participantIds].sort();
+  const existing = await collection.findOne({ participantIds: sortedIds });
+  if (existing) {
+    await collection.updateOne(
+      { participantIds: sortedIds },
+      {
+        $set: {
+          blocked: true,
+          blockedAt: new Date().toISOString(),
+          blockedBy: input.blockedBy,
+          reason: input.reason,
+        },
+      },
+    );
+  } else {
+    const block: ChatBlock = {
+      id: randomUUID(),
+      participantIds: sortedIds,
+      blocked: true,
+      blockedAt: new Date().toISOString(),
+      blockedBy: input.blockedBy,
+      reason: input.reason,
+    };
+    await collection.insertOne(block);
+  }
+  const updated = await collection.findOne({ participantIds: sortedIds });
+  return updated ? (stripMongoId(updated) as ChatBlock) : null;
+}
+
+export async function unblockChat(participantIds: string[]) {
+  const collection = await getCollection<ChatBlock>("chat_blocks");
+  const sortedIds = [...participantIds].sort();
+  await collection.updateOne(
+    { participantIds: sortedIds },
+    { $set: { blocked: false } },
+  );
+  const updated = await collection.findOne({ participantIds: sortedIds });
+  return updated ? (stripMongoId(updated) as ChatBlock) : null;
+}
+
+export async function isChatBlocked(participantIds: string[]) {
+  const collection = await getCollection<ChatBlock>("chat_blocks");
+  const sortedIds = [...participantIds].sort();
+  const block = await collection.findOne({ participantIds: sortedIds, blocked: true });
+  return block ? (stripMongoId(block) as ChatBlock) : null;
+}
+
+export async function getAllBlockedChats() {
+  const collection = await getCollection<ChatBlock>("chat_blocks");
+  return stripMongoIds(
+    await collection.find({ blocked: true }).toArray(),
+  ) as ChatBlock[];
+}
+
+export async function getAllChatMessagesForAdmin() {
+  const collection = await getCollection<MessageItem>("messages");
+  const allMessages = stripMongoIds(
+    await collection.find({ channel: "Chat" }).sort({ createdAt: -1 }).toArray(),
+  ) as MessageItem[];
+  return allMessages;
+}
+
+export async function uploadChatAttachment(input: {
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+  messageId: string;
+}) {
+  const collection = await getCollection<ChatAttachment>("chat_attachments");
+  const attachment: ChatAttachment = {
+    id: randomUUID(),
+    ...input,
+  };
+  await collection.insertOne(attachment);
+  return attachment;
+}
+
+export async function getAttachmentsForMessage(messageId: string) {
+  const collection = await getCollection<ChatAttachment>("chat_attachments");
+  return stripMongoIds(
+    await collection.find({ messageId }).toArray(),
+  ) as ChatAttachment[];
 }
 
 export async function updateMessage(
@@ -2137,6 +2318,334 @@ export async function deleteAttendanceSheet(attendanceId: string) {
   return result.deletedCount > 0;
 }
 
+// =========================
+// Leave Management
+// =========================
+
+export async function getLeaveRequestsForRole(role: Role, userId?: string) {
+  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (!userId) return [];
+
+  return stripMongoIds(
+    await collection.find({ userId }).sort({ createdAt: -1 }).toArray(),
+  );
+}
+
+export async function createLeaveRequest(input: {
+  userId: string;
+  userName: string;
+  userRole: Role;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  fromDate: string;
+  toDate: string;
+  days: number;
+  reason: string;
+  documentUrl?: string;
+}) {
+  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  const now = new Date().toISOString();
+  const request: LeaveRequest = {
+    id: `leave-${Date.now()}`,
+    ...input,
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
+  };
+  await collection.insertOne(request);
+  return stripMongoId(request);
+}
+
+export async function updateLeaveRequestStatus(
+  id: string,
+  update: {
+    status: LeaveStatus;
+    rejectReason?: string;
+    approvedBy?: string;
+  },
+) {
+  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  const setFields: Record<string, unknown> = {
+    status: update.status,
+    updatedAt: new Date().toISOString(),
+  };
+  if (update.rejectReason) setFields.rejectReason = update.rejectReason;
+  if (update.approvedBy) {
+    setFields.approvedBy = update.approvedBy;
+    setFields.approvedAt = new Date().toISOString();
+  }
+  await collection.updateOne({ id }, { $set: setFields });
+  const updated = await collection.findOne({ id });
+  return updated ? stripMongoId(updated) : null;
+}
+
+export async function getLeaveTypes() {
+  const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
+  return stripMongoIds(
+    await collection.find({ isActive: true }).sort({ name: 1 }).toArray(),
+  );
+}
+
+export async function getAllLeaveTypes() {
+  const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
+  return stripMongoIds(
+    await collection.find({}).sort({ name: 1 }).toArray(),
+  );
+}
+
+export async function createLeaveType(input: {
+  name: string;
+  category: string;
+  daysAllowed: number;
+  isPaid: boolean;
+  color: string;
+}) {
+  const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
+  const item: LeaveTypeItem = {
+    id: `leavetype-${Date.now()}`,
+    ...input,
+    isActive: true,
+  };
+  await collection.insertOne(item);
+  return stripMongoId(item);
+}
+
+export async function updateLeaveType(id: string, input: Partial<LeaveTypeItem>) {
+  const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
+  await collection.updateOne({ id }, { $set: input });
+  const updated = await collection.findOne({ id });
+  return updated ? stripMongoId(updated) : null;
+}
+
+export async function deleteLeaveType(id: string) {
+  const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
+  const result = await collection.deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
+export async function getHolidays() {
+  const collection = await getCollection<HolidayItem>(COLLECTIONS.holidays);
+  return stripMongoIds(
+    await collection.find({}).sort({ date: 1 }).toArray(),
+  );
+}
+
+export async function createHoliday(input: {
+  name: string;
+  date: string;
+  type: string;
+  color: string;
+}) {
+  const collection = await getCollection<HolidayItem>(COLLECTIONS.holidays);
+  const item: HolidayItem = {
+    id: `holiday-${Date.now()}`,
+    ...input,
+  };
+  await collection.insertOne(item);
+  return stripMongoId(item);
+}
+
+export async function deleteHoliday(id: string) {
+  const collection = await getCollection<HolidayItem>(COLLECTIONS.holidays);
+  const result = await collection.deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
+export async function getLeaveBalancesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<LeaveBalanceItem>(COLLECTIONS.leaveBalances);
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ userName: 1 }).toArray(),
+    );
+  }
+
+  if (!userId) return [];
+
+  return stripMongoIds(
+    await collection.find({ userId }).sort({ leaveTypeName: 1 }).toArray(),
+  );
+}
+
+export async function createLeaveBalance(input: {
+  userId: string;
+  userName?: string;
+  leaveTypeId: string;
+  leaveTypeName?: string;
+  daysAllowed: number;
+  note?: string;
+}) {
+  const collection = await getCollection<LeaveBalanceItem>(COLLECTIONS.leaveBalances);
+  const item: LeaveBalanceItem = {
+    id: `leavebalance-${Date.now()}`,
+    ...input,
+    daysUsed: 0,
+  };
+  await collection.insertOne(item);
+  return stripMongoId(item);
+}
+
+export async function getPendingLeaveCount() {
+  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  return await collection.countDocuments({ status: "pending" });
+}
+
+export function getLeaveStats(requests: LeaveRequest[]) {
+  return {
+    pending: requests.filter((r) => r.status === "pending").length,
+    approved: requests.filter((r) => r.status === "approved").length,
+    rejected: requests.filter((r) => r.status === "rejected").length,
+    total: requests.length,
+  };
+}
+
+// =========================
+// Roles & Permissions
+// =========================
+
+export async function getAllCustomRoles() {
+  const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  return stripMongoIds(
+    await collection.find({}).sort({ name: 1 }).toArray(),
+  );
+}
+
+export async function getActiveCustomRoles() {
+  const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  return stripMongoIds(
+    await collection.find({ isActive: true }).sort({ name: 1 }).toArray(),
+  );
+}
+
+export async function createCustomRole(input: {
+  name: string;
+  description?: string;
+  color: string;
+  modules: AvailableModule[];
+}) {
+  const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const now = new Date().toISOString();
+  const role: CustomRole = {
+    id: `role-${Date.now()}`,
+    ...input,
+    description: input.description || "",
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await collection.insertOne(role);
+  return stripMongoId(role);
+}
+
+export async function updateCustomRole(
+  id: string,
+  input: Partial<CustomRole>,
+) {
+  const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const update = { ...input, updatedAt: new Date().toISOString() };
+  await collection.updateOne({ id }, { $set: update });
+  const updated = await collection.findOne({ id });
+  return updated ? stripMongoId(updated) : null;
+}
+
+export async function deleteCustomRole(id: string) {
+  const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const result = await collection.deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
+export async function getRoleAssignments() {
+  const collection = await getCollection<CustomRoleAssignment>(
+    COLLECTIONS.roleAssignments,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ assignedAt: -1 }).toArray(),
+  );
+}
+
+export async function getRoleAssignmentsForUser(userId: string) {
+  const collection = await getCollection<CustomRoleAssignment>(
+    COLLECTIONS.roleAssignments,
+  );
+  return stripMongoIds(
+    await collection.find({ userId }).toArray(),
+  );
+}
+
+export async function assignRoleToUser(input: {
+  userId: string;
+  roleId: string;
+  roleName: string;
+  assignedBy: string;
+}) {
+  const collection = await getCollection<CustomRoleAssignment>(
+    COLLECTIONS.roleAssignments,
+  );
+  const existing = await collection.findOne({
+    userId: input.userId,
+    roleId: input.roleId,
+  });
+  if (existing) {
+    return stripMongoId(existing);
+  }
+  const assignment: CustomRoleAssignment = {
+    id: `roleassign-${Date.now()}`,
+    ...input,
+    assignedAt: new Date().toISOString(),
+  };
+  await collection.insertOne(assignment);
+  return stripMongoId(assignment);
+}
+
+export async function removeRoleFromUser(userId: string, roleId: string) {
+  const collection = await getCollection<CustomRoleAssignment>(
+    COLLECTIONS.roleAssignments,
+  );
+  const result = await collection.deleteOne({ userId, roleId });
+  return result.deletedCount > 0;
+}
+
+export async function getCustomRolesForUser(userId: string) {
+  const assignments = await getRoleAssignmentsForUser(userId);
+  if (assignments.length === 0) return [];
+
+  const roleCollection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const roleIds = assignments.map((a) => a.roleId);
+  const roles = await roleCollection
+    .find({ id: { $in: roleIds }, isActive: true })
+    .toArray();
+  return stripMongoIds(roles);
+}
+
+export async function getRolesDashboardStats() {
+  const roleCollection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const assignCollection = await getCollection<CustomRoleAssignment>(
+    COLLECTIONS.roleAssignments,
+  );
+
+  const [totalRoles, activeRoles, totalAssignments, distinctUsers] =
+    await Promise.all([
+      roleCollection.countDocuments({}),
+      roleCollection.countDocuments({ isActive: true }),
+      assignCollection.countDocuments({}),
+      assignCollection.distinct("userId"),
+    ]);
+
+  return {
+    totalRoles,
+    activeRoles,
+    totalStaff: totalAssignments,
+    staffAssigned: distinctUsers.length,
+  };
+}
+
 export async function getFeeInvoicesForRole(role: Role, userId?: string) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
 
@@ -3081,6 +3590,20 @@ export async function getDashboardBundle(
     }
   }
 
+  let linkedStudentProfile: { name?: string; email?: string; phone?: string; course?: string; batch?: string; attendance?: number | null } | undefined;
+  if (role === "parent" && userDoc?.linkedStudentId) {
+    const linkedStudentDoc = await findFullUserById(userDoc.linkedStudentId);
+    if (linkedStudentDoc) {
+      linkedStudentProfile = {
+        name: linkedStudentDoc.name,
+        email: linkedStudentDoc.email,
+        phone: linkedStudentDoc.profile?.guardianPhone ?? linkedStudentDoc.parentMobile ?? linkedStudentDoc.mobile,
+        course: linkedStudentDoc.profile?.courseWantedTitle ?? linkedStudentDoc.profile?.courseWanted,
+        batch: linkedStudentDoc.profile?.courseWantedTitle?.split("|")[0]?.trim(),
+      };
+    }
+  }
+
   return {
     roleLabel: user?.label ?? template.roleLabel,
     heroTitle: buildHeroTitle(role, template, user),
@@ -3096,9 +3619,14 @@ export async function getDashboardBundle(
     feeInvoices,
     lectures,
     linkedStudentId: userDoc?.linkedStudentId,
+    linkedStudentProfile,
     assignedFacultyIds,
     assignedFacultyNames,
-    profile: userDoc?.profile,
+    profile: userDoc?.profile ? {
+      ...userDoc.profile,
+      guardianPhone: userDoc.profile.guardianPhone ?? userDoc.parentMobile ?? userDoc.mobile,
+      parentMobile: userDoc.profile.parentMobile ?? userDoc.parentMobile,
+    } : undefined,
     analytics,
   };
 }
@@ -6127,4 +6655,296 @@ export async function getGamificationStats() {
   const totalBadgesGiven = await badgesCollection.countDocuments({});
   const stats: GamificationStats = { totalPointsAwarded, activeStudents, totalBadgesGiven };
   return stats;
+}
+
+// =========================
+// Staff Attendance CRUD
+// =========================
+
+function getStaffCategory(role: Role): StaffCategory {
+  if (role === "admin") return "Admin";
+  if (role === "counsellor") return "Counsellor";
+  if (role === "educator") return "Teacher";
+  return "Staff";
+}
+
+function getEmploymentType(_user: any): EmploymentType {
+  return "full_time";
+}
+
+export async function getStaffAttendanceForDate(date: string) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  return stripMongoIds(
+    await collection.find({ date }).sort({ userName: 1 }).toArray(),
+  );
+}
+
+export async function getStaffAttendanceForDateRange(startDate: string, endDate: string, userId?: string) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const query: Record<string, unknown> = {
+    date: { $gte: startDate, $lte: endDate },
+  };
+  if (userId) query.userId = userId;
+  return stripMongoIds(
+    await collection.find(query).sort({ date: 1 }).toArray(),
+  );
+}
+
+export async function getStaffAttendanceForUser(userId: string, limit = 30) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  return stripMongoIds(
+    await collection
+      .find({ userId })
+      .sort({ date: -1 })
+      .limit(limit)
+      .toArray(),
+  );
+}
+
+export async function getStaffAttendanceForToday(userId: string, date: string) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const doc = await collection.findOne({ userId, date } as any);
+  if (!doc) return null;
+  const { _id, ...rest } = doc;
+  return rest as StaffAttendanceRecord;
+}
+
+export async function upsertStaffAttendance(record: StaffAttendanceRecord) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const existing = await collection.findOne({ userId: record.userId, date: record.date } as any);
+  if (existing) {
+    await collection.updateOne(
+      { _id: existing._id } as any,
+      { $set: { ...record, updatedAt: new Date().toISOString() } },
+    );
+    return { ...record, id: existing.id };
+  }
+  await collection.insertOne(record);
+  return record;
+}
+
+export async function bulkMarkStaffAttendance(
+  records: { userId: string; userName: string; userEmail: string; category: StaffCategory; employmentType: EmploymentType; status: StaffAttendanceStatus; checkIn?: string; checkOut?: string }[],
+  date: string,
+  markedBy: string,
+) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const now = new Date().toISOString();
+  const results: StaffAttendanceRecord[] = [];
+  for (const rec of records) {
+    const id = randomUUID();
+    const doc: StaffAttendanceRecord = {
+      id,
+      ...rec,
+      date,
+      markedBy,
+      markedAt: now,
+    };
+    const existing = await collection.findOne({ userId: rec.userId, date } as any);
+    if (existing) {
+      await collection.updateOne(
+        { _id: existing._id } as any,
+        { $set: { status: rec.status, checkIn: rec.checkIn, checkOut: rec.checkOut, updatedAt: now, markedBy } },
+      );
+      results.push({ ...doc, id: existing.id });
+    } else {
+      await collection.insertOne(doc);
+      results.push(doc);
+    }
+  }
+  return results;
+}
+
+export async function selfCheckIn(userId: string, userName: string, userEmail: string, role: Role, date: string) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const existing = await collection.findOne({ userId, date } as any);
+  const now = new Date();
+  const timeStr = now.toTimeString().slice(0, 5);
+  const id = existing?.id ?? randomUUID();
+  const category = getStaffCategory(role);
+  if (existing) {
+    await collection.updateOne(
+      { _id: existing._id } as any,
+      { $set: { checkIn: timeStr, status: "present", updatedAt: now.toISOString() } },
+    );
+  } else {
+    await collection.insertOne({
+      id,
+      userId,
+      userName,
+      userEmail,
+      category,
+      employmentType: "full_time",
+      date,
+      status: "present",
+      checkIn: timeStr,
+      markedBy: userId,
+      markedAt: now.toISOString(),
+    });
+  }
+  return id;
+}
+
+export async function selfCheckOut(userId: string, date: string) {
+  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const existing = await collection.findOne({ userId, date } as any);
+  if (!existing) return null;
+  const now = new Date();
+  const timeStr = now.toTimeString().slice(0, 5);
+  const checkIn = existing.checkIn || "00:00";
+  const [h1, m1] = checkIn.split(":").map(Number);
+  const [h2, m2] = timeStr.split(":").map(Number);
+  const hoursWorked = Math.round(((h2 * 60 + m2) - (h1 * 60 + m1)) / 60 * 10) / 10;
+  await collection.updateOne(
+    { _id: existing._id } as any,
+    { $set: { checkOut: timeStr, hoursWorked: Math.max(0, hoursWorked), updatedAt: now.toISOString() } },
+  );
+  return existing.id;
+}
+
+export async function getStaffAttendanceStats(date: string) {
+  const records = await getStaffAttendanceForDate(date);
+  const stats: StaffAttendanceSummary = {
+    total: records.length,
+    present: 0,
+    absent: 0,
+    halfDay: 0,
+    late: 0,
+    onLeave: 0,
+    holiday: 0,
+  };
+  for (const r of records) {
+    if (r.status === "present") stats.present++;
+    else if (r.status === "absent") stats.absent++;
+    else if (r.status === "half_day") stats.halfDay++;
+    else if (r.status === "late") stats.late++;
+    else if (r.status === "on_leave") stats.onLeave++;
+    else if (r.status === "holiday") stats.holiday++;
+  }
+  return stats;
+}
+
+// =========================
+// Biometric Integration CRUD
+// =========================
+
+export async function getAllBiometricDevices() {
+  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
+  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+}
+
+export async function createBiometricDevice(input: {
+  name: string;
+  location?: string;
+  autoMarkAttendance?: boolean;
+  sendParentSms?: boolean;
+  sendStaffSms?: boolean;
+}) {
+  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
+  const device: BiometricDevice = {
+    id: randomUUID(),
+    name: input.name,
+    location: input.location ?? "",
+    serialNumber: "",
+    webhookToken: randomUUID(),
+    autoMarkAttendance: input.autoMarkAttendance ?? true,
+    sendParentSms: input.sendParentSms ?? true,
+    sendStaffSms: input.sendStaffSms ?? true,
+    isOnline: false,
+    lastSeenAt: undefined,
+    totalPunches: 0,
+    mappedStudents: 0,
+    mappedStaff: 0,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(device);
+  return device;
+}
+
+export async function updateBiometricDevice(id: string, updates: Partial<BiometricDevice>) {
+  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
+  await collection.updateOne(
+    { id } as any,
+    { $set: { ...updates, updatedAt: new Date().toISOString() } },
+  );
+}
+
+export async function deleteBiometricDevice(id: string) {
+  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
+  await collection.deleteOne({ id } as any);
+  const punchCollection = await getCollection<BiometricPunchLog>(COLLECTIONS.biometricPunchLogs);
+  await punchCollection.deleteMany({ deviceId: id } as any);
+}
+
+export async function getPunchLogs(limit = 20) {
+  const collection = await getCollection<BiometricPunchLog>(COLLECTIONS.biometricPunchLogs);
+  return stripMongoIds(
+    await collection.find({}).sort({ punchedAt: -1 }).limit(limit).toArray(),
+  );
+}
+
+export async function createPunchLog(log: BiometricPunchLog) {
+  const collection = await getCollection<BiometricPunchLog>(COLLECTIONS.biometricPunchLogs);
+  await collection.insertOne(log);
+  return log;
+}
+
+// =========================
+// Attendance Regularisation
+// =========================
+
+export async function createRegularisationRequest(input: {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  date: string;
+  reason: string;
+  requestedCheckIn?: string;
+  requestedCheckOut?: string;
+  requestedStatus: string;
+}): Promise<RegularisationRequest> {
+  const request: RegularisationRequest = {
+    id: randomUUID(),
+    ...input,
+    requestedStatus: input.requestedStatus as StaffAttendanceStatus,
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+  const collection = await getCollection<RegularisationRequest>(COLLECTIONS.regularisationRequests);
+  await collection.insertOne(request);
+  return request;
+}
+
+export async function getRegularisationRequests(filter?: {
+  status?: "pending" | "approved" | "rejected";
+  userId?: string;
+}): Promise<RegularisationRequest[]> {
+  const collection = await getCollection<RegularisationRequest>(COLLECTIONS.regularisationRequests);
+  const query: any = {};
+  if (filter?.status) query.status = filter.status;
+  if (filter?.userId) query.userId = filter.userId;
+  return stripMongoIds(
+    await collection.find(query).sort({ createdAt: -1 }).toArray(),
+  );
+}
+
+export async function reviewRegularisationRequest(
+  requestId: string,
+  reviewedBy: string,
+  status: "approved" | "rejected",
+  reviewComment?: string,
+): Promise<boolean> {
+  const collection = await getCollection<RegularisationRequest>(COLLECTIONS.regularisationRequests);
+  const result = await collection.updateOne(
+    { id: requestId } as any,
+    {
+      $set: {
+        status,
+        reviewedBy,
+        reviewedAt: new Date().toISOString(),
+        reviewComment: reviewComment || "",
+      },
+    },
+  );
+  return result.matchedCount > 0;
 }

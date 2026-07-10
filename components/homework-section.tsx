@@ -43,6 +43,7 @@ type Props = {
   session: SessionUser | null;
   role: Role;
   studentDirectory: ManagedUser[];
+  onDashboardRefresh?: () => void;
 };
 
 const HW_TYPE_LABELS: Record<HomeworkType, string> = {
@@ -61,7 +62,7 @@ const HW_TYPE_COLORS: Record<string, string> = {
   test: "#DC2626",
 };
 
-export function HomeworkSection({ session, role, studentDirectory }: Props) {
+export function HomeworkSection({ session, role, studentDirectory, onDashboardRefresh }: Props) {
   const [homework, setHomework] = useState<EnrichedHomework[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -161,6 +162,7 @@ export function HomeworkSection({ session, role, studentDirectory }: Props) {
       setShowAssign(false);
       resetForm();
       await loadHomework();
+      onDashboardRefresh?.();
     } catch {
       setError("Network error.");
     } finally {
@@ -222,6 +224,7 @@ export function HomeworkSection({ session, role, studentDirectory }: Props) {
       if (!res.ok) { const d = await res.json(); setError(d.error ?? "Delete failed."); setDeleteConfirmId(null); return; }
       setDeleteConfirmId(null);
       await loadHomework();
+      onDashboardRefresh?.();
     } catch {
       setError("Network error.");
     } finally { setDeleting(false); }
@@ -387,7 +390,7 @@ export function HomeworkSection({ session, role, studentDirectory }: Props) {
             const subs = hw.submissions ?? [];
             const gradedSubs = subs.filter((s) => s.status === "graded");
             const ungradedSubs = subs.filter((s) => s.status !== "graded");
-            const canDelete = subs.length === 0 || subs.every((s) => s.status === "graded");
+            const canDelete = true;
             const submission = hw.mySubmission;
 
             return (

@@ -137,3 +137,38 @@ Vercel deployment uses `vercel.json` for routing, headers, CORS, and regions.
 2. Introduce hashed passwords instead of plain stored demo passwords.
 3. Add media upload and content management routes.
 4. Expand admin tooling with archive/delete flows for users and courses.
+
+---
+
+## New features (Jul 2026 session)
+
+### Roles & Permissions (Custom Role System)
+- Admin-only CRUD for custom staff roles with color, description, and module-level access control.
+- 28 available modules (Overview, Students, Attendance, Fees, Batches, etc.) defined in `AVAILABLE_MODULES`.
+- Full assignment system: assign/remove custom roles to/from staff members.
+- **Files:**
+  - `components/roles-manager.tsx` — full UI with 2 tabs (Roles + Staff Assignments), create/edit/delete roles, assign/unassign staff
+  - `app/api/admin/roles/route.ts` — GET (list+stats), POST (create)
+  - `app/api/admin/roles/[id]/route.ts` — PUT (update), DELETE (remove)
+  - `app/api/admin/roles/assign/route.ts` — POST (assign), DELETE (unassign)
+  - `lib/data-store.ts` — 10 functions: `getAllCustomRoles`, `getActiveCustomRoles`, `createCustomRole`, `updateCustomRole`, `deleteCustomRole`, `getRoleAssignments`, `getRoleAssignmentsForUser`, `assignRoleToUser`, `removeRoleFromUser`, `getCustomRolesForUser`, `getRolesDashboardStats`
+  - `lib/types.ts` — `CustomRole`, `CustomRoleAssignment`, `AvailableModule` types
+
+### Profile Data Layer Fixes
+- Student phone number fallback chain: `profile.guardianPhone ?? root.parentMobile ?? root.mobile` — fixes phone not showing when data was created via different import paths.
+- Parent profile shows linked student details (name, email, phone, course, batch) via `linkedStudentProfile` on `DashboardBundle`.
+- **Files:** `lib/data-store.ts` (getDashboardBundle), `lib/types.ts` (DashboardBundle.linkedStudentProfile), `components/my-profile-client.tsx`
+
+### My Profile Page - Complete Redesign
+- Left sidebar shows "Profile Details" summary card with all collected fields.
+- Students: Course, Student Type, Parent Name/Email/Mobile, Last Qualification, Academic Score, Weak/Strong Subjects (tag inputs).
+- All roles: Gender, DOB, Father's Name, Address/City/State/Pincode.
+- **File:** `components/my-profile-client.tsx`
+
+### Assigned Faculty on Dashboard Heroes
+- Student and parent dashboard heroes show assigned faculty names as pill badges with avatar initials.
+- **File:** `components/dashboard-overview.tsx`
+
+### Chat Persistence
+- `lastReadTimestamps` persisted to `localStorage` — unread badge counts survive page refresh.
+- **File:** `components/dashboard-chat.tsx`

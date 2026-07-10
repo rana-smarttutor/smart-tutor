@@ -9,6 +9,7 @@ import { Menu, X } from "lucide-react";
 import { LiveClock } from "@/components/live-clock";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 import { AttendanceManager } from "@/components/attendance-manager";
 import { InvoiceManager } from "@/components/invoice-manager";
 import { LectureManager } from "@/components/lecture-manager";
@@ -31,6 +32,11 @@ import type {
 } from "@/lib/types";
 import { DEFAULT_HEURISTICS } from "@/lib/data-store";
 import { StudentFeedbackManager } from "./student-feedback-manager";
+import { LeaveManager } from "@/components/leave-manager";
+import { RolesManager } from "@/components/roles-manager";
+import { StaffAttendanceManager } from "@/components/staff-attendance-manager";
+import { AttendanceCalendar } from "@/components/attendance-calendar";
+import { BiometricIntegration } from "@/components/biometric-integration";
 function SectionLoading() {
   return (
     <div
@@ -246,6 +252,17 @@ const GamificationSection = dynamic(
   },
 );
 
+const AdminChatMonitor = dynamic(
+  () =>
+    import("@/components/admin-chat-monitor").then(
+      (module) => module.AdminChatMonitor,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 type StandaloneStudentReport = {
   id: string;
   title: string;
@@ -275,6 +292,7 @@ const sidebarByRole = {
     { id: "chat", label: "Chat" },
     { id: "homework", label: "Homework" },
     { id: "attendance", label: "Attendance" },
+    { id: "leave", label: "Leave" },
     { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
@@ -297,6 +315,8 @@ const sidebarByRole = {
     { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
     { id: "attendance", label: "Attendance" },
+    { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "leave", label: "Leave" },
     { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
@@ -312,6 +332,7 @@ const sidebarByRole = {
     { id: "messages", label: "Messages" },
     { id: "chat", label: "Chat" },
     { id: "ptm", label: "PTM" },
+    { id: "staff-attendance", label: "Staff Attendance" },
     { id: "notifications", label: "Notifications" },
     { id: "sales-crm", label: "Sales CRM" },
   ],
@@ -319,9 +340,11 @@ const sidebarByRole = {
   admin: [
     { id: "accounts", label: "Accounts" },
     { id: "overview", label: "Overview" },
+    { id: "roles", label: "Roles & Permissions" },
     { id: "gamification", label: "Gamification" },
     { id: "messages", label: "Messages" },
     { id: "chat", label: "Chat" },
+    { id: "chat-monitor", label: "Chat Monitor" },
     { id: "notifications", label: "Notifications" },
     { id: "enquiries", label: "Enquiries" },
     { id: "ptm", label: "PTM" },
@@ -336,9 +359,13 @@ const sidebarByRole = {
     { id: "courses", label: "Courses" },
     { id: "students", label: "Students" },
     { id: "attendance", label: "Attendance" },
+    { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "biometric", label: "Biometric" },
+    { id: "leave", label: "Leave" },
     { id: "fees", label: "Invoices" },
     { id: "fee-installments", label: "Fee Plans" },
     { id: "teacher-payouts", label: "Teacher Payouts" },
+    { id: "branches", label: "Branches" },
     { id: "batches", label: "Batch Management" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
@@ -347,15 +374,22 @@ const sidebarByRole = {
 
   parent: [
     { id: "overview", label: "Overview" },
+    { id: "profile", label: "Profile" },
+    { id: "lectures", label: "Lectures" },
+    { id: "timetable", label: "Timetable" },
     { id: "messages", label: "Messages" },
     { id: "chat", label: "Chat" },
+    { id: "ptm", label: "PTM" },
+    { id: "homework", label: "Homework" },
+    { id: "attendance", label: "Attendance" },
     { id: "notifications", label: "Notifications" },
+    { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback & Behaviour" },
-    { id: "attendance", label: "Attendance" },
+    { id: "daily-activities", label: "Daily Learning" },
+    { id: "performance", label: "Performance Reports" },
     { id: "fees", label: "Fees" },
     { id: "fee-installments", label: "Fees & Installments" },
-    { id: "lectures", label: "Lectures" },
     { id: "library", label: "Library" },
   ],
 } as const;
@@ -390,7 +424,7 @@ function getInitials(name?: string) {
 }
 
 const menuSections = [
-  { label: "Overview", items: ["accounts", "overview", "gamification", "messages", "chat", "ptm", "attendance", "notifications"] },
+  { label: "Overview", items: ["accounts", "overview", "gamification", "messages", "chat", "chat-monitor", "ptm", "attendance", "staff-attendance", "biometric", "leave", "notifications"] },
   { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance"] },
   { label: "People", items: ["enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
   { label: "Finance", items: ["fees", "fee-installments", "teacher-payouts"] },
@@ -403,8 +437,10 @@ const navIcons: Record<string, React.ReactNode> = {
   timetable: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
   messages: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>,
   chat: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
+  "chat-monitor": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
   ptm: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
   attendance: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
+  leave: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
   notifications: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
   tests: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
   "weekly-tests": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
@@ -424,6 +460,9 @@ const navIcons: Record<string, React.ReactNode> = {
   fees: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   "fee-installments": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   "teacher-payouts": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  "staff-attendance": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+  biometric: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>,
+  branches: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
 };
 
 export function DashboardShell({
@@ -435,8 +474,10 @@ export function DashboardShell({
   courseOptions,
   supportContact,
 }: Props) {
+  const [localManagedUsers, setLocalManagedUsers] = useState(managedUsers);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarSearch, setSidebarSearch] = useState("");
   const [activeSection, setActiveSection] = useState<string>(
     sidebarByRole[role][0]?.id ?? "overview",
   );
@@ -444,6 +485,26 @@ export function DashboardShell({
   useEffect(() => {
     setSidebarOpen(false);
   }, [activeSection]);
+
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!dashboardRefreshKey) return;
+    const controller = new AbortController();
+    fetch("/api/dashboard", { signal: controller.signal, credentials: "same-origin" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        setMessages(data.dashboard?.messages ?? []);
+        setSubmissions(data.submissions ?? []);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [dashboardRefreshKey]);
+
+  function triggerDashboardRefresh() {
+    setDashboardRefreshKey((k) => k + 1);
+  }
   const [messages, setMessages] = useState<MessageItem[]>(dashboard.messages);
   const [notifRefreshKey, setNotifRefreshKey] = useState(0);
   const [submissions, setSubmissions] = useState<TestSubmission[]>(
@@ -466,6 +527,7 @@ export function DashboardShell({
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
   const showChat = activeSection === "chat";
+  const showChatMonitor = activeSection === "chat-monitor";
   const showGamification = activeSection === "gamification";
   const showHomework = activeSection === "homework";
   const showNotifications = activeSection === "notifications";
@@ -483,6 +545,10 @@ export function DashboardShell({
   const showLibrary = activeSection === "library";
   const showPerformance = activeSection === "performance";
   const showAttendance = activeSection === "attendance";
+  const showLeave = activeSection === "leave";
+  const showStaffAttendance = activeSection === "staff-attendance";
+  const showBiometric = activeSection === "biometric";
+  const showRoles = activeSection === "roles";
   const showFees = activeSection === "fees";
   const showLectures = activeSection === "lectures";
   const showTimetable = activeSection === "timetable";
@@ -730,13 +796,43 @@ export function DashboardShell({
           </button>
         </div>
 
+        {/* Search */}
+        {!sidebarCollapsed && (
+          <div className="px-3 py-2">
+            <div className="flex items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-slate-400">
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search menu..."
+                value={sidebarSearch}
+                onChange={(e) => setSidebarSearch(e.target.value)}
+                className="w-full bg-transparent text-sm text-white placeholder-slate-500 outline-none"
+              />
+              {sidebarSearch && (
+                <button type="button" onClick={() => setSidebarSearch("")} className="text-slate-500 hover:text-white">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-none">
           {menuSections.map((section) => {
             const sectionItems = sidebarByRole[role].filter((item) =>
               section.items.includes(item.id),
             );
-            if (!sectionItems.length) return null;
+            const filteredItems = sidebarSearch
+              ? sectionItems.filter((item) =>
+                  item.label.toLowerCase().includes(sidebarSearch.toLowerCase()),
+                )
+              : sectionItems;
+            if (!filteredItems.length) return null;
             return (
               <div key={section.label} className="sb-group">
                 {!sidebarCollapsed && (
@@ -744,7 +840,7 @@ export function DashboardShell({
                     {section.label}
                   </div>
                 )}
-                {sectionItems.map((item) => (
+                {filteredItems.map((item) => (
                   <button
                     key={item.id}
                     type="button"
@@ -846,19 +942,15 @@ export function DashboardShell({
             <div className="flex items-center gap-3 shrink-0">
               <NotificationBell
                 onOpenNotifications={() => setActiveSection("notifications")}
+                onOpenChat={() => setActiveSection("chat")}
                 refreshKey={notifRefreshKey}
               />
-              <div className="flex items-center gap-2 cursor-pointer group">
-                <div className="h-10 w-10 rounded-full bg-slate-100 overflow-hidden border border-slate-200 group-hover:border-[#0B40A1] transition-colors">
-                  {dashboard.profile?.profilePhoto ? (
-                    <img src={dashboard.profile.profilePhoto} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sm font-bold text-[#0B40A1]">
-                      {getInitials(session?.name)}
-                    </div>
-                  )}
-                </div>
-              </div>
+              {session ? (
+                <UserMenu
+                  session={session}
+                  profilePhoto={dashboard.profile?.profilePhoto}
+                />
+              ) : null}
             </div>
           </header>
 
@@ -873,6 +965,7 @@ export function DashboardShell({
               messages={messages}
               supportContact={supportContact}
               onSetActiveSection={setActiveSection}
+              managedUsers={localManagedUsers}
             />
           ) : null}
 
@@ -891,7 +984,7 @@ export function DashboardShell({
               messages={messages}
               studentDirectory={studentDirectory}
               onMessagesChange={setMessages}
-              managedUsers={managedUsers}
+              managedUsers={localManagedUsers}
               assignedFacultyIds={dashboard.assignedFacultyIds}
               assignedFacultyNames={dashboard.assignedFacultyNames}
             />
@@ -904,10 +997,14 @@ export function DashboardShell({
               messages={messages}
               studentDirectory={studentDirectory}
               onMessagesChange={setMessages}
-              managedUsers={managedUsers}
+              managedUsers={localManagedUsers}
               assignedFacultyIds={dashboard.assignedFacultyIds}
               assignedFacultyNames={dashboard.assignedFacultyNames}
             />
+          ) : null}
+
+          {showChatMonitor && role === "admin" ? (
+            <AdminChatMonitor managedUsers={managedUsers} />
           ) : null}
 
           {showPtm && (role === "admin" || role === "educator" || role === "parent" || role === "counsellor") ? (
@@ -917,11 +1014,12 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showHomework && (role === "student" || role === "educator") ? (
+          {showHomework && (role === "student" || role === "educator" || role === "parent") ? (
             <HomeworkSection
               session={session}
               role={role}
               studentDirectory={studentDirectory}
+              onDashboardRefresh={triggerDashboardRefresh}
             />
           ) : null}
 
@@ -961,6 +1059,7 @@ export function DashboardShell({
                 onMessagePublished={(message) =>
                   setMessages((current) => [message, ...current])
                 }
+                onDashboardRefresh={triggerDashboardRefresh}
               />
 
               {role === "student" && submissions.length > 0 ? (
@@ -1010,7 +1109,7 @@ export function DashboardShell({
           ) : null}
 
           {showAccounts && role === "admin" ? (
-            <DashboardAccountDirectory initialUsers={managedUsers} />
+            <DashboardAccountDirectory initialUsers={localManagedUsers} onUsersChange={setLocalManagedUsers} />
           ) : null}
 
           {showBatches && role === "admin" ? (
@@ -1149,8 +1248,33 @@ export function DashboardShell({
               role={role}
               attendanceSheets={dashboard.attendanceSheets}
               studentDirectory={studentDirectory}
-              managedUsers={managedUsers}
+              managedUsers={localManagedUsers}
               userId={session?.id}
+            />
+          ) : null}
+
+          {showRoles && (role === "admin") ? (
+            <RolesManager managedUsers={managedUsers} />
+          ) : null}
+
+          {showBiometric ? (
+            <BiometricIntegration role={role} />
+          ) : null}
+
+          {showStaffAttendance && (role === "admin" || role === "educator" || role === "counsellor") ? (
+            <StaffAttendanceManager
+              role={role}
+              managedUsers={localManagedUsers}
+              userId={session?.id}
+              userName={session?.name}
+            />
+          ) : null}
+
+          {showLeave ? (
+            <LeaveManager
+              session={session}
+              role={role}
+              managedUsers={localManagedUsers}
             />
           ) : null}
 
@@ -1182,11 +1306,11 @@ export function DashboardShell({
           ) : null}
 
           {showTimetable &&
-          (role === "admin" || role === "educator" || role === "student") ? (
+          (role === "admin" || role === "educator" || role === "student" || role === "parent") ? (
             <TimetableManager
               role={role}
               lectures={dashboard.lectures}
-              managedUsers={managedUsers}
+              managedUsers={localManagedUsers}
               session={session}
               onCreateLecture={() => setActiveSection("lectures")}
             />

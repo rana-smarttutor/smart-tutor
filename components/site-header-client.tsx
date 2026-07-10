@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserMenu } from "@/components/user-menu";
 import { useTheme } from "@/components/theme-provider";
 import type { SessionUser } from "@/lib/types";
 
@@ -160,28 +161,15 @@ const canSeeStudentPerformance =
 
                 <div className="hidden items-center gap-3 lg:flex">
                   {session ? (
-                    <div className="surface-soft min-w-[110px] rounded-full px-4 py-2 text-center">
-                      <p className="text-xs font-semibold tracking-[0.04em] text-[var(--color-muted)]">
-                        Signed In
-                      </p>
-                      <p
-                        className="truncate text-sm font-semibold text-[var(--color-heading)]"
-                        title={session.name}
-                      >
-                        {shortenSessionName(session.name)}
-                      </p>
-                    </div>
+                    <UserMenu session={session} />
                   ) : null}
 
                   <ThemeToggle />
 
                   {session ? (
-                    <>
-                      <Link href="/dashboard" className="btn-action btn-sm">
-                        Dashboard
-                      </Link>
-                      <LogoutButton />
-                    </>
+                    <Link href="/dashboard" className="btn-action btn-sm">
+                      Dashboard
+                    </Link>
                   ) : (
                     <Link href="/login" className="btn-action btn-sm">
                       Login
@@ -270,16 +258,8 @@ const canSeeStudentPerformance =
 
                   {session ? (
                     <>
-                      <div className="surface-soft rounded-[1.4rem] px-4 py-3 text-center">
-                        <p className="text-xs font-semibold tracking-[0.04em] text-[var(--color-muted)]">
-                          Signed In
-                        </p>
-                        <p
-                          className="mt-1 truncate text-sm font-semibold text-[var(--color-heading)]"
-                          title={session.name}
-                        >
-                          {shortenSessionName(session.name)}
-                        </p>
+                      <div className="flex justify-center">
+                        <UserMenu session={session} />
                       </div>
 
                       <div className="grid gap-2">

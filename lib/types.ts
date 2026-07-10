@@ -570,6 +570,7 @@ export type DashboardBundle = {
   feeInvoices: FeeInvoice[];
   lectures: LectureItem[];
   linkedStudentId?: string;
+  linkedStudentProfile?: { name?: string; email?: string; phone?: string; course?: string; batch?: string; attendance?: number | null };
   assignedFacultyIds?: string[];
   assignedFacultyNames?: string[];
   profile?: UserProfile;
@@ -1161,4 +1162,273 @@ export type GamificationLeaderboardEntry = {
   level: number;
   levelName: string;
   rank: number;
+};
+
+export type ChatAttachment = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+  messageId: string;
+};
+
+export type ChatFlag = {
+  id: string;
+  messageId: string;
+  senderId: string;
+  receiverId: string;
+  flaggedBy: string;
+  reason: "phone" | "email" | "link" | "other";
+  reasonDetail: string;
+  status: "pending" | "allowed" | "blocked";
+  createdAt: string;
+  resolvedAt?: string;
+  resolvedBy?: string;
+};
+
+export type ChatBlock = {
+  id: string;
+  participantIds: string[];
+  blocked: boolean;
+  blockedAt?: string;
+  blockedBy?: string;
+  reason?: string;
+};
+
+// =========================
+// Roles & Permissions System
+// =========================
+
+export type AvailableModule =
+  | "overview"
+  | "accounts"
+  | "students"
+  | "attendance"
+  | "leave"
+  | "fees"
+  | "fee-installments"
+  | "lectures"
+  | "timetable"
+  | "courses"
+  | "batches"
+  | "tests"
+  | "weekly-tests"
+  | "messages"
+  | "chat"
+  | "notifications"
+  | "enquiries"
+  | "library"
+  | "performance"
+  | "daily-activities"
+  | "homework"
+  | "student-feedback"
+  | "teacher-payouts"
+  | "placement-jobs"
+  | "sales-crm"
+  | "gamification"
+  | "ptm"
+  | "chat-monitor"
+  | "password-reset-requests";
+
+export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "accounts", label: "Accounts" },
+  { id: "students", label: "Students" },
+  { id: "attendance", label: "Attendance" },
+  { id: "leave", label: "Leave" },
+  { id: "fees", label: "Fees" },
+  { id: "fee-installments", label: "Fee Installments" },
+  { id: "lectures", label: "Lectures" },
+  { id: "timetable", label: "Timetable" },
+  { id: "courses", label: "Courses" },
+  { id: "batches", label: "Batches" },
+  { id: "tests", label: "Exams" },
+  { id: "weekly-tests", label: "Weekly Tests" },
+  { id: "messages", label: "Messages" },
+  { id: "chat", label: "Chat" },
+  { id: "notifications", label: "Notifications" },
+  { id: "enquiries", label: "Enquiries" },
+  { id: "library", label: "Library" },
+  { id: "performance", label: "Performance" },
+  { id: "daily-activities", label: "Daily Activities" },
+  { id: "homework", label: "Homework" },
+  { id: "student-feedback", label: "Feedback" },
+  { id: "teacher-payouts", label: "Teacher Payouts" },
+  { id: "placement-jobs", label: "Placement Jobs" },
+  { id: "sales-crm", label: "Sales CRM" },
+  { id: "gamification", label: "Gamification" },
+  { id: "ptm", label: "PTM" },
+  { id: "chat-monitor", label: "Chat Monitor" },
+  { id: "password-reset-requests", label: "Password Reset" },
+];
+
+export type CustomRole = {
+  id: string;
+  name: string;
+  description?: string;
+  color: string;
+  modules: AvailableModule[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type CustomRoleAssignment = {
+  id: string;
+  userId: string;
+  roleId: string;
+  roleName: string;
+  assignedAt: string;
+  assignedBy: string;
+};
+
+// =========================
+// Leave Management System
+// =========================
+
+export type LeaveStatus = "pending" | "approved" | "rejected";
+
+export type LeaveRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: Role;
+  leaveTypeId: string;
+  leaveTypeName: string;
+  fromDate: string;
+  toDate: string;
+  days: number;
+  reason: string;
+  documentUrl?: string;
+  status: LeaveStatus;
+  rejectReason?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type LeaveTypeItem = {
+  id: string;
+  name: string;
+  category: string;
+  daysAllowed: number;
+  isPaid: boolean;
+  color: string;
+  isActive: boolean;
+};
+
+export type HolidayItem = {
+  id: string;
+  name: string;
+  date: string;
+  type: string;
+  color: string;
+};
+
+export type LeaveBalanceItem = {
+  id: string;
+  userId: string;
+  userName?: string;
+  leaveTypeId: string;
+  leaveTypeName?: string;
+  daysAllowed: number;
+  daysUsed: number;
+  note?: string;
+};
+
+// =========================
+// Staff Attendance System
+// =========================
+
+export type StaffAttendanceStatus = "present" | "absent" | "half_day" | "late" | "on_leave" | "holiday";
+export type EmploymentType = "full_time" | "part_time" | "contractual" | "hourly";
+export type StaffCategory = "Teacher" | "Staff" | "Admin" | "Counsellor";
+
+export type StaffAttendanceRecord = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  category: StaffCategory;
+  employmentType: EmploymentType;
+  date: string;
+  status: StaffAttendanceStatus;
+  checkIn?: string;
+  checkOut?: string;
+  hoursWorked?: number;
+  biometricId?: string;
+  markedBy?: string;
+  markedAt: string;
+  updatedAt?: string;
+};
+
+export type StaffAttendanceSummary = {
+  total: number;
+  present: number;
+  absent: number;
+  halfDay: number;
+  late: number;
+  onLeave: number;
+  holiday: number;
+};
+
+// =========================
+// Biometric Integration Types
+// =========================
+
+export type BiometricDevice = {
+  id: string;
+  name: string;
+  location: string;
+  serialNumber?: string;
+  webhookToken: string;
+  autoMarkAttendance: boolean;
+  sendParentSms: boolean;
+  sendStaffSms: boolean;
+  isOnline: boolean;
+  lastSeenAt?: string;
+  totalPunches: number;
+  mappedStudents: number;
+  mappedStaff: number;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type BiometricPunchLog = {
+  id: string;
+  deviceId: string;
+  deviceName: string;
+  personId: string;
+  personName: string;
+  personType: "Student" | "Staff";
+  biometricId: string;
+  punchType: "CheckIn" | "CheckOut";
+  inputType: string;
+  temperature?: string;
+  punchedAt: string;
+  status: "marked" | "pending" | "skipped";
+  createdAt: string;
+};
+
+// =========================
+// Attendance Regularisation
+// =========================
+
+export type RegularisationRequest = {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  date: string;
+  reason: string;
+  requestedCheckIn?: string;
+  requestedCheckOut?: string;
+  requestedStatus: StaffAttendanceStatus;
+  status: "pending" | "approved" | "rejected";
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewComment?: string;
+  createdAt: string;
 };

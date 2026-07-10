@@ -6,6 +6,7 @@ import type { AppNotification } from "@/lib/types";
 
 type NotificationBellProps = {
   onOpenNotifications: () => void;
+  onOpenChat?: () => void;
 };
 
 function formatNotificationTime(value: string) {
@@ -40,6 +41,7 @@ const labels: Record<AppNotification["type"], string> = {
 
 export function NotificationBell({
   onOpenNotifications,
+  onOpenChat,
   refreshKey,
 }: NotificationBellProps & { refreshKey?: number }) {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -268,9 +270,12 @@ export function NotificationBell({
                       <button
                         type="button"
                         disabled={updatingId === notification.id}
-                        onClick={() =>
-                          void updateReadState(notification, true)
-                        }
+                        onClick={() => {
+                          void updateReadState(notification, true);
+                          if (notification.type === "feedback" && onOpenChat) {
+                            onOpenChat();
+                          }
+                        }}
                         className="shrink-0 rounded-full border border-[var(--color-border)] px-2.5 py-1.5 text-[10px] font-bold text-[var(--color-heading)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:opacity-60"
                       >
                         {updatingId === notification.id ? "..." : "Read"}

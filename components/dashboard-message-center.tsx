@@ -91,7 +91,9 @@ export function DashboardMessageCenter({
     }
     if (role === "educator") {
       const admins = (managedUsers ?? []).filter((u) => u.role === "admin");
-      const students = studentDirectory.filter((u) => u.role === "student");
+      const students = studentDirectory.filter(
+        (u) => u.role === "student" && (u.assignedFacultyIds ?? []).includes(session?.id ?? ""),
+      );
       return [...admins, ...students];
     }
     if (role === "student") {
@@ -171,7 +173,9 @@ export function DashboardMessageCenter({
       }
       return {
         audience: ["student"] as const,
-        userIds: studentDirectory.map((s) => s.id),
+        userIds: studentDirectory
+          .filter((s) => (s.assignedFacultyIds ?? []).includes(session?.id ?? ""))
+          .map((s) => s.id),
       };
     }
     if (role === "student") {
@@ -709,7 +713,7 @@ export function DashboardMessageCenter({
                     onClick={() => setChatContactId(null)}
                     className="lg:hidden mr-1 text-lg text-[var(--color-heading)]"
                   >
-                    <i className="bi bi-arrow-left" />
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                   </button>
                   <div className="h-8 w-8 shrink-0 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-sm font-bold text-[var(--color-primary)]">
                     {chatContacts
@@ -800,7 +804,7 @@ export function DashboardMessageCenter({
                       title="Send message"
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-sm transition hover:scale-[1.03] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      <i className="bi bi-send-fill text-lg" />
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" aria-hidden="true"><path d="M4.5 4.5L20 12L4.5 19.5L7.2 12L4.5 4.5Z" fill="currentColor" /></svg>
                     </button>
                   </div>
                 </div>
@@ -808,7 +812,7 @@ export function DashboardMessageCenter({
             ) : (
               <div className="hidden lg:flex h-full items-center justify-center">
                 <div className="text-center">
-                  <i className="bi bi-chat-dots text-4xl text-[var(--color-muted)]" />
+                  <svg className="h-10 w-10 text-[var(--color-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                   <p className="mt-3 text-sm font-semibold text-[var(--color-muted)]">
                     Select a contact to start chatting
                   </p>

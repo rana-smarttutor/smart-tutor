@@ -1,45 +1,90 @@
-# Pending Approval Flow for Signups
+# Smart Tutors - Completed Work Log
 
-## Architecture
+## Session: Dashboard Fixes, Profile, Roles, Chat (Jul 2026)
 
-### 1. Types (`lib/types.ts`)
-- Add `verified?: boolean` to `SessionUser`, `UserDocument`, `UserProfile`
+### Completed Features
 
-### 2. Data Store (`lib/data-store.ts`)
-- `toSessionUser()` → include `status` + `verified`
-- Student signup → status `"pending"` (not `"active"`)
-- `approveUserRequest(id)` → sets `status: "active"`, `verified: true`
-- `rejectUserRequest(id)` → deletes the user document
-- `getPendingUserRequests()` → all users with `status: "pending"`
-- `toggleUserVerification(id, verified)` → set verified boolean
-- Parent account gets parentEmail + **parentPassword** (not auto-generated)
+#### 1. Faculty Student Count Fix
+- **File:** `app/dashboard/page.tsx:33`
+- **Change:** `getStudentDirectory(session.id)` — scoped students to logged-in educator
 
-### 3. Signup Form
-- Add `parentPassword` field to `FormData`
-- Add `parentPassword` + `parentConfirmPassword` inputs to Personal Information section
-- On success → redirect to `/application-submitted`
+#### 2. Attendance Default Tab + Confirmation Dialogs
+- **File:** `components/staff-attendance-manager.tsx`
+- **Changes:** Default tab `"mine"` for non-admins; `window.confirm()` before check-in/out
 
-### 4. Application Submitted Page
-- Create `/application-submitted/page.tsx`
-- Shows "Application in Process" with status info
-- If pending → "Awaiting admin confirmation"
-- If rejected → "Contact admin"
+#### 3. Full Regularisation System
+- **Types:** `RegularisationRequest` in `lib/types.ts`
+- **API:** `POST /api/staff-attendance` (create), `GET/POST /api/staff-attendance/regularise` (admin approve/reject)
+- **UI:** `components/staff-attendance-manager.tsx` — regularise button on records, admin review panel
 
-### 5. Login Fix (`app/api/auth/login/route.ts`)
-- Fix `user.status` check (was broken because SessionUser dropped status)
-- Pending users of ANY role → return pendingApproval=true
-- Rejected users → return 403
+#### 4. Faculty Chat with Assigned Students
+- **Verified:** Works after student directory fix; filters by `assignedFacultyIds`
 
-### 6. Dashboard Guard (`app/dashboard/page.tsx`)
-- Add status check: if pending → redirect to `/application-submitted`
-- If rejected → redirect to `/login` with error
+#### 5. Attendance Calendar Redesign
+- **File:** `components/attendance-manager.tsx`
+- **Changes:** Angular-style calendar grid, month/week toggle, 5 stat cards, regularize buttons, legend bar
 
-### 7. Admin Panel
-- Add "Verification Requests" tab in `dashboard-account-directory.tsx`
-- Table of pending users with Approve / Reject buttons
-- In "Registered Directory" edit modal → add verified badge toggle
-- New API endpoints: `POST /api/admin/approve`, `POST /api/admin/reject`, `PATCH /api/users/verify`
+#### 6. Parent Overview = Student Overview
+- **File:** `components/dashboard-overview.tsx`
+- **Change:** `ParentOverview` mirrors `StudentOverview` with hero, KPI cards, routed via `role === "parent"`
 
-### 8. Verification Badge
-- Show checkmark badge on profile card
-- Show in admin user table
+#### 7. Parent Chat = Student Chat
+- **File:** `components/dashboard-chat.tsx`
+- **Change:** `role === "parent"` case returns admins + assigned educators
+
+#### 8. Sidebar Chat Unread Badge Persistence
+- **File:** `components/dashboard-chat.tsx`
+- **Change:** `lastReadTimestamps` persisted to `localStorage` key `chat_last_read_${userId}`
+
+#### 9. Assigned Faculty Names on Dashboard Heroes
+- **File:** `components/dashboard-overview.tsx`
+- **Change:** Student and parent heroes show assigned faculty as pill badges
+
+#### 10. Faculty Dashboard Hero Format
+- **File:** `components/dashboard-overview.tsx`
+- **Change:** Student count and batch count badges use bold number styling (`text-sm font-black`)
+
+#### 11. My Profile - Full Data Rendering
+- **File:** `components/my-profile-client.tsx`
+- **Changes:**
+  - Left sidebar shows "Profile Details" summary card with all collected fields
+  - Students: added Course, Student Type, Parent Name/Email/Mobile, Last Qualification, Academic Score
+  - Students: added Weak/Strong Subjects tag inputs (red/green chips)
+  - All roles: Gender, DOB, Father's Name, Address/City/State/Pincode fields
+  - Phone field fallback chain: `guardianPhone ?? parentMobile ?? mobile` (fixes missing phone bug)
+
+#### 12. Parent Profile - Linked Student Details
+- **File:** `lib/types.ts`, `lib/data-store.ts`, `components/my-profile-client.tsx`
+- **Changes:**
+  - Added `linkedStudentProfile` to `DashboardBundle` type
+  - `getDashboardBundle` fetches linked student name, email, phone, course, batch for parents
+  - Profile sidebar shows "Student Details" card for parents with child's info
+
+#### 13. Student Phone Merge Fix (Data Layer)
+- **File:** `lib/data-store.ts` — `getDashboardBundle()`
+- **Change:** Profile response merges root-level `parentMobile` and `mobile` into `guardianPhone` fallback chain, fixing phone not showing when stored via API vs CSV import
+
+#### 14. Roles & Permissions System (Verified)
+- **Components:** `components/roles-manager.tsx` — full CRUD, 2 tabs (Roles + Staff Assignments)
+- **API:** `app/api/admin/roles/route.ts` (GET/POST), `[id]/route.ts` (PUT/DELETE), `assign/route.ts` (POST/DELETE)
+- **Data:** 10 functions in `lib/data-store.ts` — create, read, update, delete, assign, unassign, stats
+- **Types:** `CustomRole`, `CustomRoleAssignment`, `AvailableModule` in `lib/types.ts`
+- **Sidebar:** Admin sidebar item at position 3: `{ id: "roles", label: "Roles & Permissions" }`
+- **Gate:** Renders only for `role === "admin"` in `dashboard-shell.tsx:1256`
+
+#### 15. Parent Sidebar Expansion
+- **File:** `components/dashboard-shell.tsx`
+- **Change:** Parent sidebar expanded from 11 to 19 items matching student sidebar
+
+#### 16. Student Sidebar Cleanup
+- **File:** `components/dashboard-shell.tsx`
+- **Change:** Removed "Staff Attendance" entry from student sidebar
+
+### Test Coverage
+- **File:** `__tests__/roles-and-profile.test.ts` — 32 new tests
+- **Covers:** CustomRole type contract, CustomRoleAssignment, AVAILABLE_MODULES validation, DashboardBundle (linkedStudentProfile, faculty fields), UserProfile phone fields, role creation validation logic, module assignment, isActive toggle, assignment uniqueness, profile phone merge logic
+- **Total:** 122 tests across 4 suites, all passing
+
+### Verification
+- `npx tsc --noEmit` — zero errors
+- `npx jest --no-cache` — 122/122 passing

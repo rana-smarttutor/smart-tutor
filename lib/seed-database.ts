@@ -9,6 +9,7 @@ const COLLECTIONS = {
   messages: "messages",
   submissions: "test_submissions",
   quizzes: "quiz_questions",
+  deletedAccounts: "deleted_accounts",
 } as const;
 
 export async function seedMongoTemplateCollections(options?: { replaceExisting?: boolean }) {
@@ -25,6 +26,7 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
       db.collection(COLLECTIONS.messages).deleteMany({}),
       db.collection(COLLECTIONS.submissions).deleteMany({}),
       db.collection(COLLECTIONS.quizzes).deleteMany({}),
+      db.collection(COLLECTIONS.deletedAccounts).deleteMany({}),
     ]);
   }
 
@@ -65,6 +67,10 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
     db.collection(COLLECTIONS.users).createIndex(
       { emailKey: 1 },
       { unique: true, name: "users_unique_emailKey" },
+    ),
+    db.collection(COLLECTIONS.deletedAccounts).createIndex(
+      { deletedAt: -1 },
+      { name: "deleted_accounts_chronological" },
     ),
   ]);
 
@@ -109,6 +115,7 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
       messages: template.messages.length,
       submissions: template.submissions.length,
       quizzes: template.quizQuestions.length,
+      deletedAccounts: 0,
     },
   };
 }

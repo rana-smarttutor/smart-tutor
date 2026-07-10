@@ -24,6 +24,10 @@ export async function PATCH(request: Request) {
     city?: string;
     state?: string;
     pincode?: string;
+    guardianPhone?: string;
+    qualification?: string;
+    experience?: string;
+    subjects?: string;
   };
 
   try {
@@ -55,6 +59,10 @@ export async function PATCH(request: Request) {
   if (body.city !== undefined) profileFields.city = body.city;
   if (body.state !== undefined) profileFields.state = body.state;
   if (body.pincode !== undefined) profileFields.pincode = body.pincode;
+  if (body.guardianPhone !== undefined) profileFields.guardianPhone = body.guardianPhone;
+  if (body.qualification !== undefined) profileFields.qualification = body.qualification;
+  if (body.experience !== undefined) profileFields.experience = body.experience;
+  if (body.subjects !== undefined) profileFields.subjects = body.subjects;
 
   const hasProfileUpdates = Object.values(profileFields).some((v) => v !== undefined);
   if (hasProfileUpdates) {

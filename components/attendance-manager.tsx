@@ -315,16 +315,60 @@ export function AttendanceManager({
   const viewerSummary = useMemo(() => {
     if (canEdit || !userId) return null;
     let present = 0;
+    let absent = 0;
+    let late = 0;
     let total = 0;
     for (const sheet of attendanceSheets) {
       const record = sheet.records.find((r) => r.studentId === userId);
       if (!record) continue;
       total++;
-      if (record.status === "present" || record.status === "late") present++;
+      if (record.status === "present") present++;
+      else if (record.status === "absent") absent++;
+      else if (record.status === "late") late++;
     }
-    if (!total) return null;
-    return { total, present, pct: Math.round((present / total) * 100) };
+    const pct = total > 0 ? Math.round(((present + late) / total) * 100) : 0;
+    return { total, present, absent, late, pct };
   }, [canEdit, attendanceSheets, userId]);
+
+  const [calYear, setCalYear] = useState(() => new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth());
+
+  const calDateMap = useMemo(() => {
+    if (canEdit || !userId) return new Map<string, string>();
+    const map = new Map<string, string>();
+    for (const sheet of attendanceSheets) {
+      const record = sheet.records.find((r) => r.studentId === userId);
+      if (record && sheet.date) map.set(sheet.date, record.status);
+    }
+    return map;
+  }, [canEdit, attendanceSheets, userId]);
+
+  const calMonthLabel = new Date(calYear, calMonth).toLocaleString("en-US", { month: "long", year: "numeric" });
+
+  const calDays = useMemo(() => {
+    const first = new Date(calYear, calMonth, 1);
+    const last = new Date(calYear, calMonth + 1, 0);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const pad = first.getDay() === 0 ? 6 : first.getDay() - 1;
+    const days: { date: string; day: number; currentMonth: boolean; status?: string; isToday: boolean; isFuture: boolean }[] = [];
+    for (let p = pad - 1; p >= 0; p--) {
+      const d = new Date(calYear, calMonth, -p);
+      const ds = d.toISOString().slice(0, 10);
+      days.push({ date: ds, day: d.getDate(), currentMonth: false, status: calDateMap.get(ds), isToday: ds === todayStr, isFuture: ds > todayStr });
+    }
+    for (let d = 1; d <= last.getDate(); d++) {
+      const date = new Date(calYear, calMonth, d);
+      const ds = date.toISOString().slice(0, 10);
+      days.push({ date: ds, day: d, currentMonth: true, status: calDateMap.get(ds), isToday: ds === todayStr, isFuture: ds > todayStr });
+    }
+    const rem = 42 - days.length;
+    for (let i = 1; i <= rem; i++) {
+      const d = new Date(calYear, calMonth + 1, i);
+      const ds = d.toISOString().slice(0, 10);
+      days.push({ date: ds, day: d.getDate(), currentMonth: false, status: calDateMap.get(ds), isToday: ds === todayStr, isFuture: ds > todayStr });
+    }
+    return days;
+  }, [calYear, calMonth, calDateMap]);
 
   return (
     <section className="space-y-6">
@@ -359,21 +403,101 @@ export function AttendanceManager({
         </div>
       </div>
 
-      {/* Student Viewer Summary */}
-      {viewerSummary ? (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="surface rounded-[1.25rem] p-4 sm:p-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">Lectures Conducted</p>
-            <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-heading)]">{viewerSummary.total}</p>
+      {/* Student/Parent Calendar View */}
+      {!canEdit && viewerSummary ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            {[
+              { label: "Present", value: viewerSummary.present, color: "var(--color-success)", bg: "var(--color-success)" },
+              { label: "Absent", value: viewerSummary.absent, color: "var(--color-danger)", bg: "var(--color-danger)" },
+              { label: "Late", value: viewerSummary.late, color: "var(--color-amber)", bg: "var(--color-amber)" },
+              { label: "Total Lectures", value: viewerSummary.total, color: "var(--color-info)", bg: "var(--color-info)" },
+              { label: "Attendance", value: `${viewerSummary.pct}%`, color: "var(--color-primary)", bg: "var(--color-primary)" },
+            ].map((s) => (
+              <div key={s.label} className="surface rounded-2xl p-4 sm:p-5 text-center" style={{ borderTop: `3px solid ${s.bg}` }}>
+                <p className="text-2xl font-extrabold tracking-tight" style={{ color: s.color }}>{s.value}</p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{s.label}</p>
+              </div>
+            ))}
           </div>
-          <div className="surface rounded-[1.25rem] p-4 sm:p-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">Lectures Attended</p>
-            <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-heading)]">{viewerSummary.present}</p>
+
+          <div className="surface rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4">
+              <button type="button" onClick={() => { if (calMonth === 0) { setCalMonth(11); setCalYear(calYear - 1); } else setCalMonth(calMonth - 1); }} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[var(--color-background-strong)] transition">
+                <svg className="h-4 w-4 text-[var(--color-heading)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <p className="text-sm font-bold text-[var(--color-heading)]">{calMonthLabel}</p>
+              <button type="button" onClick={() => { if (calMonth === 11) { setCalMonth(0); setCalYear(calYear + 1); } else setCalMonth(calMonth + 1); }} className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[var(--color-background-strong)] transition">
+                <svg className="h-4 w-4 text-[var(--color-heading)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 border-b border-[var(--color-border)]">
+              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                <div key={d} className="px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">{d}</div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7">
+              {calDays.map((d) => {
+                const statusColor: Record<string, { bg: string; text: string; label: string }> = {
+                  present: { bg: "#DCFCE7", text: "#059669", label: "P" },
+                  absent: { bg: "#FEE2E2", text: "#DC2626", label: "A" },
+                  late: { bg: "#FEF3C7", text: "#D97706", label: "L" },
+                  on_leave: { bg: "#DBEAFE", text: "#2563EB", label: "Lv" },
+                };
+                const sc = d.status ? statusColor[d.status] : undefined;
+                return (
+                  <div
+                    key={d.date}
+                    className={`relative flex flex-col items-center justify-center border-b border-r border-[var(--color-border)] p-1.5 sm:p-2 min-h-[48px] sm:min-h-[60px] transition ${
+                      !d.currentMonth ? "bg-[var(--color-background)] opacity-40" : ""
+                    } ${d.isToday ? "bg-[var(--color-primary)]/5" : ""} ${
+                      d.isFuture ? "opacity-50" : ""
+                    }`}
+                  >
+                    <span className={`text-xs font-bold ${d.isToday ? "text-[var(--color-primary)]" : d.currentMonth ? "text-[var(--color-heading)]" : "text-[var(--color-muted)]"}`}>
+                      {d.day}
+                    </span>
+                    {sc && (
+                      <span className="mt-0.5 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[9px] font-bold" style={{ background: sc.bg, color: sc.text }}>
+                        {sc.label}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 border-t border-[var(--color-border)] px-5 py-3">
+              {[
+                { label: "Present", color: "#059669", bg: "#DCFCE7" },
+                { label: "Absent", color: "#DC2626", bg: "#FEE2E2" },
+                { label: "Late", color: "#D97706", bg: "#FEF3C7" },
+                { label: "Leave", color: "#2563EB", bg: "#DBEAFE" },
+              ].map((l) => (
+                <span key={l.label} className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: l.color }}>
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.bg }} />
+                  {l.label}
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="surface rounded-[1.25rem] p-4 sm:p-5">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-muted)]">Attendance %</p>
-            <p className="mt-2 text-2xl font-bold tracking-tight text-[var(--color-heading)]">{viewerSummary.pct}%</p>
+        </div>
+      ) : null}
+
+      {/* Empty calendar state for student/parent */}
+      {!canEdit && !viewerSummary ? (
+        <div className="surface rounded-2xl p-10 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary-soft)]">
+            <svg className="h-6 w-6 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
           </div>
+          <p className="mt-4 text-lg font-bold text-[var(--color-heading)]">No Attendance Data</p>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">
+            Your attendance records will appear here once your teacher marks them.
+          </p>
         </div>
       ) : null}
 

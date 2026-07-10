@@ -289,10 +289,25 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "User id is required." }, { status: 400 });
   }
 
-  if (body.mode === "delete") {
-    await deleteUserRecord(body.id);
-    return NextResponse.json({ ok: true, message: "User deleted." });
+  if (body.mode !== "delete") {
+    return NextResponse.json({ error: "Unknown mode." }, { status: 400 });
   }
 
-  return NextResponse.json({ error: "Unknown mode." }, { status: 400 });
+  try {
+    const deleted = await deleteUserRecord(body.id);
+    if (!deleted) {
+      console.error(`DELETE /api/users: No document found with id "${body.id}"`);
+      return NextResponse.json(
+        { error: "User not found in database. It may have already been deleted." },
+        { status: 404 },
+      );
+    }
+    return NextResponse.json({ ok: true, message: "User deleted." });
+  } catch (err) {
+    console.error("DELETE /api/users: Database error", err);
+    return NextResponse.json(
+      { error: "Database error while deleting user." },
+      { status: 500 },
+    );
+  }
 }

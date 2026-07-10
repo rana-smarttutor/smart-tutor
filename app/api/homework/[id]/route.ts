@@ -5,7 +5,6 @@ import {
   getHomeworkById,
   updateHomework,
   deleteHomework,
-  getSubmissionsForHomework,
 } from "@/lib/data-store";
 import { sanitizeTextInput, sanitizeTextareaInput } from "@/lib/validation";
 
@@ -78,16 +77,6 @@ export async function DELETE(
     return NextResponse.json(
       { error: "You can only delete your own homework." },
       { status: 403 },
-    );
-  }
-
-  // Only allow deletion if all submissions are graded
-  const submissions = await getSubmissionsForHomework(id);
-  const hasUngraded = submissions.some((s) => s.status !== "graded");
-  if (hasUngraded) {
-    return NextResponse.json(
-      { error: "Grade all submissions before deleting this homework." },
-      { status: 400 },
     );
   }
 

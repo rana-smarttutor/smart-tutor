@@ -6,6 +6,7 @@ import type { Enquiry, ManagedUser, Role } from "@/lib/types";
 
 type DashboardAccountDirectoryProps = {
   initialUsers: ManagedUser[];
+  onUsersChange?: (users: ManagedUser[]) => void;
 };
 
 type CreateAccountForm = {
@@ -24,6 +25,7 @@ type CreateAccountForm = {
 
 export function DashboardAccountDirectory({
   initialUsers,
+  onUsersChange,
 }: DashboardAccountDirectoryProps) {
   const [users, setUsers] = useState(initialUsers);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export function DashboardAccountDirectory({
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [createForm, setCreateForm] = useState<CreateAccountForm>({
     name: "",
@@ -239,18 +242,23 @@ export function DashboardAccountDirectory({
 
   async function handleDelete(userId: string) {
     if (!confirm("Delete this account permanently? This action cannot be undone.")) return;
-    const res = await fetch("/api/users", {
-      method: "DELETE",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: userId }),
-    });
-    if (res.ok) {
-      setUsers((current) => current.filter((u) => u.id !== userId));
-      setStatus("Account deleted.");
-    } else {
-      const data = await res.json();
-      setStatus(data.error ?? "Delete failed.");
+    setDeletingId(userId);
+    try {
+      const res = await fetch("/api/users", {
+        method: "DELETE",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: userId, mode: "delete" }),
+      });
+      if (res.ok) {
+        setUsers((current) => current.filter((u) => u.id !== userId));
+        setStatus("Account deleted.");
+      } else {
+        const data = await res.json();
+        setStatus(data.error ?? "Delete failed.");
+      }
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -480,10 +488,11 @@ export function DashboardAccountDirectory({
                   </button>
                   <button
                     onClick={() => handleDelete(user.id)}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors"
+                    disabled={deletingId === user.id}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                   >
                     <i className="bi bi-trash" />
-                    Delete
+                    {deletingId === user.id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>

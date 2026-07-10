@@ -13,6 +13,7 @@ type DashboardExamManagerProps = {
   studentDirectory: ManagedUser[];
   onSubmissionsChange: (submissions: TestSubmission[]) => void;
   onMessagePublished: (message: MessageItem) => void;
+  onDashboardRefresh?: () => void;
 };
 
 type DraftQuestion = {
@@ -56,6 +57,7 @@ export function DashboardExamManager({
   studentDirectory,
   onSubmissionsChange,
   onMessagePublished,
+  onDashboardRefresh,
 }: DashboardExamManagerProps) {
   const [tests, setTests] = useState(initialTests);
   const [title, setTitle] = useState("");
@@ -74,6 +76,7 @@ export function DashboardExamManager({
   const [showQuestionBank, setShowQuestionBank] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const assignedTests = useMemo(() => {
     if (role !== "student" || !session) return [];
@@ -139,6 +142,7 @@ export function DashboardExamManager({
     setQuestions([createQuestion(0, 4)]);
     setShowCreateForm(false);
     setStatusMsg("Exam created and assigned successfully.");
+    onDashboardRefresh?.();
   }
 
   async function handleSubmitTest() {
@@ -161,6 +165,7 @@ export function DashboardExamManager({
     setActiveTestId(null);
     setAnswers([]);
     setStatusMsg("Exam submitted for review.");
+    onDashboardRefresh?.();
   }
 
   async function handleGradeSubmission() {
@@ -247,22 +252,29 @@ export function DashboardExamManager({
     setTests((current) => current.map((t) => (t.id === editingTestId ? data.test : t)));
     handleCancelEdit();
     setStatusMsg("Exam updated successfully.");
+    onDashboardRefresh?.();
   }
 
   async function handleDeleteTest(testId: string) {
-    const response = await fetch(`/api/tests/${testId}`, {
-      method: "DELETE",
-      credentials: "same-origin",
-    });
+    setDeletingId(testId);
+    try {
+      const response = await fetch(`/api/tests/${testId}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
 
-    if (!response.ok) {
-      setStatusMsg("Exam could not be deleted.");
-      return;
+      if (!response.ok) {
+        setStatusMsg("Exam could not be deleted.");
+        return;
+      }
+
+      setTests((current) => current.filter((t) => t.id !== testId));
+      setShowDeleteConfirm(null);
+      setStatusMsg("Exam deleted.");
+      onDashboardRefresh?.();
+    } finally {
+      setDeletingId(null);
     }
-
-    setTests((current) => current.filter((t) => t.id !== testId));
-    setShowDeleteConfirm(null);
-    setStatusMsg("Exam deleted.");
   }
 
   const statusTabs = [
@@ -330,7 +342,7 @@ export function DashboardExamManager({
                   {(() => {
                     const graded = submissions.filter(s => s.score != null);
                     if (!graded.length) return "—";
-                    const avg = graded.reduce((a, s) => a + (s.score ?? 0), 0) / graded.length;
+                    const avg = graded.reduce((a, s) => a + ((s.score ?? 0) / s.total) * 100, 0) / graded.length;
                     return `${Math.round(avg)}%`;
                   })()}
                 </div>
@@ -766,13 +778,35 @@ export function DashboardExamManager({
                         >
                           Edit
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowDeleteConfirm(test.id)}
-                          className="btn-surface btn-sm font-bold text-xs text-red-600 border-red-200 hover:bg-red-50"
-                        >
-                          Delete
-                        </button>
+                        {showDeleteConfirm === test.id ? (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-red-600">Delete this exam?</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTest(test.id)}
+                              disabled={deletingId === test.id}
+                              className="btn-action btn-sm font-bold text-xs bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                            >
+                              {deletingId === test.id ? "Deleting..." : "Delete"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setShowDeleteConfirm(null)}
+                              disabled={deletingId === test.id}
+                              className="btn-surface btn-sm font-bold text-xs disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(test.id)}
+                            className="btn-surface btn-sm font-bold text-xs text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            Delete
+                          </button>
+                        )}
                         {pendingSubmissions.some(s => s.testId === test.id) && (
                           <button
                             type="button"
