@@ -50,7 +50,7 @@ const studentFeatures = [
   {
     icon: FileText,
     title: "Resume Builder",
-    description: "Create a professional resume",
+    description: " Comming soon ",
   },
   {
     icon: BellRing,
@@ -63,10 +63,10 @@ export function PlacementPortalHero() {
   return (
     <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)]">
-        <div className="grid lg:grid-cols-2">
+        <div className="grid items-stretch lg:grid-cols-2">
           {/* COMPANY SIDE */}
-          <div className="relative border-b border-slate-200 bg-[#f7faff] p-6 sm:p-8 lg:border-b-0 lg:border-r">
-            <div className="grid items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
+          <div className="relative flex h-full flex-col border-b border-slate-200 bg-[#f7faff] p-6 sm:p-8 lg:border-b-0 lg:border-r">
+            <div className="grid min-h-[300px] items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-blue-700">
                   <Building2 className="h-3.5 w-3.5" />
@@ -83,7 +83,7 @@ export function PlacementPortalHero() {
                   organisation.
                 </p>
 
-                <div className="mt-5 flex flex-wrap gap-2.5">
+                <div className="mt-5 flex min-h-[42px] flex-wrap items-start gap-2.5">
                   <Link
                     href="/contact"
                     className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-[11px] font-black text-white shadow-sm transition hover:bg-blue-700"
@@ -114,24 +114,24 @@ export function PlacementPortalHero() {
               </div>
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <div className="mt-auto grid grid-cols-2 items-start gap-3 pt-7 sm:grid-cols-4">
               {companyFeatures.map((feature) => {
                 const Icon = feature.icon;
 
                 return (
                   <div
                     key={feature.title}
-                    className="rounded-xl border border-blue-100 bg-white px-3 py-3.5 text-center shadow-sm"
+                    className="flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-blue-100 bg-white p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-blue-300 hover:shadow-xl hover:shadow-blue-500/15"
                   >
-                    <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                       <Icon className="h-4 w-4" />
                     </div>
 
-                    <p className="mt-2 text-[11px] font-black leading-tight text-slate-900">
+                    <p className="mt-3 flex min-h-[32px] items-center justify-center text-[11px] font-black leading-tight text-slate-900">
                       {feature.title}
                     </p>
 
-                    <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                    <p className="mt-1 flex min-h-[48px] items-start justify-center text-[9px] leading-4 text-slate-500">
                       {feature.description}
                     </p>
                   </div>
@@ -141,17 +141,16 @@ export function PlacementPortalHero() {
           </div>
 
           {/* STUDENT SIDE */}
-          <div className="relative bg-[#f7fff9] p-6 sm:p-8">
-            <div className="grid items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
-              <div>
+          <div className="relative flex h-full flex-col bg-[#f7fff9] p-6 sm:p-8">
+            <div className="grid min-h-[300px] items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
+              <div className="sm:-translate-y-7">
                 <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-emerald-700">
                   <GraduationCap className="h-3.5 w-3.5" />
                   For Students
                 </span>
 
                 <h2 className="mt-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-[38px]">
-                  Find Your{" "}
-                  <span className="text-emerald-600">Dream Job</span>
+                  Find Your <span className="text-emerald-600">Dream Job</span>
                 </h2>
 
                 <p className="mt-4 max-w-md text-sm font-medium leading-6 text-slate-600">
@@ -159,15 +158,14 @@ export function PlacementPortalHero() {
                   and full-time placements.
                 </p>
 
-                <div className="mt-5 flex flex-wrap gap-2.5">
-<a
-  href="#find-jobs"
-  className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-[11px] font-black text-white shadow-sm transition hover:bg-emerald-700"
->
-  <Search className="h-3.5 w-3.5" />
-  Find Jobs
-</a>
-
+                <div className="mt-5 flex min-h-[42px] flex-wrap items-start gap-2.5 sm:min-h-[94px]">
+                  <a
+                    href="#find-jobs"
+                    className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-[11px] font-black text-white shadow-sm transition hover:bg-emerald-700"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    Find Jobs
+                  </a>
                 </div>
               </div>
 
@@ -183,24 +181,24 @@ export function PlacementPortalHero() {
               </div>
             </div>
 
-            <div className="mt-7 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            <div className="mt-auto grid grid-cols-2 items-stretch gap-2.5 pt-7 sm:grid-cols-4">
               {studentFeatures.map((feature) => {
                 const Icon = feature.icon;
 
                 return (
                   <div
                     key={feature.title}
-                    className="rounded-xl border border-emerald-100 bg-white px-3 py-3.5 text-center shadow-sm"
+                    className="flex aspect-square w-full flex-col items-center justify-center rounded-xl border border-emerald-100 bg-white p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-500/15"
                   >
-                    <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
                       <Icon className="h-4 w-4" />
                     </div>
 
-                    <p className="mt-2 text-[11px] font-black leading-tight text-slate-900">
+                    <p className="mt-3 flex min-h-[32px] items-center justify-center text-[11px] font-black leading-tight text-slate-900">
                       {feature.title}
                     </p>
 
-                    <p className="mt-1 text-[9px] leading-4 text-slate-500">
+                    <p className="mt-1 flex min-h-[48px] items-start justify-center text-[9px] leading-4 text-slate-500">
                       {feature.description}
                     </p>
                   </div>
