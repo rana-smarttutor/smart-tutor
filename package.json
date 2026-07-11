@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@googlemaps/js-api-loader": "^2.1.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.4.0",
     "@vercel/speed-insights": "^2.0.0",
