@@ -44,6 +44,19 @@ const SESSION_SLOTS = [
   "8:00 PM – 9:30 PM",
 ];
 
+const TUITION_MODES = [
+  {
+    value: "Home Tutor",
+    title: "Home Tutor",
+    description: "In-person classes at your home",
+  },
+  {
+    value: "Online Tutor",
+    title: "Online Tutor",
+    description: "Live interactive online classes",
+  },
+] as const;
+
 const BOARD_OPTIONS = [
   "Maharashtra State Board",
   "CBSE",
@@ -508,6 +521,7 @@ export default function CourseModal({
   const [selectedAdditionalCourses, setSelectedAdditionalCourses] = useState<
     string[]
   >([]);
+  const [selectedLearningMode, setSelectedLearningMode] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
   useEffect(() => {
     setIsSuccess(false);
@@ -517,12 +531,15 @@ export default function CourseModal({
     setSelectedStream("");
     setSelectedSubjects([]);
     setOtherSubject("");
+    setSelectedLearningMode("");
     setSelectedSlot("");
 
     if (initialAdditionalCourse) {
       setSelectedAdditionalCourses([initialAdditionalCourse]);
     } else {
       setSelectedAdditionalCourses([]);
+      setSelectedLearningMode("");
+      setSelectedSlot("");
     }
   }, [course?.standardKey, initialAdditionalCourse]);
 
@@ -681,6 +698,11 @@ export default function CourseModal({
       return;
     }
 
+    if (!selectedLearningMode) {
+      alert("Please select Home Tutor or Online Tutor.");
+      return;
+    }
+
     if (!selectedSlot) {
       alert("Please select your preferred session slot.");
       return;
@@ -691,9 +713,8 @@ export default function CourseModal({
           isSeniorSecondary ? ` Stream: **${selectedStream}**.` : ""
         } Regular subjects: **${selectedSubjectText}**. Optional additional courses: **${
           selectedAdditionalCourseText || "None selected"
-        }**. Preferred session slot: **${selectedSlot}**. Enrolling as a ${role}. Let's set up a counselling demo.`
-      : `Hi Smart Tutors, I am interested in enrolling for: **${readableCourseDetail}** as a ${role}. Preferred session slot: **${selectedSlot}**. Let's set up a counselling demo.`;
-
+        }**. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Enrolling as a ${role}. Let's set up a counselling demo.`
+      : `Hi Smart Tutors, I am interested in enrolling for: **${readableCourseDetail}** as a ${role}. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Let's set up a counselling demo.`;
     setIsSubmitting(true);
 
     try {
@@ -1090,8 +1111,52 @@ export default function CourseModal({
                           </select>
                         </div>
                       ) : null}
-
                       {canSelectSlot ? (
+                        <div className="space-y-2 border-t border-slate-200/70 pt-3">
+                          <div className="flex items-center justify-between gap-3">
+                            <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
+                              Preferred Tuition Mode
+                            </label>
+
+                            <span className="text-[10px] font-bold text-blue-600">
+                              Select one
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                            {TUITION_MODES.map((mode) => {
+                              const isSelected =
+                                selectedLearningMode === mode.value;
+
+                              return (
+                                <button
+                                  key={mode.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedLearningMode(mode.value);
+                                    setSelectedSlot("");
+                                  }}
+                                  className={`cursor-pointer rounded-lg border px-4 py-3 text-left transition-all ${
+                                    isSelected
+                                      ? "border-emerald-400 bg-emerald-50 text-emerald-800 shadow-xs"
+                                      : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-2 text-[12px] font-bold">
+                                    {isSelected ? <span>✓</span> : null}
+                                    {mode.title}
+                                  </span>
+
+                                  <span className="mt-1 block text-[9px] font-medium leading-relaxed opacity-75">
+                                    {mode.description}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : null}
+                      {canSelectSlot && selectedLearningMode ? (
                         <div className="space-y-2 border-t border-slate-200/70 pt-3">
                           <div className="flex items-center justify-between gap-3">
                             <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
@@ -1208,10 +1273,12 @@ export default function CourseModal({
                               selectedSubjectText || "..."
                             }. Optional additional courses: ${
                               selectedAdditionalCourseText || "None selected"
+                            }. Preferred tuition mode: ${
+                              selectedLearningMode || "..."
                             }. Preferred session slot: ${selectedSlot || "..."}."`
-                          : `"Hi Smart Tutors, I am interested in ${readableCourseDetail}. Preferred session slot: ${
-                              selectedSlot || "..."
-                            }."`}
+                          : `"Hi Smart Tutors, I am interested in ${readableCourseDetail}. Preferred tuition mode: ${
+                              selectedLearningMode || "..."
+                            }. Preferred session slot: ${selectedSlot || "..."}."`}
                       </p>
                     </div>
 
