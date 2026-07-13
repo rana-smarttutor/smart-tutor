@@ -28,12 +28,12 @@ export default function FeeReceipt() {
         }}
       >
         {/* Inner Border */}
-        <div className="border-[1.5px] border-slate-700 m-2 sm:m-4 p-4 sm:p-6 flex flex-col">
+        <div className="border-[1.5px] border-slate-700 m-2 sm:m-4 flex flex-col">
           {/* HEADER: Logo fills width until address section */}
-          <div className="w-full border-b-[1.5px] border-slate-700 pb-4 mb-4">
+          <div className="w-full border-b-[1.5px] border-slate-700">
             <div className="flex items-stretch gap-0">
               {/* Logo — fills available width */}
-              <div className="flex-1 flex items-center justify-center pr-4 border-r border-slate-300">
+              <div className="flex-1 flex items-center justify-center px-6 py-4 border-r border-slate-300">
                 <img
                   src="/stpl.jpeg"
                   alt="Smart Tutors"
@@ -90,9 +90,9 @@ export default function FeeReceipt() {
                 </span>
               </div>
               <div className="flex-1 flex px-3 py-2 bg-white">
-                <span className="w-28 font-bold">Parent Name</span>
+                <span className="w-28 font-bold">Enrollment ID</span>
                 <span className="mr-2">:</span>
-                <span className="flex-1 text-gray-700">Archana Mokal</span>
+                <span className="flex-1 text-gray-700">7FA2BC9A</span>
               </div>
             </div>
             {/* Row 2 */}
@@ -103,25 +103,12 @@ export default function FeeReceipt() {
                 <span className="flex-1 text-gray-700">Class 9 | CBSE</span>
               </div>
               <div className="flex-1 flex px-3 py-2 bg-white">
-                <span className="w-28 font-bold">Enrolment Date</span>
-                <span className="mr-2">:</span>
-                <span className="flex-1 text-gray-700">05-07-2026</span>
-              </div>
-            </div>
-            {/* Row 3 */}
-            <div className="flex border-b border-slate-400">
-              <div className="flex-1 flex px-3 py-2 border-r border-slate-400 bg-white">
-                <span className="w-28 font-bold">Enrolment No.</span>
-                <span className="mr-2">:</span>
-                <span className="flex-1 text-gray-700">STU-2026-0005</span>
-              </div>
-              <div className="flex-1 flex px-3 py-2 bg-white">
                 <span className="w-28 font-bold">Academic Year</span>
                 <span className="mr-2">:</span>
                 <span className="flex-1 text-gray-700">2026-27</span>
               </div>
             </div>
-            {/* Row 4 */}
+            {/* Row 3 */}
             <div className="flex">
               <div className="flex-1 flex px-3 py-2 border-r border-slate-400 bg-white">
                 <span className="w-28 font-bold">Mobile No.</span>
@@ -306,7 +293,7 @@ export default function FeeReceipt() {
                 This is a computer generated receipt and does not require
                 signature.
               </p>
-              <p>Fees are not refundable at any circumstances.</p>
+              <p className="font-bold text-gray-800">FEES ARE NOT REFUNDABLE UNDER ANY CIRCUMSTANCES.</p>
             </div>
             <div className="flex flex-col items-end gap-0.5">
               <p>Thank you for choosing Smart Tutors Pvt. Ltd.</p>
