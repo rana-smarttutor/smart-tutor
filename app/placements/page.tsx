@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import Image from "next/image";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { PlacementPortalHero } from "@/components/placement-portal-hero";
-import { StudentJobPortalHero } from "@/components/student-job-portal-hero";
 import { SiteHeader } from "@/components/site-header";
 import { generatedPlacedStudents } from "@/lib/placed-students-data";
 import { PublishedPlacementJobs } from "@/components/published-placement-jobs";
