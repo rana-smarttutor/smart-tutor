@@ -54,7 +54,19 @@ const STATUS_CONFIG: Record<
     dot: "bg-[var(--color-amber)]",
   },
 };
+function toLocalDateString(date: Date) {
+  const year = date.getFullYear();
 
+  const month = String(
+    date.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate(),
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 const AVATAR_COLORS = [
   "from-[var(--color-primary)] to-[var(--color-primary-strong)]",
   "from-[var(--color-secondary)] to-[var(--color-secondary-strong)]",
@@ -98,9 +110,9 @@ export function AttendanceManager({
   const [isLoadingBatches, setIsLoadingBatches] = useState(true);
 
   const [selectedBatchId, setSelectedBatchId] = useState("");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().slice(0, 10),
-  );
+const [selectedDate, setSelectedDate] = useState(
+  toLocalDateString(new Date()),
+);
   const [subject, setSubject] = useState("");
   const [search, setSearch] = useState("");
 
@@ -348,23 +360,23 @@ export function AttendanceManager({
   const calDays = useMemo(() => {
     const first = new Date(calYear, calMonth, 1);
     const last = new Date(calYear, calMonth + 1, 0);
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = toLocalDateString(new Date());
     const pad = first.getDay() === 0 ? 6 : first.getDay() - 1;
     const days: { date: string; day: number; currentMonth: boolean; status?: string; isToday: boolean; isFuture: boolean }[] = [];
     for (let p = pad - 1; p >= 0; p--) {
       const d = new Date(calYear, calMonth, -p);
-      const ds = d.toISOString().slice(0, 10);
+      const ds = toLocalDateString(d);
       days.push({ date: ds, day: d.getDate(), currentMonth: false, status: calDateMap.get(ds), isToday: ds === todayStr, isFuture: ds > todayStr });
     }
     for (let d = 1; d <= last.getDate(); d++) {
       const date = new Date(calYear, calMonth, d);
-      const ds = date.toISOString().slice(0, 10);
+      const ds = toLocalDateString(date);
       days.push({ date: ds, day: d, currentMonth: true, status: calDateMap.get(ds), isToday: ds === todayStr, isFuture: ds > todayStr });
     }
     const rem = 42 - days.length;
     for (let i = 1; i <= rem; i++) {
       const d = new Date(calYear, calMonth + 1, i);
-      const ds = d.toISOString().slice(0, 10);
+      const ds = toLocalDateString(d);
       days.push({ date: ds, day: d.getDate(), currentMonth: false, status: calDateMap.get(ds), isToday: ds === todayStr, isFuture: ds > todayStr });
     }
     return days;

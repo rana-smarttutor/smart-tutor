@@ -72,14 +72,13 @@ export function DashboardOverview({
 }: Props) {
   if (role === "student") {
     return (
-      <StudentOverview
-        session={session}
-        dashboard={dashboard}
-        messages={messages}
-        supportContact={supportContact}
-        onSetActiveSection={onSetActiveSection}
-        managedUsers={managedUsers}
-      />
+<StudentOverview
+  session={session}
+  dashboard={dashboard}
+  messages={messages}
+  supportContact={supportContact}
+  onSetActiveSection={onSetActiveSection}
+/>
     );
   }
   if (role === "educator") {
@@ -686,7 +685,6 @@ function StudentOverview({
   dashboard,
   messages,
   onSetActiveSection,
-  managedUsers,
 }: {
   session: SessionUser | null;
   dashboard: DashboardBundle;
@@ -709,6 +707,24 @@ function StudentOverview({
   const batchInfo = dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() || dashboard.heroTitle || "";
   const admissionNo = session?.id?.slice(0, 8).toUpperCase() ?? "—";
   const attRate = dashboard.analytics?.attendance?.rate != null ? Math.round(dashboard.analytics.attendance.rate) : null;
+  const presentCount =
+  dashboard.analytics?.attendance?.present ?? 0;
+
+const absentCount =
+  dashboard.analytics?.attendance?.absent ?? 0;
+
+const attendanceTotal =
+  presentCount + absentCount;
+
+const presentPercentage =
+  attendanceTotal > 0
+    ? Math.round(
+        (presentCount / attendanceTotal) * 100,
+      )
+    : attRate ?? 0;
+
+const presentAngle =
+  presentPercentage * 3.6;
   const classRank = dashboard.stats[1]?.value || "—";
   const avgScore = dashboard.analytics?.assessments?.averageScore != null ? `${Math.round(dashboard.analytics.assessments.averageScore)}%` : "—";
   const pendingHw = dashboard.analytics?.learning?.homeworkRate != null
@@ -735,24 +751,28 @@ function StudentOverview({
       icon: TrendingUp,
       sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => (100 - v * 10)),
     },
-    {
-      label: "Pending HW",
-      value: pendingHw,
-      color: "#0EA5E9",
-      bg: "bg-sky-50",
-      text: "text-sky-600",
-      icon: BookOpen,
-      sparkData: [2, 3, 1, 4, 2, 3, 2],
-    },
-    {
-      label: "Fee Dues",
-      value: feeDueAmount,
-      color: "#DC2626",
-      bg: "bg-red-50",
-      text: "text-red-600",
-      icon: IndianRupee,
-      sparkData: [0, 0, 0, 0, 0, 0, 0],
-    },
+ {
+  label: "Pending HW",
+  value: pendingHw,
+  color: "#0EA5E9",
+  bg: "bg-sky-50",
+  text: "text-sky-600",
+  icon: BookOpen,
+  sparkData: [2, 3, 1, 4, 2, 3, 2],
+  actionLabel: "View Now",
+  actionSection: "homework",
+},
+{
+  label: "Fee Dues",
+  value: feeDueAmount,
+  color: "#DC2626",
+  bg: "bg-red-50",
+  text: "text-red-600",
+  icon: IndianRupee,
+  sparkData: [0, 0, 0, 0, 0, 0, 0],
+  actionLabel: "Pay Now",
+  actionSection: "fees",
+},
   ];
 
   const todayLectures = dashboard.lectures?.filter(
@@ -783,7 +803,7 @@ function StudentOverview({
     { label: "Live Classes", icon: PlayCircle, section: "lectures", color: "#F97316" },
     { label: "Doubts", icon: HelpCircle, section: "messages", color: "#06B6D4" },
     { label: "Notifications", icon: Bell, section: "notifications", color: "#F43F5E" },
-    { label: "AI Tutor", icon: Bot, section: "ai-tutor", color: "#6366F1" },
+
   ];
 
   const testScores = dashboard.tests?.filter((t) => t.total != null && t.total > 0).slice(0, 6) ?? [];
@@ -799,56 +819,110 @@ function StudentOverview({
 
   return (
     <div className="space-y-5">
-      {/* ── Hero Section ── */}
-      <div
-        className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
-        style={{ background: "linear-gradient(135deg,#065F46,#0D9488,#0369A1)" }}
-      >
-        <div className="absolute inset-0 opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
-            <circle cx="50" cy="30" r="80" fill="white" />
-            <circle cx="350" cy="170" r="120" fill="white" />
-            <circle cx="200" cy="100" r="60" fill="white" />
-          </svg>
-        </div>
-        <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-teal-200 uppercase tracking-wider">
-                Student Portal{batchInfo ? ` · ${batchInfo}` : ""}
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-bold mt-1">Hey, {studentName.split(" ")[0]}! 📚</h1>
-              <p className="text-sm text-teal-200 mt-1.5">{dateStr}</p>
-              {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {dashboard.assignedFacultyNames.map((name, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2.5 py-1 text-[11px] font-semibold">
-                      <span className="h-4 w-4 rounded-full bg-white/25 flex items-center justify-center text-[8px] font-bold">{name.charAt(0)}</span>
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
-                <UserCheck size={13} />
-                Attendance: {attRate != null ? `${attRate}%` : "—"}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
-                <Award size={13} />
-                Rank: {classRank}
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
-                <TrendingUp size={13} />
-                Avg: {avgScore}
-              </span>
-            </div>
-          </div>
-          <p className="text-xs text-teal-200/70 mt-3">Admission #: {admissionNo}</p>
-        </div>
+{/* ── Hero Section ── */}
+<div
+  className="relative overflow-hidden rounded-2xl p-6 text-white sm:p-8"
+  style={{
+    background:
+      "linear-gradient(135deg,#065F46,#0D9488,#0369A1)",
+  }}
+>
+  {/* Decorative background */}
+  <div className="absolute inset-0 opacity-10">
+    <svg
+      className="h-full w-full"
+      viewBox="0 0 400 200"
+      preserveAspectRatio="none"
+    >
+      <circle cx="50" cy="30" r="80" fill="white" />
+      <circle cx="350" cy="170" r="120" fill="white" />
+      <circle cx="200" cy="100" r="60" fill="white" />
+    </svg>
+  </div>
+
+  <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    {/* Photo + Student Information */}
+    <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+      {/* Student Photo / Initials Avatar */}
+      <div className="shrink-0">
+<div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-white/20 shadow-lg shadow-black/20 backdrop-blur-sm sm:h-24 sm:w-24 lg:h-28 lg:w-28">
+  {dashboard.profile?.profilePhoto ? (
+    <img
+      src={dashboard.profile.profilePhoto}
+      alt={`${studentName} profile`}
+      className="h-full w-full scale-110 rounded-full object-cover object-top"
+    />
+  ) : (
+    <div className="flex h-full w-full items-center justify-center rounded-full bg-white/20 text-2xl font-black text-white sm:text-3xl">
+      {getInitials(studentName)}
+    </div>
+  )}
+</div>
       </div>
 
+      {/* Student Details */}
+      <div>
+        <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
+          Student Portal
+        </p>
+
+        <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+          Hey, {studentName.split(" ")[0]}! 📚
+        </h1>
+         <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
+          {batchInfo ? `  ${batchInfo}` : ""}
+        </p>
+
+        <p className="mt-1.5 text-sm text-teal-200">
+          {dateStr}
+        </p>
+
+        {dashboard.assignedFacultyNames &&
+        dashboard.assignedFacultyNames.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {dashboard.assignedFacultyNames.map(
+              (name, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm"
+                >
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25 text-[8px] font-bold">
+                    {name.charAt(0)}
+                  </span>
+
+                  {name}
+                </span>
+              ),
+            )}
+          </div>
+        ) : null}
+
+        <p className="mt-3 text-xs text-teal-200/70">
+          Enrollment no: {admissionNo}
+        </p>
+      </div>
+    </div>
+
+    {/* Student Statistics */}
+    <div className="flex flex-wrap gap-2 lg:justify-end">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+        <UserCheck size={13} />
+        Attendance:{" "}
+        {attRate != null ? `${attRate}%` : "—"}
+      </span>
+
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+        <Award size={13} />
+        Rank: {classRank}
+      </span>
+
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+        <TrendingUp size={13} />
+        Avg: {avgScore}
+      </span>
+    </div>
+  </div>
+</div>
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {kpiCards.map((card, idx) => {
@@ -865,8 +939,30 @@ function StudentOverview({
                     <Sparkline values={card.sparkData} color={card.color} />
                   </div>
                 </div>
-                <p className="text-2xl font-black text-slate-900 tracking-tight">{card.value}</p>
-                <p className="text-sm font-medium text-slate-500 mt-0.5">{card.label}</p>
+<div className="flex items-end justify-between gap-3">
+  <div>
+    <p className="text-2xl font-black tracking-tight text-slate-900">
+      {card.value}
+    </p>
+
+    <p className="mt-0.5 text-sm font-medium text-slate-500">
+      {card.label}
+    </p>
+  </div>
+
+  {card.actionLabel && card.actionSection ? (
+    <button
+      type="button"
+      onClick={() => onSetActiveSection(card.actionSection)}
+      className="shrink-0 rounded-lg px-3 py-2 text-xs font-black transition hover:bg-slate-100"
+      style={{
+        color: card.color,
+      }}
+    >
+      {card.actionLabel}
+    </button>
+  ) : null}
+</div>
               </div>
             </div>
           );
@@ -1113,48 +1209,11 @@ function StudentOverview({
             </div>
           )}
 
-          {/* Student Profile Card */}
-          <StudentProfileCard session={session} dashboard={dashboard} managedUsers={managedUsers} />
+
         </div>
       </div>
 
-      {/* ── Bottom Row: Pending Homework & Fee Dues ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-            <BookOpen size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Pending Homework</p>
-            <p className="text-xl font-black text-slate-900">
-              {dashboard.analytics?.learning?.homeworkRate != null
-                ? `${Math.round((100 - dashboard.analytics.learning.homeworkRate))} items`
-                : "—"}
-            </p>
-          </div>
-          <button
-            onClick={() => onSetActiveSection("homework")}
-            className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
-          >
-            View
-          </button>
-        </div>
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-            <IndianRupee size={24} />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Fee Dues</p>
-            <p className="text-xl font-black text-slate-900">{feeDueAmount}</p>
-          </div>
-          <button
-            onClick={() => onSetActiveSection("fees")}
-            className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
-          >
-            Pay Now
-          </button>
-        </div>
-      </div>
+
 
       {/* ── Quick Access Grid ── */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
@@ -1838,132 +1897,7 @@ function PTags({ label, values }: { label: string; values: string[] | undefined 
   );
 }
 
-function StudentProfileCard({ session, dashboard, managedUsers }: { session: SessionUser | null; dashboard: DashboardBundle; managedUsers?: ManagedUser[] }) {
-  const [showAll, setShowAll] = useState(false);
-  const [profilePopup, setProfilePopup] = useState<ManagedUser | null>(null);
-  const p = dashboard.profile;
 
-  function getUserById(id: string): ManagedUser | undefined {
-    return managedUsers?.find((u) => u.id === id);
-  }
-
-  const basicFields = (
-    <>
-      <div className="grid grid-cols-2 gap-3">
-        <PField label="Batch" value={p?.courseWantedTitle?.split("|")[0]?.trim()} />
-        <PField label="Type" value={p?.studentType === "on-campus" ? "On Campus" : p?.studentType} />
-      </div>
-      <PField label="Gender" value={p?.gender} />
-      <PField label="Date of Birth" value={p?.dob || p?.dateOfBirth} />
-      <PField label="Father&apos;s Name" value={p?.fatherName} />
-      <PField label="Guardian Phone" value={p?.guardianPhone} />
-      {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
-        <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Assigned Faculty</p>
-          {dashboard.assignedFacultyIds?.map((id, i) => {
-            const faculty = getUserById(id);
-            const name = dashboard.assignedFacultyNames?.[i] ?? "Unknown";
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => faculty && setProfilePopup(faculty)}
-                className="flex w-full items-center gap-2 py-1 text-left hover:bg-white/60 rounded-lg px-1 transition"
-              >
-                <div className="h-6 w-6 rounded-full bg-[#0B40A1] text-white flex items-center justify-center text-[9px] font-bold">{name.charAt(0)}</div>
-                <span className="text-sm font-semibold text-slate-800">{name}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-      <PTags label="Focus Areas" values={p?.weakSubjects} />
-    </>
-  );
-  const extraFields = (
-    <>
-      <PTags label="Strong Subjects" values={p?.strongSubjects} />
-      <PField label="Parent Name" value={p?.parentName} />
-      <PField label="Parent Email" value={p?.parentEmail} />
-      <PField label="Parent Mobile" value={p?.parentMobile} />
-      <PField label="Latest Qualification" value={p?.latestQualification} />
-      <PField label="Latest Academic Score" value={p?.latestAcademicScore} />
-      <PField label="Address" value={[p?.addressLine1, p?.addressLine2, p?.city, p?.state, p?.pincode].filter(Boolean).join(", ")} />
-    </>
-  );
-  const hasExtra = !!(p?.strongSubjects?.length || p?.parentName || p?.parentEmail || p?.parentMobile || p?.latestQualification || p?.latestAcademicScore || p?.addressLine1);
-  return (
-    <div className="relative">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="h-20 bg-[#0B40A1] relative" />
-        <div className="px-6 pb-6 relative">
-          <div className="flex -mt-10 mb-4">
-            <div className="h-20 w-20 rounded-xl bg-white p-1 shadow-md">
-              <div className="h-full w-full rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-                {p?.profilePhoto ? <img src={p.profilePhoto} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-slate-500">{getInitials(session?.name)}</span>}
-              </div>
-            </div>
-            <div className="ml-4 mt-6">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
-                <CheckCircle2 size={10} />
-                {session?.status === "active" ? "Active" : "Pending"}
-              </span>
-            </div>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900">{session?.name ?? "Student"}</h2>
-          <p className="text-xs text-slate-500 mt-0.5">{session?.email ?? ""}</p>
-          <div className="mt-5 space-y-3">
-            {basicFields}
-            {showAll && hasExtra && extraFields}
-          </div>
-          {hasExtra && (
-            <button type="button" onClick={() => setShowAll((s) => !s)} className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors">
-              {showAll ? "View Less ↑" : "View More ↓"}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {profilePopup ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" onClick={() => setProfilePopup(null)}>
-          <div className="w-full max-w-xs rounded-2xl bg-white p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-black text-slate-900">Profile</h3>
-              <button type="button" onClick={() => setProfilePopup(null)} className="text-slate-400 hover:text-slate-700">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="flex flex-col items-center gap-3">
-              <div className="h-16 w-16 rounded-full bg-[#0B40A1] text-white flex items-center justify-center text-xl font-bold">
-                {profilePopup.name.charAt(0)}
-              </div>
-              <div className="text-center">
-                <p className="text-base font-bold text-slate-900">{profilePopup.name}</p>
-                <p className="text-xs font-semibold text-slate-500 capitalize">{profilePopup.role}</p>
-              </div>
-              <div className="w-full space-y-2 border-t border-slate-100 pt-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Program</span>
-                  <span className="font-semibold text-slate-800">{profilePopup.program || "—"}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-slate-500">Qualification</span>
-                  <span className="font-semibold text-slate-800">{profilePopup.profile?.qualification || profilePopup.profile?.latestQualification || "—"}</span>
-                </div>
-                {profilePopup.profile?.experience ? (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-500">Experience</span>
-                    <span className="font-semibold text-slate-800">{profilePopup.profile.experience}</span>
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 function EducatorProfileCard({ session, dashboard }: { session: SessionUser | null; dashboard: DashboardBundle }) {
   const [showAll, setShowAll] = useState(false);

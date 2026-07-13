@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { Batch, LectureItem, ManagedUser, Role } from "@/lib/types";
 
@@ -78,6 +73,31 @@ export function LectureManager({
   const canEdit = role === "admin" || role === "educator";
 
   const [items, setItems] = useState<LectureItem[]>(lectures);
+
+  const visibleLectures = useMemo(() => {
+    /*
+     * Admins and educators still need
+     * all lectures for management.
+     */
+    if (canEdit) {
+      return items;
+    }
+
+    /*
+     * Students and parents see only
+     * completed lectures that include
+     * an actual recording link.
+     */
+    return items.filter((lecture) => {
+      const lectureStatus =
+        (lecture.status as LectureStatus | undefined) ?? "scheduled";
+
+      return (
+        lectureStatus === "completed" && Boolean(lecture.recordingLink?.trim())
+      );
+    });
+  }, [canEdit, items]);
+
   const [batches, setBatches] = useState<Batch[]>([]);
   const [isLoadingBatches, setIsLoadingBatches] = useState(false);
 
@@ -115,8 +135,7 @@ export function LectureManager({
     return (selectedBatch.studentIds ?? [])
       .map((studentId) =>
         studentDirectory.find(
-          (student) =>
-            student.id === studentId && student.role === "student",
+          (student) => student.id === studentId && student.role === "student",
         ),
       )
       .filter((student): student is ManagedUser => Boolean(student));
@@ -325,9 +344,7 @@ export function LectureManager({
     }
 
     setItems((current) =>
-      current.map((item) =>
-        item.id === lectureId ? payload.lecture! : item,
-      ),
+      current.map((item) => (item.id === lectureId ? payload.lecture! : item)),
     );
 
     return payload.lecture;
@@ -462,13 +479,13 @@ export function LectureManager({
           <p className="section-label">Lectures</p>
 
           <h2 className="text-2xl font-black text-[var(--color-heading)]">
-            Daily Lecture Reports
+            {canEdit ? "Daily Lecture Reports" : "Recorded Lectures"}
           </h2>
 
           <p className="text-sm text-[var(--color-muted)]">
             {canEdit
               ? "Select an assigned batch to create lectures and daily reports for its students."
-              : "View your class schedule, lecture reports, homework, and study updates."}
+              : "Watch completed class recordings and access shared lecture materials."}
           </p>
         </div>
 
@@ -740,8 +757,8 @@ export function LectureManager({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {items.length ? (
-          items.map((lecture) => {
+        {visibleLectures.length ? (
+          visibleLectures.map((lecture) => {
             const lectureStatus =
               (lecture.status as LectureStatus | undefined) ?? "scheduled";
 
@@ -934,10 +951,7 @@ export function LectureManager({
                         <textarea
                           value={reportDraft.nextTopic ?? ""}
                           onChange={(event) =>
-                            updateReportDraft(
-                              "nextTopic",
-                              event.target.value,
-                            )
+                            updateReportDraft("nextTopic", event.target.value)
                           }
                           placeholder="Next topic"
                           className={textareaClass}
@@ -969,7 +983,7 @@ export function LectureManager({
                 ) : null}
 
                 <div className="mt-5 flex flex-wrap gap-3">
-                  {lecture.meetingLink ? (
+                  {canEdit && lecture.meetingLink ? (
                     <a
                       href={lecture.meetingLink}
                       target="_blank"
@@ -1040,13 +1054,13 @@ export function LectureManager({
         ) : (
           <div className="surface-soft rounded-[2rem] border border-[var(--color-border)] p-10 text-center lg:col-span-2">
             <h3 className="text-lg font-black text-[var(--color-heading)]">
-              No lectures yet
+              {canEdit ? "No lectures yet" : "No recorded lectures yet"}
             </h3>
 
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               {canEdit
                 ? "Create your first lecture or daily lecture report above."
-                : "Your scheduled lectures and reports will appear here."}
+                : "Completed class recordings will appear here once they are uploaded."}
             </p>
           </div>
         )}
@@ -1055,13 +1069,7 @@ export function LectureManager({
   );
 }
 
-function ReportItem({
-  label,
-  value,
-}: {
-  label: string;
-  value?: string;
-}) {
+function ReportItem({ label, value }: { label: string; value?: string }) {
   if (!value) {
     return null;
   }
