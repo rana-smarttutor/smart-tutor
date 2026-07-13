@@ -8,6 +8,7 @@ import {
   getFeeInvoicesForRole,
   getNotificationRecipientIdsForStudents,
 } from "@/lib/data-store";
+import type { PaymentTransaction } from "@/lib/types";
 
 function canManageFees(role: string | undefined) {
   return role === "admin" || role === "educator";
@@ -133,6 +134,29 @@ export async function POST(request: Request) {
       year: "numeric",
     }).format(new Date(`${dueDate}T12:00:00`));
 
+    const paymentMode = getText(body.paymentMode, 60);
+    let transactions: PaymentTransaction[] = [];
+    let paidAmount = 0;
+    let status: "paid" | "unpaid" | "partial" = "unpaid";
+
+    if (body.transaction && paymentMode) {
+      const t = body.transaction as Record<string, unknown>;
+      const tx: PaymentTransaction = {
+        paidAmount: amount,
+        paidDate: (t.paidDate as string) || dueDate,
+        paymentMode: (paymentMode as PaymentTransaction["paymentMode"]) || "Cash",
+        transactionId: getText(t.transactionId, 200) || undefined,
+        chequeNumber: getText(t.chequeNumber, 50) || undefined,
+        bankName: getText(t.bankName, 100) || undefined,
+        accountLast4: getText(t.accountLast4, 10) || undefined,
+        recordedBy: session.id,
+        recordedAt: new Date().toISOString(),
+      };
+      transactions = [tx];
+      paidAmount = amount;
+      status = "paid";
+    }
+
     const feeInvoice = await createFeeInvoice({
       studentId: studentDetails.studentId,
       studentName: studentDetails.studentName,
@@ -141,12 +165,12 @@ export async function POST(request: Request) {
       title,
       particulars,
       amount,
-      paidAmount: 0,
+      paidAmount,
       dueDate,
-      status: "unpaid",
+      status,
 
       notes: getText(body.notes, 500) || undefined,
-      paymentMode: getText(body.paymentMode, 60) || undefined,
+      paymentMode: paymentMode || undefined,
       createdBy: session.id,
 
       parentName: studentDetails.parentName || undefined,
@@ -156,6 +180,7 @@ export async function POST(request: Request) {
       academicYear: studentDetails.academicYear,
       mobileNo: studentDetails.mobileNo || undefined,
       month,
+      transactions,
     });
 
     const recipientIds = await getNotificationRecipientIdsForStudents([

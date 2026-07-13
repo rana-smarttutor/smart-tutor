@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { deleteFeeInvoice, updateFeeInvoice } from "@/lib/data-store";
 import { getSessionUser } from "@/lib/auth";
+import type { PaymentTransaction } from "@/lib/types";
 
 type RouteContext = {
   params: Promise<{
@@ -26,6 +27,24 @@ if (session.role !== "admin") {
   const { invoiceId } = await context.params;
   const body = await request.json();
 
+  let transaction: PaymentTransaction | undefined;
+
+  if (body.transaction) {
+    const t = body.transaction;
+    transaction = {
+      paidAmount: Number(t.paidAmount) || 0,
+      paidDate: t.paidDate || new Date().toISOString().slice(0, 10),
+      paymentMode: t.paymentMode || "Cash",
+      transactionId: t.transactionId?.trim() || undefined,
+      chequeNumber: t.chequeNumber?.trim() || undefined,
+      bankName: t.bankName?.trim() || undefined,
+      accountLast4: t.accountLast4?.trim() || undefined,
+      notes: t.notes?.trim() || undefined,
+      recordedBy: session.id,
+      recordedAt: new Date().toISOString(),
+    };
+  }
+
   const feeInvoice = await updateFeeInvoice(invoiceId, {
     title: body.title,
     amount: body.amount === undefined ? undefined : Number(body.amount),
@@ -34,6 +53,8 @@ if (session.role !== "admin") {
     dueDate: body.dueDate,
     status: body.status,
     notes: body.notes,
+    paymentMode: body.paymentMode,
+    transaction,
   });
 
   if (!feeInvoice) {

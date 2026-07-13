@@ -2,7 +2,7 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import type { FeeInvoice, ManagedUser, Role } from "@/lib/types";
+import type { FeeInvoice, ManagedUser, PaymentMode, Role } from "@/lib/types";
 
 type InvoiceManagerProps = {
   role: Role;
@@ -28,7 +28,22 @@ type InvoiceDraft = {
   particulars: string;
   amount: string;
   dueDate: string;
-  paymentMode: string;
+  paymentMode: PaymentMode | "";
+  transactionId: string;
+  chequeNumber: string;
+  bankName: string;
+  accountLast4: string;
+  notes: string;
+};
+
+type PaymentDraft = {
+  paidAmount: string;
+  paidDate: string;
+  paymentMode: PaymentMode;
+  transactionId: string;
+  chequeNumber: string;
+  bankName: string;
+  accountLast4: string;
   notes: string;
 };
 
@@ -50,6 +65,23 @@ function createDraft(studentId = ""): InvoiceDraft {
     amount: "",
     dueDate: today(),
     paymentMode: "",
+    transactionId: "",
+    chequeNumber: "",
+    bankName: "",
+    accountLast4: "",
+    notes: "",
+  };
+}
+
+function createPaymentDraft(remainingBalance: number): PaymentDraft {
+  return {
+    paidAmount: String(remainingBalance),
+    paidDate: today(),
+    paymentMode: "Cash",
+    transactionId: "",
+    chequeNumber: "",
+    bankName: "",
+    accountLast4: "",
     notes: "",
   };
 }
@@ -255,6 +287,12 @@ export function InvoiceManager({
     null,
   );
 
+  const [invoiceToPay, setInvoiceToPay] = useState<FeeInvoice | null>(null);
+  const [paymentDraft, setPaymentDraft] = useState<PaymentDraft>(
+    createPaymentDraft(0),
+  );
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
+
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -371,20 +409,34 @@ export function InvoiceManager({
     try {
       setIsSaving(true);
 
+      const bodyPayload: Record<string, unknown> = {
+        studentId: draft.studentId,
+        title: draft.title,
+        particulars: draft.particulars,
+        amount,
+        dueDate: draft.dueDate,
+        notes: draft.notes,
+      };
+
+      if (draft.paymentMode) {
+        bodyPayload.paymentMode = draft.paymentMode;
+        bodyPayload.transaction = {
+          paidAmount: amount,
+          paidDate: draft.dueDate,
+          paymentMode: draft.paymentMode,
+          transactionId: draft.transactionId || undefined,
+          chequeNumber: draft.chequeNumber || undefined,
+          bankName: draft.bankName || undefined,
+          accountLast4: draft.accountLast4 || undefined,
+        };
+      }
+
       const response = await fetch("/api/invoices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          studentId: draft.studentId,
-          title: draft.title,
-          particulars: draft.particulars,
-          amount,
-          dueDate: draft.dueDate,
-          paymentMode: draft.paymentMode,
-          notes: draft.notes,
-        }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const payload = (await response.json()) as {
@@ -447,6 +499,87 @@ export function InvoiceManager({
     }
   }
 
+  function openPaymentModal(invoice: FeeInvoice) {
+    const remaining = Math.max(invoice.amount - (invoice.paidAmount ?? 0), 0);
+    setInvoiceToPay(invoice);
+    setPaymentDraft(createPaymentDraft(remaining));
+  }
+
+  function updatePaymentDraft<K extends keyof PaymentDraft>(
+    key: K,
+    value: PaymentDraft[K],
+  ) {
+    setPaymentDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  async function recordPayment() {
+    if (!invoiceToPay) return;
+
+    const amount = Number(paymentDraft.paidAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      showMessage("error", "Enter a valid paid amount.");
+      return;
+    }
+
+    const remaining = Math.max(
+      invoiceToPay.amount - (invoiceToPay.paidAmount ?? 0),
+      0,
+    );
+    if (amount > remaining) {
+      showMessage(
+        "error",
+        `Paid amount cannot exceed the outstanding balance of ₹${remaining.toLocaleString("en-IN")}.`,
+      );
+      return;
+    }
+
+    try {
+      setIsRecordingPayment(true);
+
+      const response = await fetch(`/api/invoices/${invoiceToPay.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transaction: {
+            paidAmount: amount,
+            paidDate: paymentDraft.paidDate,
+            paymentMode: paymentDraft.paymentMode,
+            transactionId: paymentDraft.transactionId,
+            chequeNumber: paymentDraft.chequeNumber,
+            bankName: paymentDraft.bankName,
+            accountLast4: paymentDraft.accountLast4,
+            notes: paymentDraft.notes,
+          },
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        feeInvoice?: FeeInvoice;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.feeInvoice) {
+        throw new Error(payload.error || "Unable to record payment.");
+      }
+
+      setInvoices((current) =>
+        current.map((inv) =>
+          inv.id === payload.feeInvoice!.id ? payload.feeInvoice! : inv,
+        ),
+      );
+
+      setInvoiceToPay(null);
+      showMessage("success", "Payment recorded successfully.");
+    } catch (error) {
+      showMessage(
+        "error",
+        error instanceof Error ? error.message : "Unable to record payment.",
+      );
+    } finally {
+      setIsRecordingPayment(false);
+    }
+  }
+
   function downloadReceipt(invoice: FeeInvoice) {
     const popup = window.open("", "_blank", "width=1280,height=860");
 
@@ -459,12 +592,60 @@ export function InvoiceManager({
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
+    const transactions = invoice.transactions ?? [];
+
+    const statusColors: Record<string, string> = {
+      paid: "background:#d1fae5;color:#065f46;",
+      partial: "background:#dbeafe;color:#1e40af;",
+      unpaid: "background:#fef3c7;color:#92400e;",
+      overdue: "background:#fee2e2;color:#991b1b;",
+    };
+
+    const statusStyle = statusColors[invoice.status] ?? statusColors.unpaid;
+
+    function renderTransactionRows(): string {
+      if (!transactions.length) return "";
+
+      const rows = transactions
+        .map(
+          (t, i) => `
+        <tr>
+          <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;font-size:13px;">${i + 1}</td>
+          <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;font-size:13px;">${escapeHtml(formatReceiptDate(t.paidDate))}</td>
+          <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:right;font-size:13px;font-weight:700;">${escapeHtml(formatCurrency(t.paidAmount))}</td>
+          <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;font-size:13px;">${escapeHtml(t.paymentMode)}</td>
+          <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;font-size:13px;">${escapeHtml(t.transactionId || t.chequeNumber || "-")}</td>
+          <td style="padding:8px 10px;border:1px solid #d1d5db;text-align:center;font-size:13px;">${escapeHtml(t.bankName || "-")}</td>
+        </tr>`,
+        )
+        .join("");
+
+      return `
+      <div style="margin-top:16px;border:1px solid #d1d5db;border-radius:4px;overflow:hidden;">
+        <div style="background:#f1f5f9;padding:8px 12px;font-weight:900;font-size:13px;border-bottom:1px solid #d1d5db;">
+          Payment History
+        </div>
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;width:40px;">#</th>
+              <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Date</th>
+              <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:right;">Amount</th>
+              <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Mode</th>
+              <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Transaction Ref</th>
+              <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Bank</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    }
 
     const receiptHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Fee Receipt - ${escapeHtml(receiptNo)}</title>
+  <title>Fee Receipt</title>
 
   <style>
     * { box-sizing: border-box; }
@@ -486,56 +667,41 @@ export function InvoiceManager({
 
     .header {
       display: grid;
-      grid-template-columns: 220px 1fr 160px;
-      min-height: 120px;
+      grid-template-columns: 1fr auto;
+      min-height: 100px;
       align-items: center;
       border-bottom: 2px solid #18181b;
     }
 
     .brand {
-      padding: 20px;
-      text-align: center;
-      font-size: 18px;
-      font-weight: 900;
-    }
-
-    .brand small {
-      display: block;
-      margin-top: 4px;
-      color: #6b7280;
-      font-size: 8px;
-      letter-spacing: .12em;
-    }
-
-    .company {
-      padding: 14px;
+      padding: 16px 20px;
       text-align: center;
     }
 
-    .company h1 {
-      margin: 0;
-      font-size: 27px;
+    .brand img {
+      max-width: 200px;
+      height: auto;
     }
 
-    .company p {
-      margin: 5px 0 0;
-      font-size: 14px;
-    }
-
-    .parent-copy {
-      align-self: end;
-      padding: 14px;
+    .addresses {
+      padding: 14px 20px;
       text-align: right;
-      font-size: 13px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #374151;
+      border-left: 1px solid #e5e7eb;
+    }
+
+    .addresses strong {
+      font-size: 12px;
+      color: #111827;
     }
 
     .title {
-      border-bottom: 2px solid #18181b;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
       font-size: 18px;
       font-weight: 900;
-      text-decoration: underline;
     }
 
     table {
@@ -575,6 +741,16 @@ export function InvoiceManager({
       padding: 10px 14px;
       font-size: 14px;
       line-height: 1.8;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .footer {
@@ -654,21 +830,23 @@ export function InvoiceManager({
   <main class="receipt">
     <header class="header">
       <div class="brand">
-        SMART TUTORS
-        <small>Learning for Future</small>
+        <img src="${escapeHtml(`${window.location.origin}/smart-tutors-logo.png`)}" alt="Smart Tutors" />
       </div>
 
-      <div class="company">
-        <h1>Smart Tutors</h1>
-        <p><strong>Panvel Branch Office</strong></p>
-        <p>Sector 5, New Panvel East, Panvel</p>
-        <p>Phone: +91 8850447887 | Email: info@smarttutors.co.in</p>
+      <div class="addresses">
+        <strong>Vashi Branch</strong><br/>
+        Sector 17, Vashi,<br/>
+        Navi Mumbai - 400703<br/>
+        Phone: +91 8850447887<br/>
+        Email: info@smarttutors.co.in
       </div>
-
-      <div class="parent-copy">Parent's Copy</div>
     </header>
 
-    <div class="title">*Fee Receipt*</div>
+    <div class="title">
+      *Fee Receipt*
+      &nbsp;&nbsp;
+      <span class="status-badge" style="${statusStyle}">${escapeHtml(invoice.status.toUpperCase())}</span>
+    </div>
 
     <table class="details">
       <tbody>
@@ -742,14 +920,20 @@ export function InvoiceManager({
       </div>
 
       <div>
-        <strong>Payment Mode:</strong>
-        ${escapeHtml(invoice.paymentMode || "-")}
+        <strong>Payment Status:</strong>
+        <span class="status-badge" style="${statusStyle}">${escapeHtml(invoice.status.toUpperCase())}</span>
         &nbsp; | &nbsp;
-        <strong>Due Date:</strong>
-        ${escapeHtml(formatReceiptDate(invoice.dueDate))}
+        <strong>Total Paid:</strong>
+        ${escapeHtml(formatCurrency(paidAmount))}
+        &nbsp; | &nbsp;
+        <strong>Balance Due:</strong>
+        ${escapeHtml(formatCurrency(balance))}
       </div>
 
       <div>
+        <strong>Due Date:</strong>
+        ${escapeHtml(formatReceiptDate(invoice.dueDate))}
+        &nbsp; | &nbsp;
         <strong>Print Date:</strong>
         ${escapeHtml(
           new Intl.DateTimeFormat("en-IN", {
@@ -759,6 +943,8 @@ export function InvoiceManager({
         )}
       </div>
     </section>
+
+    ${renderTransactionRows()}
 
     <footer class="footer">
       <div class="note">
@@ -920,22 +1106,74 @@ window.setTimeout(() => {
               />
             </FieldLabel>
 
-            <FieldLabel label="Payment Mode">
+            <FieldLabel label="Payment Status *">
               <select
                 value={draft.paymentMode}
                 onChange={(event) =>
-                  updateDraft("paymentMode", event.target.value)
+                  updateDraft("paymentMode", event.target.value as PaymentMode | "")
                 }
                 className={fieldClass}
               >
-                <option value="">Not paid yet</option>
-                <option value="Cash">Cash</option>
-                <option value="UPI">UPI</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Card">Card</option>
-                <option value="Online Payment">Online Payment</option>
+                <option value="">Unpaid</option>
+                <option value="Cash">Paid - Cash</option>
+                <option value="UPI">Paid - UPI</option>
+                <option value="Bank Transfer">Paid - Bank Transfer</option>
+                <option value="Card">Paid - Card</option>
+                <option value="Online Payment">Paid - Online Payment</option>
+                <option value="Cheque">Paid - Cheque</option>
               </select>
             </FieldLabel>
+
+            {draft.paymentMode && draft.paymentMode !== "Cash" ? (
+              <>
+                {draft.paymentMode === "Cheque" ? (
+                  <FieldLabel label="Cheque Number">
+                    <input
+                      value={draft.chequeNumber}
+                      onChange={(event) =>
+                        updateDraft("chequeNumber", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="Cheque number"
+                    />
+                  </FieldLabel>
+                ) : null}
+
+                <FieldLabel label="Transaction ID / Reference">
+                  <input
+                    value={draft.transactionId}
+                    onChange={(event) =>
+                      updateDraft("transactionId", event.target.value)
+                    }
+                    className={fieldClass}
+                    placeholder="UPI ref, NEFT/RTGS ref, etc."
+                  />
+                </FieldLabel>
+
+                <FieldLabel label="Bank Name">
+                  <input
+                    value={draft.bankName}
+                    onChange={(event) =>
+                      updateDraft("bankName", event.target.value)
+                    }
+                    className={fieldClass}
+                    placeholder="Bank name"
+                  />
+                </FieldLabel>
+
+                <FieldLabel label="Account Last 4 Digits">
+                  <input
+                    value={draft.accountLast4}
+                    onChange={(event) =>
+                      updateDraft("accountLast4", event.target.value)
+                    }
+                    className={fieldClass}
+                    placeholder="XXXX"
+                    maxLength={4}
+                  />
+                </FieldLabel>
+              </>
+            ) : null}
 
             <FieldLabel label="Notes">
               <input
@@ -1063,7 +1301,17 @@ window.setTimeout(() => {
                   </td>
 
                   <td className="px-5 py-4 text-right">
-                    <div className="flex min-w-[260px] justify-end gap-2">
+                    <div className="flex min-w-[340px] justify-end gap-2">
+                      {canManage && balance > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => openPaymentModal(invoice)}
+                          className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-black text-emerald-700 transition hover:bg-emerald-100"
+                        >
+                          Record Payment
+                        </button>
+                      ) : null}
+
                       <button
                         type="button"
                         onClick={() => downloadReceipt(invoice)}
@@ -1127,6 +1375,164 @@ window.setTimeout(() => {
                 {deletingId === invoiceToDelete.id
                   ? "Deleting..."
                   : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {invoiceToPay ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">
+              Record Payment
+            </p>
+
+            <h3 className="mt-2 text-xl font-black text-slate-950">
+              Payment for {invoiceToPay.studentName}
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Outstanding balance:{" "}
+              <strong>
+                {formatCurrency(
+                  Math.max(
+                    invoiceToPay.amount - (invoiceToPay.paidAmount ?? 0),
+                    0,
+                  ),
+                )}
+              </strong>
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <FieldLabel label="Amount (₹) *">
+                <input
+                  type="number"
+                  min="1"
+                  value={paymentDraft.paidAmount}
+                  onChange={(event) =>
+                    updatePaymentDraft("paidAmount", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Payment Date *">
+                <input
+                  type="date"
+                  value={paymentDraft.paidDate}
+                  onChange={(event) =>
+                    updatePaymentDraft("paidDate", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Payment Mode *">
+                <select
+                  value={paymentDraft.paymentMode}
+                  onChange={(event) =>
+                    updatePaymentDraft(
+                      "paymentMode",
+                      event.target.value as PaymentMode,
+                    )
+                  }
+                  className={fieldClass}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Card">Card</option>
+                  <option value="Online Payment">Online Payment</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </FieldLabel>
+
+              <FieldLabel label="Notes">
+                <input
+                  value={paymentDraft.notes}
+                  onChange={(event) =>
+                    updatePaymentDraft("notes", event.target.value)
+                  }
+                  className={fieldClass}
+                  placeholder="Optional"
+                />
+              </FieldLabel>
+            </div>
+
+            {paymentDraft.paymentMode !== "Cash" ? (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-amber-700">
+                  Transaction Details
+                </p>
+
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {paymentDraft.paymentMode === "Cheque" ? (
+                    <FieldLabel label="Cheque Number">
+                      <input
+                        value={paymentDraft.chequeNumber}
+                        onChange={(event) =>
+                          updatePaymentDraft("chequeNumber", event.target.value)
+                        }
+                        className={fieldClass}
+                        placeholder="Cheque number"
+                      />
+                    </FieldLabel>
+                  ) : null}
+
+                  <FieldLabel label="Transaction ID / Reference">
+                    <input
+                      value={paymentDraft.transactionId}
+                      onChange={(event) =>
+                        updatePaymentDraft("transactionId", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="UPI ref, NEFT/RTGS ref, etc."
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Bank Name">
+                    <input
+                      value={paymentDraft.bankName}
+                      onChange={(event) =>
+                        updatePaymentDraft("bankName", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="Bank name"
+                    />
+                  </FieldLabel>
+
+                  <FieldLabel label="Account Last 4 Digits">
+                    <input
+                      value={paymentDraft.accountLast4}
+                      onChange={(event) =>
+                        updatePaymentDraft("accountLast4", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="XXXX"
+                      maxLength={4}
+                    />
+                  </FieldLabel>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setInvoiceToPay(null)}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isRecordingPayment}
+                onClick={() => void recordPayment()}
+                className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {isRecordingPayment ? "Saving..." : "Record Payment"}
               </button>
             </div>
           </div>

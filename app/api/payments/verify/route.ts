@@ -50,6 +50,15 @@ export async function POST(request: Request) {
     await updateFeeInvoice(invoiceId, {
       status: "paid",
       paidAmount: Number(amount) || 0,
+      transaction: {
+        paidAmount: Number(amount) || 0,
+        paidDate: new Date().toISOString().slice(0, 10),
+        paymentMode: "Online Payment",
+        transactionId: razorpay_payment_id,
+        notes: `Razorpay Order: ${razorpay_order_id}`,
+        recordedBy: session.id,
+        recordedAt: new Date().toISOString(),
+      },
     });
   }
 
