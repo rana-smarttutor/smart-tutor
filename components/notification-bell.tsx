@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Bell } from "lucide-react";
 
 import type { AppNotification } from "@/lib/types";
 
@@ -194,7 +195,10 @@ export function NotificationBell({
         aria-expanded={isOpen}
         className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-heading)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
       >
-        <span className="text-xl leading-none">🔔</span>
+        <Bell
+  className="h-5 w-5 text-[#0B40A1]"
+  strokeWidth={2.2}
+/>
 
         {unreadCount > 0 ? (
           <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--color-primary)] px-1.5 py-0.5 text-[10px] font-bold text-white">

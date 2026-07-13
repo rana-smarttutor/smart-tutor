@@ -139,18 +139,37 @@ export type CourseItem = {
     detail?: string;
   }[];
 };
+// =========================
+// Exam Types
+// =========================
+
+export type ExamType =
+  | "unit-1"
+  | "semester-1"
+  | "unit-2"
+  | "semester-2";
 
 export type TestItem = {
   id: string;
+
   title: string;
   status: string;
   summary: string;
+
+  examType?: ExamType;
+
   audience: Role[];
+
   assignedUserIds?: string[];
+
   createdBy?: string;
+
   questions?: TestQuestion[];
+
   total?: number;
+
   subject?: string;
+
   duration?: number;
 };
 
@@ -456,6 +475,7 @@ export type FeeInvoice = {
   particulars?: string;
   month?: string;
   paymentMode?: string;
+transactionId?: string;
 
   title: string;
   amount: number;
@@ -600,7 +620,6 @@ export type DashboardBundle = {
   teacherBatchAssignments?: TeacherBatchAssignment[];
   weeklyTests?: WeeklyTest[];
   teacherFeedback?: TeacherFeedback[];
-  behaviourNotes?: BehaviourNote[];
   dailyActivities?: StudentDailyActivity[];
   feeInstallmentPlans?: FeeInstallmentPlan[];
   teacherPayouts?: TeacherPayout[];
@@ -710,38 +729,7 @@ export type TeacherFeedback = {
 };
 
 
-// =========================
-// BehaviourNote
-// =========================
 
-export type BehaviourRating =
-  | "excellent"
-  | "good"
-  | "needs-improvement"
-  | "concern";
-
-export type BehaviourNote = {
-  id: string;
-
-  studentId: string;
-  studentName: string;
-
-  teacherId: string;
-  teacherName?: string;
-
-  batchId?: string;
-  batchName?: string;
-
-  rating: BehaviourRating;
-  note: string;
-  actionTaken?: string;
-
-  visibleToParent: boolean;
-  resolved?: boolean;
-
-  createdAt: string;
-  updatedAt?: string;
-};
 
 // =========================
 // StudentDailyActivity
@@ -786,6 +774,44 @@ export type StudentDailyActivity = {
   createdAt: string;
   updatedAt?: string;
 };
+
+// =========================
+// Student Daily Routine
+// =========================
+
+export type DailyRoutineMood =
+  | "difficult"
+  | "okay"
+  | "good"
+  | "great";
+
+export type StudentDailyRoutine = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+
+  date: string;
+
+  wakeUpTime: string;
+  bedTime: string;
+
+  sleepMinutes: number;
+  studyMinutes: number;
+  screenMinutes: number;
+  exerciseMinutes: number;
+
+  tasksCompleted: number;
+
+  mood: DailyRoutineMood;
+
+  mainGoal?: string;
+  reflection?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
 
 // =========================
 //  TeacherPayout

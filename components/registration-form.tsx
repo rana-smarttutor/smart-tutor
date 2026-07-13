@@ -225,9 +225,7 @@ export function RegistrationForm() {
     value: string,
   ) {
     setExamQualifications((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item,
-      ),
+      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
     );
   }
 
@@ -885,6 +883,7 @@ export function RegistrationForm() {
                     label="Weak Subjects (comma separated)"
                     value={form.weakSubjects}
                     onChange={(value) => updateField("weakSubjects", value)}
+                    required
                     placeholder="e.g. Mathematics, Physics"
                   />
 
@@ -892,6 +891,7 @@ export function RegistrationForm() {
                     label="Strong Subjects (comma separated)"
                     value={form.strongSubjects}
                     onChange={(value) => updateField("strongSubjects", value)}
+                    required
                     placeholder="e.g. English, Biology"
                   />
                 </div>
@@ -911,10 +911,12 @@ export function RegistrationForm() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                      Latest Completed Class / Qualification
+                      Latest Completed Class / Qualification{" "}
+                      <span className="text-red-500">*</span>
                     </label>
 
                     <select
+                      required
                       value={form.latestQualification}
                       onChange={(event) =>
                         updateField("latestQualification", event.target.value)
@@ -977,11 +979,12 @@ export function RegistrationForm() {
                   </div>
 
                   <InputField
-                    label="Latest Academic Score (Optional)"
+                    label="Latest Academic Score"
                     value={form.latestAcademicScore}
                     onChange={(value) =>
                       updateField("latestAcademicScore", value)
                     }
+                    required
                     placeholder="e.g. 85%, 8.5 CGPA, First Class"
                   />
                 </div>
@@ -1228,7 +1231,8 @@ export function RegistrationForm() {
 
         <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
           <p className="text-[11px] font-medium text-amber-800">
-            Password reset is only available after administrator verification. Please remember your password or contact our team for assistance.
+            Password reset is only available after administrator verification.
+            Please remember your password or contact our team for assistance.
           </p>
         </div>
 

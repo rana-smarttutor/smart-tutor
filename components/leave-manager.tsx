@@ -134,11 +134,17 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
     note: "",
   });
 
-  // Reject modal
-  const [rejectTarget, setRejectTarget] = useState<LeaveRequest | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+// Student apply-leave popup
+const [showApplyForm, setShowApplyForm] = useState(false);
 
-  const isAdmin = role === "admin";
+// Reject modal
+const [rejectTarget, setRejectTarget] =
+  useState<LeaveRequest | null>(null);
+
+const [rejectReason, setRejectReason] = useState("");
+
+const isAdmin = role === "admin";
+const isStudent = role === "student";
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -214,8 +220,9 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
         toDate: "",
         reason: "",
       });
-      setActiveTab("requests");
-      void fetchAll();
+setShowApplyForm(false);
+setActiveTab("requests");
+void fetchAll();
     } catch {
       alert("Network error. Please try again.");
     }
@@ -361,26 +368,47 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
     }
   }
 
-  const pendingCount = requests.filter((r) => r.status === "pending").length;
-  const approvedCount = requests.filter((r) => r.status === "approved").length;
-  const stats = [
-    {
-      label: "Pending",
-      count: pendingCount,
-      color: "#F59E0B",
-      bg: "#FFFBEB",
-    },
-    {
-      label: "Approved",
-      count: approvedCount,
-      color: "#10B981",
-      bg: "#ECFDF5",
-    },
-  ];
+const pendingCount = requests.filter(
+  (request) => request.status === "pending",
+).length;
+
+const approvedCount = requests.filter(
+  (request) => request.status === "approved",
+).length;
+
+const rejectedCount = requests.filter(
+  (request) => request.status === "rejected",
+).length;
+const stats = [
+  {
+    label: "Pending",
+    count: pendingCount,
+    color: "#F59E0B",
+    bg: "#FFFBEB",
+    iconPath:
+      "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+  },
+  {
+    label: "Approved",
+    count: approvedCount,
+    color: "#10B981",
+    bg: "#ECFDF5",
+    iconPath:
+      "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+  },
+  {
+    label: "Rejected",
+    count: rejectedCount,
+    color: "#EF4444",
+    bg: "#FEF2F2",
+    iconPath:
+      "M6 18L18 6M6 6l12 12",
+  },
+];
 
   const tabs: { id: Tab; label: string; show: boolean }[] = [
     { id: "requests", label: "Leave Requests", show: true },
-    { id: "apply", label: "Apply Leave", show: true },
+    { id: "apply", label: "Apply Leave", show: !isStudent },
     { id: "types", label: "Leave Types", show: isAdmin },
     { id: "holidays", label: "Holidays", show: isAdmin },
     { id: "balances", label: "Balances", show: isAdmin },
@@ -415,11 +443,12 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
               style={{ background: s.bg, color: s.color }}
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={
-                  s.label === "Pending"
-                    ? "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                } />
+                <path
+  strokeLinecap="round"
+  strokeLinejoin="round"
+  strokeWidth={2}
+  d={s.iconPath}
+/>
               </svg>
             </div>
             <div>
@@ -434,25 +463,29 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
         ))}
       </div>
 
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-[var(--color-border)] pb-2">
-        {tabs
-          .filter((t) => t.show)
-          .map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setActiveTab(t.id)}
-              className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
-                activeTab === t.id
-                  ? "bg-[var(--color-primary)] text-white"
-                  : "text-[var(--color-muted)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-heading)]"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-      </div>
+{/* Tabs — hidden for the merged student view */}
+{!isStudent ? (
+  <div className="flex flex-wrap gap-2 border-b border-[var(--color-border)] pb-2">
+    {tabs
+      .filter((tab) => tab.show)
+      .map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() =>
+            setActiveTab(tab.id)
+          }
+          className={`rounded-lg px-4 py-2 text-sm font-bold transition-colors ${
+            activeTab === tab.id
+              ? "bg-[var(--color-primary)] text-white"
+              : "text-[var(--color-muted)] hover:bg-[var(--color-primary)]/10 hover:text-[var(--color-heading)]"
+          }`}
+        >
+          {tab.label}
+        </button>
+      ))}
+  </div>
+) : null}
 
       {error && (
         <div className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] p-4 text-sm text-[#991B1B]">
@@ -467,9 +500,38 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
       ) : (
         <>
           {/* ── Requests Tab ── */}
-          {activeTab === "requests" && (
-            <div className="surface rounded-[2rem] overflow-hidden">
-              {requests.length === 0 ? (
+{activeTab === "requests" && (
+  <div className="surface overflow-hidden rounded-[2rem]">
+    {/* Student merged-page header */}
+    {isStudent ? (
+      <div className="flex flex-col gap-4 border-b border-[var(--color-border)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-[var(--color-heading)]">
+            My Leave Requests
+          </h3>
+
+          <p className="mt-1 text-sm text-[var(--color-muted)]">
+            View your leave history or submit a new request.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowApplyForm(true)
+          }
+          className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+        >
+          <span className="text-lg leading-none">
+            +
+          </span>
+
+          Apply for Leave
+        </button>
+      </div>
+    ) : null}
+
+    {requests.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center">
                   <svg className="mb-4 h-12 w-12 text-[var(--color-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -477,13 +539,17 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
                   <p className="text-sm text-[var(--color-muted)]">
                     No leave requests yet.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("apply")}
-                    className="mt-3 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
-                  >
-                    Apply for Leave
-                  </button>
+{!isStudent ? (
+  <button
+    type="button"
+    onClick={() =>
+      setActiveTab("apply")
+    }
+    className="mt-3 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+  >
+    Apply for Leave
+  </button>
+) : null}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -584,7 +650,8 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
           )}
 
           {/* ── Apply Tab ── */}
-          {activeTab === "apply" && (
+          {activeTab === "apply" &&
+!isStudent && (
             <div className="surface rounded-[2rem] p-6">
               <h3 className="mb-4 text-xl font-bold text-[var(--color-heading)]">
                 Apply for Leave
@@ -1119,7 +1186,224 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
           )}
         </>
       )}
+{/* ── Student Apply Leave Popup ── */}
+{isStudent &&
+showApplyForm ? (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6"
+    onClick={() =>
+      setShowApplyForm(false)
+    }
+  >
+    <div
+      className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-[var(--color-panel)] shadow-2xl"
+      onClick={(event) =>
+        event.stopPropagation()
+      }
+    >
+      {/* Popup header */}
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-5">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-primary)]">
+            Leave Application
+          </p>
 
+          <h3 className="mt-1 text-xl font-bold text-[var(--color-heading)]">
+            Apply for Leave
+          </h3>
+        </div>
+
+        <button
+          type="button"
+          onClick={() =>
+            setShowApplyForm(false)
+          }
+          className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-[var(--color-muted)] transition hover:bg-[var(--color-background-strong)] hover:text-[var(--color-heading)]"
+          aria-label="Close"
+        >
+          ×
+        </button>
+      </div>
+
+      <form
+        onSubmit={handleApply}
+        className="space-y-5 p-6"
+      >
+        {/* Leave Type */}
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-[var(--color-heading)]">
+            Leave Type{" "}
+            <span className="text-red-500">
+              *
+            </span>
+          </label>
+
+          <select
+            value={
+              formData.leaveTypeId
+            }
+            onChange={(event) => {
+              const option =
+                event.target
+                  .selectedOptions[0];
+
+              setFormData({
+                ...formData,
+                leaveTypeId:
+                  event.target.value,
+                leaveTypeName:
+                  option?.dataset
+                    ?.name || "",
+              });
+            }}
+            required
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
+          >
+            <option value="">
+              Select leave type
+            </option>
+
+            {leaveTypes.map(
+              (leaveType) => (
+                <option
+                  key={leaveType.id}
+                  value={leaveType.id}
+                  data-name={
+                    leaveType.name
+                  }
+                >
+                  {leaveType.name} (
+                  {
+                    leaveType.daysAllowed
+                  }
+                  d/year)
+                </option>
+              ),
+            )}
+          </select>
+        </div>
+
+        {/* Dates */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-[var(--color-heading)]">
+              From Date{" "}
+              <span className="text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="date"
+              value={
+                formData.fromDate
+              }
+              onChange={(event) =>
+                setFormData({
+                  ...formData,
+                  fromDate:
+                    event.target.value,
+                })
+              }
+              min={today}
+              required
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold text-[var(--color-heading)]">
+              To Date{" "}
+              <span className="text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="date"
+              value={
+                formData.toDate
+              }
+              onChange={(event) =>
+                setFormData({
+                  ...formData,
+                  toDate:
+                    event.target.value,
+                })
+              }
+              min={
+                formData.fromDate ||
+                today
+              }
+              required
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
+            />
+          </div>
+        </div>
+
+        {/* Day calculation */}
+        {formData.fromDate &&
+        formData.toDate ? (
+          <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            Total leave duration:{" "}
+            <strong>
+              {daysBetween(
+                formData.fromDate,
+                formData.toDate,
+              )}{" "}
+              day(s)
+            </strong>
+          </div>
+        ) : null}
+
+        {/* Reason */}
+        <div>
+          <label className="mb-1.5 block text-sm font-semibold text-[var(--color-heading)]">
+            Reason{" "}
+            <span className="text-red-500">
+              *
+            </span>
+          </label>
+
+          <textarea
+            value={formData.reason}
+            onChange={(event) =>
+              setFormData({
+                ...formData,
+                reason:
+                  event.target.value,
+              })
+            }
+            rows={4}
+            required
+            placeholder="Write the reason for your leave..."
+            className="w-full resize-none rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-col-reverse gap-3 border-t border-[var(--color-border)] pt-5 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={() =>
+              setShowApplyForm(false)
+            }
+            className="rounded-full border border-[var(--color-border)] bg-[var(--color-panel)] px-6 py-2.5 text-sm font-bold text-[var(--color-muted)] transition hover:bg-[var(--color-background-strong)]"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="rounded-full bg-[var(--color-primary)] px-6 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+          >
+            Submit Application
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+) : null}
       {/* ── Reject Modal ── */}
       {rejectTarget && (
         <div

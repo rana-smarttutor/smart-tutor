@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
+import { StudentRoutineViewer } from "@/components/student-routine-viewer";
+import { StudentDailyRoutine } from "@/components/student-daily-routine";
 import type {
   Batch,
   ManagedUser,
@@ -84,7 +85,7 @@ function getCompletedTasks(activity: StudentDailyActivity) {
   ].filter(Boolean).length;
 }
 
-export function DailyLearningActivityManager({
+function TeacherDailyLearningActivityManager({
   role,
   studentDirectory,
 }: DailyLearningActivityManagerProps) {
@@ -916,5 +917,65 @@ export function DailyLearningActivityManager({
         </div>
       </div>
     </section>
+  );
+}
+
+export function DailyLearningActivityManager(
+  props: DailyLearningActivityManagerProps,
+) {
+  /*
+   * Students fill and manage
+   * their own daily routines.
+   */
+  if (props.role === "student") {
+    return <StudentDailyRoutine />;
+  }
+
+  /*
+   * Parents automatically see
+   * the routine records of their
+   * linked child.
+   */
+  if (props.role === "parent") {
+    return (
+      <StudentRoutineViewer
+        role={props.role}
+        studentDirectory={props.studentDirectory}
+      />
+    );
+  }
+
+  /*
+   * Admins and educators keep
+   * the existing learning activity
+   * system and also receive the
+   * student routine viewer below it.
+   */
+  if (
+    props.role === "admin" ||
+    props.role === "educator"
+  ) {
+    return (
+      <div className="space-y-8">
+        <TeacherDailyLearningActivityManager
+          {...props}
+        />
+
+        <StudentRoutineViewer
+          role={props.role}
+          studentDirectory={props.studentDirectory}
+        />
+      </div>
+    );
+  }
+
+  /*
+   * Keep the existing behavior
+   * for any other supported role.
+   */
+  return (
+    <TeacherDailyLearningActivityManager
+      {...props}
+    />
   );
 }

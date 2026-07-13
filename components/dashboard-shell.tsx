@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+
 import React, { useEffect, useState } from "react";
 
 import { Menu, X } from "lucide-react";
@@ -290,7 +291,7 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Messages" },
+    { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "homework", label: "Homework" },
     { id: "attendance", label: "Attendance" },
@@ -298,8 +299,8 @@ const sidebarByRole = {
     { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Feedback & Behaviour" },
-    { id: "daily-activities", label: "Daily Learning" },
+    { id: "student-feedback", label: "Feedback" },
+    { id: "daily-activities", label: "My Daily Routines" },
     { id: "performance", label: "Performance Reports" },
     { id: "receipts", label: "My Fees" },
     { id: "library", label: "Library" },
@@ -310,7 +311,7 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Messages" },
+    { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "gamification", label: "Gamification" },
     { id: "ptm", label: "PTM" },
@@ -321,7 +322,7 @@ const sidebarByRole = {
     { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Feedback & Behaviour" },
+    { id: "student-feedback", label: "Teacher Feedback" },
     { id: "daily-activities", label: "Daily Activities" },
     { id: "results", label: "Results" },
     { id: "teacher-payouts", label: "My Earnings" },
@@ -330,7 +331,7 @@ const sidebarByRole = {
 
   counsellor: [
     { id: "overview", label: "Overview" },
-    { id: "messages", label: "Messages" },
+    { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "ptm", label: "PTM" },
     { id: "staff-attendance", label: "Staff Attendance" },
@@ -343,7 +344,7 @@ const sidebarByRole = {
     { id: "overview", label: "Overview" },
     { id: "roles", label: "Roles & Permissions" },
     { id: "gamification", label: "Gamification" },
-    { id: "messages", label: "Messages" },
+    { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "chat-monitor", label: "Chat Monitor" },
     { id: "notifications", label: "Notifications" },
@@ -354,7 +355,7 @@ const sidebarByRole = {
     { id: "placement-jobs", label: "Placement Jobs" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Feedback & Behaviour" },
+    { id: "student-feedback", label: "Teacher Feedback" },
     { id: "daily-activities", label: "Daily Activities" },
     { id: "performance", label: "Analytics Hub" },
     { id: "courses", label: "Courses" },
@@ -385,7 +386,7 @@ const sidebarByRole = {
     { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Feedback & Behaviour" },
+    { id: "student-feedback", label: "Teacher Feedback" },
     { id: "daily-activities", label: "Daily Learning" },
     { id: "performance", label: "Performance Reports" },
     { id: "receipts", label: "Child's Fees" },
@@ -1308,30 +1309,18 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showLibrary ? (
-            <article className="surface rounded-[2rem] p-5 sm:p-6">
-              <div className="mb-8">
-                <p className="section-label">Resource Center</p>
-                <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--color-heading)]">
-                  Digital Library
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-[var(--color-muted)]">
-                  Access and manage curated study materials and revision guides.
-                </p>
-              </div>
-
-              {isLibraryLoading ? (
-                <div className="flex h-64 items-center justify-center">
-                  <span className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-primary)] border-t-transparent" />
-                </div>
-              ) : (
-                <DigitalLibraryClient
-                  initialBooks={libraryBooks}
-                  canManage={role === "admin" || role === "educator"}
-                />
-              )}
-            </article>
-          ) : null}
+{showLibrary ? (
+  isLibraryLoading ? (
+    <div className="surface flex min-h-[28rem] items-center justify-center rounded-[2rem]">
+      <span className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-primary)] border-t-transparent" />
+    </div>
+  ) : (
+    <DigitalLibraryClient
+      initialBooks={libraryBooks}
+      canManage={role === "admin" || role === "educator"}
+    />
+  )
+) : null}
 
           {showPerformance ? (
             <article className="surface rounded-[2rem] p-5 sm:p-6">

@@ -40,12 +40,12 @@ import type {
   TestSubmission,
   UserProfile,
   WeeklyTest,
-  BehaviourNote,
   TeacherFeedback,
   TeacherPayout,
   AppNotification,
-  StudentDailyActivity,
-  PlacementApplication,
+StudentDailyActivity,
+StudentDailyRoutine,
+PlacementApplication,
   PlacementJob,
   PlacementApplicationStatus,
   DashboardAnalytics,
@@ -151,10 +151,16 @@ const COLLECTIONS = {
   batches: "batches",
   teacherBatchAssignments: "teacherBatchAssignments",
   weeklyTests: "weeklyTests",
-  teacherFeedback: "teacherFeedback",
-  behaviourNotes: "behaviourNotes",
-  dailyActivities: "dailyActivities",
-  feeInstallmentPlans: "feeInstallmentPlans",
+ teacherFeedback: "teacherFeedback",
+
+
+// Teacher-created daily learning records
+dailyActivities: "dailyActivities",
+
+// Student-created personal routine records
+studentDailyRoutines: "studentDailyRoutines",
+
+feeInstallmentPlans: "feeInstallmentPlans",
   teacherPayouts: "teacherPayouts",
   notifications: "notifications",
   placementJobs: "placementJobs",
@@ -945,16 +951,31 @@ export async function createTest(input: {
   title: string;
   status: string;
   summary: string;
+
+  examType?: TestItem["examType"];
+
   createdBy: string;
   assignedUserIds: string[];
   questions: TestQuestion[];
 }) {
-  const test: TestItem & { createdAt: string } = {
-    id: randomUUID(),
-    title: input.title,
-    status: input.status,
-    summary: input.summary,
-    audience: ["student", "educator", "admin", "parent"],
+const test: TestItem & { createdAt: string } = {
+  id: randomUUID(),
+
+  title: input.title,
+
+  status: input.status,
+
+  summary: input.summary,
+
+  examType:
+    input.examType,
+
+  audience: [
+    "student",
+    "educator",
+    "admin",
+    "parent",
+  ],
     assignedUserIds: input.assignedUserIds,
     createdBy: input.createdBy,
     questions: input.questions,
@@ -970,10 +991,19 @@ export async function updateTest(
   testId: string,
   input: {
     title?: string;
+
     status?: string;
+
     summary?: string;
-    assignedUserIds?: string[];
-    questions?: TestQuestion[];
+
+    examType?:
+      TestItem["examType"];
+
+    assignedUserIds?:
+      string[];
+
+    questions?:
+      TestQuestion[];
   },
 ) {
   const collection = await getCollection(COLLECTIONS.tests);
@@ -983,8 +1013,29 @@ export async function updateTest(
 
   if (input.title !== undefined) update.title = input.title;
   if (input.status !== undefined) update.status = input.status;
-  if (input.summary !== undefined) update.summary = input.summary;
-  if (input.assignedUserIds !== undefined) update.assignedUserIds = input.assignedUserIds;
+if (
+  input.summary !==
+  undefined
+) {
+  update.summary =
+    input.summary;
+}
+
+if (
+  input.examType !==
+  undefined
+) {
+  update.examType =
+    input.examType;
+}
+
+if (
+  input.assignedUserIds !==
+  undefined
+) {
+  update.assignedUserIds =
+    input.assignedUserIds;
+}
   if (input.questions !== undefined) update.questions = input.questions;
 
   const result = await collection.updateOne({ id: testId }, { $set: update });
@@ -4404,158 +4455,9 @@ export async function deleteTeacherFeedback(feedbackId: string) {
   return result.deletedCount > 0;
 }
 
-export async function getBehaviourNotesForRole(role: Role, userId?: string) {
-  const collection = await getCollection<BehaviourNote>(
-    COLLECTIONS.behaviourNotes,
-  );
 
-  if (role === "admin") {
-    return stripMongoIds(
-      await collection.find({}).sort({ createdAt: -1 }).toArray(),
-    );
-  }
 
-  if (role === "educator") {
-    if (!userId) {
-      return [];
-    }
 
-    return stripMongoIds(
-      await collection
-        .find({ teacherId: userId })
-        .sort({ createdAt: -1 })
-        .toArray(),
-    );
-  }
-
-  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
-
-  if (!linkedStudentId) {
-    return [];
-  }
-
-  return stripMongoIds(
-    await collection
-      .find({
-        studentId: linkedStudentId,
-        visibleToParent: true,
-      })
-      .sort({ createdAt: -1 })
-      .toArray(),
-  );
-}
-
-export async function createBehaviourNote(input: {
-  studentId: string;
-  studentName: string;
-  teacherId: string;
-  teacherName?: string;
-  batchId?: string;
-  batchName?: string;
-  rating: BehaviourNote["rating"];
-  note: string;
-  actionTaken?: string;
-  visibleToParent: boolean;
-  resolved?: boolean;
-}) {
-  if (!input.studentId) {
-    throw new Error("Student is required.");
-  }
-
-  if (!input.teacherId) {
-    throw new Error("Teacher is required.");
-  }
-
-  if (!input.note.trim()) {
-    throw new Error("Behaviour note is required.");
-  }
-
-  const collection = await getCollection<BehaviourNote>(
-    COLLECTIONS.behaviourNotes,
-  );
-
-  const now = new Date().toISOString();
-
-  const behaviourNote: BehaviourNote = {
-    id: `behaviour-${randomUUID()}`,
-    studentId: input.studentId,
-    studentName: input.studentName.trim(),
-    teacherId: input.teacherId,
-    teacherName: input.teacherName?.trim() || undefined,
-    batchId: input.batchId,
-    batchName: input.batchName?.trim() || undefined,
-    rating: input.rating,
-    note: input.note.trim(),
-    actionTaken: input.actionTaken?.trim() || undefined,
-    visibleToParent: input.visibleToParent,
-    resolved: input.resolved ?? false,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await collection.insertOne(behaviourNote);
-
-  return stripMongoId(behaviourNote);
-}
-
-export async function updateBehaviourNote(
-  behaviourNoteId: string,
-  input: Partial<{
-    rating: BehaviourNote["rating"];
-    note: string;
-    actionTaken: string;
-    visibleToParent: boolean;
-    resolved: boolean;
-  }>,
-) {
-  const collection = await getCollection<BehaviourNote>(
-    COLLECTIONS.behaviourNotes,
-  );
-
-  const updates: Partial<BehaviourNote> = {
-    updatedAt: new Date().toISOString(),
-  };
-
-  if (input.rating) {
-    updates.rating = input.rating;
-  }
-
-  if (typeof input.note === "string") {
-    if (!input.note.trim()) {
-      throw new Error("Behaviour note cannot be empty.");
-    }
-
-    updates.note = input.note.trim();
-  }
-
-  if (typeof input.actionTaken === "string") {
-    updates.actionTaken = input.actionTaken.trim() || undefined;
-  }
-
-  if (typeof input.visibleToParent === "boolean") {
-    updates.visibleToParent = input.visibleToParent;
-  }
-
-  if (typeof input.resolved === "boolean") {
-    updates.resolved = input.resolved;
-  }
-
-  await collection.updateOne({ id: behaviourNoteId }, { $set: updates });
-
-  const updatedNote = await collection.findOne({ id: behaviourNoteId });
-
-  return updatedNote ? stripMongoId(updatedNote) : null;
-}
-
-export async function deleteBehaviourNote(behaviourNoteId: string) {
-  const collection = await getCollection<BehaviourNote>(
-    COLLECTIONS.behaviourNotes,
-  );
-
-  const result = await collection.deleteOne({ id: behaviourNoteId });
-
-  return result.deletedCount > 0;
-}
 
 export async function getDailyActivitiesForRole(role: Role, userId?: string) {
   const collection = await getCollection<StudentDailyActivity>(
@@ -4788,6 +4690,275 @@ export async function deleteDailyActivity(activityId: string) {
   );
 
   const result = await collection.deleteOne({ id: activityId });
+
+  return result.deletedCount > 0;
+}
+// =========================
+// Student Daily Routine
+// =========================
+
+export async function getStudentDailyRoutines(
+  studentId: string,
+) {
+  const collection =
+    await getCollection<StudentDailyRoutine>(
+      COLLECTIONS.studentDailyRoutines,
+    );
+
+  return stripMongoIds(
+    await collection
+      .find({
+        studentId,
+      })
+      .sort({
+        date: -1,
+        createdAt: -1,
+      })
+      .toArray(),
+  );
+}
+
+export async function getStudentDailyRoutineById(
+  routineId: string,
+  studentId: string,
+) {
+  const collection =
+    await getCollection<StudentDailyRoutine>(
+      COLLECTIONS.studentDailyRoutines,
+    );
+
+  const routine =
+    await collection.findOne({
+      id: routineId,
+      studentId,
+    });
+
+  return routine
+    ? stripMongoId(routine)
+    : null;
+}
+
+export async function createStudentDailyRoutine(
+  input: Omit<
+    StudentDailyRoutine,
+    "id" | "createdAt" | "updatedAt"
+  >,
+) {
+  if (!input.studentId.trim()) {
+    throw new Error(
+      "Student is required.",
+    );
+  }
+
+  if (!input.studentName.trim()) {
+    throw new Error(
+      "Student name is required.",
+    );
+  }
+
+  if (!input.date.trim()) {
+    throw new Error(
+      "Routine date is required.",
+    );
+  }
+
+  const collection =
+    await getCollection<StudentDailyRoutine>(
+      COLLECTIONS.studentDailyRoutines,
+    );
+
+  /*
+   * One routine entry per student per date.
+   */
+  const existingRoutine =
+    await collection.findOne({
+      studentId: input.studentId,
+      date: input.date,
+    });
+
+  if (existingRoutine) {
+    throw new Error(
+      "A daily routine has already been saved for this date.",
+    );
+  }
+
+  const now =
+    new Date().toISOString();
+
+  const routine: StudentDailyRoutine = {
+    id: `daily-routine-${randomUUID()}`,
+
+    studentId:
+      input.studentId,
+
+    studentName:
+      input.studentName.trim(),
+
+    date:
+      input.date,
+
+    wakeUpTime:
+      input.wakeUpTime,
+
+    bedTime:
+      input.bedTime,
+
+    sleepMinutes:
+      input.sleepMinutes,
+
+    studyMinutes:
+      input.studyMinutes,
+
+    screenMinutes:
+      input.screenMinutes,
+
+    exerciseMinutes:
+      input.exerciseMinutes,
+
+    tasksCompleted:
+      input.tasksCompleted,
+
+    mood:
+      input.mood,
+
+    mainGoal:
+      input.mainGoal?.trim() ||
+      undefined,
+
+    reflection:
+      input.reflection?.trim() ||
+      undefined,
+
+    createdAt:
+      now,
+
+    updatedAt:
+      now,
+  };
+
+  await collection.insertOne(
+    routine,
+  );
+
+  return stripMongoId(
+    routine,
+  );
+}
+
+export async function updateStudentDailyRoutine(
+  routineId: string,
+  studentId: string,
+  input: Partial<
+    Omit<
+      StudentDailyRoutine,
+      | "id"
+      | "studentId"
+      | "studentName"
+      | "createdAt"
+      | "updatedAt"
+    >
+  >,
+) {
+  const collection =
+    await getCollection<StudentDailyRoutine>(
+      COLLECTIONS.studentDailyRoutines,
+    );
+
+  const existingRoutine =
+    await collection.findOne({
+      id: routineId,
+      studentId,
+    });
+
+  if (!existingRoutine) {
+    return null;
+  }
+
+  /*
+   * Prevent two routine records
+   * for the same student and date.
+   */
+  if (
+    typeof input.date ===
+      "string" &&
+    input.date !==
+      existingRoutine.date
+  ) {
+    const duplicate =
+      await collection.findOne({
+        studentId,
+        date: input.date,
+        id: {
+          $ne: routineId,
+        } as any,
+      });
+
+    if (duplicate) {
+      throw new Error(
+        "A daily routine has already been saved for this date.",
+      );
+    }
+  }
+
+  const updates: Partial<StudentDailyRoutine> =
+    {
+      ...input,
+
+      mainGoal:
+        typeof input.mainGoal ===
+        "string"
+          ? input.mainGoal.trim() ||
+            undefined
+          : input.mainGoal,
+
+      reflection:
+        typeof input.reflection ===
+        "string"
+          ? input.reflection.trim() ||
+            undefined
+          : input.reflection,
+
+      updatedAt:
+        new Date().toISOString(),
+    };
+
+  await collection.updateOne(
+    {
+      id: routineId,
+      studentId,
+    },
+    {
+      $set: updates,
+    },
+  );
+
+  const updatedRoutine =
+    await collection.findOne({
+      id: routineId,
+      studentId,
+    });
+
+  return updatedRoutine
+    ? stripMongoId(
+        updatedRoutine,
+      )
+    : null;
+}
+
+export async function deleteStudentDailyRoutine(
+  routineId: string,
+  studentId: string,
+) {
+  const collection =
+    await getCollection<StudentDailyRoutine>(
+      COLLECTIONS.studentDailyRoutines,
+    );
+
+  const result =
+    await collection.deleteOne({
+      id: routineId,
+      studentId,
+    });
 
   return result.deletedCount > 0;
 }

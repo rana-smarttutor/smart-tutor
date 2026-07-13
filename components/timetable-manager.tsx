@@ -90,11 +90,44 @@ function formatTime(value?: string) {
   if (!value) return "";
   const date = new Date(value);
   if (isNaN(date.getTime())) return "";
-  return date.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" });
+  return date.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+function formatDateRange(value: Date) {
+  return value.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
-function formatDateRange(value: Date) {
-  return value.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+function formatLectureDate(value?: string) {
+  if (!value) {
+    return "Date not available";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date not available";
+  }
+
+  return date.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function getInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
 }
 
 export function TimetableManager({
@@ -108,6 +141,9 @@ export function TimetableManager({
   const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
   const [selectedBatchId, setSelectedBatchId] = useState("all");
   const [selectedTeacherId, setSelectedTeacherId] = useState("all");
+  const [selectedLecture, setSelectedLecture] = useState<LectureItem | null>(
+    null,
+  );
 
   useEffect(() => {
     setItems(lectures);
@@ -121,6 +157,17 @@ export function TimetableManager({
     if (session?.id && session?.name) map.set(session.id, session.name);
     return map;
   }, [managedUsers, session]);
+  const facultyById = useMemo(() => {
+    const map = new Map<string, ManagedUser>();
+
+    managedUsers.forEach((user) => {
+      if (user.role === "educator") {
+        map.set(user.id, user);
+      }
+    });
+
+    return map;
+  }, [managedUsers]);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -128,13 +175,19 @@ export function TimetableManager({
   );
 
   const batchOptions = useMemo(() => {
-    const ids = [...new Set(items.map((l) => l.batchId).filter(Boolean))] as string[];
-    const names = [...new Set(items.map((l) => l.batchName).filter(Boolean))] as string[];
+    const ids = [
+      ...new Set(items.map((l) => l.batchId).filter(Boolean)),
+    ] as string[];
+    const names = [
+      ...new Set(items.map((l) => l.batchName).filter(Boolean)),
+    ] as string[];
     return ids.map((id, i) => ({ id, name: names[i] || id }));
   }, [items]);
 
   const teacherOptions = useMemo(() => {
-    const ids = [...new Set(items.map((l) => l.teacherId).filter(Boolean))] as string[];
+    const ids = [
+      ...new Set(items.map((l) => l.teacherId).filter(Boolean)),
+    ] as string[];
     return ids.map((id) => ({
       id,
       name: facultyNameById.get(id) || "Unknown",
@@ -152,23 +205,33 @@ export function TimetableManager({
         return lk >= weekStartKey && lk <= weekEndKey;
       })
       .filter((l) => selectedBatchId === "all" || l.batchId === selectedBatchId)
-      .filter((l) => selectedTeacherId === "all" || l.teacherId === selectedTeacherId);
+      .filter(
+        (l) => selectedTeacherId === "all" || l.teacherId === selectedTeacherId,
+      );
   }, [items, selectedBatchId, selectedTeacherId, weekDays]);
 
   const todayLectures = useMemo(() => {
     const todayKey = getDateKey(new Date());
-    return visibleLectures.filter((l) => {
-      if (!l.startsAt) return false;
-      return getDateKey(new Date(l.startsAt)) === todayKey;
-    }).sort((a, b) => (a.startsAt || "").localeCompare(b.startsAt || ""));
+    return visibleLectures
+      .filter((l) => {
+        if (!l.startsAt) return false;
+        return getDateKey(new Date(l.startsAt)) === todayKey;
+      })
+      .sort((a, b) => (a.startsAt || "").localeCompare(b.startsAt || ""));
   }, [visibleLectures]);
 
   const todayIndex = (new Date().getDay() + 6) % 7;
 
-  function getLectureForCell(dayIndex: number, slotIndex: number): LectureItem | undefined {
+  function getLectureForCell(
+    dayIndex: number,
+    slotIndex: number,
+  ): LectureItem | undefined {
     return visibleLectures.find((l) => {
       if (!l.startsAt) return false;
-      return getLectureDay(l.startsAt) === dayIndex && getLectureSlotIndex(l.startsAt) === slotIndex;
+      return (
+        getLectureDay(l.startsAt) === dayIndex &&
+        getLectureSlotIndex(l.startsAt) === slotIndex
+      );
     });
   }
 
@@ -188,7 +251,11 @@ export function TimetableManager({
           </div>
           <div className="flex flex-wrap gap-2">
             {role === "admin" || role === "educator" ? (
-              <button type="button" onClick={onCreateLecture} className="btn-action btn-md font-bold">
+              <button
+                type="button"
+                onClick={onCreateLecture}
+                className="btn-action btn-md font-bold"
+              >
                 + Add Class
               </button>
             ) : null}
@@ -198,13 +265,25 @@ export function TimetableManager({
         {/* Week navigation */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setWeekStart((d) => addDays(d, -7))} className="btn-surface btn-sm">
+            <button
+              type="button"
+              onClick={() => setWeekStart((d) => addDays(d, -7))}
+              className="btn-surface btn-sm"
+            >
               ← Previous
             </button>
-            <button type="button" onClick={() => setWeekStart(getStartOfWeek(new Date()))} className="btn-action btn-sm">
+            <button
+              type="button"
+              onClick={() => setWeekStart(getStartOfWeek(new Date()))}
+              className="btn-action btn-sm"
+            >
               This Week
             </button>
-            <button type="button" onClick={() => setWeekStart((d) => addDays(d, 7))} className="btn-surface btn-sm">
+            <button
+              type="button"
+              onClick={() => setWeekStart((d) => addDays(d, 7))}
+              className="btn-surface btn-sm"
+            >
               Next →
             </button>
           </div>
@@ -217,7 +296,9 @@ export function TimetableManager({
       {/* Filters */}
       <div className="surface rounded-2xl p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-[var(--color-muted)]">Batch:</span>
+          <span className="text-xs font-bold text-[var(--color-muted)]">
+            Batch:
+          </span>
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
@@ -246,7 +327,9 @@ export function TimetableManager({
             ))}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs font-bold text-[var(--color-muted)]">Teacher:</span>
+            <span className="text-xs font-bold text-[var(--color-muted)]">
+              Teacher:
+            </span>
             <select
               value={selectedTeacherId}
               onChange={(e) => setSelectedTeacherId(e.target.value)}
@@ -254,7 +337,9 @@ export function TimetableManager({
             >
               <option value="all">— All Teachers —</option>
               {teacherOptions.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
           </div>
@@ -281,7 +366,8 @@ export function TimetableManager({
                     color: "var(--color-primary)",
                   }}
                 >
-                  {l.subject || "Class"} · {formatTime(l.startsAt)}–{formatTime(l.endsAt)}
+                  {l.subject || "Class"} · {formatTime(l.startsAt)}–
+                  {formatTime(l.endsAt)}
                 </span>
               ))}
             </div>
@@ -291,28 +377,73 @@ export function TimetableManager({
 
       {/* Type legend */}
       <div className="flex flex-wrap gap-3 text-xs font-bold">
-        <span className="rounded-full px-3 py-1" style={{ background: TYPE_COLORS.lecture.bg, color: TYPE_COLORS.lecture.color }}>Lecture</span>
-        <span className="rounded-full px-3 py-1" style={{ background: TYPE_COLORS.lab.bg, color: TYPE_COLORS.lab.color }}>Lab</span>
-        <span className="rounded-full px-3 py-1" style={{ background: TYPE_COLORS.doubt.bg, color: TYPE_COLORS.doubt.color }}>Doubt</span>
-        <span className="rounded-full px-3 py-1" style={{ background: TYPE_COLORS.test.bg, color: TYPE_COLORS.test.color }}>Test</span>
-        <span className="rounded-full px-3 py-1" style={{ background: TYPE_COLORS.special.bg, color: TYPE_COLORS.special.color }}>Special</span>
+        <span
+          className="rounded-full px-3 py-1"
+          style={{
+            background: TYPE_COLORS.lecture.bg,
+            color: TYPE_COLORS.lecture.color,
+          }}
+        >
+          Lecture
+        </span>
+        <span
+          className="rounded-full px-3 py-1"
+          style={{
+            background: TYPE_COLORS.lab.bg,
+            color: TYPE_COLORS.lab.color,
+          }}
+        >
+          Lab
+        </span>
+        <span
+          className="rounded-full px-3 py-1"
+          style={{
+            background: TYPE_COLORS.doubt.bg,
+            color: TYPE_COLORS.doubt.color,
+          }}
+        >
+          Doubt
+        </span>
+        <span
+          className="rounded-full px-3 py-1"
+          style={{
+            background: TYPE_COLORS.test.bg,
+            color: TYPE_COLORS.test.color,
+          }}
+        >
+          Test
+        </span>
+        <span
+          className="rounded-full px-3 py-1"
+          style={{
+            background: TYPE_COLORS.special.bg,
+            color: TYPE_COLORS.special.color,
+          }}
+        >
+          Special
+        </span>
       </div>
 
       {/* Weekly grid */}
       <div className="surface rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <div className="tt-grid" style={{
-            display: "grid",
-            gridTemplateColumns: `60px repeat(7, minmax(130px, 1fr))`,
-            minWidth: "750px",
-          }}>
+          <div
+            className="tt-grid"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `60px repeat(7, minmax(130px, 1fr))`,
+              minWidth: "750px",
+            }}
+          >
             {/* Header row */}
             <div className="bg-[var(--color-background-strong)] p-2 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]" />
             {DAYS.map((day, i) => (
               <div
                 key={day}
                 className={`p-2 text-center text-xs font-bold ${
-                  i === todayIndex ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]" : "bg-[var(--color-background-strong)] text-[var(--color-muted)]"
+                  i === todayIndex
+                    ? "bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                    : "bg-[var(--color-background-strong)] text-[var(--color-muted)]"
                 }`}
               >
                 {day}
@@ -324,44 +455,93 @@ export function TimetableManager({
             ))}
 
             {/* Time rows */}
-            {SLOTS.map((slot, si) => (
-              <React.Fragment key={`s-${si}`}>
-                <div className="border-t border-[var(--color-border)] p-2 text-[11px] font-bold text-[var(--color-muted)] leading-tight">
+            {SLOTS.map((slot, slotIndex) => (
+              <React.Fragment key={`slot-${slotIndex}`}>
+                <div className="border-t border-[var(--color-border)] p-2 text-[11px] font-bold leading-tight text-[var(--color-muted)]">
                   <span className="block">{slotLabel(slot)}</span>
-                  <span className="block text-[9px] opacity-60">– {slotEndLabel(slot)}</span>
+
+                  <span className="block text-[9px] opacity-60">
+                    – {slotEndLabel(slot)}
+                  </span>
                 </div>
+
                 {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => {
-                  const lecture = getLectureForCell(dayIndex, si);
+                  const lecture = getLectureForCell(dayIndex, slotIndex);
+
                   const isToday = dayIndex === todayIndex;
+
                   return (
-                      <div
-                        key={`c-${si}-${dayIndex}`}
-                        className={`border-t border-[var(--color-border)] border-l border-[var(--color-border)] p-1 min-h-[72px] relative ${
-                          isToday ? "bg-[var(--color-highlight)]" : ""
-                        }`}
+                    <div
+                      key={`cell-${slotIndex}-${dayIndex}`}
+                      className={`relative min-h-[125px] border-l border-t border-[var(--color-border)] p-1 ${
+                        isToday ? "bg-[var(--color-highlight)]" : ""
+                      }`}
                     >
                       {lecture ? (
                         <div
-                          className="tt-slot rounded-lg p-2 h-full text-xs cursor-pointer transition hover:shadow-md"
+                          className="tt-slot flex h-full flex-col rounded-xl p-2 text-xs transition hover:-translate-y-0.5 hover:shadow-md"
                           style={{
-                            background: TYPE_COLORS[lecture.status === "completed" ? "lab" : "lecture"].bg,
-                            borderLeft: `3px solid ${TYPE_COLORS[lecture.status === "completed" ? "lab" : "lecture"].color}`,
+                            background:
+                              TYPE_COLORS[
+                                lecture.status === "completed"
+                                  ? "lab"
+                                  : "lecture"
+                              ].bg,
+
+                            borderLeft: `3px solid ${
+                              TYPE_COLORS[
+                                lecture.status === "completed"
+                                  ? "lab"
+                                  : "lecture"
+                              ].color
+                            }`,
                           }}
-                          title={`${lecture.subject || "Class"} · ${facultyNameById.get(lecture.teacherId ?? "") || "Teacher"} · ${formatTime(lecture.startsAt)}–${formatTime(lecture.endsAt)}`}
                         >
-                          <p className="font-bold truncate" style={{ color: TYPE_COLORS[lecture.status === "completed" ? "lab" : "lecture"].color }}>
+                          <p
+                            className="truncate font-black"
+                            style={{
+                              color:
+                                TYPE_COLORS[
+                                  lecture.status === "completed"
+                                    ? "lab"
+                                    : "lecture"
+                                ].color,
+                            }}
+                          >
                             {lecture.subject || "Class"}
                           </p>
-                          <p className="text-[10px] text-[var(--color-muted)] truncate mt-0.5">
-                            {formatTime(lecture.startsAt)}–{formatTime(lecture.endsAt)}
+
+                          <p className="mt-1 line-clamp-1 text-[10px] font-semibold text-[var(--color-heading)]">
+                            {lecture.topicCovered || lecture.title}
                           </p>
-                          <p className="text-[10px] text-[var(--color-muted)] truncate">
-                            {facultyNameById.get(lecture.teacherId ?? "") || "Teacher"}
+
+                          <p className="mt-1 truncate text-[9px] text-[var(--color-muted)]">
+                            {facultyNameById.get(lecture.teacherId ?? "") ||
+                              lecture.teacherName ||
+                              "Faculty"}
                           </p>
+
+                          <p className="mt-0.5 truncate text-[9px] text-[var(--color-muted)]">
+                            {formatTime(lecture.startsAt)}
+
+                            {" – "}
+
+                            {formatTime(lecture.endsAt)}
+                          </p>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedLecture(lecture)}
+                            className="mt-auto w-full rounded-lg bg-white/90 px-2 py-1.5 text-[9px] font-black text-[var(--color-primary)] shadow-sm transition hover:bg-white"
+                          >
+                            View Lecture
+                          </button>
                         </div>
                       ) : (
-                        <div className="h-full flex items-center justify-center">
-                          <span className="text-[10px] text-[var(--color-muted)] opacity-30">+</span>
+                        <div className="flex h-full items-center justify-center">
+                          <span className="text-[10px] text-[var(--color-muted)] opacity-30">
+                            +
+                          </span>
                         </div>
                       )}
                     </div>
@@ -372,12 +552,20 @@ export function TimetableManager({
           </div>
         </div>
       </div>
-
+      {selectedLecture ? (
+        <LectureDetailsModal
+          lecture={selectedLecture}
+          facultyById={facultyById}
+          facultyNameById={facultyNameById}
+          onClose={() => setSelectedLecture(null)}
+        />
+      ) : null}
       {/* Summary */}
       <div className="surface rounded-2xl p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-[var(--color-heading)]">
-            {visibleLectures.length} lecture{visibleLectures.length === 1 ? "" : "s"} this week
+            {visibleLectures.length} lecture
+            {visibleLectures.length === 1 ? "" : "s"} this week
           </p>
           <span className="rounded-full bg-[var(--color-primary-soft)] px-3 py-1 text-[10px] font-bold text-[var(--color-primary)]">
             {formatDateRange(weekDays[0])} – {formatDateRange(weekDays[6])}
@@ -385,5 +573,263 @@ export function TimetableManager({
         </div>
       </div>
     </section>
+  );
+}
+function LectureDetailsModal({
+  lecture,
+  facultyById,
+  facultyNameById,
+  onClose,
+}: {
+  lecture: LectureItem;
+
+  facultyById: Map<string, ManagedUser>;
+
+  facultyNameById: Map<string, string>;
+
+  onClose: () => void;
+}) {
+  const faculty = facultyById.get(lecture.teacherId ?? "");
+
+  const facultyName =
+    faculty?.name ||
+    lecture.teacherName ||
+    facultyNameById.get(lecture.teacherId ?? "") ||
+    "Faculty";
+
+  const facultyPhoto = faculty?.profilePhoto || faculty?.profile?.profilePhoto;
+
+  const statusLabel =
+    lecture.status === "completed"
+      ? "Completed"
+      : lecture.status === "cancelled"
+        ? "Cancelled"
+        : "Scheduled";
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm"
+      onMouseDown={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="lecture-popup-title"
+        onMouseDown={(event) => event.stopPropagation()}
+        className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-white/20 bg-white shadow-2xl"
+      >
+        <div className="border-b border-slate-200 bg-gradient-to-br from-indigo-50 via-white to-blue-50 p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              {facultyPhoto ? (
+                <img
+                  src={facultyPhoto}
+                  alt={facultyName}
+                  className="h-16 w-16 shrink-0 rounded-2xl border-2 border-white object-cover object-top shadow-md"
+                />
+              ) : (
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-lg font-black text-white shadow-md">
+                  {getInitials(facultyName) || "F"}
+                </div>
+              )}
+
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-500">
+                  Faculty
+                </p>
+
+                <h2
+                  id="lecture-popup-title"
+                  className="mt-1 truncate text-xl font-black text-slate-900"
+                >
+                  {facultyName}
+                </h2>
+
+                <p className="mt-1 text-sm font-semibold text-slate-500">
+                  {lecture.subject || "General"} Faculty
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close lecture details"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-xl font-bold text-slate-500 transition hover:bg-slate-100"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-6 p-5 sm:p-6">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-500">
+              Lecture
+            </p>
+
+            <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+              {lecture.title}
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              {lecture.subject || "General"}
+
+              {lecture.batchName ? ` • ${lecture.batchName}` : ""}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <LectureDetailBox
+              label="Date"
+              value={formatLectureDate(lecture.startsAt)}
+            />
+
+            <LectureDetailBox
+              label="Start Time"
+              value={formatTime(lecture.startsAt) || "Not available"}
+            />
+
+            <LectureDetailBox
+              label="End Time"
+              value={formatTime(lecture.endsAt) || "Not available"}
+            />
+
+            <LectureDetailBox label="Status" value={statusLabel} />
+          </div>
+
+          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-indigo-600">
+              Topic of Lecture
+            </p>
+
+            <p className="mt-2 text-lg font-black text-indigo-950">
+              {lecture.topicCovered || lecture.title}
+            </p>
+          </div>
+
+          {lecture.description ? (
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500">
+                Lecture Details
+              </p>
+
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+                {lecture.description}
+              </p>
+            </div>
+          ) : null}
+
+          {lecture.status === "completed" ? (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-700">
+                Lecture Report
+              </p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <PopupReportItem
+                  label="Topic Covered"
+                  value={lecture.topicCovered}
+                />
+
+                <PopupReportItem
+                  label="Doubts Solved"
+                  value={lecture.doubtsSolved}
+                />
+
+                <PopupReportItem
+                  label="Homework"
+                  value={lecture.homeworkGiven}
+                />
+
+                <PopupReportItem
+                  label="Assignment"
+                  value={lecture.assignmentGiven}
+                />
+
+                <PopupReportItem
+                  label="Revision Task"
+                  value={lecture.revisionTask}
+                />
+
+                <PopupReportItem label="Next Topic" value={lecture.nextTopic} />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3 border-t border-slate-200 pt-5">
+            {lecture.status === "scheduled" && lecture.meetingLink ? (
+              <a
+                href={lecture.meetingLink}
+                target="_blank"
+                rel="noreferrer"
+                className="action-button px-6 py-3 text-sm"
+              >
+                Join Lecture
+              </a>
+            ) : null}
+
+            {lecture.recordingLink ? (
+              <a
+                href={lecture.recordingLink}
+                target="_blank"
+                rel="noreferrer"
+                className="action-button px-6 py-3 text-sm"
+              >
+                Watch Recording
+              </a>
+            ) : null}
+
+            {lecture.materialLink ? (
+              <a
+                href={lecture.materialLink}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-slate-200 px-6 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+              >
+                Open Material
+              </a>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-slate-200 px-6 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function LectureDetailBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-[9px] font-black uppercase tracking-[0.14em] text-slate-400">
+        {label}
+      </p>
+
+      <p className="mt-2 text-sm font-black text-slate-800">{value}</p>
+    </div>
+  );
+}
+
+function PopupReportItem({ label, value }: { label: string; value?: string }) {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    <div>
+      <p className="text-[9px] font-black uppercase tracking-[0.14em] text-emerald-600">
+        {label}
+      </p>
+
+      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-emerald-950">
+        {value}
+      </p>
+    </div>
   );
 }
