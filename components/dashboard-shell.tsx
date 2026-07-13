@@ -301,7 +301,7 @@ const sidebarByRole = {
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Learning" },
     { id: "performance", label: "Performance Reports" },
-    { id: "receipts", label: "Fee Details" },
+    { id: "receipts", label: "My Fees" },
     { id: "library", label: "Library" },
   ],
 
@@ -388,7 +388,7 @@ const sidebarByRole = {
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Learning" },
     { id: "performance", label: "Performance Reports" },
-    { id: "receipts", label: "Fee Details" },
+    { id: "receipts", label: "Child's Fees" },
     { id: "library", label: "Library" },
   ],
 } as const;
@@ -424,9 +424,9 @@ function getInitials(name?: string) {
 
 const menuSections = [
   { label: "Overview", items: ["accounts", "overview", "gamification", "messages", "chat", "chat-monitor", "ptm", "attendance", "staff-attendance", "biometric", "leave", "notifications"] },
-  { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance", "receipts"] },
+  { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance"] },
   { label: "People", items: ["enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
-  { label: "Finance", items: ["fees", "teacher-payouts"] },
+  { label: "Finance", items: ["fees", "receipts", "teacher-payouts"] },
 ];
 
 const navIcons: Record<string, React.ReactNode> = {
@@ -823,7 +823,7 @@ export function DashboardShell({
         )}
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-none">
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {menuSections.map((section) => {
             const sectionItems = sidebarByRole[role].filter((item) =>
               section.items.includes(item.id),
@@ -868,17 +868,6 @@ export function DashboardShell({
             );
           })}
         </nav>
-
-        {/* Collapse toggle */}
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="hidden lg:flex items-center justify-center h-10 text-slate-400 hover:text-white hover:bg-white/5 border-t border-white/5 transition-colors"
-        >
-          <svg className={`h-5 w-5 transition-transform ${sidebarCollapsed ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-          </svg>
-        </button>
 
         {/* Footer */}
         {!sidebarCollapsed && (

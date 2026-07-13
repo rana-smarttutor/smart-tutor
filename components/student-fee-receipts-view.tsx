@@ -50,7 +50,6 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
 
   const totalDue = Math.max(totalFees - totalPaid, 0);
 
-  const allPaid = totalFees > 0 && totalDue === 0;
   const hasFees = totalFees > 0;
 
   function downloadInvoiceReceipt(invoice: FeeInvoice) {
@@ -60,7 +59,7 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
-    const logoUrl = `${window.location.origin}/smart-tutors-logo.png`;
+    const logoUrl = `${window.location.origin}/stpl.jpeg`;
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
 
@@ -89,16 +88,16 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
         .join("");
 
       return `
-      <div style="margin-top:16px;border:1px solid #d1d5db;border-radius:4px;overflow:hidden;">
-        <div style="background:#f1f5f9;padding:8px 12px;font-weight:900;font-size:13px;border-bottom:1px solid #d1d5db;">Payment History</div>
-        <table style="width:100%;border-collapse:collapse;">
+      <div style="margin-top:16px;border:1px solid #94a3b8;overflow:hidden;">
+        <div class="section-label" style="margin-bottom:0;">Payment History</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
           <thead><tr>
-            <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;width:40px;">#</th>
-            <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Date</th>
-            <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:right;">Amount</th>
-            <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Mode</th>
-            <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Transaction Ref</th>
-            <th style="padding:8px 10px;border:1px solid #d1d5db;background:#f1f5f9;font-size:12px;text-align:center;">Bank</th>
+            <th style="padding:8px 10px;border:1px solid #94a3b8;background:#dde3f0;font-size:12px;text-align:center;width:40px;">#</th>
+            <th style="padding:8px 10px;border:1px solid #94a3b8;background:#dde3f0;font-size:12px;text-align:center;">Date</th>
+            <th style="padding:8px 10px;border:1px solid #94a3b8;background:#dde3f0;font-size:12px;text-align:right;">Amount</th>
+            <th style="padding:8px 10px;border:1px solid #94a3b8;background:#dde3f0;font-size:12px;text-align:center;">Mode</th>
+            <th style="padding:8px 10px;border:1px solid #94a3b8;background:#dde3f0;font-size:12px;text-align:center;">Transaction Ref</th>
+            <th style="padding:8px 10px;border:1px solid #94a3b8;background:#dde3f0;font-size:12px;text-align:center;">Bank</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -112,73 +111,124 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
   <title>Fee Receipt</title>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 24px; background: #f3f4f6; color: #111827; font-family: Arial, Helvetica, sans-serif; }
-    .receipt { max-width: 1280px; margin: 0 auto; border: 2px solid #18181b; background: #fff; }
-    .header { display: grid; grid-template-columns: 1fr auto; min-height: 100px; align-items: center; border-bottom: 2px solid #18181b; }
-    .brand { padding: 16px 20px; text-align: center; }
-    .brand img { max-width: 200px; height: auto; }
-    .addresses { padding: 14px 20px; text-align: right; font-size: 11px; line-height: 1.6; color: #374151; border-left: 1px solid #e5e7eb; }
-    .addresses strong { font-size: 12px; color: #111827; }
-    .title { padding: 10px; text-align: center; font-size: 18px; font-weight: 900; }
-    table { width: 100%; border-collapse: collapse; }
-    .details td { padding: 7px 10px; border-bottom: 1px solid #9ca3af; font-size: 14px; }
-    .details .label { width: 13%; font-weight: 900; white-space: nowrap; }
-    .items th, .items td { padding: 9px 10px; border: 1px solid #9ca3af; font-size: 14px; }
-    .items th { background: #f1f5f9; text-align: center; }
+    body { margin: 0; padding: 24px; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; }
+    .print-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: #00072d; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 20px; }
+    .print-btn:hover { background: #000525; }
+    .receipt { max-width: 850px; margin: 0 auto; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+    .receipt-inner { border: 1.5px solid #475569; margin: 8px; padding: 20px 24px; }
+    .header-row { display: flex; align-items: stretch; border-bottom: 1.5px solid #475569; padding-bottom: 16px; margin-bottom: 16px; }
+    .brand { flex: 1; display: flex; align-items: center; justify-content: center; padding-right: 16px; border-right: 1px solid #cbd5e1; }
+    .brand img { width: 100%; max-height: 110px; object-fit: contain; }
+    .addresses { display: flex; flex-direction: column; justify-content: center; padding-left: 16px; text-align: right; min-width: 220px; }
+    .addresses .name { font-size: 13px; font-weight: 700; color: #00072d; }
+    .addresses .addr { font-size: 11px; line-height: 1.6; color: #64748b; margin-top: 4px; }
+    .title { text-align: center; font-size: 20px; font-weight: 900; color: #00072d; margin: 16px 0; letter-spacing: 0.05em; }
+    .meta-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }
+    .meta-row .val { font-weight: 400; color: #475569; }
+    .section-label { background: #00072d; color: #fff; padding: 6px 12px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+    .details-grid { border: 1px solid #94a3b8; font-size: 13px; margin-bottom: 20px; }
+    .details-grid .row { display: flex; border-bottom: 1px solid #94a3b8; }
+    .details-grid .row:last-child { border-bottom: none; }
+    .details-grid .cell { flex: 1; display: flex; padding: 8px 12px; }
+    .details-grid .cell:first-child { border-right: 1px solid #94a3b8; }
+    .details-grid .label { width: 110px; font-weight: 700; white-space: nowrap; }
+    .details-grid .sep { margin-right: 8px; }
+    .details-grid .value { color: #475569; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.fee-table th, table.fee-table td { border: 1px solid #94a3b8; padding: 8px 10px; }
+    table.fee-table th { background: #00072d; color: #fff; font-weight: 600; text-align: center; }
+    table.fee-table td { text-align: center; }
     .center { text-align: center; }
     .right { text-align: right; }
-    .summary { border-top: 1px solid #18181b; padding: 10px 14px; font-size: 14px; line-height: 1.8; }
-    .status-badge { display: inline-block; padding: 3px 12px; border-radius: 9999px; font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
-    .footer { display: flex; min-height: 140px; align-items: flex-end; justify-content: space-between; gap: 24px; border-top: 2px solid #18181b; padding: 14px; }
-    .note { padding-bottom: 3px; font-size: 13px; font-weight: 700; }
-    .signature { width: 240px; text-align: center; }
-    .signature img { display: block; width: 180px; height: 72px; margin: 0 auto 4px; object-fit: contain; }
-    .signature .line { border-top: 1px solid #18181b; margin-top: 4px; padding-top: 6px; font-size: 12px; font-weight: 900; }
-    @media print { body { padding: 0; background: #fff; } .receipt { border: none; } }
+    .summary-box { border-top: 1.5px solid #475569; padding: 12px 0; font-size: 13px; line-height: 2; margin-top: 12px; }
+    .summary-box .label { font-weight: 700; }
+    .summary-box .val { color: #475569; }
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .footer-row { display: flex; justify-content: space-between; align-items: flex-end; min-height: 120px; border-top: 1.5px solid #475569; padding-top: 16px; margin-top: 20px; }
+    .footer-note { font-size: 12px; font-weight: 600; color: #475569; }
+    .footer-note p { margin: 2px 0; }
+    .signature { text-align: center; width: 220px; }
+    .signature .line { border-top: 1.5px solid #334155; margin-top: 4px; padding-top: 6px; font-size: 13px; font-weight: 800; color: #1e293b; }
+    .signature .sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .terms { display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-top: 16px; }
+    @media print {
+      body { padding: 0; background: #fff; }
+      .print-btn { display: none !important; }
+      .receipt { border: none; margin: 0; }
+      .receipt-inner { border: none; margin: 0; }
+    }
   </style>
 </head>
 <body>
+  <div style="max-width:850px;margin:0 auto;">
+    <button class="print-btn" onclick="window.print();">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      Print Receipt
+    </button>
+  </div>
   <div class="receipt">
-    <div class="header">
-      <div class="brand">
-        <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors" />
+    <div class="receipt-inner">
+      <div class="header-row">
+        <div class="brand">
+          <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors" />
+        </div>
+        <div class="addresses">
+          <div class="name">Smart Tutors</div>
+          <div class="addr">
+            Plot No. 2, Second Floor, Vashi Plaza,<br/>
+            Sector 17, Vashi, Navi Mumbai – 400703<br/>
+            info@smarttutors.co.in | +91 88504 47887
+          </div>
+        </div>
       </div>
-      <div class="addresses">
-        <strong>Smart Tutors</strong><br/>
-        Plot No. 2, Second Floor, Vashi Plaza,<br/>
-        Sector 17, Vashi, Navi Mumbai – 400703<br/>
-        info@smarttutors.co.in | +91 88504 47887
+      <div class="title">FEE RECEIPT</div>
+      <div class="meta-row">
+        <div><span>Receipt No.</span> <span class="sep" style="margin-right:8px;">:</span> <span class="val">${escapeHtml(receiptNo)}</span></div>
+        <div><span>Receipt Date</span> <span class="sep" style="margin-right:8px;">:</span> <span class="val">${escapeHtml(formatReceiptDate(invoice.dueDate))}</span></div>
       </div>
-    </div>
-    <div class="title">FEE RECEIPT</div>
-    <div style="padding:0 14px;">
-      <table class="details">
-        <tr><td class="label">Receipt No.</td><td>${escapeHtml(receiptNo)}</td><td class="label">Date</td><td>${escapeHtml(formatReceiptDate(invoice.dueDate))}</td></tr>
-        <tr><td class="label">Student</td><td>${escapeHtml(invoice.studentName || "")}</td><td class="label">Class</td><td>${escapeHtml(invoice.classCourse || "—")}</td></tr>
-        <tr><td class="label">Batch</td><td>${escapeHtml(invoice.batch || "—")}</td><td class="label">Roll No.</td><td>${escapeHtml(invoice.rollNo || "—")}</td></tr>
-        <tr><td class="label">Academic Year</td><td>${escapeHtml(invoice.academicYear || "—")}</td><td class="label">Status</td><td><span class="status-badge" style="${statusStyle}">${escapeHtml(invoice.status.toUpperCase())}</span></td></tr>
-      </table>
-    </div>
-    <div style="padding:0 14px;">
-      <table class="items">
-        <thead><tr><th style="width:40px;">#</th><th>Particulars</th><th style="text-align:right;">Amount (₹)</th></tr></thead>
+      <div class="section-label">Student Details</div>
+      <div class="details-grid">
+        <div class="row">
+          <div class="cell"><span class="label">Student Name</span><span class="sep">:</span><span class="value">${escapeHtml(invoice.studentName || "—")}</span></div>
+          <div class="cell"><span class="label">Class</span><span class="sep">:</span><span class="value">${escapeHtml(invoice.classCourse || "—")}</span></div>
+        </div>
+        <div class="row">
+          <div class="cell"><span class="label">Batch</span><span class="sep">:</span><span class="value">${escapeHtml(invoice.batch || "—")}</span></div>
+          <div class="cell"><span class="label">Roll No.</span><span class="sep">:</span><span class="value">${escapeHtml(invoice.rollNo || "—")}</span></div>
+        </div>
+        <div class="row">
+          <div class="cell"><span class="label">Academic Year</span><span class="sep">:</span><span class="value">${escapeHtml(invoice.academicYear || "—")}</span></div>
+          <div class="cell"><span class="label">Status</span><span class="sep">:</span><span class="value"><span class="status-badge" style="${statusStyle}">${escapeHtml(invoice.status.toUpperCase())}</span></span></div>
+        </div>
+      </div>
+      <div class="section-label">Fee Details</div>
+      <table class="fee-table">
+        <thead><tr><th style="width:50px;">Sr No.</th><th style="text-align:left;">Particulars</th><th style="text-align:right;">Amount (₹)</th><th style="text-align:right;">Paid (₹)</th><th style="text-align:right;">Balance (₹)</th></tr></thead>
         <tbody>
-          <tr><td class="center">1</td><td>${escapeHtml(invoice.title || "Fee")}${invoice.particulars ? " — " + escapeHtml(invoice.particulars) : ""}</td><td class="right" style="font-weight:700;">${escapeHtml(formatCurrency(invoice.amount))}</td></tr>
+          <tr><td>1</td><td style="text-align:left;font-weight:600;">${escapeHtml(invoice.title || "Fee")}${invoice.particulars ? " — " + escapeHtml(invoice.particulars) : ""}</td><td style="text-align:right;font-weight:700;">${escapeHtml(formatCurrency(invoice.amount))}</td><td style="text-align:right;font-weight:700;">${escapeHtml(formatCurrency(paidAmount))}</td><td style="text-align:right;font-weight:700;">${escapeHtml(formatCurrency(balance))}</td></tr>
         </tbody>
       </table>
-    </div>
-    <div class="summary">
-      <strong>Total Amount:</strong> ${escapeHtml(formatCurrency(invoice.amount))}<br/>
-      <strong>Amount Paid:</strong> ${escapeHtml(formatCurrency(paidAmount))}<br/>
-      <strong>Balance Due:</strong> ${escapeHtml(formatCurrency(balance))}
-    </div>
-    ${renderTransactionRows()}
-    <div class="footer">
-      <div class="note">Thank you for your payment!</div>
-      <div class="signature">
-        <img src="${signatureUrl}" alt="Founder Signature" />
-        <div class="line">Prof. Ravi Rana</div>
-        <div style="font-size:11px;margin-top:2px;">Founder – Smart Tutors</div>
+      <div class="summary-box">
+        <span class="label">Total Amount:</span> <span class="val">${escapeHtml(formatCurrency(invoice.amount))}</span><br/>
+        <span class="label">Amount Paid:</span> <span class="val">${escapeHtml(formatCurrency(paidAmount))}</span><br/>
+        <span class="label">Balance Due:</span> <span class="val">${escapeHtml(formatCurrency(balance))}</span>
+      </div>
+      ${renderTransactionRows()}
+      <div class="footer-row">
+        <div class="footer-note">
+          <p>This is a computer generated receipt.</p>
+          <p>Fees are non-refundable.</p>
+          <p>Thank you for choosing Smart Tutors Pvt. Ltd.</p>
+        </div>
+        <div class="signature">
+          <img src="${signatureUrl}" alt="Founder Signature" style="display:block;width:180px;height:72px;margin:0 auto 4px;object-fit:contain;" />
+          <div class="line">Prof. Ravi Rana</div>
+          <div class="sub">Founder – Smart Tutors</div>
+        </div>
+      </div>
+      <div class="terms">
+        <span>Smart Tutors Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
+        <span>www.smarttutors.co.in</span>
       </div>
     </div>
   </div>
@@ -228,22 +278,6 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
               <div className={`text-xl font-bold ${totalDue > 0 ? "text-red-600" : "text-emerald-600"}`}>{formatCurrency(totalDue)}</div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* ── Status Banner ── */}
-      {hasFees && (
-        <div
-          className="rounded-xl border px-4 py-3 mb-5 text-[13px] font-semibold"
-          style={allPaid
-            ? { background: "#F0FDF4", borderColor: "#A7F3D0", color: "#166534" }
-            : { background: "#FFFBEB", borderColor: "#FDE68A", color: "#92400E" }
-          }
-        >
-          {allPaid
-            ? <><span className="mr-2">&#10003;</span>All fees are paid up to date!</>
-            : <><span className="mr-2">&#9888;</span>You have {formatCurrency(totalDue)} pending.</>
-          }
         </div>
       )}
 
