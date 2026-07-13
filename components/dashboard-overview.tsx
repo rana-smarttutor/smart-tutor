@@ -776,7 +776,7 @@ function StudentOverview({
     { label: "Results", icon: Award, section: "performance", color: "#059669" },
     { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706" },
     { label: "Homework", icon: BookOpen, section: "homework", color: "#0EA5E9" },
-    { label: "Fees", icon: DollarSign, section: "fees", color: "#DC2626" },
+    { label: "Fee Details", icon: DollarSign, section: "receipts", color: "#DC2626" },
     { label: "Materials", icon: BookMarked, section: "materials", color: "#8B5CF6" },
     { label: "Timetable", icon: CalendarDays, section: "timetable", color: "#EC4899" },
     { label: "Videos", icon: Video, section: "videos", color: "#14B8A6" },
@@ -1148,10 +1148,10 @@ function StudentOverview({
             <p className="text-xl font-black text-slate-900">{feeDueAmount}</p>
           </div>
           <button
-            onClick={() => onSetActiveSection("fees")}
+            onClick={() => onSetActiveSection("receipts")}
             className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
           >
-            Pay Now
+            View Details
           </button>
         </div>
       </div>
@@ -1299,7 +1299,7 @@ function ParentOverview({
   const quickAccessItems = [
     { label: "Exams", icon: FileText, section: "tests", color: "#4F46E5" },
     { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706" },
-    { label: "Fees", icon: DollarSign, section: "fees", color: "#DC2626" },
+    { label: "Fee Details", icon: DollarSign, section: "receipts", color: "#DC2626" },
     { label: "Timetable", icon: CalendarDays, section: "timetable", color: "#EC4899" },
     { label: "Lectures", icon: PlayCircle, section: "lectures", color: "#F97316" },
     { label: "Messages", icon: MessageSquare, section: "messages", color: "#06B6D4" },
@@ -1458,10 +1458,10 @@ function ParentOverview({
               <p className="text-xl font-black text-slate-900">{feeDueAmount}</p>
             </div>
             <button
-              onClick={() => onSetActiveSection("fees")}
+              onClick={() => onSetActiveSection("receipts")}
               className="ml-auto text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
             >
-              Pay Now
+              View Details
             </button>
           </div>
         </div>

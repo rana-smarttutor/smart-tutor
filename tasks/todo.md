@@ -1,90 +1,134 @@
-# Smart Tutors - Completed Work Log
+# Fee Section Rework — Plan
 
-## Session: Dashboard Fixes, Profile, Roles, Chat (Jul 2026)
+## Goal
+Add proper payment status management (paid/unpaid/partial) with transaction detail tracking for non-cash payments, and enhance receipts with all payment details.
 
-### Completed Features
+---
 
-#### 1. Faculty Student Count Fix
-- **File:** `app/dashboard/page.tsx:33`
-- **Change:** `getStudentDirectory(session.id)` — scoped students to logged-in educator
+## Step 1: Extend Types — Add Transaction Detail Fields
 
-#### 2. Attendance Default Tab + Confirmation Dialogs
-- **File:** `components/staff-attendance-manager.tsx`
-- **Changes:** Default tab `"mine"` for non-admins; `window.confirm()` before check-in/out
+**File: `lib/types.ts`**
 
-#### 3. Full Regularisation System
-- **Types:** `RegularisationRequest` in `lib/types.ts`
-- **API:** `POST /api/staff-attendance` (create), `GET/POST /api/staff-attendance/regularise` (admin approve/reject)
-- **UI:** `components/staff-attendance-manager.tsx` — regularise button on records, admin review panel
+- Add `PaymentTransaction` type:
+  ```ts
+  export type PaymentTransaction = {
+    paidAmount: number;
+    paidDate: string;
+    paymentMode: "Cash" | "UPI" | "Bank Transfer" | "Card" | "Online Payment" | "Cheque";
+    transactionId?: string;       // UPI ref, NEFT/RTGS ref, card auth code
+    chequeNumber?: string;        // if Cheque
+    bankName?: string;            // bank name
+    accountLast4?: string;        // last 4 digits of account
+    notes?: string;
+    recordedBy: string;           // admin/educator who recorded it
+    recordedAt: string;           // ISO timestamp
+  };
+  ```
 
-#### 4. Faculty Chat with Assigned Students
-- **Verified:** Works after student directory fix; filters by `assignedFacultyIds`
+- Extend `FeeInvoice` type:
+  - Add `transactions: PaymentTransaction[]` (payment history log)
+  - Keep existing `paidAmount`, `status`, `paymentMode` as computed/display fields
 
-#### 5. Attendance Calendar Redesign
-- **File:** `components/attendance-manager.tsx`
-- **Changes:** Angular-style calendar grid, month/week toggle, 5 stat cards, regularize buttons, legend bar
+- Extend `FeeInstallment` type:
+  - Add `transactions: PaymentTransaction[]`
 
-#### 6. Parent Overview = Student Overview
-- **File:** `components/dashboard-overview.tsx`
-- **Change:** `ParentOverview` mirrors `StudentOverview` with hero, KPI cards, routed via `role === "parent"`
+---
 
-#### 7. Parent Chat = Student Chat
-- **File:** `components/dashboard-chat.tsx`
-- **Change:** `role === "parent"` case returns admins + assigned educators
+## Step 2: Update Data Store — Persist & Compute Transaction Data
 
-#### 8. Sidebar Chat Unread Badge Persistence
-- **File:** `components/dashboard-chat.tsx`
-- **Change:** `lastReadTimestamps` persisted to `localStorage` key `chat_last_read_${userId}`
+**File: `lib/data-store.ts`**
 
-#### 9. Assigned Faculty Names on Dashboard Heroes
-- **File:** `components/dashboard-overview.tsx`
-- **Change:** Student and parent heroes show assigned faculty as pill badges
+- Update `createFeeInvoice()` to accept and store `transactions[]`
+- Update `updateFeeInvoice()` to:
+  - Accept new `transaction` payload (append to `transactions[]`)
+  - Auto-compute `paidAmount` = sum of all transaction `paidAmount`s
+  - Auto-compute `status` based on paidAmount vs amount (0=paid, <amount=partial, unpaid)
+  - Auto-set `paymentMode` from latest transaction
+- Update `updateFeeInstallmentPlan()` similarly for installment-level transactions
+- Fix `getStudentDirectory()` to compute `feesStatus` from actual invoice data instead of hardcoded `"none"`
 
-#### 10. Faculty Dashboard Hero Format
-- **File:** `components/dashboard-overview.tsx`
-- **Change:** Student count and batch count badges use bold number styling (`text-sm font-black`)
+---
 
-#### 11. My Profile - Full Data Rendering
-- **File:** `components/my-profile-client.tsx`
-- **Changes:**
-  - Left sidebar shows "Profile Details" summary card with all collected fields
-  - Students: added Course, Student Type, Parent Name/Email/Mobile, Last Qualification, Academic Score
-  - Students: added Weak/Strong Subjects tag inputs (red/green chips)
-  - All roles: Gender, DOB, Father's Name, Address/City/State/Pincode fields
-  - Phone field fallback chain: `guardianPhone ?? parentMobile ?? mobile` (fixes missing phone bug)
+## Step 3: Update API Routes — Accept Transaction Details
 
-#### 12. Parent Profile - Linked Student Details
-- **File:** `lib/types.ts`, `lib/data-store.ts`, `components/my-profile-client.tsx`
-- **Changes:**
-  - Added `linkedStudentProfile` to `DashboardBundle` type
-  - `getDashboardBundle` fetches linked student name, email, phone, course, batch for parents
-  - Profile sidebar shows "Student Details" card for parents with child's info
+**File: `app/api/invoices/[invoiceId]/route.ts`**
 
-#### 13. Student Phone Merge Fix (Data Layer)
-- **File:** `lib/data-store.ts` — `getDashboardBundle()`
-- **Change:** Profile response merges root-level `parentMobile` and `mobile` into `guardianPhone` fallback chain, fixing phone not showing when stored via API vs CSV import
+- Extend PATCH to accept a `transaction` object (not just raw `paidAmount`/`status`)
+- Auto-compute status and paidAmount server-side from transactions
 
-#### 14. Roles & Permissions System (Verified)
-- **Components:** `components/roles-manager.tsx` — full CRUD, 2 tabs (Roles + Staff Assignments)
-- **API:** `app/api/admin/roles/route.ts` (GET/POST), `[id]/route.ts` (PUT/DELETE), `assign/route.ts` (POST/DELETE)
-- **Data:** 10 functions in `lib/data-store.ts` — create, read, update, delete, assign, unassign, stats
-- **Types:** `CustomRole`, `CustomRoleAssignment`, `AvailableModule` in `lib/types.ts`
-- **Sidebar:** Admin sidebar item at position 3: `{ id: "roles", label: "Roles & Permissions" }`
-- **Gate:** Renders only for `role === "admin"` in `dashboard-shell.tsx:1256`
+**File: `app/api/fee-installments/[planId]/route.ts`**
 
-#### 15. Parent Sidebar Expansion
-- **File:** `components/dashboard-shell.tsx`
-- **Change:** Parent sidebar expanded from 11 to 19 items matching student sidebar
+- Extend PATCH to accept transaction details per installment
 
-#### 16. Student Sidebar Cleanup
-- **File:** `components/dashboard-shell.tsx`
-- **Change:** Removed "Staff Attendance" entry from student sidebar
+---
 
-### Test Coverage
-- **File:** `__tests__/roles-and-profile.test.ts` — 32 new tests
-- **Covers:** CustomRole type contract, CustomRoleAssignment, AVAILABLE_MODULES validation, DashboardBundle (linkedStudentProfile, faculty fields), UserProfile phone fields, role creation validation logic, module assignment, isActive toggle, assignment uniqueness, profile phone merge logic
-- **Total:** 122 tests across 4 suites, all passing
+## Step 4: Add "Record Payment" UI to Invoice Manager
 
-### Verification
-- `npx tsc --noEmit` — zero errors
-- `npx jest --no-cache` — 122/122 passing
+**File: `components/invoice-manager.tsx`**
+
+- Add a "Record Payment" button in the action column for unpaid/partial invoices (admin only)
+- Add a `RecordPaymentModal` with:
+  - Paid Amount (₹) — pre-fills remaining balance
+  - Payment Date — defaults to today
+  - Payment Mode dropdown (Cash, UPI, Bank Transfer, Card, Online Payment, Cheque)
+  - **Conditional fields shown only when mode is NOT "Cash":**
+    - Transaction ID / Reference Number
+    - Bank Name
+    - Cheque Number (only when Cheque selected)
+    - Account Last 4 Digits
+  - Notes
+- On submit: PATCH invoice with new transaction, auto-compute status
+
+---
+
+## Step 5: Enhance Receipt HTML with Transaction Details
+
+**File: `components/invoice-manager.tsx` — `downloadReceipt()`**
+
+- Add a "Payment Details" section in the receipt HTML:
+  - For each transaction: Date, Amount, Mode, Transaction ID (if non-cash), Bank, Cheque No (if cheque)
+  - For partial: show total paid, balance due
+  - For unpaid: show "Payment Pending"
+- Add payment status badge to receipt header (PAID / PARTIAL / UNPAID / OVERDUE)
+- Show transaction reference numbers prominently for non-cash payments
+
+---
+
+## Step 6: Add "Record Payment" to Fee Installment Manager
+
+**File: `components/fee-installment-manager.tsx`**
+
+- Add inline "Record Payment" button per installment row
+- Reuse same transaction detail modal pattern (Cash vs non-cash conditional fields)
+- Auto-compute installment status and plan totals
+
+---
+
+## Step 7: Fix Student Directory Fee Status
+
+**File: `lib/data-store.ts` — `getStudentDirectory()`**
+
+- Query `feeInvoices` collection per student
+- Compute `feesStatus`:
+  - `"paid"` if all invoices have status "paid"
+  - `"partial"` if any invoice has status "partial" or mix of paid/unpaid
+  - `"unpaid"` if all invoices are unpaid/overdue
+  - `"none"` if no invoices exist
+
+---
+
+## Files to Modify
+1. `lib/types.ts` — new PaymentTransaction type, extend FeeInvoice & FeeInstallment
+2. `lib/data-store.ts` — transaction logic, student directory fee status
+3. `app/api/invoices/[invoiceId]/route.ts` — accept transaction payloads
+4. `app/api/fee-installments/[planId]/route.ts` — accept installment transactions
+5. `components/invoice-manager.tsx` — Record Payment UI + enhanced receipt
+6. `components/fee-installment-manager.tsx` — Record Payment UI per installment
+
+## Verification
+- `npm run build` (or `next build`) to verify no type errors
+- Manual: create invoice → record partial payment → verify status changes to "partial"
+- Manual: record full payment → verify status changes to "paid"
+- Manual: download receipt → verify transaction details appear
+- Manual: non-cash payment → verify transaction ID/bank fields appear
+- Manual: student directory → verify feesStatus computed correctly

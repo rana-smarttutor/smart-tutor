@@ -1846,10 +1846,32 @@ export async function getStudentDirectoryV2(filters?: {
       (s as any).admissionNo ?? String((s as any).admissionNumber ?? ""),
     batchName: (s as any).batchName ?? "",
     attendancePercent: (s as any).attendancePercent ?? 0,
-    feesStatus: "none" as const,
+    feesStatus: "none" as StudentDirectoryEntry["feesStatus"],
     riskLevel: "low" as StudentRiskLevel,
     photoUrl: (s as any).photoUrl ?? undefined,
   })) satisfies StudentDirectoryEntry[];
+
+  const invoiceCollection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+  for (const entry of managed) {
+    const invoices = await invoiceCollection
+      .find({ studentId: entry.id })
+      .toArray();
+    if (!invoices.length) continue;
+
+    const statuses = invoices.map((inv) => stripMongoId(inv) as FeeInvoice);
+    const allPaid = statuses.every((inv) => inv.status === "paid");
+    const anyPartial = statuses.some((inv) => inv.status === "partial");
+    const anyOverdue = statuses.some((inv) => inv.status === "overdue");
+
+    if (allPaid) {
+      entry.feesStatus = "paid";
+    } else if (anyPartial || anyOverdue) {
+      entry.feesStatus = "partial";
+    } else {
+      entry.feesStatus = "unpaid";
+    }
+  }
+
   return enrichWithFacultyNames(managed);
 }
 
@@ -2773,6 +2795,7 @@ export async function createFeeInvoice(input: {
   particulars?: string;
   month?: string;
   paymentMode?: string;
+  transactions?: FeeInvoice["transactions"];
 }) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
   const receiptNo = await generateFeeReceiptNo();
@@ -2802,6 +2825,7 @@ export async function createFeeInvoice(input: {
     particulars: input.particulars,
     month: input.month,
     paymentMode: input.paymentMode,
+    transactions: input.transactions ?? [],
   };
 
   await collection.insertOne(invoice);
@@ -2824,16 +2848,48 @@ export async function updateFeeInvoice(
     dueDate: string;
     status: FeeInvoice["status"];
     notes: string;
+    paymentMode: string;
+    transaction: import("@/lib/types").PaymentTransaction;
   }>,
 ) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+  const existing = await collection.findOne({ id: invoiceId });
+  if (!existing) return null;
 
-  const update = {
-    ...input,
+  const existingInvoice = stripMongoId(existing) as FeeInvoice;
+  const updateFields: Record<string, unknown> = {
     updatedAt: new Date().toISOString(),
   };
 
-  await collection.updateOne({ id: invoiceId }, { $set: update });
+  if (input.title !== undefined) updateFields.title = input.title;
+  if (input.amount !== undefined) updateFields.amount = input.amount;
+  if (input.dueDate !== undefined) updateFields.dueDate = input.dueDate;
+  if (input.notes !== undefined) updateFields.notes = input.notes;
+
+  if (input.transaction) {
+    const transactions = [...(existingInvoice.transactions ?? []), input.transaction];
+    updateFields.transactions = transactions;
+
+    const totalPaid = transactions.reduce((sum, t) => sum + t.paidAmount, 0);
+    const amount = input.amount ?? existingInvoice.amount;
+    updateFields.paidAmount = totalPaid;
+
+    if (totalPaid <= 0) {
+      updateFields.status = "unpaid";
+    } else if (totalPaid >= amount) {
+      updateFields.status = "paid";
+    } else {
+      updateFields.status = "partial";
+    }
+
+    updateFields.paymentMode = input.transaction.paymentMode;
+  } else {
+    if (input.paidAmount !== undefined) updateFields.paidAmount = input.paidAmount;
+    if (input.status !== undefined) updateFields.status = input.status;
+    if (input.paymentMode !== undefined) updateFields.paymentMode = input.paymentMode;
+  }
+
+  await collection.updateOne({ id: invoiceId }, { $set: updateFields });
 
   const updatedInvoice = await collection.findOne({ id: invoiceId });
 
@@ -4835,6 +4891,7 @@ function normalizeInstallments(
         status: getInstallmentStatus(amount, paidAmount, installment.dueDate),
         receiptNumber: installment.receiptNumber?.trim() || undefined,
         paymentMode: installment.paymentMode?.trim() || undefined,
+        transactions: [],
         notes: installment.notes?.trim() || undefined,
       };
     })
@@ -5012,6 +5069,10 @@ export async function updateFeeInstallmentPlan(
         | "notes"
       >
     >;
+    installmentTransaction: {
+      installmentNumber: number;
+      transaction: import("@/lib/types").PaymentTransaction;
+    };
   }>,
 ) {
   const collection = await getCollection<FeeInstallmentPlan>(
@@ -5024,6 +5085,7 @@ export async function updateFeeInstallmentPlan(
     return null;
   }
 
+  const existingPlanData = stripMongoId(existingPlan) as FeeInstallmentPlan;
   const updates: Partial<FeeInstallmentPlan> = {
     updatedAt: new Date().toISOString(),
   };
@@ -5052,7 +5114,33 @@ export async function updateFeeInstallmentPlan(
     updates.notes = input.notes.trim() || undefined;
   }
 
-  if (Array.isArray(input.installments)) {
+  if (input.installmentTransaction) {
+    const { installmentNumber, transaction } = input.installmentTransaction;
+    const installments = existingPlanData.installments.map((inst) => {
+      if (inst.installmentNumber !== installmentNumber) return inst;
+
+      const newTransactions = [...(inst.transactions ?? []), transaction];
+      const totalPaid = newTransactions.reduce((s, t) => s + t.paidAmount, 0);
+      const clampedPaid = Math.min(totalPaid, inst.amount);
+
+      return {
+        ...inst,
+        paidAmount: clampedPaid,
+        pendingAmount: Math.max(0, inst.amount - clampedPaid),
+        paidDate: transaction.paidDate,
+        paymentMode: transaction.paymentMode,
+        transactions: newTransactions,
+        status: getInstallmentStatus(inst.amount, clampedPaid, inst.dueDate),
+      };
+    });
+
+    updates.installments = installments;
+    const amounts = calculatePlanAmounts(installments);
+    updates.totalFee = amounts.totalFee;
+    updates.paidAmount = amounts.paidAmount;
+    updates.pendingAmount = amounts.pendingAmount;
+    updates.status = amounts.status;
+  } else if (Array.isArray(input.installments)) {
     const normalizedInstallments = normalizeInstallments(input.installments);
     const amounts = calculatePlanAmounts(normalizedInstallments);
 

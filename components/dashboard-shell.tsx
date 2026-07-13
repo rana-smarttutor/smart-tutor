@@ -12,6 +12,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { AttendanceManager } from "@/components/attendance-manager";
 import { InvoiceManager } from "@/components/invoice-manager";
+import { StudentFeeReceiptsView } from "./student-fee-receipts-view";
+import { AdminFeeHub } from "./admin-fee-hub";
 import { LectureManager } from "@/components/lecture-manager";
 import { DailyLearningActivityManager } from "./daily-learning-activity-manager";
 import { FeeInstallmentManager } from "./fee-installment-manager";
@@ -299,8 +301,7 @@ const sidebarByRole = {
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Learning" },
     { id: "performance", label: "Performance Reports" },
-    { id: "fees", label: "Fees" },
-    { id: "fee-installments", label: "Fees & Installments" },
+    { id: "receipts", label: "Fee Details" },
     { id: "library", label: "Library" },
   ],
 
@@ -362,8 +363,7 @@ const sidebarByRole = {
     { id: "staff-attendance", label: "Staff Attendance" },
     { id: "biometric", label: "Biometric" },
     { id: "leave", label: "Leave" },
-    { id: "fees", label: "Invoices" },
-    { id: "fee-installments", label: "Fee Plans" },
+    { id: "fees", label: "Billing Hub" },
     { id: "teacher-payouts", label: "Teacher Payouts" },
     { id: "branches", label: "Branches" },
     { id: "batches", label: "Batch Management" },
@@ -388,8 +388,7 @@ const sidebarByRole = {
     { id: "student-feedback", label: "Feedback & Behaviour" },
     { id: "daily-activities", label: "Daily Learning" },
     { id: "performance", label: "Performance Reports" },
-    { id: "fees", label: "Fees" },
-    { id: "fee-installments", label: "Fees & Installments" },
+    { id: "receipts", label: "Fee Details" },
     { id: "library", label: "Library" },
   ],
 } as const;
@@ -425,9 +424,9 @@ function getInitials(name?: string) {
 
 const menuSections = [
   { label: "Overview", items: ["accounts", "overview", "gamification", "messages", "chat", "chat-monitor", "ptm", "attendance", "staff-attendance", "biometric", "leave", "notifications"] },
-  { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance"] },
+  { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance", "receipts"] },
   { label: "People", items: ["enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
-  { label: "Finance", items: ["fees", "fee-installments", "teacher-payouts"] },
+  { label: "Finance", items: ["fees", "teacher-payouts"] },
 ];
 
 const navIcons: Record<string, React.ReactNode> = {
@@ -459,6 +458,7 @@ const navIcons: Record<string, React.ReactNode> = {
   profile: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
   fees: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   "fee-installments": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
+  receipts: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   "teacher-payouts": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   "staff-attendance": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   biometric: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>,
@@ -556,6 +556,7 @@ export function DashboardShell({
   const showStudentFeedback = activeSection === "student-feedback";
   const showDailyActivities = activeSection === "daily-activities";
   const showFeeInstallments = activeSection === "fee-installments";
+  const showReceipts = activeSection === "receipts";
   const showTeacherPayouts = activeSection === "teacher-payouts";
   const showProfile = activeSection === "profile";
 
@@ -1278,23 +1279,25 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showFeeInstallments ? (
-            <FeeInstallmentManager
+          {showFees && role === "admin" ? (
+            <AdminFeeHub
               role={role}
+              feeInvoices={dashboard.feeInvoices}
+              feeInstallmentPlans={dashboard.feeInstallmentPlans ?? []}
               studentDirectory={studentDirectory}
+            />
+          ) : null}
+
+          {showReceipts && (role === "student" || role === "parent") ? (
+            <StudentFeeReceiptsView
+              role={role}
+              feeInvoices={dashboard.feeInvoices}
+              feeInstallmentPlans={dashboard.feeInstallmentPlans ?? []}
             />
           ) : null}
 
           {showTeacherPayouts && (role === "admin" || role === "educator") ? (
             <TeacherPayoutManager role={role} managedUsers={managedUsers} />
-          ) : null}
-
-          {showFees ? (
-            <InvoiceManager
-              role={role}
-              feeInvoices={dashboard.feeInvoices}
-              studentDirectory={studentDirectory}
-            />
           ) : null}
 
           {showLectures ? (

@@ -419,6 +419,27 @@ export type AttendanceSheet = {
 
 export type FeeInvoiceStatus = "paid" | "unpaid" | "partial" | "overdue";
 
+export type PaymentMode =
+  | "Cash"
+  | "UPI"
+  | "Bank Transfer"
+  | "Card"
+  | "Online Payment"
+  | "Cheque";
+
+export type PaymentTransaction = {
+  paidAmount: number;
+  paidDate: string;
+  paymentMode: PaymentMode;
+  transactionId?: string;
+  chequeNumber?: string;
+  bankName?: string;
+  accountLast4?: string;
+  notes?: string;
+  recordedBy: string;
+  recordedAt: string;
+};
+
 export type FeeInvoice = {
   id: string;
   studentId: string;
@@ -442,6 +463,7 @@ export type FeeInvoice = {
   dueDate: string;
   status: FeeInvoiceStatus;
   notes?: string;
+  transactions: PaymentTransaction[];
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
@@ -820,6 +842,7 @@ export type FeeInstallment = {
 
   receiptNumber?: string;
   paymentMode?: string;
+  transactions: PaymentTransaction[];
   notes?: string;
 };
 

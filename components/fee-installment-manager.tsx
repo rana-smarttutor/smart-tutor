@@ -6,6 +6,7 @@ import type {
   FeeInstallment,
   FeeInstallmentPlan,
   ManagedUser,
+  PaymentMode,
   Role,
 } from "@/lib/types";
 
@@ -22,6 +23,17 @@ type InstallmentDraft = {
   paidDate: string;
   paymentMode: string;
   receiptNumber: string;
+  notes: string;
+};
+
+type InstallmentPaymentDraft = {
+  paidAmount: string;
+  paidDate: string;
+  paymentMode: PaymentMode;
+  transactionId: string;
+  chequeNumber: string;
+  bankName: string;
+  accountLast4: string;
   notes: string;
 };
 
@@ -160,6 +172,20 @@ export function FeeInstallmentManager({
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+
+  const [paymentPlan, setPaymentPlan] = useState<FeeInstallmentPlan | null>(null);
+  const [paymentInstallment, setPaymentInstallment] = useState<FeeInstallment | null>(null);
+  const [installmentPaymentDraft, setInstallmentPaymentDraft] = useState<InstallmentPaymentDraft>({
+    paidAmount: "",
+    paidDate: getToday(),
+    paymentMode: "Cash",
+    transactionId: "",
+    chequeNumber: "",
+    bankName: "",
+    accountLast4: "",
+    notes: "",
+  });
+  const [isRecordingPayment, setIsRecordingPayment] = useState(false);
 
   const selectedStudent = useMemo(
     () =>
@@ -542,6 +568,104 @@ export function FeeInstallmentManager({
       setMessage("Unable to delete fee plan.");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  function openInstallmentPaymentModal(
+    plan: FeeInstallmentPlan,
+    installment: FeeInstallment,
+  ) {
+    const remaining = Math.max(0, installment.amount - installment.paidAmount);
+    setPaymentPlan(plan);
+    setPaymentInstallment(installment);
+    setInstallmentPaymentDraft({
+      paidAmount: String(remaining),
+      paidDate: getToday(),
+      paymentMode: "Cash",
+      transactionId: "",
+      chequeNumber: "",
+      bankName: "",
+      accountLast4: "",
+      notes: "",
+    });
+  }
+
+  function updateInstallmentPaymentDraft<K extends keyof InstallmentPaymentDraft>(
+    key: K,
+    value: InstallmentPaymentDraft[K],
+  ) {
+    setInstallmentPaymentDraft((current) => ({ ...current, [key]: value }));
+  }
+
+  async function recordInstallmentPayment() {
+    if (!paymentPlan || !paymentInstallment) return;
+
+    const amount = Number(installmentPaymentDraft.paidAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setMessage("Enter a valid paid amount.");
+      return;
+    }
+
+    const remaining = Math.max(
+      0,
+      paymentInstallment.amount - paymentInstallment.paidAmount,
+    );
+    if (amount > remaining) {
+      setMessage(
+        `Paid amount cannot exceed the outstanding balance of ${formatCurrency(remaining)}.`,
+      );
+      return;
+    }
+
+    setIsRecordingPayment(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(`/api/fee-installments/${paymentPlan.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          installmentTransaction: {
+            installmentNumber: paymentInstallment.installmentNumber,
+            transaction: {
+              paidAmount: amount,
+              paidDate: installmentPaymentDraft.paidDate,
+              paymentMode: installmentPaymentDraft.paymentMode,
+              transactionId: installmentPaymentDraft.transactionId,
+              chequeNumber: installmentPaymentDraft.chequeNumber,
+              bankName: installmentPaymentDraft.bankName,
+              accountLast4: installmentPaymentDraft.accountLast4,
+              notes: installmentPaymentDraft.notes,
+            },
+          },
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        feeInstallmentPlan?: FeeInstallmentPlan;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.feeInstallmentPlan) {
+        setMessage(payload.error ?? "Unable to record payment.");
+        return;
+      }
+
+      setPlans((current) =>
+        current.map((p) =>
+          p.id === payload.feeInstallmentPlan!.id
+            ? payload.feeInstallmentPlan!
+            : p,
+        ),
+      );
+
+      setPaymentPlan(null);
+      setPaymentInstallment(null);
+      setMessage("Payment recorded successfully.");
+    } catch {
+      setMessage("Unable to record payment.");
+    } finally {
+      setIsRecordingPayment(false);
     }
   }
 
@@ -974,6 +1098,7 @@ export function FeeInstallmentManager({
                       <th className="px-4 py-3">Pending</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Payment</th>
+                      <th className="px-4 py-3">Action</th>
                     </tr>
                   </thead>
 
@@ -1019,6 +1144,22 @@ export function FeeInstallmentManager({
                             ? ` • ${installment.receiptNumber}`
                             : ""}
                         </td>
+
+                        <td className="px-4 py-3">
+                          {canManage &&
+                          installment.status !== "paid" &&
+                          installment.pendingAmount > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openInstallmentPaymentModal(plan, installment)
+                              }
+                              className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-700 hover:bg-emerald-100"
+                            >
+                              Record Payment
+                            </button>
+                          ) : null}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1059,6 +1200,188 @@ export function FeeInstallmentManager({
           ))}
         </div>
       </div>
+
+      {paymentPlan && paymentInstallment ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">
+              Record Payment
+            </p>
+
+            <h3 className="mt-2 text-xl font-black text-slate-950">
+              Installment #{paymentInstallment.installmentNumber} — {paymentPlan.studentName}
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Outstanding balance:{" "}
+              <strong>
+                {formatCurrency(
+                  Math.max(0, paymentInstallment.amount - paymentInstallment.paidAmount),
+                )}
+              </strong>
+            </p>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                  Amount (₹) *
+                </span>
+                <input
+                  type="number"
+                  min="1"
+                  value={installmentPaymentDraft.paidAmount}
+                  onChange={(event) =>
+                    updateInstallmentPaymentDraft("paidAmount", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                  Payment Date *
+                </span>
+                <input
+                  type="date"
+                  value={installmentPaymentDraft.paidDate}
+                  onChange={(event) =>
+                    updateInstallmentPaymentDraft("paidDate", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </label>
+
+              <label className="space-y-2">
+                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                  Payment Mode *
+                </span>
+                <select
+                  value={installmentPaymentDraft.paymentMode}
+                  onChange={(event) =>
+                    updateInstallmentPaymentDraft(
+                      "paymentMode",
+                      event.target.value as PaymentMode,
+                    )
+                  }
+                  className={fieldClass}
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Card">Card</option>
+                  <option value="Online Payment">Online Payment</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </label>
+
+              <label className="space-y-2">
+                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                  Notes
+                </span>
+                <input
+                  value={installmentPaymentDraft.notes}
+                  onChange={(event) =>
+                    updateInstallmentPaymentDraft("notes", event.target.value)
+                  }
+                  className={fieldClass}
+                  placeholder="Optional"
+                />
+              </label>
+            </div>
+
+            {installmentPaymentDraft.paymentMode !== "Cash" ? (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-amber-700">
+                  Transaction Details
+                </p>
+
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  {installmentPaymentDraft.paymentMode === "Cheque" ? (
+                    <label className="space-y-2">
+                      <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                        Cheque Number
+                      </span>
+                      <input
+                        value={installmentPaymentDraft.chequeNumber}
+                        onChange={(event) =>
+                          updateInstallmentPaymentDraft("chequeNumber", event.target.value)
+                        }
+                        className={fieldClass}
+                        placeholder="Cheque number"
+                      />
+                    </label>
+                  ) : null}
+
+                  <label className="space-y-2">
+                    <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                      Transaction ID / Reference
+                    </span>
+                    <input
+                      value={installmentPaymentDraft.transactionId}
+                      onChange={(event) =>
+                        updateInstallmentPaymentDraft("transactionId", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="UPI ref, NEFT/RTGS ref, etc."
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                      Bank Name
+                    </span>
+                    <input
+                      value={installmentPaymentDraft.bankName}
+                      onChange={(event) =>
+                        updateInstallmentPaymentDraft("bankName", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="Bank name"
+                    />
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
+                      Account Last 4 Digits
+                    </span>
+                    <input
+                      value={installmentPaymentDraft.accountLast4}
+                      onChange={(event) =>
+                        updateInstallmentPaymentDraft("accountLast4", event.target.value)
+                      }
+                      className={fieldClass}
+                      placeholder="XXXX"
+                      maxLength={4}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPaymentPlan(null);
+                  setPaymentInstallment(null);
+                }}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isRecordingPayment}
+                onClick={() => void recordInstallmentPayment()}
+                className="rounded-full bg-emerald-600 px-5 py-2 text-sm font-black text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              >
+                {isRecordingPayment ? "Saving..." : "Record Payment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

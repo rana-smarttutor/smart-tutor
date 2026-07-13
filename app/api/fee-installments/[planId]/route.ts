@@ -6,7 +6,11 @@ import {
   getFeeInstallmentPlanById,
   updateFeeInstallmentPlan,
 } from "@/lib/data-store";
-import type { FeeInstallment, FeeInstallmentPlan } from "@/lib/types";
+import type {
+  FeeInstallment,
+  FeeInstallmentPlan,
+  PaymentTransaction,
+} from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -146,27 +150,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     const body = (await request.json()) as Record<string, unknown>;
 
-    const updates: Partial<{
-      title: string;
-      courseName: string;
-      batchName: string;
-      academicYear: string;
-      notes: string;
-      status: FeeInstallmentPlan["status"];
-      installments: Array<
-        Pick<
-          FeeInstallment,
-          | "installmentNumber"
-          | "amount"
-          | "paidAmount"
-          | "dueDate"
-          | "paidDate"
-          | "receiptNumber"
-          | "paymentMode"
-          | "notes"
-        >
-      >;
-    }> = {};
+    const updates: Record<string, unknown> = {};
 
     if (hasField(body, "title")) {
       updates.title = getRequiredText(body.title, "Fee plan title");
@@ -190,6 +174,28 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     if (hasField(body, "installments")) {
       updates.installments = parseInstallments(body.installments);
+    }
+
+    if (body.installmentTransaction) {
+      const it = body.installmentTransaction as Record<string, unknown>;
+      const t = it.transaction as Record<string, unknown>;
+      const transaction: PaymentTransaction = {
+        paidAmount: Number(t.paidAmount) || 0,
+        paidDate: (t.paidDate as string) || new Date().toISOString().slice(0, 10),
+        paymentMode: (t.paymentMode as PaymentTransaction["paymentMode"]) || "Cash",
+        transactionId: getOptionalText(t.transactionId),
+        chequeNumber: getOptionalText(t.chequeNumber),
+        bankName: getOptionalText(t.bankName),
+        accountLast4: getOptionalText(t.accountLast4),
+        notes: getOptionalText(t.notes),
+        recordedBy: session.id,
+        recordedAt: new Date().toISOString(),
+      };
+
+      (updates as Record<string, unknown>).installmentTransaction = {
+        installmentNumber: Number(it.installmentNumber),
+        transaction,
+      };
     }
 
     if (hasField(body, "status")) {
