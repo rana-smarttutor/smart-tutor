@@ -35,6 +35,7 @@ const labels: Record<AppNotification["type"], string> = {
   fees: "Fees",
   payment: "Payment",
   placement: "Placement",
+  ptm: "PTM",
 };
 
   return labels[type];

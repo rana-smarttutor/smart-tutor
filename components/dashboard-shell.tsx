@@ -42,7 +42,7 @@ import type {
   SessionUser,
   TestSubmission,
 } from "@/lib/types";
-import { DEFAULT_HEURISTICS } from "@/lib/data-store";
+import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 import { StudentFeedbackManager } from "./student-feedback-manager";
 import { LeaveManager } from "@/components/leave-manager";
 import { RolesManager } from "@/components/roles-manager";

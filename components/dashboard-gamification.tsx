@@ -9,7 +9,7 @@ import type {
   GamificationStats,
   SessionUser,
 } from "@/lib/types";
-import { DEFAULT_GAMIFICATION_LEVELS } from "@/lib/data-store";
+import { DEFAULT_GAMIFICATION_LEVELS } from "@/lib/gamification-constants";
 
 type Props = {
   session: SessionUser | null;

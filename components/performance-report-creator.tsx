@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { PerformanceHeuristics, PerformanceReport, ManagedUser, SessionUser } from "@/lib/types";
-import { DEFAULT_HEURISTICS } from "@/lib/data-store";
+import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 
 type Props = {
   session: SessionUser | null;

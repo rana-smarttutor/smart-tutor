@@ -1,4 +1,4 @@
-"use server"
+import "server-only";
 import { MongoClient } from "mongodb";
 
 declare global {
