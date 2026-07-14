@@ -83,7 +83,7 @@ describe("AVAILABLE_MODULES constant", () => {
   });
 
   it("contains expected core modules", () => {
-    const expected = ["overview", "students", "attendance", "fees", "messages", "chat", "batches", "courses"];
+    const expected = ["overview", "students", "attendance", "fees", "messages", "chat", "courses"];
     for (const mod of expected) {
       expect(MODULE_IDS).toContain(mod);
     }

@@ -91,8 +91,6 @@ export async function POST(request: Request) {
     const lecture = await createLecture({
       title,
       subject: getOptionalText(body.subject),
-      batchName: getOptionalText(body.batchName),
-      batchId: getOptionalText(body.batchId),
       teacherId: session.id,
       teacherName: session.name,
 
@@ -148,10 +146,6 @@ export async function POST(request: Request) {
 
     if (lecture.subject) {
       messageBody += `Subject: ${lecture.subject}\n`;
-    }
-
-    if (lecture.batchName) {
-      messageBody += `Batch: ${lecture.batchName}\n`;
     }
 
     messageBody += `Date & Time: ${startTime}\n`;

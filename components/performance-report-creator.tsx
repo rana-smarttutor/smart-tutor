@@ -19,13 +19,11 @@ export function PerformanceReportCreator({ session, studentDirectory, onReportCr
   const [formData, setFormData] = useState<Partial<PerformanceReport>>({
     studentId: "",
     studentName: "",
-    batchName: "",
     courseType: "JEE",
     parentContact: "",
     reportType: "weekly",
     period: "",
     averageScore: 0,
-    batchRank: 0,
     attendancePercentage: 0,
     homeworkCompletionPercentage: 0,
     improvementPercentage: 0,
@@ -65,7 +63,6 @@ export function PerformanceReportCreator({ session, studentDirectory, onReportCr
         ...prev,
         studentId: student.id,
         studentName: student.name,
-        batchName: student.program,
       }));
     }
   };
@@ -258,15 +255,6 @@ export function PerformanceReportCreator({ session, studentDirectory, onReportCr
                 type="number"
                 value={formData.averageScore}
                 onChange={(e) => setFormData({ ...formData, averageScore: parseInt(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-3 text-sm font-bold outline-none"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-widest text-[var(--color-muted)]">Batch Rank</label>
-              <input
-                type="number"
-                value={formData.batchRank}
-                onChange={(e) => setFormData({ ...formData, batchRank: parseInt(e.target.value) || 0 })}
                 className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-3 text-sm font-bold outline-none"
               />
             </div>

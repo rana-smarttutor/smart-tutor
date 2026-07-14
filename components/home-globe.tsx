@@ -55,7 +55,7 @@ export function HomeGlobe() {
               <p className="text-sm font-semibold text-[var(--color-heading)]">What these outcomes represent</p>
               <div className="mt-4 grid gap-3">
                 <div className="surface rounded-3xl p-4 text-sm leading-6 text-[var(--color-muted)]">
-                  School batches receive concept clarity, worksheet discipline, and regular parent communication.
+                  School classes receive concept clarity, worksheet discipline, and regular parent communication.
                 </div>
                 <div className="surface rounded-3xl p-4 text-sm leading-6 text-[var(--color-muted)]">
                   Senior secondary and college-focused learners get stronger testing rhythm, revision planning, and academic mentoring.

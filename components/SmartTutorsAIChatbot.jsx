@@ -13,7 +13,6 @@ const STEPS = {
   CLASS: "class",
   COURSE: "course",
   TIMING: "timing",
-  BATCH: "batch",
   COMPLETE: "complete",
 };
 
@@ -41,12 +40,6 @@ const OPTIONS = {
     "Full-time College",
     "Working Professional",
   ],
-  [STEPS.BATCH]: [
-    "Morning Batch",
-    "Evening Batch",
-    "Weekend Batch",
-    "Flexible",
-  ],
 };
 
 export default function SmartTutorsAIChatbot() {
@@ -64,7 +57,6 @@ export default function SmartTutorsAIChatbot() {
     classLevel: "",
     courseName: "",
     schoolTiming: "",
-    preferredBatch: "",
   });
 
   const bottomRef = useRef(null);
@@ -170,25 +162,13 @@ export default function SmartTutorsAIChatbot() {
         schoolTiming: userInput,
       }));
 
-      setStep(STEPS.BATCH);
-
-      return "Almost there! What is your preferred time for attending our specialized batches?";
-    }
-
-    if (currentStep === STEPS.BATCH) {
-      setMemory((previous) => ({
-        ...previous,
-        preferredBatch: userInput,
-      }));
-
       setStep(STEPS.COMPLETE);
 
       return `Perfect. I've curated your profile:
 
 • Academic Level: ${memory.classLevel}
 • Interest: ${memory.courseName}
-• Current Schedule: ${memory.schoolTiming}
-• Batch Preference: ${userInput}
+• Current Schedule: ${userInput}
 
 A Smart Tutors mentor will now reach out to provide your custom learning roadmap. Is there anything else you'd like to ask about our faculty or campus?`;
     }

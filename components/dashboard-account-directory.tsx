@@ -183,7 +183,9 @@ export function DashboardAccountDirectory({
       setStatus(payload.error ?? "New account could not be created.");
       return;
     }
-    setUsers((current) => [payload.user as ManagedUser, ...current]);
+    const updatedUsers = [payload.user as ManagedUser, ...users];
+    setUsers(updatedUsers);
+    onUsersChange?.(updatedUsers);
     setCreateForm({
       name: "",
       email: "",
@@ -233,9 +235,10 @@ export function DashboardAccountDirectory({
       setStatus(payload.error ?? "Account update could not be prepared.");
       return;
     }
-    setUsers((current) =>
-      current.map((item) => (item.id === userId ? { ...item, ...payload.user } : item)),
-    );
+    const updatedUsers = (prev: ManagedUser[]) =>
+      prev.map((item) => (item.id === userId ? { ...item, ...payload.user } : item));
+    setUsers(updatedUsers);
+    onUsersChange?.(updatedUsers(users));
     setEditingUserId(null);
     setStatus("Editable account draft prepared.");
   }
@@ -251,7 +254,9 @@ export function DashboardAccountDirectory({
         body: JSON.stringify({ id: userId, mode: "delete" }),
       });
       if (res.ok) {
-        setUsers((current) => current.filter((u) => u.id !== userId));
+        const updatedUsers = users.filter((u) => u.id !== userId);
+        setUsers(updatedUsers);
+        onUsersChange?.(updatedUsers);
         setStatus("Account deleted.");
       } else {
         const data = await res.json();
@@ -337,7 +342,12 @@ export function DashboardAccountDirectory({
                           <i className="bi bi-patch-check-fill" />
                           Verified
                         </span>
-                      ) : null}
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-red-500">
+                          <i className="bi bi-exclamation-triangle-fill" />
+                          Not Verified
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -456,6 +466,22 @@ export function DashboardAccountDirectory({
                             {p!.subjects!.map((s, i) => (
                               <span key={i} className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-600">{s}</span>
                             ))}
+                          </div>
+                        </div>
+                      )}
+                      {p?.cvUrl && (
+                        <div className="col-span-2">
+                          <span className="font-semibold text-[var(--color-muted)]">Resume / CV</span>
+                          <div className="mt-1">
+                            <a
+                              href={p.cvUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-blue-600 hover:bg-blue-100 transition-colors"
+                            >
+                              <i className="bi bi-file-earmark-text" />
+                              View Resume
+                            </a>
                           </div>
                         </div>
                       )}

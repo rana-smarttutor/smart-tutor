@@ -346,10 +346,15 @@ export function MyProfileClient({ session }: Props) {
                 <i className={`bi ${roleIcon}`} />
                 {session.label || session.role}
               </div>
-              {session.verified && (
+              {session.verified ? (
                 <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
                   <i className="bi bi-patch-check-fill" />
                   Verified Account
+                </div>
+              ) : (
+                <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-600">
+                  <i className="bi bi-exclamation-triangle-fill" />
+                  Not Verified
                 </div>
               )}
             </div>
@@ -393,7 +398,6 @@ export function MyProfileClient({ session }: Props) {
                   {dashboard.linkedStudentProfile.email && <ProfileField label="Student Email" value={dashboard.linkedStudentProfile.email} />}
                   {dashboard.linkedStudentProfile.phone && <ProfileField label="Student Phone" value={dashboard.linkedStudentProfile.phone} />}
                   {dashboard.linkedStudentProfile.course && <ProfileField label="Course" value={dashboard.linkedStudentProfile.course} />}
-                  {dashboard.linkedStudentProfile.batch && <ProfileField label="Batch" value={dashboard.linkedStudentProfile.batch} />}
                 </div>
               </div>
             )}
@@ -753,6 +757,7 @@ export function MyProfileClient({ session }: Props) {
             )}
 
             {/* Delete Account */}
+            {session.role === "admin" && (
             <div className="rounded-2xl border border-red-200 bg-white shadow-sm overflow-hidden">
               <div className="bg-gradient-to-r from-red-500 to-rose-600 px-6 py-5">
                 <div className="flex items-center gap-3">
@@ -818,6 +823,7 @@ export function MyProfileClient({ session }: Props) {
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
 

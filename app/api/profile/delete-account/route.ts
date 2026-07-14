@@ -15,6 +15,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 
+  if (session.role !== "admin") {
+    return NextResponse.json({ error: "Only administrators can delete accounts." }, { status: 403 });
+  }
+
   let body: { password?: string };
   try {
     body = await request.json();

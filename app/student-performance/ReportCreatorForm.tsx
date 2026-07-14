@@ -82,7 +82,6 @@ export default function ReportCreatorForm() {
     classLevel: "",
     city: "",
     state: "",
-    batch: "",
     course: "",
     parentName: "",
     parentRelation: "",
@@ -90,7 +89,6 @@ export default function ReportCreatorForm() {
     photo: "",
 
     averageScore: "",
-    batchRank: "",
     attendancePercentage: "",
     homeworkCompletionPercentage: "",
     improvementPercentage: "",
@@ -471,7 +469,6 @@ export default function ReportCreatorForm() {
         classLevel: form.classLevel,
         city: form.city,
         state: form.state,
-        batch: form.batch,
         course: form.course,
         parentName: form.parentName,
         parentRelation: form.parentRelation,
@@ -481,7 +478,6 @@ export default function ReportCreatorForm() {
 
       metrics: {
         averageScore: Number(form.averageScore) || 0,
-        batchRank: Number(form.batchRank) || 0,
         attendancePercentage: Number(form.attendancePercentage) || 0,
         homeworkCompletionPercentage:
           Number(form.homeworkCompletionPercentage) || 0,
@@ -827,13 +823,6 @@ export default function ReportCreatorForm() {
             </div>
 
             <Field
-              label="Batch"
-              name="batch"
-              value={form.batch}
-              onChange={updateForm}
-            />
-
-            <Field
               label="Course"
               name="course"
               value={form.course}
@@ -871,13 +860,6 @@ export default function ReportCreatorForm() {
               label="Average Score (%)"
               name="averageScore"
               value={form.averageScore}
-              onChange={updateForm}
-            />
-
-            <Field
-              label="Batch Rank"
-              name="batchRank"
-              value={form.batchRank}
               onChange={updateForm}
             />
 

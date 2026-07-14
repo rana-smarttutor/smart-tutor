@@ -139,7 +139,6 @@ export function TimetableManager({
 }: TimetableManagerProps) {
   const [items, setItems] = useState<LectureItem[]>(lectures);
   const [weekStart, setWeekStart] = useState(() => getStartOfWeek(new Date()));
-  const [selectedBatchId, setSelectedBatchId] = useState("all");
   const [selectedTeacherId, setSelectedTeacherId] = useState("all");
   const [selectedLecture, setSelectedLecture] = useState<LectureItem | null>(
     null,
@@ -174,16 +173,6 @@ export function TimetableManager({
     [weekStart],
   );
 
-  const batchOptions = useMemo(() => {
-    const ids = [
-      ...new Set(items.map((l) => l.batchId).filter(Boolean)),
-    ] as string[];
-    const names = [
-      ...new Set(items.map((l) => l.batchName).filter(Boolean)),
-    ] as string[];
-    return ids.map((id, i) => ({ id, name: names[i] || id }));
-  }, [items]);
-
   const teacherOptions = useMemo(() => {
     const ids = [
       ...new Set(items.map((l) => l.teacherId).filter(Boolean)),
@@ -204,11 +193,10 @@ export function TimetableManager({
         const lk = getDateKey(new Date(l.startsAt));
         return lk >= weekStartKey && lk <= weekEndKey;
       })
-      .filter((l) => selectedBatchId === "all" || l.batchId === selectedBatchId)
       .filter(
         (l) => selectedTeacherId === "all" || l.teacherId === selectedTeacherId,
       );
-  }, [items, selectedBatchId, selectedTeacherId, weekDays]);
+  }, [items, selectedTeacherId, weekDays]);
 
   const todayLectures = useMemo(() => {
     const todayKey = getDateKey(new Date());
@@ -296,36 +284,6 @@ export function TimetableManager({
       {/* Filters */}
       <div className="surface rounded-2xl p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-[var(--color-muted)]">
-            Batch:
-          </span>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => setSelectedBatchId("all")}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                selectedBatchId === "all"
-                  ? "bg-[var(--color-primary)] text-white"
-                  : "bg-[var(--color-background-strong)] text-[var(--color-muted)] hover:text-[var(--color-heading)]"
-              }`}
-            >
-              All
-            </button>
-            {batchOptions.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => setSelectedBatchId(b.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-                  selectedBatchId === b.id
-                    ? "bg-[var(--color-primary)] text-white"
-                    : "bg-[var(--color-background-strong)] text-[var(--color-muted)] hover:text-[var(--color-heading)]"
-                }`}
-              >
-                {b.name}
-              </button>
-            ))}
-          </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-xs font-bold text-[var(--color-muted)]">
               Teacher:
@@ -674,8 +632,6 @@ function LectureDetailsModal({
 
             <p className="mt-2 text-sm text-slate-500">
               {lecture.subject || "General"}
-
-              {lecture.batchName ? ` • ${lecture.batchName}` : ""}
             </p>
           </div>
 

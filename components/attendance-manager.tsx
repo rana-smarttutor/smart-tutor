@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import type {
   AttendanceSheet,
   AttendanceStatus,
-  Batch,
   ManagedUser,
   Role,
 } from "@/lib/types";
@@ -106,13 +105,9 @@ export function AttendanceManager({
   const canEdit = role === "admin" || role === "educator";
   const isAdmin = role === "admin" || role === "educator";
 
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [isLoadingBatches, setIsLoadingBatches] = useState(true);
-
-  const [selectedBatchId, setSelectedBatchId] = useState("");
-const [selectedDate, setSelectedDate] = useState(
-  toLocalDateString(new Date()),
-);
+  const [selectedDate, setSelectedDate] = useState(
+    toLocalDateString(new Date()),
+  );
   const [subject, setSubject] = useState("");
   const [search, setSearch] = useState("");
 
@@ -127,67 +122,29 @@ const [selectedDate, setSelectedDate] = useState(
   const [hasUnsaved, setHasUnsaved] = useState(false);
   const [lastSaved, setLastSaved] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setIsLoadingBatches(true);
-      try {
-        const res = await fetch("/api/batches", {
-          credentials: "same-origin",
-          cache: "no-store",
-        });
-        const data = (await res.json()) as { batches?: Batch[] };
-        if (!cancelled) setBatches(data.batches ?? []);
-      } catch {
-        if (!cancelled) setMessage("Failed to load batches.");
-      } finally {
-        if (!cancelled) setIsLoadingBatches(false);
-      }
-    }
-    void load();
-    return () => { cancelled = true; };
-  }, []);
-
-  const selectedBatch = useMemo(
-    () => batches.find((b) => b.id === selectedBatchId),
-    [batches, selectedBatchId],
-  );
-
-  const facultyInBatch = useMemo(() => {
-    if (!selectedBatch || !isAdmin) return [];
-    return selectedBatch.teacherIds
-      .map((tid) => managedUsers.find((u) => u.id === tid && u.role === "educator"))
-      .filter((u): u is ManagedUser => Boolean(u));
-  }, [selectedBatch, managedUsers, isAdmin]);
-
-  const studentsInBatch = useMemo(() => {
-    if (!selectedBatch) return [];
-    return selectedBatch.studentIds
-      .map((sid) => studentDirectory.find((s) => s.id === sid && s.role === "student"))
-      .filter((s): s is ManagedUser => Boolean(s));
-  }, [selectedBatch, studentDirectory]);
+  const allStudents = useMemo(() => {
+    return studentDirectory.filter((s) => s.role === "student");
+  }, [studentDirectory]);
 
   const filteredPeople = useMemo(() => {
-    const people = viewMode === "faculty" ? facultyInBatch : studentsInBatch;
-    if (!search) return people;
+    if (!search) return allStudents;
     const q = search.toLowerCase();
-    return people.filter(
+    return allStudents.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         (p.id?.toLowerCase() || "").includes(q),
     );
-  }, [viewMode, facultyInBatch, studentsInBatch, search]);
+  }, [allStudents, search]);
 
   function loadAttendance() {
-    if (!selectedBatchId || !selectedDate) {
-      setMessage("Select a batch and date first.");
+    if (!selectedDate) {
+      setMessage("Select a date first.");
       return;
     }
 
     const sheetType = viewMode === "faculty" ? "faculty" : "student";
     const existing = attendanceSheets.find(
       (s) =>
-        s.batchId === selectedBatchId &&
         s.date === selectedDate &&
         s.lectureId === sheetType,
     );
@@ -208,9 +165,9 @@ const [selectedDate, setSelectedDate] = useState(
       return;
     }
 
-    const people = viewMode === "faculty" ? facultyInBatch : studentsInBatch;
+    const people = allStudents;
     if (!people.length) {
-      setMessage(`No ${viewMode} in this batch.`);
+      setMessage(`No ${viewMode} found.`);
       return;
     }
 
@@ -262,7 +219,7 @@ const [selectedDate, setSelectedDate] = useState(
   }, [localRecords]);
 
   async function saveAttendance() {
-    if (!canEdit || !selectedBatchId || !selectedDate) return;
+    if (!canEdit || !selectedDate) return;
     if (viewMode === "faculty" && !isAdmin) return;
     setIsSaving(true);
     setMessage("");
@@ -298,8 +255,6 @@ const [selectedDate, setSelectedDate] = useState(
           body: JSON.stringify({
             title: `${viewMode === "faculty" ? "Faculty" : "Student"} Attendance - ${selectedDate}`,
             date: selectedDate,
-            batchName: selectedBatch?.name || "",
-            batchId: selectedBatchId,
             lectureId: sheetType,
             subject: subject.trim() || undefined,
             records,
@@ -546,20 +501,6 @@ const [selectedDate, setSelectedDate] = useState(
                 </div>
               </div>
             ) : null}
-            <div className="min-w-[180px] flex-[2]">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Batch</p>
-              <select
-                value={selectedBatchId}
-                onChange={(e) => { setSelectedBatchId(e.target.value); setActiveSheetId(null); setLocalRecords([]); setHasUnsaved(false); }}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
-                disabled={isLoadingBatches}
-              >
-                <option value="">{isLoadingBatches ? "Loading..." : "— Select Batch —"}</option>
-                {batches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
             <div className="min-w-[150px] flex-1">
               <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Date</p>
               <input
@@ -582,7 +523,6 @@ const [selectedDate, setSelectedDate] = useState(
             <button
               type="button"
               onClick={loadAttendance}
-              disabled={!selectedBatchId}
               className="btn-action btn-md font-bold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -634,7 +574,7 @@ const [selectedDate, setSelectedDate] = useState(
               </div>
               <div>
                 <p className="text-sm font-bold text-[var(--color-heading)]">
-                  {selectedBatch?.name || "Attendance"} — {viewMode === "faculty" ? "Faculty" : "Students"}
+                  {viewMode === "faculty" ? "Faculty" : "Students"} Attendance
                 </p>
                 <p className="text-xs text-[var(--color-muted)]">
                   {new Date(selectedDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
@@ -766,7 +706,7 @@ const [selectedDate, setSelectedDate] = useState(
       ) : null}
 
       {/* Empty state */}
-      {localRecords.length === 0 && canEdit && selectedBatchId ? (
+      {localRecords.length === 0 && canEdit ? (
         <div className="surface rounded-2xl p-10 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--color-primary-soft)]">
             <svg className="h-6 w-6 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -775,20 +715,11 @@ const [selectedDate, setSelectedDate] = useState(
           </div>
           <p className="mt-4 text-lg font-bold text-[var(--color-heading)]">No Attendance Loaded</p>
           <p className="mt-2 text-sm text-[var(--color-muted)]">
-            Select a {isAdmin ? "type, " : ""}batch and date above, then click Load Attendance.
+            Select a {isAdmin ? "type and " : ""}date above, then click Load Attendance.
           </p>
         </div>
       ) : null}
 
-      {/* No batches state */}
-      {canEdit && !isLoadingBatches && batches.length === 0 ? (
-        <div className="surface-soft rounded-2xl p-6 text-center">
-          <p className="text-sm font-bold text-[var(--color-heading)]">No batches available</p>
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            Create a batch and assign students first.
-          </p>
-        </div>
-      ) : null}
     </section>
   );
 }

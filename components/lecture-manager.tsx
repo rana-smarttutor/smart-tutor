@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { Batch, LectureItem, ManagedUser, Role } from "@/lib/types";
+import type { LectureItem, ManagedUser, Role } from "@/lib/types";
 
 type LectureManagerProps = {
   role: Role;
@@ -98,12 +98,14 @@ export function LectureManager({
     });
   }, [canEdit, items]);
 
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [isLoadingBatches, setIsLoadingBatches] = useState(false);
+  const allStudents = useMemo(() => {
+    return studentDirectory.filter(
+      (student) => student.role === "student",
+    );
+  }, [studentDirectory]);
 
   const [title, setTitle] = useState("Live Class");
   const [subject, setSubject] = useState("");
-  const [batchId, setBatchId] = useState("");
   const [description, setDescription] = useState("");
   const [startsAt, setStartsAt] = useState("");
   const [endsAt, setEndsAt] = useState("");
@@ -122,83 +124,9 @@ export function LectureManager({
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [message, setMessage] = useState("");
 
-  const selectedBatch = useMemo(
-    () => batches.find((batch) => batch.id === batchId),
-    [batches, batchId],
-  );
-
-  const batchStudents = useMemo(() => {
-    if (!selectedBatch) {
-      return [];
-    }
-
-    return (selectedBatch.studentIds ?? [])
-      .map((studentId) =>
-        studentDirectory.find(
-          (student) => student.id === studentId && student.role === "student",
-        ),
-      )
-      .filter((student): student is ManagedUser => Boolean(student));
-  }, [selectedBatch, studentDirectory]);
-
   useEffect(() => {
     setItems(lectures);
   }, [lectures]);
-
-  useEffect(() => {
-    if (!canEdit) {
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadBatches() {
-      setIsLoadingBatches(true);
-
-      try {
-        const response = await fetch("/api/batches", {
-          method: "GET",
-          credentials: "same-origin",
-          cache: "no-store",
-        });
-
-        const payload = (await response.json()) as {
-          batches?: Batch[];
-          error?: string;
-        };
-
-        if (!response.ok) {
-          throw new Error(payload.error ?? "Unable to load batches.");
-        }
-
-        if (!cancelled) {
-          setBatches(payload.batches ?? []);
-        }
-      } catch {
-        if (!cancelled) {
-          setMessage("Unable to load assigned batches.");
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingBatches(false);
-        }
-      }
-    }
-
-    void loadBatches();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [canEdit]);
-
-  function handleBatchChange(nextBatchId: string) {
-    setBatchId(nextBatchId);
-
-    const batch = batches.find((item) => item.id === nextBatchId);
-
-    setSubject(batch?.subject ?? "");
-  }
 
   function updateNewReport<Key extends keyof ReportDraft>(
     key: Key,
@@ -223,7 +151,6 @@ export function LectureManager({
   function resetForm() {
     setTitle("Live Class");
     setSubject("");
-    setBatchId("");
     setDescription("");
     setStartsAt("");
     setEndsAt("");
@@ -249,13 +176,8 @@ export function LectureManager({
       return;
     }
 
-    if (!batchId || !selectedBatch) {
-      setMessage("Select an assigned batch before saving the lecture.");
-      return;
-    }
-
-    if (!batchStudents.length) {
-      setMessage("The selected batch has no active students assigned.");
+    if (!allStudents.length) {
+      setMessage("No students available in the system.");
       return;
     }
 
@@ -281,15 +203,13 @@ export function LectureManager({
         body: JSON.stringify({
           title: title.trim(),
           subject,
-          batchId: selectedBatch.id,
-          batchName: selectedBatch.name,
           description,
           startsAt,
           endsAt,
           meetingLink,
           recordingLink,
           materialLink,
-          assignedStudentIds: batchStudents.map((student) => student.id),
+          assignedStudentIds: allStudents.map((student) => student.id),
           status,
           ...newLectureReport,
         }),
@@ -497,14 +417,7 @@ export function LectureManager({
 
         {canEdit ? (
           <div className="mt-6 space-y-6">
-            {!isLoadingBatches && !batches.length ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                No batches are assigned yet. Create a batch and assign faculty
-                before creating lectures.
-              </div>
-            ) : null}
-
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <FieldLabel label="Lecture Title">
                 <input
                   value={title}
@@ -521,27 +434,6 @@ export function LectureManager({
                   placeholder="Subject"
                   className={fieldClass}
                 />
-              </FieldLabel>
-
-              <FieldLabel label="Assigned Batch">
-                <select
-                  value={batchId}
-                  onChange={(event) => handleBatchChange(event.target.value)}
-                  disabled={isLoadingBatches}
-                  className={fieldClass}
-                >
-                  <option value="">
-                    {isLoadingBatches
-                      ? "Loading batches..."
-                      : "Select assigned batch"}
-                  </option>
-
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.name}
-                    </option>
-                  ))}
-                </select>
               </FieldLabel>
 
               <FieldLabel label="Start Time">
@@ -711,18 +603,14 @@ export function LectureManager({
                 </div>
 
                 <span className="pill w-fit">
-                  {batchStudents.length} Student
-                  {batchStudents.length === 1 ? "" : "s"}
+                  {allStudents.length} Student
+                  {allStudents.length === 1 ? "" : "s"}
                 </span>
               </div>
 
-              {!batchId ? (
-                <p className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-3 text-sm font-semibold text-[var(--color-heading)]">
-                  Select a batch above to load its assigned students.
-                </p>
-              ) : batchStudents.length ? (
+              {allStudents.length ? (
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                  {batchStudents.map((student) => (
+                  {allStudents.map((student) => (
                     <div
                       key={student.id}
                       className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-sm font-bold text-[var(--color-heading)] shadow-sm"
@@ -733,7 +621,7 @@ export function LectureManager({
                 </div>
               ) : (
                 <p className="mt-4 rounded-xl border border-yellow-400/30 bg-yellow-400/10 px-3 py-3 text-sm font-semibold text-[var(--color-heading)]">
-                  This batch has no active students assigned.
+                  No students available in the system.
                 </p>
               )}
             </div>
@@ -741,7 +629,7 @@ export function LectureManager({
             <button
               type="button"
               onClick={() => void createLecture()}
-              disabled={isSaving || !batchId || !batchStudents.length}
+              disabled={isSaving || !allStudents.length}
               className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving
@@ -777,7 +665,6 @@ export function LectureManager({
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
                       {lecture.subject || "General"}
-                      {lecture.batchName ? ` • ${lecture.batchName}` : ""}
                     </p>
                   </div>
 

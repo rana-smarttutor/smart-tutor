@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import {
   createDailyActivity,
-  getBatchesForRole,
   getDailyActivitiesForRole,
 } from "@/lib/data-store";
 import type { StudentDailyActivity } from "@/lib/types";
@@ -88,36 +87,9 @@ export async function POST(request: Request) {
 
     const body = (await request.json()) as Record<string, unknown>;
 
-    const batchId = getRequiredText(body.batchId, "Batch");
     const studentId = getRequiredText(body.studentId, "Student ID");
     const studentName = getRequiredText(body.studentName, "Student name");
     const date = getRequiredText(body.date, "Activity date");
-
-    const allowedBatches = await getBatchesForRole(
-      session.role,
-      session.id,
-    );
-
-    const batch = allowedBatches.find(
-      (item) => item.id === batchId && item.status === "active",
-    );
-
-    if (!batch) {
-      return NextResponse.json(
-        {
-          error:
-            "This batch is unavailable or is not assigned to your account.",
-        },
-        { status: 403 },
-      );
-    }
-
-    if (!batch.studentIds.includes(studentId)) {
-      return NextResponse.json(
-        { error: "This student is not assigned to the selected batch." },
-        { status: 403 },
-      );
-    }
 
     const rawParticipation =
       typeof body.participation === "string"
@@ -135,13 +107,10 @@ export async function POST(request: Request) {
       studentId,
       studentName,
 
-      batchId: batch.id,
-      batchName: batch.name,
-
       teacherId: session.id,
       teacherName: session.name,
 
-      subject: getOptionalText(body.subject) ?? batch.subject,
+      subject: getOptionalText(body.subject),
       date,
 
       topicStudied: getOptionalText(body.topicStudied),

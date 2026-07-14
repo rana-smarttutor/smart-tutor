@@ -40,6 +40,10 @@ import { RolesManager } from "@/components/roles-manager";
 import { StaffAttendanceManager } from "@/components/staff-attendance-manager";
 import { AttendanceCalendar } from "@/components/attendance-calendar";
 import { BiometricIntegration } from "@/components/biometric-integration";
+import { StaffPayrollManager } from "./staff-payroll-manager";
+import { FacultyPerformanceManager } from "./faculty-performance-manager";
+import { StaffPayoutManager } from "./staff-payout-manager";
+import { FeeDeletionAuditLogComponent as FeeDeletionAuditLogView } from "./fee-deletion-audit-log";
 function SectionLoading() {
   return (
     <div
@@ -213,15 +217,6 @@ const WeeklyTestManager = dynamic(
   },
 );
 
-const BatchManager = dynamic(
-  () =>
-    import("@/components/batch-manager").then((module) => module.BatchManager),
-  {
-    loading: () => <SectionLoading />,
-    ssr: false,
-  },
-);
-
 const HomeworkSection = dynamic(
   () =>
     import("@/components/homework-section").then(
@@ -291,19 +286,19 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
     { id: "homework", label: "Homework" },
-    { id: "attendance", label: "Attendance" },
-    { id: "leave", label: "Leave" },
-    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback" },
     { id: "daily-activities", label: "My Daily Routines" },
     { id: "performance", label: "Performance Reports" },
-    { id: "receipts", label: "My Fees" },
     { id: "library", label: "Library" },
+    { id: "attendance", label: "Attendance" },
+    { id: "leave", label: "Leave" },
+    { id: "receipts", label: "My Fees" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
+    { id: "notifications", label: "Notifications" },
   ],
 
   educator: [
@@ -311,66 +306,72 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
-    { id: "gamification", label: "Gamification" },
-    { id: "ptm", label: "PTM" },
+    { id: "courses", label: "Courses" },
     { id: "homework", label: "Homework" },
+    { id: "tests", label: "Exams" },
+    { id: "weekly-tests", label: "Weekly Tests" },
+    { id: "results", label: "Results" },
+    { id: "daily-activities", label: "Daily Activities" },
+    { id: "student-feedback", label: "Teacher Feedback" },
+    { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
     { id: "staff-attendance", label: "Staff Attendance" },
     { id: "leave", label: "Leave" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
-    { id: "tests", label: "Exams" },
-    { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Teacher Feedback" },
-    { id: "daily-activities", label: "Daily Activities" },
-    { id: "results", label: "Results" },
-    { id: "teacher-payouts", label: "My Earnings" },
-    { id: "library", label: "Library" },
+    { id: "ptm", label: "PTM" },
+    { id: "staff-payouts", label: "My Earnings" },
+    { id: "gamification", label: "Gamification" },
   ],
 
   counsellor: [
     { id: "overview", label: "Overview" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
+    { id: "profile", label: "Profile" },
+    { id: "sales-crm", label: "Sales CRM" },
+    { id: "enquiries", label: "Enquiries" },
     { id: "ptm", label: "PTM" },
     { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
-    { id: "sales-crm", label: "Sales CRM" },
   ],
 
   admin: [
-    { id: "accounts", label: "Accounts" },
     { id: "overview", label: "Overview" },
+    { id: "profile", label: "Profile" },
+    { id: "accounts", label: "Accounts" },
+    { id: "branches", label: "Branches" },
     { id: "roles", label: "Roles & Permissions" },
-    { id: "gamification", label: "Gamification" },
+    { id: "students", label: "Students" },
+    { id: "enquiries", label: "Enquiries" },
+    { id: "password-reset-requests", label: "Password Reset Requests" },
+    { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "biometric", label: "Biometric" },
+    { id: "leave", label: "Leave" },
+    { id: "courses", label: "Courses" },
+    { id: "lectures", label: "Lectures" },
+    { id: "timetable", label: "Timetable" },
+    { id: "homework", label: "Homework" },
+    { id: "tests", label: "Exams" },
+    { id: "weekly-tests", label: "Weekly Tests" },
+    { id: "results", label: "Results" },
+    { id: "daily-activities", label: "Daily Activities" },
+    { id: "student-feedback", label: "Teacher Feedback" },
+    { id: "faculty-performance", label: "Faculty Performance" },
+    { id: "performance", label: "Analytics Hub" },
+    { id: "library", label: "Library" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "chat-monitor", label: "Chat Monitor" },
     { id: "notifications", label: "Notifications" },
-    { id: "enquiries", label: "Enquiries" },
     { id: "ptm", label: "PTM" },
-    { id: "password-reset-requests", label: "Password Reset Requests" },
+    { id: "fees", label: "Billing Hub" },
+    { id: "fee-deletion-audit", label: "Fee Deletion Audit" },
+    { id: "staff-payouts", label: "Staff Payouts" },
     { id: "sales-crm", label: "Sales CRM" },
     { id: "placement-jobs", label: "Placement Jobs" },
-    { id: "tests", label: "Exams" },
-    { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Teacher Feedback" },
-    { id: "daily-activities", label: "Daily Activities" },
-    { id: "performance", label: "Analytics Hub" },
-    { id: "courses", label: "Courses" },
-    { id: "students", label: "Students" },
-    { id: "attendance", label: "Attendance" },
-    { id: "staff-attendance", label: "Staff Attendance" },
-    { id: "biometric", label: "Biometric" },
-    { id: "leave", label: "Leave" },
-    { id: "fees", label: "Billing Hub" },
-    { id: "teacher-payouts", label: "Teacher Payouts" },
-    { id: "branches", label: "Branches" },
-    { id: "batches", label: "Batch Management" },
-    { id: "lectures", label: "Lectures" },
-    { id: "timetable", label: "Timetable" },
-    { id: "library", label: "Library" },
+    { id: "gamification", label: "Gamification" },
   ],
 
   parent: [
@@ -378,19 +379,19 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Messages" },
-    { id: "chat", label: "Chat" },
-    { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
-    { id: "attendance", label: "Attendance" },
-    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Teacher Feedback" },
     { id: "daily-activities", label: "Daily Learning" },
     { id: "performance", label: "Performance Reports" },
-    { id: "receipts", label: "Child's Fees" },
     { id: "library", label: "Library" },
+    { id: "attendance", label: "Attendance" },
+    { id: "receipts", label: "Child's Fees" },
+    { id: "messages", label: "Messages" },
+    { id: "chat", label: "Chat" },
+    { id: "notifications", label: "Notifications" },
+    { id: "ptm", label: "PTM" },
   ],
 } as const;
 
@@ -400,7 +401,7 @@ function getRoleFocus(role: Role) {
   }
 
   if (role === "educator") {
-    return "Batch delivery, assessment review, and learner coordination.";
+    return "Assessment review, learning coordination, and student guidance.";
   }
 
   if (role === "parent") {
@@ -424,10 +425,12 @@ function getInitials(name?: string) {
 }
 
 const menuSections = [
-  { label: "Overview", items: ["accounts", "overview", "gamification", "messages", "chat", "chat-monitor", "ptm", "attendance", "staff-attendance", "biometric", "leave", "notifications"] },
-  { label: "Academics", items: ["lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "courses", "batches", "library", "performance"] },
-  { label: "People", items: ["enquiries", "password-reset-requests", "sales-crm", "placement-jobs"] },
-  { label: "Finance", items: ["fees", "receipts", "teacher-payouts"] },
+  { label: "Dashboard", items: ["overview", "accounts", "branches", "profile"] },
+  { label: "People & Access", items: ["roles", "students", "enquiries", "password-reset-requests", "staff-attendance", "biometric", "leave"] },
+  { label: "Academics", items: ["courses", "lectures", "timetable", "homework", "tests", "weekly-tests", "results", "daily-activities", "student-feedback", "faculty-performance", "performance", "library"] },
+  { label: "Communication", items: ["messages", "chat", "chat-monitor", "notifications", "ptm"] },
+  { label: "Finance", items: ["fees", "fee-deletion-audit", "staff-payouts", "receipts"] },
+  { label: "Growth", items: ["sales-crm", "placement-jobs", "gamification"] },
 ];
 
 const navIcons: Record<string, React.ReactNode> = {
@@ -450,20 +453,23 @@ const navIcons: Record<string, React.ReactNode> = {
   enquiries: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>,
   "password-reset-requests": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
   "student-feedback": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>,
+  "faculty-performance": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
   "sales-crm": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   "placement-jobs": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
   courses: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
-  batches: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
   library: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
   performance: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
   profile: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
   fees: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
+  "fee-deletion-audit": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>,
   "fee-installments": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
   receipts: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>,
-  "teacher-payouts": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  "staff-payouts": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   "staff-attendance": <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>,
   biometric: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" /></svg>,
   branches: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>,
+  roles: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>,
+  students: <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
 };
 
 export function DashboardShell({
@@ -498,6 +504,7 @@ export function DashboardShell({
         if (!data) return;
         setMessages(data.dashboard?.messages ?? []);
         setSubmissions(data.submissions ?? []);
+        if (Array.isArray(data.users)) setLocalManagedUsers(data.users);
       })
       .catch(() => {});
     return () => controller.abort();
@@ -542,7 +549,6 @@ export function DashboardShell({
   const showCourses = activeSection === "courses";
   const showStudents = activeSection === "students";
   const showAccounts = activeSection === "accounts";
-  const showBatches = activeSection === "batches";
   const showLibrary = activeSection === "library";
   const showPerformance = activeSection === "performance";
   const showAttendance = activeSection === "attendance";
@@ -559,6 +565,10 @@ export function DashboardShell({
   const showFeeInstallments = activeSection === "fee-installments";
   const showReceipts = activeSection === "receipts";
   const showTeacherPayouts = activeSection === "teacher-payouts";
+  const showStaffPayroll = activeSection === "staff-payroll";
+  const showStaffPayouts = activeSection === "staff-payouts";
+  const showFeeDeletionAudit = activeSection === "fee-deletion-audit";
+  const showFacultyPerformance = activeSection === "faculty-performance";
   const showProfile = activeSection === "profile";
 
   const profileHighlights = [
@@ -884,7 +894,7 @@ export function DashboardShell({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-white">
                   {session?.name ?? "Smart Tutors"}
-                  {session?.verified ? <span className="ml-1 text-[10px] text-emerald-400">✓</span> : null}
+                  {session?.verified ? <span className="ml-1 text-[10px] text-emerald-400">✓</span> : <span className="ml-1 text-[10px] text-red-400">✗</span>}
                 </p>
                 <p className="truncate text-[11px] text-slate-400">{dashboard.roleLabel}</p>
               </div>
@@ -960,7 +970,7 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showProfile && (role === "student" || role === "educator" || role === "parent") ? (
+          {showProfile ? (
             <DashboardProfileSettings
               session={session}
               role={role}
@@ -1103,10 +1113,6 @@ export function DashboardShell({
             <DashboardAccountDirectory initialUsers={localManagedUsers} onUsersChange={setLocalManagedUsers} />
           ) : null}
 
-          {showBatches && role === "admin" ? (
-            <BatchManager managedUsers={managedUsers} />
-          ) : null}
-
           {showCourses && role === "admin" ? (
             <DashboardCourseManager
               initialCourses={dashboard.courses}
@@ -1151,10 +1157,6 @@ export function DashboardShell({
                       <div className="text-center">
                         <p className="text-lg font-extrabold text-[var(--color-primary)]">{course.subjectsCovered.length}</p>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Subjects</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-extrabold text-[var(--color-success)]">1</p>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Batches</p>
                       </div>
                       <div className="text-center">
                         <p className="text-lg font-extrabold text-[var(--color-warning)]">{course.duration}</p>
@@ -1288,6 +1290,22 @@ export function DashboardShell({
 
           {showTeacherPayouts && (role === "admin" || role === "educator") ? (
             <TeacherPayoutManager role={role} managedUsers={managedUsers} />
+          ) : null}
+
+          {showStaffPayroll && (role === "admin" || role === "educator") ? (
+            <StaffPayrollManager role={role} session={session} managedUsers={managedUsers} />
+          ) : null}
+
+          {showStaffPayouts && (role === "admin" || role === "educator") ? (
+            <StaffPayoutManager role={role} session={session} managedUsers={managedUsers} />
+          ) : null}
+
+          {showFeeDeletionAudit && role === "admin" ? (
+            <FeeDeletionAuditLogView session={session} />
+          ) : null}
+
+          {showFacultyPerformance && role === "admin" ? (
+            <FacultyPerformanceManager />
           ) : null}
 
           {showLectures ? (

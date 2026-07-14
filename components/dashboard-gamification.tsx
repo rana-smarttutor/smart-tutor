@@ -20,7 +20,6 @@ export function GamificationManager({ session }: Props) {
   const [badges, setBadges] = useState<GamificationBadge[]>([]);
   const [rules, setRules] = useState<GamificationAutoAwardRule[]>([]);
   const [stats, setStats] = useState<GamificationStats | null>(null);
-  const [batchFilter, setBatchFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [showAwardModal, setShowAwardModal] = useState(false);
@@ -72,7 +71,7 @@ export function GamificationManager({ session }: Props) {
     setLoading(true);
     try {
       const [lbRes, badgeRes, ruleRes, statsRes] = await Promise.all([
-        fetch(`/api/gamification?${batchFilter ? `batchId=${batchFilter}` : ""}`, { credentials: "same-origin" }),
+        fetch("/api/gamification", { credentials: "same-origin" }),
         fetch("/api/gamification/badges", { credentials: "same-origin" }),
         fetch("/api/gamification/rules", { credentials: "same-origin" }),
         fetch("/api/gamification?type=stats", { credentials: "same-origin" }),
@@ -94,7 +93,7 @@ export function GamificationManager({ session }: Props) {
 
   useEffect(() => {
     loadData();
-  }, [batchFilter]);
+  }, []);
 
   const studentOptions = useMemo(
     () =>
@@ -306,22 +305,6 @@ export function GamificationManager({ session }: Props) {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Batch Filter */}
-      <div className="px-6 pt-4">
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-[var(--color-muted)] whitespace-nowrap">
-            Filter by Batch:
-          </label>
-          <select
-            value={batchFilter}
-            onChange={(e) => setBatchFilter(e.target.value)}
-            className="w-full max-w-[200px] rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-2 text-xs font-medium text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-          >
-            <option value="">All Batches</option>
-          </select>
         </div>
       </div>
 

@@ -4,7 +4,6 @@ import { getSessionUser } from "@/lib/auth";
 import {
   createNotifications,
   createWeeklyTest,
-  getBatchesForRole,
   getNotificationRecipientIdsForStudents,
   getWeeklyTestsForRole,
 } from "@/lib/data-store";
@@ -144,7 +143,6 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Record<string, unknown>;
 
     const title = getRequiredText(body.title, "Test title");
-    const batchId = getRequiredText(body.batchId, "Batch");
     const testDate = getRequiredText(body.testDate, "Test date");
     const totalMarks = Number(body.totalMarks);
 
@@ -155,26 +153,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const allowedBatches = await getBatchesForRole(
-      session.role,
-      session.id,
-    );
-
-    const batch = allowedBatches.find(
-      (item) => item.id === batchId && item.status === "active",
-    );
-
-    if (!batch) {
-      return NextResponse.json(
-        {
-          error:
-            "This batch is unavailable or is not assigned to your account.",
-        },
-        { status: 403 },
-      );
-    }
-
-    const subject = getOptionalText(body.subject) ?? batch.subject;
+    const subject = getOptionalText(body.subject);
 
     if (!subject) {
       return NextResponse.json(
@@ -187,8 +166,6 @@ export async function POST(request: Request) {
 
 const weeklyTest = await createWeeklyTest({
   title,
-  batchId: batch.id,
-  batchName: batch.name,
   teacherId: session.id,
   subject,
   testDate,

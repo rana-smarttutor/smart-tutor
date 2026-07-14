@@ -305,7 +305,7 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
                   <div>
                     <div className="text-sm font-bold text-slate-800">{plan.title}</div>
                     <div className="text-[11px] text-slate-500 mt-0.5">
-                      {plan.courseName ? `${plan.courseName}` : ""}{plan.batchName ? ` \u00B7 ${plan.batchName}` : ""}{plan.academicYear ? ` \u00B7 ${plan.academicYear}` : ""}
+                      {plan.courseName ? `${plan.courseName}` : ""}{plan.academicYear ? ` \u00B7 ${plan.academicYear}` : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-[12px]">

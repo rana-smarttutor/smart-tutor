@@ -91,7 +91,7 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">2. How We Use Data</h3>
                     <p>
-                      Your data is used to coordinate batches, deliver assessments, and facilitate communication between students and educators. We do not sell or rent your personal information to third-party marketers.
+                      Your data is used to coordinate courses, deliver assessments, and facilitate communication between students and educators. We do not sell or rent your personal information to third-party marketers.
                     </p>
                   </section>
                   <section>

@@ -867,8 +867,6 @@ export function InvoiceManager({
         <tr>
           <td class="label">Class / Course</td>
           <td>${escapeHtml(invoice.classCourse || "-")}</td>
-          <td class="label">Batch</td>
-          <td>${escapeHtml(invoice.batch || "-")}</td>
         </tr>
 
         <tr>

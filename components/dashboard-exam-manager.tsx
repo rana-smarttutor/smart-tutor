@@ -2031,7 +2031,7 @@ export function DashboardExamManager({
 
               <select className="surface min-w-[140px] rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm outline-none">
                 <option value="">
-                  All Batches
+                  All Classes
                 </option>
               </select>
 

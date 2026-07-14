@@ -15,7 +15,6 @@ import {
 } from "@/lib/course-library";
 import type {
   AttendanceSheet,
-  Batch,
   CourseItem,
   DashboardMetric,
   DashboardBundle,
@@ -34,7 +33,6 @@ import type {
   QuizQuestion,
   Role,
   SessionUser,
-  TeacherBatchAssignment,
   TestItem,
   TestQuestion,
   TestSubmission,
@@ -87,6 +85,21 @@ PlacementApplication,
   BiometricDevice,
   BiometricPunchLog,
   RegularisationRequest,
+  StaffPayrollProfile,
+  PayrollRun,
+  PayrollSlip,
+  SalaryAdvance,
+  SalaryIncrement,
+  SalaryTransfer,
+  PayrollSlipStatus,
+  PayrollRunStatus,
+  StaffPayout,
+  StaffPayoutStatus,
+  StaffPayoutAuditLog,
+  StaffPayoutAuditAction,
+  PaymentTransaction,
+  PaymentMode,
+  FeeDeletionAuditLog,
 } from "@/lib/types";
 
 import type {
@@ -132,7 +145,7 @@ type MessageDocument = MessageItem & {
   expiresAt?: string | Date | null;
 };
 
-const COLLECTIONS = {
+export const COLLECTIONS = {
   content: "content",
   users: "users",
   courses: "courses",
@@ -148,8 +161,6 @@ const COLLECTIONS = {
   feeInvoices: "feeInvoices",
   lectures: "lectures",
 
-  batches: "batches",
-  teacherBatchAssignments: "teacherBatchAssignments",
   weeklyTests: "weeklyTests",
  teacherFeedback: "teacherFeedback",
 
@@ -201,6 +212,22 @@ feeInstallmentPlans: "feeInstallmentPlans",
   // Biometric Integration
   biometricDevices: "biometricDevices",
   biometricPunchLogs: "biometricPunchLogs",
+
+  // Staff Payroll
+  staffPayrollProfiles: "staffPayrollProfiles",
+  payrollRuns: "payrollRuns",
+  salaryAdvances: "salaryAdvances",
+  salaryIncrements: "salaryIncrements",
+  salaryTransfers: "salaryTransfers",
+
+  // Unified Staff Payouts
+  staffPayouts: "staffPayouts",
+
+  // Staff Payout Audit Logs
+  staffPayoutAuditLogs: "staffPayoutAuditLogs",
+
+  // Fee Deletion Audit Logs
+  feeDeletionAuditLogs: "feeDeletionAuditLogs",
 } as const;
 // ... (existing code)
 
@@ -292,7 +319,7 @@ function stripMongoIds<T extends Array<{ _id?: unknown }>>(documents: T) {
   };
 }
 
-async function getCollection<T extends Document>(
+export async function getCollection<T extends Document>(
   name: (typeof COLLECTIONS)[keyof typeof COLLECTIONS],
 ) {
   const db = await getMongoDatabase();
@@ -1866,7 +1893,6 @@ export async function getStudentStats(): Promise<StudentStats> {
 
 export async function getStudentDirectoryV2(filters?: {
   search?: string;
-  batchId?: string;
   status?: string;
 }): Promise<StudentDirectoryEntry[]> {
   const collection = await getUsersCollection();
@@ -1877,9 +1903,6 @@ export async function getStudentDirectoryV2(filters?: {
     else if (filters.status === "at_risk") query.status = "at_risk";
     else if (filters.status === "dropped") query.status = "dropped";
     else if (filters.status === "graduated") query.status = "graduated";
-  }
-  if (filters?.batchId) {
-    query.batchIds = { $in: [filters.batchId] };
   }
   let students = await collection.find(query).sort({ name: 1 }).toArray();
   if (filters?.search) {
@@ -1895,7 +1918,6 @@ export async function getStudentDirectoryV2(filters?: {
     ...toManagedUser(s),
     admissionNo:
       (s as any).admissionNo ?? String((s as any).admissionNumber ?? ""),
-    batchName: (s as any).batchName ?? "",
     attendancePercent: (s as any).attendancePercent ?? 0,
     feesStatus: "none" as StudentDirectoryEntry["feesStatus"],
     riskLevel: "low" as StudentRiskLevel,
@@ -2321,8 +2343,6 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
 export async function createAttendanceSheet(input: {
   title: string;
   date: string;
-  batchName?: string;
-  batchId?: string;
   subject?: string;
   lectureId?: string;
   createdBy: string;
@@ -2338,8 +2358,6 @@ export async function createAttendanceSheet(input: {
     id: `attendance-${Date.now()}`,
     title: input.title,
     date: input.date,
-    batchName: input.batchName,
-    batchId: input.batchId,
     subject: input.subject,
     lectureId: input.lectureId,
     createdBy: input.createdBy,
@@ -2358,8 +2376,6 @@ export async function updateAttendanceSheet(
   input: Partial<{
     title: string;
     date: string;
-    batchName: string;
-    batchId: string;
     subject: string;
     lectureId: string;
     records: AttendanceSheet["records"];
@@ -2757,9 +2773,8 @@ export async function getFeeInvoiceStudentDetails(
   }
 
   const users = await getUsersCollection();
-  const batches = await getCollection<Batch>(COLLECTIONS.batches);
 
-  const [student, parent, activeBatchDocuments] = await Promise.all([
+  const [student, parent] = await Promise.all([
     users.findOne({
       id: normalizedStudentId,
       role: "student",
@@ -2769,24 +2784,11 @@ export async function getFeeInvoiceStudentDetails(
       role: "parent",
       linkedStudentId: normalizedStudentId,
     }),
-
-    batches
-      .find({
-        studentIds: normalizedStudentId,
-        status: "active",
-      })
-      .sort({
-        updatedAt: -1,
-        createdAt: -1,
-      })
-      .toArray(),
   ]);
 
   if (!student) {
     return null;
   }
-
-  const activeBatch = stripMongoIds(activeBatchDocuments)[0];
 
   const selectedDate = dueDate ? new Date(`${dueDate}T12:00:00`) : new Date();
 
@@ -2807,9 +2809,7 @@ export async function getFeeInvoiceStudentDetails(
     parentName: parent?.name || student.profile?.parentName || "",
 
     classCourse:
-      activeBatch?.courseName?.trim() || student.program?.trim() || "",
-
-    batch: activeBatch?.name?.trim() || "",
+      student.program?.trim() || "",
 
     rollNo: "",
 
@@ -2839,7 +2839,6 @@ export async function createFeeInvoice(input: {
   receiptNo?: string;
   parentName?: string;
   classCourse?: string;
-  batch?: string;
   rollNo?: string;
   academicYear?: string;
   mobileNo?: string;
@@ -2869,7 +2868,6 @@ export async function createFeeInvoice(input: {
     receiptNo: input.receiptNo ?? receiptNo,
     parentName: input.parentName,
     classCourse: input.classCourse,
-    batch: input.batch,
     rollNo: input.rollNo,
     academicYear: input.academicYear,
     mobileNo: input.mobileNo,
@@ -2997,8 +2995,6 @@ export async function getLecturesForRole(role: Role, userId?: string) {
 export async function createLecture(input: {
   title: string;
   subject?: string;
-  batchName?: string;
-  batchId?: string;
   teacherId?: string;
   teacherName?: string;
   description?: string;
@@ -3027,8 +3023,6 @@ export async function createLecture(input: {
     id: `lecture-${Date.now()}`,
     title: input.title,
     subject: input.subject,
-    batchName: input.batchName,
-    batchId: input.batchId,
     teacherId: input.teacherId ?? input.createdBy,
     teacherName: input.teacherName?.trim() || undefined,
     description: input.description,
@@ -3062,7 +3056,6 @@ export async function updateLecture(
   input: Partial<{
     title: string;
     subject: string;
-    batchName: string;
     description: string;
     startsAt: string;
     endsAt: string;
@@ -3071,7 +3064,6 @@ export async function updateLecture(
     materialLink: string;
     assignedStudentIds: string[];
     status: LectureItem["status"];
-    batchId: string;
     teacherId: string;
     topicCovered: string;
     homeworkGiven: string;
@@ -3117,7 +3109,6 @@ function buildDashboardAnalytics(input: {
   dailyActivities: StudentDailyActivity[];
   feeInvoices: FeeInvoice[];
   feeInstallmentPlans: FeeInstallmentPlan[];
-  batches: Batch[];
   lectures: LectureItem[];
   teacherPayouts: TeacherPayout[];
   users: ManagedUser[];
@@ -3366,22 +3357,11 @@ function buildDashboardAnalytics(input: {
     }
   }
 
-  const activeBatches = input.batches.filter(
-    (batch) => batch.status === "active",
-  );
-
-  const batchLearnerIds = new Set(
-    activeBatches.flatMap((batch) => batch.studentIds),
-  );
-
   const activeStudents = input.users.filter(
     (user) => user.role === "student" && user.status === "active",
   ).length;
 
-  const learners =
-    input.role === "admin"
-      ? Math.max(activeStudents, batchLearnerIds.size)
-      : batchLearnerIds.size;
+  const learners = activeStudents;
 
   const completedLectures = input.lectures.filter(
     (lecture) => lecture.status === "completed",
@@ -3409,12 +3389,7 @@ function buildDashboardAnalytics(input: {
       {
         label: "Active Learners",
         value: `${learners}`,
-        detail: "Active student accounts and enrolled batch learners",
-      },
-      {
-        label: "Active Batches",
-        value: `${activeBatches.length}`,
-        detail: "Current active batches across the institute",
+        detail: "Active student accounts",
       },
       {
         label: "Attendance",
@@ -3430,14 +3405,9 @@ function buildDashboardAnalytics(input: {
   } else if (input.role === "educator") {
     metrics = [
       {
-        label: "Assigned Batches",
-        value: `${activeBatches.length}`,
-        detail: "Active batches assigned to your account",
-      },
-      {
         label: "Learners",
         value: `${learners}`,
-        detail: "Unique students in your active batches",
+        detail: "Students in the system",
       },
       {
         label: "Attendance",
@@ -3592,7 +3562,6 @@ function buildDashboardAnalytics(input: {
     },
     finance,
     operations: {
-      activeBatches: activeBatches.length,
       learners,
       completedLectures,
       scheduledLectures,
@@ -3616,7 +3585,6 @@ export async function getDashboardBundle(
     attendanceSheets,
     feeInvoices,
     lectures,
-    batches,
     weeklyTests,
     dailyActivities,
     feeInstallmentPlans,
@@ -3635,7 +3603,6 @@ export async function getDashboardBundle(
     getAttendanceSheetsForRole(role, userId),
     getFeeInvoicesForRole(role, userId),
     getLecturesForRole(role, userId),
-    getBatchesForRole(role, userId),
     getWeeklyTestsForRole(role, userId),
     getDailyActivitiesForRole(role, userId),
     getFeeInstallmentPlansForRole(role, userId),
@@ -3668,7 +3635,6 @@ export async function getDashboardBundle(
     dailyActivities,
     feeInvoices,
     feeInstallmentPlans,
-    batches,
     lectures,
     teacherPayouts,
     users,
@@ -3697,7 +3663,7 @@ export async function getDashboardBundle(
     }
   }
 
-  let linkedStudentProfile: { name?: string; email?: string; phone?: string; course?: string; batch?: string; attendance?: number | null } | undefined;
+  let linkedStudentProfile: { name?: string; email?: string; phone?: string; course?: string; attendance?: number | null } | undefined;
   if (role === "parent" && userDoc?.linkedStudentId) {
     const linkedStudentDoc = await findFullUserById(userDoc.linkedStudentId);
     if (linkedStudentDoc) {
@@ -3706,7 +3672,6 @@ export async function getDashboardBundle(
         email: linkedStudentDoc.email,
         phone: linkedStudentDoc.profile?.guardianPhone ?? linkedStudentDoc.parentMobile ?? linkedStudentDoc.mobile,
         course: linkedStudentDoc.profile?.courseWantedTitle ?? linkedStudentDoc.profile?.courseWanted,
-        batch: linkedStudentDoc.profile?.courseWantedTitle?.split("|")[0]?.trim(),
       };
     }
   }
@@ -3724,6 +3689,7 @@ export async function getDashboardBundle(
     submissions: submissions.slice(0, 6),
     attendanceSheets,
     feeInvoices,
+    feeInstallmentPlans,
     lectures,
     linkedStudentId: userDoc?.linkedStudentId,
     linkedStudentProfile,
@@ -3782,14 +3748,13 @@ export async function deleteLibraryBook(id: string) {
 }
 
 export async function getPerformanceReports(
-  filter: { studentId?: string; batchName?: string } = {},
+  filter: { studentId?: string } = {},
 ) {
   const collection = await getCollection<PerformanceReport>(
     COLLECTIONS.performance,
   );
   const query: any = {};
   if (filter.studentId) query.studentId = filter.studentId;
-  if (filter.batchName) query.batchName = filter.batchName;
 
   return stripMongoIds(
     await collection.find(query).sort({ createdAt: -1 }).toArray(),
@@ -3858,267 +3823,6 @@ async function generateFeeReceiptNo() {
   return `${prefix}${String(nextNumber).padStart(3, "0")}`;
 }
 
-export async function getBatchesForRole(role: Role, userId?: string) {
-  const collection = await getCollection<Batch>(COLLECTIONS.batches);
-
-  if (role === "admin") {
-    return stripMongoIds(
-      await collection.find({}).sort({ createdAt: -1 }).toArray(),
-    );
-  }
-
-  if (role === "educator") {
-    if (!userId) return [];
-
-    return stripMongoIds(
-      await collection
-        .find({ teacherIds: userId, status: "active" })
-        .sort({ createdAt: -1 })
-        .toArray(),
-    );
-  }
-
-  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
-
-  if (!linkedStudentId) return [];
-
-  return stripMongoIds(
-    await collection
-      .find({ studentIds: linkedStudentId, status: "active" })
-      .sort({ createdAt: -1 })
-      .toArray(),
-  );
-}
-
-export async function createBatch(input: {
-  name: string;
-  code?: string;
-  courseId?: string;
-  courseName?: string;
-  subject?: string;
-  capacity?: number;
-  schedule?: string;
-  studentIds?: string[];
-  teacherIds?: string[];
-  startDate?: string;
-  endDate?: string;
-  createdBy: string;
-}) {
-  const name = input.name.trim();
-
-  if (!name) {
-    throw new Error("Batch name is required.");
-  }
-
-  const collection = await getCollection<Batch>(COLLECTIONS.batches);
-  const now = new Date().toISOString();
-
-  const batch: Batch = {
-    id: `batch-${randomUUID()}`,
-    name,
-    code: input.code?.trim() || undefined,
-    courseId: input.courseId?.trim() || undefined,
-    courseName: input.courseName?.trim() || undefined,
-    subject: input.subject?.trim() || undefined,
-    capacity: typeof input.capacity === "number" ? input.capacity : undefined,
-    schedule: input.schedule?.trim() || undefined,
-    studentIds: [...new Set(input.studentIds ?? [])],
-    teacherIds: [...new Set(input.teacherIds ?? [])],
-    startDate: input.startDate?.trim() || undefined,
-    endDate: input.endDate?.trim() || undefined,
-    status: "active",
-    createdBy: input.createdBy,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await collection.insertOne(batch);
-
-  return batch;
-}
-
-export async function updateBatch(
-  batchId: string,
-  input: Partial<{
-    name: string;
-    code: string;
-    courseId: string;
-    courseName: string;
-    subject: string;
-    capacity: number;
-    schedule: string;
-    studentIds: string[];
-    teacherIds: string[];
-    startDate: string;
-    endDate: string;
-    status: "active" | "archived";
-  }>,
-) {
-  const collection = await getCollection<Batch>(COLLECTIONS.batches);
-
-  const updates: Partial<Batch> = {
-    updatedAt: new Date().toISOString(),
-  };
-
-  if (typeof input.name === "string") {
-    updates.name = input.name.trim();
-  }
-
-  if (typeof input.code === "string") {
-    updates.code = input.code.trim() || undefined;
-  }
-
-  if (typeof input.courseId === "string") {
-    updates.courseId = input.courseId.trim() || undefined;
-  }
-
-  if (typeof input.courseName === "string") {
-    updates.courseName = input.courseName.trim() || undefined;
-  }
-
-  if (typeof input.subject === "string") {
-    updates.subject = input.subject.trim() || undefined;
-  }
-
-  if (typeof input.capacity === "number") {
-    updates.capacity = input.capacity;
-  }
-
-  if (typeof input.schedule === "string") {
-    updates.schedule = input.schedule.trim() || undefined;
-  }
-
-  if (typeof input.startDate === "string") {
-    updates.startDate = input.startDate.trim() || undefined;
-  }
-
-  if (typeof input.endDate === "string") {
-    updates.endDate = input.endDate.trim() || undefined;
-  }
-
-  if (Array.isArray(input.studentIds)) {
-    updates.studentIds = [...new Set(input.studentIds)];
-  }
-
-  if (Array.isArray(input.teacherIds)) {
-    updates.teacherIds = [...new Set(input.teacherIds)];
-  }
-
-  if (input.status === "active" || input.status === "archived") {
-    updates.status = input.status;
-  }
-
-  await collection.updateOne({ id: batchId }, { $set: updates });
-
-  const updatedBatch = await collection.findOne({ id: batchId });
-  return updatedBatch ? stripMongoId(updatedBatch) : null;
-}
-
-export async function deleteBatch(batchId: string) {
-  const collection = await getCollection<Batch>(COLLECTIONS.batches);
-  const assignmentCollection = await getCollection<TeacherBatchAssignment>(
-    COLLECTIONS.teacherBatchAssignments,
-  );
-
-  const batch = await collection.findOne({ id: batchId });
-
-  if (!batch) {
-    throw new Error("Batch not found.");
-  }
-
-  await assignmentCollection.deleteMany({ batchId });
-  await collection.deleteOne({ id: batchId });
-}
-
-export async function assignTeacherToBatch(input: {
-  batchId: string;
-  teacherId: string;
-  subject?: string;
-  assignedBy: string;
-}) {
-  const batchCollection = await getCollection<Batch>(COLLECTIONS.batches);
-  const assignmentCollection = await getCollection<TeacherBatchAssignment>(
-    COLLECTIONS.teacherBatchAssignments,
-  );
-
-  const batch = await batchCollection.findOne({ id: input.batchId });
-
-  if (!batch) {
-    throw new Error("Batch not found.");
-  }
-
-  const existingAssignment = await assignmentCollection.findOne({
-    batchId: input.batchId,
-    teacherId: input.teacherId,
-  });
-
-  const now = new Date().toISOString();
-
-  if (!existingAssignment) {
-    const assignment: TeacherBatchAssignment = {
-      id: `teacher-batch-${randomUUID()}`,
-      batchId: input.batchId,
-      teacherId: input.teacherId,
-      subject: input.subject?.trim() || undefined,
-      assignedAt: now,
-      assignedBy: input.assignedBy,
-    };
-
-    await assignmentCollection.insertOne(assignment);
-  }
-
-  await batchCollection.updateOne(
-    { id: input.batchId },
-    {
-      $set: {
-        teacherIds: [
-          ...new Set([...(batch.teacherIds ?? []), input.teacherId]),
-        ],
-        updatedAt: now,
-      },
-    },
-  );
-
-  const updatedBatch = await batchCollection.findOne({ id: input.batchId });
-  return updatedBatch ? stripMongoId(updatedBatch) : null;
-}
-
-export async function removeTeacherFromBatch(input: {
-  batchId: string;
-  teacherId: string;
-}) {
-  const batchCollection = await getCollection<Batch>(COLLECTIONS.batches);
-  const assignmentCollection = await getCollection<TeacherBatchAssignment>(
-    COLLECTIONS.teacherBatchAssignments,
-  );
-
-  const batch = await batchCollection.findOne({ id: input.batchId });
-
-  if (!batch) {
-    throw new Error("Batch not found.");
-  }
-
-  await assignmentCollection.deleteOne({
-    batchId: input.batchId,
-    teacherId: input.teacherId,
-  });
-
-  await batchCollection.updateOne(
-    { id: input.batchId },
-    {
-      $set: {
-        teacherIds: (batch.teacherIds ?? []).filter(
-          (teacherId) => teacherId !== input.teacherId,
-        ),
-        updatedAt: new Date().toISOString(),
-      },
-    },
-  );
-
-  const updatedBatch = await batchCollection.findOne({ id: input.batchId });
-  return updatedBatch ? stripMongoId(updatedBatch) : null;
-}
-
 export async function getWeeklyTestsForRole(role: Role, userId?: string) {
   const collection = await getCollection<WeeklyTest>(COLLECTIONS.weeklyTests);
 
@@ -4160,8 +3864,6 @@ export async function getWeeklyTestsForRole(role: Role, userId?: string) {
 
 export async function createWeeklyTest(input: {
   title: string;
-  batchId: string;
-  batchName: string;
   teacherId: string;
   subject: string;
   testDate: string;
@@ -4171,10 +3873,6 @@ export async function createWeeklyTest(input: {
 }) {
   if (!input.title.trim()) {
     throw new Error("Test title is required.");
-  }
-
-  if (!input.batchId) {
-    throw new Error("Batch is required.");
   }
 
   if (!input.subject.trim()) {
@@ -4200,8 +3898,6 @@ export async function createWeeklyTest(input: {
   const weeklyTest: WeeklyTest = {
     id: `weekly-test-${randomUUID()}`,
     title: input.title.trim(),
-    batchId: input.batchId,
-    batchName: input.batchName.trim(),
     teacherId: input.teacherId,
     subject: input.subject.trim(),
     testDate: input.testDate,
@@ -4341,8 +4037,6 @@ export async function createTeacherFeedback(input: {
   studentName: string;
   teacherId: string;
   teacherName?: string;
-  batchId?: string;
-  batchName?: string;
   subject?: string;
   category: TeacherFeedback["category"];
   strengths?: string;
@@ -4374,8 +4068,6 @@ export async function createTeacherFeedback(input: {
     studentName: input.studentName.trim(),
     teacherId: input.teacherId,
     teacherName: input.teacherName?.trim() || undefined,
-    batchId: input.batchId,
-    batchName: input.batchName?.trim() || undefined,
     subject: input.subject?.trim() || undefined,
     category: input.category,
     strengths: input.strengths?.trim() || undefined,
@@ -4504,9 +4196,6 @@ export async function createDailyActivity(input: {
   studentId: string;
   studentName: string;
 
-  batchId: string;
-  batchName: string;
-
   teacherId: string;
   teacherName?: string;
 
@@ -4532,10 +4221,6 @@ export async function createDailyActivity(input: {
     throw new Error("Student is required.");
   }
 
-  if (!input.batchId) {
-    throw new Error("Batch is required.");
-  }
-
   if (!input.teacherId) {
     throw new Error("Teacher is required.");
   }
@@ -4555,9 +4240,6 @@ export async function createDailyActivity(input: {
 
     studentId: input.studentId,
     studentName: input.studentName.trim(),
-
-    batchId: input.batchId,
-    batchName: input.batchName.trim(),
 
     teacherId: input.teacherId,
     teacherName: input.teacherName?.trim() || undefined,
@@ -5141,7 +4823,6 @@ export async function createFeeInstallmentPlan(input: {
   title: string;
 
   courseName?: string;
-  batchName?: string;
   academicYear?: string;
   notes?: string;
 
@@ -5197,7 +4878,6 @@ export async function createFeeInstallmentPlan(input: {
     title: input.title.trim(),
 
     courseName: input.courseName?.trim() || undefined,
-    batchName: input.batchName?.trim() || undefined,
     academicYear: input.academicYear?.trim() || undefined,
 
     totalFee: amounts.totalFee,
@@ -5223,7 +4903,6 @@ export async function updateFeeInstallmentPlan(
   input: Partial<{
     title: string;
     courseName: string;
-    batchName: string;
     academicYear: string;
     notes: string;
     status: FeeInstallmentPlan["status"];
@@ -5271,10 +4950,6 @@ export async function updateFeeInstallmentPlan(
 
   if (typeof input.courseName === "string") {
     updates.courseName = input.courseName.trim() || undefined;
-  }
-
-  if (typeof input.batchName === "string") {
-    updates.batchName = input.batchName.trim() || undefined;
   }
 
   if (typeof input.academicYear === "string") {
@@ -6556,8 +6231,6 @@ export async function createHomework(input: {
   hwType: string;
   maxMarks: number;
   dueDate: string;
-  batchId: string;
-  batchName?: string;
   allowLateSubmission: boolean;
   attachmentUrl?: string;
   createdBy: string;
@@ -6578,8 +6251,6 @@ export async function createHomework(input: {
     hwType: input.hwType as HomeworkItem["hwType"],
     maxMarks: input.maxMarks,
     dueDate: input.dueDate,
-    batchId: input.batchId,
-    batchName: input.batchName,
     allowLateSubmission: input.allowLateSubmission,
     attachmentUrl: input.attachmentUrl,
     createdBy: input.createdBy,
@@ -6689,6 +6360,23 @@ export async function getSubmissionsForHomework(homeworkId: string) {
   const items = await collection
     .find({ homeworkId })
     .sort({ submittedAt: -1 })
+    .toArray();
+  return items.map(stripMongoId);
+}
+
+export async function getAllHomeworkForAdmin() {
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+  const items = await collection.find({}).sort({ createdAt: -1 }).toArray();
+  return items.map(stripMongoId);
+}
+
+export async function getSubmissionsForHomeworkBatch(homeworkIds: string[]) {
+  if (!homeworkIds.length) return [];
+  const collection = await getCollection<HomeworkSubmission>(
+    COLLECTIONS.homeworkSubmissions,
+  );
+  const items = await collection
+    .find({ homeworkId: { $in: homeworkIds } })
     .toArray();
   return items.map(stripMongoId);
 }
@@ -7206,4 +6894,731 @@ export async function reviewRegularisationRequest(
     },
   );
   return result.matchedCount > 0;
+}
+
+// =========================
+// Staff Payroll / Salary Management
+// =========================
+
+export async function getStaffPayrollProfiles() {
+  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  return stripMongoIds(await collection.find({}).sort({ userName: 1 }).toArray());
+}
+
+export async function getStaffPayrollProfileByUserId(userId: string) {
+  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const profile = await collection.findOne({ userId });
+  return profile ? stripMongoId(profile) : null;
+}
+
+export async function createStaffPayrollProfile(input: {
+  userId: string;
+  userName: string;
+  employeeId?: string;
+  employmentType: string;
+  salaryType: string;
+  monthlySalary: number;
+  hourlyRate: number;
+  perClassRate: number;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  panNumber?: string;
+  pfEnabled: boolean;
+  tdsEnabled: boolean;
+  notes?: string;
+}) {
+  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const now = new Date().toISOString();
+
+  const profile: StaffPayrollProfile = {
+    id: `sp-${randomUUID()}`,
+    userId: input.userId,
+    userName: input.userName,
+    employeeId: input.employeeId?.trim() || undefined,
+    employmentType: input.employmentType as StaffPayrollProfile["employmentType"],
+    salaryType: input.salaryType as StaffPayrollProfile["salaryType"],
+    monthlySalary: input.monthlySalary,
+    hourlyRate: input.hourlyRate,
+    perClassRate: input.perClassRate,
+    bankName: input.bankName?.trim() || undefined,
+    accountNumber: input.accountNumber?.trim() || undefined,
+    ifscCode: input.ifscCode?.trim() || undefined,
+    panNumber: input.panNumber?.trim() || undefined,
+    pfEnabled: input.pfEnabled,
+    tdsEnabled: input.tdsEnabled,
+    effectiveFrom: now.slice(0, 10),
+    notes: input.notes?.trim() || undefined,
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(profile);
+  return stripMongoId(profile);
+}
+
+export async function updateStaffPayrollProfile(
+  profileId: string,
+  input: Partial<{
+    employeeId: string;
+    employmentType: string;
+    salaryType: string;
+    monthlySalary: number;
+    hourlyRate: number;
+    perClassRate: number;
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    panNumber: string;
+    pfEnabled: boolean;
+    tdsEnabled: boolean;
+    notes: string;
+    isActive: boolean;
+  }>
+) {
+  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const existing = await collection.findOne({ id: profileId });
+  if (!existing) return null;
+
+  const updateFields: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  if (input.employeeId !== undefined) updateFields.employeeId = input.employeeId?.trim() || undefined;
+  if (input.employmentType !== undefined) updateFields.employmentType = input.employmentType;
+  if (input.salaryType !== undefined) updateFields.salaryType = input.salaryType;
+  if (input.monthlySalary !== undefined) updateFields.monthlySalary = input.monthlySalary;
+  if (input.hourlyRate !== undefined) updateFields.hourlyRate = input.hourlyRate;
+  if (input.perClassRate !== undefined) updateFields.perClassRate = input.perClassRate;
+  if (input.bankName !== undefined) updateFields.bankName = input.bankName?.trim() || undefined;
+  if (input.accountNumber !== undefined) updateFields.accountNumber = input.accountNumber?.trim() || undefined;
+  if (input.ifscCode !== undefined) updateFields.ifscCode = input.ifscCode?.trim() || undefined;
+  if (input.panNumber !== undefined) updateFields.panNumber = input.panNumber?.trim() || undefined;
+  if (input.pfEnabled !== undefined) updateFields.pfEnabled = input.pfEnabled;
+  if (input.tdsEnabled !== undefined) updateFields.tdsEnabled = input.tdsEnabled;
+  if (input.notes !== undefined) updateFields.notes = input.notes?.trim() || undefined;
+  if (input.isActive !== undefined) updateFields.isActive = input.isActive;
+
+  await collection.updateOne({ id: profileId }, { $set: updateFields });
+  return stripMongoId({ ...existing, ...updateFields } as StaffPayrollProfile);
+}
+
+export async function getPayrollRuns(month?: number, year?: number) {
+  const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
+  const query: Record<string, unknown> = {};
+  if (month) query.month = month;
+  if (year) query.year = year;
+  return stripMongoIds(await collection.find(query).sort({ year: -1, month: -1 }).toArray());
+}
+
+export async function getPayrollRunById(runId: string) {
+  const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
+  const run = await collection.findOne({ id: runId });
+  return run ? stripMongoId(run) : null;
+}
+
+export async function createPayrollRun(input: {
+  month: number;
+  year: number;
+  workingDays: number;
+  createdBy: string;
+}) {
+  const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
+  const profiles = await getStaffPayrollProfiles();
+  const activeProfiles = profiles.filter(p => p.isActive);
+  const now = new Date().toISOString();
+
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const label = `${monthNames[input.month - 1]} ${input.year}`;
+
+  const existingRun = await collection.findOne({ month: input.month, year: input.year });
+  if (existingRun) {
+    throw new Error(`A payroll run already exists for ${label}. Rollback or edit the existing one.`);
+  }
+
+  const slips: PayrollSlip[] = activeProfiles.map(profile => {
+    const attendancePercent = 0;
+    const grossPay = profile.salaryType === "monthly"
+      ? profile.monthlySalary
+      : profile.salaryType === "hourly"
+        ? profile.hourlyRate * 8 * input.workingDays
+        : profile.perClassRate * 0;
+    const pfDeduction = profile.pfEnabled ? Math.round(grossPay * 0.12) : 0;
+    const tdsDeduction = profile.tdsEnabled ? Math.round(grossPay * 0.10) : 0;
+    const totalDeductions = pfDeduction + tdsDeduction;
+    const netPay = Math.max(0, grossPay - totalDeductions);
+
+    return {
+      id: `slip-${randomUUID()}`,
+      payrollRunId: "",
+      staffProfileId: profile.id,
+      userId: profile.userId,
+      userName: profile.userName,
+      employeeId: profile.employeeId,
+      employmentType: profile.employmentType,
+      monthlySalary: profile.monthlySalary,
+      hourlyRate: profile.hourlyRate,
+      perClassRate: profile.perClassRate,
+      workingDays: input.workingDays,
+      presentDays: 0,
+      attendancePercent,
+      grossPay,
+      pfDeduction,
+      tdsDeduction,
+      advanceRecovery: 0,
+      totalDeductions,
+      netPay,
+      status: "pending" as const,
+      paidAmount: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+  });
+
+  const totalGross = slips.reduce((s, sl) => s + sl.grossPay, 0);
+  const totalDeductions = slips.reduce((s, sl) => s + sl.totalDeductions, 0);
+  const totalNet = slips.reduce((s, sl) => s + sl.netPay, 0);
+
+  const run: PayrollRun = {
+    id: `pr-${randomUUID()}`,
+    month: input.month,
+    year: input.year,
+    label,
+    status: "draft",
+    totalStaff: activeProfiles.length,
+    profilesSetUp: activeProfiles.filter(p => p.monthlySalary > 0 || p.hourlyRate > 0 || p.perClassRate > 0).length,
+    workingDays: input.workingDays,
+    totalGross,
+    totalDeductions,
+    totalNet,
+    totalSettled: 0,
+    slips,
+    createdBy: input.createdBy,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  // Set payrollRunId on each slip
+  run.slips.forEach(s => { s.payrollRunId = run.id; });
+
+  await collection.insertOne(run);
+  return stripMongoId(run);
+}
+
+export async function updatePayrollSlip(
+  runId: string,
+  slipId: string,
+  input: Partial<{
+    presentDays: number;
+    grossPay: number;
+    pfDeduction: number;
+    tdsDeduction: number;
+    advanceRecovery: number;
+    netPay: number;
+    paidAmount: number;
+    paidDate: string;
+    paymentMode: string;
+    transactionRef: string;
+    notes: string;
+    status: string;
+  }>
+) {
+  const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
+  const run = await collection.findOne({ id: runId });
+  if (!run) return null;
+
+  const slipIndex = run.slips.findIndex(s => s.id === slipId);
+  if (slipIndex === -1) return null;
+
+  const slip = run.slips[slipIndex];
+  if (input.presentDays !== undefined) {
+    slip.presentDays = input.presentDays;
+    slip.attendancePercent = slip.workingDays > 0 ? Math.round((input.presentDays / slip.workingDays) * 100) : 0;
+  }
+  if (input.grossPay !== undefined) slip.grossPay = input.grossPay;
+  if (input.pfDeduction !== undefined) slip.pfDeduction = input.pfDeduction;
+  if (input.tdsDeduction !== undefined) slip.tdsDeduction = input.tdsDeduction;
+  if (input.advanceRecovery !== undefined) slip.advanceRecovery = input.advanceRecovery;
+  if (input.netPay !== undefined) slip.netPay = input.netPay;
+  if (input.paidAmount !== undefined) slip.paidAmount = input.paidAmount;
+  if (input.paidDate !== undefined) slip.paidDate = input.paidDate;
+  if (input.paymentMode !== undefined) slip.paymentMode = input.paymentMode;
+  if (input.transactionRef !== undefined) slip.transactionRef = input.transactionRef;
+  if (input.notes !== undefined) slip.notes = input.notes;
+  if (input.status !== undefined) slip.status = input.status as PayrollSlipStatus;
+  slip.updatedAt = new Date().toISOString();
+
+  // Recalculate totals
+  run.totalGross = run.slips.reduce((s, sl) => s + sl.grossPay, 0);
+  run.totalDeductions = run.slips.reduce((s, sl) => s + sl.totalDeductions, 0);
+  run.totalNet = run.slips.reduce((s, sl) => s + sl.netPay, 0);
+  run.totalSettled = run.slips.filter(s => s.status === "paid").reduce((s, sl) => s + sl.paidAmount, 0);
+  run.updatedAt = new Date().toISOString();
+
+  await collection.updateOne({ id: runId }, { $set: run });
+  return stripMongoId(run);
+}
+
+export async function updatePayrollRunStatus(
+  runId: string,
+  status: PayrollRunStatus,
+  userId: string,
+  reason?: string
+) {
+  const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
+  const run = await collection.findOne({ id: runId });
+  if (!run) return null;
+
+  const now = new Date().toISOString();
+  run.status = status;
+  run.updatedAt = now;
+
+  if (status === "approved") {
+    run.approvedBy = userId;
+    run.approvedAt = now;
+  } else if (status === "finalized") {
+    run.finalizedBy = userId;
+    run.finalizedAt = now;
+  } else if (status === "settled") {
+    run.settledBy = userId;
+    run.settledAt = now;
+  } else if (status === "rolled_back") {
+    run.rolledBackBy = userId;
+    run.rolledBackAt = now;
+    run.rollbackReason = reason;
+    run.status = "draft";
+    run.slips.forEach(s => {
+      s.status = "pending";
+      s.paidAmount = 0;
+      s.paidDate = undefined;
+      s.paymentMode = undefined;
+      s.transactionRef = undefined;
+    });
+    run.totalSettled = 0;
+  }
+
+  await collection.updateOne({ id: runId }, { $set: run });
+  return stripMongoId(run);
+}
+
+export async function getPayrollRunsForFaculty(userId: string) {
+  const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
+  const runs = await collection.find({}).sort({ year: -1, month: -1 }).toArray();
+  return stripMongoIds(
+    runs
+      .map(run => ({
+        ...run,
+        slips: run.slips.filter(s => s.userId === userId),
+      }))
+      .filter(run => run.slips.length > 0)
+  );
+}
+
+export async function createSalaryAdvance(input: {
+  userId: string;
+  userName: string;
+  amount: number;
+  reason: string;
+  createdBy: string;
+}) {
+  const collection = await getCollection<SalaryAdvance>(COLLECTIONS.salaryAdvances);
+  const now = new Date().toISOString();
+  const advance: SalaryAdvance = {
+    id: `sa-${randomUUID()}`,
+    userId: input.userId,
+    userName: input.userName,
+    amount: input.amount,
+    reason: input.reason,
+    status: "pending",
+    createdBy: input.createdBy,
+    createdAt: now,
+  };
+  await collection.insertOne(advance);
+  return stripMongoId(advance);
+}
+
+export async function getSalaryAdvances() {
+  const collection = await getCollection<SalaryAdvance>(COLLECTIONS.salaryAdvances);
+  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+}
+
+export async function createSalaryIncrement(input: {
+  userId: string;
+  userName: string;
+  previousSalary: number;
+  newSalary: number;
+  effectiveDate: string;
+  reason?: string;
+  createdBy: string;
+}) {
+  const collection = await getCollection<SalaryIncrement>(COLLECTIONS.salaryIncrements);
+  const now = new Date().toISOString();
+  const increment: SalaryIncrement = {
+    id: `si-${randomUUID()}`,
+    userId: input.userId,
+    userName: input.userName,
+    previousSalary: input.previousSalary,
+    newSalary: input.newSalary,
+    effectiveDate: input.effectiveDate,
+    reason: input.reason,
+    createdBy: input.createdBy,
+    createdAt: now,
+  };
+  await collection.insertOne(increment);
+
+  // Also update the payroll profile
+  const profileCollection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const profile = await profileCollection.findOne({ userId: input.userId });
+  if (profile) {
+    await profileCollection.updateOne(
+      { userId: input.userId },
+      { $set: { monthlySalary: input.newSalary, updatedAt: now } }
+    );
+  }
+
+  return stripMongoId(increment);
+}
+
+export async function getSalaryIncrements() {
+  const collection = await getCollection<SalaryIncrement>(COLLECTIONS.salaryIncrements);
+  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+}
+
+export async function createSalaryTransfer(input: {
+  userId: string;
+  userName: string;
+  payrollRunId?: string;
+  amount: number;
+  paymentMode: string;
+  transactionRef?: string;
+  notes?: string;
+  transferredBy: string;
+  transferredByName: string;
+}) {
+  const collection = await getCollection<SalaryTransfer>(COLLECTIONS.salaryTransfers);
+  const now = new Date().toISOString();
+  const transfer: SalaryTransfer = {
+    id: `st-${randomUUID()}`,
+    userId: input.userId,
+    userName: input.userName,
+    payrollRunId: input.payrollRunId,
+    amount: input.amount,
+    paymentMode: input.paymentMode,
+    transactionRef: input.transactionRef?.trim() || undefined,
+    notes: input.notes?.trim() || undefined,
+    transferredBy: input.transferredBy,
+    transferredByName: input.transferredByName,
+    transferredAt: now,
+    createdAt: now,
+  };
+  await collection.insertOne(transfer);
+  return stripMongoId(transfer);
+}
+
+export async function getSalaryTransfers() {
+  const collection = await getCollection<SalaryTransfer>(COLLECTIONS.salaryTransfers);
+  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+}
+
+// =========================
+// Staff Payouts (Unified)
+// =========================
+
+async function generateStaffPayoutReceiptNo() {
+  const year = new Date().getFullYear();
+  const prefix = `STF-REC-${year}-`;
+  const collection = await getCollection<StaffPayout>(COLLECTIONS.staffPayouts);
+  const latest = await collection
+    .find({ id: { $regex: `^sp-${year}` } })
+    .sort({ createdAt: -1 })
+    .limit(1)
+    .toArray();
+  let seq = 1;
+  if (latest.length > 0) {
+    const last = stripMongoId(latest[0]);
+    const match = (last as any).receiptNo?.match(/-(\d+)$/);
+    if (match) seq = parseInt(match[1], 10) + 1;
+  }
+  return `${prefix}${String(seq).padStart(3, "0")}`;
+}
+
+export async function getStaffPayoutsForRole(role: Role, userId?: string) {
+  const collection = await getCollection<StaffPayout>(COLLECTIONS.staffPayouts);
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+  if (role === "educator" && userId) {
+    return stripMongoIds(
+      await collection.find({ staffId: userId }).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+  return [];
+}
+
+export async function createStaffPayout(input: {
+  staffId: string;
+  staffName: string;
+  month: string;
+  title: string;
+  particulars: string;
+  amount: number;
+  paymentMode?: string;
+  transactionId?: string;
+  paidDate?: string;
+  createdBy: string;
+}) {
+  const collection = await getCollection<StaffPayout>(COLLECTIONS.staffPayouts);
+  const receiptNo = await generateStaffPayoutReceiptNo();
+  const now = new Date().toISOString();
+
+  const hasPayment = input.paymentMode && input.paidDate;
+  const transactions: PaymentTransaction[] = hasPayment
+    ? [
+        {
+          paidAmount: input.amount,
+          paidDate: input.paidDate!,
+          paymentMode: input.paymentMode as PaymentMode,
+          transactionId: input.transactionId || undefined,
+          recordedBy: input.createdBy,
+          recordedAt: now,
+        },
+      ]
+    : [];
+
+  const payout: StaffPayout & { receiptNo: string } = {
+    id: `sp-${Date.now()}-${randomUUID().slice(0, 8)}`,
+    receiptNo,
+    staffId: input.staffId,
+    staffName: input.staffName,
+    month: input.month,
+    title: input.title,
+    particulars: input.particulars,
+    amount: input.amount,
+    paidAmount: hasPayment ? input.amount : 0,
+    status: hasPayment ? "paid" : "unpaid",
+    paymentMode: hasPayment ? input.paymentMode : undefined,
+    transactionId: hasPayment ? input.transactionId : undefined,
+    paidDate: hasPayment ? input.paidDate : undefined,
+    transactions,
+    createdBy: input.createdBy,
+    createdAt: now,
+  };
+
+  await collection.insertOne(payout as any);
+  return stripMongoId(payout as any) as StaffPayout & { receiptNo: string };
+}
+
+export async function updateStaffPayout(
+  payoutId: string,
+  input: {
+    title?: string;
+    particulars?: string;
+    amount?: number;
+    paymentMode?: string;
+    transactionId?: string;
+    paidDate?: string;
+    month?: string;
+  },
+) {
+  const collection = await getCollection<StaffPayout>(COLLECTIONS.staffPayouts);
+  const existing = await collection.findOne({ id: payoutId });
+  if (!existing) return null;
+
+  const current = stripMongoId(existing) as StaffPayout;
+  const now = new Date().toISOString();
+
+  const updatedAmount = input.amount ?? current.amount;
+  const hasPayment = input.paymentMode && input.paidDate;
+
+  let transactions = [...(current.transactions || [])];
+  if (hasPayment) {
+    const alreadyHasPayment = transactions.length > 0 && current.status === "paid";
+    if (!alreadyHasPayment) {
+      transactions.push({
+        paidAmount: updatedAmount,
+        paidDate: input.paidDate!,
+        paymentMode: input.paymentMode as PaymentMode,
+        transactionId: input.transactionId || undefined,
+        recordedBy: current.createdBy,
+        recordedAt: now,
+      });
+    }
+  }
+
+  const totalPaid = transactions.reduce((s, t) => s + (t.paidAmount || 0), 0);
+  const status: StaffPayoutStatus =
+    totalPaid >= updatedAmount ? "paid"
+    : totalPaid > 0 ? "partial"
+    : "unpaid";
+
+  const updateData: Record<string, unknown> = {
+    title: input.title ?? current.title,
+    particulars: input.particulars ?? current.particulars,
+    amount: updatedAmount,
+    month: input.month ?? current.month,
+    paidAmount: totalPaid,
+    status,
+    transactions,
+    paymentMode: hasPayment ? input.paymentMode : (current.paymentMode ?? undefined),
+    transactionId: hasPayment ? (input.transactionId ?? undefined) : (current.transactionId ?? undefined),
+    paidDate: hasPayment ? input.paidDate : (current.paidDate ?? undefined),
+    updatedAt: now,
+  };
+
+  await collection.updateOne({ id: payoutId }, { $set: updateData });
+  const updated = await collection.findOne({ id: payoutId });
+  return updated ? stripMongoId(updated) : null;
+}
+
+export async function deleteStaffPayout(payoutId: string) {
+  const collection = await getCollection<StaffPayout>(COLLECTIONS.staffPayouts);
+  await collection.deleteOne({ id: payoutId });
+}
+
+// =========================
+// Staff Payout Audit Logs (Append-only, immutable)
+// =========================
+
+export async function appendStaffPayoutAuditLog(entry: {
+  payoutId: string;
+  receiptNo: string;
+  staffId: string;
+  staffName: string;
+  action: StaffPayoutAuditAction;
+  title?: string;
+  month?: string;
+  amount?: number;
+  paidAmount?: number;
+  previousAmount?: number;
+  paymentMode?: string;
+  transactionId?: string;
+  paidDate?: string;
+  changes?: Record<string, { from: unknown; to: unknown }>;
+  performedBy: string;
+  performedByName: string;
+}): Promise<StaffPayoutAuditLog> {
+  const collection = await getCollection<StaffPayoutAuditLog>(
+    COLLECTIONS.staffPayoutAuditLogs,
+  );
+  const log: StaffPayoutAuditLog = {
+    id: `spl-${Date.now()}-${randomUUID().slice(0, 8)}`,
+    payoutId: entry.payoutId,
+    receiptNo: entry.receiptNo,
+    staffId: entry.staffId,
+    staffName: entry.staffName,
+    action: entry.action,
+    title: entry.title,
+    month: entry.month,
+    amount: entry.amount,
+    paidAmount: entry.paidAmount,
+    previousAmount: entry.previousAmount,
+    paymentMode: entry.paymentMode,
+    transactionId: entry.transactionId,
+    paidDate: entry.paidDate,
+    changes: entry.changes,
+    performedBy: entry.performedBy,
+    performedByName: entry.performedByName,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(log as any);
+  return log;
+}
+
+export async function getStaffPayoutAuditLogs(filters?: {
+  staffId?: string;
+  action?: StaffPayoutAuditAction;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+}): Promise<StaffPayoutAuditLog[]> {
+  const collection = await getCollection<StaffPayoutAuditLog>(
+    COLLECTIONS.staffPayoutAuditLogs,
+  );
+  const query: Record<string, unknown> = {};
+  if (filters?.staffId) query.staffId = filters.staffId;
+  if (filters?.action) query.action = filters.action;
+  if (filters?.dateFrom || filters?.dateTo) {
+    query.createdAt = {};
+    if (filters.dateFrom) (query.createdAt as any).$gte = filters.dateFrom;
+    if (filters.dateTo) (query.createdAt as any).$lte = filters.dateTo + "T23:59:59.999Z";
+  }
+  const limit = Math.min(filters?.limit || 200, 500);
+  return stripMongoIds(
+    await collection.find(query).sort({ createdAt: -1 }).limit(limit).toArray(),
+  );
+}
+
+export async function getStaffPayoutAuditLogsByPayout(
+  payoutId: string,
+): Promise<StaffPayoutAuditLog[]> {
+  const collection = await getCollection<StaffPayoutAuditLog>(
+    COLLECTIONS.staffPayoutAuditLogs,
+  );
+  return stripMongoIds(
+    await collection.find({ payoutId }).sort({ createdAt: -1 }).toArray(),
+  );
+}
+
+// ═══ Fee Deletion Audit Log ═══
+
+export async function appendFeeDeletionAuditLog(entry: Omit<FeeDeletionAuditLog, "id" | "createdAt">) {
+  const collection = await getCollection<FeeDeletionAuditLog>(COLLECTIONS.feeDeletionAuditLogs);
+  const log: FeeDeletionAuditLog = {
+    id: `fdl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    ...entry,
+    createdAt: new Date().toISOString(),
+  };
+  await collection.insertOne(log as any);
+  return log;
+}
+
+export async function getFeeDeletionAuditLogs(filters?: {
+  studentSearch?: string;
+  deletedBy?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  paymentMode?: string;
+  limit?: number;
+}) {
+  const collection = await getCollection<FeeDeletionAuditLog>(COLLECTIONS.feeDeletionAuditLogs);
+  const query: Record<string, unknown> = {};
+
+  if (filters?.studentSearch) {
+    query.$or = [
+      { studentName: { $regex: filters.studentSearch, $options: "i" } },
+      { studentAdmNo: { $regex: filters.studentSearch, $options: "i" } },
+      { receiptNo: { $regex: filters.studentSearch, $options: "i" } },
+    ];
+  }
+  if (filters?.deletedBy) {
+    query.performedByName = { $regex: filters.deletedBy, $options: "i" };
+  }
+  if (filters?.dateFrom || filters?.dateTo) {
+    query.createdAt = {};
+    if (filters.dateFrom) (query.createdAt as Record<string, unknown>).$gte = filters.dateFrom;
+    if (filters.dateTo) (query.createdAt as Record<string, unknown>).$lte = filters.dateTo + "T23:59:59.999Z";
+  }
+  if (filters?.paymentMode) {
+    query.paymentMode = { $regex: filters.paymentMode, $options: "i" };
+  }
+
+  const logs = await collection.find(query).sort({ createdAt: -1 }).limit(filters?.limit ?? 200).toArray();
+  return stripMongoIds(logs);
+}
+
+export async function getFeeDeletionAuditLogStats() {
+  const collection = await getCollection<FeeDeletionAuditLog>(COLLECTIONS.feeDeletionAuditLogs);
+  const all = await collection.find({}).toArray();
+  const now = new Date();
+  const thisMonth = all.filter((l) => {
+    const d = new Date(l.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  return {
+    totalDeletions: all.length,
+    thisMonth: thisMonth.length,
+    totalPrincipalDeleted: all.reduce((s, l) => s + (l.principalAmount || 0), 0),
+    totalNetReversed: all.reduce((s, l) => s + (l.netReversed || 0), 0),
+    totalFineReversed: all.reduce((s, l) => s + (l.fineAmount || 0), 0),
+  };
 }

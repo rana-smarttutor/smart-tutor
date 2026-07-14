@@ -5,7 +5,6 @@ import {
   createHomework,
   getHomeworkForTeacher,
   getHomeworkForStudent,
-  getHomeworkForBatch,
   getSubmissionsForHomework,
 } from "@/lib/data-store";
 import { getStudentDirectory, findFullUserById } from "@/lib/data-store";
@@ -40,7 +39,7 @@ export async function GET() {
         ),
       })),
     );
-    return NextResponse.json({ homework: enriched, batchIds });
+    return NextResponse.json({ homework: enriched });
   }
 
   return NextResponse.json({ homework: [] });
@@ -80,30 +79,14 @@ export async function POST(request: Request) {
   const hwType = (body.hwType as string) ?? "homework";
   const maxMarks = Math.max(1, Math.min(1000, Number(body.maxMarks) || 10));
   const dueDate = body.dueDate as string;
-  const batchId = sanitizeTextInput(body.batchId as string, 80);
-  const batchName = sanitizeTextInput(body.batchName as string, 120);
   const allowLateSubmission = body.allowLateSubmission === true;
   const attachmentUrl = sanitizeTextInput(body.attachmentUrl as string, 500);
 
-  if (!title || !dueDate || !batchId) {
+  if (!title || !dueDate) {
     return NextResponse.json(
-      { error: "Title, due date, and batch are required." },
+      { error: "Title and due date are required." },
       { status: 400 },
     );
-  }
-
-  // For educators: only allow homework for their assigned batches
-  if (session.role === "educator") {
-    const assignedTokens = await getStudentDirectory(session.id);
-    const assignedBatchIds = [
-      ...new Set(assignedTokens.map((s) => s.program).filter(Boolean)),
-    ];
-    if (!assignedBatchIds.includes(batchId)) {
-      return NextResponse.json(
-        { error: "You can only assign homework to your own batches." },
-        { status: 403 },
-      );
-    }
   }
 
   const homework = await createHomework({
@@ -119,8 +102,6 @@ export async function POST(request: Request) {
     hwType,
     maxMarks,
     dueDate,
-    batchId,
-    batchName: batchName || undefined,
     allowLateSubmission,
     attachmentUrl: attachmentUrl || undefined,
     createdBy: session.id,
