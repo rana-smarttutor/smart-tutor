@@ -371,12 +371,12 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
                                 )}
                               </td>
                             </tr>
-                            {inst.transactions.length > 0 && (
+                            {(inst.transactions ?? []).length > 0 && (
                               <tr className="bg-slate-50/80">
                                 <td colSpan={7} className="px-4 py-2">
                                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Payment History</div>
                                   <div className="flex flex-wrap gap-x-5 gap-y-1">
-                                    {inst.transactions.map((t, ti) => (
+                                    {(inst.transactions ?? []).map((t, ti) => (
                                       <span key={ti} className="inline-flex items-center gap-1 text-[12px] text-slate-600">
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                         {formatCurrency(t.paidAmount)} via {t.paymentMode} on {formatReceiptDate(t.paidDate)}
@@ -457,12 +457,12 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
                           )}
                         </td>
                       </tr>
-                      {inv.transactions.length > 0 && (
+                      {(inv.transactions ?? []).length > 0 && (
                         <tr className="bg-slate-50/80">
                           <td colSpan={7} className="px-4 py-2">
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Payment History</div>
                             <div className="flex flex-wrap gap-x-5 gap-y-1">
-                              {inv.transactions.map((t, ti) => (
+                              {(inv.transactions ?? []).map((t, ti) => (
                                 <span key={ti} className="inline-flex items-center gap-1 text-[12px] text-slate-600">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                   {formatCurrency(t.paidAmount)} via {t.paymentMode} on {formatReceiptDate(t.paidDate)}

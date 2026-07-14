@@ -16,6 +16,7 @@ import {
 import type {
   AttendanceSheet,
   CourseItem,
+  ComplaintItem,
   DashboardMetric,
   DashboardBundle,
   DemoCredential,
@@ -23,6 +24,7 @@ import type {
   FeeInstallment,
   FeeInstallmentPlan,
   LectureItem,
+  PtmSession,
   LibraryBook,
   ManagedUser,
   MessageItem,
@@ -160,6 +162,7 @@ export const COLLECTIONS = {
   attendanceSheets: "attendanceSheets",
   feeInvoices: "feeInvoices",
   lectures: "lectures",
+  ptmSessions: "ptmSessions",
 
   weeklyTests: "weeklyTests",
  teacherFeedback: "teacherFeedback",
@@ -174,6 +177,10 @@ studentDailyRoutines: "studentDailyRoutines",
 feeInstallmentPlans: "feeInstallmentPlans",
   teacherPayouts: "teacherPayouts",
   notifications: "notifications",
+
+  // Complaint Box
+  complaints: "complaints",
+
   placementJobs: "placementJobs",
   placementApplications: "placementApplications",
 
@@ -1334,7 +1341,288 @@ export async function deleteMessage(messageId: string) {
   const result = await collection.deleteOne({ id: messageId });
   return result.deletedCount > 0;
 }
+// =========================
+// Complaint Box
+// =========================
 
+export async function getComplaintsForAdmin() {
+  const collection = await getCollection<ComplaintItem>(
+    COLLECTIONS.complaints,
+  );
+
+  return stripMongoIds(
+    await collection
+      .find({})
+      .sort({
+        createdAt: -1,
+      })
+      .toArray(),
+  );
+}
+
+export async function getComplaintById(
+  complaintId: string,
+) {
+  const collection = await getCollection<ComplaintItem>(
+    COLLECTIONS.complaints,
+  );
+
+  const complaint = await collection.findOne({
+    id: complaintId,
+  });
+
+  return complaint
+    ? stripMongoId(complaint)
+    : null;
+}
+
+export async function createComplaint(input: {
+  submittedById: string;
+  submittedByName: string;
+
+  submittedByRole:
+    | "student"
+    | "parent"
+    | "educator";
+
+  category:
+    ComplaintItem["category"];
+
+  subject: string;
+  description: string;
+
+  priority:
+    ComplaintItem["priority"];
+}) {
+  if (
+    !input.submittedById.trim()
+  ) {
+    throw new Error(
+      "Complaint submitter is required.",
+    );
+  }
+
+  if (
+    !input.submittedByName.trim()
+  ) {
+    throw new Error(
+      "Complaint submitter name is required.",
+    );
+  }
+
+  if (
+    input.submittedByRole !==
+      "student" &&
+    input.submittedByRole !==
+      "parent" &&
+    input.submittedByRole !==
+      "educator"
+  ) {
+    throw new Error(
+      "Only students, parents, and educators can submit complaints.",
+    );
+  }
+
+  if (
+    !input.subject.trim()
+  ) {
+    throw new Error(
+      "Complaint subject is required.",
+    );
+  }
+
+  if (
+    !input.description.trim()
+  ) {
+    throw new Error(
+      "Complaint details are required.",
+    );
+  }
+
+  const now =
+    new Date().toISOString();
+
+  const complaint: ComplaintItem = {
+    id:
+      `complaint-${randomUUID()}`,
+
+    submittedById:
+      input.submittedById,
+
+    submittedByName:
+      input.submittedByName.trim(),
+
+    submittedByRole:
+      input.submittedByRole,
+
+    category:
+      input.category,
+
+    subject:
+      input.subject.trim(),
+
+    description:
+      input.description.trim(),
+
+    priority:
+      input.priority,
+
+    status:
+      "submitted",
+
+    createdAt:
+      now,
+
+    updatedAt:
+      now,
+  };
+
+  const collection =
+    await getCollection<ComplaintItem>(
+      COLLECTIONS.complaints,
+    );
+
+  await collection.insertOne(
+    complaint,
+  );
+
+  return stripMongoId(
+    complaint,
+  );
+}
+
+export async function updateComplaint(
+  complaintId: string,
+
+  input: Partial<{
+    status:
+      ComplaintItem["status"];
+
+    adminNote:
+      string;
+
+    reviewedBy:
+      string;
+
+    reviewedByName:
+      string;
+  }>,
+) {
+  const collection =
+    await getCollection<ComplaintItem>(
+      COLLECTIONS.complaints,
+    );
+
+  const existingComplaint =
+    await collection.findOne({
+      id: complaintId,
+    });
+
+  if (
+    !existingComplaint
+  ) {
+    return null;
+  }
+
+  const updates: Partial<ComplaintItem> = {
+    updatedAt:
+      new Date().toISOString(),
+  };
+
+  if (
+    input.status ===
+      "submitted" ||
+    input.status ===
+      "under-review" ||
+    input.status ===
+      "resolved" ||
+    input.status ===
+      "closed"
+  ) {
+    updates.status =
+      input.status;
+  }
+
+  if (
+    typeof input.adminNote ===
+    "string"
+  ) {
+    updates.adminNote =
+      input.adminNote.trim() ||
+      undefined;
+  }
+
+  if (
+    typeof input.reviewedBy ===
+      "string" &&
+    input.reviewedBy.trim()
+  ) {
+    updates.reviewedBy =
+      input.reviewedBy.trim();
+  }
+
+  if (
+    typeof input.reviewedByName ===
+      "string" &&
+    input.reviewedByName.trim()
+  ) {
+    updates.reviewedByName =
+      input.reviewedByName.trim();
+  }
+
+  if (
+    input.status ===
+      "under-review" ||
+    input.status ===
+      "resolved" ||
+    input.status ===
+      "closed"
+  ) {
+    updates.reviewedAt =
+      new Date().toISOString();
+  }
+
+  await collection.updateOne(
+    {
+      id: complaintId,
+    },
+
+    {
+      $set:
+        updates,
+    },
+  );
+
+  const updatedComplaint =
+    await collection.findOne({
+      id: complaintId,
+    });
+
+  return updatedComplaint
+    ? stripMongoId(
+        updatedComplaint,
+      )
+    : null;
+}
+
+export async function deleteComplaint(
+  complaintId: string,
+) {
+  const collection =
+    await getCollection<ComplaintItem>(
+      COLLECTIONS.complaints,
+    );
+
+  const result =
+    await collection.deleteOne({
+      id: complaintId,
+    });
+
+  return (
+    result.deletedCount >
+    0
+  );
+}
 type NotificationTargetMode = "everyone" | "selected-users";
 
 export async function getNotificationsForUser(userId: string) {
@@ -2314,7 +2602,442 @@ async function getLinkedStudentIdForViewer(role: Role, userId?: string) {
 
   return null;
 }
+// =========================
+// Parent-Teacher Meetings
+// =========================
 
+export async function getPtmSessionsForRole(
+  role: Role,
+  userId?: string,
+) {
+  const collection = await getCollection<PtmSession>(
+    COLLECTIONS.ptmSessions,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection
+        .find({})
+        .sort({
+          startsAt: -1,
+          createdAt: -1,
+        })
+        .toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    if (!userId) {
+      return [];
+    }
+
+    return stripMongoIds(
+      await collection
+        .find({
+          $or: [
+            { teacherId: userId },
+            { createdBy: userId },
+          ],
+        })
+        .sort({
+          startsAt: -1,
+          createdAt: -1,
+        })
+        .toArray(),
+    );
+  }
+
+  const linkedStudentId =
+    await getLinkedStudentIdForViewer(
+      role,
+      userId,
+    );
+
+  if (!linkedStudentId) {
+    return [];
+  }
+
+  return stripMongoIds(
+    await collection
+      .find({
+        studentId: linkedStudentId,
+      })
+      .sort({
+        startsAt: -1,
+        createdAt: -1,
+      })
+      .toArray(),
+  );
+}
+
+export async function getPtmSessionById(
+  ptmId: string,
+) {
+  const collection = await getCollection<PtmSession>(
+    COLLECTIONS.ptmSessions,
+  );
+
+  const ptm = await collection.findOne({
+    id: ptmId,
+  });
+
+  return ptm
+    ? stripMongoId(ptm)
+    : null;
+}
+
+export async function createPtmSession(input: {
+  title: string;
+
+  studentId: string;
+  studentName: string;
+
+  teacherId: string;
+  teacherName: string;
+
+  batchId?: string;
+  batchName?: string;
+
+  startsAt: string;
+  endsAt?: string;
+
+  mode: PtmSession["mode"];
+
+  meetingLink?: string;
+  location?: string;
+
+  agenda?: string;
+  notes?: string;
+
+  status?: PtmSession["status"];
+
+  createdBy: string;
+}) {
+  if (!input.title.trim()) {
+    throw new Error(
+      "PTM title is required.",
+    );
+  }
+
+  if (!input.studentId.trim()) {
+    throw new Error(
+      "Student is required.",
+    );
+  }
+
+  if (!input.teacherId.trim()) {
+    throw new Error(
+      "Teacher is required.",
+    );
+  }
+
+  if (!input.startsAt.trim()) {
+    throw new Error(
+      "PTM date and time are required.",
+    );
+  }
+
+  if (
+    input.mode === "online" &&
+    !input.meetingLink?.trim()
+  ) {
+    throw new Error(
+      "Meeting link is required for an online PTM.",
+    );
+  }
+
+  if (
+    input.mode === "offline" &&
+    !input.location?.trim()
+  ) {
+    throw new Error(
+      "Location is required for an offline PTM.",
+    );
+  }
+
+  const users =
+    await getUsersCollection();
+
+  const student =
+    await users.findOne({
+      id: input.studentId,
+      role: "student",
+    });
+
+  if (!student) {
+    throw new Error(
+      "Selected student could not be found.",
+    );
+  }
+
+  const linkedParent =
+    await users.findOne({
+      role: "parent",
+      linkedStudentId:
+        input.studentId,
+    });
+
+  const now =
+    new Date().toISOString();
+
+  const ptm: PtmSession = {
+    id: `ptm-${randomUUID()}`,
+
+    title:
+      input.title.trim(),
+
+    studentId:
+      student.id,
+
+    studentName:
+      student.name,
+
+    parentId:
+      linkedParent?.id,
+
+    parentName:
+      linkedParent?.name,
+
+    teacherId:
+      input.teacherId,
+
+    teacherName:
+      input.teacherName.trim(),
+
+    batchId:
+      input.batchId?.trim() ||
+      undefined,
+
+    batchName:
+      input.batchName?.trim() ||
+      undefined,
+
+    startsAt:
+      input.startsAt,
+
+    endsAt:
+      input.endsAt?.trim() ||
+      undefined,
+
+    mode:
+      input.mode,
+
+    meetingLink:
+      input.mode === "online"
+        ? input.meetingLink?.trim() ||
+          undefined
+        : undefined,
+
+    location:
+      input.mode === "offline"
+        ? input.location?.trim() ||
+          undefined
+        : undefined,
+
+    agenda:
+      input.agenda?.trim() ||
+      undefined,
+
+    notes:
+      input.notes?.trim() ||
+      undefined,
+
+    status:
+      input.status ??
+      "scheduled",
+
+    createdBy:
+      input.createdBy,
+
+    createdAt:
+      now,
+
+    updatedAt:
+      now,
+  };
+
+  const collection =
+    await getCollection<PtmSession>(
+      COLLECTIONS.ptmSessions,
+    );
+
+  await collection.insertOne(
+    ptm,
+  );
+
+  return stripMongoId(
+    ptm,
+  );
+}
+
+export async function updatePtmSession(
+  ptmId: string,
+  input: Partial<{
+    title: string;
+
+    startsAt: string;
+    endsAt: string;
+
+    mode: PtmSession["mode"];
+
+    meetingLink: string;
+    location: string;
+
+    agenda: string;
+    notes: string;
+
+    status: PtmSession["status"];
+  }>,
+) {
+  const collection =
+    await getCollection<PtmSession>(
+      COLLECTIONS.ptmSessions,
+    );
+
+  const existing =
+    await collection.findOne({
+      id: ptmId,
+    });
+
+  if (!existing) {
+    return null;
+  }
+
+  const updates: Partial<PtmSession> = {
+    updatedAt:
+      new Date().toISOString(),
+  };
+
+  if (
+    typeof input.title ===
+    "string"
+  ) {
+    if (!input.title.trim()) {
+      throw new Error(
+        "PTM title cannot be empty.",
+      );
+    }
+
+    updates.title =
+      input.title.trim();
+  }
+
+  if (
+    typeof input.startsAt ===
+    "string"
+  ) {
+    if (!input.startsAt.trim()) {
+      throw new Error(
+        "PTM date and time are required.",
+      );
+    }
+
+    updates.startsAt =
+      input.startsAt;
+  }
+
+  if (
+    typeof input.endsAt ===
+    "string"
+  ) {
+    updates.endsAt =
+      input.endsAt.trim() ||
+      undefined;
+  }
+
+  if (
+    input.mode === "online" ||
+    input.mode === "offline"
+  ) {
+    updates.mode =
+      input.mode;
+  }
+
+  if (
+    typeof input.meetingLink ===
+    "string"
+  ) {
+    updates.meetingLink =
+      input.meetingLink.trim() ||
+      undefined;
+  }
+
+  if (
+    typeof input.location ===
+    "string"
+  ) {
+    updates.location =
+      input.location.trim() ||
+      undefined;
+  }
+
+  if (
+    typeof input.agenda ===
+    "string"
+  ) {
+    updates.agenda =
+      input.agenda.trim() ||
+      undefined;
+  }
+
+  if (
+    typeof input.notes ===
+    "string"
+  ) {
+    updates.notes =
+      input.notes.trim() ||
+      undefined;
+  }
+
+  if (
+    input.status ===
+      "scheduled" ||
+    input.status ===
+      "completed" ||
+    input.status ===
+      "cancelled"
+  ) {
+    updates.status =
+      input.status;
+  }
+
+  await collection.updateOne(
+    {
+      id: ptmId,
+    },
+    {
+      $set: updates,
+    },
+  );
+
+  const updated =
+    await collection.findOne({
+      id: ptmId,
+    });
+
+  return updated
+    ? stripMongoId(updated)
+    : null;
+}
+
+export async function deletePtmSession(
+  ptmId: string,
+) {
+  const collection =
+    await getCollection<PtmSession>(
+      COLLECTIONS.ptmSessions,
+    );
+
+  const result =
+    await collection.deleteOne({
+      id: ptmId,
+    });
+
+  return (
+    result.deletedCount >
+    0
+  );
+}
 export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
   const collection = await getCollection<AttendanceSheet>(
     COLLECTIONS.attendanceSheets,

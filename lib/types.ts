@@ -917,6 +917,52 @@ export type FeeInstallmentPlan = {
 };
 
 // =========================
+// Parent-Teacher Meeting System
+// =========================
+
+export type PtmMode = "online" | "offline";
+
+export type PtmStatus =
+  | "scheduled"
+  | "completed"
+  | "cancelled";
+
+export type PtmSession = {
+  id: string;
+
+  title: string;
+
+  studentId: string;
+  studentName: string;
+
+  parentId?: string;
+  parentName?: string;
+
+  teacherId: string;
+  teacherName: string;
+
+  batchId?: string;
+  batchName?: string;
+
+  startsAt: string;
+  endsAt?: string;
+
+  mode: PtmMode;
+
+  meetingLink?: string;
+  location?: string;
+
+  agenda?: string;
+  notes?: string;
+
+  status: PtmStatus;
+
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
 // Notifications
 // =========================
 
@@ -928,7 +974,8 @@ export type AppNotificationType =
   | "feedback"
   | "fees"
   | "payment"
-  | "placement";
+  | "placement"
+  | "ptm";
 
 export type AppNotification = {
   id: string;
@@ -941,6 +988,61 @@ export type AppNotification = {
   createdAt: string;
 };
 
+
+
+// =========================
+// Complaint Box System
+// =========================
+
+export type ComplaintCategory =
+  | "academic"
+  | "faculty"
+  | "fees"
+  | "attendance"
+  | "technical"
+  | "facilities"
+  | "safety"
+  | "other";
+
+export type ComplaintPriority =
+  | "low"
+  | "medium"
+  | "high"
+  | "urgent";
+
+export type ComplaintStatus =
+  | "submitted"
+  | "under-review"
+  | "resolved"
+  | "closed";
+
+export type ComplaintItem = {
+  id: string;
+
+  submittedById: string;
+  submittedByName: string;
+  submittedByRole:
+    | "student"
+    | "parent"
+    | "educator";
+
+  category: ComplaintCategory;
+
+  subject: string;
+  description: string;
+
+  priority: ComplaintPriority;
+  status: ComplaintStatus;
+
+  adminNote?: string;
+
+  reviewedBy?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+};
 
 // =========================
 // Placement Jobs System
@@ -1283,6 +1385,7 @@ export type AvailableModule =
   | "sales-crm"
   | "gamification"
   | "ptm"
+  | "complaints"
   | "chat-monitor"
   | "password-reset-requests";
 
@@ -1313,6 +1416,7 @@ export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "sales-crm", label: "Sales CRM" },
   { id: "gamification", label: "Gamification" },
   { id: "ptm", label: "PTM" },
+  { id: "complaints", label: "Complaint Box" },
   { id: "chat-monitor", label: "Chat Monitor" },
   { id: "password-reset-requests", label: "Password Reset" },
 ];
