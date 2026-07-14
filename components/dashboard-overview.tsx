@@ -803,6 +803,8 @@ const presentAngle =
     { label: "Live Classes", icon: PlayCircle, section: "lectures", color: "#F97316" },
     { label: "Doubts", icon: HelpCircle, section: "messages", color: "#06B6D4" },
     { label: "Notifications", icon: Bell, section: "notifications", color: "#F43F5E" },
+    { label: "Complaint Box", icon: MessageSquare, section: "complaints", color: "#b97822" },
+
 
   ];
 

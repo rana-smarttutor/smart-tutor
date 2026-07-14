@@ -22,8 +22,9 @@ type Props = {
 
 export function UserMenu({ session, profilePhoto }: Props) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
+const [open, setOpen] = useState(false);
+const [loggingOut, setLoggingOut] = useState(false);
+const [photoFailed, setPhotoFailed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +36,9 @@ export function UserMenu({ session, profilePhoto }: Props) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
+useEffect(() => {
+  setPhotoFailed(false);
+}, [profilePhoto]);
   async function handleLogout() {
     setLoggingOut(true);
     try {
@@ -56,19 +59,20 @@ export function UserMenu({ session, profilePhoto }: Props) {
         aria-expanded={open}
         aria-haspopup="true"
       >
-        <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-transparent group-hover:border-indigo-400 transition-all duration-200">
-          {profilePhoto ? (
-            <img
-              src={profilePhoto}
-              alt={session.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-sm font-bold text-white bg-gradient-to-br from-indigo-500 to-purple-600">
-              {getInitials(session.name)}
-            </div>
-          )}
-        </div>
+<div className="h-10 w-10 overflow-hidden rounded-full border-2 border-transparent bg-white shadow-sm transition-all duration-200 group-hover:border-[#0B40A1]">
+  {profilePhoto && !photoFailed ? (
+    <img
+      src={profilePhoto}
+      alt={`${session.name} profile`}
+      onError={() => setPhotoFailed(true)}
+      className="h-full w-full object-cover object-top"
+    />
+  ) : (
+    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white">
+      {getInitials(session.name)}
+    </div>
+  )}
+</div>
         <svg
           className={`hidden sm:block h-4 w-4 text-slate-400 transition-transform duration-200 ${
             open ? "rotate-180" : ""

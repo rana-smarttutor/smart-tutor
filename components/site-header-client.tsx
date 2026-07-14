@@ -27,9 +27,7 @@ const links = [
   { href: "/placements", label: "Placements" },
 ];
 
-const staffOnlyLinks = [
-  { href: "/student-performance", label: "Performance" },
-];
+const staffOnlyLinks = [{ href: "/student-performance", label: "Performance" }];
 
 export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const pathname = usePathname();
@@ -37,54 +35,95 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
-useEffect(() => {
-  setMounted(true);
+  useEffect(() => {
+    setMounted(true);
 
-  let frame = 0;
+    let frame = 0;
 
-  const updateScrollProgress = () => {
-    const maxScroll =
-      document.documentElement.scrollHeight - window.innerHeight;
+    const updateScrollProgress = () => {
+      const maxScroll =
+        document.documentElement.scrollHeight - window.innerHeight;
 
-    const nextProgress =
-      maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
+      const nextProgress =
+        maxScroll > 0 ? Math.min(window.scrollY / maxScroll, 1) : 0;
 
-    setScrollProgress((currentProgress) =>
-      Math.abs(currentProgress - nextProgress) < 0.001
-        ? currentProgress
-        : nextProgress,
-    );
+      setScrollProgress((currentProgress) =>
+        Math.abs(currentProgress - nextProgress) < 0.001
+          ? currentProgress
+          : nextProgress,
+      );
 
-    frame = 0;
-  };
+      frame = 0;
+    };
 
-  const queueScrollProgress = () => {
-    if (frame) {
+    const queueScrollProgress = () => {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(updateScrollProgress);
+    };
+
+    updateScrollProgress();
+
+    window.addEventListener("scroll", queueScrollProgress, {
+      passive: true,
+    });
+
+    window.addEventListener("resize", queueScrollProgress);
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+
+      window.removeEventListener("scroll", queueScrollProgress);
+      window.removeEventListener("resize", queueScrollProgress);
+    };
+  }, []);
+  useEffect(() => {
+    if (!session) {
+      setProfilePhoto(null);
       return;
     }
 
-    frame = window.requestAnimationFrame(updateScrollProgress);
-  };
+    const controller = new AbortController();
 
-  updateScrollProgress();
+    async function loadProfilePhoto() {
+      try {
+        const response = await fetch("/api/dashboard", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        });
 
-  window.addEventListener("scroll", queueScrollProgress, {
-    passive: true,
-  });
+        if (!response.ok) {
+          return;
+        }
 
-  window.addEventListener("resize", queueScrollProgress);
+        const data = (await response.json()) as {
+          dashboard?: {
+            profile?: {
+              profilePhoto?: string | null;
+            };
+          };
+        };
 
-  return () => {
-    if (frame) {
-      window.cancelAnimationFrame(frame);
+        setProfilePhoto(data.dashboard?.profile?.profilePhoto ?? null);
+      } catch {
+        // Keep the initials fallback when the photo cannot be loaded.
+      }
     }
 
-    window.removeEventListener("scroll", queueScrollProgress);
-    window.removeEventListener("resize", queueScrollProgress);
-  };
-}, []);
+    void loadProfilePhoto();
 
+    return () => {
+      controller.abort();
+    };
+  }, [session?.id]);
 
   function closeMenu() {
     setIsMobileMenuOpen(false);
@@ -94,8 +133,8 @@ useEffect(() => {
 
   const userRole = String((session as any)?.role || "").toLowerCase();
 
-const canSeeStudentPerformance =
-  userRole === "admin" || userRole === "educator";
+  const canSeeStudentPerformance =
+    userRole === "admin" || userRole === "educator";
 
   const filteredLinks = links.filter((link) => {
     if (session && link.label === "Mock Test") return false;
@@ -135,8 +174,8 @@ const canSeeStudentPerformance =
                   />
                 </Link>
 
-               <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-                 <nav className="flex min-w-0 flex-nowrap items-center justify-center gap-1">
+                <div className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+                  <nav className="flex min-w-0 flex-nowrap items-center justify-center gap-1">
                     {visibleLinks.map((link) => {
                       const isActive =
                         pathname === link.href ||
@@ -161,7 +200,7 @@ const canSeeStudentPerformance =
 
                 <div className="hidden items-center gap-3 lg:flex">
                   {session ? (
-                    <UserMenu session={session} />
+                    <UserMenu session={session} profilePhoto={profilePhoto} />
                   ) : null}
 
                   <ThemeToggle />
@@ -259,7 +298,10 @@ const canSeeStudentPerformance =
                   {session ? (
                     <>
                       <div className="flex justify-center">
-                        <UserMenu session={session} />
+                        <UserMenu
+                          session={session}
+                          profilePhoto={profilePhoto}
+                        />
                       </div>
 
                       <div className="grid gap-2">
