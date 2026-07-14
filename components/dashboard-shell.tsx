@@ -315,7 +315,6 @@ const sidebarByRole = {
     { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
     { id: "leave", label: "Leave" },
-    { id: "notifications", label: "Notifications" },
   ],
 
   educator: [
@@ -336,7 +335,6 @@ const sidebarByRole = {
     { id: "leave", label: "Leave" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
-    { id: "notifications", label: "Notifications" },
     { id: "ptm", label: "PTM" },
     { id: "staff-payouts", label: "My Earnings" },
     { id: "gamification", label: "Gamification" },
@@ -351,7 +349,6 @@ const sidebarByRole = {
     { id: "staff-attendance", label: "Staff Attendance" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
-    { id: "notifications", label: "Notifications" },
   ],
 
   admin: [
@@ -374,7 +371,6 @@ const sidebarByRole = {
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "chat-monitor", label: "Chat Monitor" },
-    { id: "notifications", label: "Notifications" },
     { id: "ptm", label: "PTM" },
     { id: "fees", label: "Billing Hub" },
     { id: "fee-deletion-audit", label: "Fee Deletion Audit" },
@@ -401,7 +397,6 @@ const sidebarByRole = {
     { id: "attendance", label: "Attendance" },
     { id: "messages", label: "Messages" },
     { id: "chat", label: "Chat" },
-    { id: "notifications", label: "Notifications" },
     { id: "ptm", label: "PTM" },
   ],
 } as const;
@@ -466,7 +461,6 @@ const menuSections = [
       "staff-attendance",
       "biometric",
       "leave",
-      "notifications",
     ],
   },
   {
