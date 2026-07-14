@@ -72,13 +72,13 @@ export function DashboardOverview({
 }: Props) {
   if (role === "student") {
     return (
-<StudentOverview
-  session={session}
-  dashboard={dashboard}
-  messages={messages}
-  supportContact={supportContact}
-  onSetActiveSection={onSetActiveSection}
-/>
+      <StudentOverview
+        session={session}
+        dashboard={dashboard}
+        messages={messages}
+        supportContact={supportContact}
+        onSetActiveSection={onSetActiveSection}
+      />
     );
   }
   if (role === "educator") {
@@ -126,7 +126,13 @@ function getInitials(name?: string | null) {
     .slice(0, 2);
 }
 
-function Sparkline({ values, color = "#4F46E5" }: { values: number[]; color?: string }) {
+function Sparkline({
+  values,
+  color = "#4F46E5",
+}: {
+  values: number[];
+  color?: string;
+}) {
   if (values.length < 2) return null;
   const w = 100;
   const h = 40;
@@ -138,14 +144,27 @@ function Sparkline({ values, color = "#4F46E5" }: { values: number[]; color?: st
   });
   const areaPoints = `${points.join(" ")} ${w},${h} 0,${h}`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-full" preserveAspectRatio="none">
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      className="w-full h-full"
+      preserveAspectRatio="none"
+    >
       <defs>
-        <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient
+          id={`spark-${color.replace("#", "")}`}
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="1"
+        >
           <stop offset="0%" stopColor={color} stopOpacity={0.3} />
           <stop offset="100%" stopColor={color} stopOpacity={0.02} />
         </linearGradient>
       </defs>
-      <polygon fill={`url(#spark-${color.replace("#", "")})`} points={areaPoints} />
+      <polygon
+        fill={`url(#spark-${color.replace("#", "")})`}
+        points={areaPoints}
+      />
       <polyline
         fill="none"
         stroke={color}
@@ -174,9 +193,13 @@ function GenericOverview({
   supportContact: string;
   onSetActiveSection: (section: string) => void;
 }) {
-  const [period, setPeriod] = useState<"monthly" | "quarterly" | "yearly">("monthly");
+  const [period, setPeriod] = useState<"monthly" | "quarterly" | "yearly">(
+    "monthly",
+  );
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
@@ -186,19 +209,22 @@ function GenericOverview({
     year: "numeric",
   });
   const instituteName = dashboard.heroTitle || "Smart Tutors";
-  const totalStudents = dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
+  const totalStudents =
+    dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
   const rawRevenue = dashboard.analytics?.finance?.collected ?? 0;
-  const revenue = rawRevenue > 0
-    ? `₹${(rawRevenue / 1000).toFixed(1)}K`
-    : "—";
+  const revenue = rawRevenue > 0 ? `₹${(rawRevenue / 1000).toFixed(1)}K` : "—";
   const totalBilled = dashboard.analytics?.finance?.billed ?? 0;
-  const feeCollectionPct = totalBilled > 0 ? Math.round((rawRevenue / totalBilled) * 100) : 0;
+  const feeCollectionPct =
+    totalBilled > 0 ? Math.round((rawRevenue / totalBilled) * 100) : 0;
   const atRiskCount = dashboard.analytics?.finance?.overdueCount ?? 0;
 
   const kpiCards = [
     {
       label: "Total Students",
-      value: typeof totalStudents === "string" ? totalStudents : String(totalStudents),
+      value:
+        typeof totalStudents === "string"
+          ? totalStudents
+          : String(totalStudents),
       color: "#4F46E5",
       bg: "bg-indigo-50",
       text: "text-indigo-600",
@@ -235,15 +261,52 @@ function GenericOverview({
   ];
 
   const quickActions = [
-    { label: "Add Student", icon: UserPlus, section: "account-directory", color: "#4F46E5", bg: "bg-indigo-50" },
-    { label: "New Exam", icon: FileText, section: "tests", color: "#059669", bg: "bg-emerald-50" },
-    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706", bg: "bg-amber-50" },
-    { label: "Fees", icon: DollarSign, section: "fees", color: "#0EA5E9", bg: "bg-sky-50" },
-    { label: "Broadcast", icon: Megaphone, section: "messages", color: "#DC2626", bg: "bg-red-50" },
-    { label: "Reports", icon: BarChart3, section: "analytics", color: "#8B5CF6", bg: "bg-violet-50" },
+    {
+      label: "Add Student",
+      icon: UserPlus,
+      section: "account-directory",
+      color: "#4F46E5",
+      bg: "bg-indigo-50",
+    },
+    {
+      label: "New Exam",
+      icon: FileText,
+      section: "tests",
+      color: "#059669",
+      bg: "bg-emerald-50",
+    },
+    {
+      label: "Attendance",
+      icon: UserCheck,
+      section: "attendance",
+      color: "#D97706",
+      bg: "bg-amber-50",
+    },
+    {
+      label: "Fees",
+      icon: DollarSign,
+      section: "fees",
+      color: "#0EA5E9",
+      bg: "bg-sky-50",
+    },
+    {
+      label: "Broadcast",
+      icon: Megaphone,
+      section: "messages",
+      color: "#DC2626",
+      bg: "bg-red-50",
+    },
+    {
+      label: "Reports",
+      icon: BarChart3,
+      section: "analytics",
+      color: "#8B5CF6",
+      bg: "bg-violet-50",
+    },
   ];
 
-  const enrollmentData = dashboard.analytics?.attendance?.dailyRecords?.slice(0, 7) ?? [];
+  const enrollmentData =
+    dashboard.analytics?.attendance?.dailyRecords?.slice(0, 7) ?? [];
   const hasEnrollmentData = enrollmentData.length >= 2;
   const enrollmentLabels = enrollmentData.map((d) => {
     const dt = new Date(d.date);
@@ -264,9 +327,13 @@ function GenericOverview({
   const pts = pointChart(enrollmentValues, chartWidth, chartHeight);
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const todaysLectures = dashboard.lectures?.filter((l) => l.date?.slice(0, 10) === todayStr) ?? [];
+  const todaysLectures =
+    dashboard.lectures?.filter((l) => l.date?.slice(0, 10) === todayStr) ?? [];
 
-  const upcomingTests = dashboard.tests?.filter((t) => t.status === "published" || t.status === "pending") ?? [];
+  const upcomingTests =
+    dashboard.tests?.filter(
+      (t) => t.status === "published" || t.status === "pending",
+    ) ?? [];
 
   const recentInvoices = dashboard.feeInvoices?.slice(0, 5) ?? [];
 
@@ -282,10 +349,16 @@ function GenericOverview({
       {/* ── Hero Section ── */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
-        style={{ background: "linear-gradient(135deg,#1E1B4B,#4F46E5,#6D28D9)" }}
+        style={{
+          background: "linear-gradient(135deg,#1E1B4B,#4F46E5,#6D28D9)",
+        }}
       >
         <div className="absolute inset-0 opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 400 200"
+            preserveAspectRatio="none"
+          >
             <circle cx="50" cy="30" r="80" fill="white" />
             <circle cx="350" cy="170" r="120" fill="white" />
             <circle cx="200" cy="100" r="60" fill="white" />
@@ -293,7 +366,9 @@ function GenericOverview({
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{instituteName}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              {instituteName}
+            </h1>
             <p className="text-sm text-indigo-200 mt-1.5">{dateStr}</p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -314,19 +389,28 @@ function GenericOverview({
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
           return (
-            <div key={idx} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+            <div
+              key={idx}
+              className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow"
+            >
               <div style={{ height: 3, backgroundColor: card.color }} />
               <div className="p-5 relative">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}
+                  >
                     <Icon size={20} strokeWidth={2} />
                   </div>
                   <div className="w-20 h-8 opacity-40">
                     <Sparkline values={card.sparkData} color={card.color} />
                   </div>
                 </div>
-                <p className="text-2xl font-black text-slate-900 tracking-tight">{card.value}</p>
-                <p className="text-sm font-medium text-slate-500 mt-0.5">{card.label}</p>
+                <p className="text-2xl font-black text-slate-900 tracking-tight">
+                  {card.value}
+                </p>
+                <p className="text-sm font-medium text-slate-500 mt-0.5">
+                  {card.label}
+                </p>
               </div>
             </div>
           );
@@ -343,10 +427,14 @@ function GenericOverview({
               onClick={() => onSetActiveSection(action.section)}
               className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[#E8EDF2] hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <div className={`w-10 h-10 rounded-xl ${action.bg} ${action.color.replace("bg-", "text-")} flex items-center justify-center`}>
+              <div
+                className={`w-10 h-10 rounded-xl ${action.bg} ${action.color.replace("bg-", "text-")} flex items-center justify-center`}
+              >
                 <Icon size={18} strokeWidth={2} />
               </div>
-              <span className="text-xs font-semibold text-slate-700 text-center leading-tight">{action.label}</span>
+              <span className="text-xs font-semibold text-slate-700 text-center leading-tight">
+                {action.label}
+              </span>
             </button>
           );
         })}
@@ -359,7 +447,9 @@ function GenericOverview({
           {/* Enrollment Trend */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-bold text-slate-900">Enrollment Trend</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Enrollment Trend
+              </h2>
               <div className="flex gap-1">
                 {(["monthly", "quarterly", "yearly"] as const).map((p) => (
                   <button
@@ -371,28 +461,52 @@ function GenericOverview({
                         : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                     }`}
                   >
-                    {p === "monthly" ? "Monthly" : p === "quarterly" ? "Quarterly" : "Yearly"}
+                    {p === "monthly"
+                      ? "Monthly"
+                      : p === "quarterly"
+                        ? "Quarterly"
+                        : "Yearly"}
                   </button>
                 ))}
               </div>
             </div>
             {hasEnrollmentData ? (
               <div className="w-full">
-                <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-48">
+                <svg
+                  viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+                  className="w-full h-48"
+                >
                   <defs>
                     <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#4F46E5" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#4F46E5" stopOpacity={0.02} />
+                      <stop
+                        offset="100%"
+                        stopColor="#4F46E5"
+                        stopOpacity={0.02}
+                      />
                     </linearGradient>
                   </defs>
                   {[0, 25, 50, 75, 100].map((val) => {
-                    const y = chartHeight - 30 - (val / 100) * (chartHeight - 60);
+                    const y =
+                      chartHeight - 30 - (val / 100) * (chartHeight - 60);
                     return (
                       <g key={val}>
-                        <text x="35" y={y + 3} className="text-[10px] fill-slate-400" textAnchor="end">
+                        <text
+                          x="35"
+                          y={y + 3}
+                          className="text-[10px] fill-slate-400"
+                          textAnchor="end"
+                        >
                           {Math.round((val / 100) * enrollMax)}
                         </text>
-                        <line x1="40" y1={y} x2={chartWidth - 20} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                        <line
+                          x1="40"
+                          y1={y}
+                          x2={chartWidth - 20}
+                          y2={y}
+                          stroke="#f1f5f9"
+                          strokeWidth="1"
+                        />
                       </g>
                     );
                   })}
@@ -409,7 +523,15 @@ function GenericOverview({
                     points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
                   />
                   {pts.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#4F46E5" stroke="white" strokeWidth="2" />
+                    <circle
+                      key={i}
+                      cx={p.x}
+                      cy={p.y}
+                      r="4"
+                      fill="#4F46E5"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
                   ))}
                 </svg>
                 <div className="flex justify-between mt-2 px-8 text-xs font-medium text-slate-400">
@@ -421,7 +543,10 @@ function GenericOverview({
             ) : (
               <div className="flex items-center justify-center h-48 text-sm text-slate-400">
                 <div className="text-center">
-                  <LineChart size={32} className="mx-auto mb-2 text-slate-300" />
+                  <LineChart
+                    size={32}
+                    className="mx-auto mb-2 text-slate-300"
+                  />
                   <p>No enrollment data yet</p>
                 </div>
               </div>
@@ -431,7 +556,9 @@ function GenericOverview({
           {/* Recent Transactions */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Recent Transactions</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Recent Transactions
+              </h2>
               <button
                 onClick={() => onSetActiveSection("fees")}
                 className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -442,25 +569,44 @@ function GenericOverview({
             {recentInvoices.length > 0 ? (
               <div className="space-y-2">
                 {recentInvoices.map((inv) => (
-                  <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div
+                    key={inv.id}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                        inv.status === "paid" ? "bg-emerald-100 text-emerald-600" :
-                        inv.status === "overdue" ? "bg-red-100 text-red-600" :
-                        "bg-amber-100 text-amber-600"
-                      }`}>
-                        {inv.status === "paid" ? <CheckCircle2 size={15} /> : <Clock size={15} />}
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                          inv.status === "paid"
+                            ? "bg-emerald-100 text-emerald-600"
+                            : inv.status === "overdue"
+                              ? "bg-red-100 text-red-600"
+                              : "bg-amber-100 text-amber-600"
+                        }`}
+                      >
+                        {inv.status === "paid" ? (
+                          <CheckCircle2 size={15} />
+                        ) : (
+                          <Clock size={15} />
+                        )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{inv.studentName || inv.title}</p>
+                        <p className="text-sm font-bold text-slate-800 truncate">
+                          {inv.studentName || inv.title}
+                        </p>
                         <p className="text-[11px] text-slate-500">
-                          {inv.month || inv.academicYear || new Date(inv.dueDate).toLocaleDateString("en-IN")}
+                          {inv.month ||
+                            inv.academicYear ||
+                            new Date(inv.dueDate).toLocaleDateString("en-IN")}
                         </p>
                       </div>
                     </div>
                     <div className="text-right shrink-0 ml-3">
-                      <p className="text-sm font-bold text-slate-900">₹{inv.amount.toLocaleString("en-IN")}</p>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[inv.status] || "bg-slate-100 text-slate-600"}`}>
+                      <p className="text-sm font-bold text-slate-900">
+                        ₹{inv.amount.toLocaleString("en-IN")}
+                      </p>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[inv.status] || "bg-slate-100 text-slate-600"}`}
+                      >
                         {inv.status}
                       </span>
                     </div>
@@ -470,7 +616,10 @@ function GenericOverview({
             ) : (
               <div className="flex items-center justify-center h-28 text-sm text-slate-400">
                 <div className="text-center">
-                  <CreditCard size={28} className="mx-auto mb-1 text-slate-300" />
+                  <CreditCard
+                    size={28}
+                    className="mx-auto mb-1 text-slate-300"
+                  />
                   <p>No recent transactions</p>
                 </div>
               </div>
@@ -484,16 +633,28 @@ function GenericOverview({
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             {todaysLectures.length > 0 ? (
               <>
-                <h2 className="text-base font-bold text-slate-900 mb-4" suppressHydrationWarning>Today&apos;s Classes</h2>
+                <h2
+                  className="text-base font-bold text-slate-900 mb-4"
+                  suppressHydrationWarning
+                >
+                  Today&apos;s Classes
+                </h2>
                 <div className="space-y-3">
                   {todaysLectures.slice(0, 4).map((lec, idx) => (
-                    <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div
+                      key={lec.id ?? idx}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+                    >
                       <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                         <PlayCircle size={17} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-800 truncate">{lec.title}</p>
-                        <p className="text-[11px] text-slate-500">{lec.subject}</p>
+                        <p className="text-sm font-bold text-slate-800 truncate">
+                          {lec.title}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {lec.subject}
+                        </p>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 shrink-0">
                         {lec.startsAt?.slice(11, 16) || "Scheduled"}
@@ -504,12 +665,23 @@ function GenericOverview({
               </>
             ) : (
               <>
-                <h2 className="text-base font-bold text-slate-900 mb-4">Attendance Distribution</h2>
+                <h2 className="text-base font-bold text-slate-900 mb-4">
+                  Attendance Distribution
+                </h2>
                 <div className="flex flex-col items-center">
                   <svg viewBox="0 0 120 120" className="w-32 h-32 -rotate-90">
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="10" />
                     <circle
-                      cx="60" cy="60" r="50"
+                      cx="60"
+                      cy="60"
+                      r="50"
+                      fill="none"
+                      stroke="#f1f5f9"
+                      strokeWidth="10"
+                    />
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="50"
                       fill="none"
                       stroke="#4F46E5"
                       strokeWidth="10"
@@ -520,13 +692,23 @@ function GenericOverview({
                   </svg>
                   <div className="text-center -mt-4">
                     <p className="text-2xl font-black text-slate-900">
-                      {dashboard.analytics?.attendance?.rate != null ? `${Math.round(dashboard.analytics.attendance.rate)}%` : "—"}
+                      {dashboard.analytics?.attendance?.rate != null
+                        ? `${Math.round(dashboard.analytics.attendance.rate)}%`
+                        : "—"}
                     </p>
-                    <p className="text-xs font-medium text-slate-500">Attendance</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      Attendance
+                    </p>
                   </div>
                   <div className="flex gap-4 mt-3 text-xs font-medium text-slate-600">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500" /> Present: {dashboard.analytics?.attendance?.present ?? 0}</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Absent: {dashboard.analytics?.attendance?.absent ?? 0}</span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-indigo-500" />{" "}
+                      Present: {dashboard.analytics?.attendance?.present ?? 0}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-red-400" />{" "}
+                      Absent: {dashboard.analytics?.attendance?.absent ?? 0}
+                    </span>
                   </div>
                 </div>
               </>
@@ -536,7 +718,9 @@ function GenericOverview({
           {/* Notice Board */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Notice Board</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Notice Board
+              </h2>
               {messages.length > 0 && (
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
                   {messages.length}
@@ -546,26 +730,43 @@ function GenericOverview({
             <div className="space-y-3">
               {messages.length > 0 ? (
                 messages.slice(0, 2).map((msg) => (
-                  <div key={msg.id} className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer">
+                  <div
+                    key={msg.id}
+                    className="p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg shrink-0 ${
-                        msg.channel === "important" || msg.channel === "notice"
-                          ? "bg-[#EBF1FA] text-[#0B40A1]"
-                          : msg.channel === "alert"
-                            ? "bg-red-50 text-red-500"
-                            : "bg-slate-100 text-slate-500"
-                      }`}>
-                        {msg.channel === "important" || msg.channel === "notice" ? <Bell size={14} /> : <MessageSquare size={14} />}
+                      <div
+                        className={`p-2 rounded-lg shrink-0 ${
+                          msg.channel === "important" ||
+                          msg.channel === "notice"
+                            ? "bg-[#EBF1FA] text-[#0B40A1]"
+                            : msg.channel === "alert"
+                              ? "bg-red-50 text-red-500"
+                              : "bg-slate-100 text-slate-500"
+                        }`}
+                      >
+                        {msg.channel === "important" ||
+                        msg.channel === "notice" ? (
+                          <Bell size={14} />
+                        ) : (
+                          <MessageSquare size={14} />
+                        )}
                       </div>
                       <div>
-                        <h3 className="text-sm font-bold text-slate-800">{msg.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{msg.body}</p>
+                        <h3 className="text-sm font-bold text-slate-800">
+                          {msg.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                          {msg.body}
+                        </p>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-slate-400 text-center py-6">No notices yet.</p>
+                <p className="text-sm text-slate-400 text-center py-6">
+                  No notices yet.
+                </p>
               )}
             </div>
             <button
@@ -577,7 +778,11 @@ function GenericOverview({
           </div>
 
           {/* Profile Card */}
-          <GenericProfileCard session={session} role={role} dashboard={dashboard} />
+          <GenericProfileCard
+            session={session}
+            role={role}
+            dashboard={dashboard}
+          />
         </div>
       </div>
 
@@ -586,7 +791,9 @@ function GenericOverview({
         {/* Upcoming Exams */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">Upcoming Exams</h2>
+            <h2 className="text-base font-bold text-slate-900">
+              Upcoming Exams
+            </h2>
             <button
               onClick={() => onSetActiveSection("tests")}
               className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -597,14 +804,22 @@ function GenericOverview({
           {upcomingTests.length > 0 ? (
             <div className="space-y-3">
               {upcomingTests.slice(0, 4).map((test, idx) => (
-                <div key={test.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div
+                  key={test.id ?? idx}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+                >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
                       <FileText size={16} />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
-                      <p className="text-[11px] text-slate-500">{test.subject}{test.total ? ` • ${test.total} marks` : ""}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">
+                        {test.title}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {test.subject}
+                        {test.total ? ` • ${test.total} marks` : ""}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -629,15 +844,21 @@ function GenericOverview({
         {/* At-Risk Students */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">At-Risk Students</h2>
+            <h2 className="text-base font-bold text-slate-900">
+              At-Risk Students
+            </h2>
           </div>
           {atRiskCount > 0 ? (
             <div className="flex flex-col items-center gap-3">
               <div className="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center">
                 <AlertCircle size={28} />
               </div>
-              <p className="text-2xl font-black text-slate-900">{atRiskCount} Student{atRiskCount !== 1 ? "s" : ""}</p>
-              <p className="text-sm text-slate-500 text-center">Require immediate attention on fee overdue</p>
+              <p className="text-2xl font-black text-slate-900">
+                {atRiskCount} Student{atRiskCount !== 1 ? "s" : ""}
+              </p>
+              <p className="text-sm text-slate-500 text-center">
+                Require immediate attention on fee overdue
+              </p>
               <button
                 onClick={() => onSetActiveSection("account-directory")}
                 className="mt-2 px-5 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors"
@@ -651,29 +872,44 @@ function GenericOverview({
                 <ShieldCheck size={28} />
               </div>
               <p className="text-lg font-bold text-slate-900">All Clear</p>
-              <p className="text-sm text-slate-500">All students are on track</p>
+              <p className="text-sm text-slate-500">
+                All students are on track
+              </p>
             </div>
           )}
         </div>
       </div>
 
       {/* Top Performers */}
-      {dashboard.analytics?.insights && dashboard.analytics.insights.length > 0 && (
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-          <h2 className="text-base font-bold text-slate-900 mb-4">Top Performers</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {dashboard.analytics.insights.filter((i) => i.tone === "positive").slice(0, 3).map((insight, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
-                <Medal size={20} className="text-emerald-600 shrink-0" />
-                <div>
-                  <p className="text-sm font-bold text-slate-800">{insight.title}</p>
-                  <p className="text-xs text-slate-500">{insight.description}</p>
-                </div>
-              </div>
-            ))}
+      {dashboard.analytics?.insights &&
+        dashboard.analytics.insights.length > 0 && (
+          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
+            <h2 className="text-base font-bold text-slate-900 mb-4">
+              Top Performers
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {dashboard.analytics.insights
+                .filter((i) => i.tone === "positive")
+                .slice(0, 3)
+                .map((insight, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100"
+                  >
+                    <Medal size={20} className="text-emerald-600 shrink-0" />
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">
+                        {insight.title}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {insight.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
@@ -694,7 +930,9 @@ function StudentOverview({
   managedUsers?: ManagedUser[];
 }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
@@ -704,32 +942,36 @@ function StudentOverview({
     year: "numeric",
   });
   const studentName = session?.name ?? "Student";
-  const batchInfo = dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() || dashboard.heroTitle || "";
+  const batchInfo =
+    dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() ||
+    dashboard.heroTitle ||
+    "";
   const admissionNo = session?.id?.slice(0, 8).toUpperCase() ?? "—";
-  const attRate = dashboard.analytics?.attendance?.rate != null ? Math.round(dashboard.analytics.attendance.rate) : null;
-  const presentCount =
-  dashboard.analytics?.attendance?.present ?? 0;
+  const attRate =
+    dashboard.analytics?.attendance?.rate != null
+      ? Math.round(dashboard.analytics.attendance.rate)
+      : null;
+  const presentCount = dashboard.analytics?.attendance?.present ?? 0;
 
-const absentCount =
-  dashboard.analytics?.attendance?.absent ?? 0;
+  const absentCount = dashboard.analytics?.attendance?.absent ?? 0;
 
-const attendanceTotal =
-  presentCount + absentCount;
+  const attendanceTotal = presentCount + absentCount;
 
-const presentPercentage =
-  attendanceTotal > 0
-    ? Math.round(
-        (presentCount / attendanceTotal) * 100,
-      )
-    : attRate ?? 0;
+  const presentPercentage =
+    attendanceTotal > 0
+      ? Math.round((presentCount / attendanceTotal) * 100)
+      : (attRate ?? 0);
 
-const presentAngle =
-  presentPercentage * 3.6;
+  const presentAngle = presentPercentage * 3.6;
   const classRank = dashboard.stats[1]?.value || "—";
-  const avgScore = dashboard.analytics?.assessments?.averageScore != null ? `${Math.round(dashboard.analytics.assessments.averageScore)}%` : "—";
-  const pendingHw = dashboard.analytics?.learning?.homeworkRate != null
-    ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
-    : "—";
+  const avgScore =
+    dashboard.analytics?.assessments?.averageScore != null
+      ? `${Math.round(dashboard.analytics.assessments.averageScore)}%`
+      : "—";
+  const pendingHw =
+    dashboard.analytics?.learning?.homeworkRate != null
+      ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
+      : "—";
   const feeDueAmount = dashboard.stats[3]?.value || "₹0";
 
   const kpiCards = [
@@ -740,7 +982,17 @@ const presentAngle =
       bg: "bg-emerald-50",
       text: "text-emerald-600",
       icon: CheckCircle2,
-      sparkData: attRate ? [attRate - 15, attRate - 10, attRate - 5, attRate + 2, attRate + 5, attRate + 3, attRate] : [60, 65, 70, 72, 78, 75, 80],
+      sparkData: attRate
+        ? [
+            attRate - 15,
+            attRate - 10,
+            attRate - 5,
+            attRate + 2,
+            attRate + 5,
+            attRate + 3,
+            attRate,
+          ]
+        : [60, 65, 70, 72, 78, 75, 80],
     },
     {
       label: "Class Rank",
@@ -749,66 +1001,124 @@ const presentAngle =
       bg: "bg-amber-50",
       text: "text-amber-600",
       icon: TrendingUp,
-      sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => (100 - v * 10)),
+      sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => 100 - v * 10),
     },
- {
-  label: "Pending HW",
-  value: pendingHw,
-  color: "#0EA5E9",
-  bg: "bg-sky-50",
-  text: "text-sky-600",
-  icon: BookOpen,
-  sparkData: [2, 3, 1, 4, 2, 3, 2],
-  actionLabel: "View Now",
-  actionSection: "homework",
-},
-{
-  label: "Fee Dues",
-  value: feeDueAmount,
-  color: "#DC2626",
-  bg: "bg-red-50",
-  text: "text-red-600",
-  icon: IndianRupee,
-  sparkData: [0, 0, 0, 0, 0, 0, 0],
-  actionLabel: "Pay Now",
-  actionSection: "fees",
-},
+    {
+      label: "Pending HW",
+      value: pendingHw,
+      color: "#0EA5E9",
+      bg: "bg-sky-50",
+      text: "text-sky-600",
+      icon: BookOpen,
+      sparkData: [2, 3, 1, 4, 2, 3, 2],
+      actionLabel: "View Now",
+      actionSection: "homework",
+    },
+    {
+      label: "Fee Dues",
+      value: feeDueAmount,
+      color: "#DC2626",
+      bg: "bg-red-50",
+      text: "text-red-600",
+      icon: IndianRupee,
+      sparkData: [0, 0, 0, 0, 0, 0, 0],
+      actionLabel: "Pay Now",
+      actionSection: "fees",
+    },
   ];
 
-  const todayLectures = dashboard.lectures?.filter(
-    (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
-  ) ?? [];
+  const todayLectures =
+    dashboard.lectures?.filter(
+      (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
+    ) ?? [];
 
-  const upcomingTests = dashboard.tests?.filter((t) => t.status === "published" || t.status === "pending") ?? [];
+  const upcomingTests =
+    dashboard.tests?.filter(
+      (t) => t.status === "published" || t.status === "pending",
+    ) ?? [];
 
-  const subjectScores = dashboard.analytics?.assessments?.subjectPerformance?.length
+  const subjectScores = dashboard.analytics?.assessments?.subjectPerformance
+    ?.length
     ? dashboard.analytics.assessments.subjectPerformance.slice(0, 6)
     : dashboard.tests.length
-      ? dashboard.tests.slice(0, 6).map((t) => ({ subject: t.title, percentage: t.total ? Math.round(((t.total ?? 0) / 100) * 100) : 75, resultCount: 0 }))
+      ? dashboard.tests
+          .slice(0, 6)
+          .map((t) => ({
+            subject: t.title,
+            percentage: t.total ? Math.round(((t.total ?? 0) / 100) * 100) : 75,
+            resultCount: 0,
+          }))
       : [];
 
-  const weeklyTestTasks = dashboard.weeklyTests?.filter(
-    (t) => t.status === "published" || t.status === "pending",
-  ) ?? [];
+  const weeklyTestTasks =
+    dashboard.weeklyTests?.filter(
+      (t) => t.status === "published" || t.status === "pending",
+    ) ?? [];
 
   const quickAccessItems = [
     { label: "Exams", icon: FileText, section: "tests", color: "#4F46E5" },
     { label: "Results", icon: Award, section: "performance", color: "#059669" },
-    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706" },
-    { label: "Homework", icon: BookOpen, section: "homework", color: "#0EA5E9" },
-    { label: "Fee Details", icon: DollarSign, section: "receipts", color: "#DC2626" },
-    { label: "Materials", icon: BookMarked, section: "materials", color: "#8B5CF6" },
-    { label: "Timetable", icon: CalendarDays, section: "timetable", color: "#EC4899" },
+    {
+      label: "Attendance",
+      icon: UserCheck,
+      section: "attendance",
+      color: "#D97706",
+    },
+    {
+      label: "Homework",
+      icon: BookOpen,
+      section: "homework",
+      color: "#0EA5E9",
+    },
+    {
+      label: "Fee Details",
+      icon: DollarSign,
+      section: "receipts",
+      color: "#DC2626",
+    },
+    {
+      label: "Materials",
+      icon: BookMarked,
+      section: "materials",
+      color: "#8B5CF6",
+    },
+    {
+      label: "Timetable",
+      icon: CalendarDays,
+      section: "timetable",
+      color: "#EC4899",
+    },
     { label: "Videos", icon: Video, section: "videos", color: "#14B8A6" },
-    { label: "Live Classes", icon: PlayCircle, section: "lectures", color: "#F97316" },
-    { label: "Doubts", icon: HelpCircle, section: "messages", color: "#06B6D4" },
-    { label: "Notifications", icon: Bell, section: "notifications", color: "#F43F5E" },
-    { label: "Complaint Box", icon: MessageSquare, section: "complaints", color: "#b97822" },
-
-
+    {
+      label: "Live Classes",
+      icon: PlayCircle,
+      section: "lectures",
+      color: "#F97316",
+    },
+    {
+      label: "Doubts",
+      icon: HelpCircle,
+      section: "messages",
+      color: "#06B6D4",
+    },
+    {
+      label: "Notifications",
+      icon: Bell,
+      section: "notifications",
+      color: "#F43F5E",
+    },
+    {
+      label: "Complaint Box",
+      icon: MessageSquare,
+      section: "complaints",
+      color: "#b97822",
+    },
   ];
 
-  const testScores = dashboard.tests?.filter((t) => t.total != null && t.total > 0).slice(0, 6) ?? [];
+  const testScores =
+    dashboard.tests
+      ?.filter((t) => t.total != null && t.total > 0)
+      .slice(0, 6) ?? [];
   const hasProgressData = testScores.length >= 2;
   const progressW = 500;
   const progressH = 160;
@@ -821,150 +1131,149 @@ const presentAngle =
 
   return (
     <div className="space-y-5">
-{/* ── Hero Section ── */}
-<div
-  className="relative overflow-hidden rounded-2xl p-6 text-white sm:p-8"
-  style={{
-    background:
-      "linear-gradient(135deg,#065F46,#0D9488,#0369A1)",
-  }}
->
-  {/* Decorative background */}
-  <div className="absolute inset-0 opacity-10">
-    <svg
-      className="h-full w-full"
-      viewBox="0 0 400 200"
-      preserveAspectRatio="none"
-    >
-      <circle cx="50" cy="30" r="80" fill="white" />
-      <circle cx="350" cy="170" r="120" fill="white" />
-      <circle cx="200" cy="100" r="60" fill="white" />
-    </svg>
-  </div>
+      {/* ── Hero Section ── */}
+      <div
+        className="relative overflow-hidden rounded-2xl p-6 text-white sm:p-8"
+        style={{
+          background: "linear-gradient(135deg,#065F46,#0D9488,#0369A1)",
+        }}
+      >
+        {/* Decorative background */}
+        <div className="absolute inset-0 opacity-10">
+          <svg
+            className="h-full w-full"
+            viewBox="0 0 400 200"
+            preserveAspectRatio="none"
+          >
+            <circle cx="50" cy="30" r="80" fill="white" />
+            <circle cx="350" cy="170" r="120" fill="white" />
+            <circle cx="200" cy="100" r="60" fill="white" />
+          </svg>
+        </div>
 
-  <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-    {/* Photo + Student Information */}
-    <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-      {/* Student Photo / Initials Avatar */}
-      <div className="shrink-0">
-<div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-white/20 shadow-lg shadow-black/20 backdrop-blur-sm sm:h-24 sm:w-24 lg:h-28 lg:w-28">
-  {dashboard.profile?.profilePhoto ? (
-    <img
-      src={dashboard.profile.profilePhoto}
-      alt={`${studentName} profile`}
-      className="h-full w-full scale-110 rounded-full object-cover object-top"
-    />
-  ) : (
-    <div className="flex h-full w-full items-center justify-center rounded-full bg-white/20 text-2xl font-black text-white sm:text-3xl">
-      {getInitials(studentName)}
-    </div>
-  )}
-</div>
-      </div>
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          {/* Photo + Student Information */}
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            {/* Student Photo / Initials Avatar */}
+            <div className="shrink-0">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-white/20 shadow-lg shadow-black/20 backdrop-blur-sm sm:h-24 sm:w-24 lg:h-28 lg:w-28">
+                {dashboard.profile?.profilePhoto ? (
+                  <img
+                    src={dashboard.profile.profilePhoto}
+                    alt={`${studentName} profile`}
+                    className="h-full w-full scale-110 rounded-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-white/20 text-2xl font-black text-white sm:text-3xl">
+                    {getInitials(studentName)}
+                  </div>
+                )}
+              </div>
+            </div>
 
-      {/* Student Details */}
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
-          Student Portal
-        </p>
+            {/* Student Details */}
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
+                Student Portal
+              </p>
 
-        <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-          Hey, {studentName.split(" ")[0]}! 📚
-        </h1>
-         <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
-          {batchInfo ? `  ${batchInfo}` : ""}
-        </p>
+              <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
+                Hey, {studentName.split(" ")[0]}! 📚
+              </h1>
+              <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
+                {batchInfo ? `  ${batchInfo}` : ""}
+              </p>
 
-        <p className="mt-1.5 text-sm text-teal-200">
-          {dateStr}
-        </p>
+              <p className="mt-1.5 text-sm text-teal-200">{dateStr}</p>
 
-        {dashboard.assignedFacultyNames &&
-        dashboard.assignedFacultyNames.length > 0 ? (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {dashboard.assignedFacultyNames.map(
-              (name, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm"
-                >
-                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25 text-[8px] font-bold">
-                    {name.charAt(0)}
-                  </span>
+              {dashboard.assignedFacultyNames &&
+              dashboard.assignedFacultyNames.length > 0 ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {dashboard.assignedFacultyNames.map((name, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm"
+                    >
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25 text-[8px] font-bold">
+                        {name.charAt(0)}
+                      </span>
 
-                  {name}
-                </span>
-              ),
-            )}
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
+
+              <p className="mt-3 text-xs text-teal-200/70">
+                Enrollment no: {admissionNo}
+              </p>
+            </div>
           </div>
-        ) : null}
 
-        <p className="mt-3 text-xs text-teal-200/70">
-          Enrollment no: {admissionNo}
-        </p>
+          {/* Student Statistics */}
+          <div className="flex flex-wrap gap-2 lg:justify-end">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+              <UserCheck size={13} />
+              Attendance: {attRate != null ? `${attRate}%` : "—"}
+            </span>
+
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+              <Award size={13} />
+              Rank: {classRank}
+            </span>
+
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
+              <TrendingUp size={13} />
+              Avg: {avgScore}
+            </span>
+          </div>
+        </div>
       </div>
-    </div>
-
-    {/* Student Statistics */}
-    <div className="flex flex-wrap gap-2 lg:justify-end">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-        <UserCheck size={13} />
-        Attendance:{" "}
-        {attRate != null ? `${attRate}%` : "—"}
-      </span>
-
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-        <Award size={13} />
-        Rank: {classRank}
-      </span>
-
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-        <TrendingUp size={13} />
-        Avg: {avgScore}
-      </span>
-    </div>
-  </div>
-</div>
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
           return (
-            <div key={idx} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+            <div
+              key={idx}
+              className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow"
+            >
               <div style={{ height: 3, backgroundColor: card.color }} />
               <div className="p-5 relative">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}
+                  >
                     <Icon size={20} strokeWidth={2} />
                   </div>
                   <div className="w-16 h-7 opacity-30">
                     <Sparkline values={card.sparkData} color={card.color} />
                   </div>
                 </div>
-<div className="flex items-end justify-between gap-3">
-  <div>
-    <p className="text-2xl font-black tracking-tight text-slate-900">
-      {card.value}
-    </p>
+                <div className="flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-2xl font-black tracking-tight text-slate-900">
+                      {card.value}
+                    </p>
 
-    <p className="mt-0.5 text-sm font-medium text-slate-500">
-      {card.label}
-    </p>
-  </div>
+                    <p className="mt-0.5 text-sm font-medium text-slate-500">
+                      {card.label}
+                    </p>
+                  </div>
 
-  {card.actionLabel && card.actionSection ? (
-    <button
-      type="button"
-      onClick={() => onSetActiveSection(card.actionSection)}
-      className="shrink-0 rounded-lg px-3 py-2 text-xs font-black transition hover:bg-slate-100"
-      style={{
-        color: card.color,
-      }}
-    >
-      {card.actionLabel}
-    </button>
-  ) : null}
-</div>
+                  {card.actionLabel && card.actionSection ? (
+                    <button
+                      type="button"
+                      onClick={() => onSetActiveSection(card.actionSection)}
+                      className="shrink-0 rounded-lg px-3 py-2 text-xs font-black transition hover:bg-slate-100"
+                      style={{
+                        color: card.color,
+                      }}
+                    >
+                      {card.actionLabel}
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
           );
@@ -978,7 +1287,12 @@ const presentAngle =
           {/* Today's Classes */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900" suppressHydrationWarning>Today&apos;s Classes</h2>
+              <h2
+                className="text-base font-bold text-slate-900"
+                suppressHydrationWarning
+              >
+                Today&apos;s Classes
+              </h2>
               <button
                 onClick={() => onSetActiveSection("lectures")}
                 className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -989,20 +1303,31 @@ const presentAngle =
             {todayLectures.length > 0 ? (
               <div className="space-y-3">
                 {todayLectures.slice(0, 3).map((lec, idx) => (
-                  <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div
+                    key={lec.id ?? idx}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
                     <div className="w-9 h-9 rounded-lg bg-teal-100 text-teal-600 flex items-center justify-center shrink-0">
                       <PlayCircle size={17} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">
+                        {lec.title || "Lecture"}
+                      </p>
                       <p className="text-[11px] text-slate-500">
-                        {lec.subject ?? ""}{lec.duration ? ` • ${lec.duration} mins` : ""}
+                        {lec.subject ?? ""}
+                        {lec.duration ? ` • ${lec.duration} mins` : ""}
                       </p>
                     </div>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
-                      lec.status === "completed" ? "bg-emerald-50 text-emerald-700" : "bg-teal-50 text-teal-600"
-                    }`}>
-                      {lec.startsAt?.slice(11, 16) || (lec.status === "completed" ? "Done" : "Upcoming")}
+                    <span
+                      className={`text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
+                        lec.status === "completed"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-teal-50 text-teal-600"
+                      }`}
+                    >
+                      {lec.startsAt?.slice(11, 16) ||
+                        (lec.status === "completed" ? "Done" : "Upcoming")}
                     </span>
                   </div>
                 ))}
@@ -1010,7 +1335,10 @@ const presentAngle =
             ) : (
               <div className="flex items-center justify-center h-24 text-sm text-slate-400">
                 <div className="text-center">
-                  <CalendarDays size={24} className="mx-auto mb-1 text-slate-300" />
+                  <CalendarDays
+                    size={24}
+                    className="mx-auto mb-1 text-slate-300"
+                  />
                   <p>No classes today</p>
                 </div>
               </div>
@@ -1020,7 +1348,9 @@ const presentAngle =
           {/* Upcoming Exams */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Upcoming Exams</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Upcoming Exams
+              </h2>
               <button
                 onClick={() => onSetActiveSection("tests")}
                 className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -1031,14 +1361,22 @@ const presentAngle =
             {upcomingTests.length > 0 ? (
               <div className="space-y-3">
                 {upcomingTests.slice(0, 3).map((test, idx) => (
-                  <div key={test.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div
+                    key={test.id ?? idx}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
                         <FileText size={16} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
-                        <p className="text-[11px] text-slate-500">{test.subject}{test.total ? ` • ${test.total} marks` : ""}</p>
+                        <p className="text-sm font-bold text-slate-800 truncate">
+                          {test.title}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {test.subject}
+                          {test.total ? ` • ${test.total} marks` : ""}
+                        </p>
                       </div>
                     </div>
                     <button
@@ -1053,14 +1391,22 @@ const presentAngle =
             ) : weeklyTestTasks.length > 0 ? (
               <div className="space-y-3">
                 {weeklyTestTasks.slice(0, 3).map((task, idx) => (
-                  <div key={task.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div
+                    key={task.id ?? idx}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
                         <BookOpen size={16} />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{task.title}</p>
-                        <p className="text-[11px] text-slate-500">{task.subject ?? ""}{task.duration ? ` • ${task.duration} mins` : ""}</p>
+                        <p className="text-sm font-bold text-slate-800 truncate">
+                          {task.title}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {task.subject ?? ""}
+                          {task.duration ? ` • ${task.duration} mins` : ""}
+                        </p>
                       </div>
                     </div>
                     <button
@@ -1085,7 +1431,9 @@ const presentAngle =
           {/* Academic Progress Trend */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Academic Progress</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                Academic Progress
+              </h2>
               <button
                 onClick={() => onSetActiveSection("performance")}
                 className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -1095,21 +1443,40 @@ const presentAngle =
             </div>
             {hasProgressData ? (
               <div className="w-full">
-                <svg viewBox={`0 0 ${progressW} ${progressH}`} className="w-full h-36">
+                <svg
+                  viewBox={`0 0 ${progressW} ${progressH}`}
+                  className="w-full h-36"
+                >
                   <defs>
                     <linearGradient id="progGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#0D9488" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="#0D9488" stopOpacity={0.02} />
+                      <stop
+                        offset="100%"
+                        stopColor="#0D9488"
+                        stopOpacity={0.02}
+                      />
                     </linearGradient>
                   </defs>
                   {[0, 25, 50, 75, 100].map((val) => {
                     const y = progressH - 30 - (val / 100) * (progressH - 60);
                     return (
                       <g key={val}>
-                        <text x="35" y={y + 3} className="text-[9px] fill-slate-400" textAnchor="end">
+                        <text
+                          x="35"
+                          y={y + 3}
+                          className="text-[9px] fill-slate-400"
+                          textAnchor="end"
+                        >
                           {Math.round((val / 100) * progMax)}
                         </text>
-                        <line x1="40" y1={y} x2={progressW - 20} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+                        <line
+                          x1="40"
+                          y1={y}
+                          x2={progressW - 20}
+                          y2={y}
+                          stroke="#f1f5f9"
+                          strokeWidth="1"
+                        />
                       </g>
                     );
                   })}
@@ -1126,7 +1493,15 @@ const presentAngle =
                     points={progPts.map((p) => `${p.x},${p.y}`).join(" ")}
                   />
                   {progPts.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="4" fill="#0D9488" stroke="white" strokeWidth="2" />
+                    <circle
+                      key={i}
+                      cx={p.x}
+                      cy={p.y}
+                      r="4"
+                      fill="#0D9488"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
                   ))}
                 </svg>
                 <div className="flex justify-between mt-1 px-8 text-[10px] font-medium text-slate-400">
@@ -1138,7 +1513,10 @@ const presentAngle =
             ) : (
               <div className="flex items-center justify-center h-28 text-sm text-slate-400">
                 <div className="text-center">
-                  <TrendingUp size={24} className="mx-auto mb-1 text-slate-300" />
+                  <TrendingUp
+                    size={24}
+                    className="mx-auto mb-1 text-slate-300"
+                  />
                   <p>Complete a test to see progress</p>
                 </div>
               </div>
@@ -1150,13 +1528,27 @@ const presentAngle =
         <div className="space-y-5">
           {/* Attendance Donut */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-4">Attendance</h2>
+            <h2 className="text-base font-bold text-slate-900 mb-4">
+              Attendance
+            </h2>
             <div className="flex flex-col items-center">
               <div className="relative w-28 h-28">
-                <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90 absolute inset-0">
-                  <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                <svg
+                  viewBox="0 0 120 120"
+                  className="w-full h-full -rotate-90 absolute inset-0"
+                >
                   <circle
-                    cx="60" cy="60" r="50"
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="#f1f5f9"
+                    strokeWidth="8"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
                     fill="none"
                     stroke="#059669"
                     strokeWidth="8"
@@ -1166,42 +1558,157 @@ const presentAngle =
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-2xl font-black text-slate-900">{attRate != null ? `${attRate}%` : "—"}</p>
+                  <p className="text-2xl font-black text-slate-900">
+                    {attRate != null ? `${attRate}%` : "—"}
+                  </p>
                 </div>
               </div>
-              <p className="text-xs font-medium text-slate-500 mt-2">Overall Attendance</p>
+              <p className="text-xs font-medium text-slate-500 mt-2">
+                Overall Attendance
+              </p>
               <div className="flex gap-4 mt-4 text-xs font-medium text-slate-600">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Present: {dashboard.analytics?.attendance?.present ?? 0}</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400" /> Absent: {dashboard.analytics?.attendance?.absent ?? 0}</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />{" "}
+                  Present: {dashboard.analytics?.attendance?.present ?? 0}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-400" /> Absent:{" "}
+                  {dashboard.analytics?.attendance?.absent ?? 0}
+                </span>
               </div>
               {attRate != null && attRate < 75 && (
                 <div className="mt-4 w-full p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2">
                   <AlertCircle size={16} className="text-red-600 shrink-0" />
-                  <p className="text-xs font-semibold text-red-700">Attendance below 75% — please improve!</p>
+                  <p className="text-xs font-semibold text-red-700">
+                    Attendance below 75% — please improve!
+                  </p>
                 </div>
               )}
             </div>
           </div>
+          {/* Notice Board */}
+          <div className="mt-5 rounded-[1.5rem] border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EBF1FA] text-[#0B40A1]">
+                  <Bell className="h-5 w-5" />
+                </div>
 
+                <div>
+                  <h2 className="text-base font-black text-slate-900">
+                    Notice Board
+                  </h2>
+
+                  <p className="text-xs font-medium text-slate-500">
+                    Latest announcements and updates
+                  </p>
+                </div>
+              </div>
+
+              {messages.filter((message) => message.channel !== "Chat").length >
+              0 ? (
+                <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-[#0B40A1] px-2 text-xs font-black text-white">
+                  {
+                    messages.filter((message) => message.channel !== "Chat")
+                      .length
+                  }
+                </span>
+              ) : null}
+            </div>
+
+            <div className="space-y-3">
+              {messages.filter((message) => message.channel !== "Chat").length >
+              0 ? (
+                messages
+                  .filter((message) => message.channel !== "Chat")
+                  .slice(0, 3)
+                  .map((message) => (
+                    <button
+                      key={message.id}
+                      type="button"
+                      onClick={() => onSetActiveSection("messages")}
+                      className="group flex w-full items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/60 hover:shadow-sm"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#0B40A1] shadow-sm">
+                        <MessageSquare className="h-4 w-4" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="truncate text-sm font-black text-slate-800">
+                            {message.title}
+                          </h3>
+
+                          <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[10px] font-bold text-[#0B40A1]">
+                            {message.channel}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 line-clamp-2 text-xs font-medium leading-5 text-slate-500">
+                          {message.body}
+                        </p>
+                      </div>
+                    </button>
+                  ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-8 text-center">
+                  <Bell className="mx-auto h-7 w-7 text-slate-300" />
+
+                  <p className="mt-3 text-sm font-bold text-slate-600">
+                    No notices yet
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    New announcements will appear here.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("messages")}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B40A1] px-4 py-3 text-sm font-black text-white transition-all hover:-translate-y-0.5 hover:bg-[#092F78] hover:shadow-md"
+            >
+              View Notice Board
+              <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </div>
           {/* Subject Performance */}
           {subjectScores.length > 0 && (
             <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-              <h2 className="text-base font-bold text-slate-900 mb-4">Subject Performance</h2>
+              <h2 className="text-base font-bold text-slate-900 mb-4">
+                Subject Performance
+              </h2>
               <div className="space-y-4">
                 {subjectScores.map((item, idx) => {
                   const score = item.percentage ?? 75;
-                  const colors = ["#4F46E5", "#059669", "#D97706", "#0EA5E9", "#8B5CF6", "#EC4899"];
+                  const colors = [
+                    "#4F46E5",
+                    "#059669",
+                    "#D97706",
+                    "#0EA5E9",
+                    "#8B5CF6",
+                    "#EC4899",
+                  ];
                   const c = colors[idx % colors.length];
                   return (
                     <div key={idx}>
                       <div className="flex justify-between items-center text-sm mb-1.5">
-                        <span className="font-semibold text-slate-700">{item.subject}</span>
-                        <span className="font-bold text-slate-900">{score}%</span>
+                        <span className="font-semibold text-slate-700">
+                          {item.subject}
+                        </span>
+                        <span className="font-bold text-slate-900">
+                          {score}%
+                        </span>
                       </div>
                       <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-1000 ease-out"
-                          style={{ width: mounted ? `${score}%` : "0%", backgroundColor: c }}
+                          style={{
+                            width: mounted ? `${score}%` : "0%",
+                            backgroundColor: c,
+                          }}
                         />
                       </div>
                     </div>
@@ -1210,16 +1717,14 @@ const presentAngle =
               </div>
             </div>
           )}
-
-
         </div>
       </div>
 
-
-
       {/* ── Quick Access Grid ── */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-        <h2 className="text-base font-bold text-slate-900 mb-4">Quick Access</h2>
+        <h2 className="text-base font-bold text-slate-900 mb-4">
+          Quick Access
+        </h2>
         <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
           {quickAccessItems.map((item, idx) => {
             const Icon = item.icon;
@@ -1231,11 +1736,16 @@ const presentAngle =
               >
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${item.color}15`, color: item.color }}
+                  style={{
+                    backgroundColor: `${item.color}15`,
+                    color: item.color,
+                  }}
                 >
                   <Icon size={16} strokeWidth={2} />
                 </div>
-                <span className="text-[10px] font-semibold text-slate-600 text-center leading-tight">{item.label}</span>
+                <span className="text-[10px] font-semibold text-slate-600 text-center leading-tight">
+                  {item.label}
+                </span>
               </button>
             );
           })}
@@ -1246,7 +1756,9 @@ const presentAngle =
       {testScores.length > 0 && (
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">Recent Results</h2>
+            <h2 className="text-base font-bold text-slate-900">
+              Recent Results
+            </h2>
             <button
               onClick={() => onSetActiveSection("performance")}
               className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -1256,14 +1768,25 @@ const presentAngle =
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {testScores.slice(0, 6).map((test, idx) => {
-              const pct = test.total ? Math.min(100, Math.round((test.total / 100) * 100)) : 0;
+              const pct = test.total
+                ? Math.min(100, Math.round((test.total / 100) * 100))
+                : 0;
               return (
-                <div key={test.id ?? idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div
+                  key={test.id ?? idx}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100"
+                >
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
-                    <p className="text-[11px] text-slate-500">{test.subject ?? ""}</p>
+                    <p className="text-sm font-bold text-slate-800 truncate">
+                      {test.title}
+                    </p>
+                    <p className="text-[11px] text-slate-500">
+                      {test.subject ?? ""}
+                    </p>
                   </div>
-                  <span className={`text-sm font-black shrink-0 ml-3 ${pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-red-600"}`}>
+                  <span
+                    className={`text-sm font-black shrink-0 ml-3 ${pct >= 80 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-red-600"}`}
+                  >
                     {pct}%
                   </span>
                 </div>
@@ -1293,7 +1816,9 @@ function ParentOverview({
   managedUsers?: ManagedUser[];
 }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
@@ -1303,14 +1828,26 @@ function ParentOverview({
     year: "numeric",
   });
   const parentName = session?.name ?? "Parent";
-  const childName = dashboard.profile?.fatherName ? `${dashboard.profile.fatherName}'s Child` : "Your Child";
-  const batchInfo = dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() || dashboard.heroTitle || "";
-  const attRate = dashboard.analytics?.attendance?.rate != null ? Math.round(dashboard.analytics.attendance.rate) : null;
-  const avgScore = dashboard.analytics?.assessments?.averageScore != null ? `${Math.round(dashboard.analytics.assessments.averageScore)}%` : "—";
+  const childName = dashboard.profile?.fatherName
+    ? `${dashboard.profile.fatherName}'s Child`
+    : "Your Child";
+  const batchInfo =
+    dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() ||
+    dashboard.heroTitle ||
+    "";
+  const attRate =
+    dashboard.analytics?.attendance?.rate != null
+      ? Math.round(dashboard.analytics.attendance.rate)
+      : null;
+  const avgScore =
+    dashboard.analytics?.assessments?.averageScore != null
+      ? `${Math.round(dashboard.analytics.assessments.averageScore)}%`
+      : "—";
   const feeDueAmount = dashboard.stats[3]?.value || "₹0";
-  const pendingHw = dashboard.analytics?.learning?.homeworkRate != null
-    ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
-    : "—";
+  const pendingHw =
+    dashboard.analytics?.learning?.homeworkRate != null
+      ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
+      : "—";
 
   const kpiCards = [
     {
@@ -1320,7 +1857,17 @@ function ParentOverview({
       bg: "bg-emerald-50",
       text: "text-emerald-600",
       icon: CheckCircle2,
-      sparkData: attRate ? [attRate - 15, attRate - 10, attRate - 5, attRate + 2, attRate + 5, attRate + 3, attRate] : [60, 65, 70, 72, 78, 75, 80],
+      sparkData: attRate
+        ? [
+            attRate - 15,
+            attRate - 10,
+            attRate - 5,
+            attRate + 2,
+            attRate + 5,
+            attRate + 3,
+            attRate,
+          ]
+        : [60, 65, 70, 72, 78, 75, 80],
     },
     {
       label: "Avg Score",
@@ -1329,7 +1876,7 @@ function ParentOverview({
       bg: "bg-amber-50",
       text: "text-amber-600",
       icon: TrendingUp,
-      sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => (100 - v * 10)),
+      sparkData: [5, 4, 4, 3, 3, 2, 2].map((v) => 100 - v * 10),
     },
     {
       label: "Pending HW",
@@ -1351,19 +1898,48 @@ function ParentOverview({
     },
   ];
 
-  const todayLectures = dashboard.lectures?.filter(
-    (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
-  ) ?? [];
+  const todayLectures =
+    dashboard.lectures?.filter(
+      (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
+    ) ?? [];
 
-  const upcomingTests = dashboard.tests?.filter((t) => t.status === "published" || t.status === "pending") ?? [];
+  const upcomingTests =
+    dashboard.tests?.filter(
+      (t) => t.status === "published" || t.status === "pending",
+    ) ?? [];
 
   const quickAccessItems = [
     { label: "Exams", icon: FileText, section: "tests", color: "#4F46E5" },
-    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#D97706" },
-    { label: "Fee Details", icon: DollarSign, section: "receipts", color: "#DC2626" },
-    { label: "Timetable", icon: CalendarDays, section: "timetable", color: "#EC4899" },
-    { label: "Lectures", icon: PlayCircle, section: "lectures", color: "#F97316" },
-    { label: "Messages", icon: MessageSquare, section: "messages", color: "#06B6D4" },
+    {
+      label: "Attendance",
+      icon: UserCheck,
+      section: "attendance",
+      color: "#D97706",
+    },
+    {
+      label: "Fee Details",
+      icon: DollarSign,
+      section: "receipts",
+      color: "#DC2626",
+    },
+    {
+      label: "Timetable",
+      icon: CalendarDays,
+      section: "timetable",
+      color: "#EC4899",
+    },
+    {
+      label: "Lectures",
+      icon: PlayCircle,
+      section: "lectures",
+      color: "#F97316",
+    },
+    {
+      label: "Messages",
+      icon: MessageSquare,
+      section: "messages",
+      color: "#06B6D4",
+    },
   ];
 
   return (
@@ -1371,10 +1947,16 @@ function ParentOverview({
       {/* Hero Section */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
-        style={{ background: "linear-gradient(135deg,#7C3AED,#6D28D9,#4F46E5)" }}
+        style={{
+          background: "linear-gradient(135deg,#7C3AED,#6D28D9,#4F46E5)",
+        }}
       >
         <div className="absolute inset-0 opacity-10">
-          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 400 200"
+            preserveAspectRatio="none"
+          >
             <circle cx="50" cy="30" r="80" fill="white" />
             <circle cx="350" cy="170" r="120" fill="white" />
           </svg>
@@ -1385,18 +1967,26 @@ function ParentOverview({
               <p className="text-sm font-semibold text-violet-200 uppercase tracking-wider">
                 Parent Portal{batchInfo ? ` · ${batchInfo}` : ""}
               </p>
-              <h1 className="text-2xl sm:text-3xl font-bold mt-1">Welcome, {parentName.split(" ")[0]}!</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold mt-1">
+                Welcome, {parentName.split(" ")[0]}!
+              </h1>
               <p className="text-sm text-violet-200 mt-1.5">{dateStr}</p>
-              {dashboard.assignedFacultyNames && dashboard.assignedFacultyNames.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {dashboard.assignedFacultyNames.map((name, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2.5 py-1 text-[11px] font-semibold">
-                      <span className="h-4 w-4 rounded-full bg-white/25 flex items-center justify-center text-[8px] font-bold">{name.charAt(0)}</span>
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {dashboard.assignedFacultyNames &&
+                dashboard.assignedFacultyNames.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {dashboard.assignedFacultyNames.map((name, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-2.5 py-1 text-[11px] font-semibold"
+                      >
+                        <span className="h-4 w-4 rounded-full bg-white/25 flex items-center justify-center text-[8px] font-bold">
+                          {name.charAt(0)}
+                        </span>
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                )}
             </div>
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
@@ -1417,19 +2007,28 @@ function ParentOverview({
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
           return (
-            <div key={idx} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+            <div
+              key={idx}
+              className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow"
+            >
               <div style={{ height: 3, backgroundColor: card.color }} />
               <div className="p-5 relative">
                 <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}>
+                  <div
+                    className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}
+                  >
                     <Icon size={20} strokeWidth={2} />
                   </div>
                   <div className="w-16 h-7 opacity-30">
                     <Sparkline values={card.sparkData} color={card.color} />
                   </div>
                 </div>
-                <p className="text-2xl font-black text-slate-900 tracking-tight">{card.value}</p>
-                <p className="text-sm font-medium text-slate-500 mt-0.5">{card.label}</p>
+                <p className="text-2xl font-black text-slate-900 tracking-tight">
+                  {card.value}
+                </p>
+                <p className="text-sm font-medium text-slate-500 mt-0.5">
+                  {card.label}
+                </p>
               </div>
             </div>
           );
@@ -1443,7 +2042,12 @@ function ParentOverview({
           {/* Today's Classes */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900" suppressHydrationWarning>Today&apos;s Classes</h2>
+              <h2
+                className="text-base font-bold text-slate-900"
+                suppressHydrationWarning
+              >
+                Today&apos;s Classes
+              </h2>
               <button
                 onClick={() => onSetActiveSection("lectures")}
                 className="text-xs font-bold text-[#0B40A1] hover:underline"
@@ -1454,13 +2058,20 @@ function ParentOverview({
             {todayLectures.length > 0 ? (
               <div className="space-y-3">
                 {todayLectures.slice(0, 3).map((lec, idx) => (
-                  <div key={lec.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div
+                    key={lec.id ?? idx}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
                     <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center shrink-0">
                       <PlayCircle size={16} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
-                      <p className="text-xs text-slate-500">{lec.subject ?? ""}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">
+                        {lec.title || "Lecture"}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {lec.subject ?? ""}
+                      </p>
                     </div>
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-violet-50 text-violet-600">
                       {lec.startsAt?.slice(11, 16) || "Scheduled"}
@@ -1479,21 +2090,33 @@ function ParentOverview({
           {/* Upcoming Tests */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">Upcoming Exams</h2>
-              <button onClick={() => onSetActiveSection("tests")} className="text-xs font-bold text-[#0B40A1] hover:underline">
+              <h2 className="text-base font-bold text-slate-900">
+                Upcoming Exams
+              </h2>
+              <button
+                onClick={() => onSetActiveSection("tests")}
+                className="text-xs font-bold text-[#0B40A1] hover:underline"
+              >
                 View All
               </button>
             </div>
             {upcomingTests.length > 0 ? (
               <div className="space-y-2">
                 {upcomingTests.slice(0, 3).map((test, idx) => (
-                  <div key={test.id ?? idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div
+                    key={test.id ?? idx}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
+                  >
                     <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
                       <FileText size={16} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800 truncate">{test.title}</p>
-                      <p className="text-xs text-slate-500">{test.subject ?? ""} · {test.total ?? 0} marks</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">
+                        {test.title}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {test.subject ?? ""} · {test.total ?? 0} marks
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -1516,7 +2139,9 @@ function ParentOverview({
             </div>
             <div>
               <p className="text-sm font-medium text-slate-500">Fee Dues</p>
-              <p className="text-xl font-black text-slate-900">{feeDueAmount}</p>
+              <p className="text-xl font-black text-slate-900">
+                {feeDueAmount}
+              </p>
             </div>
             <button
               onClick={() => onSetActiveSection("receipts")}
@@ -1530,7 +2155,9 @@ function ParentOverview({
 
       {/* Quick Access Grid */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-        <h2 className="text-base font-bold text-slate-900 mb-4">Quick Access</h2>
+        <h2 className="text-base font-bold text-slate-900 mb-4">
+          Quick Access
+        </h2>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {quickAccessItems.map((item, idx) => {
             const Icon = item.icon;
@@ -1540,10 +2167,15 @@ function ParentOverview({
                 onClick={() => onSetActiveSection(item.section)}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-[#E8EDF2] transition-all"
               >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${item.color}14` }}>
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: `${item.color}14` }}
+                >
                   <Icon size={18} style={{ color: item.color }} />
                 </div>
-                <span className="text-[11px] font-bold text-slate-600">{item.label}</span>
+                <span className="text-[11px] font-bold text-slate-600">
+                  {item.label}
+                </span>
               </button>
             );
           })}
@@ -1568,7 +2200,9 @@ function EducatorOverview({
   onSetActiveSection: (section: string) => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
@@ -1580,23 +2214,45 @@ function EducatorOverview({
 
   const ops = dashboard.analytics?.operations;
   const myStudents = ops?.learners ?? dashboard.analytics?.activeStudents ?? 0;
-  const pendingReviews = dashboard.submissions?.filter((s) => s.status === "submitted").length ?? 0;
-  const gradedSubs = dashboard.submissions?.filter((s) => s.score != null) ?? [];
+  const pendingReviews =
+    dashboard.submissions?.filter((s) => s.status === "submitted").length ?? 0;
+  const gradedSubs =
+    dashboard.submissions?.filter((s) => s.score != null) ?? [];
   const totalSubmissions = dashboard.submissions?.length ?? 0;
-  const reviewedFraction = totalSubmissions > 0 ? gradedSubs.length / totalSubmissions : 0;
+  const reviewedFraction =
+    totalSubmissions > 0 ? gradedSubs.length / totalSubmissions : 0;
   const avgScore = gradedSubs.length
-    ? Math.round(gradedSubs.reduce((a, s) => a + ((s.score ?? 0) / s.total) * 100, 0) / gradedSubs.length)
+    ? Math.round(
+        gradedSubs.reduce((a, s) => a + ((s.score ?? 0) / s.total) * 100, 0) /
+          gradedSubs.length,
+      )
     : 0;
 
-  const todayLectures = dashboard.lectures?.filter(
-    (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
-  ) ?? [];
+  const todayLectures =
+    dashboard.lectures?.filter(
+      (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
+    ) ?? [];
 
   const quickActions = [
-    { label: "Attendance", icon: UserCheck, section: "attendance", color: "#059669" },
-    { label: "Homework", icon: BookOpen, section: "homework", color: "#1D4ED8" },
+    {
+      label: "Attendance",
+      icon: UserCheck,
+      section: "attendance",
+      color: "#059669",
+    },
+    {
+      label: "Homework",
+      icon: BookOpen,
+      section: "homework",
+      color: "#1D4ED8",
+    },
     { label: "Exams", icon: FileText, section: "tests", color: "#6D28D9" },
-    { label: "My Students", icon: Users, section: "students", color: "#D97706" },
+    {
+      label: "My Students",
+      icon: Users,
+      section: "students",
+      color: "#D97706",
+    },
   ];
 
   return (
@@ -1604,24 +2260,34 @@ function EducatorOverview({
       {/* ── Hero ── */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
-        style={{ background: "linear-gradient(135deg,#0369A1,#1D4ED8,#6D28D9)" }}
+        style={{
+          background: "linear-gradient(135deg,#0369A1,#1D4ED8,#6D28D9)",
+        }}
       >
         <div className="absolute inset-0 opacity-[0.07]">
-          <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
+          <svg
+            className="w-full h-full"
+            viewBox="0 0 400 200"
+            preserveAspectRatio="none"
+          >
             <circle cx="60" cy="20" r="100" fill="white" />
             <circle cx="360" cy="180" r="130" fill="white" />
           </svg>
         </div>
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.08em] opacity-60">Teacher Portal</p>
+            <p className="text-xs font-bold uppercase tracking-[0.08em] opacity-60">
+              Teacher Portal
+            </p>
             <h1 className="text-2xl sm:text-3xl font-bold mt-1">
               Welcome, {session?.name?.split(" ")[0] ?? "Teacher"}!
             </h1>
             <p className="text-sm opacity-70 mt-0.5">{dateStr}</p>
             <div className="flex gap-2 mt-3 flex-wrap">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
-                <Users size={12} /> <span className="text-sm font-black">{myStudents}</span> My Students
+                <Users size={12} />{" "}
+                <span className="text-sm font-black">{myStudents}</span> My
+                Students
               </span>
             </div>
           </div>
@@ -1631,20 +2297,48 @@ function EducatorOverview({
       {/* ── KPI Row ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "My Students", value: myStudents, color: "#1D4ED8", icon: Users },
-          { label: "Pending Reviews", value: pendingReviews, color: "#D97706", icon: Clock },
-          { label: "Class Avg Score", value: `${avgScore}%`, color: "#059669", icon: TrendingUp },
+          {
+            label: "My Students",
+            value: myStudents,
+            color: "#1D4ED8",
+            icon: Users,
+          },
+          {
+            label: "Pending Reviews",
+            value: pendingReviews,
+            color: "#D97706",
+            icon: Clock,
+          },
+          {
+            label: "Class Avg Score",
+            value: `${avgScore}%`,
+            color: "#059669",
+            icon: TrendingUp,
+          },
         ].map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <div key={i} className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow">
+            <div
+              key={i}
+              className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow"
+            >
               <div style={{ height: 3, background: kpi.color }} />
               <div className="p-4 sm:p-5">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3" style={{ background: `${kpi.color}14` }}>
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: `${kpi.color}14` }}
+                >
                   <Icon size={20} style={{ color: kpi.color }} />
                 </div>
-                <p className="text-2xl font-black text-slate-900" style={{ color: kpi.color }}>{kpi.value}</p>
-                <p className="text-xs font-bold uppercase tracking-[0.05em] text-slate-400 mt-0.5">{kpi.label}</p>
+                <p
+                  className="text-2xl font-black text-slate-900"
+                  style={{ color: kpi.color }}
+                >
+                  {kpi.value}
+                </p>
+                <p className="text-xs font-bold uppercase tracking-[0.05em] text-slate-400 mt-0.5">
+                  {kpi.label}
+                </p>
               </div>
             </div>
           );
@@ -1657,39 +2351,72 @@ function EducatorOverview({
         <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 size={16} style={{ color: "#D97706" }} /> Homework Evaluation Status
+              <BarChart3 size={16} style={{ color: "#D97706" }} /> Homework
+              Evaluation Status
             </h2>
             <span className="text-xs text-slate-400">Reviewed vs Pending</span>
           </div>
           <div className="p-5 flex items-center gap-6">
             <div className="relative w-24 h-24 shrink-0">
-              <svg viewBox="0 0 120 120" className="w-full h-full" transform="rotate(-90 60 60)">
-                <circle cx="60" cy="60" r="48" fill="none" stroke="#E8EDF2" strokeWidth="10" />
-                <circle cx="60" cy="60" r="48" fill="none" stroke="#059669" strokeWidth="10" strokeDasharray={`${2 * Math.PI * 48 * reviewedFraction}`} strokeDashoffset="0" strokeLinecap="round" />
+              <svg
+                viewBox="0 0 120 120"
+                className="w-full h-full"
+                transform="rotate(-90 60 60)"
+              >
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  fill="none"
+                  stroke="#E8EDF2"
+                  strokeWidth="10"
+                />
+                <circle
+                  cx="60"
+                  cy="60"
+                  r="48"
+                  fill="none"
+                  stroke="#059669"
+                  strokeWidth="10"
+                  strokeDasharray={`${2 * Math.PI * 48 * reviewedFraction}`}
+                  strokeDashoffset="0"
+                  strokeLinecap="round"
+                />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-base font-black text-[#1D4ED8]">{dashboard.submissions?.length ?? 0}</p>
-                <p className="text-[8px] font-bold text-slate-400 tracking-wider">SUBMITTED</p>
+                <p className="text-base font-black text-[#1D4ED8]">
+                  {dashboard.submissions?.length ?? 0}
+                </p>
+                <p className="text-[8px] font-bold text-slate-400 tracking-wider">
+                  SUBMITTED
+                </p>
               </div>
             </div>
             <div className="flex-1 space-y-2">
               <div className="flex justify-between text-xs">
                 <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600" /> Reviewed
+                  <span className="w-2 h-2 rounded-full bg-emerald-600" />{" "}
+                  Reviewed
                 </span>
-                <span className="font-bold text-emerald-600">{gradedSubs.length}</span>
+                <span className="font-bold text-emerald-600">
+                  {gradedSubs.length}
+                </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="font-semibold text-amber-600 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-amber-500" /> Pending
                 </span>
-                <span className="font-bold text-amber-600">{pendingReviews}</span>
+                <span className="font-bold text-amber-600">
+                  {pendingReviews}
+                </span>
               </div>
               <div className="flex justify-between text-xs pt-2 border-t border-dashed border-slate-200">
                 <span className="font-semibold text-slate-500 flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-slate-400" /> Total
                 </span>
-                <span className="font-bold text-slate-500">{dashboard.submissions?.length ?? 0}</span>
+                <span className="font-bold text-slate-500">
+                  {dashboard.submissions?.length ?? 0}
+                </span>
               </div>
             </div>
           </div>
@@ -1700,22 +2427,38 @@ function EducatorOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2" suppressHydrationWarning>
-              <CalendarDays size={16} style={{ color: "#1D4ED8" }} /> Today&apos;s Classes
+            <h2
+              className="text-sm font-bold text-slate-900 flex items-center gap-2"
+              suppressHydrationWarning
+            >
+              <CalendarDays size={16} style={{ color: "#1D4ED8" }} />{" "}
+              Today&apos;s Classes
             </h2>
-            <span className="text-xs text-slate-400">{todayLectures.length > 0 ? `${todayLectures.length} today` : "Wed, 08 Jul"}</span>
+            <span className="text-xs text-slate-400">
+              {todayLectures.length > 0
+                ? `${todayLectures.length} today`
+                : "Wed, 08 Jul"}
+            </span>
           </div>
           <div className="p-4">
             {todayLectures.length > 0 ? (
               <div className="space-y-2">
                 {todayLectures.slice(0, 5).map((lec, i) => (
-                  <div key={lec.id ?? i} className="flex items-center gap-3 p-3 rounded-xl bg-[#F8FAFC] border-l-[3px]" style={{ borderLeftColor: "#1D4ED8" }}>
+                  <div
+                    key={lec.id ?? i}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-[#F8FAFC] border-l-[3px]"
+                    style={{ borderLeftColor: "#1D4ED8" }}
+                  >
                     <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                       <PlayCircle size={16} />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
-                      <p className="text-xs text-slate-500">{lec.subject ?? ""}</p>
+                      <p className="text-sm font-bold text-slate-800 truncate">
+                        {lec.title || "Lecture"}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {lec.subject ?? ""}
+                      </p>
                     </div>
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-indigo-50 text-indigo-600">
                       {lec.startsAt?.slice(11, 16) || "Scheduled"}
@@ -1743,42 +2486,60 @@ function EducatorOverview({
       <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Clock size={16} style={{ color: "#D97706" }} /> Pending Homework Reviews ({pendingReviews})
+            <Clock size={16} style={{ color: "#D97706" }} /> Pending Homework
+            Reviews ({pendingReviews})
           </h2>
-          <button onClick={() => onSetActiveSection("homework")} className="text-xs font-bold text-indigo-600 hover:underline">
+          <button
+            onClick={() => onSetActiveSection("homework")}
+            className="text-xs font-bold text-indigo-600 hover:underline"
+          >
             View all →
           </button>
         </div>
         <div className="px-5 py-4">
           {pendingReviews > 0 ? (
             <div className="space-y-2">
-              {dashboard.submissions?.filter(s => s.status === "submitted").slice(0, 5).map((sub, i) => {
-                const test = dashboard.tests?.find(t => t.id === sub.testId);
-                return (
-                  <div key={sub.id ?? i} className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-                        <FileText size={16} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-800 truncate">{sub.studentName}</p>
-                        <p className="text-xs text-slate-500">{test?.title ?? "Exam"}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => onSetActiveSection("tests")}
-                      className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 ml-3"
+              {dashboard.submissions
+                ?.filter((s) => s.status === "submitted")
+                .slice(0, 5)
+                .map((sub, i) => {
+                  const test = dashboard.tests?.find(
+                    (t) => t.id === sub.testId,
+                  );
+                  return (
+                    <div
+                      key={sub.id ?? i}
+                      className="flex items-center justify-between p-3 rounded-xl bg-amber-50 border border-amber-100"
                     >
-                      Review
-                    </button>
-                  </div>
-                );
-              })}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                          <FileText size={16} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-slate-800 truncate">
+                            {sub.studentName}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {test?.title ?? "Exam"}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onSetActiveSection("tests")}
+                        className="text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition-colors shrink-0 ml-3"
+                      >
+                        Review
+                      </button>
+                    </div>
+                  );
+                })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-6 text-sm">
               <CheckCircle2 size={28} className="text-emerald-400 mb-2" />
-              <p className="font-bold text-emerald-600">All homework reviewed!</p>
+              <p className="font-bold text-emerald-600">
+                All homework reviewed!
+              </p>
             </div>
           )}
         </div>
@@ -1794,10 +2555,15 @@ function EducatorOverview({
               onClick={() => onSetActiveSection(action.section)}
               className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[#E8EDF2] hover:shadow-md transition-all hover:-translate-y-0.5"
             >
-              <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: `${action.color}14` }}>
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                style={{ background: `${action.color}14` }}
+              >
                 <Icon size={20} style={{ color: action.color }} />
               </div>
-              <span className="text-xs font-bold text-slate-700">{action.label}</span>
+              <span className="text-xs font-bold text-slate-700">
+                {action.label}
+              </span>
             </button>
           );
         })}
@@ -1808,33 +2574,60 @@ function EducatorOverview({
 
 // ─────────── PROFILE CARD HELPERS ───────────
 
-function PField({ label, value }: { label: string; value: string | undefined | null }) {
+function PField({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | undefined | null;
+}) {
   if (!value) return null;
   return (
     <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</p>
-      <p className="text-sm font-bold text-slate-900 mt-0.5 break-words">{value}</p>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        {label}
+      </p>
+      <p className="text-sm font-bold text-slate-900 mt-0.5 break-words">
+        {value}
+      </p>
     </div>
   );
 }
 
-function PTags({ label, values }: { label: string; values: string[] | undefined | null }) {
+function PTags({
+  label,
+  values,
+}: {
+  label: string;
+  values: string[] | undefined | null;
+}) {
   if (!values || values.length === 0) return null;
   return (
     <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">{label}</p>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+        {label}
+      </p>
       <div className="flex flex-wrap gap-1.5">
         {values.map((v) => (
-          <span key={v} className="rounded-lg bg-[#EBF1FA] text-[#0B40A1] px-2.5 py-1 text-xs font-bold border border-[#EBF1FA]">{v}</span>
+          <span
+            key={v}
+            className="rounded-lg bg-[#EBF1FA] text-[#0B40A1] px-2.5 py-1 text-xs font-bold border border-[#EBF1FA]"
+          >
+            {v}
+          </span>
         ))}
       </div>
     </div>
   );
 }
 
-
-
-function EducatorProfileCard({ session, dashboard }: { session: SessionUser | null; dashboard: DashboardBundle }) {
+function EducatorProfileCard({
+  session,
+  dashboard,
+}: {
+  session: SessionUser | null;
+  dashboard: DashboardBundle;
+}) {
   const [showAll, setShowAll] = useState(false);
   const p = dashboard.profile;
   const basicFields = (
@@ -1848,14 +2641,24 @@ function EducatorProfileCard({ session, dashboard }: { session: SessionUser | nu
   const extraFields = (
     <>
       <PField label="Date of Birth" value={p?.dob || p?.dateOfBirth} />
-      <PField label="Address" value={[p?.addressLine1, p?.addressLine2, p?.city, p?.state, p?.pincode].filter(Boolean).join(", ")} />
+      <PField
+        label="Address"
+        value={[p?.addressLine1, p?.addressLine2, p?.city, p?.state, p?.pincode]
+          .filter(Boolean)
+          .join(", ")}
+      />
       {p?.examQualifications && p.examQualifications.length > 0 && (
         <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Exam Qualifications</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+            Exam Qualifications
+          </p>
           <div className="space-y-2">
             {p.examQualifications.map((eq, i) => (
               <div key={i} className="text-sm font-semibold text-slate-800">
-                {eq.examName}{eq.score ? ` – ${eq.score}` : ""}{eq.year ? ` (${eq.year})` : ""}{eq.rank ? ` • Rank: ${eq.rank}` : ""}
+                {eq.examName}
+                {eq.score ? ` – ${eq.score}` : ""}
+                {eq.year ? ` (${eq.year})` : ""}
+                {eq.rank ? ` • Rank: ${eq.rank}` : ""}
               </div>
             ))}
           </div>
@@ -1863,7 +2666,12 @@ function EducatorProfileCard({ session, dashboard }: { session: SessionUser | nu
       )}
     </>
   );
-  const hasExtra = !!(p?.dob || p?.dateOfBirth || p?.addressLine1 || (p?.examQualifications && p.examQualifications.length > 0));
+  const hasExtra = !!(
+    p?.dob ||
+    p?.dateOfBirth ||
+    p?.addressLine1 ||
+    (p?.examQualifications && p.examQualifications.length > 0)
+  );
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="h-20 bg-[#0B40A1] relative" />
@@ -1871,7 +2679,17 @@ function EducatorProfileCard({ session, dashboard }: { session: SessionUser | nu
         <div className="flex -mt-10 mb-4">
           <div className="h-20 w-20 rounded-xl bg-white p-1 shadow-md">
             <div className="h-full w-full rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-              {p?.profilePhoto ? <img src={p.profilePhoto} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-slate-500">{getInitials(session?.name)}</span>}
+              {p?.profilePhoto ? (
+                <img
+                  src={p.profilePhoto}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-xl font-black text-slate-500">
+                  {getInitials(session?.name)}
+                </span>
+              )}
             </div>
           </div>
           <div className="ml-4 mt-6">
@@ -1882,20 +2700,29 @@ function EducatorProfileCard({ session, dashboard }: { session: SessionUser | nu
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600 border border-red-100">
-                <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: 10 }} />
+                <i
+                  className="bi bi-exclamation-triangle-fill"
+                  style={{ fontSize: 10 }}
+                />
                 Not Verified
               </span>
             )}
           </div>
         </div>
-        <h2 className="text-xl font-bold text-slate-900">{session?.name ?? "Educator"}</h2>
+        <h2 className="text-xl font-bold text-slate-900">
+          {session?.name ?? "Educator"}
+        </h2>
         <p className="text-xs text-slate-500 mt-0.5">{session?.email ?? ""}</p>
         <div className="mt-5 space-y-3">
           {basicFields}
           {showAll && hasExtra && extraFields}
         </div>
         {hasExtra && (
-          <button type="button" onClick={() => setShowAll((s) => !s)} className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowAll((s) => !s)}
+            className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors"
+          >
             {showAll ? "View Less ↑" : "View More ↓"}
           </button>
         )}
@@ -1904,7 +2731,15 @@ function EducatorProfileCard({ session, dashboard }: { session: SessionUser | nu
   );
 }
 
-function GenericProfileCard({ session, role, dashboard }: { session: SessionUser | null; role: Role; dashboard: DashboardBundle }) {
+function GenericProfileCard({
+  session,
+  role,
+  dashboard,
+}: {
+  session: SessionUser | null;
+  role: Role;
+  dashboard: DashboardBundle;
+}) {
   const [showAll, setShowAll] = useState(false);
   const p = dashboard.profile;
   const basicFields = (
@@ -1913,17 +2748,29 @@ function GenericProfileCard({ session, role, dashboard }: { session: SessionUser
       <PField label="Date of Birth" value={p?.dob || p?.dateOfBirth} />
       {role === "parent" && (
         <>
-          <PField label="Student" value={dashboard.linkedStudentId ? `Linked (${dashboard.linkedStudentId.slice(0, 8).toUpperCase()})` : "—"} />
+          <PField
+            label="Student"
+            value={
+              dashboard.linkedStudentId
+                ? `Linked (${dashboard.linkedStudentId.slice(0, 8).toUpperCase()})`
+                : "—"
+            }
+          />
         </>
       )}
     </>
   );
   const extraFields = (
     <>
-      <PField label="Address" value={[p?.addressLine1, p?.addressLine2, p?.city, p?.state, p?.pincode].filter(Boolean).join(", ")} />
+      <PField
+        label="Address"
+        value={[p?.addressLine1, p?.addressLine2, p?.city, p?.state, p?.pincode]
+          .filter(Boolean)
+          .join(", ")}
+      />
     </>
   );
-  const hasExtra = !!(p?.addressLine1);
+  const hasExtra = !!p?.addressLine1;
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="h-16 bg-[#0B40A1]" />
@@ -1931,18 +2778,36 @@ function GenericProfileCard({ session, role, dashboard }: { session: SessionUser
         <div className="flex -mt-8 mb-3">
           <div className="h-16 w-16 rounded-xl bg-white p-1 shadow-md">
             <div className="h-full w-full rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden">
-              {p?.profilePhoto ? <img src={p.profilePhoto} alt="" className="w-full h-full object-cover" /> : <span className="text-lg font-black text-slate-500">{getInitials(session?.name)}</span>}
+              {p?.profilePhoto ? (
+                <img
+                  src={p.profilePhoto}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-lg font-black text-slate-500">
+                  {getInitials(session?.name)}
+                </span>
+              )}
             </div>
           </div>
         </div>
-        <h2 className="text-lg font-bold text-slate-900">{session?.name ?? role}</h2>
-        <p className="text-xs text-slate-500 mt-0.5 capitalize">{role} • {session?.email ?? ""}</p>
+        <h2 className="text-lg font-bold text-slate-900">
+          {session?.name ?? role}
+        </h2>
+        <p className="text-xs text-slate-500 mt-0.5 capitalize">
+          {role} • {session?.email ?? ""}
+        </p>
         <div className="mt-4 space-y-3">
           {basicFields}
           {showAll && hasExtra && extraFields}
         </div>
         {hasExtra && (
-          <button type="button" onClick={() => setShowAll((s) => !s)} className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowAll((s) => !s)}
+            className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors"
+          >
             {showAll ? "View Less ↑" : "View More ↓"}
           </button>
         )}

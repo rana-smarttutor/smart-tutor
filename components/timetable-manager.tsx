@@ -13,14 +13,14 @@ type TimetableManagerProps = {
 };
 
 const SLOTS = [
-  { startHour: 8, startMin: 30 },
-  { startHour: 10, startMin: 0 },
-  { startHour: 11, startMin: 30 },
-  { startHour: 13, startMin: 0 },
-  { startHour: 14, startMin: 30 },
-  { startHour: 16, startMin: 0 },
-  { startHour: 17, startMin: 30 },
-  { startHour: 19, startMin: 0 },
+  { startHour: 8, startMin: 0 },   // 08:00 - 09:30
+  { startHour: 10, startMin: 0 },  // 10:00 - 11:30
+  { startHour: 12, startMin: 0 },  // 12:00 - 01:30
+  { startHour: 14, startMin: 0 },  // 02:00 - 03:30
+  { startHour: 16, startMin: 0 },  // 04:00 - 05:30
+  { startHour: 18, startMin: 0 },  // 06:00 - 07:30
+  { startHour: 20, startMin: 0 },  // 08:00 - 09:30
+  { startHour: 22, startMin: 0 },  // 10:00 - 11:30
 ];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 

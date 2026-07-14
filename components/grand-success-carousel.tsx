@@ -33,7 +33,7 @@ const RESULT_CATEGORIES = [
    {
     id: "12-CBSE Science",
     label: "12TH CBSE SCIENCE",
-    image: "/hof/12th CBSE science.jpg",
+    image: "/hof/12th  sci cbse new.jpeg",
   },
   {
     id: "jee",
