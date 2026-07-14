@@ -315,9 +315,6 @@ const sidebarByRole = {
     { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
     { id: "leave", label: "Leave" },
-    { id: "receipts", label: "My Fees" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
   ],
 
@@ -402,7 +399,6 @@ const sidebarByRole = {
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
-    { id: "receipts", label: "Child's Fees" },
     { id: "messages", label: "Messages" },
     { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
