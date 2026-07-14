@@ -41,7 +41,7 @@ export default async function ContactPage() {
             Get in <span className="text-blue-600">Touch.</span>
           </h1>
           <p className="text-xl md:text-2xl leading-relaxed text-[var(--color-muted)] font-medium max-w-2xl">
-            Have questions about admissions, batches, or career guidance? Reach
+            Have questions about admissions, courses, or career guidance? Reach
             out via WhatsApp, call, or visit our Vashi campus.
           </p>
         </div>

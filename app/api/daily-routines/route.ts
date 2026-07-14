@@ -5,7 +5,6 @@ import { getSessionUser } from "@/lib/auth";
 import {
   createStudentDailyRoutine,
   findFullUserById,
-  getBatchesForRole,
   getStudentDailyRoutines,
   getStudentDirectory,
 } from "@/lib/data-store";
@@ -383,32 +382,18 @@ export async function GET(
         });
       }
 
-      const [
-        assignedStudents,
-        assignedBatches,
-      ] = await Promise.all([
-        getStudentDirectory(
+      const assignedStudents =
+        await getStudentDirectory(
           session.id,
-        ),
-
-        getBatchesForRole(
-          "educator",
-          session.id,
-        ),
-      ]);
+        );
 
       const allowedStudentIds =
-        new Set([
-          ...assignedStudents.map(
+        new Set(
+          assignedStudents.map(
             (student) =>
               student.id,
           ),
-
-          ...assignedBatches.flatMap(
-            (batch) =>
-              batch.studentIds,
-          ),
-        ]);
+        );
 
       if (
         !allowedStudentIds.has(

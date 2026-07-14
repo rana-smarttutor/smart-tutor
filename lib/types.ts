@@ -96,7 +96,6 @@ export type DashboardAnalytics = {
   } | null;
 
   operations: {
-    activeBatches: number;
     learners: number;
     completedLectures: number;
     scheduledLectures: number;
@@ -360,7 +359,6 @@ export type PerformanceReport = {
   id: string;
   studentId: string;
   studentName: string;
-  batchName: string;
   courseType: "JEE" | "NEET" | "Foundation";
   parentContact: string;
   reportType: "weekly" | "monthly";
@@ -368,7 +366,6 @@ export type PerformanceReport = {
 
   // Core Metrics
   averageScore: number;
-  batchRank: number;
   attendancePercentage: number;
   homeworkCompletionPercentage: number;
   improvementPercentage: number;
@@ -422,14 +419,12 @@ export type AttendanceSheet = {
   id: string;
   title: string;
   date: string;
-  batchName?: string;
   subject?: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
   records: AttendanceRecord[];
   lectureId?: string;
-  batchId?: string;
 };
 
 // =========================
@@ -468,7 +463,6 @@ export type FeeInvoice = {
   receiptNo?: string;
   parentName?: string;
   classCourse?: string;
-  batch?: string;
   rollNo?: string;
   academicYear?: string;
   mobileNo?: string;
@@ -499,7 +493,6 @@ export type LectureItem = {
   id: string;
   title: string;
   subject?: string;
-  batchName?: string;
   description?: string;
   startsAt: string;
   endsAt?: string;
@@ -521,7 +514,6 @@ export type LectureItem = {
   nextTopic?: string;
   attendanceSheetId?: string;
   lectureReportSubmittedAt?: string;
-  batchId?: string;
   teacherId?: string;
   teacherName?: string;
 };
@@ -612,12 +604,10 @@ export type DashboardBundle = {
   feeInvoices: FeeInvoice[];
   lectures: LectureItem[];
   linkedStudentId?: string;
-  linkedStudentProfile?: { name?: string; email?: string; phone?: string; course?: string; batch?: string; attendance?: number | null };
+  linkedStudentProfile?: { name?: string; email?: string; phone?: string; course?: string; attendance?: number | null };
   assignedFacultyIds?: string[];
   assignedFacultyNames?: string[];
   profile?: UserProfile;
-  batches?: Batch[];
-  teacherBatchAssignments?: TeacherBatchAssignment[];
   weeklyTests?: WeeklyTest[];
   teacherFeedback?: TeacherFeedback[];
   dailyActivities?: StudentDailyActivity[];
@@ -625,38 +615,6 @@ export type DashboardBundle = {
   teacherPayouts?: TeacherPayout[];
   notifications?: AppNotification[];
   analytics?: DashboardAnalytics;
-};
-
-// =========================
-// batch items
-// =========================
-
-export type Batch = {
-  id: string;
-  name: string;
-  code?: string;
-  courseId?: string;
-  courseName?: string;
-  subject?: string;
-  capacity?: number;
-  studentIds: string[];
-  teacherIds: string[];
-  schedule?: string;
-  startDate?: string;
-  endDate?: string;
-  status: "active" | "archived";
-  createdBy: string;
-  createdAt: string;
-  updatedAt?: string;
-};
-
-export type TeacherBatchAssignment = {
-  id: string;
-  teacherId: string;
-  batchId: string;
-  subject?: string;
-  assignedAt: string;
-  assignedBy: string;
 };
 
 // =========================
@@ -679,8 +637,6 @@ export type WeeklyTestResult = {
 export type WeeklyTest = {
   id: string;
   title: string;
-  batchId: string;
-  batchName: string;
   teacherId: string;
   subject: string;
   testDate: string;
@@ -712,8 +668,6 @@ export type TeacherFeedback = {
   teacherId: string;
   teacherName?: string;
 
-  batchId?: string;
-  batchName?: string;
   subject?: string;
 
   category: FeedbackCategory;
@@ -746,9 +700,6 @@ export type StudentDailyActivity = {
 
   studentId: string;
   studentName: string;
-
-  batchId: string;
-  batchName: string;
 
   teacherId: string;
   teacherName?: string;
@@ -843,6 +794,66 @@ export type TeacherPayout = {
   updatedAt?: string;
 };
 
+// =========================
+// Staff Payout (Unified)
+// =========================
+
+export type StaffPayoutStatus = "paid" | "unpaid" | "partial";
+
+export type StaffPayout = {
+  id: string;
+  staffId: string;
+  staffName: string;
+
+  month: string;
+  title: string;
+  particulars: string;
+
+  amount: number;
+  paidAmount: number;
+  status: StaffPayoutStatus;
+
+  paymentMode?: string;
+  transactionId?: string;
+  paidDate?: string;
+
+  transactions: PaymentTransaction[];
+
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// Staff Payout Audit Log
+// =========================
+
+export type StaffPayoutAuditAction =
+  | "created"
+  | "updated"
+  | "payment_recorded"
+  | "deleted";
+
+export type StaffPayoutAuditLog = {
+  id: string;
+  payoutId: string;
+  receiptNo: string;
+  staffId: string;
+  staffName: string;
+  action: StaffPayoutAuditAction;
+  title?: string;
+  month?: string;
+  amount?: number;
+  paidAmount?: number;
+  previousAmount?: number;
+  paymentMode?: string;
+  transactionId?: string;
+  paidDate?: string;
+  changes?: Record<string, { from: unknown; to: unknown }>;
+  performedBy: string;
+  performedByName: string;
+  createdAt: string;
+};
 
 // =========================
 // Fee Installment Plans
@@ -888,7 +899,6 @@ export type FeeInstallmentPlan = {
   title: string;
 
   courseName?: string;
-  batchName?: string;
   academicYear?: string;
 
   totalFee: number;
@@ -1143,7 +1153,6 @@ export type StudentStats = {
 
 export type StudentDirectoryEntry = ManagedUser & {
   admissionNo?: string;
-  batchName?: string;
   attendancePercent?: number;
   feesStatus?: "paid" | "partial" | "unpaid" | "none";
   riskLevel?: StudentRiskLevel;
@@ -1197,8 +1206,6 @@ export type HomeworkItem = {
   hwType: HomeworkType;
   maxMarks: number;
   dueDate: string;
-  batchId: string;
-  batchName?: string;
   allowLateSubmission: boolean;
   attachmentUrl?: string;
   createdBy: string;
@@ -1362,7 +1369,6 @@ export type AvailableModule =
   | "lectures"
   | "timetable"
   | "courses"
-  | "batches"
   | "tests"
   | "weekly-tests"
   | "messages"
@@ -1394,7 +1400,6 @@ export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "lectures", label: "Lectures" },
   { id: "timetable", label: "Timetable" },
   { id: "courses", label: "Courses" },
-  { id: "batches", label: "Batches" },
   { id: "tests", label: "Exams" },
   { id: "weekly-tests", label: "Weekly Tests" },
   { id: "messages", label: "Messages" },
@@ -1583,5 +1588,169 @@ export type RegularisationRequest = {
   reviewedBy?: string;
   reviewedAt?: string;
   reviewComment?: string;
+  createdAt: string;
+};
+
+// =========================
+// Staff Payroll / Salary Management System
+// =========================
+
+export type PayrollEmploymentType = "full_time" | "part_time" | "contractual" | "hourly";
+
+export type PayrollSalaryType = "monthly" | "hourly" | "per_class";
+
+export type StaffPayrollProfile = {
+  id: string;
+  userId: string;
+  userName: string;
+  employeeId?: string;
+  employmentType: PayrollEmploymentType;
+  salaryType: PayrollSalaryType;
+  monthlySalary: number;
+  hourlyRate: number;
+  perClassRate: number;
+  bankName?: string;
+  accountNumber?: string;
+  ifscCode?: string;
+  panNumber?: string;
+  pfEnabled: boolean;
+  tdsEnabled: boolean;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  notes?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type PayrollRunStatus = "draft" | "approved" | "finalized" | "settled" | "rolled_back";
+
+export type PayrollSlipStatus = "pending" | "generated" | "approved" | "paid" | "held";
+
+export type PayrollSlip = {
+  id: string;
+  payrollRunId: string;
+  staffProfileId: string;
+  userId: string;
+  userName: string;
+  employeeId?: string;
+  employmentType: PayrollEmploymentType;
+  monthlySalary: number;
+  hourlyRate: number;
+  perClassRate: number;
+  workingDays: number;
+  presentDays: number;
+  attendancePercent: number;
+  grossPay: number;
+  pfDeduction: number;
+  tdsDeduction: number;
+  advanceRecovery: number;
+  totalDeductions: number;
+  netPay: number;
+  status: PayrollSlipStatus;
+  paidAmount: number;
+  paidDate?: string;
+  paymentMode?: string;
+  transactionRef?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type PayrollRun = {
+  id: string;
+  month: number;
+  year: number;
+  label: string;
+  status: PayrollRunStatus;
+  totalStaff: number;
+  profilesSetUp: number;
+  workingDays: number;
+  totalGross: number;
+  totalDeductions: number;
+  totalNet: number;
+  totalSettled: number;
+  slips: PayrollSlip[];
+  approvedBy?: string;
+  approvedAt?: string;
+  finalizedBy?: string;
+  finalizedAt?: string;
+  settledBy?: string;
+  settledAt?: string;
+  rolledBackBy?: string;
+  rolledBackAt?: string;
+  rollbackReason?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type SalaryAdvance = {
+  id: string;
+  userId: string;
+  userName: string;
+  amount: number;
+  reason: string;
+  repayMonth?: string;
+  status: "pending" | "deducted" | "cancelled";
+  createdBy: string;
+  createdAt: string;
+};
+
+export type SalaryIncrement = {
+  id: string;
+  userId: string;
+  userName: string;
+  previousSalary: number;
+  newSalary: number;
+  effectiveDate: string;
+  reason?: string;
+  createdBy: string;
+  createdAt: string;
+};
+
+export type SalaryTransfer = {
+  id: string;
+  userId: string;
+  userName: string;
+  payrollRunId?: string;
+  amount: number;
+  paymentMode: string;
+  transactionRef?: string;
+  notes?: string;
+  transferredBy: string;
+  transferredByName: string;
+  transferredAt: string;
+  createdAt: string;
+};
+
+// =========================
+// Fee Deletion Audit Log
+// =========================
+
+export type FeeDeletionAuditLog = {
+  id: string;
+  receiptNo: string;
+  studentId: string;
+  studentName: string;
+  studentAdmNo?: string;
+  courseName?: string;
+  feeTitle: string;
+  feeType?: string;
+  principalAmount: number;
+  fineAmount: number;
+  discountAmount: number;
+  netReversed: number;
+  paymentMode: string;
+  paymentDate: string;
+  performedByName: string;
+  performedByEmail: string;
+  ipAddress?: string;
+  balanceBeforePaid: number;
+  balanceBeforeDue: number;
+  balanceAfterPaid: number;
+  balanceAfterDue: number;
+  previousFeeStatus: string;
+  newFeeStatus: string;
   createdAt: string;
 };

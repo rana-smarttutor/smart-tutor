@@ -175,7 +175,6 @@ export async function POST(request: Request) {
 
       parentName: studentDetails.parentName || undefined,
       classCourse: studentDetails.classCourse || undefined,
-      batch: studentDetails.batch || undefined,
       rollNo: studentDetails.rollNo || undefined,
       academicYear: studentDetails.academicYear,
       mobileNo: studentDetails.mobileNo || undefined,

@@ -49,7 +49,7 @@ export function DashboardCourseManager({
       (sum, c) => sum + c.subjectsCovered.length,
       0,
     );
-    const totalBatches = courses.length;
+    const totalCourses = courses.length;
     const avgDuration = courses.length
       ? Math.round(
           courses.reduce((sum, c) => {
@@ -58,7 +58,7 @@ export function DashboardCourseManager({
           }, 0) / courses.length,
         )
       : 0;
-    return { totalSubjects, totalBatches, avgDuration };
+    return { totalSubjects, totalCourses, avgDuration };
   }, [courses]);
 
   function resetAddForm() {
@@ -188,7 +188,7 @@ export function DashboardCourseManager({
         <div>
           <p className="section-label">Course / Program Master</p>
           <h2 className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-            Top-level hierarchy: Course → Subject → Topic. Batches are linked to a course.
+            Top-level hierarchy: Course → Subject → Topic.
           </h2>
         </div>
         <button
@@ -211,8 +211,8 @@ export function DashboardCourseManager({
           <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Subjects</p>
         </div>
         <div className="surface-soft rounded-2xl px-4 py-3 text-center">
-          <p className="text-2xl font-extrabold text-[var(--color-success)]">{stats.totalBatches}</p>
-          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Batches</p>
+          <p className="text-2xl font-extrabold text-[var(--color-success)]">{stats.totalCourses}</p>
+          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Courses</p>
         </div>
         <div className="surface-soft rounded-2xl px-4 py-3 text-center">
           <p className="text-2xl font-extrabold text-[var(--color-warning)]">{stats.avgDuration}</p>
@@ -255,7 +255,7 @@ export function DashboardCourseManager({
               </div>
               <div className="text-center">
                 <p className="text-lg font-extrabold text-[var(--color-success)]">1</p>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Batches</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Courses</p>
               </div>
               <div className="text-center">
                 <p className="text-lg font-extrabold text-[var(--color-warning)]">{course.duration}</p>

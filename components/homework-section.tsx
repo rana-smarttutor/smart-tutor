@@ -85,8 +85,6 @@ export function HomeworkSection({
   const [assignHours, setAssignHours] = useState("");
   const [assignTaskNum, setAssignTaskNum] = useState("");
   const [assignAllowLate, setAssignAllowLate] = useState(false);
-  const [assignBatchId, setAssignBatchId] = useState("");
-  const [assignBatchName, setAssignBatchName] = useState("");
   const [assigning, setAssigning] = useState(false);
 
   const [submitContent, setSubmitContent] = useState("");
@@ -106,10 +104,6 @@ export function HomeworkSection({
 
   const isEducator = role === "educator" || role === "admin";
   const isStudent = role === "student";
-
-  const educatorBatches = isEducator
-    ? [...new Set(studentDirectory.map((s) => s.program).filter(Boolean))]
-    : [];
 
   async function loadHomework() {
     try {
@@ -135,7 +129,7 @@ export function HomeworkSection({
 
   async function handleAssign(e: React.FormEvent) {
     e.preventDefault();
-    if (!assignTitle.trim() || !assignDueDate || !assignBatchId) return;
+    if (!assignTitle.trim() || !assignDueDate) return;
     setAssigning(true);
     try {
       const keyStepsArr = assignKeySteps
@@ -159,8 +153,6 @@ export function HomeworkSection({
           hwType: assignType,
           maxMarks: assignMaxMarks,
           dueDate: assignDueDate,
-          batchId: assignBatchId,
-          batchName: assignBatchName || undefined,
           allowLateSubmission: assignAllowLate,
         }),
       });
@@ -194,8 +186,6 @@ export function HomeworkSection({
     setAssignHours("");
     setAssignTaskNum("");
     setAssignAllowLate(false);
-    setAssignBatchId("");
-    setAssignBatchName("");
   }
 
   async function handleSubmit(hwId: string) {
@@ -536,11 +526,6 @@ export function HomeworkSection({
                         {hw.subject && (
                           <span className="text-xs text-slate-500">
                             {hw.subject}
-                          </span>
-                        )}
-                        {hw.batchName && (
-                          <span className="text-xs text-slate-400">
-                            · {hw.batchName}
                           </span>
                         )}
                         {hw.estimatedHours && (
@@ -885,29 +870,6 @@ export function HomeworkSection({
                     {Object.entries(HW_TYPE_LABELS).map(([k, v]) => (
                       <option key={k} value={k}>
                         {v}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                    Batch *
-                  </label>
-                  <select
-                    value={assignBatchId}
-                    onChange={(e) => {
-                      const idx = e.target.selectedIndex;
-                      const name = e.target.options[idx]?.text ?? "";
-                      setAssignBatchId(e.target.value);
-                      setAssignBatchName(name);
-                    }}
-                    required
-                    className="w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none"
-                  >
-                    <option value="">Select batch</option>
-                    {educatorBatches.map((b) => (
-                      <option key={b} value={b}>
-                        {b}
                       </option>
                     ))}
                   </select>

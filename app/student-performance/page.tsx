@@ -10,7 +10,6 @@ type SavedReport = {
   periodLabel: string;
   reportType: "weekly" | "monthly" | string;
   studentName: string;
-  batchName?: string;
   createdAt?: string | null;
 };
 
@@ -61,10 +60,8 @@ export default function StudentPerformancePage() {
           reportType?: string;
           student?: {
             name?: string;
-            batch?: string;
           };
           studentName?: string;
-          batchName?: string;
           createdAt?: string | null;
         }>;
         message?: string;
@@ -89,7 +86,6 @@ export default function StudentPerformancePage() {
             report.student?.name ||
             report.studentName ||
             "Student Performance Report",
-          batchName: report.student?.batch || report.batchName || "",
           createdAt: report.createdAt || null,
         }),
       );
@@ -245,15 +241,6 @@ export default function StudentPerformancePage() {
                             {report.studentName}
                           </strong>
                         </span>
-
-                        {report.batchName ? (
-                          <span>
-                            Batch:{" "}
-                            <strong className="text-white">
-                              {report.batchName}
-                            </strong>
-                          </span>
-                        ) : null}
 
                         <span>Created: {formatCreatedAt(report.createdAt)}</span>
                       </div>

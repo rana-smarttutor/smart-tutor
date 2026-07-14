@@ -7,7 +7,6 @@ import {
 } from "react";
 
 import type {
-  Batch,
   ManagedUser,
   Role,
   TeacherFeedback,
@@ -98,22 +97,11 @@ export function StudentFeedbackManager({
     TeacherFeedback[]
   >([]);
 
-  const [
-    batches,
-    setBatches,
-  ] = useState<Batch[]>(
-    [],
+  const [allStudents] = useState<ManagedUser[]>(() =>
+    studentDirectory.filter((s) => s.role === "student"),
   );
 
-  const [
-    selectedBatchId,
-    setSelectedBatchId,
-  ] = useState("");
-
-  const [
-    selectedStudentId,
-    setSelectedStudentId,
-  ] = useState("");
+  const [selectedStudentId, setSelectedStudentId] = useState("");
 
   const [
     subject,
@@ -177,60 +165,16 @@ export function StudentFeedbackManager({
     setMessage,
   ] = useState("");
 
-  const selectedBatch =
-    useMemo(
-      () =>
-        batches.find(
-          (batch) =>
-            batch.id ===
-            selectedBatchId,
-        ),
-      [
-        batches,
-        selectedBatchId,
-      ],
-    );
-
-  const batchStudents =
-    useMemo(() => {
-      if (
-        !selectedBatch
-      ) {
-        return [];
-      }
-
-      return selectedBatch.studentIds
-        .map(
-          (studentId) =>
-            studentDirectory.find(
-              (student) =>
-                student.id ===
-                  studentId &&
-                student.role ===
-                  "student",
-            ),
-        )
-        .filter(
-          (
-            student,
-          ): student is ManagedUser =>
-            Boolean(student),
-        );
-    }, [
-      selectedBatch,
-      studentDirectory,
-    ]);
-
   const selectedStudent =
     useMemo(
       () =>
-        batchStudents.find(
+        allStudents.find(
           (student) =>
             student.id ===
             selectedStudentId,
         ),
       [
-        batchStudents,
+        allStudents,
         selectedStudentId,
       ],
     );
@@ -287,50 +231,6 @@ export function StudentFeedbackManager({
               [],
           );
         }
-
-        if (
-          canManage
-        ) {
-          const batchResponse =
-            await fetch(
-              "/api/batches",
-              {
-                method:
-                  "GET",
-
-                credentials:
-                  "same-origin",
-
-                cache:
-                  "no-store",
-              },
-            );
-
-          const batchPayload =
-            (await batchResponse.json()) as {
-              batches?: Batch[];
-
-              error?: string;
-            };
-
-          if (
-            !batchResponse.ok
-          ) {
-            throw new Error(
-              batchPayload.error ??
-                "Unable to load assigned batches.",
-            );
-          }
-
-          if (
-            !cancelled
-          ) {
-            setBatches(
-              batchPayload.batches ??
-                [],
-            );
-          }
-        }
       } catch (error) {
         if (
           !cancelled
@@ -358,33 +258,7 @@ export function StudentFeedbackManager({
     return () => {
       cancelled = true;
     };
-  }, [
-    canManage,
-  ]);
-
-  function handleBatchChange(
-    nextBatchId: string,
-  ) {
-    setSelectedBatchId(
-      nextBatchId,
-    );
-
-    setSelectedStudentId(
-      "",
-    );
-
-    const batch =
-      batches.find(
-        (item) =>
-          item.id ===
-          nextBatchId,
-      );
-
-    setSubject(
-      batch?.subject ??
-        "",
-    );
-  }
+  }, []);
 
   function resetFeedbackForm() {
     setEditingFeedbackId(
@@ -419,11 +293,6 @@ export function StudentFeedbackManager({
   ) {
     setEditingFeedbackId(
       item.id,
-    );
-
-    setSelectedBatchId(
-      item.batchId ??
-        "",
     );
 
     setSelectedStudentId(
@@ -470,17 +339,6 @@ export function StudentFeedbackManager({
     if (
       !canManage
     ) {
-      return;
-    }
-
-    if (
-      !editingFeedbackId &&
-      !selectedBatch
-    ) {
-      setMessage(
-        "Select a batch.",
-      );
-
       return;
     }
 
@@ -552,13 +410,9 @@ export function StudentFeedbackManager({
                       visibleToParent:
                         feedbackVisibleToParent,
                     }
-                  : {
+                    : {
                       type:
                         "feedback",
-
-                      batchId:
-                        selectedBatch!
-                          .id,
 
                       studentId:
                         selectedStudent!
@@ -758,67 +612,7 @@ export function StudentFeedbackManager({
 
         {canManage ? (
           <div className="mt-6 space-y-5">
-            {!isLoading &&
-            !batches.length ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                No active batches are assigned.
-                Create a batch and add
-                students before recording
-                feedback.
-              </div>
-            ) : null}
-
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2">
-                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Batch
-                </span>
-
-                <select
-                  value={
-                    selectedBatchId
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    handleBatchChange(
-                      event.target
-                        .value,
-                    )
-                  }
-                  disabled={
-                    isLoading ||
-                    isEditing
-                  }
-                  className={
-                    fieldClass
-                  }
-                >
-                  <option value="">
-                    {isLoading
-                      ? "Loading batches..."
-                      : "Select assigned batch"}
-                  </option>
-
-                  {batches.map(
-                    (batch) => (
-                      <option
-                        key={
-                          batch.id
-                        }
-                        value={
-                          batch.id
-                        }
-                      >
-                        {
-                          batch.name
-                        }
-                      </option>
-                    ),
-                  )}
-                </select>
-              </label>
-
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
                   Student
@@ -837,7 +631,6 @@ export function StudentFeedbackManager({
                     )
                   }
                   disabled={
-                    !selectedBatchId ||
                     isEditing
                   }
                   className={
@@ -845,12 +638,12 @@ export function StudentFeedbackManager({
                   }
                 >
                   <option value="">
-                    {selectedBatchId
+                    {allStudents.length
                       ? "Select student"
-                      : "Select batch first"}
+                      : "No students available"}
                   </option>
 
-                  {batchStudents.map(
+                  {allStudents.map(
                     (
                       student,
                     ) => (
@@ -1176,11 +969,8 @@ export function StudentFeedbackManager({
                         </h5>
 
                         <p className="mt-1 text-sm text-[var(--color-muted)]">
-                          {item.batchName ??
-                            "Batch not specified"}
-
                           {item.subject
-                            ? ` • ${item.subject}`
+                            ? item.subject
                             : ""}
 
                           {` • ${formatDate(

@@ -8,7 +8,7 @@ import {
   type FormEvent,
 } from "react";
 
-import type { ManagedUser, Role, TeacherPayout } from "@/lib/types";
+import type { ManagedUser, Role, StaffPayrollProfile, TeacherPayout } from "@/lib/types";
 
 type TeacherPayoutManagerProps = {
   role: Role;

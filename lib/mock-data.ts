@@ -124,11 +124,11 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
   educator: [
     {
       title: "Teaching operations",
-      description: "Create tests, grade work, and message batches.",
+      description: "Create tests, grade work, and message students.",
     },
     {
       title: "Delivery oversight",
-      description: "Track batches, attendance, and follow-ups.",
+      description: "Track attendance, fees, and follow-ups.",
     },
   ],
   counsellor: [
@@ -705,7 +705,7 @@ export function getPublicInstituteData() {
         role: "educator" as const,
         title: "Faculty operations",
         summary:
-          "Educators manage batches across school, competitive, and civil services preparation with clear operational visibility.",
+          "Educators manage classes across school, competitive, and civil services preparation with clear operational visibility.",
         features: [
           "Create tests and publish review notes",
           "Manage course delivery and batch updates",
@@ -733,7 +733,7 @@ export function getPublicInstituteData() {
       {
         title: "Notes and worksheet delivery",
         description:
-          "Support class notes, revision sheets, answer-writing work, and practice resources across batches.",
+          "Support class notes, revision sheets, answer-writing work, and practice resources across courses.",
       },
       {
         title: "Counselling and parent confidence",
@@ -867,7 +867,7 @@ export function getDashboardBundle(role: Role, userId?: string) {
     },
     educator: {
       title: `Educator Console${user ? ` | ${user.name}` : ""}`,
-      description: "Manage tests, batches, and notices from one view.",
+      description: "Manage tests, courses, and notices from one view.",
     },
     counsellor: {
       title: "Your Sales CRM is ready",
@@ -1176,7 +1176,7 @@ export function getTemplateSeedData() {
             roleLabel: "Educator Desk",
             heroTitle: "Educator Console",
             heroDescription:
-              "Manage tests, batches, and notices from one view.",
+              "Manage tests, courses, and notices from one view.",
             stats: dashboardStats.educator,
             primaryPanel: getDashboardBundle("educator").primaryPanel,
             permissions: rolePermissions.educator,

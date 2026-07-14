@@ -5,7 +5,6 @@ import { getSessionUser } from "@/lib/auth";
 import {
   createNotifications,
   createTeacherFeedback,
-  getBatchesForRole,
   getNotificationRecipientIdsForStudents,
   getStudentDirectory,
   getTeacherFeedbackForRole,
@@ -211,62 +210,12 @@ export async function POST(
       );
     }
 
-    const batchId =
-      getRequiredText(
-        body.batchId,
-        "Batch",
-        150,
-      );
-
     const studentId =
       getRequiredText(
         body.studentId,
         "Student",
         150,
       );
-
-    const availableBatches =
-      await getBatchesForRole(
-        session.role,
-        session.id,
-      );
-
-    const selectedBatch =
-      availableBatches.find(
-        (batch) =>
-          batch.id ===
-          batchId,
-      );
-
-    if (
-      !selectedBatch
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Selected batch was not found or is not assigned to you.",
-        },
-        {
-          status: 403,
-        },
-      );
-    }
-
-    if (
-      !selectedBatch.studentIds.includes(
-        studentId,
-      )
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "The selected student does not belong to this batch.",
-        },
-        {
-          status: 400,
-        },
-      );
-    }
 
     const studentDirectory =
       await getStudentDirectory(
@@ -342,12 +291,6 @@ export async function POST(
 
           teacherName:
             session.name,
-
-          batchId:
-            selectedBatch.id,
-
-          batchName:
-            selectedBatch.name,
 
           subject:
             getOptionalText(

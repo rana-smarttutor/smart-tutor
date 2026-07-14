@@ -88,9 +88,6 @@ if (!existingLecture) {
       title: getOptionalText(body.title),
       subject: getOptionalText(body.subject),
 
-      batchName: getOptionalText(body.batchName),
-      batchId: getOptionalText(body.batchId),
-
       description: getOptionalText(body.description),
       startsAt: getOptionalText(body.startsAt),
       endsAt: getOptionalText(body.endsAt),

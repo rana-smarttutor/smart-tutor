@@ -24,7 +24,6 @@ periodLabel?: string;
     school?: string;
     city: string;
     state: string;
-    batch: string;
     course: string;
     parentName: string;
     parentRelation: string;
@@ -33,7 +32,6 @@ periodLabel?: string;
   };
   metrics: {
     averageScore: number;
-    batchRank: number;
     attendancePercentage: number;
     homeworkCompletionPercentage: number;
     improvementPercentage: number;
@@ -537,11 +535,6 @@ const reportTitle = useMemo(() => {
     </div>
 
     <div className="t5-student-info-item">
-      <span>BATCH</span>
-      <strong>{report.student.batch || "Not added"}</strong>
-    </div>
-
-    <div className="t5-student-info-item">
       <span>COURSE</span>
       <strong>{report.student.course || "Not added"}</strong>
     </div>
@@ -588,21 +581,6 @@ const reportTitle = useMemo(() => {
     suffix="%"
     helper="Last tests average"
     tone={statusClass(Number(report.metrics.averageScore || 0))}
-  />
-
-  <MetricCard
-    label="Batch Rank"
-    value={report.metrics.batchRank}
-    helper="Latest test rank"
-    tone={
-      Number(report.metrics.batchRank || 0) <= 0
-        ? "bad"
-        : Number(report.metrics.batchRank || 0) <= 3
-          ? "good"
-          : Number(report.metrics.batchRank || 0) <= 10
-            ? "average"
-            : "bad"
-    }
   />
 
   <MetricCard

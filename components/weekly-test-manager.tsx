@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type {
-  Batch,
   ManagedUser,
   Role,
   WeeklyTest,
@@ -89,10 +88,8 @@ export function WeeklyTestManager({
 
   const [weeklyTests, setWeeklyTests] =
     useState<WeeklyTest[]>(initialWeeklyTests);
-  const [batches, setBatches] = useState<Batch[]>([]);
 
   const [title, setTitle] = useState("");
-  const [batchId, setBatchId] = useState("");
   const [subject, setSubject] = useState("");
   const [testDate, setTestDate] = useState(getToday());
   const [totalMarks, setTotalMarks] = useState("100");
@@ -103,25 +100,11 @@ export function WeeklyTestManager({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  const selectedBatch = useMemo(
-    () => batches.find((batch) => batch.id === batchId),
-    [batches, batchId],
-  );
-
-  const batchStudents = useMemo(() => {
-    if (!selectedBatch) {
-      return [];
-    }
-
-    return selectedBatch.studentIds
-      .map((studentId) =>
-        studentDirectory.find(
-          (student) =>
-            student.id === studentId && student.role === "student",
-        ),
-      )
-      .filter((student): student is ManagedUser => Boolean(student));
-  }, [selectedBatch, studentDirectory]);
+  const allStudents = useMemo(() => {
+    return studentDirectory.filter(
+      (student) => student.role === "student",
+    );
+  }, [studentDirectory]);
 
   const viewerStudentId =
     linkedStudentId ?? (role === "student" ? userId : undefined);
@@ -167,29 +150,6 @@ export function WeeklyTestManager({
         if (!cancelled) {
           setWeeklyTests(testsPayload.weeklyTests ?? []);
         }
-
-        if (canManage) {
-          const batchesResponse = await fetch("/api/batches", {
-            method: "GET",
-            credentials: "same-origin",
-            cache: "no-store",
-          });
-
-          const batchesPayload = (await batchesResponse.json()) as {
-            batches?: Batch[];
-            error?: string;
-          };
-
-          if (!batchesResponse.ok) {
-            throw new Error(
-              batchesPayload.error ?? "Unable to load assigned batches.",
-            );
-          }
-
-          if (!cancelled) {
-            setBatches(batchesPayload.batches ?? []);
-          }
-        }
       } catch (error) {
         if (!cancelled) {
           setMessage(
@@ -211,25 +171,6 @@ export function WeeklyTestManager({
       cancelled = true;
     };
   }, [canManage]);
-
-  function handleBatchChange(nextBatchId: string) {
-    setBatchId(nextBatchId);
-
-    const batch = batches.find((item) => item.id === nextBatchId);
-
-    setSubject(batch?.subject ?? "");
-
-    const students = (batch?.studentIds ?? [])
-      .map((studentId) =>
-        studentDirectory.find(
-          (student) =>
-            student.id === studentId && student.role === "student",
-        ),
-      )
-      .filter((student): student is ManagedUser => Boolean(student));
-
-    setResults(createDraftResults(students));
-  }
 
   function updateResult(
     studentId: string,
@@ -271,7 +212,7 @@ export function WeeklyTestManager({
     setTestDate(getToday());
     setTotalMarks("100");
     setPublishNow(false);
-    setResults(createDraftResults(batchStudents));
+    setResults(createDraftResults(allStudents));
   }
 
   async function saveWeeklyTest() {
@@ -281,11 +222,6 @@ export function WeeklyTestManager({
 
     if (!title.trim()) {
       setMessage("Test title is required.");
-      return;
-    }
-
-    if (!selectedBatch) {
-      setMessage("Select a batch before saving the test.");
       return;
     }
 
@@ -302,7 +238,7 @@ export function WeeklyTestManager({
     }
 
     if (!results.length) {
-      setMessage("The selected batch has no students assigned.");
+      setMessage("No students available to create the test.");
       return;
     }
 
@@ -317,7 +253,6 @@ export function WeeklyTestManager({
         },
         body: JSON.stringify({
           title: title.trim(),
-          batchId: selectedBatch.id,
           subject: subject.trim(),
           testDate,
           totalMarks: parsedTotalMarks,
@@ -373,7 +308,7 @@ export function WeeklyTestManager({
 
           <p className="mt-2 text-sm text-[var(--color-muted)]">
             {canManage
-              ? "Select a batch, add marks for each student, then save or publish the result."
+              ? "Add marks for each student, then save or publish the result."
               : "Track test scores, percentage, subject-wise progress, and teacher remarks."}
           </p>
         </div>
@@ -386,20 +321,7 @@ export function WeeklyTestManager({
 
         {canManage ? (
           <div className="mt-6 space-y-5">
-            {isLoading ? (
-              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-muted)]">
-                Loading assigned batches...
-              </div>
-            ) : null}
-
-            {!isLoading && !batches.length ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                No active batches are assigned. Create a batch and assign
-                students before adding weekly tests.
-              </div>
-            ) : null}
-
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
                   Test Title
@@ -411,27 +333,6 @@ export function WeeklyTestManager({
                   placeholder="e.g. Algebra Weekly Test"
                   className={fieldClass}
                 />
-              </label>
-
-              <label className="space-y-2">
-                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Batch
-                </span>
-
-                <select
-                  value={batchId}
-                  onChange={(event) => handleBatchChange(event.target.value)}
-                  disabled={isLoading}
-                  className={fieldClass}
-                >
-                  <option value="">Select assigned batch</option>
-
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.name}
-                    </option>
-                  ))}
-                </select>
               </label>
 
               <label className="space-y-2">
@@ -475,7 +376,7 @@ export function WeeklyTestManager({
               </label>
             </div>
 
-            {batchId ? (
+            {results.length > 0 ? (
               <div className="overflow-x-auto rounded-[1.5rem] border border-[var(--color-border)]">
                 <table className="w-full min-w-[840px] text-left text-sm">
                   <thead className="bg-[var(--color-panel)]">
@@ -548,23 +449,12 @@ export function WeeklyTestManager({
                         </td>
                       </tr>
                     ))}
-
-                    {!results.length ? (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-10 text-center text-sm text-[var(--color-muted)]"
-                        >
-                          This batch has no assigned students.
-                        </td>
-                      </tr>
-                    ) : null}
                   </tbody>
                 </table>
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-muted)]">
-                Select a batch to load students and enter their marks.
+                No students available. Add students to the system first.
               </div>
             )}
 
@@ -593,7 +483,7 @@ export function WeeklyTestManager({
             <button
               type="button"
               onClick={() => void saveWeeklyTest()}
-              disabled={isSaving || !selectedBatch || !results.length}
+              disabled={isSaving || !results.length}
               className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving
@@ -612,7 +502,7 @@ export function WeeklyTestManager({
             <p className="section-label">Test History</p>
 
             <h3 className="text-xl font-black text-[var(--color-heading)]">
-              {canManage ? "Batch Test Results" : "Your Test Performance"}
+              {canManage ? "Test Results" : "Your Test Performance"}
             </h3>
           </div>
 
@@ -636,7 +526,7 @@ export function WeeklyTestManager({
 
             <p className="mt-2 text-sm text-[var(--color-muted)]">
               {canManage
-                ? "Create the first batch-wise test result above."
+                ? "Create the first test result above."
                 : "Published weekly test results will appear here."}
             </p>
           </div>
@@ -681,7 +571,7 @@ export function WeeklyTestManager({
                     </h4>
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
-                      {test.subject} • {test.batchName} •{" "}
+                      {test.subject} •{" "}
                       {formatTestDate(test.testDate)}
                     </p>
                   </div>
@@ -710,7 +600,7 @@ export function WeeklyTestManager({
 
                     <div className="flex items-center justify-between rounded-xl bg-[var(--color-panel)] px-4 py-3 text-sm">
                       <span className="font-bold text-[var(--color-muted)]">
-                        Batch average
+                        Class average
                       </span>
                       <span className="font-black text-[var(--color-heading)]">
                         {batchAverage === null

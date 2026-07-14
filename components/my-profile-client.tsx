@@ -395,10 +395,15 @@ export function MyProfileClient({ session }: Props) {
                 <i className={`bi ${roleIcon}`} />
                 {session.label || session.role}
               </div>
-              {session.verified && (
+              {session.verified ? (
                 <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
                   <i className="bi bi-patch-check-fill" />
                   Verified Account
+                </div>
+              ) : (
+                <div className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-600">
+                  <i className="bi bi-exclamation-triangle-fill" />
+                  Not Verified
                 </div>
               )}
             </div>

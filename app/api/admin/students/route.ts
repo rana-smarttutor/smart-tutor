@@ -45,7 +45,6 @@ export async function GET(request: NextRequest) {
 
     const filters = {
       search: searchParams.get("search") ?? undefined,
-      batchId: searchParams.get("batchId") ?? undefined,
       status: searchParams.get("status") ?? undefined,
     };
     const students = await getStudentDirectoryV2(filters);

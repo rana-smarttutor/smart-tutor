@@ -177,7 +177,6 @@ export async function POST(request: Request) {
       title: getRequiredText(body.title, "Fee plan title"),
 
       courseName: getOptionalText(body.courseName),
-      batchName: getOptionalText(body.batchName),
       academicYear: getOptionalText(body.academicYear),
       notes: getOptionalText(body.notes),
 

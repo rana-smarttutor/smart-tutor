@@ -161,7 +161,7 @@ export function PerformanceDashboard({ reports, heuristics, studentName }: Props
   };
 
   const shareWhatsApp = () => {
-    const text = `*Student Performance Report*\n\nName: ${activeReport.studentName}\nPeriod: ${activeReport.period}\nAverage Score: ${activeReport.averageScore}%\nRank: ${activeReport.batchRank}\nAttendance: ${activeReport.attendancePercentage}%\n\nTeacher Remark: ${activeReport.teacherRemark}`;
+    const text = `*Student Performance Report*\n\nName: ${activeReport.studentName}\nPeriod: ${activeReport.period}\nAverage Score: ${activeReport.averageScore}%\nAttendance: ${activeReport.attendancePercentage}%\n\nTeacher Remark: ${activeReport.teacherRemark}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -235,7 +235,7 @@ export function PerformanceDashboard({ reports, heuristics, studentName }: Props
           </div>
           <div className="text-left sm:text-right space-y-2">
             <p className="text-lg font-bold text-slate-900">{activeReport.studentName}</p>
-            <p className="text-sm font-medium text-slate-500">{activeReport.batchName} | {activeReport.courseType}</p>
+            <p className="text-sm font-medium text-slate-500">{activeReport.courseType}</p>
             <p className="text-sm font-medium text-slate-500">Parent: {activeReport.parentContact}</p>
             <div className={`mt-4 inline-flex px-4 py-2 rounded-full border ${level.border} ${level.bg} ${level.color} text-xs font-black uppercase tracking-widest`}>
               {level.label}
@@ -247,9 +247,9 @@ export function PerformanceDashboard({ reports, heuristics, studentName }: Props
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 py-10">
           {[
             { label: "Avg. Score", value: `${activeReport.averageScore}%`, icon: "🎯", color: "text-blue-600" },
-            { label: "Batch Rank", value: `#${activeReport.batchRank}`, icon: "🏆", color: "text-amber-600" },
             { label: "Attendance", value: `${activeReport.attendancePercentage}%`, icon: "📅", color: "text-emerald-600" },
             { label: "Accuracy", value: `${activeReport.accuracyPercentage}%`, icon: "📈", color: "text-indigo-600" },
+            { label: "Improvement", value: `${activeReport.improvementPercentage}%`, icon: "📊", color: "text-purple-600" },
           ].map((stat) => (
             <div key={stat.label} className="bg-slate-50 p-5 rounded-3xl border border-slate-100/50">
               <div className="text-2xl mb-3">{stat.icon}</div>

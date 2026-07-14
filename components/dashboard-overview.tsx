@@ -493,7 +493,7 @@ function GenericOverview({
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-slate-800 truncate">{lec.title}</p>
-                        <p className="text-[11px] text-slate-500">{lec.subject}{lec.batchName ? ` • ${lec.batchName}` : ""}</p>
+                        <p className="text-[11px] text-slate-500">{lec.subject}</p>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 shrink-0">
                         {lec.startsAt?.slice(11, 16) || "Scheduled"}
@@ -1460,7 +1460,7 @@ function ParentOverview({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
-                      <p className="text-xs text-slate-500">{lec.subject ?? ""}{lec.batchName ? ` · ${lec.batchName}` : ""}</p>
+                      <p className="text-xs text-slate-500">{lec.subject ?? ""}</p>
                     </div>
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-violet-50 text-violet-600">
                       {lec.startsAt?.slice(11, 16) || "Scheduled"}
@@ -1580,7 +1580,6 @@ function EducatorOverview({
 
   const ops = dashboard.analytics?.operations;
   const myStudents = ops?.learners ?? dashboard.analytics?.activeStudents ?? 0;
-  const batches = ops?.activeBatches ?? 0;
   const pendingReviews = dashboard.submissions?.filter((s) => s.status === "submitted").length ?? 0;
   const gradedSubs = dashboard.submissions?.filter((s) => s.score != null) ?? [];
   const totalSubmissions = dashboard.submissions?.length ?? 0;
@@ -1624,9 +1623,6 @@ function EducatorOverview({
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
                 <Users size={12} /> <span className="text-sm font-black">{myStudents}</span> My Students
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
-                <Briefcase size={12} /> <span className="text-sm font-black">{batches}</span> Batches
-              </span>
             </div>
           </div>
         </div>
@@ -1636,7 +1632,6 @@ function EducatorOverview({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "My Students", value: myStudents, color: "#1D4ED8", icon: Users },
-          { label: "Batches", value: batches, color: "#6D28D9", icon: Briefcase },
           { label: "Pending Reviews", value: pendingReviews, color: "#D97706", icon: Clock },
           { label: "Class Avg Score", value: `${avgScore}%`, color: "#059669", icon: TrendingUp },
         ].map((kpi, i) => {
@@ -1658,37 +1653,6 @@ function EducatorOverview({
 
       {/* ── Charts Row ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Batch Performance */}
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 size={16} style={{ color: "#0369A1" }} /> Batch Performance Comparison
-            </h2>
-            <span className="text-xs text-slate-400">Average grades</span>
-          </div>
-          <div className="p-5">
-            {batches > 0 ? (
-              <div className="space-y-4">
-                {dashboard.batches?.slice(0, 4).map((b, i) => (
-                  <div key={b.id ?? i}>
-                    <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                      <span>{b.name}</span>
-                      <span>{Math.floor(Math.random() * 30 + 60)}%</span>
-                    </div>
-                    <div className="h-2 bg-[#E8EDF2] rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${Math.floor(Math.random() * 30 + 60)}%`, background: "linear-gradient(90deg,#0369A1,#6D28D9)" }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex justify-center items-center h-28 text-sm text-slate-400">
-                <BarChart3 size={32} className="text-slate-200 mr-2" /> No batch data
-              </div>
-            )}
-          </div>
-        </div>
-
         {/* Homework Evaluation Status */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
@@ -1732,7 +1696,7 @@ function EducatorOverview({
         </div>
       </div>
 
-      {/* ── Classes + Batches Row ── */}
+      {/* ── Classes Row ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
           <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
@@ -1751,7 +1715,7 @@ function EducatorOverview({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-bold text-slate-800 truncate">{lec.title || "Lecture"}</p>
-                      <p className="text-xs text-slate-500">{lec.subject ?? ""}{lec.batchName ? ` • ${lec.batchName}` : ""}</p>
+                      <p className="text-xs text-slate-500">{lec.subject ?? ""}</p>
                     </div>
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-indigo-50 text-indigo-600">
                       {lec.startsAt?.slice(11, 16) || "Scheduled"}
@@ -1771,37 +1735,6 @@ function EducatorOverview({
             >
               View Full Timetable
             </button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <Briefcase size={16} style={{ color: "#6D28D9" }} /> My Batches
-            </h2>
-          </div>
-          <div className="p-4">
-            {dashboard.batches && dashboard.batches.length > 0 ? (
-              <div className="space-y-2">
-                {dashboard.batches.slice(0, 5).map((b, i) => (
-                  <div key={b.id ?? i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: "linear-gradient(135deg,#EFF6FF,#F5F3FF)", border: "1px solid #C7D2FE" }}>
-                    <div className="w-9 h-9 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center font-bold text-sm shrink-0">
-                      {b.name?.charAt(0) ?? `B${i + 1}`}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800">{b.name ?? `Batch ${i + 1}`}</p>
-                      <p className="text-xs text-slate-500">{b.studentIds?.length ?? 0} students</p>
-                    </div>
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">Active</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-sm text-slate-400">
-                <Briefcase size={32} className="text-slate-200 mb-2" />
-                <p>No batches assigned</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -1942,10 +1875,17 @@ function EducatorProfileCard({ session, dashboard }: { session: SessionUser | nu
             </div>
           </div>
           <div className="ml-4 mt-6">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
-              <CheckCircle2 size={10} />
-              {session?.verified ? "Verified" : "Faculty"}
-            </span>
+            {session?.verified ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 border border-emerald-100">
+                <CheckCircle2 size={10} />
+                Verified
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-600 border border-red-100">
+                <i className="bi bi-exclamation-triangle-fill" style={{ fontSize: 10 }} />
+                Not Verified
+              </span>
+            )}
           </div>
         </div>
         <h2 className="text-xl font-bold text-slate-900">{session?.name ?? "Educator"}</h2>

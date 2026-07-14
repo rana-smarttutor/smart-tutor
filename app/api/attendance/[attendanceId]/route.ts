@@ -69,8 +69,6 @@ if (!existingAttendanceSheet) {
     const attendanceSheet = await updateAttendanceSheet(attendanceId, {
       title: getOptionalText(body.title),
       date: getOptionalText(body.date),
-      batchName: getOptionalText(body.batchName),
-      batchId: getOptionalText(body.batchId),
       subject: getOptionalText(body.subject),
       lectureId: getOptionalText(body.lectureId),
       records: Array.isArray(body.records) ? body.records : undefined,

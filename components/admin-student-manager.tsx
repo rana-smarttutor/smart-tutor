@@ -88,7 +88,6 @@ export default function AdminStudentManager({ initialStudents }: Props) {
   const [stats, setStats] = useState<StudentStats>({ total: 0, active: 0, atRisk: 0, dropped: 0, newThisMonth: 0 });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [batchFilter, setBatchFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<StudentDirectoryEntry | null>(null);
@@ -110,7 +109,6 @@ export default function AdminStudentManager({ initialStudents }: Props) {
       const params = new URLSearchParams();
       if (searchQuery) params.set("search", searchQuery);
       if (statusFilter) params.set("status", statusFilter);
-      if (batchFilter) params.set("batchId", batchFilter);
       const res = await fetch(`/api/admin/students?${params.toString()}`);
       const data = await res.json();
       if (data.ok) {
@@ -260,7 +258,7 @@ export default function AdminStudentManager({ initialStudents }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Students</h1>
-          <p className="text-sm text-slate-500">Manage all enrolled students across batches</p>
+          <p className="text-sm text-slate-500">Manage all enrolled students</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -349,10 +347,10 @@ export default function AdminStudentManager({ initialStudents }: Props) {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
           Filter
         </button>
-        {(searchQuery || statusFilter || batchFilter) && (
+        {(searchQuery || statusFilter) && (
           <button
             type="button"
-            onClick={() => { setSearchQuery(""); setStatusFilter(""); setBatchFilter(""); fetchStudents(); fetchStats(); }}
+            onClick={() => { setSearchQuery(""); setStatusFilter(""); fetchStudents(); fetchStats(); }}
             className="text-xs font-semibold text-indigo-600 hover:text-indigo-500"
           >
             Clear
@@ -369,7 +367,6 @@ export default function AdminStudentManager({ initialStudents }: Props) {
               <tr className="border-b border-slate-200 bg-slate-50/50">
                 <th className="text-left font-semibold text-slate-600 px-4 py-3">Student</th>
                 <th className="text-left font-semibold text-slate-600 px-4 py-3">Admission No.</th>
-                <th className="text-left font-semibold text-slate-600 px-4 py-3 hidden sm:table-cell">Batch</th>
                 <th className="text-left font-semibold text-slate-600 px-4 py-3 hidden md:table-cell">Attendance</th>
                 <th className="text-left font-semibold text-slate-600 px-4 py-3">Fees</th>
                 <th className="text-left font-semibold text-slate-600 px-4 py-3 hidden md:table-cell">Risk</th>
@@ -380,13 +377,13 @@ export default function AdminStudentManager({ initialStudents }: Props) {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-sm text-slate-400">
+                  <td colSpan={7} className="text-center py-12 text-sm text-slate-400">
                     Loading students...
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-sm text-slate-400">
+                  <td colSpan={7} className="text-center py-12 text-sm text-slate-400">
                     No students found
                   </td>
                 </tr>
@@ -409,9 +406,6 @@ export default function AdminStudentManager({ initialStudents }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs font-semibold text-slate-600">{student.admissionNo || student.passwordHint?.slice(0, 8) || "—"}</span>
-                    </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className="text-xs text-slate-500">{student.batchName || "—"}</span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       {attendanceBar(student.attendancePercent ?? 0)}

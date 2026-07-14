@@ -158,7 +158,6 @@ export function FeeInstallmentManager({
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [title, setTitle] = useState("");
   const [courseName, setCourseName] = useState("");
-  const [batchName, setBatchName] = useState("");
   const [academicYear, setAcademicYear] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -260,7 +259,6 @@ export function FeeInstallmentManager({
     setSelectedStudentId("");
     setTitle("");
     setCourseName("");
-    setBatchName("");
     setAcademicYear("");
     setNotes("");
     setInstallments([createEmptyInstallment(1)]);
@@ -316,7 +314,6 @@ export function FeeInstallmentManager({
     setSelectedStudentId(plan.studentId);
     setTitle(plan.title);
     setCourseName(plan.courseName ?? "");
-    setBatchName(plan.batchName ?? "");
     setAcademicYear(plan.academicYear ?? "");
     setNotes(plan.notes ?? "");
     setInstallments(plan.installments.map(toInstallmentDraft));
@@ -413,7 +410,6 @@ export function FeeInstallmentManager({
               ? {
                   title: title.trim(),
                   courseName,
-                  batchName,
                   academicYear,
                   notes,
                   installments: normalizedInstallments,
@@ -422,7 +418,6 @@ export function FeeInstallmentManager({
                   studentId: selectedStudent!.id,
                   title: title.trim(),
                   courseName,
-                  batchName,
                   academicYear,
                   notes,
                   installments: normalizedInstallments,
@@ -753,19 +748,6 @@ export function FeeInstallmentManager({
 
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Batch Name
-                </span>
-
-                <input
-                  value={batchName}
-                  onChange={(event) => setBatchName(event.target.value)}
-                  placeholder="Optional batch name"
-                  className={fieldClass}
-                />
-              </label>
-
-              <label className="space-y-2">
-                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
                   Academic Year
                 </span>
 
@@ -1040,7 +1022,6 @@ export function FeeInstallmentManager({
                   <p className="mt-2 text-sm text-[var(--color-muted)]">
                     {canManage ? plan.studentName : "Student Fee Plan"}
                     {plan.courseName ? ` • ${plan.courseName}` : ""}
-                    {plan.batchName ? ` • ${plan.batchName}` : ""}
                     {plan.academicYear ? ` • ${plan.academicYear}` : ""}
                   </p>
                 </div>

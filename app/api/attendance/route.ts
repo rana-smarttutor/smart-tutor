@@ -83,8 +83,6 @@ export async function POST(request: Request) {
     const attendanceSheet = await createAttendanceSheet({
       title,
       date,
-      batchName: getOptionalText(body.batchName),
-      batchId: getOptionalText(body.batchId),
       lectureId: getOptionalText(body.lectureId),
       subject: getOptionalText(body.subject),
       createdBy: session.id,

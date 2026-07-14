@@ -49,6 +49,10 @@ import { RolesManager } from "@/components/roles-manager";
 import { StaffAttendanceManager } from "@/components/staff-attendance-manager";
 import { AttendanceCalendar } from "@/components/attendance-calendar";
 import { BiometricIntegration } from "@/components/biometric-integration";
+import { StaffPayrollManager } from "./staff-payroll-manager";
+import { FacultyPerformanceManager } from "./faculty-performance-manager";
+import { StaffPayoutManager } from "./staff-payout-manager";
+import { FeeDeletionAuditLogComponent as FeeDeletionAuditLogView } from "./fee-deletion-audit-log";
 function SectionLoading() {
   return (
     <div
@@ -228,15 +232,6 @@ const WeeklyTestManager = dynamic(
   },
 );
 
-const BatchManager = dynamic(
-  () =>
-    import("@/components/batch-manager").then((module) => module.BatchManager),
-  {
-    loading: () => <SectionLoading />,
-    ssr: false,
-  },
-);
-
 const HomeworkSection = dynamic(
   () =>
     import("@/components/homework-section").then(
@@ -310,9 +305,6 @@ const sidebarByRole = {
     { id: "chat", label: "Chat" },
     { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
-    { id: "attendance", label: "Attendance" },
-    { id: "leave", label: "Leave" },
-    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback" },
@@ -321,6 +313,12 @@ const sidebarByRole = {
     { id: "receipts", label: "My Fees" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
+    { id: "attendance", label: "Attendance" },
+    { id: "leave", label: "Leave" },
+    { id: "receipts", label: "My Fees" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
+    { id: "notifications", label: "Notifications" },
   ],
 
   educator: [
@@ -328,68 +326,65 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
-    { id: "gamification", label: "Gamification" },
-    { id: "ptm", label: "PTM" },
+    { id: "courses", label: "Courses" },
     { id: "homework", label: "Homework" },
-    { id: "attendance", label: "Attendance" },
-    { id: "staff-attendance", label: "Staff Attendance" },
-    { id: "leave", label: "Leave" },
-    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Teacher Feedback" },
-    { id: "daily-activities", label: "Daily Activities" },
     { id: "results", label: "Results" },
     { id: "teacher-payouts", label: "My Earnings" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
+    { id: "attendance", label: "Attendance" },
+    { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "leave", label: "Leave" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
+    { id: "notifications", label: "Notifications" },
+    { id: "ptm", label: "PTM" },
+    { id: "staff-payouts", label: "My Earnings" },
+    { id: "gamification", label: "Gamification" },
   ],
 
   counsellor: [
     { id: "overview", label: "Overview" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
+    { id: "profile", label: "Profile" },
+    { id: "sales-crm", label: "Sales CRM" },
+    { id: "enquiries", label: "Enquiries" },
     { id: "ptm", label: "PTM" },
     { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
     { id: "notifications", label: "Notifications" },
-    { id: "sales-crm", label: "Sales CRM" },
   ],
 
   admin: [
-    { id: "accounts", label: "Accounts" },
     { id: "overview", label: "Overview" },
+    { id: "profile", label: "Profile" },
+    { id: "accounts", label: "Accounts" },
+    { id: "branches", label: "Branches" },
     { id: "roles", label: "Roles & Permissions" },
-    { id: "gamification", label: "Gamification" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
-    { id: "chat-monitor", label: "Chat Monitor" },
-    { id: "notifications", label: "Notifications" },
-    { id: "enquiries", label: "Enquiries" },
-    { id: "ptm", label: "PTM" },
-    { id: "password-reset-requests", label: "Password Reset Requests" },
-    { id: "sales-crm", label: "Sales CRM" },
-    { id: "placement-jobs", label: "Placement Jobs" },
-    { id: "tests", label: "Exams" },
-    { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "student-feedback", label: "Teacher Feedback" },
-    { id: "daily-activities", label: "Daily Activities" },
-    { id: "performance", label: "Analytics Hub" },
-    { id: "courses", label: "Courses" },
     { id: "students", label: "Students" },
-    { id: "attendance", label: "Attendance" },
+    { id: "enquiries", label: "Enquiries" },
+    { id: "password-reset-requests", label: "Password Reset Requests" },
     { id: "staff-attendance", label: "Staff Attendance" },
     { id: "biometric", label: "Biometric" },
     { id: "leave", label: "Leave" },
-    { id: "fees", label: "Billing Hub" },
-    { id: "teacher-payouts", label: "Teacher Payouts" },
-    { id: "branches", label: "Branches" },
-    { id: "batches", label: "Batch Management" },
+    { id: "courses", label: "Courses" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
+    { id: "chat-monitor", label: "Chat Monitor" },
+    { id: "notifications", label: "Notifications" },
+    { id: "ptm", label: "PTM" },
+    { id: "fees", label: "Billing Hub" },
+    { id: "fee-deletion-audit", label: "Fee Deletion Audit" },
+    { id: "staff-payouts", label: "Staff Payouts" },
+    { id: "sales-crm", label: "Sales CRM" },
+    { id: "placement-jobs", label: "Placement Jobs" },
+    { id: "gamification", label: "Gamification" },
   ],
 
   parent: [
@@ -397,12 +392,7 @@ const sidebarByRole = {
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
-    { id: "messages", label: "Messages" },
-    { id: "chat", label: "Chat" },
-    { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
-    { id: "attendance", label: "Attendance" },
-    { id: "notifications", label: "Notifications" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Teacher Feedback" },
@@ -411,6 +401,12 @@ const sidebarByRole = {
     { id: "receipts", label: "Child's Fees" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
+    { id: "attendance", label: "Attendance" },
+    { id: "receipts", label: "Child's Fees" },
+    { id: "messages", label: "Messages" },
+    { id: "chat", label: "Chat" },
+    { id: "notifications", label: "Notifications" },
+    { id: "ptm", label: "PTM" },
   ],
 } as const;
 
@@ -420,7 +416,7 @@ function getRoleFocus(role: Role) {
   }
 
   if (role === "educator") {
-    return "Batch delivery, assessment review, and learner coordination.";
+    return "Assessment review, learning coordination, and student guidance.";
   }
 
   if (role === "parent") {
@@ -1060,6 +1056,7 @@ export function DashboardShell({
         if (!data) return;
         setMessages(data.dashboard?.messages ?? []);
         setSubmissions(data.submissions ?? []);
+        if (Array.isArray(data.users)) setLocalManagedUsers(data.users);
       })
       .catch(() => {});
     return () => controller.abort();
@@ -1105,7 +1102,6 @@ export function DashboardShell({
   const showCourses = activeSection === "courses";
   const showStudents = activeSection === "students";
   const showAccounts = activeSection === "accounts";
-  const showBatches = activeSection === "batches";
   const showLibrary = activeSection === "library";
   const showPerformance = activeSection === "performance";
   const showAttendance = activeSection === "attendance";
@@ -1122,6 +1118,10 @@ export function DashboardShell({
   const showFeeInstallments = activeSection === "fee-installments";
   const showReceipts = activeSection === "receipts";
   const showTeacherPayouts = activeSection === "teacher-payouts";
+  const showStaffPayroll = activeSection === "staff-payroll";
+  const showStaffPayouts = activeSection === "staff-payouts";
+  const showFeeDeletionAudit = activeSection === "fee-deletion-audit";
+  const showFacultyPerformance = activeSection === "faculty-performance";
   const showProfile = activeSection === "profile";
 
   const profileHighlights = [
@@ -1804,10 +1804,6 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showBatches && role === "admin" ? (
-            <BatchManager managedUsers={managedUsers} />
-          ) : null}
-
           {showCourses && role === "admin" ? (
             <DashboardCourseManager
               initialCourses={dashboard.courses}
@@ -2002,6 +1998,22 @@ export function DashboardShell({
 
           {showTeacherPayouts && (role === "admin" || role === "educator") ? (
             <TeacherPayoutManager role={role} managedUsers={managedUsers} />
+          ) : null}
+
+          {showStaffPayroll && (role === "admin" || role === "educator") ? (
+            <StaffPayrollManager role={role} session={session} managedUsers={managedUsers} />
+          ) : null}
+
+          {showStaffPayouts && (role === "admin" || role === "educator") ? (
+            <StaffPayoutManager role={role} session={session} managedUsers={managedUsers} />
+          ) : null}
+
+          {showFeeDeletionAudit && role === "admin" ? (
+            <FeeDeletionAuditLogView session={session} />
+          ) : null}
+
+          {showFacultyPerformance && role === "admin" ? (
+            <FacultyPerformanceManager />
           ) : null}
 
           {showLectures ? (

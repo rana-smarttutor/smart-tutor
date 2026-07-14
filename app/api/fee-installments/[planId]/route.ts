@@ -160,10 +160,6 @@ export async function PATCH(request: Request, context: RouteContext) {
       updates.courseName = getOptionalText(body.courseName) ?? "";
     }
 
-    if (hasField(body, "batchName")) {
-      updates.batchName = getOptionalText(body.batchName) ?? "";
-    }
-
     if (hasField(body, "academicYear")) {
       updates.academicYear = getOptionalText(body.academicYear) ?? "";
     }

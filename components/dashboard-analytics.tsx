@@ -32,14 +32,14 @@ function getHeading(role: Role) {
       label: "Institute Analytics",
       title: "Operational performance snapshot",
       description:
-        "Live totals calculated from batches, attendance, assessments, learning activity, lectures, and fees.",
+        "Live totals calculated from attendance, assessments, learning activity, lectures, and fees.",
     };
   }
 
   if (role === "educator") {
     return {
       label: "Teaching Analytics",
-      title: "Your batch and learner progress",
+      title: "Your learner progress",
       description:
         "Use these signals to identify attendance gaps, weak assessment results, and incomplete learning work.",
     };
@@ -315,19 +315,10 @@ export function DashboardAnalytics({
           <article className="surface-soft rounded-[1.6rem] p-5">
             <p className="section-label">Teaching Operations</p>
             <h3 className="mt-2 text-xl font-semibold text-[var(--color-heading)]">
-              Batch and lecture activity
+              Lecture activity
             </h3>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-muted)]">
-                  Active Batches
-                </p>
-                <p className="mt-2 text-2xl font-bold text-[var(--color-heading)]">
-                  {analytics.operations.activeBatches}
-                </p>
-              </div>
-
               <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--color-muted)]">
                   Learners

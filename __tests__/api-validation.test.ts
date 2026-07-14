@@ -2,131 +2,13 @@
  * API endpoint validation tests for new features.
  *
  * These tests validate request body structure, required fields,
- * type coercion, and authorization rules for the batch, lecture,
+ * type coercion, and authorization rules for lecture
  * and timetable API endpoints.
  */
 
 import {
   sanitizeTextInput,
-  sanitizeIdList,
 } from "@/lib/validation";
-
-// =====================
-// Batch API validation
-// =====================
-
-describe("POST /api/batches - request validation", () => {
-  const validBody = {
-    name: "Class 10 CBSE - Morning",
-    code: "X-CBSE-MORN",
-    courseName: "Class 10 CBSE",
-    subject: "Mathematics",
-    capacity: 40,
-    schedule: "Mon, Wed, Fri · 5:00 PM",
-    startDate: "2026-04-01",
-    endDate: "2027-03-31",
-    studentIds: ["student-1", "student-2"],
-    teacherIds: ["teacher-1"],
-  };
-
-  it("accepts a valid full batch body", () => {
-    expect(validBody.name.trim()).toBeTruthy();
-    expect(typeof validBody.capacity).toBe("number");
-    expect(validBody.capacity).toBeGreaterThan(0);
-    expect(Array.isArray(validBody.studentIds)).toBe(true);
-    expect(Array.isArray(validBody.teacherIds)).toBe(true);
-  });
-
-  it("requires name field", () => {
-    const body = { ...validBody, name: "" };
-    expect(body.name.trim()).toBeFalsy();
-  });
-
-  it("requires at least one student for a meaningful batch", () => {
-    const body = { ...validBody, studentIds: [] };
-    expect(body.studentIds.length).toBe(0);
-  });
-
-  it("coerces capacity to number when given as string in request", () => {
-    const raw = "40";
-    const parsed = parseInt(raw, 10);
-    expect(Number.isFinite(parsed)).toBe(true);
-    expect(parsed).toBe(40);
-  });
-
-  it("handles missing optional fields gracefully", () => {
-    const minimal = {
-      name: "Minimal Batch",
-      studentIds: [],
-      teacherIds: [],
-    };
-    expect(minimal.name).toBeTruthy();
-    expect(minimal.code).toBeUndefined();
-    expect(minimal.capacity).toBeUndefined();
-    expect(minimal.startDate).toBeUndefined();
-    expect(minimal.endDate).toBeUndefined();
-  });
-
-  it("trims string fields before processing", () => {
-    const dirty = {
-      name: "  Batch Name  ",
-      code: "  CODE-01  ",
-      courseName: "  Course  ",
-    };
-    const clean = {
-      name: sanitizeTextInput(dirty.name, 100),
-      code: sanitizeTextInput(dirty.code, 20),
-      courseName: sanitizeTextInput(dirty.courseName, 100),
-    };
-    expect(clean.name).toBe("Batch Name");
-    expect(clean.code).toBe("CODE-01");
-    expect(clean.courseName).toBe("Course");
-  });
-
-  it("sanitizes studentIds and teacherIds arrays", () => {
-    const dirty = { studentIds: ["  a  ", "", "b", "   "], teacherIds: undefined };
-    const cleaned = {
-      studentIds: sanitizeIdList(dirty.studentIds, 50),
-      teacherIds: sanitizeIdList(dirty.teacherIds, 50),
-    };
-    expect(cleaned.studentIds).toEqual(["a", "b"]);
-    expect(cleaned.teacherIds).toEqual([]);
-  });
-});
-
-describe("PATCH /api/batches - request validation", () => {
-  it("requires batchId field", () => {
-    const body = { name: "Updated Name" };
-    expect(body.batchId).toBeUndefined();
-  });
-
-  it("accepts partial updates", () => {
-    const body = { batchId: "batch-1", capacity: 50 };
-    expect(body.batchId).toBeTruthy();
-    expect(body.capacity).toBe(50);
-    expect(body.name).toBeUndefined();
-  });
-
-  it("validates status transitions are valid enum values", () => {
-    const valid = ["active", "archived"];
-    expect(valid).toContain("active");
-    expect(valid).toContain("archived");
-    expect(valid).not.toContain("deleted");
-    expect(valid).not.toContain("inactive");
-  });
-});
-
-describe("DELETE /api/batches - request validation", () => {
-  it("requires batchId field", () => {
-    const body = {};
-    expect(body.batchId).toBeUndefined();
-  });
-
-  it("batchId must be a non-empty string", () => {
-    const body = { batchId: "" };
-    expect(body.batchId.trim()).toBeFalsy();
-  });
-});
 
 // =====================
 // Timetable / Lecture API validation
@@ -136,10 +18,8 @@ describe("Timetable / Lecture data validation", () => {
   const validLecture = {
     title: "Algebra: Quadratic Equations",
     subject: "Mathematics",
-    batchName: "Class 10 CBSE - Morning",
     startsAt: "2026-04-15T09:00:00.000Z",
     endsAt: "2026-04-15T10:00:00.000Z",
-    batchId: "batch-1",
     teacherId: "teacher-1",
   };
 
@@ -241,19 +121,6 @@ describe("Time slot conflict detection", () => {
 // =====================
 
 describe("Dashboard bundle integrity", () => {
-  it("dashboard batches match expected shape", () => {
-    const dashboardBatch = {
-      id: "batch-1",
-      name: "Test Batch",
-      status: "active",
-      studentIds: ["s1", "s2"],
-    };
-    expect(dashboardBatch).toHaveProperty("id");
-    expect(dashboardBatch).toHaveProperty("name");
-    expect(dashboardBatch).toHaveProperty("status");
-    expect(dashboardBatch).toHaveProperty("studentIds");
-  });
-
   it("role label is derived from session role", () => {
     const roleLabelMap: Record<string, string> = {
       admin: "Institute Administrator",

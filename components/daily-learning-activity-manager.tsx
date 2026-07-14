@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { StudentRoutineViewer } from "@/components/student-routine-viewer";
 import { StudentDailyRoutine } from "@/components/student-daily-routine";
 import type {
-  Batch,
   ManagedUser,
   Role,
   StudentDailyActivity,
@@ -92,9 +91,7 @@ function TeacherDailyLearningActivityManager({
   const canManage = role === "admin" || role === "educator";
 
   const [activities, setActivities] = useState<StudentDailyActivity[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
 
-  const [selectedBatchId, setSelectedBatchId] = useState("");
   const [selectedStudentId, setSelectedStudentId] = useState("");
 
   const [date, setDate] = useState(getToday());
@@ -123,29 +120,15 @@ function TeacherDailyLearningActivityManager({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const selectedBatch = useMemo(
-    () => batches.find((batch) => batch.id === selectedBatchId),
-    [batches, selectedBatchId],
-  );
-
-  const batchStudents = useMemo(() => {
-    if (!selectedBatch) {
-      return [];
-    }
-
-    return selectedBatch.studentIds
-      .map((studentId) =>
-        studentDirectory.find(
-          (student) =>
-            student.id === studentId && student.role === "student",
-        ),
-      )
-      .filter((student): student is ManagedUser => Boolean(student));
-  }, [selectedBatch, studentDirectory]);
+  const allStudents = useMemo(() => {
+    return studentDirectory.filter(
+      (student) => student.role === "student",
+    );
+  }, [studentDirectory]);
 
   const selectedStudent = useMemo(
-    () => batchStudents.find((student) => student.id === selectedStudentId),
-    [batchStudents, selectedStudentId],
+    () => allStudents.find((student) => student.id === selectedStudentId),
+    [allStudents, selectedStudentId],
   );
 
   const isEditing = Boolean(editingActivityId);
@@ -177,29 +160,6 @@ function TeacherDailyLearningActivityManager({
         if (!cancelled) {
           setActivities(activitiesPayload.activities ?? []);
         }
-
-        if (canManage) {
-          const batchesResponse = await fetch("/api/batches", {
-            method: "GET",
-            credentials: "same-origin",
-            cache: "no-store",
-          });
-
-          const batchesPayload = (await batchesResponse.json()) as {
-            batches?: Batch[];
-            error?: string;
-          };
-
-          if (!batchesResponse.ok) {
-            throw new Error(
-              batchesPayload.error ?? "Unable to load assigned batches.",
-            );
-          }
-
-          if (!cancelled) {
-            setBatches(batchesPayload.batches ?? []);
-          }
-        }
       } catch (error) {
         if (!cancelled) {
           setMessage(
@@ -222,18 +182,8 @@ function TeacherDailyLearningActivityManager({
     };
   }, [canManage]);
 
-  function handleBatchChange(nextBatchId: string) {
-    setSelectedBatchId(nextBatchId);
-    setSelectedStudentId("");
-
-    const batch = batches.find((item) => item.id === nextBatchId);
-
-    setSubject(batch?.subject ?? "");
-  }
-
   function resetForm() {
     setEditingActivityId(null);
-    setSelectedBatchId("");
     setSelectedStudentId("");
 
     setDate(getToday());
@@ -255,7 +205,6 @@ function TeacherDailyLearningActivityManager({
 
   function openEditor(activity: StudentDailyActivity) {
     setEditingActivityId(activity.id);
-    setSelectedBatchId(activity.batchId);
     setSelectedStudentId(activity.studentId);
 
     setDate(activity.date);
@@ -288,11 +237,6 @@ function TeacherDailyLearningActivityManager({
 
   async function saveActivity() {
     if (!canManage) {
-      return;
-    }
-
-    if (!editingActivityId && !selectedBatch) {
-      setMessage("Select a batch.");
       return;
     }
 
@@ -355,7 +299,6 @@ function TeacherDailyLearningActivityManager({
               ? updatePayload
               : {
                   ...updatePayload,
-                  batchId: selectedBatch!.id,
                   studentId: selectedStudent!.id,
                   studentName: selectedStudent!.name,
                 },
@@ -466,44 +409,14 @@ function TeacherDailyLearningActivityManager({
 
         {canManage ? (
           <div className="mt-6 space-y-5">
-            {!isLoading && !batches.length ? (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                No active batches are assigned. Create a batch and add students
-                before recording daily activities.
-              </div>
-            ) : null}
-
             {isEditing ? (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                You are editing an existing record. Batch and student cannot be
+                You are editing an existing record. Student cannot be
                 changed after creation.
               </div>
             ) : null}
 
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2">
-                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Batch
-                </span>
-
-                <select
-                  value={selectedBatchId}
-                  onChange={(event) => handleBatchChange(event.target.value)}
-                  disabled={isLoading || isEditing}
-                  className={fieldClass}
-                >
-                  <option value="">
-                    {isLoading ? "Loading batches..." : "Select assigned batch"}
-                  </option>
-
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
                   Student
@@ -512,16 +425,14 @@ function TeacherDailyLearningActivityManager({
                 <select
                   value={selectedStudentId}
                   onChange={(event) => setSelectedStudentId(event.target.value)}
-                  disabled={!selectedBatchId || isEditing}
+                  disabled={isEditing}
                   className={fieldClass}
                 >
                   <option value="">
-                    {selectedBatchId
-                      ? "Select student"
-                      : "Select batch first"}
+                    Select student
                   </option>
 
-                  {batchStudents.map((student) => (
+                  {allStudents.map((student) => (
                     <option key={student.id} value={student.id}>
                       {student.name}
                     </option>
@@ -782,7 +693,7 @@ function TeacherDailyLearningActivityManager({
                     </h4>
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
-                      {canManage ? activity.subject || "General" : activity.batchName}
+                      {canManage ? activity.subject || "General" : ""}
                       {` • ${formatDate(activity.date)}`}
                     </p>
                   </div>
