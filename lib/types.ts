@@ -604,7 +604,14 @@ export type DashboardBundle = {
   feeInvoices: FeeInvoice[];
   lectures: LectureItem[];
   linkedStudentId?: string;
-  linkedStudentProfile?: { name?: string; email?: string; phone?: string; course?: string; attendance?: number | null };
+  linkedStudentProfile?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    course?: string;
+    batch?: string;
+    attendance?: number | null;
+  };
   assignedFacultyIds?: string[];
   assignedFacultyNames?: string[];
   profile?: UserProfile;

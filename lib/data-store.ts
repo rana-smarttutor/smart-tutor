@@ -2,6 +2,7 @@ import { cache } from "react";
 import { randomUUID } from "crypto";
 
 import type { Document } from "mongodb";
+import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 
 import { getPublicInstituteData as getTemplatePublicInstituteData } from "@/lib/mock-data";
 import { getMongoDatabase } from "@/lib/mongodb";
@@ -295,13 +296,7 @@ export async function updatePasswordResetRequest(
   await collection.updateOne({ id }, { $set: update });
 }
 
-export const DEFAULT_HEURISTICS: PerformanceHeuristics = {
-  outstanding: 95,
-  excellent: 85,
-  good: 70,
-  average: 50,
-  weak: 40,
-};
+export { DEFAULT_HEURISTICS };
 
 let userIndexesPromise: Promise<void> | null = null;
 let standardCoursesBackfillPromise: Promise<void> | null = null;
