@@ -21,6 +21,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserMenu } from "@/components/user-menu";
 import { AttendanceManager } from "@/components/attendance-manager";
+import { AttendanceHub } from "@/components/attendance-hub";
 import { InvoiceManager } from "@/components/invoice-manager";
 import { StudentFeeReceiptsView } from "./student-fee-receipts-view";
 import { AdminFeeHub } from "./admin-fee-hub";
@@ -323,20 +324,19 @@ const sidebarByRole = {
     { id: "timetable", label: "Timetable" },
     { id: "courses", label: "Courses" },
     { id: "homework", label: "Homework" },
-    { id: "tests", label: "Exams" },
+    { id: "tests", label: "Question Papers" },
     { id: "weekly-tests", label: "Weekly Tests" },
-    { id: "results", label: "Results" },
+    { id: "results", label: " Student's Results" },
     { id: "teacher-payouts", label: "My Earnings" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
-    { id: "staff-attendance", label: "Staff Attendance" },
     { id: "leave", label: "Leave" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "ptm", label: "PTM" },
     { id: "staff-payouts", label: "My Earnings" },
-    { id: "gamification", label: "Gamification" },
+    { id: "gamification", label: "Rankers" },
   ],
 
   counsellor: [
@@ -345,7 +345,7 @@ const sidebarByRole = {
     { id: "sales-crm", label: "Sales CRM" },
     { id: "enquiries", label: "Enquiries" },
     { id: "ptm", label: "PTM" },
-    { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "staff-attendance", label: "My Attendance" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
   ],
@@ -359,7 +359,6 @@ const sidebarByRole = {
     { id: "students", label: "Students" },
     { id: "enquiries", label: "Enquiries" },
     { id: "password-reset-requests", label: "Password Reset Requests" },
-    { id: "staff-attendance", label: "Staff Attendance" },
     { id: "biometric", label: "Biometric" },
     { id: "leave", label: "Leave" },
     { id: "courses", label: "Courses" },
@@ -376,7 +375,7 @@ const sidebarByRole = {
     { id: "staff-payouts", label: "Staff Payouts" },
     { id: "sales-crm", label: "Sales CRM" },
     { id: "placement-jobs", label: "Placement Jobs" },
-    { id: "gamification", label: "Gamification" },
+    { id: "gamification", label: "Rankers" },
   ],
 
   parent: [
@@ -613,7 +612,7 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
-    complaints: (
+  complaints: (
     <svg
       className="h-4 w-4 shrink-0"
       fill="none"
@@ -1666,27 +1665,21 @@ export function DashboardShell({
             <AdminChatMonitor managedUsers={managedUsers} />
           ) : null}
 
-{showPtm &&
-  (role === "admin" ||
-    role === "educator" ||
-    role === "student" ||
-    role === "parent" ||
-    role === "counsellor") ? (
-  <DashboardPtmManager
-    session={session}
-    role={role}
-  />
-) : null}
-{showComplaints &&
-  (role === "admin" ||
-    role === "educator" ||
-    role === "student" ||
-    role === "parent") ? (
-  <DashboardComplaintBox
-    session={session}
-    role={role}
-  />
-) : null}
+          {showPtm &&
+          (role === "admin" ||
+            role === "educator" ||
+            role === "student" ||
+            role === "parent" ||
+            role === "counsellor") ? (
+            <DashboardPtmManager session={session} role={role} />
+          ) : null}
+          {showComplaints &&
+          (role === "admin" ||
+            role === "educator" ||
+            role === "student" ||
+            role === "parent") ? (
+            <DashboardComplaintBox session={session} role={role} />
+          ) : null}
 
           {showHomework &&
           (role === "student" || role === "educator" || role === "parent") ? (
@@ -1935,7 +1928,18 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showAttendance ? (
+          {showAttendance && (role === "admin" || role === "educator") ? (
+            <AttendanceHub
+              role={role}
+              attendanceSheets={dashboard.attendanceSheets}
+              studentDirectory={studentDirectory}
+              managedUsers={localManagedUsers}
+              userId={session?.id}
+              userName={session?.name}
+            />
+          ) : null}
+
+          {showAttendance && (role === "student" || role === "parent") ? (
             <AttendanceManager
               role={role}
               attendanceSheets={dashboard.attendanceSheets}
@@ -1951,8 +1955,7 @@ export function DashboardShell({
 
           {showBiometric ? <BiometricIntegration role={role} /> : null}
 
-          {showStaffAttendance &&
-          (role === "admin" || role === "educator" || role === "counsellor") ? (
+          {showStaffAttendance && role === "counsellor" ? (
             <StaffAttendanceManager
               role={role}
               managedUsers={localManagedUsers}
@@ -1991,11 +1994,19 @@ export function DashboardShell({
           ) : null}
 
           {showStaffPayroll && (role === "admin" || role === "educator") ? (
-            <StaffPayrollManager role={role} session={session} managedUsers={managedUsers} />
+            <StaffPayrollManager
+              role={role}
+              session={session}
+              managedUsers={managedUsers}
+            />
           ) : null}
 
           {showStaffPayouts && (role === "admin" || role === "educator") ? (
-            <StaffPayoutManager role={role} session={session} managedUsers={managedUsers} />
+            <StaffPayoutManager
+              role={role}
+              session={session}
+              managedUsers={managedUsers}
+            />
           ) : null}
 
           {showFeeDeletionAudit && role === "admin" ? (

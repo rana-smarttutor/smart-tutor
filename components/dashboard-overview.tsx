@@ -39,6 +39,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   CreditCard,
+  MapPin,
+  Navigation,
   X,
 } from "lucide-react";
 import type {
@@ -89,6 +91,7 @@ export function DashboardOverview({
         messages={messages}
         supportContact={supportContact}
         onSetActiveSection={onSetActiveSection}
+        managedUsers={managedUsers}
       />
     );
   }
@@ -1041,13 +1044,11 @@ function StudentOverview({
     ?.length
     ? dashboard.analytics.assessments.subjectPerformance.slice(0, 6)
     : dashboard.tests.length
-      ? dashboard.tests
-          .slice(0, 6)
-          .map((t) => ({
-            subject: t.title,
-            percentage: t.total ? Math.round(((t.total ?? 0) / 100) * 100) : 75,
-            resultCount: 0,
-          }))
+      ? dashboard.tests.slice(0, 6).map((t) => ({
+          subject: t.title,
+          percentage: t.total ? Math.round(((t.total ?? 0) / 100) * 100) : 75,
+          resultCount: 0,
+        }))
       : [];
 
   const weeklyTestTasks =
@@ -2192,12 +2193,14 @@ function EducatorOverview({
   dashboard,
   messages,
   onSetActiveSection,
+  managedUsers,
 }: {
   session: SessionUser | null;
   dashboard: DashboardBundle;
   messages: MessageItem[];
   supportContact: string;
   onSetActiveSection: (section: string) => void;
+  managedUsers?: ManagedUser[];
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -2227,11 +2230,153 @@ function EducatorOverview({
           gradedSubs.length,
       )
     : 0;
+  const attendanceByStudent = new Map<
+    string,
+    {
+      attended: number;
+      total: number;
+    }
+  >();
+
+  for (const sheet of dashboard.attendanceSheets ?? []) {
+    for (const record of sheet.records ?? []) {
+      const current = attendanceByStudent.get(record.studentId) ?? {
+        attended: 0,
+        total: 0,
+      };
+
+      current.total += 1;
+
+      if (
+        record.status === "present" ||
+        record.status === "late" ||
+        record.status === "excused"
+      ) {
+        current.attended += 1;
+      }
+
+      attendanceByStudent.set(record.studentId, current);
+    }
+  }
+
+  const lowAttendanceStudents = Array.from(attendanceByStudent.values()).filter(
+    ({ attended, total }) => total > 0 && (attended / total) * 100 < 75,
+  ).length;
+
+  const pendingReviewStudents = new Set(
+    (dashboard.submissions ?? [])
+      .filter((submission) => submission.status === "submitted")
+      .map((submission) => submission.studentId),
+  ).size;
+
+  const lowScoreStudents = new Set(
+    (dashboard.submissions ?? [])
+      .filter(
+        (submission) =>
+          submission.score != null &&
+          submission.total > 0 &&
+          (submission.score / submission.total) * 100 < 40,
+      )
+      .map((submission) => submission.studentId),
+  ).size;
+
+  const totalAttentionAlerts =
+    lowAttendanceStudents + pendingReviewStudents + lowScoreStudents;
+
+  const pendingEarningsMetric = dashboard.analytics?.metrics?.find(
+    (metric) => metric.label === "Pending Earnings",
+  );
+
+  const pendingEarnings = pendingEarningsMetric?.value ?? "₹0";
+  const pendingEarningsDetail =
+    pendingEarningsMetric?.detail ?? "No outstanding teacher payout";
+
+  const todayDateKey = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+  });
 
   const todayLectures =
-    dashboard.lectures?.filter(
-      (l) => l.date?.slice(0, 10) === new Date().toISOString().slice(0, 10),
-    ) ?? [];
+    dashboard.lectures?.filter((lecture) => {
+      const lectureDateValue = lecture.date || lecture.startsAt;
+
+      if (!lectureDateValue) {
+        return false;
+      }
+
+      const lectureDate = new Date(lectureDateValue);
+
+      if (Number.isNaN(lectureDate.getTime())) {
+        return lectureDateValue.slice(0, 10) === todayDateKey;
+      }
+
+      return (
+        lectureDate.toLocaleDateString("en-CA", {
+          timeZone: "Asia/Kolkata",
+        }) === todayDateKey
+      );
+    }) ?? [];
+
+  function formatVisitTime(value?: string) {
+    if (!value) {
+      return null;
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value.slice(11, 16) || value;
+    }
+
+    return date.toLocaleTimeString("en-IN", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    });
+  }
+
+  const homeTutoringVisits = todayLectures.flatMap((lecture) => {
+    const assignedStudentIds = lecture.assignedStudentIds ?? [];
+
+    return assignedStudentIds.flatMap((studentId) => {
+      const student = managedUsers?.find((user) => user.id === studentId);
+
+      if (!student || student.profile?.studentType !== "home") {
+        return [];
+      }
+
+      const addressParts = [
+        student.profile.addressLine1,
+        student.profile.addressLine2,
+        student.profile.city,
+        student.profile.state,
+        student.profile.pincode,
+      ].filter(
+        (part): part is string =>
+          typeof part === "string" && part.trim().length > 0,
+      );
+
+      const fullAddress =
+        addressParts.join(", ") ||
+        student.profile.address?.trim() ||
+        "Address not added";
+
+      return [
+        {
+          id: `${lecture.id}-${student.id}`,
+          studentName: student.name,
+          studentPhoto: student.profile.profilePhoto,
+          subject: lecture.subject || "General Tuition",
+          topic: lecture.topicCovered || lecture.title || "Topic not added",
+          startTime: formatVisitTime(lecture.startsAt) || "Time not set",
+          endTime: formatVisitTime(lecture.endsAt),
+          fullAddress,
+          hasAddress: fullAddress !== "Address not added",
+          status: lecture.status,
+        },
+      ];
+    });
+  });
 
   const quickActions = [
     {
@@ -2274,20 +2419,41 @@ function EducatorOverview({
             <circle cx="360" cy="180" r="130" fill="white" />
           </svg>
         </div>
-        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+        <div className="relative z-10 flex items-center gap-5">
+          {/* Teacher Profile Picture / Avatar */}
+          <div className="shrink-0">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-white/20 shadow-lg shadow-black/20 backdrop-blur-sm sm:h-24 sm:w-24">
+              {dashboard.profile?.profilePhoto ? (
+                <img
+                  src={dashboard.profile.profilePhoto}
+                  alt={`${session?.name ?? "Teacher"} profile`}
+                  className="h-full w-full object-cover object-top"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-white/20 text-2xl font-black text-white sm:text-3xl">
+                  {getInitials(session?.name)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Teacher Information */}
+          <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-[0.08em] opacity-60">
               Teacher Portal
             </p>
-            <h1 className="text-2xl sm:text-3xl font-bold mt-1">
+
+            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
               Welcome, {session?.name?.split(" ")[0] ?? "Teacher"}!
             </h1>
-            <p className="text-sm opacity-70 mt-0.5">{dateStr}</p>
-            <div className="flex gap-2 mt-3 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 px-3 py-1 text-xs font-bold">
-                <Users size={12} />{" "}
-                <span className="text-sm font-black">{myStudents}</span> My
-                Students
+
+            <p className="mt-0.5 text-sm opacity-70">{dateStr}</p>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-bold backdrop-blur-sm">
+                <Users size={12} />
+                <span className="text-sm font-black">{myStudents}</span>
+                My Students
               </span>
             </div>
           </div>
@@ -2314,6 +2480,12 @@ function EducatorOverview({
             value: `${avgScore}%`,
             color: "#059669",
             icon: TrendingUp,
+          },
+          {
+            label: "Today's Classes",
+            value: todayLectures.length,
+            color: "#7C3AED",
+            icon: CalendarDays,
           },
         ].map((kpi, i) => {
           const Icon = kpi.icon;
@@ -2346,74 +2518,89 @@ function EducatorOverview({
       </div>
 
       {/* ── Charts Row ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         {/* Homework Evaluation Status */}
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 size={16} style={{ color: "#D97706" }} /> Homework
-              Evaluation Status
+        <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+              <BarChart3 size={16} style={{ color: "#D97706" }} />
+              Homework Evaluation Status
             </h2>
+
             <span className="text-xs text-slate-400">Reviewed vs Pending</span>
           </div>
-          <div className="p-5 flex items-center gap-6">
-            <div className="relative w-24 h-24 shrink-0">
-              <svg
+
+          <div className="flex h-[170px] items-center gap-6 p-5">
+            <div className="relative h-24 w-24 shrink-0">
+<svg
                 viewBox="0 0 120 120"
-                className="w-full h-full"
-                transform="rotate(-90 60 60)"
+                className="h-full w-full"
               >
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="48"
-                  fill="none"
-                  stroke="#E8EDF2"
-                  strokeWidth="10"
-                />
-                <circle
-                  cx="60"
-                  cy="60"
-                  r="48"
-                  fill="none"
-                  stroke="#059669"
-                  strokeWidth="10"
-                  strokeDasharray={`${2 * Math.PI * 48 * reviewedFraction}`}
-                  strokeDashoffset="0"
-                  strokeLinecap="round"
-                />
+                <g transform="rotate(-90 60 60)">
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="48"
+                    fill="none"
+                    stroke="#E8EDF2"
+                    strokeWidth="10"
+                  />
+
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="48"
+                    fill="none"
+                    stroke="#059669"
+                    strokeWidth="10"
+                    strokeDasharray={`${2 * Math.PI * 48}`}
+                    strokeDashoffset={`${2 * Math.PI * 48 * (1 - reviewedFraction)}`}
+                    strokeLinecap="round"
+                    className="transition-all duration-700"
+                  />
+                </g>
               </svg>
+
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <p className="text-base font-black text-[#1D4ED8]">
                   {dashboard.submissions?.length ?? 0}
                 </p>
-                <p className="text-[8px] font-bold text-slate-400 tracking-wider">
+
+                <p className="text-[8px] font-bold tracking-wider text-slate-400">
                   SUBMITTED
                 </p>
               </div>
             </div>
-            <div className="flex-1 space-y-2">
+
+            <div className="flex-1 space-y-3">
               <div className="flex justify-between text-xs">
-                <span className="font-semibold text-emerald-600 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600" />{" "}
+                <span className="flex items-center gap-1 font-semibold text-emerald-600">
+                  <span className="h-2 w-2 rounded-full bg-emerald-600" />
                   Reviewed
                 </span>
+
                 <span className="font-bold text-emerald-600">
                   {gradedSubs.length}
                 </span>
               </div>
+
               <div className="flex justify-between text-xs">
-                <span className="font-semibold text-amber-600 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" /> Pending
+                <span className="flex items-center gap-1 font-semibold text-amber-600">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Pending
                 </span>
+
                 <span className="font-bold text-amber-600">
                   {pendingReviews}
                 </span>
               </div>
-              <div className="flex justify-between text-xs pt-2 border-t border-dashed border-slate-200">
-                <span className="font-semibold text-slate-500 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-slate-400" /> Total
+
+              <div className="flex justify-between border-t border-dashed border-slate-200 pt-3 text-xs">
+                <span className="flex items-center gap-1 font-semibold text-slate-500">
+                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  Total
                 </span>
+
                 <span className="font-bold text-slate-500">
                   {dashboard.submissions?.length ?? 0}
                 </span>
@@ -2421,63 +2608,299 @@ function EducatorOverview({
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Classes Row ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-            <h2
-              className="text-sm font-bold text-slate-900 flex items-center gap-2"
-              suppressHydrationWarning
-            >
-              <CalendarDays size={16} style={{ color: "#1D4ED8" }} />{" "}
-              Today&apos;s Classes
+        {/* Students Needing Attention */}
+        <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
+            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+              <AlertCircle size={16} className="text-rose-600" />
+              Students Needing Attention
             </h2>
-            <span className="text-xs text-slate-400">
-              {todayLectures.length > 0
-                ? `${todayLectures.length} today`
-                : "Wed, 08 Jul"}
+
+            <span
+              className={`rounded-full px-3 py-1 text-[10px] font-black ${
+                totalAttentionAlerts > 0
+                  ? "bg-rose-50 text-rose-700"
+                  : "bg-emerald-50 text-emerald-700"
+              }`}
+            >
+              {totalAttentionAlerts > 0
+                ? `${totalAttentionAlerts} Alerts`
+                : "All Clear"}
             </span>
           </div>
+
+          <div className="grid h-[170px] grid-cols-1 gap-2 p-4 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("attendance")}
+              className="flex flex-col items-center justify-center rounded-xl border border-rose-100 bg-rose-50 px-3 py-3 text-center transition hover:bg-rose-100"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
+                <UserCheck size={17} />
+              </div>
+
+              <span className="mt-2 text-xl font-black text-rose-600">
+                {lowAttendanceStudents}
+              </span>
+
+              <span className="text-xs font-bold text-slate-800">
+                Low Attendance
+              </span>
+
+              <span className="mt-0.5 text-[10px] text-slate-500">
+                Below 75%
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("tests")}
+              className="flex flex-col items-center justify-center rounded-xl border border-amber-100 bg-amber-50 px-3 py-3 text-center transition hover:bg-amber-100"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                <Clock size={17} />
+              </div>
+
+              <span className="mt-2 text-xl font-black text-amber-600">
+                {pendingReviewStudents}
+              </span>
+
+              <span className="text-xs font-bold text-slate-800">
+                Pending Reviews
+              </span>
+
+              <span className="mt-0.5 text-[10px] text-slate-500">
+                Awaiting review
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("tests")}
+              className="flex flex-col items-center justify-center rounded-xl border border-violet-100 bg-violet-50 px-3 py-3 text-center transition hover:bg-violet-100"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+                <TrendingUp size={17} />
+              </div>
+
+              <span className="mt-2 text-xl font-black text-violet-600">
+                {lowScoreStudents}
+              </span>
+
+              <span className="text-xs font-bold text-slate-800">
+                Low Scores
+              </span>
+
+              <span className="mt-0.5 text-[10px] text-slate-500">
+                Below 40%
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* ── Earnings and Home Tutoring Row ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* My Earnings */}
+        <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
+            <div>
+              <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Banknote size={17} className="text-emerald-600" />
+                My Earnings
+              </h2>
+
+              <p className="mt-1 text-[11px] font-medium text-slate-400">
+                Teacher payout summary
+              </p>
+            </div>
+
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black text-emerald-700">
+              Private
+            </span>
+          </div>
+
+          <div className="p-5">
+            <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-sm">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-100">
+                Pending Earnings
+              </p>
+
+              <p className="mt-2 text-3xl font-black tracking-tight">
+                {pendingEarnings}
+              </p>
+
+              <p className="mt-2 text-xs leading-5 text-emerald-100">
+                {pendingEarningsDetail}
+              </p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                  <CheckCircle2 size={17} />
+                </div>
+
+                <p className="mt-3 text-xl font-black text-slate-900">
+                  {dashboard.analytics?.operations?.completedLectures ?? 0}
+                </p>
+
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  Classes Completed
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                  <CalendarDays size={17} />
+                </div>
+
+                <p className="mt-3 text-xl font-black text-slate-900">
+                  {dashboard.analytics?.operations?.scheduledLectures ?? 0}
+                </p>
+
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  Classes Scheduled
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("teacher-payouts")}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-black text-white transition hover:bg-emerald-700"
+            >
+              View My Earnings
+              <ArrowUpRight size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Today's Home Tutoring */}
+        <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
+            <div>
+              <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                <Home size={17} className="text-violet-600" />
+                Today&apos;s Home Tutoring
+              </h2>
+
+              <p className="mt-1 text-[11px] font-medium text-slate-400">
+                Home visits assigned for today
+              </p>
+            </div>
+
+            <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-violet-50 px-2 text-xs font-black text-violet-700">
+              {homeTutoringVisits.length}
+            </span>
+          </div>
+
           <div className="p-4">
-            {todayLectures.length > 0 ? (
-              <div className="space-y-2">
-                {todayLectures.slice(0, 5).map((lec, i) => (
-                  <div
-                    key={lec.id ?? i}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-[#F8FAFC] border-l-[3px]"
-                    style={{ borderLeftColor: "#1D4ED8" }}
+            {homeTutoringVisits.length > 0 ? (
+              <div className="space-y-3">
+                {homeTutoringVisits.slice(0, 3).map((visit) => (
+                  <article
+                    key={visit.id}
+                    className="overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/70 to-white"
                   >
-                    <div className="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-                      <PlayCircle size={16} />
+                    <div className="p-4">
+                      <div className="flex items-start gap-3">
+                        {visit.studentPhoto ? (
+                          <img
+                            src={visit.studentPhoto}
+                            alt={`${visit.studentName} profile`}
+                            className="h-11 w-11 shrink-0 rounded-xl border border-white object-cover object-top shadow-sm"
+                          />
+                        ) : (
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-black text-violet-700">
+                            {getInitials(visit.studentName)}
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <h3 className="truncate text-sm font-black text-slate-900">
+                                {visit.studentName}
+                              </h3>
+
+                              <p className="mt-0.5 text-xs font-bold text-violet-700">
+                                {visit.subject}
+                              </p>
+                            </div>
+
+                            <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#0B40A1] shadow-sm">
+                              {visit.startTime}
+                              {visit.endTime ? ` – ${visit.endTime}` : ""}
+                            </span>
+                          </div>
+
+                          <div className="mt-3 rounded-xl border border-white bg-white/80 p-3">
+                            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                              Topic
+                            </p>
+
+                            <p className="mt-1 text-xs font-bold leading-5 text-slate-700">
+                              {visit.topic}
+                            </p>
+                          </div>
+
+                          <div className="mt-3 flex items-start gap-2">
+                            <MapPin
+                              size={15}
+                              className="mt-0.5 shrink-0 text-rose-500"
+                            />
+
+                            <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-600">
+                              {visit.fullAddress}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-slate-800 truncate">
-                        {lec.title || "Lecture"}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {lec.subject ?? ""}
-                      </p>
+
+                    <div className="flex gap-2 border-t border-violet-100 bg-white/70 p-3">
+                      {visit.hasAddress ? (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                            visit.fullAddress,
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-3 py-2.5 text-xs font-black text-white transition hover:bg-violet-700"
+                        >
+                          <Navigation size={14} />
+                          Open Map
+                        </a>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        onClick={() => onSetActiveSection("timetable")}
+                        className="flex flex-1 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-xs font-black text-violet-700 transition hover:bg-violet-50"
+                      >
+                        View Timetable
+                      </button>
                     </div>
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full shrink-0 bg-indigo-50 text-indigo-600">
-                      {lec.startsAt?.slice(11, 16) || "Scheduled"}
-                    </span>
-                  </div>
+                  </article>
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-sm text-slate-400">
-                <CalendarDays size={32} className="text-slate-200 mb-2" />
-                <p>No classes today</p>
+              <div className="flex min-h-[220px] flex-col items-center justify-center rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 px-6 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
+                  <Home size={25} />
+                </div>
+
+                <p className="mt-4 text-sm font-black text-slate-800">
+                  No home visits today
+                </p>
+
+                <p className="mt-2 max-w-xs text-xs leading-5 text-slate-500">
+                  Home tutoring sessions assigned for today will appear here
+                  with the student, topic, time and address.
+                </p>
               </div>
             )}
-            <button
-              onClick={() => onSetActiveSection("timetable")}
-              className="w-full mt-3 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors"
-            >
-              View Full Timetable
-            </button>
           </div>
         </div>
       </div>

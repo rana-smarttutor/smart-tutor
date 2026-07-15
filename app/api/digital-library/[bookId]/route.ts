@@ -74,6 +74,13 @@ async function authorizeManager() {
   return role === "admin" || role === "educator";
 }
 
+async function authorizeAdmin() {
+  const session = await getSessionUser();
+  const role = String(session?.role || "student").toLowerCase();
+
+  return role === "admin";
+}
+
 async function findMaterial(pathname: string, token: string) {
   const { blobs } = await list({
     prefix: pathname,
@@ -422,11 +429,11 @@ export async function PATCH(request: Request, context: RouteContext) {
 
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
-    if (!(await authorizeManager())) {
+    if (!(await authorizeAdmin())) {
       return NextResponse.json(
         {
           success: false,
-          message: "Only admins and educators can delete materials.",
+          message: "Only admins can delete materials.",
         },
         { status: 403 },
       );
