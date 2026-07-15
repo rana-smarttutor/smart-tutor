@@ -68,7 +68,7 @@ const sections = [
     ),
   },
   {
-    title: "4. User-Generated Content",
+    title: "4. User-Generated Content &amp; Uploaded Documents",
     content: (
       <div className="space-y-2">
         <p>
@@ -89,6 +89,21 @@ const sections = [
             the right to remove any content at its sole discretion without
             prior notice.
           </p>
+        </div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-900">
+          <p className="font-bold">Identity Documents &amp; Resume Uploads:</p>
+          <p className="mt-1">
+            Faculty members who upload identity verification documents
+            (government-issued photo ID front/back images) and resumes/CVs
+            during registration acknowledge and agree that:
+          </p>
+          <ul className="mt-2 ml-6 list-disc space-y-1">
+            <li>You are solely responsible for the authenticity and legality of all uploaded documents</li>
+            <li>Smart Tutors is <strong>not liable</strong> for any loss, theft, misuse, unauthorised access, or disclosure of your uploaded identity documents or resumes</li>
+            <li>Smart Tutors makes no representation or warranty regarding the security of uploaded documents and does not guarantee protection against all possible threats</li>
+            <li>You upload documents entirely at your own risk and accept full responsibility for any consequences arising from their submission</li>
+            <li>Smart Tutors shall not be liable for any identity theft, fraud, or reputational damage resulting from a data breach involving uploaded documents</li>
+          </ul>
         </div>
       </div>
     ),
@@ -143,6 +158,18 @@ const sections = [
           <li>
             Data breaches, hacks, or security incidents originating from
             third-party services integrated with the platform
+          </li>
+          <li>
+            Loss, theft, misuse, or unauthorised disclosure of identity
+            documents, resumes, or any other uploaded files
+          </li>
+          <li>
+            Identity theft, fraud, or reputational damage resulting from a
+            security incident involving your uploaded documents
+          </li>
+          <li>
+            Rejection, delay, or failure of the identity verification or
+            account approval process
           </li>
           <li>
             Actions, omissions, or content of other users, including faculty

@@ -1141,70 +1141,168 @@ export function DashboardAccountDirectory({
               {pendingRequests.length === 0 ? (
                 <p className="text-sm text-[var(--color-muted)]">No pending requests.</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {pendingRequests.map((req) => (
                     <div
                       key={req.id}
-                      className="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/10"
+                      className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-800 dark:bg-amber-900/10"
                     >
-                      <div>
-                        <p className="font-bold text-[var(--color-heading)]">{req.name}</p>
-                        <p className="mt-0.5 text-xs text-[var(--color-muted)]">{req.email}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
-                            <i className="bi bi-person-badge" />
-                            {req.role}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 dark:bg-violet-900/20 dark:text-violet-400">
-                            <i className="bi bi-book" />
-                            {req.program}
-                          </span>
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <p className="font-bold text-[var(--color-heading)]">{req.name}</p>
+                          <p className="mt-0.5 text-xs text-[var(--color-muted)]">{req.email}</p>
+                          {req.mobile && (
+                            <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                              <i className="bi bi-telephone me-1" />{req.mobile}
+                            </p>
+                          )}
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/20 dark:text-blue-400">
+                              <i className="bi bi-person-badge" />
+                              {req.role}
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 dark:bg-violet-900/20 dark:text-violet-400">
+                              <i className="bi bi-book" />
+                              {req.program}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              const res = await fetch("/api/admin/user-requests/approve", {
+                                method: "POST",
+                                credentials: "same-origin",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ userId: req.id }),
+                              });
+                              const data = await res.json();
+                              if (data.ok) {
+                                setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                                setStatus(`Approved: ${req.name}`);
+                              } else {
+                                setStatus(data.error ?? "Failed to approve.");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
+                          >
+                            <i className="bi bi-check-lg" />
+                            Approve
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const res = await fetch("/api/admin/user-requests/reject", {
+                                method: "POST",
+                                credentials: "same-origin",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ userId: req.id }),
+                              });
+                              const data = await res.json();
+                              if (data.ok) {
+                                setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                                setStatus(`Rejected: ${req.name}`);
+                              } else {
+                                setStatus(data.error ?? "Failed to reject.");
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700"
+                          >
+                            <i className="bi bi-x-lg" />
+                            Reject
+                          </button>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={async () => {
-                            const res = await fetch("/api/admin/user-requests/approve", {
-                              method: "POST",
-                              credentials: "same-origin",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ userId: req.id }),
-                            });
-                            const data = await res.json();
-                            if (data.ok) {
-                              setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
-                              setStatus(`Approved: ${req.name}`);
-                            } else {
-                              setStatus(data.error ?? "Failed to approve.");
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700"
-                        >
-                          <i className="bi bi-check-lg" />
-                          Approve
-                        </button>
-                        <button
-                          onClick={async () => {
-                            const res = await fetch("/api/admin/user-requests/reject", {
-                              method: "POST",
-                              credentials: "same-origin",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ userId: req.id }),
-                            });
-                            const data = await res.json();
-                            if (data.ok) {
-                              setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
-                              setStatus(`Rejected: ${req.name}`);
-                            } else {
-                              setStatus(data.error ?? "Failed to reject.");
-                            }
-                          }}
-                          className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700"
-                        >
-                          <i className="bi bi-x-lg" />
-                          Reject
-                        </button>
-                      </div>
+
+                      {req.role === "educator" && req.profile && (
+                        <div className="mt-3 border-t border-amber-200/60 pt-3">
+                          <p className="mb-2 text-[11px] font-black uppercase tracking-widest text-amber-700">
+                            <i className="bi bi-file-earmark-person me-1" />
+                            Faculty Verification Documents
+                          </p>
+
+                          {req.profile.qualification && (
+                            <p className="mb-1 text-xs text-[var(--color-heading)]">
+                              <span className="font-semibold text-[var(--color-muted)]">Qualification:</span>{" "}
+                              {req.profile.qualification}
+                            </p>
+                          )}
+                          {req.profile.experience && (
+                            <p className="mb-1 text-xs text-[var(--color-heading)]">
+                              <span className="font-semibold text-[var(--color-muted)]">Experience:</span>{" "}
+                              {req.profile.experience}
+                            </p>
+                          )}
+                          {(req.profile.subjects?.length ?? 0) > 0 && (
+                            <div className="mb-2">
+                              <span className="text-xs font-semibold text-[var(--color-muted)]">Subjects: </span>
+                              {req.profile.subjects!.map((s, i) => (
+                                <span key={i} className="mr-1 inline-block rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-900/20">{s}</span>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {req.profile.cvUrl && (
+                              <a
+                                href={req.profile.cvUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-[11px] font-bold text-blue-600 hover:bg-blue-100 transition-colors dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-400"
+                              >
+                                <i className="bi bi-file-earmark-text" />
+                                View Resume / CV
+                              </a>
+                            )}
+                            {req.profile.photoIdFrontUrl && (
+                              <a
+                                href={req.profile.photoIdFrontUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                              >
+                                <i className="bi bi-card-image" />
+                                Photo ID — Front
+                              </a>
+                            )}
+                            {req.profile.photoIdBackUrl && (
+                              <a
+                                href={req.profile.photoIdBackUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
+                              >
+                                <i className="bi bi-card-image" />
+                                Photo ID — Back
+                              </a>
+                            )}
+                          </div>
+
+                          {(req.profile.photoIdFrontUrl || req.profile.photoIdBackUrl) && (
+                            <div className="mt-3 flex flex-wrap gap-3">
+                              {req.profile.photoIdFrontUrl && (
+                                <div className="rounded-lg border border-[var(--color-border)] bg-white p-1.5 dark:bg-[var(--color-card)]">
+                                  <p className="mb-1 text-[10px] font-bold text-[var(--color-muted)]">ID Front</p>
+                                  <img
+                                    src={req.profile.photoIdFrontUrl}
+                                    alt="Photo ID Front"
+                                    className="h-28 w-auto rounded-md object-contain"
+                                  />
+                                </div>
+                              )}
+                              {req.profile.photoIdBackUrl && (
+                                <div className="rounded-lg border border-[var(--color-border)] bg-white p-1.5 dark:bg-[var(--color-card)]">
+                                  <p className="mb-1 text-[10px] font-bold text-[var(--color-muted)]">ID Back</p>
+                                  <img
+                                    src={req.profile.photoIdBackUrl}
+                                    alt="Photo ID Back"
+                                    className="h-28 w-auto rounded-md object-contain"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

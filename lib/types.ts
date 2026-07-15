@@ -574,6 +574,8 @@ export type UserProfile = {
   // Educator specific
   qualification?: string;
   cvUrl?: string;
+  photoIdFrontUrl?: string;
+  photoIdBackUrl?: string;
   experience?: string;
   subjects?: string[];
   examQualifications?: ExamQualification[];

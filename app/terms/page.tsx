@@ -69,7 +69,36 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">5. Limitation of Liability</h2>
+            <h2 className="text-xl font-semibold">5. Identity Documents &amp; Verification Data</h2>
+            <div className="mt-2 space-y-2">
+              <p>
+                Faculty accounts are required to submit identity verification documents during registration,
+                including but not limited to a resume/CV and government-issued photo identification (such as
+                Aadhar Card, PAN Card, Passport, Voter ID, or Driver&apos;s License) in front and back image form.
+                By submitting these documents, you:
+              </p>
+              <ul className="mt-2 list-disc pl-6 space-y-1">
+                <li>Represent and warrant that the documents are genuine, legally valid, and belong to you</li>
+                <li>Acknowledge that these documents are collected solely for the purpose of identity verification and faculty onboarding</li>
+                <li>Consent to Smart Tutors storing, reviewing, and processing these documents for verification purposes</li>
+                <li>Acknowledge that submission of documents does not guarantee account approval or activation</li>
+              </ul>
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-4 text-red-900">
+                <p className="font-bold">No Liability for Document Handling:</p>
+                <p className="mt-1">
+                  Smart Tutors, its operators, and affiliates shall <strong>not be liable</strong> for any
+                  loss, theft, misuse, unauthorised access, or disclosure of identity documents or resumes
+                  uploaded to the platform. This includes, but is not limited to, breaches caused by
+                  third-party service providers, force majeure events, user-side security failures, or
+                  vulnerabilities in cloud storage infrastructure. You upload documents at your own risk
+                  and accept full responsibility for the security of your own identity documents.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold">6. Limitation of Liability</h2>
             <p className="mt-2">
               Smart Tutors, its operators, and affiliates shall not be held liable for any direct, indirect,
               incidental, special, or consequential damages resulting from:
@@ -80,11 +109,20 @@ export default function TermsPage() {
               <li>Actions or content posted by other users</li>
               <li>Technical failures, data loss, or service interruptions</li>
               <li>Disclosure of information by users to third parties</li>
+              <li>Loss, misuse, or unauthorised disclosure of uploaded identity documents or resumes</li>
+              <li>Rejection, delay, or failure of the account verification process</li>
+              <li>Any decision made or action taken based on information provided through the platform</li>
             </ul>
+            <p className="mt-2">
+              In no event shall Smart Tutors&apos; total aggregate liability exceed the amount paid by you
+              to Smart Tutors during the twelve (12) months preceding the claim, or INR 1,000, whichever is
+              greater. You agree to indemnify and hold harmless Smart Tutors from any claims arising from your
+              use of the platform or your submission of documents.
+            </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">6. Third-Party Links</h2>
+            <h2 className="text-xl font-semibold">7. Third-Party Links</h2>
             <p className="mt-2">
               The platform may contain links to third-party websites. Smart Tutors is not responsible for the
               content, privacy practices, or security of those websites.
@@ -92,7 +130,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">7. Modifications</h2>
+            <h2 className="text-xl font-semibold">8. Modifications</h2>
             <p className="mt-2">
               We reserve the right to modify these terms at any time. Users will be notified of material changes
               via the platform. Continued use after changes constitutes acceptance of the new terms.
@@ -100,7 +138,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">8. Governing Law</h2>
+            <h2 className="text-xl font-semibold">9. Governing Law</h2>
             <p className="mt-2">
               These terms are governed by the laws of India. Any disputes shall be subject to the jurisdiction
               of the courts in Navi Mumbai, Maharashtra.

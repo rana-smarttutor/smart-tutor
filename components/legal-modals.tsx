@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type ModalType = "terms" | "privacy" | null;
+type ModalType = "terms" | "privacy" | "eula" | null;
 
 export function LegalModals() {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -24,6 +24,12 @@ export function LegalModals() {
         >
           Privacy Policy
         </button>
+        <button
+          onClick={() => setActiveModal("eula")}
+          className="hover:text-[var(--color-primary)] transition-colors cursor-pointer"
+        >
+          EULA
+        </button>
       </div>
 
       {activeModal && (
@@ -34,7 +40,7 @@ export function LegalModals() {
           >
             <div className="p-6 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-background-strong)]">
               <h2 className="text-xl font-black tracking-tight text-[var(--color-heading)] uppercase">
-                {activeModal === "terms" ? "Terms of Service" : "Privacy Policy"}
+                {activeModal === "terms" ? "Terms of Service" : activeModal === "privacy" ? "Privacy Policy" : "End User License Agreement"}
               </h2>
               <button 
                 onClick={closeModal}
@@ -74,42 +80,87 @@ export function LegalModals() {
                     </p>
                   </section>
                   <section>
-                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Limitation of Liability</h3>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Identity Documents</h3>
                     <p>
-                      Smart Tutors and its directors shall not be liable for any academic failures, data loss, or indirect damages resulting from the use or inability to use the platform. All materials are provided "as-is" without express warranties.
+                      Faculty accounts are required to submit identity verification documents (resume/CV and government-issued photo ID front and back images). By submitting these documents, you represent they are genuine and belong to you. Smart Tutors is not liable for any loss, theft, misuse, or unauthorised access to uploaded identity documents or resumes.
+                    </p>
+                  </section>
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">6. Limitation of Liability</h3>
+                    <p>
+                      Smart Tutors and its directors shall not be liable for any academic failures, data loss, indirect damages, or loss of identity documents resulting from the use or inability to use the platform. All materials are provided "as-is" without express warranties.
+                    </p>
+                  </section>
+                </div>
+              ) : activeModal === "privacy" ? (
+                <div className="space-y-6">
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">1. Information We Collect</h3>
+                    <p>
+                      We collect basic identity data (name, email) and academic progress information to provide a personalized learning experience. We also log diagnostic data to maintain system stability. Faculty accounts are additionally required to submit a resume/CV and government-issued photo ID (front and back images) for identity verification.
+                    </p>
+                  </section>
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">2. How We Use Data</h3>
+                    <p>
+                      Your data is used to coordinate courses, deliver assessments, and facilitate communication between students and educators. Identity documents are used solely for faculty verification and onboarding. We do not sell or rent your personal information to third-party marketers.
+                    </p>
+                  </section>
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">3. Third-Party Integrations</h3>
+                    <p>
+                      We utilize secure third-party services like MongoDB Atlas for data storage and Vercel Blob for file hosting. Usage of these features implies acceptance of their respective privacy standards. Smart Tutors is not liable for any data breaches or security incidents at these third-party providers.
+                    </p>
+                  </section>
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">4. Identity Document Security</h3>
+                    <p>
+                      While we implement reasonable security measures, Smart Tutors does not guarantee absolute security of uploaded identity documents. You acknowledge that uploading identity documents is done at your own risk and Smart Tutors is not liable for any loss, theft, misuse, or unauthorised disclosure of these documents.
+                    </p>
+                  </section>
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Data Security</h3>
+                    <p>
+                      We implement industry-standard encryption and security protocols to protect your workspace. However, no digital system is 100% secure, and users are responsible for maintaining their own login credential security.
+                    </p>
+                  </section>
+                  <section>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">6. Updates to Policy</h3>
+                    <p>
+                      This policy may be updated periodically to reflect changes in our services or legal requirements. Continued use of the platform after updates constitutes acceptance of the new terms.
                     </p>
                   </section>
                 </div>
               ) : (
                 <div className="space-y-6">
                   <section>
-                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">1. Information We Collect</h3>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">1. License Grant</h3>
                     <p>
-                      We collect basic identity data (name, email) and academic progress information to provide a personalized learning experience. We also log diagnostic data to maintain system stability.
+                      Smart Tutors grants you a limited, non-exclusive, non-transferable, revocable license to use the platform for personal, non-commercial educational purposes within the scope of your enrolment or role at the institute.
                     </p>
                   </section>
                   <section>
-                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">2. How We Use Data</h3>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">2. Restrictions</h3>
                     <p>
-                      Your data is used to coordinate courses, deliver assessments, and facilitate communication between students and educators. We do not sell or rent your personal information to third-party marketers.
+                      You may not copy, modify, distribute, reverse engineer, or attempt to extract the source code of the platform. Sharing login credentials or allowing unauthorised access through your account is prohibited.
                     </p>
                   </section>
                   <section>
-                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">3. Third-Party Integrations</h3>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">3. Uploaded Documents</h3>
                     <p>
-                      We utilize secure third-party services like MongoDB Atlas for data storage and Vercel Blob for digital library hosting. Usage of these features implies acceptance of their respective privacy standards.
+                      By uploading identity documents (photo ID, resume/CV), you grant Smart Tutors a license to store and process such documents for verification purposes. You are solely responsible for the authenticity of uploaded documents. Smart Tutors is not liable for any loss, theft, or misuse of your uploaded identity documents or resumes.
                     </p>
                   </section>
                   <section>
-                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">4. Data Security</h3>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">4. Disclaimer of Warranties</h3>
                     <p>
-                      We implement industry-standard encryption and security protocols to protect your workspace. However, no digital system is 100% secure, and users are responsible for maintaining their own login credential security.
+                      The platform is provided "as is" without warranties of any kind. Smart Tutors does not warrant uninterrupted, secure, or error-free access. You assume all risk for any damage to your device or data.
                     </p>
                   </section>
                   <section>
-                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Updates to Policy</h3>
+                    <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Limitation of Liability</h3>
                     <p>
-                      This policy may be updated periodically to reflect changes in our services or legal requirements. Continued use of the platform after updates constitutes acceptance of the new terms.
+                      Smart Tutors shall not be liable for any indirect, incidental, consequential, or punitive damages, including loss of data, identity documents, profits, or business opportunity, or damages arising from third-party service failures, force majeure events, or user-side security compromises.
                     </p>
                   </section>
                 </div>

@@ -50,6 +50,8 @@ export async function POST(request: Request) {
       confirmPassword?: string;
       qualification?: string;
       cvUrl?: string;
+      photoIdFrontUrl?: string;
+      photoIdBackUrl?: string;
       experience?: string;
       subjects?: string[];
       examQualifications?: { examName: string; score?: string; year?: string }[];
@@ -232,9 +234,32 @@ export async function POST(request: Request) {
 
       profile.qualification = qualification;
 
-      if (body.cvUrl) {
-        profile.cvUrl = body.cvUrl;
+      if (!body.cvUrl) {
+        return NextResponse.json(
+          { error: "Resume / CV is required for educators." },
+          { status: 400 },
+        );
       }
+
+      profile.cvUrl = body.cvUrl;
+
+      if (!body.photoIdFrontUrl) {
+        return NextResponse.json(
+          { error: "Photo ID front image is required for educators." },
+          { status: 400 },
+        );
+      }
+
+      profile.photoIdFrontUrl = body.photoIdFrontUrl;
+
+      if (!body.photoIdBackUrl) {
+        return NextResponse.json(
+          { error: "Photo ID back image is required for educators." },
+          { status: 400 },
+        );
+      }
+
+      profile.photoIdBackUrl = body.photoIdBackUrl;
 
       if (body.experience) {
         profile.experience = sanitizeTextInput(body.experience, 100);

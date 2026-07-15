@@ -13,16 +13,36 @@ const sections = [
   {
     title: "1. Information We Collect",
     content: (
-      <p>
-        Smart Tutors collects personal information that you voluntarily provide
-        when you register on our platform, including your name, email address,
-        phone number, academic records, attendance data, test scores, fee
-        payment history, and learning activity logs. We also collect resume and
-        qualification data submitted for placement and career services. Device
-        information such as browser type, operating system, IP address, and
-        usage patterns may be collected automatically for analytics and security
-        purposes.
-      </p>
+      <div className="space-y-2">
+        <p>
+          Smart Tutors collects personal information that you voluntarily provide
+          when you register on our platform, including your name, email address,
+          phone number, academic records, attendance data, test scores, fee
+          payment history, and learning activity logs. We also collect resume and
+          qualification data submitted for placement and career services. Device
+          information such as browser type, operating system, IP address, and
+          usage patterns may be collected automatically for analytics and security
+          purposes.
+        </p>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
+          <p className="font-bold">Identity Verification Documents (Faculty Only):</p>
+          <p className="mt-1">
+            Faculty accounts are required to submit the following identity
+            verification documents during registration:
+          </p>
+          <ul className="mt-2 ml-6 list-disc space-y-1">
+            <li><strong>Resume / CV</strong> — in PDF, DOC, or DOCX format</li>
+            <li><strong>Photo ID — Front image</strong> — government-issued photo identification such as Aadhar Card, PAN Card, Passport, Voter ID, or Driver&apos;s License</li>
+            <li><strong>Photo ID — Back image</strong> — back side of the same government-issued photo identification</li>
+          </ul>
+          <p className="mt-2">
+            These documents are collected solely for the purpose of identity
+            verification and faculty onboarding. By submitting these documents,
+            you acknowledge and consent to their collection, storage, and
+            processing as described in this policy.
+          </p>
+        </div>
+      </div>
     ),
   },
   {
@@ -77,6 +97,44 @@ const sections = [
         period required by applicable Indian law. Anonymised or aggregated data
         may be retained indefinitely for analytical purposes.
       </p>
+    ),
+  },
+  {
+    title: "5. Identity Document Handling &amp; Consent",
+    content: (
+      <div className="space-y-2">
+        <p>
+          Faculty members who submit identity verification documents (resume/CV
+          and photo ID front/back images) during registration explicitly
+          consent to the collection, storage, and processing of these documents
+          by Smart Tutors for the sole purpose of identity verification and
+          faculty onboarding.
+        </p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-900">
+          <p className="font-bold">No Liability for Document Security:</p>
+          <p className="mt-1">
+            While we implement reasonable security measures, Smart Tutors{" "}
+            <strong>does not and cannot guarantee</strong> the absolute security
+            of uploaded identity documents. Smart Tutors, its operators,
+            employees, affiliates, and service providers shall{" "}
+            <strong>not be held liable</strong> for any loss, theft, misuse,
+            unauthorised access, disclosure, or corruption of identity documents
+            or resumes uploaded to the platform, whether caused by third-party
+            service provider failures, force majeure events, cyberattacks,
+            user-side security failures, or any other reason beyond our
+            reasonable control. You acknowledge that uploading identity
+            documents is done entirely at your own risk.
+          </p>
+        </div>
+        <p>
+          Identity documents are accessible only to authorised administrators
+          and verification staff for the purpose of reviewing and approving
+          faculty accounts. These documents are not shared with third parties
+          for marketing or any unrelated purpose. Documents may be retained
+          for the duration of your account and for any period required by
+          applicable Indian law after account closure or deletion.
+        </p>
+      </div>
     ),
   },
   {

@@ -52,6 +52,8 @@ type SignupFormData = {
 
   profilePhotoUrl: string;
   cvUrl: string;
+  photoIdFrontUrl: string;
+  photoIdBackUrl: string;
 };
 
 const JUNIOR_CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"];
@@ -188,6 +190,8 @@ function getInitialFormData(): SignupFormData {
 
     profilePhotoUrl: "",
     cvUrl: "",
+    photoIdFrontUrl: "",
+    photoIdBackUrl: "",
   };
 }
 
@@ -203,6 +207,9 @@ export function RegistrationForm() {
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingCv, setUploadingCv] = useState(false);
+  const [uploadingPhotoIdFront, setUploadingPhotoIdFront] = useState(false);
+  const [uploadingPhotoIdBack, setUploadingPhotoIdBack] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const [examQualifications, setExamQualifications] = useState<
     { examName: string; score: string; year: string }[]
@@ -232,6 +239,8 @@ export function RegistrationForm() {
   const courseDropdownRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
+  const photoIdFrontInputRef = useRef<HTMLInputElement>(null);
+  const photoIdBackInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -376,6 +385,53 @@ export function RegistrationForm() {
     }
   }
 
+  async function handlePhotoIdUpload(file: File, side: "front" | "back") {
+    const setUploading = side === "front" ? setUploadingPhotoIdFront : setUploadingPhotoIdBack;
+    setUploading(true);
+    setError("");
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("field", "photoId");
+
+      const response = await fetch("/api/upload/signup", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const data = (await response.json()) as {
+        success: boolean;
+        url?: string;
+        message?: string;
+      };
+
+      if (data.success && data.url) {
+        updateField(side === "front" ? "photoIdFrontUrl" : "photoIdBackUrl", data.url);
+      } else {
+        setError(data.message || `Photo ID ${side} upload failed.`);
+      }
+    } catch {
+      setError(`Photo ID ${side} upload failed.`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handlePhotoIdFrontChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) {
+      handlePhotoIdUpload(file, "front");
+    }
+  }
+
+  function handlePhotoIdBackChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (file) {
+      handlePhotoIdUpload(file, "back");
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -444,6 +500,26 @@ export function RegistrationForm() {
           setError("Passwords do not match.");
           return;
         }
+
+        if (!form.cvUrl) {
+          setError("Resume / CV is required for faculty accounts.");
+          return;
+        }
+
+        if (!form.photoIdFrontUrl) {
+          setError("Photo ID front image is required for faculty verification.");
+          return;
+        }
+
+        if (!form.photoIdBackUrl) {
+          setError("Photo ID back image is required for faculty verification.");
+          return;
+        }
+      }
+
+      if (!consentAccepted) {
+        setError("You must accept the Terms & Conditions, Privacy Policy, and consent to data collection to create an account.");
+        return;
       }
 
       const body: Record<string, unknown> = {
@@ -494,6 +570,8 @@ export function RegistrationForm() {
         body.qualification = form.qualification;
         body.experience = form.experience;
         body.cvUrl = form.cvUrl;
+        body.photoIdFrontUrl = form.photoIdFrontUrl;
+        body.photoIdBackUrl = form.photoIdBackUrl;
 
         body.subjects = form.subjects
           ? form.subjects
@@ -1110,7 +1188,7 @@ export function RegistrationForm() {
 
               <div>
                 <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Upload CV / Resume
+                  Upload CV / Resume <span className="text-red-500">*</span>
                 </label>
 
                 <div className="flex flex-wrap items-center gap-3">
@@ -1141,6 +1219,78 @@ export function RegistrationForm() {
                     PDF, DOC, DOCX (max 5MB)
                   </span>
                 </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-amber-700">
+                  <i className="bi bi-shield-lock me-1" />
+                  Photo ID for Verification <span className="text-red-500">*</span>
+                </label>
+                <p className="mb-3 text-[11px] text-amber-600/80">
+                  Upload front and back images of a valid photo ID such as Aadhar Card, PAN Card, Passport, or Driver's License. This is required for account verification.
+                </p>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
+                      Photo ID — Front <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => photoIdFrontInputRef.current?.click()}
+                        disabled={uploadingPhotoIdFront}
+                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        {uploadingPhotoIdFront ? "Uploading..." : "Choose Front Image"}
+                      </button>
+                      <input
+                        ref={photoIdFrontInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoIdFrontChange}
+                      />
+                      {form.photoIdFrontUrl && (
+                        <span className="text-[11px] text-emerald-600">
+                          <i className="bi bi-check-circle me-1" />Uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
+                      Photo ID — Back <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => photoIdBackInputRef.current?.click()}
+                        disabled={uploadingPhotoIdBack}
+                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        {uploadingPhotoIdBack ? "Uploading..." : "Choose Back Image"}
+                      </button>
+                      <input
+                        ref={photoIdBackInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoIdBackChange}
+                      />
+                      {form.photoIdBackUrl && (
+                        <span className="text-[11px] text-emerald-600">
+                          <i className="bi bi-check-circle me-1" />Uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mt-2 text-[10px] text-slate-400">
+                  Accepted IDs: Aadhar Card, PAN Card, Passport, Voter ID, Driver's License. Images must be clear and readable. (PNG, JPG, WEBP — max 5MB each)
+                </p>
               </div>
             </div>
           </div>
@@ -1189,6 +1339,32 @@ export function RegistrationForm() {
               />
             </div>
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+          <label className="flex cursor-pointer items-start gap-3">
+            <input
+              type="checkbox"
+              checked={consentAccepted}
+              onChange={(e) => setConsentAccepted(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-xs leading-5 text-[var(--color-muted)]">
+              I acknowledge and consent to the collection, storage, and processing of my personal data and uploaded documents (including resume/CV and photo ID images) by Smart Tutors as described in the{" "}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:text-blue-700 underline">
+                Terms &amp; Conditions
+              </a>
+              ,{" "}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:text-blue-700 underline">
+                Privacy Policy
+              </a>
+              , and{" "}
+              <a href="/eula" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:text-blue-700 underline">
+                EULA
+              </a>
+              . I understand that Smart Tutors is not liable for any loss or misuse of the documents I submit. <span className="text-red-500 font-bold">*</span>
+            </span>
+          </label>
         </div>
 
         {error && (
