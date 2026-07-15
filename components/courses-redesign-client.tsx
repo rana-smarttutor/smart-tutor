@@ -102,6 +102,7 @@ const CREATIVE_DIGITAL_SKILLS_COURSE: CourseItem = {
     "Game Design & Development",
     "Game Development with AI",
     "UI Design Basics",
+    "Web Designing & Development",
     "Motion Graphics",
     "Photography",
     "Videography",
