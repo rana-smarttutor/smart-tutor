@@ -2,7 +2,24 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { LectureItem, ManagedUser, Role } from "@/lib/types";
+import type {
+  LectureItem,
+  ManagedUser,
+  Role,
+} from "@/lib/types";
+
+import {
+  Building2,
+  CalendarClock,
+  Home,
+  Link2,
+  MapPin,
+  Monitor,
+  Navigation,
+  UserRound,
+  Users,
+  Video,
+} from "lucide-react";
 
 type LectureManagerProps = {
   role: Role;
@@ -111,8 +128,8 @@ export function LectureManager({
   const [endsAt, setEndsAt] = useState("");
   const [meetingLink, setMeetingLink] = useState("");
   const [recordingLink, setRecordingLink] = useState("");
-  const [materialLink, setMaterialLink] = useState("");
-  const [status, setStatus] = useState<LectureStatus>("scheduled");
+const [materialLink, setMaterialLink] = useState("");
+const [status, setStatus] = useState<LectureStatus>("scheduled");
 
   const [newLectureReport, setNewLectureReport] =
     useState<ReportDraft>(emptyReport);
