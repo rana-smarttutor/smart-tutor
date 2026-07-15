@@ -28,6 +28,7 @@ type UploadedBlobInfo = {
 type DigitalLibraryClientProps = {
   initialBooks?: Book[];
   canManage?: boolean;
+  canDelete?: boolean;
   isLoggedIn?: boolean;
 };
 
@@ -334,8 +335,10 @@ function BookThumbnail({ book }: { book: Book }) {
 export function DigitalLibraryClient({
   initialBooks = [],
   canManage = false,
+  canDelete = false,
   isLoggedIn = false,
 }: DigitalLibraryClientProps) {
+  const canDeleteBooks = canDelete;
   const [books, setBooks] = useState<Book[]>(initialBooks);
   const [allowedToManage, setAllowedToManage] = useState(canManage);
   const [loggedIn, setLoggedIn] = useState(isLoggedIn);
@@ -805,14 +808,14 @@ export function DigitalLibraryClient({
     }
   }
 
-  function requestDeleteBook(book: Book) {
-    if (!allowedToManage) {
-      return;
-    }
-
-    setDeleteError("");
-    setBookToDelete(book);
+function requestDeleteBook(book: Book) {
+  if (!canDeleteBooks) {
+    return;
   }
+
+  setDeleteError("");
+  setBookToDelete(book);
+}
 
   function cancelDeleteBook() {
     if (isDeleting) {
@@ -822,11 +825,10 @@ export function DigitalLibraryClient({
     setDeleteError("");
     setBookToDelete(null);
   }
-
-  async function confirmDeleteBook() {
-    if (!allowedToManage || !bookToDelete) {
-      return;
-    }
+async function confirmDeleteBook() {
+  if (!canDeleteBooks || !bookToDelete) {
+    return;
+  }
 
     if (!bookToDelete.pathname) {
       setDeleteError("Unable to identify this material.");
@@ -1125,25 +1127,31 @@ export function DigitalLibraryClient({
                       </button>
                     </div>
 
-                    {allowedToManage && (
-                      <div className="mt-4 grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(book)}
-                          className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50   sm:text-sm"
-                        >
-                          Edit
-                        </button>
+{allowedToManage && (
+  <div
+    className={`mt-4 grid gap-3 ${
+      canDeleteBooks ? "grid-cols-2" : "grid-cols-1"
+    }`}
+  >
+    <button
+      type="button"
+      onClick={() => openEdit(book)}
+      className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50 sm:text-sm"
+    >
+      Edit
+    </button>
 
-                        <button
-                          type="button"
-                          onClick={() => requestDeleteBook(book)}
-                          className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50   sm:text-sm"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
+    {canDeleteBooks ? (
+      <button
+        type="button"
+        onClick={() => requestDeleteBook(book)}
+        className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 sm:text-sm"
+      >
+        Delete
+      </button>
+    ) : null}
+  </div>
+)}
                   </article>
                 );
               })}
@@ -1235,7 +1243,7 @@ export function DigitalLibraryClient({
         </div>
       )}
 
-      {allowedToManage && bookToDelete && (
+      {canDeleteBooks && bookToDelete && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-[2px]"
           onMouseDown={cancelDeleteBook}
