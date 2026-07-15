@@ -684,7 +684,7 @@ export function MyProfileClient({ session }: Props) {
                         setFatherName(e.target.value.slice(0, 60))
                       }
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                      placeholder="Father's name"
+                      placeholder="e.g. Ankit"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -852,7 +852,7 @@ export function MyProfileClient({ session }: Props) {
                             setParentName(e.target.value.slice(0, 60))
                           }
                           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                          placeholder="Parent / Guardian name"
+                          placeholder="e.g. Supriya"
                         />
                       </div>
                       <div>

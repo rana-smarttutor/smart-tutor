@@ -709,7 +709,7 @@ export function RegistrationForm() {
               value={form.name}
               onChange={(value) => updateField("name", value)}
               required
-              placeholder="Enter your full name"
+              placeholder="e.g. Supriya"
             />
 
             <InputField
@@ -803,7 +803,7 @@ export function RegistrationForm() {
                   label="Parent Name"
                   value={form.parentName}
                   onChange={(value) => updateField("parentName", value)}
-                  placeholder="Parent's full name"
+                  placeholder="e.g. Ankit"
                 />
 
                 <InputField

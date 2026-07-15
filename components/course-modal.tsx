@@ -21,6 +21,7 @@ interface CourseModalProps {
   course: CourseItem | null;
   onClose: () => void;
   initialAdditionalCourse?: string;
+  programTopics?: string[];
 }
 
 const MHT_CET_EXAMS = [
@@ -506,6 +507,7 @@ export default function CourseModal({
   course,
   onClose,
   initialAdditionalCourse,
+  programTopics = [],
 }: CourseModalProps) {
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
@@ -866,6 +868,25 @@ export default function CourseModal({
                   ))}
                 </ul>
               </div>
+
+              {programTopics.length > 0 && (
+                <div className="space-y-3 border-t border-slate-200 pt-4">
+                  <h5 className="text-[10px] font-bold uppercase tracking-wider leading-none text-slate-400">
+                    Topics Covered:
+                  </h5>
+                  <div className="flex flex-wrap gap-2">
+                    {programTopics.map((topic, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700"
+                      >
+                        <span className="mr-1.5 h-1 w-1 rounded-full bg-indigo-400" />
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="self-start rounded-lg border border-slate-200 bg-slate-50 p-5 md:col-span-5">
@@ -1213,7 +1234,7 @@ export default function CourseModal({
                           <input
                             type="text"
                             required
-                            placeholder="John Doe"
+                            placeholder="e.g. Ankit"
                             value={name}
                             onChange={(event) => setName(event.target.value)}
                             className="w-full rounded border border-slate-200 bg-white p-2.5 pl-10 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"

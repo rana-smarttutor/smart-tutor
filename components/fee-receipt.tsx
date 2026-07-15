@@ -37,7 +37,7 @@ export default function FeeReceipt() {
                 <img
                   src="/stpl.jpeg"
                   alt="Smart Tutors"
-                  className="w-full h-auto max-h-[120px] object-contain"
+                  className="w-full h-auto"
                 />
               </div>
               {/* Address Section */}

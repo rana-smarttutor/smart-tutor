@@ -23,6 +23,7 @@ interface AdditionalProgram {
   streamLabel: string;
   duration: string;
   summary: string;
+  topics: string[];
   mode: string;
 }
 
@@ -74,7 +75,18 @@ const TECHNOLOGY_FUTURE_SKILLS_COURSE: CourseItem = {
   ],
   branchesIncluded: [],
   subjectsCovered: [],
-  points: [],
+  points: [
+    "Artificial Intelligence — AI Domains, Python Basics, Computer Vision, NLP",
+    "Robotics — Sensors, Motors, Arduino Programming, Robot Assembly",
+    "Coding for Kids — Scratch, Block-Based Coding, Logic Building, Game Making",
+    "Internet & Digital Literacy — How the Internet Works, Online Safety, Digital Footprint",
+    "Cyber Safety — Password Security, Phishing, Privacy, Safe Browsing",
+    "STEM Innovation — Science Experiments, Engineering Challenges, Math Applications",
+    "Drone Technology — Aerodynamics, Flight Controls, DGCA Rules, Drone Assembly",
+    "3D Printing — CAD Design (Tinkercad/Fusion 360), Slicing, Material Science",
+    "Electronics & IoT — Circuits, Arduino, Sensors, Cloud Connectivity",
+    "Hands-On Projects — Build Robots, Code Apps, Create IoT Systems",
+  ],
   audience: ["student", "parent", "admin"],
 };
 
@@ -110,7 +122,18 @@ const CREATIVE_DIGITAL_SKILLS_COURSE: CourseItem = {
   ],
   branchesIncluded: [],
   subjectsCovered: [],
-  points: [],
+  points: [
+    "Graphic Design — Canva, Photoshop, Illustrator, Logo & Banner Creation",
+    "Video Editing — Premiere Pro, CapCut, Colour Grading, Transitions",
+    "Animation — 2D Animation Principles, Motion Graphics, After Effects",
+    "Game Design — Scratch to Unity, 2D & 3D Game Development",
+    "Game Dev with AI — NPC Behaviour, Procedural Generation, Game AI",
+    "UI Design — Figma, Wireframing, Prototyping, User-Centred Design",
+    "Motion Graphics — Title Animations, Explainer Videos, Kinetic Typography",
+    "Photography — Composition, Lighting, Camera Settings, Photo Editing",
+    "Videography — Shooting Techniques, Stabilisation, Storytelling",
+    "Content Creation — YouTube, Instagram, Reels, Social Media Strategy",
+  ],
   audience: ["student", "parent", "admin"],
 };
 
@@ -121,6 +144,18 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Build speaking confidence, pronunciation, vocabulary, and everyday communication skills.",
+    topics: [
+      "Greetings & Introductions",
+      "Everyday Conversations & Phrases",
+      "Pronunciation & Accent Training",
+      "Vocabulary Building (Synonyms, Antonyms)",
+      "Tenses in Speech",
+      "Picture Composition & Describing",
+      "Listening & Comprehension",
+      "Confidence Building in Speaking",
+      "Basic Grammar in Conversation",
+      "Role-Play & Situational Dialogues",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -129,6 +164,18 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Improve calculation speed, focus, memory, and number confidence through abacus practice.",
+    topics: [
+      "Introduction to Abacus & Bead Values",
+      "Single Digit Addition & Subtraction",
+      "Double Digit Addition & Subtraction",
+      "Mental Visualization Techniques",
+      "Finger Movement & Speed Drills",
+      "Number Recognition & Place Value",
+      "Small Friend & Big Friend Concepts",
+      "Carrying & Borrowing Techniques",
+      "Basic Multiplication Introduction",
+      "Memory & Concentration Exercises",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -137,6 +184,18 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Introduce basic robotics, logic building, sensors, and hands-on STEM activities.",
+    topics: [
+      "What is a Robot? — Types & Uses",
+      "Basic Robotics Components (Motors, Sensors)",
+      "Introduction to Logic & Sequencing",
+      "Building Simple Circuits",
+      "Understanding Sensors (IR, Ultrasonic)",
+      "Basic Block-Based Coding for Robots",
+      "Line Follower & Obstacle Avoidance Bots",
+      "Hands-On Robot Assembly Projects",
+      "STEM Innovation Challenges",
+      "Introduction to AI & Smart Devices",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -145,6 +204,18 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Prepare for school-level Olympiads with reasoning, science, maths, and practice tests.",
+    topics: [
+      "Verbal & Non-Verbal Reasoning",
+      "Number Sense & Place Value",
+      "Patterns & Sequences",
+      "Basic Geometry & Mensuration",
+      "Science Fundamentals (Physics, Chemistry, Biology)",
+      "Data Handling & Graphs",
+      "Logical Puzzles & Coding-Decoding",
+      "Everyday Mathematics Application",
+      "Achievers Section (HOTS Questions)",
+      "Mock Tests & Previous Year Papers",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -153,6 +224,18 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Develop early awareness of history, geography, current affairs, civics, and India knowledge.",
+    topics: [
+      "Indian History — Ancient, Medieval, Modern",
+      "Indian Geography — Physical & Political",
+      "Indian Polity — Constitution Basics",
+      "Current Affairs & News Awareness",
+      "Civics & Governance",
+      "Indian Culture & Heritage",
+      "World Geography Introduction",
+      "Map Reading & Identification",
+      "Thinking & Analytical Skills",
+      "Communication & Expression",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -161,6 +244,18 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Improve confidence, behaviour, communication, manners, and classroom participation.",
+    topics: [
+      "Self-Awareness & SWOT Analysis",
+      "Building Self-Confidence",
+      "Body Language & Posture",
+      "Positive Thinking & Attitude",
+      "Time Management & Discipline",
+      "Social Etiquette & Manners",
+      "Goal Setting & Motivation",
+      "Stress Management Basics",
+      "Interpersonal Skills",
+      "Leadership Qualities for Students",
+    ],
     mode: "Home / Online Tutoring",
   },
 ];
@@ -173,6 +268,18 @@ const CLASS_7_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Train students to speak clearly, present ideas, and participate confidently in school activities.",
+    topics: [
+      "Overcoming Stage Fear",
+      "Speech Structure — Opening, Body, Conclusion",
+      "Voice Modulation & Projection",
+      "Impromptu Speaking Techniques",
+      "Storytelling & Narrative Skills",
+      "Debate Fundamentals",
+      "Persuasive Speaking",
+      "Using Visual Aids in Presentations",
+      "Audience Engagement Methods",
+      "Group Discussion & Exchange of Ideas",
+    ],
     mode: "Home / Online Tutoring",
   },
 ];
@@ -184,6 +291,18 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Learn robotics basics, logic, sensors, and practical STEM-based project activities.",
+    topics: [
+      "Robot Classification & Applications",
+      "Mechanical & Electrical Systems",
+      "Sensors & Actuators (IR, Ultrasonic, Servo)",
+      "Microcontroller Programming (Arduino Basics)",
+      "Logic Gates & Decision Making",
+      "Autonomous Navigation Concepts",
+      "Robot Arm & Manipulator Basics",
+      "3D Modelling for Robot Parts",
+      "IoT & Connected Robots Introduction",
+      "Hands-On Project: Build a Smart Robot",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -192,6 +311,18 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Improve calculation speed, concentration, memory, and numerical confidence.",
+    topics: [
+      "Triple Digit Addition & Subtraction",
+      "Multiplication on Abacus",
+      "Division Basics on Abacus",
+      "Mental Math Visualization",
+      "Speed & Accuracy Drills",
+      "BODMAS / Order of Operations",
+      "Decimal Introduction",
+      "Fraction Basics",
+      "Competitive Exam Math Patterns",
+      "Mixed Operation Speed Challenges",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -200,6 +331,20 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Introduce AI concepts, smart tools, basic automation ideas, and future technology awareness.",
+    topics: [
+      "What is AI? — Real-World Applications",
+      "AI vs Machine Learning vs Deep Learning",
+      "AI Project Cycle — Problem to Solution",
+      "Data Collection & Data Types",
+      "Introduction to Python Programming",
+      "Variables, Loops & Conditions in Python",
+      "Decision Trees & Rule-Based Systems",
+      "Neural Networks — Simple Concepts",
+      "Computer Vision Basics",
+      "Natural Language Processing Introduction",
+      "AI Ethics, Bias & Responsible AI",
+      "Hands-On: Build a Simple AI Model",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -208,6 +353,18 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Practice maths, science, reasoning, and Olympiad-style questions with structured guidance.",
+    topics: [
+      "Advanced Logical Reasoning",
+      "Integers, Fractions & Decimals",
+      "Ratio & Proportion",
+      "Basic Algebra & Simple Equations",
+      "Geometry — Lines, Angles, Triangles",
+      "Mensuration — Perimeter & Area",
+      "Science: Force, Energy, Cells, Environment",
+      "Data Handling — Mean, Median, Mode",
+      "Blood Relations & Venn Diagrams",
+      "Previous Year Olympiad Paper Practice",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -216,6 +373,18 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Build early knowledge of history, polity, geography, current affairs, and civic awareness.",
+    topics: [
+      "Indian History — Mughal to Freedom Struggle",
+      "Indian Polity — Fundamental Rights & Duties",
+      "Indian Geography — Rivers, Mountains, Climate",
+      "Economic Basics — GDP, Inflation, Budget",
+      "Current Affairs (Weekly Updates)",
+      "Indian Constitution — Preamble & Parts",
+      "World History Overview",
+      "Environment & Ecology Basics",
+      "Map-Based Questions Practice",
+      "Answer Writing & Expression Skills",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -224,6 +393,18 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Develop stage confidence, speech delivery, presentation skills, and clear expression.",
+    topics: [
+      "Public Speaking Anxiety Management",
+      "Speech Writing & Structuring",
+      "Voice Modulation & Pace Control",
+      "Debate Format & Argumentation",
+      "Extempore Speaking Practice",
+      "Mock Press Conference & Panel Discussion",
+      "Presentation Design & Delivery",
+      "Media Training Basics",
+      "Confidence Building Exercises",
+      "Peer Feedback & Improvement",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -232,6 +413,18 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Improve self-confidence, social behaviour, discipline, and personal presentation.",
+    topics: [
+      "Self-Confidence Building Exercises",
+      "Assertive Communication",
+      "Grooming & Personal Hygiene",
+      "Time Management & Productivity",
+      "Goal Setting — Short & Long Term",
+      "Emotional Intelligence Basics",
+      "Public Manners & Social Graces",
+      "Teamwork & Collaboration",
+      "Decision Making & Problem Solving",
+      "Interview Preparation Basics",
+    ],
     mode: "Home / Online Tutoring",
   },
 ];
@@ -243,6 +436,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Start early preparation for engineering entrance concepts through maths and science foundations.",
+    topics: [
+      "Algebra — Polynomials, Quadratic Equations",
+      "Trigonometry — Ratios, Identities, Heights & Distances",
+      "Coordinate Geometry — Distance & Section Formula",
+      "Physics — Force, Motion, Laws of Newton",
+      "Work, Energy & Power",
+      "Current Electricity & Ohm's Law",
+      "Chemistry — Atoms, Molecules, Periodic Table",
+      "Acids, Bases & Salts",
+      "Geometry — Triangles, Circles, Area",
+      "Problem Solving & Logical Thinking",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -251,6 +456,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Build early biology, chemistry, and science fundamentals for future medical entrance preparation.",
+    topics: [
+      "Cell Biology — Structure & Function",
+      "Tissues & Organ Systems",
+      "Diversity in Living Organisms",
+      "Heredity & Evolution Basics",
+      "Physics — Motion, Force, Gravitation",
+      "Work, Energy & Sound",
+      "Chemistry — Matter, Atoms, Elements",
+      "Periodic Classification of Elements",
+      "Environmental Science & Ecology",
+      "NCERT-Based Concept Building",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -259,6 +476,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Develop early understanding of history, geography, civics, current affairs, and India studies.",
+    topics: [
+      "Ancient India — Indus Valley, Vedic Period",
+      "Medieval India — Sultanate, Mughals",
+      "Modern India — Colonial Rule & Freedom Struggle",
+      "Indian Geography — Physiography & Climate",
+      "Indian Polity — Parliament, Judiciary, Executive",
+      "Economic Concepts — Sectors, Banking, Taxation",
+      "Current Affairs Analysis",
+      "Environment & Biodiversity",
+      "International Organizations & Events",
+      "Answer Writing & Critical Thinking",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -267,6 +496,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Introduce defence career awareness, basic aptitude, discipline, and fitness guidance.",
+    topics: [
+      "Defence Career Awareness & Structure",
+      "Physical Fitness & Training Basics",
+      "Running, Endurance & Stamina Drills",
+      "Basic Arithmetic & Numerical Ability",
+      "General Knowledge — India & World",
+      "Current Affairs for Defence Exams",
+      "Reasoning & Mental Ability",
+      "English & Hindi Grammar Basics",
+      "Map Reading & Direction Sense",
+      "Discipline, Values & Motivation",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -275,6 +516,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Learn robotics concepts, logic building, electronics basics, and project-based STEM skills.",
+    topics: [
+      "Robot Types, Classification & Applications",
+      "Mechanical Systems — Gears, Linkages, Joints",
+      "Electronics — Resistors, LEDs, Circuits",
+      "Arduino Programming (C/C++ Basics)",
+      "Sensor Integration — IR, Ultrasonic, LDR",
+      "Motor Control — DC, Servo, Stepper",
+      "Degree of Freedom & Motion Planning",
+      "Robot Kinematics Introduction",
+      "Autonomous Robot Design",
+      "Capstone Project: Smart Robot Build",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -283,6 +536,20 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Understand AI fundamentals, smart tools, automation, and future digital opportunities.",
+    topics: [
+      "AI Domains — Data, Computer Vision, NLP",
+      "AI Project Cycle — Problem to Deployment",
+      "Data Collection, Cleaning & Visualization",
+      "Python Programming — Variables, Lists, Loops",
+      "Decision Trees & Model Building",
+      "Introduction to Neural Networks",
+      "Computer Vision — Image Recognition",
+      "NLP — Chatbots & Text Analysis",
+      "AI in Healthcare, Transport & Agriculture",
+      "AI Ethics, Bias & Social Impact",
+      "No-Code AI Tools (Teachable Machine)",
+      "Hands-On: Build & Train a Model",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -291,6 +558,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Learn basic design, editing, visual storytelling, and beginner-friendly digital creation tools.",
+    topics: [
+      "Introduction to Canva & Design Basics",
+      "Colour Theory & Typography",
+      "Image Editing — Cropping, Filters, Retouching",
+      "Logo & Banner Design",
+      "Social Media Post Design",
+      "Video Editing — Cuts, Transitions, Effects",
+      "Audio Syncing & Background Music",
+      "Typography in Video & Graphics",
+      "Content Creation for Instagram & YouTube",
+      "Building a Design Portfolio",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -299,6 +578,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Improve fluency, vocabulary, pronunciation, and confidence in spoken communication.",
+    topics: [
+      "Grammar in Speech — Tenses & Agreement",
+      "Pronunciation & Stress Patterns",
+      "Vocabulary Building — Root Words & Idioms",
+      "Daily Conversation & Situational English",
+      "Picture Description & Narration",
+      "Debate & Group Discussion",
+      "Interview Skills & Mock Interviews",
+      "Presentation Speaking",
+      "News Reading & Comprehension",
+      "Exam Viva & Oral Communication",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -307,6 +598,18 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Build confidence, communication, behaviour, presentation, and personal discipline.",
+    topics: [
+      "Self-Discovery & Strength Identification",
+      "Growth Mindset Development",
+      "Body Language & Eye Contact",
+      "Effective Communication Skills",
+      "Time Management & Prioritization",
+      "Emotional Intelligence & Empathy",
+      "Conflict Resolution & Negotiation",
+      "Personal Branding for Students",
+      "Interview & Group Discussion Skills",
+      "Career Awareness & Goal Planning",
+    ],
     mode: "Home / Online Tutoring",
   },
 ];
@@ -318,6 +621,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Prepare early for engineering entrance concepts while balancing Class 10 board studies.",
+    topics: [
+      "Quadratic Equations & Arithmetic Progressions",
+      "Trigonometry — Heights & Distances",
+      "Coordinate Geometry — Lines & Slopes",
+      "Physics — Light, Reflection, Refraction",
+      "Electricity & Magnetic Effects",
+      "Chemistry — Chemical Reactions, Acids & Bases",
+      "Metals & Non-Metals",
+      "Periodic Table & Periodicity",
+      "Surface Area & Volume (Mensuration)",
+      "Board + Entrance Integrated Problem Practice",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -326,6 +641,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Strengthen science concepts for future medical entrance preparation and stream planning.",
+    topics: [
+      "Life Processes — Nutrition, Circulation, Respiration",
+      "Control & Coordination — Nervous System",
+      "Reproduction & Heredity",
+      "Evolution & Classification",
+      "Light — Reflection & Refraction",
+      "Electricity & Its Effects",
+      "Chemical Reactions & Equations",
+      "Carbon & Its Compounds",
+      "Our Environment & Ecosystem",
+      "NCERT-Based Deep Dive & MCQ Practice",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -334,6 +661,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Build early awareness of history, geography, polity, current affairs, and civic studies.",
+    topics: [
+      "Indian Freedom Movement — Complete",
+      "Post-Independence India",
+      "Indian Geography — Resources & Industries",
+      "Indian Polity — Constitution in Detail",
+      "Economic Development — Five Year Plans",
+      "Current Affairs — National & International",
+      "Environment & Climate Change",
+      "Science & Technology Developments",
+      "Ethics & Human Values",
+      "Map Practice & Answer Writing",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -342,6 +681,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Introduce aptitude, defence career awareness, discipline, and basic physical-readiness guidance.",
+    topics: [
+      "Written Exam Syllabus Overview",
+      "Numerical Ability — Speed, Distance, Ratio",
+      "Reasoning — Series, Coding, Analogies",
+      "General Knowledge — India & World",
+      "Current Affairs (Defence & Security Focus)",
+      "English Comprehension & Grammar",
+      "Physical Fitness — Running, Push-Ups, Planks",
+      "Obstacle Course Awareness",
+      "Map Reading & Direction Sense",
+      "Previous Year Question Practice",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -350,6 +701,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Learn robotics, electronics basics, logical thinking, and practical project work.",
+    topics: [
+      "Robot Anatomy — Mechanical, Electrical, Computing",
+      "Microcontroller Programming (Arduino / ESP32)",
+      "Sensor Arrays — Multi-Sensor Integration",
+      "Motor Drivers & H-Bridge Circuits",
+      "PID Control & Feedback Systems",
+      "Bluetooth & WiFi Controlled Robots",
+      "Line Follower to Maze Solver Progression",
+      "Drone Basics & Aerodynamics Intro",
+      "IoT — Connecting Robots to Cloud",
+      "Final Project: Autonomous Robot Competition",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -358,6 +721,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3-6 Months",
     summary:
       "Explore AI concepts, digital tools, automation thinking, and future technology careers.",
+    topics: [
+      "AI Project Cycle — Advanced Problem Scoping",
+      "Statistical Data & No-Code AI Tools",
+      "Supervised, Unsupervised & Reinforcement Learning",
+      "Python — Functions, Lists, Dictionaries",
+      "Model Evaluation & Accuracy Metrics",
+      "Computer Vision — Face & Object Detection",
+      "NLP — Sentiment Analysis & Chatbots",
+      "AI in Real World — Healthcare, Transport, Finance",
+      "AI Bias, Fairness & Ethics",
+      "Capstone: Build an End-to-End AI Project",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -366,6 +741,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Learn beginner-friendly video editing, content creation, visual cuts, and storytelling.",
+    topics: [
+      "Introduction to Video Editing Software",
+      "Timeline, Cuts & Transitions",
+      "Colour Correction & Grading Basics",
+      "Audio Editing & Background Music",
+      "Text Overlays & Subtitles",
+      "Motion Graphics Introduction",
+      "Green Screen & Chroma Key",
+      "YouTube & Reels Editing Workflow",
+      "Export Settings for Different Platforms",
+      "Portfolio: Create a Short Film or Vlog",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -374,6 +761,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "3 Months",
     summary:
       "Improve fluency, pronunciation, vocabulary, and confidence for school and interviews.",
+    topics: [
+      "Advanced Grammar in Use",
+      "Pronunciation & Fluency Drills",
+      "Vocabulary Expansion — Academic & Professional",
+      "Essay & Paragraph Speaking",
+      "Group Discussion & Debate",
+      "Mock Interview — School & College",
+      "Phone & Email Communication",
+      "Presentation Skills",
+      "Reading Comprehension & Retelling",
+      "Board Viva & Oral Exam Preparation",
+    ],
     mode: "Home / Online Tutoring",
   },
   {
@@ -382,6 +781,18 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
     duration: "Short Term",
     summary:
       "Get guidance for stream selection, career options, entrance exams, and future planning.",
+    topics: [
+      "Stream Selection — Science, Commerce, Arts",
+      "Career Assessment & Aptitude Testing",
+      "Top Career Paths — Engineering, Medical, Law, Management",
+      "Entrance Exam Roadmap (JEE, NEET, CET, CUET)",
+      "Professional Courses — BBA, BCA, BCom, Design",
+      "Study in India vs Study Abroad",
+      "Scholarship & Financial Aid Guidance",
+      "Resume & Profile Building",
+      "Parent-Student Career Discussion",
+      "Action Plan & Goal Setting",
+    ],
     mode: "Online / Counselling Session",
   },
 ];
@@ -457,6 +868,7 @@ const CLASS_11_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   streamLabel: getProgramStreamLabel(title),
   duration: getAdditionalProgramDuration(title),
   summary: getProgramSummary(title),
+  topics: getProgramTopics(title),
   mode: "Home / Online Tutoring",
 }));
 
@@ -486,6 +898,7 @@ const CLASS_12_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   streamLabel: getProgramStreamLabel(title),
   duration: getAdditionalProgramDuration(title),
   summary: getProgramSummary(title),
+  topics: getProgramTopics(title),
   mode: "Home / Online Tutoring",
 }));
 
@@ -585,6 +998,182 @@ function getProgramSummary(title: string) {
   );
 }
 
+function getProgramTopics(title: string): string[] {
+  const topicMap: Record<string, string[]> = {
+    JEE: [
+      "Mathematics — Algebra, Calculus, Coordinate Geometry",
+      "Physics — Mechanics, Thermodynamics, Optics",
+      "Chemistry — Organic, Inorganic, Physical Chemistry",
+      "Problem Solving & Speed Techniques",
+      "Previous Year JEE Question Practice",
+      "Mock Tests & Performance Analysis",
+    ],
+    NEET: [
+      "Biology — Cell, Genetics, Ecology, Human Physiology",
+      "Physics — Mechanics, Electricity, Magnetism",
+      "Chemistry — Organic, Inorganic, Physical",
+      "NCERT-Based Concept Mastery",
+      "MCQ Practice & Time Management",
+      "Mock Tests & Revision Strategy",
+    ],
+    "All MHT CET Exam": [
+      "Physics — Mechanics, Waves, Electricity, Magnetism",
+      "Chemistry — Physical, Organic, Inorganic",
+      "Mathematics — Algebra, Calculus, Trigonometry",
+      "State Board Syllabus Focus",
+      "Practice Papers & Mock Tests",
+      "Exam Strategy & Time Management",
+    ],
+    CUET: [
+      "Domain-Specific Subjects (Science, Commerce, Arts)",
+      "General Test — Reasoning, GK, Quant",
+      "Language Proficiency (English / Hindi)",
+      "Subject-Wise Concept Revision",
+      "Mock Tests & Previous Year Papers",
+      "University Admission Guidance",
+    ],
+    NDA: [
+      "Mathematics — Algebra, Trigonometry, Calculus",
+      "General Ability — English, GK, Science",
+      "Current Affairs & Defence Awareness",
+      "Physical Fitness Preparation",
+      "SSB Interview & Personality Test",
+      "Previous Year Paper Practice",
+    ],
+    "Police/Army Bharti": [
+      "Numerical Ability — Arithmetic, Mensuration",
+      "Reasoning — Series, Coding, Analogies",
+      "General Knowledge — India & World",
+      "English / Marathi Grammar",
+      "Physical Fitness — Running, Endurance",
+      "Previous Year Question Practice",
+    ],
+    "IMU CET": [
+      "English — Grammar, Comprehension, Vocabulary",
+      "General Knowledge — Maritime & Current Affairs",
+      "Mathematics — Algebra, Trigonometry, Calculus",
+      "Physics — Mechanics, Waves, Optics",
+      "Chemistry — Elements, Compounds, Reactions",
+      "Maritime Awareness & Career Guidance",
+    ],
+    "NCHMCT JEE": [
+      "English Language — Grammar & Comprehension",
+      "Numerical Ability — Arithmetic & Reasoning",
+      "Logical Reasoning & Analytical Ability",
+      "General Knowledge — Tourism & Hospitality",
+      "Service Aptitude & Personality Traits",
+      "Hotel Management Career Awareness",
+    ],
+    CLAT: [
+      "Legal Aptitude — Principles & Application",
+      "Logical Reasoning — Patterns & Arguments",
+      "English — Comprehension & Grammar",
+      "General Knowledge — Current Affairs",
+      "Mathematics — Basic Numerical Ability",
+      "Constitutional Law & Legal Awareness",
+    ],
+    "CA Foundation": [
+      "Accounting — Principles & Practice",
+      "Business Laws — Indian Contract, Sale of Goods",
+      "Economics — Micro & Macro Basics",
+      "Quantitative Aptitude — Maths & Statistics",
+      "Mercantile Laws & Ethics",
+      "Mock Tests & ICAI Pattern Practice",
+    ],
+    "CS Foundation": [
+      "Business Environment & Management",
+      "Business Laws — Company Law Basics",
+      "Economic & Commercial Laws",
+      "Tax Laws — Income Tax & GST Introduction",
+      "Auditing Basics",
+      "Communication & Business Correspondence",
+    ],
+    "CMA Foundation": [
+      "Cost Accounting — Basics & Fundamentals",
+      "Management Accounting Introduction",
+      "Financial Accounting — Journal, Ledger, Trial Balance",
+      "Business Mathematics & Statistics",
+      "Economics — Micro & Macro Basics",
+      "Business Laws & Ethics",
+    ],
+    IPMAT: [
+      "Quantitative Aptitude — Maths & Data Interpretation",
+      "Logical Reasoning — Puzzles & Sequences",
+      "Verbal Ability — Grammar, Vocabulary, Reading",
+      "General Awareness — Business & Current Affairs",
+      "Mock Tests & Previous Year Papers",
+      "PI & WAT Preparation",
+    ],
+    NPAT: [
+      "Quantitative & Numerical Ability",
+      "Reasoning & General Intelligence",
+      "English Language & Proficiency",
+      "General Awareness — Business & Current Affairs",
+      "Data Interpretation & Analysis",
+      "Mock Tests & Exam Strategy",
+    ],
+    "UPSC Foundation": [
+      "Indian History — Ancient, Medieval, Modern",
+      "Indian Polity — Constitution & Governance",
+      "Indian Geography — Physical & Economic",
+      "Economics — Concepts & Current Developments",
+      "Current Affairs — National & International",
+      "Ethics, Integrity & Aptitude",
+    ],
+    SSC: [
+      "Quantitative Aptitude — Arithmetic & Advanced",
+      "General Intelligence & Reasoning",
+      "English Language — Grammar & Comprehension",
+      "General Awareness — GK & Current Affairs",
+      "Computer Basics",
+      "Tier-Wise Preparation Strategy",
+    ],
+    Railway: [
+      "Mathematics — Arithmetic, Algebra, Mensuration",
+      "Reasoning — Analogies, Classification, Series",
+      "General Science — Physics, Chemistry, Biology",
+      "General Awareness — India & Current Affairs",
+      "Speed & Accuracy Drills",
+      "Previous Year Railway Paper Practice",
+    ],
+    "Video Editing": [
+      "Video Editing Software Basics (Premiere Pro / CapCut)",
+      "Cuts, Trims & Transitions",
+      "Colour Correction & Grading",
+      "Audio Syncing & Background Music",
+      "Motion Graphics & Text Animation",
+      "YouTube & Reels Editing Workflow",
+    ],
+    "Spoken English": [
+      "Fluency & Pronunciation Drills",
+      "Vocabulary Building — Idioms & Phrases",
+      "Grammar in Conversation",
+      "Debate, GD & Presentation Skills",
+      "Mock Interview Practice",
+      "Daily Use English Communication",
+    ],
+    "Interview & Personality Development": [
+      "Resume & CV Building",
+      "Mock Interview — HR & Technical",
+      "Body Language & Confidence Building",
+      "Group Discussion Techniques",
+      "Grooming & Professional Appearance",
+      "Career Planning & Self-Presentation",
+    ],
+  };
+
+  return (
+    topicMap[title] ?? [
+      "Structured curriculum with theory & practice",
+      "Regular assessments & progress tracking",
+      "Hands-on projects & practical application",
+      "Expert faculty guidance",
+      "Previous year question practice",
+      "Performance analysis & feedback",
+    ]
+  );
+}
+
 function getAdditionalProgramGroups(activeTab: string): AdditionalProgramGroup[] {
   switch (activeTab) {
     case "Class 6":
@@ -664,7 +1253,7 @@ function AdditionalProgramsSection({
   activeTab: string;
   searchQuery: string;
   allCourses: CourseItem[];
-  onSelectCourse: (course: CourseItem, additionalProgram?: string) => void;
+  onSelectCourse: (course: CourseItem, additionalProgram?: string, topics?: string[]) => void;
 }) {
   const groups = useMemo(() => {
     const baseGroups = getAdditionalProgramGroups(activeTab);
@@ -681,7 +1270,10 @@ function AdditionalProgramsSection({
           (program) =>
             program.title.toLowerCase().includes(q) ||
             program.streamLabel.toLowerCase().includes(q) ||
-            program.summary.toLowerCase().includes(q),
+            program.summary.toLowerCase().includes(q) ||
+            program.topics?.some((topic) =>
+              topic.toLowerCase().includes(q),
+            ),
         ),
       }))
       .filter((group) => group.programs.length > 0);
@@ -691,13 +1283,13 @@ function AdditionalProgramsSection({
     return null;
   }
 
-function openEnrollment(standardKey: string, programTitle: string) {
+function openEnrollment(standardKey: string, programTitle: string, topics: string[] = []) {
   const matchingCourse = allCourses.find(
     (course) => course.standardKey === standardKey,
   );
 
   if (matchingCourse) {
-    onSelectCourse(matchingCourse, programTitle);
+    onSelectCourse(matchingCourse, programTitle, topics);
   }
 }
 
@@ -753,7 +1345,7 @@ function openEnrollment(standardKey: string, programTitle: string) {
 
                   <button
                     type="button"
-                    onClick={() => openEnrollment(group.standardKey, program.title)}
+                    onClick={() => openEnrollment(group.standardKey, program.title, program.topics ?? [])}
                     className="inline-flex items-center gap-1 text-[11px] font-black text-blue-600 transition-colors hover:text-blue-800"
                   >
                     Enroll Now
@@ -781,6 +1373,8 @@ const [activeTab, setActiveTab] = useState("Class 6");
 const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
 const [selectedAdditionalProgram, setSelectedAdditionalProgram] =
   useState<string>("");
+const [selectedProgramTopics, setSelectedProgramTopics] =
+  useState<string[]>([]);
 
   useEffect(() => {
     if (isCourseTab(requestedTab)) {
@@ -859,8 +1453,9 @@ const [selectedAdditionalProgram, setSelectedAdditionalProgram] =
   activeTab={activeTab}
   searchQuery={searchQuery}
   allCourses={coursesWithRequiredSkills}
-  onSelectCourse={(course, additionalProgram) => {
+  onSelectCourse={(course, additionalProgram, topics) => {
     setSelectedAdditionalProgram(additionalProgram ?? "");
+    setSelectedProgramTopics(topics ?? []);
     setSelectedCourse(course);
   }}
 />
@@ -932,9 +1527,11 @@ const [selectedAdditionalProgram, setSelectedAdditionalProgram] =
 <CourseModal
   course={selectedCourse}
   initialAdditionalCourse={selectedAdditionalProgram}
+  programTopics={selectedProgramTopics}
   onClose={() => {
     setSelectedCourse(null);
     setSelectedAdditionalProgram("");
+    setSelectedProgramTopics([]);
   }}
 />
 

@@ -3026,7 +3026,7 @@ export function SalesCrmManager({
                       onChange={(event) =>
                         setDemoEducatorName(event.target.value)
                       }
-                      placeholder="Teacher name"
+                      placeholder="e.g. Ankit"
                       className="rounded-xl border border-violet-200 bg-white px-3 py-2.5 outline-none focus:border-violet-500"
                     />
                   </label>

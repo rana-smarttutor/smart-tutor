@@ -673,6 +673,7 @@ export function InvoiceManager({
       .print-btn { display: none !important; }
       .receipt-wrap { margin: 0; border: none; }
       .receipt-box { margin: 0; border: none; }
+      .receipt-box img { width: 100% !important; height: auto !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
   </style>
 </head>
@@ -685,8 +686,8 @@ export function InvoiceManager({
     <div class="receipt-box">
 
       <!-- Full-width Header Banner -->
-      <div style="width:100%;border-bottom:2px solid ${NAVY};-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors" style="width:100%;display:block;max-height:140px;object-fit:contain;" />
+      <div style="width:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+        <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors" style="width:100%;display:block;height:auto;" />
       </div>
 
       <!-- Content Area -->

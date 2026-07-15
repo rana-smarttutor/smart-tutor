@@ -706,7 +706,7 @@ export function DashboardProfileSettings({
                     Parent / Guardian
                   </h3>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <FieldInput label="Parent Name" value={parentName} onChange={setParentName} maxLength={60} placeholder="Parent / Guardian name" />
+                    <FieldInput label="Parent Name" value={parentName} onChange={setParentName} maxLength={60} placeholder="e.g. Supriya" />
                     <FieldInput label="Parent Email" value={parentEmail} onChange={setParentEmail} type="email" placeholder="parent@email.com" />
                     <FieldInput label="Parent Mobile" value={parentMobile} onChange={setParentMobile} maxLength={15} placeholder="Parent phone number" />
                   </div>

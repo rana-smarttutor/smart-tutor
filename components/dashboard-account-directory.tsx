@@ -618,9 +618,10 @@ export function DashboardAccountDirectory({
                   onChange={(e) =>
                     setDrafts((c) => ({ ...c, [user.id]: { ...d, name: e.target.value.slice(0, 48) } }))
                   }
-                  placeholder="Full name"
+                   placeholder="e.g. Supriya"
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
+
                 <input
                   value={d.email}
                   onChange={(e) =>
@@ -883,7 +884,7 @@ export function DashboardAccountDirectory({
                   <input
                     value={createForm.name}
                     onChange={(e) => setCreateForm((c) => ({ ...c, name: e.target.value.slice(0, 48) }))}
-                    placeholder="Full name"
+                    placeholder="e.g. Tanish"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                   <input
@@ -943,7 +944,7 @@ export function DashboardAccountDirectory({
                         <input
                           value={createForm.parentName}
                           onChange={(e) => setCreateForm((c) => ({ ...c, parentName: e.target.value.slice(0, 60) }))}
-                          placeholder="Parent name"
+                           placeholder="e.g. Supriya"
                           className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                         <input
