@@ -880,7 +880,7 @@ export function MyProfileClient({ session }: Props) {
                             setParentMobile(e.target.value.slice(0, 15))
                           }
                           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                          placeholder="Parent phone number"
+                          placeholder="+91 9876543210"
                         />
                       </div>
                       <div>

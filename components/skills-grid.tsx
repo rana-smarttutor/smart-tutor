@@ -156,13 +156,13 @@ export default function SkillsGrid({ onSelectCourse, allCourses }: SkillsGridPro
         <div className="hidden lg:block flex-1 max-w-xs h-[1px] bg-blue-100 mx-6" />
 
         {/* Highlight Pills */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           {["Expert Trainers", "Hands-on Projects", "Industry Certifications", "Job Placement"].map((tag) => (
             <span
               key={tag}
-              className="bg-slate-50 border border-slate-200 text-slate-600 text-[10px] font-semibold px-2.5 py-1 rounded flex items-center shadow-3xs"
+              className="bg-slate-50 border border-slate-200 text-slate-500 text-[9px] font-semibold px-2 py-0.5 rounded flex items-center"
             >
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5" />
+              <div className="w-1 h-1 rounded-full bg-blue-500 mr-1" />
               {tag}
             </span>
           ))}
@@ -213,12 +213,12 @@ export default function SkillsGrid({ onSelectCourse, allCourses }: SkillsGridPro
                     <div className="p-2 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
                       <IconComponent className="w-4 h-4 text-blue-600" />
                     </div>
-                    <h3 className="font-display font-medium text-xs text-slate-950 group-hover:text-blue-600 transition-colors leading-tight">
+                    <h3 className="font-display font-medium text-[11px] text-slate-950 group-hover:text-blue-600 transition-colors leading-tight">
                       {domain.title}
                     </h3>
                   </div>
 
-                  <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                  <p className="text-slate-500 text-[10px] font-medium leading-relaxed">
                     {domain.desc}
                   </p>
                 </div>
@@ -227,7 +227,7 @@ export default function SkillsGrid({ onSelectCourse, allCourses }: SkillsGridPro
                 <div className="pt-4 mt-3 border-t border-slate-200/80 flex items-center justify-between">
                   <div className="flex flex-wrap gap-1 max-w-[70%]">
                     {domain.techTags.slice(1, 4).map((tech, tIdx) => (
-                      <span key={tIdx} className="bg-slate-100 text-slate-600 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                      <span key={tIdx} className="bg-slate-100 text-slate-500 text-[8px] font-bold px-1.5 py-0.5 rounded">
                         {tech}
                       </span>
                     ))}

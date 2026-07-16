@@ -96,6 +96,23 @@ async function run() {
   });
   assert("POST /api/enquiries accepts valid input", apiRes.status === 201 || apiRes.status === 200, `(got ${apiRes.status})`);
 
+  // Certificate routes
+  console.log("\n── Certificate Routes ──");
+  apiRes = await request("GET", "/api/certificates");
+  assert("GET /api/certificates requires auth (401)", apiRes.status === 401 || apiRes.status === 403, `(got ${apiRes.status})`);
+
+  apiRes = await request("POST", "/api/certificates", {});
+  assert("POST /api/certificates rejects unauthenticated", apiRes.status === 401 || apiRes.status === 403, `(got ${apiRes.status})`);
+
+  apiRes = await request("GET", "/api/certificates/nonexistent-id");
+  assert("GET /api/certificates/:id returns 404 for missing", apiRes.status === 404, `(got ${apiRes.status})`);
+
+  apiRes = await request("PATCH", "/api/certificates/nonexistent-id", { status: "revoked" });
+  assert("PATCH /api/certificates/:id rejects unauthenticated", apiRes.status === 401 || apiRes.status === 403, `(got ${apiRes.status})`);
+
+  apiRes = await request("DELETE", "/api/certificates/nonexistent-id");
+  assert("DELETE /api/certificates/:id rejects unauthenticated", apiRes.status === 401 || apiRes.status === 403, `(got ${apiRes.status})`);
+
   console.log(`\n📊 Results: ${pass} passed, ${fail} failed\n`);
 
   if (fail > 0) process.exit(1);

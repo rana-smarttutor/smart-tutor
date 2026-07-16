@@ -1329,7 +1329,7 @@ function openEnrollment(standardKey: string, programTitle: string, topics: strin
                     {program.title}
                   </h3>
 
-                  <span className="inline-flex rounded bg-indigo-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-indigo-600">
+                  <span className="inline-flex rounded bg-blue-50 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-blue-600">
                     {activeTab}
                   </span>
 
@@ -1436,7 +1436,7 @@ const [selectedProgramTopics, setSelectedProgramTopics] =
   return (
     <div
       id="smart-tutors-root"
-      className="flex min-h-screen flex-col bg-slate-50/50 font-sans selection:bg-indigo-100 selection:text-indigo-950"
+      className="flex min-h-screen flex-col bg-slate-50/50 font-sans selection:bg-blue-100 selection:text-blue-950"
     >
       <main className="mx-auto flex-1 w-full max-w-7xl space-y-12 px-4 pb-8 pt-4 sm:space-y-16 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8">
 <SpotlightSection
@@ -1470,7 +1470,7 @@ const [selectedProgramTopics, setSelectedProgramTopics] =
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:24px_24px]" />
 
           <div className="relative z-10 mx-auto max-w-2xl space-y-4">
-            <span className="mx-auto inline-flex items-center gap-1 rounded border border-indigo-500/20 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+            <span className="mx-auto inline-flex items-center gap-1 rounded border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-blue-300">
               <HelpingHand className="h-3.5 w-3.5" />
               Free consultation
             </span>
@@ -1502,7 +1502,7 @@ const [selectedProgramTopics, setSelectedProgramTopics] =
                     setSelectedCourse(fallbackCourse);
                   }
                 }}
-                className="w-full cursor-pointer rounded bg-indigo-600 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-indigo-500 sm:w-auto"
+                className="w-full cursor-pointer rounded bg-blue-600 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-blue-500 sm:w-auto"
               >
                 Book a Free Counseling Session
               </motion.button>

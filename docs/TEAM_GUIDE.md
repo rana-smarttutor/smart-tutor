@@ -172,3 +172,24 @@ Vercel deployment uses `vercel.json` for routing, headers, CORS, and regions.
 ### Chat Persistence
 - `lastReadTimestamps` persisted to `localStorage` — unread badge counts survive page refresh.
 - **File:** `components/dashboard-chat.tsx`
+
+### Certificate System (Admin Issue + All Roles Download)
+- Admin-only certificate creation with 3 template designs: Classic Gold, Modern Blue, Professional Dark.
+- Templates rendered as HTML components for preview and PDF generation via html2canvas + jsPDF.
+- Certificates stored in MongoDB `certificates` collection, fetched in dashboard bundle for all roles.
+- Students/educators/parents see their own certificates with download capability; admin has full management panel.
+- Certificate numbers auto-generated as `ST-YYYY-XXXX`. Revocation support with reason tracking.
+- **Files:**
+  - `lib/types.ts` — `Certificate`, `CertificateTemplateId`, `CertificateRecipientType` types; `certificates` added to `AvailableModule` and `DashboardBundle`
+  - `lib/certificate-templates.ts` — template configurations (3 designs), `getTemplateConfig()`, `generateCertificateNo()`
+  - `lib/data-store.ts` — `getCertificatesForRole()`, added to `getDashboardBundle()` Promise.all
+  - `lib/seed-database.ts` — certificates collection seeding
+  - `lib/mock-data.ts` — 3 sample certificates in seed data
+  - `app/api/certificates/route.ts` — GET (list with role filtering), POST (admin-only create)
+  - `app/api/certificates/[id]/route.ts` — GET (public read), PATCH (admin revoke), DELETE (admin)
+  - `components/certificate-template-renderer.tsx` — 3 visual certificate designs (Classic Gold, Modern Blue, Professional Dark) with compact/full modes
+  - `components/admin-certificate-manager.tsx` — admin panel: template picker, recipient search, form, live preview, certificate table, PDF download
+  - `components/certificate-card.tsx` — `DashboardCertificatesSection` + `CertificateCard` + preview modal with PDF download
+  - `components/dashboard-shell.tsx` — sidebar nav added for all roles; lazy-loaded modules for admin and student/educator/parent views
+  - `components/ui-icons.tsx` — added Search, Trash2, Ban, Plus, ChevronDown, AlertTriangle, Eye icons
+  - `docs/MOBILE_APP_API.md` — Section 23: full certificate API reference for Android migration

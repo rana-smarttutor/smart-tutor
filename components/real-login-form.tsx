@@ -153,7 +153,7 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
               onChange={(e) => setForgotForm({ ...forgotForm, phone: e.target.value })}
               required
               className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-              placeholder="Registered phone number"
+              placeholder="+91 9876543210"
             />
           </div>
 

@@ -10,6 +10,22 @@
   display: none;
 }
 
+/* Thin visible scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  height: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 :root {
   --font-sans: var(--font-geist-sans), sans-serif;
   --font-headline: var(--font-geist-sans), sans-serif;

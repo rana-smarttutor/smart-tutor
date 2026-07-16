@@ -624,6 +624,7 @@ export type DashboardBundle = {
   teacherPayouts?: TeacherPayout[];
   notifications?: AppNotification[];
   analytics?: DashboardAnalytics;
+  certificates?: Certificate[];
 };
 
 // =========================
@@ -1394,9 +1395,10 @@ export type AvailableModule =
   | "sales-crm"
   | "gamification"
   | "ptm"
-  | "complaints"
-  | "chat-monitor"
-  | "password-reset-requests";
+    | "complaints"
+    | "chat-monitor"
+    | "password-reset-requests"
+    | "certificates";
 
 export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -1428,6 +1430,7 @@ export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "complaints", label: "Complaint Box" },
   { id: "chat-monitor", label: "Chat Monitor" },
   { id: "password-reset-requests", label: "Password Reset" },
+  { id: "certificates", label: "Certificates" },
 ];
 
 export type CustomRole = {
@@ -1762,4 +1765,34 @@ export type FeeDeletionAuditLog = {
   previousFeeStatus: string;
   newFeeStatus: string;
   createdAt: string;
+};
+
+// =========================
+// Certificate System
+// =========================
+
+export type CertificateTemplateId = "classic-gold" | "modern-blue" | "professional-dark";
+
+export type CertificateRecipientType = "student" | "educator" | "parent";
+
+export type Certificate = {
+  id: string;
+  templateId: CertificateTemplateId;
+  recipientId: string;
+  recipientName: string;
+  recipientType: CertificateRecipientType;
+  recipientEmail?: string;
+  title: string;
+  description: string;
+  courseName?: string;
+  issuedDate: string;
+  issuedBy: string;
+  issuedByName: string;
+  certificateNo: string;
+  status: "issued" | "revoked";
+  revokedAt?: string;
+  revokedBy?: string;
+  revokeReason?: string;
+  createdAt: string;
+  updatedAt?: string;
 };

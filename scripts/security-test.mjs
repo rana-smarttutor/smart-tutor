@@ -132,6 +132,42 @@ async function run() {
   const ct = apiRes.headers.get("content-type") || "";
   pass += check("/api/courses returns JSON", ct.includes("application/json"), `(content-type: ${ct})`);
 
+  // 10. Certificate API security
+  console.log("\n── Certificate API Security ──");
+  const certRes = await fetch(`${BASE_URL}/api/certificates`);
+  pass += check("GET /api/certificates requires auth", certRes.status === 401 || certRes.status === 403, `(got ${certRes.status})`);
+
+  const certPostRes = await fetch(`${BASE_URL}/api/certificates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+  pass += check("POST /api/certificates rejects unauthenticated", certPostRes.status === 401 || certPostRes.status === 403, `(got ${certPostRes.status})`);
+
+  const certPatchRes = await fetch(`${BASE_URL}/api/certificates/fake-id`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status: "revoked" }),
+  });
+  pass += check("PATCH /api/certificates/:id rejects unauthenticated", certPatchRes.status === 401 || certPatchRes.status === 403, `(got ${certPatchRes.status})`);
+
+  const certDeleteRes = await fetch(`${BASE_URL}/api/certificates/fake-id`, { method: "DELETE" });
+  pass += check("DELETE /api/certificates/:id rejects unauthenticated", certDeleteRes.status === 401 || certDeleteRes.status === 403, `(got ${certDeleteRes.status})`);
+
+  const certXssRes = await fetch(`${BASE_URL}/api/certificates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: "<script>alert(1)</script>", recipientName: "<img onerror=alert(1)>" }),
+  });
+  pass += check("Certificate POST handles XSS safely", certXssRes.status < 500, `(got ${certXssRes.status})`);
+
+  const certInjectionRes = await fetch(`${BASE_URL}/api/certificates`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ templateId: '{"$ne": ""}', recipientId: '{"$gt": ""}' }),
+  });
+  pass += check("Certificate POST blocks NoSQL injection", certInjectionRes.status < 500, `(got ${certInjectionRes.status})`);
+
   console.log(`\n📊 Security Test Results: ${pass} passed, ${fail} failed\n`);
 
   if (fail > 0) {

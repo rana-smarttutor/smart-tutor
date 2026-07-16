@@ -421,21 +421,21 @@ function GenericOverview({
       </div>
 
       {/* ── Quick Actions ── */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {quickActions.map((action, idx) => {
           const Icon = action.icon;
           return (
             <button
               key={idx}
               onClick={() => onSetActiveSection(action.section)}
-              className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-[#E8EDF2] hover:shadow-md transition-all hover:-translate-y-0.5"
+              className="flex flex-col items-center gap-2 p-3 sm:p-4 bg-white rounded-2xl border border-[#E8EDF2] hover:shadow-md transition-all hover:-translate-y-0.5"
             >
               <div
-                className={`w-10 h-10 rounded-xl ${action.bg} ${action.color.replace("bg-", "text-")} flex items-center justify-center`}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${action.bg} ${action.color.replace("bg-", "text-")} flex items-center justify-center`}
               >
                 <Icon size={18} strokeWidth={2} />
               </div>
-              <span className="text-xs font-semibold text-slate-700 text-center leading-tight">
+              <span className="text-[10px] sm:text-xs font-semibold text-slate-700 text-center leading-tight">
                 {action.label}
               </span>
             </button>
@@ -449,8 +449,8 @@ function GenericOverview({
         <div className="space-y-5">
           {/* Enrollment Trend */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-bold text-slate-900">
+            <div className="flex items-center justify-between mb-5 gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Enrollment Trend
               </h2>
               <div className="flex gap-1">
@@ -458,7 +458,7 @@ function GenericOverview({
                   <button
                     key={p}
                     onClick={() => setPeriod(p)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                    className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold rounded-lg transition-colors ${
                       period === p
                         ? "bg-indigo-600 text-white"
                         : "bg-slate-100 text-slate-500 hover:bg-slate-200"
@@ -537,7 +537,7 @@ function GenericOverview({
                     />
                   ))}
                 </svg>
-                <div className="flex justify-between mt-2 px-8 text-xs font-medium text-slate-400">
+                <div className="flex justify-between mt-2 px-4 sm:px-8 text-[10px] sm:text-xs font-medium text-slate-400">
                   {enrollmentLabels.map((l, i) => (
                     <span key={i}>{l}</span>
                   ))}
@@ -559,12 +559,12 @@ function GenericOverview({
           {/* Recent Transactions */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Recent Transactions
               </h2>
               <button
                 onClick={() => onSetActiveSection("fees")}
-                className="text-xs font-bold text-[#0B40A1] hover:underline"
+                className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
               >
                 View All
               </button>
@@ -720,12 +720,12 @@ function GenericOverview({
 
           {/* Notice Board */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Notice Board
               </h2>
               {messages.length > 0 && (
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-100 text-rose-600 text-xs font-bold shrink-0">
                   {messages.length}
                 </span>
               )}
@@ -793,13 +793,13 @@ function GenericOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Upcoming Exams */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
               Upcoming Exams
             </h2>
             <button
               onClick={() => onSetActiveSection("tests")}
-              className="text-xs font-bold text-[#0B40A1] hover:underline"
+              className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
             >
               Manage Exams
             </button>
@@ -846,8 +846,8 @@ function GenericOverview({
 
         {/* At-Risk Students */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
               At-Risk Students
             </h2>
           </div>
@@ -1134,7 +1134,7 @@ function StudentOverview({
     <div className="space-y-5">
       {/* ── Hero Section ── */}
       <div
-        className="relative overflow-hidden rounded-2xl p-6 text-white sm:p-8"
+        className="relative overflow-hidden rounded-2xl p-5 sm:p-6 lg:p-8 text-white"
         style={{
           background: "linear-gradient(135deg,#065F46,#0D9488,#0369A1)",
         }}
@@ -1152,86 +1152,94 @@ function StudentOverview({
           </svg>
         </div>
 
-        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          {/* Photo + Student Information */}
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-            {/* Student Photo / Initials Avatar */}
-            <div className="shrink-0">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-white/20 shadow-lg shadow-black/20 backdrop-blur-sm sm:h-24 sm:w-24 lg:h-28 lg:w-28">
-                {dashboard.profile?.profilePhoto ? (
-                  <img
-                    src={dashboard.profile.profilePhoto}
-                    alt={`${studentName} profile`}
-                    className="h-full w-full scale-110 rounded-full object-cover object-top"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-white/20 text-2xl font-black text-white sm:text-3xl">
-                    {getInitials(studentName)}
-                  </div>
-                )}
+        <div className="relative z-10">
+          {/* Row 1: Photo + Name + Stats */}
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between lg:gap-8">
+            {/* Photo + Student Information */}
+            <div className="flex items-center gap-4 sm:gap-5">
+              {/* Student Photo / Initials Avatar */}
+              <div className="shrink-0">
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/80 bg-white/20 shadow-lg shadow-black/20 backdrop-blur-sm sm:h-20 sm:w-20 lg:h-24 lg:w-24">
+                  {dashboard.profile?.profilePhoto ? (
+                    <img
+                      src={dashboard.profile.profilePhoto}
+                      alt={`${studentName} profile`}
+                      className="h-full w-full scale-110 rounded-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center rounded-full bg-white/20 text-xl font-black text-white sm:text-2xl">
+                      {getInitials(studentName)}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Name + Batch + Date */}
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-teal-200">
+                  Student Portal
+                </p>
+                <h1 className="mt-0.5 text-xl font-bold sm:text-2xl lg:text-3xl truncate">
+                  Hey, {studentName.split(" ")[0]}! 📚
+                </h1>
+                {batchInfo ? (
+                  <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-teal-200 truncate">
+                    {batchInfo}
+                  </p>
+                ) : null}
+                <p className="mt-1 text-[11px] sm:text-xs text-teal-200">{dateStr}</p>
               </div>
             </div>
 
-            {/* Student Details */}
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
-                Student Portal
-              </p>
-
-              <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-                Hey, {studentName.split(" ")[0]}! 📚
-              </h1>
-              <p className="text-sm font-semibold uppercase tracking-wider text-teal-200">
-                {batchInfo ? `  ${batchInfo}` : ""}
-              </p>
-
-              <p className="mt-1.5 text-sm text-teal-200">{dateStr}</p>
-
-              {dashboard.assignedFacultyNames &&
-              dashboard.assignedFacultyNames.length > 0 ? (
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {dashboard.assignedFacultyNames.map((name, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm"
-                    >
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white/25 text-[8px] font-bold">
-                        {name.charAt(0)}
-                      </span>
-
-                      {name}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-
-              <p className="mt-3 text-xs text-teal-200/70">
-                Enrollment no: {admissionNo}
-              </p>
+            {/* Stats Pills - Top Right */}
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
+                <UserCheck size={12} className="sm:w-3.5 sm:h-3.5" />
+                Attendance: {attRate != null ? `${attRate}%` : "—"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
+                <Award size={12} className="sm:w-3.5 sm:h-3.5" />
+                Rank: {classRank}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
+                <TrendingUp size={12} className="sm:w-3.5 sm:h-3.5" />
+                Avg: {avgScore}
+              </span>
             </div>
           </div>
 
-          {/* Student Statistics */}
-          <div className="flex flex-wrap gap-2 lg:justify-end">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-              <UserCheck size={13} />
-              Attendance: {attRate != null ? `${attRate}%` : "—"}
-            </span>
+          {/* Row 2: Faculty + Enrollment - spread along width */}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-white/10 pt-4">
+            {/* Assigned Faculty */}
+            {dashboard.assignedFacultyNames &&
+            dashboard.assignedFacultyNames.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] sm:text-xs text-teal-200/70 font-medium mr-1">Faculty:</span>
+                {dashboard.assignedFacultyNames.map((name, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/15 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-[11px] font-semibold backdrop-blur-sm"
+                  >
+                    <span className="flex h-3.5 w-3.5 sm:h-4 sm:w-4 items-center justify-center rounded-full bg-white/25 text-[7px] sm:text-[8px] font-bold">
+                      {name.charAt(0)}
+                    </span>
+                    {name}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <div />
+            )}
 
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-              <Award size={13} />
-              Rank: {classRank}
-            </span>
-
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur-sm">
-              <TrendingUp size={13} />
-              Avg: {avgScore}
-            </span>
+            {/* Enrollment Number */}
+            <p className="text-[10px] sm:text-xs text-teal-200/70 font-medium shrink-0">
+              Enrollment no: {admissionNo}
+            </p>
           </div>
         </div>
       </div>
       {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
           return (
@@ -1240,24 +1248,24 @@ function StudentOverview({
               className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden hover:shadow-md transition-shadow"
             >
               <div style={{ height: 3, backgroundColor: card.color }} />
-              <div className="p-5 relative">
-                <div className="flex items-start justify-between mb-3">
+              <div className="p-3 sm:p-4 lg:p-5 relative">
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
                   <div
-                    className={`w-10 h-10 rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}
+                    className={`w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 rounded-lg sm:rounded-xl ${card.bg} ${card.text} flex items-center justify-center`}
                   >
-                    <Icon size={20} strokeWidth={2} />
+                    <Icon size={16} strokeWidth={2} className="lg:w-5 lg:h-5" />
                   </div>
-                  <div className="w-16 h-7 opacity-30">
+                  <div className="w-12 sm:w-14 lg:w-16 h-6 lg:h-7 opacity-30">
                     <Sparkline values={card.sparkData} color={card.color} />
                   </div>
                 </div>
-                <div className="flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-2xl font-black tracking-tight text-slate-900">
+                <div className="flex items-end justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-lg sm:text-xl lg:text-2xl font-black tracking-tight text-slate-900">
                       {card.value}
                     </p>
 
-                    <p className="mt-0.5 text-sm font-medium text-slate-500">
+                    <p className="mt-0.5 text-[10px] sm:text-xs lg:text-sm font-medium text-slate-500 truncate">
                       {card.label}
                     </p>
                   </div>
@@ -1266,7 +1274,7 @@ function StudentOverview({
                     <button
                       type="button"
                       onClick={() => onSetActiveSection(card.actionSection)}
-                      className="shrink-0 rounded-lg px-3 py-2 text-xs font-black transition hover:bg-slate-100"
+                      className="shrink-0 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-black transition hover:bg-slate-100"
                       style={{
                         color: card.color,
                       }}
@@ -1287,16 +1295,16 @@ function StudentOverview({
         <div className="space-y-5">
           {/* Today's Classes */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 gap-2">
               <h2
-                className="text-base font-bold text-slate-900"
+                className="text-sm sm:text-base font-bold text-slate-900"
                 suppressHydrationWarning
               >
                 Today&apos;s Classes
               </h2>
               <button
                 onClick={() => onSetActiveSection("lectures")}
-                className="text-xs font-bold text-[#0B40A1] hover:underline"
+                className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
               >
                 View All
               </button>
@@ -1348,13 +1356,13 @@ function StudentOverview({
 
           {/* Upcoming Exams */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Upcoming Exams
               </h2>
               <button
                 onClick={() => onSetActiveSection("tests")}
-                className="text-xs font-bold text-[#0B40A1] hover:underline"
+                className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
               >
                 View All
               </button>
@@ -1431,13 +1439,13 @@ function StudentOverview({
 
           {/* Academic Progress Trend */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Academic Progress
               </h2>
               <button
                 onClick={() => onSetActiveSection("performance")}
-                className="text-xs font-bold text-[#0B40A1] hover:underline"
+                className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
               >
                 Detailed Report
               </button>
@@ -1590,17 +1598,17 @@ function StudentOverview({
           {/* Notice Board */}
           <div className="mt-5 rounded-[1.5rem] border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EBF1FA] text-[#0B40A1]">
-                  <Bell className="h-5 w-5" />
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-[#EBF1FA] text-[#0B40A1] shrink-0">
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
 
-                <div>
-                  <h2 className="text-base font-black text-slate-900">
+                <div className="min-w-0">
+                  <h2 className="text-sm sm:text-base font-black text-slate-900">
                     Notice Board
                   </h2>
 
-                  <p className="text-xs font-medium text-slate-500">
+                  <p className="text-[10px] sm:text-xs font-medium text-slate-500">
                     Latest announcements and updates
                   </p>
                 </div>
@@ -1722,29 +1730,29 @@ function StudentOverview({
       </div>
 
       {/* ── Quick Access Grid ── */}
-      <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-        <h2 className="text-base font-bold text-slate-900 mb-4">
+      <div className="bg-white rounded-2xl border border-[#E8EDF2] p-4 sm:p-5 lg:p-6">
+        <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-3 sm:mb-4">
           Quick Access
         </h2>
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
           {quickAccessItems.map((item, idx) => {
             const Icon = item.icon;
             return (
               <button
                 key={idx}
                 onClick={() => onSetActiveSection(item.section)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-all hover:-translate-y-0.5"
+                className="flex flex-col items-center gap-1 sm:gap-1.5 p-2 sm:p-3 rounded-xl bg-slate-50 border border-slate-100 hover:shadow-sm transition-all hover:-translate-y-0.5"
               >
                 <div
-                  className="w-9 h-9 rounded-lg flex items-center justify-center"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center"
                   style={{
                     backgroundColor: `${item.color}15`,
                     color: item.color,
                   }}
                 >
-                  <Icon size={16} strokeWidth={2} />
+                  <Icon size={14} strokeWidth={2} className="sm:w-4 sm:h-4" />
                 </div>
-                <span className="text-[10px] font-semibold text-slate-600 text-center leading-tight">
+                <span className="text-[9px] sm:text-[10px] font-semibold text-slate-600 text-center leading-tight">
                   {item.label}
                 </span>
               </button>
@@ -1756,13 +1764,13 @@ function StudentOverview({
       {/* ── Recent Results ── */}
       {testScores.length > 0 && (
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-bold text-slate-900">
+          <div className="flex items-center justify-between mb-4 gap-2">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900">
               Recent Results
             </h2>
             <button
               onClick={() => onSetActiveSection("performance")}
-              className="text-xs font-bold text-[#0B40A1] hover:underline"
+              className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
             >
               View All
             </button>
@@ -2042,16 +2050,16 @@ function ParentOverview({
         <div className="space-y-5">
           {/* Today's Classes */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 gap-2">
               <h2
-                className="text-base font-bold text-slate-900"
+                className="text-sm sm:text-base font-bold text-slate-900"
                 suppressHydrationWarning
               >
                 Today&apos;s Classes
               </h2>
               <button
                 onClick={() => onSetActiveSection("lectures")}
-                className="text-xs font-bold text-[#0B40A1] hover:underline"
+                className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
               >
                 View All
               </button>
@@ -2090,13 +2098,13 @@ function ParentOverview({
 
           {/* Upcoming Tests */}
           <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-slate-900">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900">
                 Upcoming Exams
               </h2>
               <button
                 onClick={() => onSetActiveSection("tests")}
-                className="text-xs font-bold text-[#0B40A1] hover:underline"
+                className="text-[10px] sm:text-xs font-bold text-[#0B40A1] hover:underline shrink-0"
               >
                 View All
               </button>
@@ -2521,13 +2529,13 @@ function EducatorOverview({
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         {/* Homework Evaluation Status */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <BarChart3 size={16} style={{ color: "#D97706" }} />
-              Homework Evaluation Status
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
+            <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900 min-w-0">
+              <BarChart3 size={14} className="sm:w-4 sm:h-4 shrink-0" style={{ color: "#D97706" }} />
+              <span className="truncate">Homework Evaluation Status</span>
             </h2>
 
-            <span className="text-xs text-slate-400">Reviewed vs Pending</span>
+            <span className="text-[10px] sm:text-xs text-slate-400 shrink-0 hidden sm:inline">Reviewed vs Pending</span>
           </div>
 
           <div className="flex h-[170px] items-center gap-6 p-5">
@@ -2611,10 +2619,10 @@ function EducatorOverview({
 
         {/* Students Needing Attention */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
-            <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-              <AlertCircle size={16} className="text-rose-600" />
-              Students Needing Attention
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
+            <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900 min-w-0">
+              <AlertCircle size={14} className="sm:w-4 sm:h-4 shrink-0 text-rose-600" />
+              <span className="truncate">Students Needing Attention</span>
             </h2>
 
             <span
@@ -2703,19 +2711,19 @@ function EducatorOverview({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* My Earnings */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
-            <div>
-              <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Banknote size={17} className="text-emerald-600" />
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900">
+                <Banknote size={15} className="sm:w-[17px] sm:h-[17px] shrink-0 text-emerald-600" />
                 My Earnings
               </h2>
 
-              <p className="mt-1 text-[11px] font-medium text-slate-400">
+              <p className="mt-1 text-[10px] sm:text-[11px] font-medium text-slate-400">
                 Teacher payout summary
               </p>
             </div>
 
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-black text-emerald-700">
+            <span className="rounded-full bg-emerald-50 px-2 sm:px-3 py-1 text-[9px] sm:text-[10px] font-black text-emerald-700 shrink-0">
               Private
             </span>
           </div>
@@ -2778,19 +2786,19 @@ function EducatorOverview({
 
         {/* Today's Home Tutoring */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-5 py-4">
-            <div>
-              <h2 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                <Home size={17} className="text-violet-600" />
+          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
+            <div className="min-w-0">
+              <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900">
+                <Home size={15} className="sm:w-[17px] sm:h-[17px] shrink-0 text-violet-600" />
                 Today&apos;s Home Tutoring
               </h2>
 
-              <p className="mt-1 text-[11px] font-medium text-slate-400">
+              <p className="mt-1 text-[10px] sm:text-[11px] font-medium text-slate-400">
                 Home visits assigned for today
               </p>
             </div>
 
-            <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-violet-50 px-2 text-xs font-black text-violet-700">
+            <span className="flex h-7 sm:h-8 min-w-7 sm:min-w-8 items-center justify-center rounded-full bg-violet-50 px-2 text-[10px] sm:text-xs font-black text-violet-700 shrink-0">
               {homeTutoringVisits.length}
             </span>
           </div>
@@ -2907,14 +2915,13 @@ function EducatorOverview({
 
       {/* ── Pending Homework Reviews ── */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#F1F5F9]">
-          <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Clock size={16} style={{ color: "#D97706" }} /> Pending Homework
-            Reviews ({pendingReviews})
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[#F1F5F9] gap-2">
+          <h2 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <Clock size={14} className="sm:w-4 sm:h-4 shrink-0" style={{ color: "#D97706" }} /> <span className="truncate">Pending Homework Reviews ({pendingReviews})</span>
           </h2>
           <button
             onClick={() => onSetActiveSection("homework")}
-            className="text-xs font-bold text-indigo-600 hover:underline"
+            className="text-[10px] sm:text-xs font-bold text-indigo-600 hover:underline shrink-0"
           >
             View all →
           </button>

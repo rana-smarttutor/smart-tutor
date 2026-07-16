@@ -585,7 +585,7 @@ export function DashboardProfileSettings({
               <div className="grid gap-4 sm:grid-cols-2">
                 <FieldInput label="Full Name" value={name} onChange={setName} maxLength={60} />
                 <FieldInput label="Email" value={session?.email ?? ""} disabled />
-                <FieldInput label="Phone" value={phone} onChange={setPhone} placeholder="Contact number" maxLength={15} />
+                <FieldInput label="Phone" value={phone} onChange={setPhone} placeholder="+91 9876543210" maxLength={15} />
                 <div>
                   <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
                     Gender
@@ -708,7 +708,7 @@ export function DashboardProfileSettings({
                   <div className="grid gap-4 sm:grid-cols-2">
                     <FieldInput label="Parent Name" value={parentName} onChange={setParentName} maxLength={60} placeholder="e.g. Supriya" />
                     <FieldInput label="Parent Email" value={parentEmail} onChange={setParentEmail} type="email" placeholder="parent@email.com" />
-                    <FieldInput label="Parent Mobile" value={parentMobile} onChange={setParentMobile} maxLength={15} placeholder="Parent phone number" />
+                    <FieldInput label="Parent Mobile" value={parentMobile} onChange={setParentMobile} maxLength={15} placeholder="+91 9876543210" />
                   </div>
                 </div>
               </>

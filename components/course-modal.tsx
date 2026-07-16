@@ -13,6 +13,7 @@ import {
   Sparkles,
   Phone,
   User,
+  ChevronRight,
 } from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 import type { CourseItem } from "@/lib/types";
@@ -525,6 +526,11 @@ export default function CourseModal({
   >([]);
   const [selectedLearningMode, setSelectedLearningMode] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
+  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
+    whatYoullLearn: true,
+    skillsYoullGain: false,
+    topicsCovered: false,
+  });
   useEffect(() => {
     setIsSuccess(false);
     setSelectedCourseName("");
@@ -535,6 +541,7 @@ export default function CourseModal({
     setOtherSubject("");
     setSelectedLearningMode("");
     setSelectedSlot("");
+    setOpenAccordions({ whatYoullLearn: true, skillsYoullGain: false, topicsCovered: false });
 
     if (initialAdditionalCourse) {
       setSelectedAdditionalCourses([initialAdditionalCourse]);
@@ -776,7 +783,7 @@ export default function CourseModal({
                   {course.category}
                 </span>
                 <h4 className="mt-0.5 font-display text-xs font-bold tracking-tight">
-                  Syllabus & Registration Module
+                  {initialAdditionalCourse || course.title}
                 </h4>
               </div>
             </div>
@@ -795,17 +802,17 @@ export default function CourseModal({
             <div className="space-y-6 md:col-span-7">
               <div className="space-y-1.5">
                 <span className="block text-xs font-semibold uppercase tracking-wider text-blue-600">
-                  {course.tagline}
+                  {initialAdditionalCourse || course.tagline}
                 </span>
                 <h3 className="font-display text-xl font-bold leading-tight tracking-tight text-slate-900">
-                  {course.title}
+                  {initialAdditionalCourse || course.title}
                 </h3>
                 <p className="text-xs font-medium leading-relaxed text-slate-500">
                   {course.description}
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
                   <Clock className="mx-auto h-4 w-4 text-blue-600" />
                   <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
@@ -820,7 +827,7 @@ export default function CourseModal({
                   <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
                     Mode
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-slate-700">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-700">
                     {course.mode}
                   </span>
                 </div>
@@ -829,64 +836,166 @@ export default function CourseModal({
                   <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
                     Schedule
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-bold text-slate-700">
+                  <span className="mt-0.5 block text-xs font-bold text-slate-700">
                     {course.schedule}
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <h5 className="text-[10px] font-bold uppercase tracking-wider leading-none text-slate-400">
-                  Syllabus Domains & Chapters Covered:
-                </h5>
-                <div className="flex flex-wrap gap-2.5">
-                  {course.subjectsCovered.map((subject) => (
-                    <span
-                      key={subject}
-                      className="flex items-center rounded border border-blue-100/40 bg-blue-50/50 px-2.5 py-1 text-[10px] font-bold text-blue-800 shadow-3xs"
-                    >
-                      <span className="mr-2 h-1.5 w-1.5 rounded-full bg-blue-500" />
-                      {subject}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
+              {/* ── Coursera-style Accordion Sections ── */}
               <div className="space-y-3 border-t border-slate-200 pt-4">
-                <h5 className="text-[10px] font-bold uppercase tracking-wider leading-none text-slate-400">
-                  Core Modules & Outcomes:
-                </h5>
-                <ul className="space-y-2">
-                  {course.points.map((point, index) => (
-                    <li
-                      key={`${point}-${index}`}
-                      className="flex items-start space-x-2 text-xs font-semibold text-slate-500"
+                {/* What You'll Learn */}
+                {course.points.length > 0 && (
+                  <div className="rounded-lg border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setOpenAccordions((prev) => ({ ...prev, whatYoullLearn: !prev.whatYoullLearn }))}
+                      className="flex w-full items-center justify-between gap-3 rounded-t-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
                     >
-                      <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {programTopics.length > 0 && (
-                <div className="space-y-3 border-t border-slate-200 pt-4">
-                  <h5 className="text-[10px] font-bold uppercase tracking-wider leading-none text-slate-400">
-                    Topics Covered:
-                  </h5>
-                  <div className="flex flex-wrap gap-2">
-                    {programTopics.map((topic, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center rounded border border-indigo-100 bg-indigo-50 px-2 py-1 text-[10px] font-semibold text-indigo-700"
-                      >
-                        <span className="mr-1.5 h-1 w-1 rounded-full bg-indigo-400" />
-                        {topic}
-                      </span>
-                    ))}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                          <CheckCircle className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h5 className="text-xs font-bold text-slate-900">What you'll learn</h5>
+                          <p className="text-[10px] text-slate-500">{course.points.length} outcomes</p>
+                        </div>
+                      </div>
+                      <ChevronRight
+                        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                          openAccordions.whatYoullLearn ? "rotate-90" : ""
+                        }`}
+                      />
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        openAccordions.whatYoullLearn ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="border-t border-slate-100 bg-white px-4 py-3">
+                        <ul className="space-y-2">
+                          {course.points.map((point, index) => (
+                            <li
+                              key={`${point}-${index}`}
+                              className="flex items-start gap-2.5 text-xs font-medium text-slate-600"
+                            >
+                              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* Skills You'll Gain */}
+                {course.subjectsCovered.length > 0 && (
+                  <div className="rounded-lg border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setOpenAccordions((prev) => ({ ...prev, skillsYoullGain: !prev.skillsYoullGain }))}
+                      className="flex w-full items-center justify-between gap-3 rounded-t-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                          <BookOpen className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h5 className="text-xs font-bold text-slate-900">Skills you'll gain</h5>
+                          <p className="text-[10px] text-slate-500">{course.subjectsCovered.length} domains</p>
+                        </div>
+                      </div>
+                      <ChevronRight
+                        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                          openAccordions.skillsYoullGain ? "rotate-90" : ""
+                        }`}
+                      />
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        openAccordions.skillsYoullGain ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="border-t border-slate-100 bg-white px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          {course.subjectsCovered.map((subject) => (
+                            <span
+                              key={subject}
+                              className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700"
+                            >
+                              {subject}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Topics Covered */}
+                {programTopics.length > 0 && (
+                  <div className="rounded-lg border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setOpenAccordions((prev) => ({ ...prev, topicsCovered: !prev.topicsCovered }))}
+                      className="flex w-full items-center justify-between gap-3 rounded-t-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h5 className="text-xs font-bold text-slate-900">Topics Covered</h5>
+                          <p className="text-[10px] text-slate-500">{programTopics.length} detailed topics</p>
+                        </div>
+                      </div>
+                      <ChevronRight
+                        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
+                          openAccordions.topicsCovered ? "rotate-90" : ""
+                        }`}
+                      />
+                    </button>
+                    <div
+                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                        openAccordions.topicsCovered ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                      }`}
+                    >
+                      <div className="border-t border-slate-100 bg-white px-4 py-3">
+                        <div className="space-y-2.5">
+                          {programTopics.map((topic, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5 transition-colors hover:border-blue-100 hover:bg-blue-50/30"
+                            >
+                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-600">
+                                {index + 1}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-bold leading-snug text-slate-800">
+                                  {topic}
+                                </p>
+                                <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">
+                                  {index === 0
+                                    ? "Foundational concepts and practical exercises included"
+                                    : index === 1
+                                      ? "Hands-on projects with real-world applications"
+                                      : index === 2
+                                        ? "Industry-aligned curriculum with assessment modules"
+                                        : index === 3
+                                          ? "Interactive sessions with expert-led demonstrations"
+                                          : "Comprehensive coverage with step-by-step learning path"}
+                                </p>
+                              </div>
+                              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-400" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="self-start rounded-lg border border-slate-200 bg-slate-50 p-5 md:col-span-5">
@@ -1113,7 +1222,7 @@ export default function CourseModal({
 
                       {shouldShowMhtCetCategory ? (
                         <div className="space-y-1">
-                          <label className="block text-[10px] font-bold uppercase leading-none text-purple-600">
+                          <label className="block text-[10px] font-bold uppercase leading-none text-blue-600">
                             MHT CET Exam Category
                           </label>
                           <select
@@ -1121,7 +1230,7 @@ export default function CourseModal({
                             onChange={(event) =>
                               setMhtCetSubExam(event.target.value)
                             }
-                            className="w-full rounded border border-purple-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-purple-500 focus:outline-hidden"
+                            className="w-full rounded border border-blue-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
                           >
                             <option value="">-- Select your exam --</option>
                             {MHT_CET_EXAMS.map((exam) => (
@@ -1251,7 +1360,7 @@ export default function CourseModal({
                           <input
                             type="text"
                             required
-                            placeholder="e.g. +91 9876543210"
+                            placeholder="+91 9876543210"
                             value={contact}
                             onChange={(event) => setContact(event.target.value)}
                             className="w-full rounded border border-slate-200 bg-white p-2.5 pl-10 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
@@ -1350,7 +1459,7 @@ export default function CourseModal({
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="mt-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 transition-colors hover:text-indigo-600"
+                      className="mt-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 transition-colors hover:text-blue-600"
                     >
                       Reset / Register another
                     </button>

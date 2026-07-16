@@ -277,6 +277,28 @@ const AdminChatMonitor = dynamic(
   },
 );
 
+const AdminCertificateManager = dynamic(
+  () =>
+    import("@/components/admin-certificate-manager").then(
+      (module) => module.AdminCertificateManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
+const DashboardCertificatesSection = dynamic(
+  () =>
+    import("@/components/certificate-card").then(
+      (module) => module.DashboardCertificatesSection,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
+
 type StandaloneStudentReport = {
   id: string;
   title: string;
@@ -311,6 +333,7 @@ const sidebarByRole = {
     { id: "student-feedback", label: "Feedback" },
     { id: "daily-activities", label: "My Daily Routines" },
     { id: "performance", label: "Performance Reports" },
+    { id: "certificates", label: "Certificates" },
     { id: "receipts", label: "My Fees" },
     { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
@@ -337,6 +360,7 @@ const sidebarByRole = {
     { id: "ptm", label: "PTM" },
     { id: "staff-payouts", label: "My Earnings" },
     { id: "gamification", label: "Rankers" },
+    { id: "certificates", label: "Certificates" },
   ],
 
   counsellor: [
@@ -376,6 +400,7 @@ const sidebarByRole = {
     { id: "sales-crm", label: "Sales CRM" },
     { id: "placement-jobs", label: "Placement Jobs" },
     { id: "gamification", label: "Rankers" },
+    { id: "certificates", label: "Certificates" },
   ],
 
   parent: [
@@ -396,6 +421,7 @@ const sidebarByRole = {
     { id: "messages", label: "Messages" },
     { id: "chat", label: "Chat" },
     { id: "ptm", label: "PTM" },
+    { id: "certificates", label: "Certificates" },
   ],
 } as const;
 
@@ -477,6 +503,7 @@ const menuSections = [
       "batches",
       "library",
       "performance",
+      "certificates",
     ],
   },
   {
@@ -1008,6 +1035,21 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  certificates: (
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
+      />
+    </svg>
+  ),
 };
 
 export function DashboardShell({
@@ -1112,6 +1154,7 @@ export function DashboardShell({
   const showFeeDeletionAudit = activeSection === "fee-deletion-audit";
   const showFacultyPerformance = activeSection === "faculty-performance";
   const showProfile = activeSection === "profile";
+  const showCertificates = activeSection === "certificates";
 
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
@@ -1555,7 +1598,7 @@ export function DashboardShell({
           </button>
 
           {/* Nav links - horizontally scrollable */}
-          <nav className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-none text-sm whitespace-nowrap min-w-0">
+          <nav className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-thin text-sm whitespace-nowrap min-w-0">
             <Link
               href="/"
               className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0"
@@ -1717,6 +1760,17 @@ export function DashboardShell({
 
           {showPlacementJobs && role === "admin" ? (
             <PlacementJobsManager />
+          ) : null}
+
+          {showCertificates && role === "admin" ? (
+            <AdminCertificateManager allUsers={managedUsers} />
+          ) : null}
+
+          {showCertificates && (role === "student" || role === "educator" || role === "parent") ? (
+            <DashboardCertificatesSection
+              certificates={dashboard.certificates ?? []}
+              userName={session?.name ?? ""}
+            />
           ) : null}
 
           {showTests ? (

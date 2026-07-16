@@ -32,7 +32,7 @@ Authentication: HTTP-only cookie (`smart_tutor_session`) set on login. All authe
 ## 2. Dashboard
 
 ### GET /api/dashboard
-**Response:** Full `DashboardBundle` (stats, courses, tests, messages, submissions, attendance, invoices, lectures, profile, batches, weekly tests, feedback, activities, fees, payouts, notifications, analytics).
+**Response:** Full `DashboardBundle` (stats, courses, tests, messages, submissions, attendance, invoices, lectures, profile, batches, weekly tests, feedback, activities, fees, payouts, notifications, analytics, **certificates**).
 
 ---
 
@@ -378,7 +378,85 @@ Authentication: HTTP-only cookie (`smart_tutor_session`) set on login. All authe
 
 ---
 
-## 23. Payments
+## 23. Certificates (Admin Issue + All Roles Download)
+
+### GET /api/certificates
+**Query:** `?recipientId=<id>&status=issued`
+**Auth:** Required. Students/parents see only their own certificates. Admin sees all.
+**Response:** `{ certificates: Certificate[] }`
+
+### POST /api/certificates
+**Auth:** Admin only.
+**Body:**
+```json
+{
+  "templateId": "classic-gold | modern-blue | professional-dark",
+  "recipientId": "string",
+  "recipientName": "string",
+  "recipientType": "student | educator | parent",
+  "recipientEmail?": "string",
+  "title": "string (e.g., Certificate of Excellence)",
+  "description": "string (detailed achievement description)",
+  "courseName?": "string",
+  "issuedDate": "YYYY-MM-DD",
+  "issuedBy": "admin-user-id",
+  "issuedByName": "Admin Name"
+}
+```
+**Response:** `{ certificate: Certificate }` (201)
+**Note:** `id`, `certificateNo` (auto-generated ST-YYYY-XXXX), `status` ("issued"), and `createdAt` are auto-set.
+
+### GET /api/certificates/:id
+**Auth:** None (public read for verification).
+**Response:** `{ certificate: Certificate }` or 404.
+
+### PATCH /api/certificates/:id
+**Auth:** Admin only.
+**Body:** `{ status: "issued" | "revoked", revokeReason?: "string" }`
+**Response:** `{ certificate: Certificate }` — On revoke, sets `revokedAt`, `revokedBy`, `revokeReason`.
+
+### DELETE /api/certificates/:id
+**Auth:** Admin only.
+**Response:** `{ success: true }`
+
+### Certificate Data Type
+```json
+{
+  "id": "string",
+  "templateId": "classic-gold | modern-blue | professional-dark",
+  "recipientId": "string",
+  "recipientName": "string",
+  "recipientType": "student | educator | parent",
+  "recipientEmail?": "string",
+  "title": "string",
+  "description": "string",
+  "courseName?": "string",
+  "issuedDate": "YYYY-MM-DD",
+  "issuedBy": "string",
+  "issuedByName": "string",
+  "certificateNo": "ST-YYYY-XXXX",
+  "status": "issued | revoked",
+  "revokedAt?": "ISO 8601",
+  "revokedBy?": "string",
+  "revokeReason?": "string",
+  "createdAt": "ISO 8601",
+  "updatedAt?": "ISO 8601"
+}
+```
+
+### Certificate Templates
+| Template ID | Name | Style |
+|---|---|---|
+| `classic-gold` | Classic Gold | Traditional gold borders, serif typography, gold seal |
+| `modern-blue` | Modern Blue | Clean blue accents, sans-serif, geometric corners |
+| `professional-dark` | Professional Dark | Dark slate theme, silver accents, diamond decorations |
+
+### Dashboard Integration
+Certificates appear in the `DashboardBundle.certificates` array. Student, educator, and parent dashboards show a "Certificates" sidebar section with downloadable certificates. Admin has a full certificate management panel to issue, preview, revoke, and delete certificates.
+
+---
+
+## 24. Payments
 
 ### POST /api/payments/create-order
 **Body:** `{ amount, currency?, receipt? }`

@@ -76,7 +76,7 @@ export default async function Home() {
 
   return (
     <main className="relative overflow-hidden pb-16 pt-2">
-      <section className="section-shell grid gap-8 pt-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
+      <section className="section-shell grid gap-8 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
         <RevealOnScroll className="space-y-7 text-center lg:text-left w-full max-w-full">
           <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
             <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">

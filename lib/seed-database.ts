@@ -10,6 +10,7 @@ const COLLECTIONS = {
   submissions: "test_submissions",
   quizzes: "quiz_questions",
   deletedAccounts: "deleted_accounts",
+  certificates: "certificates",
 } as const;
 
 export async function seedMongoTemplateCollections(options?: { replaceExisting?: boolean }) {
@@ -27,6 +28,7 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
       db.collection(COLLECTIONS.submissions).deleteMany({}),
       db.collection(COLLECTIONS.quizzes).deleteMany({}),
       db.collection(COLLECTIONS.deletedAccounts).deleteMany({}),
+      db.collection(COLLECTIONS.certificates).deleteMany({}),
     ]);
   }
 
@@ -104,6 +106,14 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
     ),
   );
 
+  if (template.certificates?.length) {
+    await Promise.all(
+      template.certificates.map((document: any) =>
+        db.collection(COLLECTIONS.certificates).replaceOne({ id: document.id } as any, document, { upsert: true }),
+      ),
+    );
+  }
+
   return {
     ok: true,
     replaceExisting,
@@ -115,6 +125,7 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
       messages: template.messages.length,
       submissions: template.submissions.length,
       quizzes: template.quizQuestions.length,
+      certificates: template.certificates?.length ?? 0,
       deletedAccounts: 0,
     },
   };

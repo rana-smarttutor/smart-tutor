@@ -103,6 +103,7 @@ PlacementApplication,
   PaymentTransaction,
   PaymentMode,
   FeeDeletionAuditLog,
+  Certificate,
 } from "@/lib/types";
 
 import type {
@@ -236,6 +237,9 @@ feeInstallmentPlans: "feeInstallmentPlans",
 
   // Fee Deletion Audit Logs
   feeDeletionAuditLogs: "feeDeletionAuditLogs",
+
+  // Certificates
+  certificates: "certificates",
 } as const;
 // ... (existing code)
 
@@ -4307,6 +4311,7 @@ export async function getDashboardBundle(
     dailyActivities,
     feeInstallmentPlans,
     teacherPayouts,
+    certificates,
     users,
   ] = await Promise.all([
     getContentDocument<{ templates: Record<Role, DashboardTemplate> }>(
@@ -4325,6 +4330,7 @@ export async function getDashboardBundle(
     getDailyActivitiesForRole(role, userId),
     getFeeInstallmentPlansForRole(role, userId),
     getTeacherPayoutsForRole(role, userId),
+    getCertificatesForRole(role, userId),
     role === "admin" ? getUsersForAdmin() : Promise.resolve([]),
   ]);
 
@@ -4419,6 +4425,7 @@ export async function getDashboardBundle(
       parentMobile: userDoc.profile.parentMobile ?? userDoc.parentMobile,
     } : undefined,
     analytics,
+    certificates,
   };
 }
 
@@ -5821,6 +5828,29 @@ export async function getTeacherPayoutsForRole(role: Role, userId?: string) {
       await collection
         .find({ teacherId: userId })
         .sort({ month: -1, createdAt: -1 })
+        .toArray(),
+    );
+  }
+
+  return [];
+}
+
+export async function getCertificatesForRole(role: Role, userId?: string) {
+  const collection = await getCollection<Certificate>(
+    COLLECTIONS.certificates,
+  );
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection.find({ status: "issued" }).sort({ createdAt: -1 }).toArray(),
+    );
+  }
+
+  if (userId) {
+    return stripMongoIds(
+      await collection
+        .find({ recipientId: userId, status: "issued" })
+        .sort({ createdAt: -1 })
         .toArray(),
     );
   }

@@ -53,6 +53,7 @@ async function run() {
     { name: "Library", url: `${BASE_URL}/library` },
     { name: "API Courses", url: `${BASE_URL}/api/courses` },
     { name: "API Institute", url: `${BASE_URL}/api/institute` },
+    { name: "API Certificates (Auth)", url: `${BASE_URL}/api/certificates` },
     { name: "API Enquiries (POST)", url: `${BASE_URL}/api/enquiries`, method: "POST", body: { name: "Stress Test", contact: "test@stress.local", message: "Stress test enquiry" } },
   ];
 
