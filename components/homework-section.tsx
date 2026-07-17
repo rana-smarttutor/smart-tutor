@@ -2,24 +2,28 @@
 
 import { useEffect, useState } from "react";
 import {
-  BookOpen,
-  Clock,
+  AlignLeft,
   AlertCircle,
-  CheckCircle2,
-  Users,
-  PlayCircle,
   Award,
+  BookOpen,
+  CheckCircle2,
+  ClipboardList,
+  ExternalLink,
+  FileCheck2,
+  FileUp,
+  Hourglass,
+  ListChecks,
+  Loader2,
+  MessageSquareText,
+  Paperclip,
   Plus,
   Search,
-  Trash2,
   Send,
-  X,
-  ListChecks,
   Target,
-  ClipboardList,
-  AlignLeft,
-  Hourglass,
-  MessageSquareText,
+  Trash2,
+  UploadCloud,
+  Users,
+  X,
 } from "lucide-react";
 
 import type {
@@ -61,7 +65,7 @@ const HW_TYPE_COLORS: Record<string, string> = {
 
 export function HomeworkSection({
   role,
-  studentDirectory,
+  studentDirectory: _studentDirectory,
   onDashboardRefresh,
 }: Props) {
   const [homework, setHomework] = useState<EnrichedHomework[]>([]);
@@ -88,8 +92,10 @@ export function HomeworkSection({
   const [assigning, setAssigning] = useState(false);
 
   const [submitContent, setSubmitContent] = useState("");
+  const [submitFile, setSubmitFile] = useState<File | null>(null);
   const [submittingId, setSubmittingId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const [gradeModal, setGradeModal] = useState<{
     homeworkTitle: string;
@@ -188,28 +194,117 @@ export function HomeworkSection({
     setAssignAllowLate(false);
   }
 
+  function handleSubmissionFile(
+    homeworkId: string,
+    file: File | null,
+  ) {
+    if (!file) {
+      setSubmitFile(null);
+      return;
+    }
+
+    const allowedExtensions =
+      /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|png|jpg|jpeg|webp|txt)$/i;
+
+    if (!allowedExtensions.test(file.name)) {
+      setError(
+        "Upload a PDF, Word, PowerPoint, Excel, image, or text file.",
+      );
+      setSubmitFile(null);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("The homework file must be 10 MB or smaller.");
+      setSubmitFile(null);
+      return;
+    }
+
+    setError("");
+    setSubmittingId(homeworkId);
+    setSubmitFile(file);
+  }
+
+  async function uploadSubmissionFile(file: File) {
+    setUploadingFile(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch(
+        "/api/homework/submissions/upload",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          body: formData,
+        },
+      );
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        url?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.success || !payload.url) {
+        throw new Error(payload.error ?? "Unable to upload homework file.");
+      }
+
+      return payload.url;
+    } finally {
+      setUploadingFile(false);
+    }
+  }
+
   async function handleSubmit(hwId: string) {
-    if (!submitContent.trim()) return;
+    const content = submittingId === hwId ? submitContent.trim() : "";
+    const file = submittingId === hwId ? submitFile : null;
+
+    if (!content && !file) {
+      setError("Write a short note or choose a file before submitting.");
+      return;
+    }
+
     setSubmitting(true);
     setSubmittingId(hwId);
+    setError("");
+
     try {
+      const attachmentUrl = file
+        ? await uploadSubmissionFile(file)
+        : undefined;
+
       const res = await fetch("/api/homework/submissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
           homeworkId: hwId,
-          content: submitContent.trim(),
+          content: content || undefined,
+          attachmentUrl,
         }),
       });
-      if (!res.ok) return;
+
+      const payload = (await res.json()) as { error?: string };
+
+      if (!res.ok) {
+        throw new Error(payload.error ?? "Unable to submit homework.");
+      }
+
       setSubmitContent("");
-      setSubmittingId("");
+      setSubmitFile(null);
       await loadHomework();
-    } catch {
-      /* ignore */
+      onDashboardRefresh?.();
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : "Unable to submit homework.",
+      );
     } finally {
       setSubmitting(false);
+      setUploadingFile(false);
       setSubmittingId("");
     }
   }
@@ -290,11 +385,35 @@ export function HomeworkSection({
     String(today.getDate()).padStart(2, "0"),
   ].join("-");
 
-  const overdueCount = homework.filter((hw) => hw.dueDate < todayDate).length;
-  const activeCount = totalAssigned - overdueCount;
   const submissionCount = isEducator
     ? homework.reduce((sum, hw) => sum + (hw.submissions?.length ?? 0), 0)
-    : homework.filter((hw) => hw.mySubmission).length;
+    : homework.filter((hw) => Boolean(hw.mySubmission)).length;
+
+  const pendingCount = isEducator
+    ? homework.reduce(
+        (sum, hw) =>
+          sum +
+          (hw.submissions?.filter(
+            (submission) => submission.status !== "graded",
+          ).length ?? 0),
+        0,
+      )
+    : homework.filter((hw) => !hw.mySubmission).length;
+
+  const feedbackCount = isEducator
+    ? homework.reduce(
+        (sum, hw) =>
+          sum +
+          (hw.submissions?.filter(
+            (submission) => submission.status === "graded",
+          ).length ?? 0),
+        0,
+      )
+    : homework.filter(
+        (hw) =>
+          hw.mySubmission?.status === "graded" &&
+          Boolean(hw.mySubmission.feedback?.trim()),
+      ).length;
 
   function HWTypeBadge({ hwType }: { hwType: string }) {
     return (
@@ -377,7 +496,7 @@ export function HomeworkSection({
       )}
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label="Total Tasks"
           value={totalAssigned}
@@ -387,24 +506,19 @@ export function HomeworkSection({
 
         <StatCard
           label="Submitted"
-          value={activeCount}
+          value={submissionCount}
           icon={<CheckCircle2 size={18} style={{ color: "#10B981" }} />}
           color="#10B981"
         />
 
         <StatCard
-          label="Pending"
-          value={overdueCount}
+          label={isEducator ? "Pending Review" : "Pending"}
+          value={pendingCount}
           icon={<Hourglass size={18} style={{ color: "#F59E0B" }} />}
           color="#F59E0B"
         />
 
-        <StatCard
-          label="Teacher Feedback"
-          value={submissionCount}
-          icon={<MessageSquareText size={18} style={{ color: "#0EA5E9" }} />}
-          color="#0EA5E9"
-        />
+
       </div>
 
       {/* ── Toolbar ── */}
@@ -493,7 +607,7 @@ export function HomeworkSection({
         </div>
       ) : (
         <div className="grid gap-4">
-          {filtered.map((hw) => {
+          {filtered.map((hw, index) => {
             const isOverdue = hw.dueDate < todayDate;
             const subs = hw.submissions ?? [];
             const gradedSubs = subs.filter((s) => s.status === "graded");
@@ -512,11 +626,10 @@ export function HomeworkSection({
                   }}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    {hw.taskNumber && (
-                      <span className="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-[var(--color-border)] text-sm font-black text-[var(--color-heading)] shrink-0">
-                        {hw.taskNumber}
-                      </span>
-                    )}
+                    <span className="inline-flex min-w-[88px] shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-[#0B40A1] shadow-sm">
+                      {hw.hwType === "assignment" ? "Assignment" : "Task"}{" "}
+                      {hw.taskNumber ?? index + 1}
+                    </span>
                     <div className="min-w-0">
                       <h3 className="text-base font-bold text-[var(--color-heading)] truncate">
                         {hw.title}
@@ -642,64 +755,170 @@ export function HomeworkSection({
 
                   {/* Student: submission area */}
                   {isStudent && (
-                    <div className="border-t border-[var(--color-border)] pt-3">
+                    <div className="border-t border-[var(--color-border)] pt-4">
                       {submission ? (
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span
-                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${
-                              submission.status === "graded"
-                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
-                            }`}
-                          >
-                            {submission.status === "graded" ? (
-                              <>
-                                <CheckCircle2 size={11} /> Graded:{" "}
-                                {submission.marks}/{hw.maxMarks}
-                              </>
-                            ) : (
-                              <>
-                                <Hourglass size={11} /> Submitted (pending
-                                grade)
-                              </>
-                            )}
-                          </span>
-                          {submission.feedback && (
-                            <span className="text-xs text-[var(--color-muted)]">
-                              Feedback: {submission.feedback}
+                        <div className="space-y-3">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${
+                                submission.status === "graded"
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                  : "border-amber-200 bg-amber-50 text-amber-700"
+                              }`}
+                            >
+                              {submission.status === "graded" ? (
+                                <>
+                                  <CheckCircle2 size={12} /> Checked by teacher
+                                </>
+                              ) : (
+                                <>
+                                  <Hourglass size={12} /> Submitted for review
+                                </>
+                              )}
                             </span>
+
+                            {submission.status === "graded" ? (
+                              <span className="text-sm font-black text-emerald-700">
+                                {submission.marks ?? 0}/{hw.maxMarks} marks
+                              </span>
+                            ) : null}
+                          </div>
+
+                          {(submission.content || submission.attachmentUrl) && (
+                            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                                Your Submission
+                              </p>
+
+                              {submission.content ? (
+                                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                                  {submission.content}
+                                </p>
+                              ) : null}
+
+                              {submission.attachmentUrl ? (
+                                <a
+                                  href={submission.attachmentUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-3 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-black text-[#0B40A1] transition hover:bg-blue-50"
+                                >
+                                  <Paperclip size={14} />
+                                  Open uploaded homework
+                                  <ExternalLink size={13} />
+                                </a>
+                              ) : null}
+                            </div>
+                          )}
+
+                          {submission.status === "graded" ? (
+                            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                              <div className="flex items-center gap-2 text-[#0B40A1]">
+                                <MessageSquareText size={16} />
+                                <p className="text-xs font-black uppercase tracking-[0.12em]">
+                                  Teacher&apos;s Feedback
+                                </p>
+                              </div>
+
+                              <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">
+                                {submission.feedback?.trim() ||
+                                  "Your teacher checked this task but did not add written feedback."}
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-xs font-semibold text-slate-500">
+                              Your teacher will review the file and publish marks and feedback here.
+                            </p>
                           )}
                         </div>
                       ) : (
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Your submission text..."
+                        <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#0B40A1] shadow-sm">
+                              <UploadCloud size={19} />
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-black text-slate-800">
+                                Upload your completed work
+                              </p>
+                              <p className="mt-1 text-xs leading-5 text-slate-500">
+                                Add an optional note and upload one file up to 10 MB.
+                              </p>
+                            </div>
+                          </div>
+
+                          <textarea
+                            rows={3}
+                            placeholder="Write a note for your teacher (optional)..."
                             value={submittingId === hw.id ? submitContent : ""}
-                            onChange={(e) => {
-                              setSubmitContent(e.target.value);
+                            onChange={(event) => {
+                              setSubmitContent(event.target.value.slice(0, 1000));
                               setSubmittingId(hw.id);
+                              if (submittingId !== hw.id) {
+                                setSubmitFile(null);
+                              }
                             }}
-                            className="flex-1 rounded-xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
+                            className="mt-4 w-full resize-y rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)]"
                           />
-                          <button
-                            onClick={() => {
-                              setSubmitContent(
-                                submittingId === hw.id ? submitContent : "",
-                              );
-                              setSubmittingId(hw.id);
-                              handleSubmit(hw.id);
-                            }}
-                            disabled={submitting && submittingId === hw.id}
-                            className="btn-action btn-sm font-bold"
-                          >
-                            {submitting && submittingId === hw.id ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                            ) : (
-                              <Send size={13} className="mr-1" />
-                            )}
-                            Submit
-                          </button>
+
+                          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-[#0B40A1] transition hover:bg-blue-50">
+                              <FileUp size={15} />
+                              {submittingId === hw.id && submitFile
+                                ? "Change File"
+                                : "Choose File"}
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt"
+                                className="hidden"
+                                onChange={(event) =>
+                                  handleSubmissionFile(
+                                    hw.id,
+                                    event.target.files?.[0] ?? null,
+                                  )
+                                }
+                              />
+                            </label>
+
+                            {submittingId === hw.id && submitFile ? (
+                              <div className="flex min-w-0 items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-600">
+                                <Paperclip size={14} className="shrink-0 text-blue-500" />
+                                <span className="max-w-[220px] truncate">
+                                  {submitFile.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setSubmitFile(null)}
+                                  className="shrink-0 text-slate-400 transition hover:text-red-500"
+                                  aria-label="Remove selected file"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            ) : null}
+
+                            <button
+                              type="button"
+                              onClick={() => void handleSubmit(hw.id)}
+                              disabled={
+                                submitting && submittingId === hw.id
+                              }
+                              className="btn-action btn-md inline-flex items-center justify-center font-bold disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {submitting && submittingId === hw.id ? (
+                                <>
+                                  <Loader2 size={15} className="mr-2 animate-spin" />
+                                  {uploadingFile ? "Uploading..." : "Submitting..."}
+                                </>
+                              ) : (
+                                <>
+                                  <Send size={14} className="mr-2" />
+                                  Submit Task
+                                </>
+                              )}
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -707,69 +926,120 @@ export function HomeworkSection({
 
                   {/* Educator: submissions */}
                   {isEducator && subs.length > 0 && (
-                    <div className="border-t border-[var(--color-border)] pt-3 space-y-2">
-                      {ungradedSubs.length > 0 && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-semibold text-amber-600">
-                            {ungradedSubs.length} pending review
-                          </span>
+                    <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-black text-slate-800">
+                            Student Submissions
+                          </p>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {ungradedSubs.length} waiting for review · {gradedSubs.length} checked
+                          </p>
+                        </div>
+
+                        {ungradedSubs.length > 0 ? (
                           <button
+                            type="button"
                             onClick={() => {
-                              const s = ungradedSubs[0];
+                              const submissionToReview = ungradedSubs[0];
                               setGradeModal({
                                 homeworkTitle: hw.title,
-                                submission: s,
+                                submission: submissionToReview,
                               });
-                              setGradeMarks(s.marks ?? 0);
-                              setGradeFeedback(s.feedback ?? "");
+                              setGradeMarks(submissionToReview.marks ?? 0);
+                              setGradeFeedback(submissionToReview.feedback ?? "");
                             }}
                             className="btn-surface btn-sm font-bold text-xs"
                           >
-                            Grade All
+                            Review Next
                           </button>
-                        </div>
-                      )}
-                      {subs.slice(0, 5).map((s) => (
-                        <div
-                          key={s.id}
-                          className="flex items-center justify-between rounded-xl bg-[#F8FAFC] border border-[#E8EDF2] px-4 py-2.5"
+                        ) : null}
+                      </div>
+
+                      {subs.slice(0, 5).map((submissionItem) => (
+                        <article
+                          key={submissionItem.id}
+                          className="rounded-2xl border border-[#E8EDF2] bg-[#F8FAFC] p-4"
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold shrink-0">
-                              {s.studentName.charAt(0)}
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-600">
+                                {submissionItem.studentName.charAt(0).toUpperCase()}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-black text-[var(--color-heading)]">
+                                  {submissionItem.studentName}
+                                </p>
+
+                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                  Submitted {new Date(submissionItem.submittedAt).toLocaleDateString("en-IN", {
+                                    day: "numeric",
+                                    month: "short",
+                                    year: "numeric",
+                                  })}
+                                </p>
+
+                                {submissionItem.content ? (
+                                  <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
+                                    {submissionItem.content}
+                                  </p>
+                                ) : null}
+
+                                {submissionItem.attachmentUrl ? (
+                                  <a
+                                    href={submissionItem.attachmentUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-2 inline-flex items-center gap-1.5 text-xs font-black text-[#0B40A1] hover:underline"
+                                  >
+                                    <Paperclip size={13} />
+                                    Open submitted file
+                                    <ExternalLink size={12} />
+                                  </a>
+                                ) : null}
+
+                                {submissionItem.status === "graded" && submissionItem.feedback ? (
+                                  <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-slate-700">
+                                    <span className="font-black text-[#0B40A1]">Feedback: </span>
+                                    {submissionItem.feedback}
+                                  </div>
+                                ) : null}
+                              </div>
                             </div>
-                            <span className="text-sm font-semibold text-[var(--color-heading)] truncate">
-                              {s.studentName}
-                            </span>
+
+                            <div className="flex shrink-0 items-center gap-2">
+                              {submissionItem.status === "graded" ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
+                                  <FileCheck2 size={13} />
+                                  {submissionItem.marks ?? 0}/{hw.maxMarks}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setGradeModal({
+                                      homeworkTitle: hw.title,
+                                      submission: submissionItem,
+                                    });
+                                    setGradeMarks(submissionItem.marks ?? 0);
+                                    setGradeFeedback(submissionItem.feedback ?? "");
+                                  }}
+                                  className="btn-action btn-sm font-bold text-xs"
+                                >
+                                  Check &amp; Give Feedback
+                                </button>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {s.status === "graded" ? (
-                              <span className="text-sm font-bold text-emerald-600">
-                                {s.marks}/{hw.maxMarks}
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => {
-                                  setGradeModal({
-                                    homeworkTitle: hw.title,
-                                    submission: s,
-                                  });
-                                  setGradeMarks(s.marks ?? 0);
-                                  setGradeFeedback(s.feedback ?? "");
-                                }}
-                                className="btn-action btn-sm font-bold text-xs"
-                              >
-                                Grade
-                              </button>
-                            )}
-                          </div>
-                        </div>
+                        </article>
                       ))}
-                      {subs.length > 5 && (
-                        <p className="text-xs text-slate-400 text-center">
+
+                      {subs.length > 5 ? (
+                        <p className="text-center text-xs text-slate-400">
                           +{subs.length - 5} more submissions
                         </p>
-                      )}
+                      ) : null}
                     </div>
                   )}
 
@@ -1077,7 +1347,7 @@ Clarity of presentation..."
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-bold text-[var(--color-heading)] mb-1">
-              Grade Submission
+              Check Homework & Give Feedback
             </h3>
             <p className="text-sm text-[var(--color-muted)] mb-4">
               {gradeModal.homeworkTitle} — {gradeModal.submission.studentName}
@@ -1088,16 +1358,31 @@ Clarity of presentation..."
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
                   Student Response
                 </p>
-                <p className="text-sm text-[var(--color-heading)]">
+                <p className="whitespace-pre-wrap text-sm text-[var(--color-heading)]">
                   {gradeModal.submission.content}
                 </p>
               </div>
             )}
 
+            {gradeModal.submission.attachmentUrl ? (
+              <a
+                href={gradeModal.submission.attachmentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mb-4 flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-black text-[#0B40A1] transition hover:bg-blue-100"
+              >
+                <span className="flex items-center gap-2">
+                  <Paperclip size={15} />
+                  Open student&apos;s uploaded file
+                </span>
+                <ExternalLink size={14} />
+              </a>
+            ) : null}
+
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                  Marks
+                  Marks Awarded
                 </label>
                 <input
                   type="number"
@@ -1111,14 +1396,14 @@ Clarity of presentation..."
               </div>
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                  Feedback
+                  Teacher&apos;s Feedback
                 </label>
                 <textarea
                   value={gradeFeedback}
                   onChange={(e) =>
                     setGradeFeedback(e.target.value.slice(0, 500))
                   }
-                  placeholder="Feedback for the student..."
+                  placeholder="Write clear feedback for the student..."
                   rows={3}
                   className="w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]"
                 />
@@ -1136,7 +1421,7 @@ Clarity of presentation..."
                 ) : (
                   <>
                     <Award size={14} className="mr-2" />
-                    Save Grade
+                    Publish Marks & Feedback
                   </>
                 )}
               </button>

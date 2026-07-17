@@ -21,6 +21,7 @@ import {
   Loader2,
   Moon,
   Pencil,
+  Plus,
   Save,
   Smartphone,
   Smile,
@@ -71,6 +72,72 @@ const MOOD_OPTIONS: Array<{
     description: "I had a great day",
   },
 ];
+
+type GoalTask = {
+  text: string;
+  completed: boolean;
+};
+
+const MAX_GOAL_TASKS = 10;
+const MAX_GOAL_TASK_LENGTH = 160;
+
+function createEmptyGoalTask(): GoalTask {
+  return {
+    text: "",
+    completed: false,
+  };
+}
+
+function parseGoalTasks(value?: string | null): GoalTask[] {
+  if (!value?.trim()) {
+    return [];
+  }
+
+  const lines = value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, MAX_GOAL_TASKS);
+
+  const checklistTasks = lines
+    .map((line) => {
+      const match = line.match(/^\[([xX ])\]\s*(.+)$/);
+
+      if (!match) {
+        return null;
+      }
+
+      return {
+        text: match[2].slice(0, MAX_GOAL_TASK_LENGTH),
+        completed: match[1].toLowerCase() === "x",
+      };
+    })
+    .filter((task): task is GoalTask => task !== null);
+
+  if (checklistTasks.length > 0) {
+    return checklistTasks;
+  }
+
+  // Older entries stored Main Goal as ordinary text.
+  return [
+    {
+      text: value.slice(0, MAX_GOAL_TASK_LENGTH),
+      completed: false,
+    },
+  ];
+}
+
+function serializeGoalTasks(tasks: GoalTask[]) {
+  return tasks
+    .map((task) => ({
+      text: task.text.trim().slice(0, MAX_GOAL_TASK_LENGTH),
+      completed: task.completed,
+    }))
+    .filter((task) => task.text.length > 0)
+    .slice(0, MAX_GOAL_TASKS)
+    .map((task) => `${task.completed ? "[x]" : "[ ]"} ${task.text}`)
+    .join("\n");
+}
 
 function getToday() {
   const now = new Date();
@@ -449,11 +516,6 @@ export function StudentDailyRoutine() {
   ] = useState("");
 
   const [
-    tasksCompleted,
-    setTasksCompleted,
-  ] = useState("");
-
-  const [
     mood,
     setMood,
   ] =
@@ -462,9 +524,11 @@ export function StudentDailyRoutine() {
     );
 
   const [
-    mainGoal,
-    setMainGoal,
-  ] = useState("");
+    goalTasks,
+    setGoalTasks,
+  ] = useState<GoalTask[]>([
+    createEmptyGoalTask(),
+  ]);
 
   const [
     reflection,
@@ -564,6 +628,67 @@ export function StudentDailyRoutine() {
       ],
     );
 
+  const completedGoalTaskCount =
+    useMemo(
+      () =>
+        goalTasks.filter(
+          (task) =>
+            task.text.trim().length > 0 &&
+            task.completed,
+        ).length,
+      [goalTasks],
+    );
+
+  function updateGoalTask(
+    index: number,
+    value: string,
+  ) {
+    setGoalTasks((current) =>
+      current.map((task, taskIndex) =>
+        taskIndex === index
+          ? {
+              text: value.slice(0, MAX_GOAL_TASK_LENGTH),
+              completed:
+                value.trim().length > 0
+                  ? task.completed
+                  : false,
+            }
+          : task,
+      ),
+    );
+  }
+
+  function toggleGoalTask(index: number) {
+    setGoalTasks((current) =>
+      current.map((task, taskIndex) =>
+        taskIndex === index && task.text.trim().length > 0
+          ? {
+              ...task,
+              completed: !task.completed,
+            }
+          : task,
+      ),
+    );
+  }
+
+  function addGoalTask() {
+    setGoalTasks((current) =>
+      current.length >= MAX_GOAL_TASKS
+        ? current
+        : [...current, createEmptyGoalTask()],
+    );
+  }
+
+  function removeGoalTask(index: number) {
+    setGoalTasks((current) => {
+      if (current.length === 1) {
+        return [createEmptyGoalTask()];
+      }
+
+      return current.filter((_, taskIndex) => taskIndex !== index);
+    });
+  }
+
   function resetForm() {
     setEditingId(null);
 
@@ -583,11 +708,11 @@ export function StudentDailyRoutine() {
 
     setExerciseMinutes("");
 
-    setTasksCompleted("");
-
     setMood("good");
 
-    setMainGoal("");
+    setGoalTasks([
+      createEmptyGoalTask(),
+    ]);
 
     setReflection("");
   }
@@ -643,19 +768,19 @@ export function StudentDailyRoutine() {
       ),
     );
 
-    setTasksCompleted(
-      String(
-        routine.tasksCompleted,
-      ),
-    );
-
     setMood(
       routine.mood,
     );
 
-    setMainGoal(
-      routine.mainGoal ??
-        "",
+    const savedGoalTasks =
+      parseGoalTasks(
+        routine.mainGoal,
+      );
+
+    setGoalTasks(
+      savedGoalTasks.length > 0
+        ? savedGoalTasks
+        : [createEmptyGoalTask()],
     );
 
     setReflection(
@@ -770,16 +895,14 @@ export function StudentDailyRoutine() {
                       ),
 
                 tasksCompleted:
-                  tasksCompleted.trim() ===
-                  ""
-                    ? 0
-                    : Number(
-                        tasksCompleted,
-                      ),
+                  completedGoalTaskCount,
 
                 mood,
 
-                mainGoal,
+                mainGoal:
+                  serializeGoalTasks(
+                    goalTasks,
+                  ),
 
                 reflection,
               }),
@@ -1288,71 +1411,8 @@ export function StudentDailyRoutine() {
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField
-              label="Exercise / Outdoor Time"
-              icon={
-                <Dumbbell
-                  size={14}
-                />
-              }
-              hint="Minutes"
-            >
-              <input
-                type="number"
-                min="0"
-                max="1440"
-                step="1"
-                value={
-                  exerciseMinutes
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setExerciseMinutes(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="e.g. 45"
-                className={
-                  fieldClass
-                }
-              />
-            </FormField>
 
-            <FormField
-              label="Tasks Completed"
-              icon={
-                <ListChecks
-                  size={14}
-                />
-              }
-              hint="Number"
-            >
-              <input
-                type="number"
-                min="0"
-                max="100"
-                step="1"
-                value={
-                  tasksCompleted
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setTasksCompleted(
-                    event.target
-                      .value,
-                  )
-                }
-                placeholder="e.g. 4"
-                className={
-                  fieldClass
-                }
-              />
-            </FormField>
-          </div>
+
 
           <div>
             <div className="mb-3 flex items-center gap-2">
@@ -1414,36 +1474,22 @@ export function StudentDailyRoutine() {
             </div>
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <FormField
-              label="Main Goal"
-              icon={
-                <Target
-                  size={14}
-                />
+          <div className="space-y-6">
+            <GoalChecklist
+              tasks={goalTasks}
+              onTextChange={
+                updateGoalTask
               }
-              hint="Optional"
-            >
-              <textarea
-                value={
-                  mainGoal
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setMainGoal(
-                    event.target.value.slice(
-                      0,
-                      500,
-                    ),
-                  )
-                }
-                placeholder="What was your main goal for today?"
-                className={
-                  textareaClass
-                }
-              />
-            </FormField>
+              onToggle={
+                toggleGoalTask
+              }
+              onAdd={
+                addGoalTask
+              }
+              onRemove={
+                removeGoalTask
+              }
+            />
 
             <FormField
               label="Task for Tomorrow"
@@ -1568,6 +1614,11 @@ export function StudentDailyRoutine() {
                   routine.mood,
                 );
 
+              const routineGoalTasks =
+                parseGoalTasks(
+                  routine.mainGoal,
+                );
+
               return (
                 <article
                   key={
@@ -1660,23 +1711,48 @@ export function StudentDailyRoutine() {
                     Tasks Completed
                   </div>
 
-                  {routine.mainGoal ? (
+                  {routineGoalTasks.length > 0 ? (
                     <div className="mt-4">
                       <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-blue-500">
                         <Target
-                          size={
-                            12
-                          }
+                          size={12}
                         />
 
-                        Main Goal
+                        Main Goals
                       </p>
 
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[var(--color-heading)]">
-                        {
-                          routine.mainGoal
-                        }
-                      </p>
+                      <div className="mt-3 space-y-2">
+                        {routineGoalTasks.map((task, taskIndex) => (
+                          <div
+                            key={`${routine.id}-goal-${taskIndex}`}
+                            className={`flex items-start gap-3 rounded-xl border px-3 py-2.5 ${
+                              task.completed
+                                ? "border-emerald-100 bg-emerald-50/70"
+                                : "border-slate-100 bg-slate-50"
+                            }`}
+                          >
+                            <span
+                              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
+                                task.completed
+                                  ? "border-emerald-500 bg-emerald-500 text-white"
+                                  : "border-slate-300 bg-white text-transparent"
+                              }`}
+                            >
+                              <CheckCircle2 size={13} />
+                            </span>
+
+                            <p
+                              className={`text-sm leading-5 ${
+                                task.completed
+                                  ? "text-slate-400 line-through"
+                                  : "font-semibold text-[var(--color-heading)]"
+                              }`}
+                            >
+                              {task.text}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ) : null}
 
@@ -1827,6 +1903,114 @@ function FormField({
 
       {children}
     </label>
+  );
+}
+
+function GoalChecklist({
+  tasks,
+  onTextChange,
+  onToggle,
+  onAdd,
+  onRemove,
+}: {
+  tasks: GoalTask[];
+  onTextChange: (index: number, value: string) => void;
+  onToggle: (index: number) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+}) {
+  const completedCount = tasks.filter(
+    (task) => task.text.trim().length > 0 && task.completed,
+  ).length;
+
+  return (
+    <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-slate-50/70 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-blue-500">
+            <Target size={14} />
+            Main Goal
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
+            Add up to 10 tasks and tick them when completed.
+          </p>
+        </div>
+
+        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[10px] font-black text-slate-500 shadow-sm">
+          {completedCount}/{tasks.length} Done
+        </span>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        {tasks.map((task, index) => (
+          <div
+            key={index}
+            className={`flex items-center gap-3 rounded-2xl border bg-white p-3 transition ${
+              task.completed
+                ? "border-emerald-200 bg-emerald-50/40"
+                : "border-[var(--color-border)]"
+            }`}
+          >
+            <button
+              type="button"
+              role="checkbox"
+              aria-checked={task.completed}
+              aria-label={`Mark task ${index + 1} as ${
+                task.completed ? "incomplete" : "complete"
+              }`}
+              disabled={task.text.trim().length === 0}
+              onClick={() => onToggle(index)}
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                task.completed
+                  ? "border-emerald-500 bg-emerald-500 text-white"
+                  : "border-slate-300 bg-white text-transparent hover:border-blue-400"
+              }`}
+            >
+              <CheckCircle2 size={15} />
+            </button>
+
+            <input
+              type="text"
+              value={task.text}
+              maxLength={MAX_GOAL_TASK_LENGTH}
+              onChange={(event) => onTextChange(index, event.target.value)}
+              placeholder={`Write task ${index + 1}`}
+              className={`min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-slate-400 ${
+                task.completed
+                  ? "text-slate-400 line-through"
+                  : "text-[var(--color-heading)]"
+              }`}
+            />
+
+            <button
+              type="button"
+              onClick={() => onRemove(index)}
+              aria-label={`Remove task ${index + 1}`}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={onAdd}
+        disabled={tasks.length >= MAX_GOAL_TASKS}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-4 py-3 text-xs font-black text-blue-700 transition hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+      >
+        <Plus size={15} />
+        {tasks.length >= MAX_GOAL_TASKS
+          ? "Task limit reached"
+          : "Add New Task"}
+      </button>
+
+      <p className="mt-2 text-right text-[10px] font-bold text-slate-400">
+        {tasks.length}/{MAX_GOAL_TASKS} tasks
+      </p>
+    </div>
   );
 }
 

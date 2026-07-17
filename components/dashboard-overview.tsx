@@ -954,18 +954,7 @@ function StudentOverview({
     dashboard.analytics?.attendance?.rate != null
       ? Math.round(dashboard.analytics.attendance.rate)
       : null;
-  const presentCount = dashboard.analytics?.attendance?.present ?? 0;
 
-  const absentCount = dashboard.analytics?.attendance?.absent ?? 0;
-
-  const attendanceTotal = presentCount + absentCount;
-
-  const presentPercentage =
-    attendanceTotal > 0
-      ? Math.round((presentCount / attendanceTotal) * 100)
-      : (attRate ?? 0);
-
-  const presentAngle = presentPercentage * 3.6;
   const classRank = dashboard.stats[1]?.value || "—";
   const avgScore =
     dashboard.analytics?.assessments?.averageScore != null
@@ -1055,6 +1044,97 @@ function StudentOverview({
     dashboard.weeklyTests?.filter(
       (t) => t.status === "published" || t.status === "pending",
     ) ?? [];
+
+  const nextAction = (() => {
+    const weeklyTask = weeklyTestTasks[0];
+
+    if (weeklyTask) {
+      return {
+        title: weeklyTask.title || "Weekly Learning Task",
+        description:
+          [
+            weeklyTask.subject,
+            weeklyTask.duration ? `${weeklyTask.duration} mins` : null,
+          ]
+            .filter(Boolean)
+            .join(" • ") || "Complete your pending weekly learning task.",
+        helperText: "This task is waiting for you to complete.",
+        buttonLabel: "Start Task",
+        section: "weekly-tests",
+        badge: "Pending",
+        icon: BookOpen,
+        iconBoxClass: "bg-violet-100 text-violet-700",
+        panelClass: "border-violet-100 bg-violet-50/60",
+        badgeClass: "bg-violet-100 text-violet-700",
+        buttonClass: "bg-violet-600 hover:bg-violet-700",
+      };
+    }
+
+    const exam = upcomingTests[0];
+
+    if (exam) {
+      return {
+        title: exam.title || "Upcoming Exam",
+        description:
+          [exam.subject, exam.total ? `${exam.total} marks` : null]
+            .filter(Boolean)
+            .join(" • ") || "Review the details of your upcoming exam.",
+        helperText:
+          exam.status === "published"
+            ? "The exam is available and ready to start."
+            : "Prepare now so you are ready for the exam.",
+        buttonLabel: exam.status === "published" ? "Start Exam" : "View Exam",
+        section: "tests",
+        badge: exam.status === "published" ? "Ready" : "Upcoming",
+        icon: FileText,
+        iconBoxClass: "bg-blue-100 text-blue-700",
+        panelClass: "border-blue-100 bg-blue-50/60",
+        badgeClass: "bg-blue-100 text-blue-700",
+        buttonClass: "bg-[#0B40A1] hover:bg-[#092F78]",
+      };
+    }
+
+    const lecture = todayLectures[0];
+
+    if (lecture) {
+      return {
+        title: lecture.title || "Today’s Class",
+        description:
+          [
+            lecture.subject,
+            lecture.startsAt?.slice(11, 16) || null,
+            lecture.duration ? `${lecture.duration} mins` : null,
+          ]
+            .filter(Boolean)
+            .join(" • ") || "Your next class is scheduled for today.",
+        helperText: "Open the lecture section to view the class details.",
+        buttonLabel: "View Class",
+        section: "lectures",
+        badge: "Today",
+        icon: PlayCircle,
+        iconBoxClass: "bg-teal-100 text-teal-700",
+        panelClass: "border-teal-100 bg-teal-50/60",
+        badgeClass: "bg-teal-100 text-teal-700",
+        buttonClass: "bg-teal-600 hover:bg-teal-700",
+      };
+    }
+
+    return {
+      title: "You’re all caught up",
+      description: "No pending tests or classes need your attention right now.",
+      helperText: "Use this time to revise a topic or explore study materials.",
+      buttonLabel: "Explore Materials",
+      section: "materials",
+      badge: "All Clear",
+      icon: CheckCircle2,
+      iconBoxClass: "bg-emerald-100 text-emerald-700",
+      panelClass: "border-emerald-100 bg-emerald-50/60",
+      badgeClass: "bg-emerald-100 text-emerald-700",
+      buttonClass: "bg-emerald-600 hover:bg-emerald-700",
+    };
+  })();
+
+  const NextActionIcon = nextAction.icon;
 
   const quickAccessItems = [
     { label: "Exams", icon: FileText, section: "tests", color: "#4F46E5" },
@@ -1535,68 +1615,64 @@ function StudentOverview({
 
         {/* Right */}
         <div className="space-y-5">
-          {/* Attendance Donut */}
-          <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
-            <h2 className="text-base font-bold text-slate-900 mb-4">
-              Attendance
-            </h2>
-            <div className="flex flex-col items-center">
-              <div className="relative w-28 h-28">
-                <svg
-                  viewBox="0 0 120 120"
-                  className="w-full h-full -rotate-90 absolute inset-0"
-                >
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="#f1f5f9"
-                    strokeWidth="8"
-                  />
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="50"
-                    fill="none"
-                    stroke="#059669"
-                    strokeWidth="8"
-                    strokeDasharray={`${2 * Math.PI * 50}`}
-                    strokeDashoffset={`${2 * Math.PI * 50 * (1 - (attRate ?? 75) / 100)}`}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <p className="text-2xl font-black text-slate-900">
-                    {attRate != null ? `${attRate}%` : "—"}
-                  </p>
+          {/* Next Action */}
+          <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+              <div className="min-w-0">
+                <h2 className="text-sm font-black text-slate-900 sm:text-base">
+                  Next Action
+                </h2>
+                <p className="mt-0.5 text-[10px] font-medium text-slate-500 sm:text-xs">
+                  Your most important learning task
+                </p>
+              </div>
+
+              <span
+                className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black ${nextAction.badgeClass}`}
+              >
+                {nextAction.badge}
+              </span>
+            </div>
+
+            <div className="p-5 sm:p-6">
+              <div
+                className={`rounded-2xl border p-4 sm:p-5 ${nextAction.panelClass}`}
+              >
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${nextAction.iconBoxClass}`}
+                  >
+                    <NextActionIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-black leading-5 text-slate-900 sm:text-base">
+                      {nextAction.title}
+                    </h3>
+
+                    <p className="mt-1 text-xs font-bold leading-5 text-slate-600">
+                      {nextAction.description}
+                    </p>
+
+                    <p className="mt-2 text-[11px] font-medium leading-5 text-slate-500">
+                      {nextAction.helperText}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p className="text-xs font-medium text-slate-500 mt-2">
-                Overall Attendance
-              </p>
-              <div className="flex gap-4 mt-4 text-xs font-medium text-slate-600">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />{" "}
-                  Present: {dashboard.analytics?.attendance?.present ?? 0}
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-red-400" /> Absent:{" "}
-                  {dashboard.analytics?.attendance?.absent ?? 0}
-                </span>
-              </div>
-              {attRate != null && attRate < 75 && (
-                <div className="mt-4 w-full p-3 rounded-xl bg-red-50 border border-red-100 flex items-center gap-2">
-                  <AlertCircle size={16} className="text-red-600 shrink-0" />
-                  <p className="text-xs font-semibold text-red-700">
-                    Attendance below 75% — please improve!
-                  </p>
-                </div>
-              )}
+
+              <button
+                type="button"
+                onClick={() => onSetActiveSection(nextAction.section)}
+                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black text-white transition-all hover:-translate-y-0.5 hover:shadow-md ${nextAction.buttonClass}`}
+              >
+                {nextAction.buttonLabel}
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
           {/* Notice Board */}
-          <div className="mt-5 rounded-[1.5rem] border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
+          <div className="rounded-[1.5rem] border border-[#E2E8F0] bg-white p-5 shadow-sm sm:p-6">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-[#EBF1FA] text-[#0B40A1] shrink-0">
