@@ -322,7 +322,7 @@ const sidebarByRole = {
   student: [
     { id: "overview", label: "Overview" },
     { id: "profile", label: "Profile" },
-    { id: "lectures", label: "Lectures" },
+    { id: "lectures", label: "Recorded Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "complaints", label: "Complaint Box" },
     { id: "chat", label: "Chat" },
@@ -424,7 +424,22 @@ const sidebarByRole = {
     { id: "certificates", label: "Certificates" },
   ],
 } as const;
+function getDefaultDashboardSection(role: Role) {
+  return sidebarByRole[role][0]?.id ?? "overview";
+}
 
+function isValidDashboardSection(
+  role: Role,
+  section: string,
+) {
+  if (section === "notifications") {
+    return true;
+  }
+
+  return sidebarByRole[role].some(
+    (item) => item.id === section,
+  );
+}
 function getRoleFocus(role: Role) {
   if (role === "admin") {
     return "Access control, institute governance, and approvals.";
@@ -1065,9 +1080,73 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
-  const [activeSection, setActiveSection] = useState<string>(
-    sidebarByRole[role][0]?.id ?? "overview",
+const defaultSection =
+  getDefaultDashboardSection(role);
+
+const [activeSection, setActiveSection] =
+  useState<string>(defaultSection);
+
+const [
+  hasRestoredActiveSection,
+  setHasRestoredActiveSection,
+] = useState(false);
+useEffect(() => {
+  const storageKey = `smart-tutor-dashboard-section:${
+    session?.id ?? role
+  }`;
+
+  const savedSection =
+    window.sessionStorage.getItem(
+      storageKey,
+    );
+
+  if (
+    savedSection &&
+    isValidDashboardSection(
+      role,
+      savedSection,
+    )
+  ) {
+    setActiveSection(savedSection);
+  } else {
+    setActiveSection(defaultSection);
+  }
+
+  setHasRestoredActiveSection(true);
+}, [
+  defaultSection,
+  role,
+  session?.id,
+]);
+
+useEffect(() => {
+  if (!hasRestoredActiveSection) {
+    return;
+  }
+
+  if (
+    !isValidDashboardSection(
+      role,
+      activeSection,
+    )
+  ) {
+    return;
+  }
+
+  const storageKey = `smart-tutor-dashboard-section:${
+    session?.id ?? role
+  }`;
+
+  window.sessionStorage.setItem(
+    storageKey,
+    activeSection,
   );
+}, [
+  activeSection,
+  hasRestoredActiveSection,
+  role,
+  session?.id,
+]);
 
   useEffect(() => {
     setSidebarOpen(false);

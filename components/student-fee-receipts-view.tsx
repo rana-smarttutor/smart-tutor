@@ -1,10 +1,18 @@
 "use client";
 
 import { Fragment, useMemo } from "react";
-import { type FeeInvoice, type FeeInstallmentPlan, type Role } from "@/lib/types";
+import {
+  type FeeInvoice,
+  type FeeInstallmentPlan,
+  type Role,
+} from "@/lib/types";
 
 function escapeHtml(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function formatCurrency(n: number) {
@@ -14,30 +22,82 @@ function formatCurrency(n: number) {
 function formatReceiptDate(iso: string) {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function statusColor(s: string) {
-  if (s === "paid") return { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" };
-  if (s === "partial") return { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" };
-  if (s === "overdue") return { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" };
+  if (s === "paid")
+    return {
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      dot: "bg-emerald-500",
+    };
+  if (s === "partial")
+    return { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" };
+  if (s === "overdue")
+    return { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" };
   return { bg: "bg-slate-50", text: "text-slate-600", dot: "bg-slate-400" };
 }
 
 function numberToWords(n: number): string {
   if (n === 0) return "Zero Rupees Only";
-  const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-  const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+  const ones = [
+    "",
+    "One",
+    "Two",
+    "Three",
+    "Four",
+    "Five",
+    "Six",
+    "Seven",
+    "Eight",
+    "Nine",
+    "Ten",
+    "Eleven",
+    "Twelve",
+    "Thirteen",
+    "Fourteen",
+    "Fifteen",
+    "Sixteen",
+    "Seventeen",
+    "Eighteen",
+    "Nineteen",
+  ];
+  const tens = [
+    "",
+    "",
+    "Twenty",
+    "Thirty",
+    "Forty",
+    "Fifty",
+    "Sixty",
+    "Seventy",
+    "Eighty",
+    "Ninety",
+  ];
   function convertBelow1000(num: number): string {
     let result = "";
-    if (num >= 100) { result += ones[Math.floor(num / 100)] + " Hundred "; num %= 100; }
-    if (num >= 20) { result += tens[Math.floor(num / 10)] + " "; num %= 10; }
+    if (num >= 100) {
+      result += ones[Math.floor(num / 100)] + " Hundred ";
+      num %= 100;
+    }
+    if (num >= 20) {
+      result += tens[Math.floor(num / 10)] + " ";
+      num %= 10;
+    }
     if (num > 0) result += ones[num] + " ";
     return result.trim();
   }
-  const crore = Math.floor(n / 10000000); n %= 10000000;
-  const lakh = Math.floor(n / 100000); n %= 100000;
-  const thousand = Math.floor(n / 1000); n %= 1000;
+  const crore = Math.floor(n / 10000000);
+  n %= 10000000;
+  const lakh = Math.floor(n / 100000);
+  n %= 100000;
+  const thousand = Math.floor(n / 1000);
+  n %= 1000;
   let result = "";
   if (crore) result += convertBelow1000(crore) + " Crore ";
   if (lakh) result += convertBelow1000(lakh) + " Lakh ";
@@ -52,7 +112,11 @@ type Props = {
   feeInstallmentPlans: FeeInstallmentPlan[];
 };
 
-export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans }: Props) {
+export function StudentFeeReceiptsView({
+  role,
+  feeInvoices,
+  feeInstallmentPlans,
+}: Props) {
   const isAdmin = role === "admin";
 
   const invoices = useMemo(() => feeInvoices ?? [], [feeInvoices]);
@@ -72,6 +136,95 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
 
   const totalDue = Math.max(totalFees - totalPaid, 0);
 
+  const nextMonthlyFee = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // First use an already scheduled future unpaid installment.
+    const scheduledInstallments = plans
+      .flatMap((plan) =>
+        plan.installments.map((installment) => ({
+          amount:
+            installment.pendingAmount > 0
+              ? installment.pendingAmount
+              : installment.amount,
+          dueDate: installment.dueDate,
+          pendingAmount: installment.pendingAmount,
+        })),
+      )
+      .filter((installment) => {
+        const dueDate = new Date(installment.dueDate);
+
+        return (
+          !Number.isNaN(dueDate.getTime()) &&
+          dueDate.getTime() >= today.getTime() &&
+          installment.pendingAmount > 0
+        );
+      })
+      .sort(
+        (first, second) =>
+          new Date(first.dueDate).getTime() -
+          new Date(second.dueDate).getTime(),
+      );
+
+    if (scheduledInstallments.length > 0) {
+      return {
+        amount: scheduledInstallments[0].amount,
+        dueDate: scheduledInstallments[0].dueDate,
+        isProjected: false,
+      };
+    }
+
+    // When the next installment has not yet been generated,
+    // calculate it from the latest fee record.
+    const feeHistory = [
+      ...plans.flatMap((plan) =>
+        plan.installments.map((installment) => ({
+          amount: installment.amount,
+          dueDate: installment.dueDate,
+        })),
+      ),
+      ...invoices.map((invoice) => ({
+        amount: invoice.amount,
+        dueDate: invoice.dueDate || invoice.createdAt || "",
+      })),
+    ]
+      .filter((record) => {
+        const date = new Date(record.dueDate);
+        return record.amount > 0 && !Number.isNaN(date.getTime());
+      })
+      .sort(
+        (first, second) =>
+          new Date(second.dueDate).getTime() -
+          new Date(first.dueDate).getTime(),
+      );
+
+    const latestFee = feeHistory[0];
+
+    if (!latestFee) {
+      return null;
+    }
+
+    const nextDueDate = new Date(latestFee.dueDate);
+    const originalDay = nextDueDate.getDate();
+
+    nextDueDate.setDate(1);
+    nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+
+    const lastDayOfNextMonth = new Date(
+      nextDueDate.getFullYear(),
+      nextDueDate.getMonth() + 1,
+      0,
+    ).getDate();
+
+    nextDueDate.setDate(Math.min(originalDay, lastDayOfNextMonth));
+
+    return {
+      amount: latestFee.amount,
+      dueDate: nextDueDate.toISOString(),
+      isProjected: true,
+    };
+  }, [invoices, plans]);
   const hasFees = totalFees > 0;
 
   function downloadInvoiceReceipt(invoice: FeeInvoice) {
@@ -85,7 +238,18 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
     const now = new Date();
-    const printDateStr = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) + ", " + now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const printDateStr =
+      now.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }) +
+      ", " +
+      now.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
     const amountInWords = numberToWords(invoice.amount);
 
     const statusLabels: Record<string, string> = {
@@ -100,7 +264,8 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
       unpaid: "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;",
       overdue: "background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;",
     };
-    const badgeStyle = statusBadgeColors[invoice.status] ?? statusBadgeColors.unpaid;
+    const badgeStyle =
+      statusBadgeColors[invoice.status] ?? statusBadgeColors.unpaid;
     const statusLabel = statusLabels[invoice.status] ?? "UNPAID";
 
     function renderTransactionRows(): string {
@@ -315,41 +480,149 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
 
       {/* ── Summary Stats ── */}
       {hasFees && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(37,99,235,.1)", color: "#2563EB" }}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Monthly Fees */}
+          <div className="flex min-h-[116px] items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-5">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+              style={{
+                background: "rgba(37,99,235,.1)",
+                color: "#2563EB",
+              }}
+            >
+              <span className="text-xl font-black leading-none">₹</span>
             </div>
-            <div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Fees</div>
-              <div className="text-xl font-bold text-slate-800">{formatCurrency(totalFees)}</div>
+
+            <div className="min-w-0">
+              <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Monthly Fees
+              </p>
+
+              <p className="mt-1 truncate text-2xl font-black text-slate-800">
+                {formatCurrency(totalFees)}
+              </p>
             </div>
           </div>
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(16,185,129,.1)", color: "#10B981" }}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+
+          {/* Amount Paid */}
+          <div className="flex min-h-[116px] items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-5">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+              style={{
+                background: "rgba(16,185,129,.1)",
+                color: "#10B981",
+              }}
+            >
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
             </div>
-            <div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount Paid</div>
-              <div className="text-xl font-bold text-emerald-600">{formatCurrency(totalPaid)}</div>
+
+            <div className="min-w-0">
+              <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Amount Paid
+              </p>
+
+              <p className="mt-1 truncate text-2xl font-black text-emerald-600">
+                {formatCurrency(totalPaid)}
+              </p>
             </div>
           </div>
-          <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: totalDue > 0 ? "rgba(239,68,68,.1)" : "rgba(16,185,129,.1)", color: totalDue > 0 ? "#EF4444" : "#10B981" }}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" /></svg>
+
+          {/* Amount Due */}
+          <div className="flex min-h-[116px] items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-5">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+              style={{
+                background:
+                  totalDue > 0 ? "rgba(239,68,68,.1)" : "rgba(16,185,129,.1)",
+                color: totalDue > 0 ? "#EF4444" : "#10B981",
+              }}
+            >
+              <span className="text-xl font-black leading-none">₹</span>
             </div>
-            <div>
-              <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Amount Due</div>
-              <div className={`text-xl font-bold ${totalDue > 0 ? "text-red-600" : "text-emerald-600"}`}>{formatCurrency(totalDue)}</div>
+
+            <div className="min-w-0">
+              <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Amount Due
+              </p>
+
+              <p
+                className={`mt-1 truncate text-2xl font-black ${
+                  totalDue > 0 ? "text-red-600" : "text-emerald-600"
+                }`}
+              >
+                {formatCurrency(totalDue)}
+              </p>
+            </div>
+          </div>
+
+          {/* Next Monthly Fee */}
+          <div className="flex min-h-[116px] items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-white p-5">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 7V3m8 4V3M5 11h14M5 5h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2z"
+                />
+              </svg>
+            </div>
+
+            <div className="min-w-0">
+              <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Next Monthly Fee
+              </p>
+
+              <p className="mt-1 truncate text-2xl font-black text-amber-600">
+                {nextMonthlyFee
+                  ? formatCurrency(nextMonthlyFee.amount)
+                  : "Not Scheduled"}
+              </p>
+
+              <p className="mt-1 truncate text-[11px] font-semibold text-slate-400">
+                {nextMonthlyFee
+                  ? `${nextMonthlyFee.isProjected ? "Expected" : "Due"} ${formatReceiptDate(
+                      nextMonthlyFee.dueDate,
+                    )}`
+                  : "No monthly fee record available"}
+              </p>
             </div>
           </div>
         </div>
       )}
-
       {/* ── No Fees ── */}
       {!hasFees && (
         <div className="text-center py-12 text-slate-400">
-          <svg className="w-12 h-12 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+          <svg
+            className="w-12 h-12 mx-auto mb-3 opacity-40"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
           <p className="text-sm font-medium">No fee records found.</p>
         </div>
       )}
@@ -358,25 +631,56 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
       {plans.length > 0 && (
         <div className="mb-5">
           {plans.map((plan) => {
-            const planStatus = plan.status === "completed" ? "paid" : plan.pendingAmount > 0 && plan.paidAmount > 0 ? "partial" : plan.paidAmount === 0 ? "unpaid" : "paid";
+            const planStatus =
+              plan.status === "completed"
+                ? "paid"
+                : plan.pendingAmount > 0 && plan.paidAmount > 0
+                  ? "partial"
+                  : plan.paidAmount === 0
+                    ? "unpaid"
+                    : "paid";
             const sc = statusColor(planStatus);
 
             return (
-              <div key={plan.id} className="rounded-2xl border border-[var(--color-border)] bg-white overflow-hidden mb-4">
+              <div
+                key={plan.id}
+                className="rounded-2xl border border-[var(--color-border)] bg-white overflow-hidden mb-4"
+              >
                 <div className="px-4 py-3 border-b border-[var(--color-border)] flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="text-sm font-bold text-slate-800">{plan.title}</div>
+                    <div className="text-sm font-bold text-slate-800">
+                      {plan.title}
+                    </div>
                     <div className="text-[11px] text-slate-500 mt-0.5">
-                      {plan.courseName ? `${plan.courseName}` : ""}{plan.academicYear ? ` \u00B7 ${plan.academicYear}` : ""}
+                      {plan.courseName ? `${plan.courseName}` : ""}
+                      {plan.academicYear ? ` \u00B7 ${plan.academicYear}` : ""}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-[12px]">
-                    <span className="text-slate-500">Total: <strong className="text-slate-800">{formatCurrency(plan.totalFee)}</strong></span>
-                    <span className="text-emerald-600">Paid: <strong>{formatCurrency(plan.paidAmount)}</strong></span>
-                    {plan.pendingAmount > 0 && <span className="text-red-600">Due: <strong>{formatCurrency(plan.pendingAmount)}</strong></span>}
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${sc.bg} ${sc.text}`}>
+                    <span className="text-slate-500">
+                      Total:{" "}
+                      <strong className="text-slate-800">
+                        {formatCurrency(plan.totalFee)}
+                      </strong>
+                    </span>
+                    <span className="text-emerald-600">
+                      Paid: <strong>{formatCurrency(plan.paidAmount)}</strong>
+                    </span>
+                    {plan.pendingAmount > 0 && (
+                      <span className="text-red-600">
+                        Due:{" "}
+                        <strong>{formatCurrency(plan.pendingAmount)}</strong>
+                      </span>
+                    )}
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${sc.bg} ${sc.text}`}
+                    >
                       <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                      {planStatus === "paid" ? "Paid" : planStatus === "partial" ? "Partial" : "Unpaid"}
+                      {planStatus === "paid"
+                        ? "Paid"
+                        : planStatus === "partial"
+                          ? "Partial"
+                          : "Unpaid"}
                     </span>
                   </div>
                 </div>
@@ -385,63 +689,141 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
                   <table className="w-full text-[13px]">
                     <thead>
                       <tr className="bg-slate-50 text-left">
-                        <th className="px-4 py-2 font-semibold text-slate-600">Installment</th>
-                        <th className="px-4 py-2 font-semibold text-slate-600 text-right">Total</th>
-                        <th className="px-4 py-2 font-semibold text-slate-600 text-right">Paid</th>
-                        <th className="px-4 py-2 font-semibold text-slate-600 text-right">Due</th>
-                        <th className="px-4 py-2 font-semibold text-slate-600">Due Date</th>
-                        <th className="px-4 py-2 font-semibold text-slate-600">Status</th>
-                        <th className="px-4 py-2 font-semibold text-slate-600">Action</th>
+                        <th className="px-4 py-2 font-semibold text-slate-600">
+                          Installment
+                        </th>
+                        <th className="px-4 py-2 font-semibold text-slate-600 text-right">
+                          Total
+                        </th>
+                        <th className="px-4 py-2 font-semibold text-slate-600 text-right">
+                          Paid
+                        </th>
+                        <th className="px-4 py-2 font-semibold text-slate-600 text-right">
+                          Due
+                        </th>
+                        <th className="px-4 py-2 font-semibold text-slate-600">
+                          Due Date
+                        </th>
+                        <th className="px-4 py-2 font-semibold text-slate-600">
+                          Status
+                        </th>
+                        <th className="px-4 py-2 font-semibold text-slate-600">
+                          Action
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {plan.installments.map((inst, idx) => {
-                        const instStatus = inst.status === "paid" ? "paid" : inst.paidAmount > 0 ? "partial" : inst.status === "overdue" ? "overdue" : "unpaid";
+                        const instStatus =
+                          inst.status === "paid"
+                            ? "paid"
+                            : inst.paidAmount > 0
+                              ? "partial"
+                              : inst.status === "overdue"
+                                ? "overdue"
+                                : "unpaid";
                         const isc = statusColor(instStatus);
-                        const matchedInvoice = invoices.find((inv) => inv.receiptNo === inst.receiptNumber || inv.id === inst.receiptNumber);
+                        const matchedInvoice = invoices.find(
+                          (inv) =>
+                            inv.receiptNo === inst.receiptNumber ||
+                            inv.id === inst.receiptNumber,
+                        );
 
                         return (
                           <Fragment key={idx}>
                             <tr className="border-t border-[var(--color-border)]">
                               <td className="px-4 py-3">
-                                <div className="font-semibold text-slate-800">{plan.title}</div>
-                                <div className="text-[11px] text-slate-400">Installment {inst.installmentNumber}</div>
+                                <div className="font-semibold text-slate-800">
+                                  {plan.title}
+                                </div>
+                                <div className="text-[11px] text-slate-400">
+                                  Installment {inst.installmentNumber}
+                                </div>
                               </td>
-                              <td className="px-4 py-3 text-right">{formatCurrency(inst.amount)}</td>
-                              <td className="px-4 py-3 text-right text-emerald-600 font-semibold">{formatCurrency(inst.paidAmount)}</td>
-                              <td className="px-4 py-3 text-right font-semibold" style={{ color: inst.pendingAmount > 0 ? "#EF4444" : "#10B981" }}>
+                              <td className="px-4 py-3 text-right">
+                                {formatCurrency(inst.amount)}
+                              </td>
+                              <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
+                                {formatCurrency(inst.paidAmount)}
+                              </td>
+                              <td
+                                className="px-4 py-3 text-right font-semibold"
+                                style={{
+                                  color:
+                                    inst.pendingAmount > 0
+                                      ? "#EF4444"
+                                      : "#10B981",
+                                }}
+                              >
                                 {formatCurrency(inst.pendingAmount)}
                               </td>
-                              <td className="px-4 py-3 text-slate-600">{formatReceiptDate(inst.dueDate)}</td>
+                              <td className="px-4 py-3 text-slate-600">
+                                {formatReceiptDate(inst.dueDate)}
+                              </td>
                               <td className="px-4 py-3">
-                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isc.bg} ${isc.text}`}>
-                                  <span className={`w-1.5 h-1.5 rounded-full ${isc.dot}`} />
-                                  {instStatus === "paid" ? "Paid" : instStatus === "partial" ? "Partial" : instStatus === "overdue" ? "Overdue" : "Unpaid"}
+                                <span
+                                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isc.bg} ${isc.text}`}
+                                >
+                                  <span
+                                    className={`w-1.5 h-1.5 rounded-full ${isc.dot}`}
+                                  />
+                                  {instStatus === "paid"
+                                    ? "Paid"
+                                    : instStatus === "partial"
+                                      ? "Partial"
+                                      : instStatus === "overdue"
+                                        ? "Overdue"
+                                        : "Unpaid"}
                                 </span>
                               </td>
                               <td className="px-4 py-3">
-                                {(instStatus === "paid" || instStatus === "partial") && matchedInvoice ? (
+                                {(instStatus === "paid" ||
+                                  instStatus === "partial") &&
+                                matchedInvoice ? (
                                   <button
-                                    onClick={() => downloadInvoiceReceipt(matchedInvoice)}
+                                    onClick={() =>
+                                      downloadInvoiceReceipt(matchedInvoice)
+                                    }
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
                                   >
-                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                      />
+                                    </svg>
                                     Receipt
                                   </button>
                                 ) : (
-                                  <span className="text-[11px] text-slate-400">—</span>
+                                  <span className="text-[11px] text-slate-400">
+                                    —
+                                  </span>
                                 )}
                               </td>
                             </tr>
                             {(inst.transactions ?? []).length > 0 && (
                               <tr className="bg-slate-50/80">
                                 <td colSpan={7} className="px-4 py-2">
-                                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Payment History</div>
+                                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                                    Payment History
+                                  </div>
                                   <div className="flex flex-wrap gap-x-5 gap-y-1">
                                     {(inst.transactions ?? []).map((t, ti) => (
-                                      <span key={ti} className="inline-flex items-center gap-1 text-[12px] text-slate-600">
+                                      <span
+                                        key={ti}
+                                        className="inline-flex items-center gap-1 text-[12px] text-slate-600"
+                                      >
                                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        {formatCurrency(t.paidAmount)} via {t.paymentMode} on {formatReceiptDate(t.paidDate)}
+                                        {formatCurrency(t.paidAmount)} via{" "}
+                                        {t.paymentMode} on{" "}
+                                        {formatReceiptDate(t.paidDate)}
                                       </span>
                                     ))}
                                   </div>
@@ -470,13 +852,27 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="bg-slate-50 text-left">
-                  <th className="px-4 py-2 font-semibold text-slate-600">Description</th>
-                  <th className="px-4 py-2 font-semibold text-slate-600 text-right">Total</th>
-                  <th className="px-4 py-2 font-semibold text-slate-600 text-right">Paid</th>
-                  <th className="px-4 py-2 font-semibold text-slate-600 text-right">Due</th>
-                  <th className="px-4 py-2 font-semibold text-slate-600">Due Date</th>
-                  <th className="px-4 py-2 font-semibold text-slate-600">Status</th>
-                  <th className="px-4 py-2 font-semibold text-slate-600">Action</th>
+                  <th className="px-4 py-2 font-semibold text-slate-600">
+                    Description
+                  </th>
+                  <th className="px-4 py-2 font-semibold text-slate-600 text-right">
+                    Total
+                  </th>
+                  <th className="px-4 py-2 font-semibold text-slate-600 text-right">
+                    Paid
+                  </th>
+                  <th className="px-4 py-2 font-semibold text-slate-600 text-right">
+                    Due
+                  </th>
+                  <th className="px-4 py-2 font-semibold text-slate-600">
+                    Due Date
+                  </th>
+                  <th className="px-4 py-2 font-semibold text-slate-600">
+                    Status
+                  </th>
+                  <th className="px-4 py-2 font-semibold text-slate-600">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -490,44 +886,90 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
                     <Fragment key={inv.id}>
                       <tr className="border-t border-[var(--color-border)]">
                         <td className="px-4 py-3">
-                          <div className="font-semibold text-slate-800">{inv.title}</div>
-                          {inv.particulars && <div className="text-[11px] text-slate-400">{inv.particulars}</div>}
+                          <div className="font-semibold text-slate-800">
+                            {inv.title}
+                          </div>
+                          {inv.particulars && (
+                            <div className="text-[11px] text-slate-400">
+                              {inv.particulars}
+                            </div>
+                          )}
                         </td>
-                        <td className="px-4 py-3 text-right">{formatCurrency(inv.amount)}</td>
-                        <td className="px-4 py-3 text-right text-emerald-600 font-semibold">{formatCurrency(paidAmt)}</td>
-                        <td className="px-4 py-3 text-right font-semibold" style={{ color: bal > 0 ? "#EF4444" : "#10B981" }}>
+                        <td className="px-4 py-3 text-right">
+                          {formatCurrency(inv.amount)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
+                          {formatCurrency(paidAmt)}
+                        </td>
+                        <td
+                          className="px-4 py-3 text-right font-semibold"
+                          style={{ color: bal > 0 ? "#EF4444" : "#10B981" }}
+                        >
                           {formatCurrency(bal)}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{formatReceiptDate(inv.dueDate)}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {formatReceiptDate(inv.dueDate)}
+                        </td>
                         <td className="px-4 py-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isc.bg} ${isc.text}`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${isc.dot}`} />
-                            {invStatus === "paid" ? "Paid" : invStatus === "partial" ? "Partial" : invStatus === "overdue" ? "Overdue" : "Unpaid"}
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isc.bg} ${isc.text}`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${isc.dot}`}
+                            />
+                            {invStatus === "paid"
+                              ? "Paid"
+                              : invStatus === "partial"
+                                ? "Partial"
+                                : invStatus === "overdue"
+                                  ? "Overdue"
+                                  : "Unpaid"}
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          {(invStatus === "paid" || invStatus === "partial") ? (
+                          {invStatus === "paid" || invStatus === "partial" ? (
                             <button
                               onClick={() => downloadInvoiceReceipt(inv)}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                              <svg
+                                className="w-3.5 h-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
+                              </svg>
                               Receipt
                             </button>
                           ) : (
-                            <span className="text-[11px] text-slate-400">—</span>
+                            <span className="text-[11px] text-slate-400">
+                              —
+                            </span>
                           )}
                         </td>
                       </tr>
                       {(inv.transactions ?? []).length > 0 && (
                         <tr className="bg-slate-50/80">
                           <td colSpan={7} className="px-4 py-2">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Payment History</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">
+                              Payment History
+                            </div>
                             <div className="flex flex-wrap gap-x-5 gap-y-1">
                               {(inv.transactions ?? []).map((t, ti) => (
-                                <span key={ti} className="inline-flex items-center gap-1 text-[12px] text-slate-600">
+                                <span
+                                  key={ti}
+                                  className="inline-flex items-center gap-1 text-[12px] text-slate-600"
+                                >
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  {formatCurrency(t.paidAmount)} via {t.paymentMode} on {formatReceiptDate(t.paidDate)}
+                                  {formatCurrency(t.paidAmount)} via{" "}
+                                  {t.paymentMode} on{" "}
+                                  {formatReceiptDate(t.paidDate)}
                                 </span>
                               ))}
                             </div>
@@ -545,5 +987,3 @@ export function StudentFeeReceiptsView({ role, feeInvoices, feeInstallmentPlans 
     </article>
   );
 }
-
-

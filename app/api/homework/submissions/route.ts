@@ -38,7 +38,12 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-
+if (!content && !attachmentUrl) {
+  return NextResponse.json(
+    { error: "Write a response or upload a homework file." },
+    { status: 400 },
+  );
+}
   const submission = await submitHomework({
     homeworkId,
     studentId: session.id,
