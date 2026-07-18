@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlignLeft,
   AlertCircle,
@@ -109,7 +110,19 @@ function createDemoHomework(): EnrichedHomework {
     mySubmission: null,
   };
 }
+function ModalPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return createPortal(children, document.body);
+}
 export function HomeworkSection({
   session,
   role,
@@ -123,6 +136,7 @@ export function HomeworkSection({
   const [filterType, setFilterType] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [uploadTaskId, setUploadTaskId] = useState<string | null>(null);
   const [feedbackTaskId, setFeedbackTaskId] = useState<string | null>(null);
 
   const [showAssign, setShowAssign] = useState(false);
@@ -312,10 +326,7 @@ export function HomeworkSection({
     setAssignAllowLate(false);
   }
 
-  function handleSubmissionFile(
-    homeworkId: string,
-    file: File | null,
-  ) {
+  function handleSubmissionFile(homeworkId: string, file: File | null) {
     if (!file) {
       setSubmitFile(null);
       return;
@@ -325,9 +336,7 @@ export function HomeworkSection({
       /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|png|jpg|jpeg|webp|txt)$/i;
 
     if (!allowedExtensions.test(file.name)) {
-      setError(
-        "Upload a PDF, Word, PowerPoint, Excel, image, or text file.",
-      );
+      setError("Upload a PDF, Word, PowerPoint, Excel, image, or text file.");
       setSubmitFile(null);
       return;
     }
@@ -350,14 +359,11 @@ export function HomeworkSection({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(
-        "/api/homework/submissions/upload",
-        {
-          method: "POST",
-          credentials: "same-origin",
-          body: formData,
-        },
-      );
+      const response = await fetch("/api/homework/submissions/upload", {
+        method: "POST",
+        credentials: "same-origin",
+        body: formData,
+      });
 
       const payload = (await response.json()) as {
         success?: boolean;
@@ -389,9 +395,7 @@ export function HomeworkSection({
     setError("");
 
     try {
-      const attachmentUrl = file
-        ? await uploadSubmissionFile(file)
-        : undefined;
+      const attachmentUrl = file ? await uploadSubmissionFile(file) : undefined;
 
       const res = await fetch("/api/homework/submissions", {
         method: "POST",
@@ -412,6 +416,7 @@ export function HomeworkSection({
 
       setSubmitContent("");
       setSubmitFile(null);
+      setUploadTaskId(null);
       await loadHomework();
       onDashboardRefresh?.();
     } catch (submissionError) {
@@ -492,7 +497,13 @@ export function HomeworkSection({
     }
     return true;
   });
+  const detailsTask =
+    homework.find((item) => item.id === expandedTaskId) ?? null;
 
+  const uploadTask = homework.find((item) => item.id === uploadTaskId) ?? null;
+
+  const uploadSelectedFile =
+    uploadTask && submittingId === uploadTask.id ? submitFile : null;
   const totalAssigned = homework.length;
 
   const today = new Date();
@@ -517,21 +528,6 @@ export function HomeworkSection({
         0,
       )
     : homework.filter((hw) => !hw.mySubmission).length;
-
-  const feedbackCount = isEducator
-    ? homework.reduce(
-        (sum, hw) =>
-          sum +
-          (hw.submissions?.filter(
-            (submission) => submission.status === "graded",
-          ).length ?? 0),
-        0,
-      )
-    : homework.filter(
-        (hw) =>
-          hw.mySubmission?.status === "graded" &&
-          Boolean(hw.mySubmission.feedback?.trim()),
-      ).length;
 
   function HWTypeBadge({ hwType }: { hwType: string }) {
     return (
@@ -635,8 +631,6 @@ export function HomeworkSection({
           icon={<Hourglass size={18} style={{ color: "#F59E0B" }} />}
           color="#F59E0B"
         />
-
-
       </div>
 
       {/* ── Toolbar ── */}
@@ -736,9 +730,8 @@ export function HomeworkSection({
             const taskLabel = `${hw.hwType === "assignment" ? "Assignment" : "Task"} ${
               hw.taskNumber ?? index + 1
             }`;
-            const isExpanded = expandedTaskId === hw.id;
+
             const showFeedback = feedbackTaskId === hw.id;
-            const selectedFile = submittingId === hw.id ? submitFile : null;
 
             if (isStudent) {
               return (
@@ -749,80 +742,45 @@ export function HomeworkSection({
                   <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-black text-[#0B40A1]">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedTaskId(hw.id)}
+                          className="inline-flex shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-black text-[#0B40A1] transition hover:border-blue-300 hover:bg-blue-100"
+                        >
                           {taskLabel}
-                        </span>
+                        </button>
 
                         <div className="min-w-0">
                           <h3 className="truncate text-base font-black text-[var(--color-heading)]">
                             {hw.title}
                           </h3>
                           <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                            {hw.subject || "General"} · Due {new Date(
-                              hw.dueDate,
-                            ).toLocaleDateString("en-IN", {
+                            {hw.subject || "General"} · Due{" "}
+                            {new Date(hw.dueDate).toLocaleDateString("en-IN", {
                               day: "numeric",
                               month: "short",
                             })}
                           </p>
                         </div>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedTaskId((current) =>
-                            current === hw.id ? null : hw.id,
-                          )
-                        }
-                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-black text-[#0B40A1] hover:underline"
-                      >
-                        <AlignLeft size={13} />
-                        {isExpanded ? "Hide Details" : "View Details"}
-                      </button>
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">
                       {!submission ? (
-                        <>
-                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0B40A1] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#092F78]">
-                            <FileUp size={15} />
-                            {selectedFile ? "Change Upload" : "Upload"}
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx"
-                              className="hidden"
-                              onChange={(event) =>
-                                handleSubmissionFile(
-                                  hw.id,
-                                  event.target.files?.[0] ?? null,
-                                )
-                              }
-                            />
-                          </label>
-
-                          <button
-                            type="button"
-                            onClick={() => void handleSubmit(hw.id)}
-                            disabled={
-                              !selectedFile ||
-                              (submitting && submittingId === hw.id)
-                            }
-                            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
-                          >
-                            {submitting && submittingId === hw.id ? (
-                              <>
-                                <Loader2 size={14} className="animate-spin" />
-                                {uploadingFile ? "Uploading..." : "Submitting..."}
-                              </>
-                            ) : (
-                              <>
-                                <Send size={14} />
-                                Submit
-                              </>
-                            )}
-                          </button>
-                        </>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUploadTaskId(hw.id);
+                            setSubmittingId(hw.id);
+                            setSubmitContent("");
+                            setSubmitFile(null);
+                            setError("");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-xl bg-[#0B40A1] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#092F78]"
+                        >
+                          <FileUp size={15} />
+                          Upload
+                        </button>
                       ) : (
                         <>
                           {submission.attachmentUrl ? (
@@ -872,104 +830,10 @@ export function HomeworkSection({
                     </div>
                   </div>
 
-                  {!submission && selectedFile ? (
-                    <div className="mx-4 mb-4 flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 sm:mx-5">
-                      <div className="flex min-w-0 items-center gap-2 text-xs font-bold text-slate-700">
-                        <Paperclip size={14} className="shrink-0 text-[#0B40A1]" />
-                        <span className="truncate">{selectedFile.name}</span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setSubmitFile(null)}
-                        className="shrink-0 text-slate-400 transition hover:text-red-500"
-                        aria-label="Remove selected file"
-                      >
-                        <X size={15} />
-                      </button>
-                    </div>
-                  ) : null}
-
                   {submission && submission.status !== "graded" ? (
                     <div className="mx-4 mb-4 rounded-xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700 sm:mx-5">
-                      Your assignment has been submitted. Teacher feedback will appear here after review.
-                    </div>
-                  ) : null}
-
-                  {isExpanded ? (
-                    <div className="space-y-4 border-t border-[var(--color-border)] bg-slate-50/50 p-4 sm:p-5">
-                      {hw.objective ? (
-                        <div>
-                          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-                            <Target size={12} /> Objective
-                          </p>
-                          <p className="mt-1.5 text-sm leading-6 text-slate-700">
-                            {hw.objective}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        {hw.keySteps && hw.keySteps.length > 0 ? (
-                          <div>
-                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-                              <ListChecks size={12} /> Key Steps
-                            </p>
-                            <ol className="mt-1.5 list-inside list-decimal space-y-1 text-sm leading-6 text-slate-600">
-                              {hw.keySteps.map((step, stepIndex) => (
-                                <li key={stepIndex}>{step}</li>
-                              ))}
-                            </ol>
-                          </div>
-                        ) : null}
-
-                        <div className="space-y-3">
-                          {hw.deliverables ? (
-                            <div>
-                              <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-                                <ClipboardList size={12} /> Deliverables
-                              </p>
-                              <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                                {hw.deliverables}
-                              </p>
-                            </div>
-                          ) : null}
-
-                          {hw.evaluationCriteria ? (
-                            <div>
-                              <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-                                <Award size={12} /> Evaluation Criteria
-                              </p>
-                              <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                                {hw.evaluationCriteria}
-                              </p>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      {hw.description ? (
-                        <div>
-                          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
-                            <AlignLeft size={12} /> Description
-                          </p>
-                          <p className="mt-1.5 text-sm leading-6 text-slate-600">
-                            {hw.description}
-                          </p>
-                        </div>
-                      ) : null}
-
-                      <div className="flex flex-wrap gap-4 border-t border-slate-200 pt-3 text-xs font-bold text-slate-500">
-                        <span>Max {hw.maxMarks} marks</span>
-                        {hw.estimatedHours ? (
-                          <span>Estimated {hw.estimatedHours}h</span>
-                        ) : null}
-                        <span>Due {new Date(hw.dueDate).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}</span>
-                      </div>
+                      Your assignment has been submitted. Teacher feedback will
+                      appear here after review.
                     </div>
                   ) : null}
 
@@ -1210,7 +1074,8 @@ export function HomeworkSection({
                             </div>
                           ) : (
                             <p className="text-xs font-semibold text-slate-500">
-                              Your teacher will review the file and publish marks and feedback here.
+                              Your teacher will review the file and publish
+                              marks and feedback here.
                             </p>
                           )}
                         </div>
@@ -1226,7 +1091,8 @@ export function HomeworkSection({
                                 Upload your completed work
                               </p>
                               <p className="mt-1 text-xs leading-5 text-slate-500">
-                                Add an optional note and upload one file up to 10 MB.
+                                Add an optional note and upload one file up to
+                                10 MB.
                               </p>
                             </div>
                           </div>
@@ -1236,7 +1102,9 @@ export function HomeworkSection({
                             placeholder="Write a note for your teacher (optional)..."
                             value={submittingId === hw.id ? submitContent : ""}
                             onChange={(event) => {
-                              setSubmitContent(event.target.value.slice(0, 1000));
+                              setSubmitContent(
+                                event.target.value.slice(0, 1000),
+                              );
                               setSubmittingId(hw.id);
                               if (submittingId !== hw.id) {
                                 setSubmitFile(null);
@@ -1266,7 +1134,10 @@ export function HomeworkSection({
 
                             {submittingId === hw.id && submitFile ? (
                               <div className="flex min-w-0 items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-600">
-                                <Paperclip size={14} className="shrink-0 text-blue-500" />
+                                <Paperclip
+                                  size={14}
+                                  className="shrink-0 text-blue-500"
+                                />
                                 <span className="max-w-[220px] truncate">
                                   {submitFile.name}
                                 </span>
@@ -1284,15 +1155,18 @@ export function HomeworkSection({
                             <button
                               type="button"
                               onClick={() => void handleSubmit(hw.id)}
-                              disabled={
-                                submitting && submittingId === hw.id
-                              }
+                              disabled={submitting && submittingId === hw.id}
                               className="btn-action btn-md inline-flex items-center justify-center font-bold disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {submitting && submittingId === hw.id ? (
                                 <>
-                                  <Loader2 size={15} className="mr-2 animate-spin" />
-                                  {uploadingFile ? "Uploading..." : "Submitting..."}
+                                  <Loader2
+                                    size={15}
+                                    className="mr-2 animate-spin"
+                                  />
+                                  {uploadingFile
+                                    ? "Uploading..."
+                                    : "Submitting..."}
                                 </>
                               ) : (
                                 <>
@@ -1316,7 +1190,8 @@ export function HomeworkSection({
                             Student Submissions
                           </p>
                           <p className="mt-0.5 text-xs text-slate-500">
-                            {ungradedSubs.length} waiting for review · {gradedSubs.length} checked
+                            {ungradedSubs.length} waiting for review ·{" "}
+                            {gradedSubs.length} checked
                           </p>
                         </div>
 
@@ -1330,7 +1205,9 @@ export function HomeworkSection({
                                 submission: submissionToReview,
                               });
                               setGradeMarks(submissionToReview.marks ?? 0);
-                              setGradeFeedback(submissionToReview.feedback ?? "");
+                              setGradeFeedback(
+                                submissionToReview.feedback ?? "",
+                              );
                             }}
                             className="btn-surface btn-sm font-bold text-xs"
                           >
@@ -1347,7 +1224,9 @@ export function HomeworkSection({
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex min-w-0 items-start gap-3">
                               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-600">
-                                {submissionItem.studentName.charAt(0).toUpperCase()}
+                                {submissionItem.studentName
+                                  .charAt(0)
+                                  .toUpperCase()}
                               </div>
 
                               <div className="min-w-0">
@@ -1356,7 +1235,10 @@ export function HomeworkSection({
                                 </p>
 
                                 <p className="mt-0.5 text-[11px] text-slate-400">
-                                  Submitted {new Date(submissionItem.submittedAt).toLocaleDateString("en-IN", {
+                                  Submitted{" "}
+                                  {new Date(
+                                    submissionItem.submittedAt,
+                                  ).toLocaleDateString("en-IN", {
                                     day: "numeric",
                                     month: "short",
                                     year: "numeric",
@@ -1382,9 +1264,12 @@ export function HomeworkSection({
                                   </a>
                                 ) : null}
 
-                                {submissionItem.status === "graded" && submissionItem.feedback ? (
+                                {submissionItem.status === "graded" &&
+                                submissionItem.feedback ? (
                                   <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-slate-700">
-                                    <span className="font-black text-[#0B40A1]">Feedback: </span>
+                                    <span className="font-black text-[#0B40A1]">
+                                      Feedback:{" "}
+                                    </span>
                                     {submissionItem.feedback}
                                   </div>
                                 ) : null}
@@ -1406,7 +1291,9 @@ export function HomeworkSection({
                                       submission: submissionItem,
                                     });
                                     setGradeMarks(submissionItem.marks ?? 0);
-                                    setGradeFeedback(submissionItem.feedback ?? "");
+                                    setGradeFeedback(
+                                      submissionItem.feedback ?? "",
+                                    );
                                   }}
                                   className="btn-action btn-sm font-bold text-xs"
                                 >
@@ -1472,7 +1359,278 @@ export function HomeworkSection({
           })}
         </div>
       )}
+      {detailsTask ? (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm sm:p-8"
+            onClick={() => setExpandedTaskId(null)}
+          >
+            <div
+              className="max-h-[calc(100vh-3rem)] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-4 sm:px-6">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#0B40A1]">
+                    Assignment Details
+                  </p>
 
+                  <h2 className="mt-1 text-xl font-black text-slate-900">
+                    {detailsTask.title}
+                  </h2>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {detailsTask.subject || "General"} · Due{" "}
+                    {new Date(detailsTask.dueDate).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setExpandedTaskId(null)}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200"
+                  aria-label="Close assignment details"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-5 p-5 sm:p-6">
+                {detailsTask.objective ? (
+                  <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+                    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-[#0B40A1]">
+                      <Target size={14} />
+                      Objective
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {detailsTask.objective}
+                    </p>
+                  </div>
+                ) : null}
+
+                {detailsTask.keySteps?.length ? (
+                  <div>
+                    <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
+                      <ListChecks size={14} />
+                      Key Steps
+                    </p>
+
+                    <ol className="mt-3 space-y-2">
+                      {detailsTask.keySteps.map((step, index) => (
+                        <li
+                          key={index}
+                          className="flex gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-700"
+                        >
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-[#0B40A1]">
+                            {index + 1}
+                          </span>
+
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ) : null}
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {detailsTask.deliverables ? (
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-black uppercase text-slate-500">
+                        Deliverables
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {detailsTask.deliverables}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {detailsTask.evaluationCriteria ? (
+                    <div className="rounded-2xl bg-slate-50 p-4">
+                      <p className="text-xs font-black uppercase text-slate-500">
+                        Evaluation Criteria
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-700">
+                        {detailsTask.evaluationCriteria}
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
+
+                {detailsTask.description ? (
+                  <div>
+                    <p className="text-xs font-black uppercase text-slate-500">
+                      Description
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-700">
+                      {detailsTask.description}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+                  <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
+                    Max {detailsTask.maxMarks} marks
+                  </span>
+
+                  {detailsTask.estimatedHours ? (
+                    <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700">
+                      Approx. {detailsTask.estimatedHours} hour
+                      {detailsTask.estimatedHours === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      ) : null}
+      {uploadTask ? (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm sm:p-8"
+            onClick={() => {
+              if (submitting) return;
+
+              setUploadTaskId(null);
+              setSubmitContent("");
+              setSubmitFile(null);
+              setSubmittingId("");
+              setError("");
+            }}
+          >
+            <div
+              className="max-h-[calc(100vh-3rem)] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white shadow-2xl"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[#0B40A1]">
+                    Upload Assignment
+                  </p>
+
+                  <h2 className="mt-1 text-lg font-black text-slate-900">
+                    {uploadTask.title}
+                  </h2>
+
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    Choose your completed file and submit it to your teacher.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={submitting}
+                  onClick={() => {
+                    setUploadTaskId(null);
+                    setSubmitContent("");
+                    setSubmitFile(null);
+                    setSubmittingId("");
+                    setError("");
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 disabled:opacity-50"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="p-5 sm:p-6">
+                <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#0B40A1] shadow-sm">
+                      <UploadCloud size={20} />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-black text-slate-900">
+                        Upload your completed work
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Maximum file size: 10 MB
+                      </p>
+                    </div>
+                  </div>
+
+                  <label className="mt-5 flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-black text-[#0B40A1] hover:bg-blue-50">
+                    <FileUp size={17} />
+                    {uploadSelectedFile ? "Change File" : "Choose File"}
+
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt"
+                      className="hidden"
+                      onChange={(event) =>
+                        handleSubmissionFile(
+                          uploadTask.id,
+                          event.target.files?.[0] ?? null,
+                        )
+                      }
+                    />
+                  </label>
+
+                  {uploadSelectedFile ? (
+                    <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-white px-4 py-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <Paperclip
+                          size={15}
+                          className="shrink-0 text-[#0B40A1]"
+                        />
+                        <span className="truncate text-xs font-bold text-slate-700">
+                          {uploadSelectedFile.name}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSubmitFile(null)}
+                        className="shrink-0 text-slate-400 hover:text-red-500"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <textarea
+                  rows={3}
+                  value={submitContent}
+                  onChange={(event) =>
+                    setSubmitContent(event.target.value.slice(0, 1000))
+                  }
+                  placeholder="Write a note for your teacher (optional)..."
+                  className="mt-4 w-full resize-none rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[#0B40A1]"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => void handleSubmit(uploadTask.id)}
+                  disabled={
+                    !uploadSelectedFile ||
+                    (submitting && submittingId === uploadTask.id)
+                  }
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0B40A1] px-4 py-3 text-sm font-black text-white hover:bg-[#092F78] disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {submitting && submittingId === uploadTask.id ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      {uploadingFile ? "Uploading..." : "Submitting..."}
+                    </>
+                  ) : (
+                    <>
+                      <Send size={16} />
+                      Submit Assignment
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      ) : null}
       {/* ── Assign Modal ── */}
       {showAssign && (
         <div
