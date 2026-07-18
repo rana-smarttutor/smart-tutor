@@ -36,6 +36,8 @@ import type {
 } from "@/lib/types";
 
 type EnrichedHomework = HomeworkItem & {
+  batchId?: string;
+  batchName?: string;
   submissions?: HomeworkSubmission[];
   mySubmission?: HomeworkSubmission | null;
 };
@@ -63,9 +65,55 @@ const HW_TYPE_COLORS: Record<string, string> = {
   test: "#DC2626",
 };
 
+const DEMO_HOMEWORK_ID = "demo-homework-task-1";
+
+function getDemoDueDate() {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
+
+  const year = dueDate.getFullYear();
+  const month = String(dueDate.getMonth() + 1).padStart(2, "0");
+  const day = String(dueDate.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function createDemoHomework(): EnrichedHomework {
+  return {
+    id: DEMO_HOMEWORK_ID,
+    title: "Upload Your Completed Homework",
+    description:
+      "Complete the assigned work and upload it as a PDF or Word document. Your assigned faculty will review it and publish marks and feedback here.",
+    objective:
+      "Test the complete homework submission, faculty review, marks, and feedback workflow.",
+    keySteps: [
+      "Complete the homework in a PDF or Word document.",
+      "Use the Choose File button below to select the file.",
+      "Submit the task and wait for your assigned faculty to review it.",
+    ],
+    deliverables: "One PDF, DOC, or DOCX file.",
+    evaluationCriteria: "Completion, clarity, accuracy, and presentation.",
+    estimatedHours: 1,
+    taskNumber: 1,
+    subject: "General",
+    hwType: "assignment",
+    maxMarks: 10,
+    dueDate: getDemoDueDate(),
+    batchId: "demo-homework-batch",
+    batchName: "Demo Task",
+    allowLateSubmission: true,
+    createdBy: "assigned-faculty",
+    createdByName: "Assigned Faculty",
+    createdAt: new Date().toISOString(),
+    submissions: [],
+    mySubmission: null,
+  };
+}
+
 export function HomeworkSection({
+  session,
   role,
-  studentDirectory: _studentDirectory,
+  studentDirectory,
   onDashboardRefresh,
 }: Props) {
   const [homework, setHomework] = useState<EnrichedHomework[]>([]);
@@ -74,6 +122,8 @@ export function HomeworkSection({
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
+  const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
+  const [feedbackTaskId, setFeedbackTaskId] = useState<string | null>(null);
 
   const [showAssign, setShowAssign] = useState(false);
   const [assignTitle, setAssignTitle] = useState("");
@@ -115,13 +165,81 @@ export function HomeworkSection({
     try {
       setLoading(true);
       setError("");
-      const res = await fetch("/api/homework", { credentials: "same-origin" });
+
+      const res = await fetch("/api/homework", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+
       if (!res.ok) {
         setError("Failed to load homework.");
         return;
       }
-      const data = await res.json();
-      setHomework(data.homework ?? []);
+
+      const data = (await res.json()) as {
+        homework?: EnrichedHomework[];
+      };
+
+      const loadedHomework = data.homework ?? [];
+
+      if (loadedHomework.length > 0) {
+        setHomework(loadedHomework);
+        return;
+      }
+
+      // A real backend-backed demo task is shown only while no actual task
+      // has been assigned. Its submission is saved in MongoDB using the
+      // normal homework-submission API.
+      if (!isStudent && !isEducator) {
+        setHomework([]);
+        return;
+      }
+
+      let demoSubmissions: HomeworkSubmission[] = [];
+
+      try {
+        const submissionResponse = await fetch(
+          `/api/homework/submissions?homeworkId=${encodeURIComponent(
+            DEMO_HOMEWORK_ID,
+          )}`,
+          {
+            credentials: "same-origin",
+            cache: "no-store",
+          },
+        );
+
+        if (submissionResponse.ok) {
+          const submissionPayload = (await submissionResponse.json()) as {
+            submissions?: HomeworkSubmission[];
+          };
+
+          demoSubmissions = submissionPayload.submissions ?? [];
+        }
+      } catch {
+        // The demo task can still be displayed even before any submission exists.
+      }
+
+      const demoHomework = createDemoHomework();
+
+      if (isStudent) {
+        demoHomework.mySubmission =
+          demoSubmissions.find(
+            (submission) => submission.studentId === session?.id,
+          ) ?? null;
+      } else {
+        const assignedStudentIds = new Set(
+          studentDirectory.map((student) => student.id),
+        );
+
+        demoHomework.submissions =
+          role === "admin"
+            ? demoSubmissions
+            : demoSubmissions.filter((submission) =>
+                assignedStudentIds.has(submission.studentId),
+              );
+      }
+
+      setHomework([demoHomework]);
     } catch {
       setError("Network error loading homework.");
     } finally {
@@ -612,8 +730,273 @@ export function HomeworkSection({
             const subs = hw.submissions ?? [];
             const gradedSubs = subs.filter((s) => s.status === "graded");
             const ungradedSubs = subs.filter((s) => s.status !== "graded");
-            const canDelete = true;
+            const isDemoTask = hw.id === DEMO_HOMEWORK_ID;
+            const canDelete = !isDemoTask;
             const submission = hw.mySubmission;
+            const taskLabel = `${hw.hwType === "assignment" ? "Assignment" : "Task"} ${
+              hw.taskNumber ?? index + 1
+            }`;
+            const isExpanded = expandedTaskId === hw.id;
+            const showFeedback = feedbackTaskId === hw.id;
+            const selectedFile = submittingId === hw.id ? submitFile : null;
+
+            if (isStudent) {
+              return (
+                <article
+                  key={hw.id}
+                  className="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white"
+                >
+                  <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-black text-[#0B40A1]">
+                          {taskLabel}
+                        </span>
+
+                        <div className="min-w-0">
+                          <h3 className="truncate text-base font-black text-[var(--color-heading)]">
+                            {hw.title}
+                          </h3>
+                          <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                            {hw.subject || "General"} · Due {new Date(
+                              hw.dueDate,
+                            ).toLocaleDateString("en-IN", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedTaskId((current) =>
+                            current === hw.id ? null : hw.id,
+                          )
+                        }
+                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-black text-[#0B40A1] hover:underline"
+                      >
+                        <AlignLeft size={13} />
+                        {isExpanded ? "Hide Details" : "View Details"}
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {!submission ? (
+                        <>
+                          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0B40A1] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#092F78]">
+                            <FileUp size={15} />
+                            {selectedFile ? "Change Upload" : "Upload"}
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx"
+                              className="hidden"
+                              onChange={(event) =>
+                                handleSubmissionFile(
+                                  hw.id,
+                                  event.target.files?.[0] ?? null,
+                                )
+                              }
+                            />
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => void handleSubmit(hw.id)}
+                            disabled={
+                              !selectedFile ||
+                              (submitting && submittingId === hw.id)
+                            }
+                            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {submitting && submittingId === hw.id ? (
+                              <>
+                                <Loader2 size={14} className="animate-spin" />
+                                {uploadingFile ? "Uploading..." : "Submitting..."}
+                              </>
+                            ) : (
+                              <>
+                                <Send size={14} />
+                                Submit
+                              </>
+                            )}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          {submission.attachmentUrl ? (
+                            <a
+                              href={submission.attachmentUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 rounded-xl bg-[#0B40A1] px-4 py-2.5 text-xs font-black text-white transition hover:bg-[#092F78]"
+                            >
+                              <Paperclip size={14} />
+                              Open Upload
+                            </a>
+                          ) : null}
+
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-xl border px-4 py-2.5 text-xs font-black ${
+                              submission.status === "graded"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "border-amber-200 bg-amber-50 text-amber-700"
+                            }`}
+                          >
+                            {submission.status === "graded" ? (
+                              <CheckCircle2 size={14} />
+                            ) : (
+                              <Hourglass size={14} />
+                            )}
+                            {submission.status === "graded"
+                              ? "Checked"
+                              : "Submitted"}
+                          </span>
+                        </>
+                      )}
+
+                      <button
+                        type="button"
+                        disabled={submission?.status !== "graded"}
+                        onClick={() =>
+                          setFeedbackTaskId((current) =>
+                            current === hw.id ? null : hw.id,
+                          )
+                        }
+                        className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-[#0B40A1] transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400 disabled:hover:bg-white"
+                      >
+                        <MessageSquareText size={14} />
+                        Teacher Feedback
+                      </button>
+                    </div>
+                  </div>
+
+                  {!submission && selectedFile ? (
+                    <div className="mx-4 mb-4 flex items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 sm:mx-5">
+                      <div className="flex min-w-0 items-center gap-2 text-xs font-bold text-slate-700">
+                        <Paperclip size={14} className="shrink-0 text-[#0B40A1]" />
+                        <span className="truncate">{selectedFile.name}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSubmitFile(null)}
+                        className="shrink-0 text-slate-400 transition hover:text-red-500"
+                        aria-label="Remove selected file"
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {submission && submission.status !== "graded" ? (
+                    <div className="mx-4 mb-4 rounded-xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-700 sm:mx-5">
+                      Your assignment has been submitted. Teacher feedback will appear here after review.
+                    </div>
+                  ) : null}
+
+                  {isExpanded ? (
+                    <div className="space-y-4 border-t border-[var(--color-border)] bg-slate-50/50 p-4 sm:p-5">
+                      {hw.objective ? (
+                        <div>
+                          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                            <Target size={12} /> Objective
+                          </p>
+                          <p className="mt-1.5 text-sm leading-6 text-slate-700">
+                            {hw.objective}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        {hw.keySteps && hw.keySteps.length > 0 ? (
+                          <div>
+                            <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                              <ListChecks size={12} /> Key Steps
+                            </p>
+                            <ol className="mt-1.5 list-inside list-decimal space-y-1 text-sm leading-6 text-slate-600">
+                              {hw.keySteps.map((step, stepIndex) => (
+                                <li key={stepIndex}>{step}</li>
+                              ))}
+                            </ol>
+                          </div>
+                        ) : null}
+
+                        <div className="space-y-3">
+                          {hw.deliverables ? (
+                            <div>
+                              <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                                <ClipboardList size={12} /> Deliverables
+                              </p>
+                              <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                                {hw.deliverables}
+                              </p>
+                            </div>
+                          ) : null}
+
+                          {hw.evaluationCriteria ? (
+                            <div>
+                              <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                                <Award size={12} /> Evaluation Criteria
+                              </p>
+                              <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                                {hw.evaluationCriteria}
+                              </p>
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {hw.description ? (
+                        <div>
+                          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-slate-500">
+                            <AlignLeft size={12} /> Description
+                          </p>
+                          <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                            {hw.description}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      <div className="flex flex-wrap gap-4 border-t border-slate-200 pt-3 text-xs font-bold text-slate-500">
+                        <span>Max {hw.maxMarks} marks</span>
+                        {hw.estimatedHours ? (
+                          <span>Estimated {hw.estimatedHours}h</span>
+                        ) : null}
+                        <span>Due {new Date(hw.dueDate).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}</span>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {showFeedback && submission?.status === "graded" ? (
+                    <div className="border-t border-blue-100 bg-blue-50/70 p-4 sm:p-5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-[#0B40A1]">
+                          <MessageSquareText size={17} />
+                          <p className="text-xs font-black uppercase tracking-[0.12em]">
+                            Teacher&apos;s Feedback
+                          </p>
+                        </div>
+
+                        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-700">
+                          {submission.marks ?? 0}/{hw.maxMarks} marks
+                        </span>
+                      </div>
+
+                      <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">
+                        {submission.feedback?.trim() ||
+                          "Your teacher checked this assignment but did not add written feedback."}
+                      </p>
+                    </div>
+                  ) : null}
+                </article>
+              );
+            }
 
             return (
               <div key={hw.id} className="exam-card p-0">
@@ -1071,9 +1454,11 @@ export function HomeworkSection({
                           disabled={!canDelete}
                           className="btn-surface btn-sm font-bold text-xs text-red-600 border-red-200 hover:bg-red-50 disabled:opacity-40"
                           title={
-                            !canDelete
-                              ? "Grade all submissions first"
-                              : "Delete"
+                            isDemoTask
+                              ? "The demo task cannot be deleted."
+                              : !canDelete
+                                ? "Grade all submissions first"
+                                : "Delete"
                           }
                         >
                           <Trash2 size={12} className="mr-1" /> Delete

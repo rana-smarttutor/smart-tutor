@@ -52,6 +52,8 @@ export async function POST(request: Request) {
     parentEmail?: string;
     parentMobile?: string;
     assignedFacultyIds?: string[];
+    gender?: string;
+profile?: Record<string, unknown>;
   };
 
   try {
@@ -68,6 +70,8 @@ export async function POST(request: Request) {
       parentEmail?: string;
       parentMobile?: string;
       assignedFacultyIds?: string[];
+      gender?: string;
+profile?: Record<string, unknown>;
     };
   } catch {
     return NextResponse.json({ error: "Invalid user payload." }, { status: 400 });
@@ -78,6 +82,14 @@ export async function POST(request: Request) {
   const role = sanitizeRoleInput(body.role);
   const password = sanitizePasswordInput(body.password);
   const requestedProgram = sanitizeTextInput(body.program, 60);
+  const submittedGender =
+  typeof body.profile?.gender === "string"
+    ? body.profile.gender
+    : body.gender;
+
+const gender = sanitizeTextInput(submittedGender, 20)
+  .trim()
+  .toLowerCase();
 
 const program =
   requestedProgram || (role === "counsellor" ? "CRM Counsellor" : "");
@@ -116,6 +128,16 @@ const program =
   }
 
   const profile: UserProfile = {};
+  if (role === "educator") {
+  if (gender !== "male" && gender !== "female") {
+    return NextResponse.json(
+      { error: "Select the educator's gender." },
+      { status: 400 },
+    );
+  }
+
+  profile.gender = gender as UserProfile["gender"];
+}
 
   if (role === "student") {
     const parentName = sanitizeTextInput(body.parentName, 100);
