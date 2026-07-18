@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
-import { createChatMessage, createChatFlag, getMessagesForRole } from "@/lib/data-store";
+import {
+  createChatMessage,
+  createChatFlag,
+  getMessagesForRole,
+  getUsersForAdmin,
+} from "@/lib/data-store";
 import { sanitizeTextareaInput } from "@/lib/validation";
 import { validateChatContent } from "@/lib/chat-validation";
 
@@ -9,18 +14,51 @@ export async function GET() {
   const session = await getSessionUser();
 
   if (!session) {
-    return NextResponse.json(
-      { error: "Login is required." },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Login is required." }, { status: 401 });
   }
 
   const messages = await getMessagesForRole(session.role, session.id);
-  const chatMessages = messages.filter((m) => m.channel === "Chat");
 
-  return NextResponse.json({ messages: chatMessages });
+  const chatMessages = messages.filter((message) => message.channel === "Chat");
+
+  let contacts: Array<{
+    id: string;
+    name: string;
+    role: "admin" | "educator";
+    status?: string;
+    verified?: boolean;
+  }> = [];
+
+  if (session.role === "student") {
+    const users = await getUsersForAdmin();
+
+    contacts = users
+      .filter(
+        (user) =>
+          (user.role === "admin" || user.role === "educator") &&
+          user.status === "active" &&
+          user.verified !== false,
+      )
+      .map((user) => ({
+        id: user.id,
+        name: user.name,
+        role: user.role as "admin" | "educator",
+        status: user.status,
+        verified: user.verified,
+      }))
+      .sort((left, right) => {
+        if (left.role === "admin" && right.role !== "admin") return -1;
+        if (right.role === "admin" && left.role !== "admin") return 1;
+
+        return left.name.localeCompare(right.name);
+      });
+  }
+
+  return NextResponse.json({
+    messages: chatMessages,
+    contacts,
+  });
 }
-
 export async function POST(request: Request) {
   const session = await getSessionUser();
 
@@ -82,9 +120,13 @@ export async function POST(request: Request) {
         receiverId: body.receiverId,
         flaggedBy: session.id,
         reason: validation.reasons[0]?.type ?? "other",
-        reasonDetail: validation.reasons.map((r) => `${r.type}: ${r.detail}`).join("; "),
+        reasonDetail: validation.reasons
+          .map((r) => `${r.type}: ${r.detail}`)
+          .join("; "),
       });
-    } catch { /* flag is optional */ }
+    } catch {
+      /* flag is optional */
+    }
     return NextResponse.json(
       {
         error: "Message blocked: sensitive content detected.",

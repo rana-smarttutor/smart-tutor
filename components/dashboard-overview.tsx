@@ -203,8 +203,8 @@ function GenericOverview({
   useEffect(() => {
     setMounted(true);
   }, []);
-
   const now = new Date();
+
   const dateStr = now.toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -1267,16 +1267,18 @@ function StudentOverview({
                     {batchInfo}
                   </p>
                 ) : null}
-                <p className="mt-1 text-[11px] sm:text-xs text-teal-200">{dateStr}</p>
+                <p className="mt-1 text-[11px] sm:text-xs text-teal-200">
+                  {dateStr}
+                </p>
+                {/* Enrollment Number */}
+                <p className="text-[10px] sm:text-xs text-teal-200/70 font-medium shrink-0">
+                  Enrollment no: {admissionNo}
+                </p>
               </div>
             </div>
 
             {/* Stats Pills - Top Right */}
             <div className="flex flex-wrap gap-2 sm:justify-end">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
-                <UserCheck size={12} className="sm:w-3.5 sm:h-3.5" />
-                Attendance: {attRate != null ? `${attRate}%` : "—"}
-              </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
                 <Award size={12} className="sm:w-3.5 sm:h-3.5" />
                 Rank: {classRank}
@@ -1294,7 +1296,9 @@ function StudentOverview({
             {dashboard.assignedFacultyNames &&
             dashboard.assignedFacultyNames.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-[10px] sm:text-xs text-teal-200/70 font-medium mr-1">Faculty:</span>
+                <span className="text-[10px] sm:text-xs text-teal-200/70 font-medium mr-1">
+                  Faculty:
+                </span>
                 {dashboard.assignedFacultyNames.map((name, index) => (
                   <span
                     key={index}
@@ -1310,11 +1314,6 @@ function StudentOverview({
             ) : (
               <div />
             )}
-
-            {/* Enrollment Number */}
-            <p className="text-[10px] sm:text-xs text-teal-200/70 font-medium shrink-0">
-              Enrollment no: {admissionNo}
-            </p>
           </div>
         </div>
       </div>
@@ -2287,18 +2286,34 @@ function EducatorOverview({
   managedUsers?: ManagedUser[];
 }) {
   const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("en-IN", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const capitalizeWords = (value: string) =>
+    value
+      .trim()
+      .split(/\s+/)
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
 
+  const educatorFirstName = capitalizeWords(
+    session?.name?.trim().split(/\s+/)[0] || "Teacher",
+  );
+
+  const educatorGender = dashboard.profile?.gender?.trim().toLowerCase() ?? "";
+
+  const educatorTitle =
+    educatorGender === "female" || educatorGender === "f"
+      ? "Ma'am"
+      : educatorGender === "male" || educatorGender === "m"
+        ? "Sir"
+        : "";
+  const educatorSubjects =
+    dashboard.profile?.subjects
+      ?.map((subject) => capitalizeWords(subject))
+      .filter(Boolean) ?? [];
   const ops = dashboard.analytics?.operations;
   const myStudents = ops?.learners ?? dashboard.analytics?.activeStudents ?? 0;
   const pendingReviews =
@@ -2374,6 +2389,19 @@ function EducatorOverview({
   const pendingEarnings = pendingEarningsMetric?.value ?? "₹0";
   const pendingEarningsDetail =
     pendingEarningsMetric?.detail ?? "No outstanding teacher payout";
+  const monthlyEarningsMetric = dashboard.analytics?.metrics?.find(
+    (metric) =>
+      metric.label === "Monthly Earnings" ||
+      metric.label === "This Month Earnings",
+  );
+
+  const totalEarningsMetric = dashboard.analytics?.metrics?.find(
+    (metric) =>
+      metric.label === "Total Earnings" || metric.label === "Lifetime Earnings",
+  );
+
+  const monthlyEarnings = monthlyEarningsMetric?.value ?? "₹0";
+  const totalEarnings = totalEarningsMetric?.value ?? "₹0";
 
   const todayDateKey = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -2526,12 +2554,15 @@ function EducatorOverview({
             <p className="text-xs font-bold uppercase tracking-[0.08em] opacity-60">
               Teacher Portal
             </p>
-
             <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
-              Welcome, {session?.name?.split(" ")[0] ?? "Teacher"}!
+              Welcome, {educatorFirstName}
+              {educatorTitle ? ` ${educatorTitle}` : ""}!
             </h1>
-
-            <p className="mt-0.5 text-sm opacity-70">{dateStr}</p>
+            <p className="mt-0.5 text-sm font-semibold text-white/75">
+              {educatorSubjects.length > 0
+                ? `Teaches: ${educatorSubjects.join(" • ")}`
+                : "Subjects not added"}
+            </p>
 
             <div className="mt-3 flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-bold backdrop-blur-sm">
@@ -2554,7 +2585,7 @@ function EducatorOverview({
             icon: Users,
           },
           {
-            label: "Pending Reviews",
+            label: "Pending Homework Reviews",
             value: pendingReviews,
             color: "#D97706",
             icon: Clock,
@@ -2607,19 +2638,22 @@ function EducatorOverview({
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
           <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
             <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900 min-w-0">
-              <BarChart3 size={14} className="sm:w-4 sm:h-4 shrink-0" style={{ color: "#D97706" }} />
+              <BarChart3
+                size={14}
+                className="sm:w-4 sm:h-4 shrink-0"
+                style={{ color: "#D97706" }}
+              />
               <span className="truncate">Homework Evaluation Status</span>
             </h2>
 
-            <span className="text-[10px] sm:text-xs text-slate-400 shrink-0 hidden sm:inline">Reviewed vs Pending</span>
+            <span className="text-[10px] sm:text-xs text-slate-400 shrink-0 hidden sm:inline">
+              Reviewed vs Pending
+            </span>
           </div>
 
           <div className="flex h-[170px] items-center gap-6 p-5">
             <div className="relative h-24 w-24 shrink-0">
-<svg
-                viewBox="0 0 120 120"
-                className="h-full w-full"
-              >
+              <svg viewBox="0 0 120 120" className="h-full w-full">
                 <g transform="rotate(-90 60 60)">
                   <circle
                     cx="60"
@@ -2697,7 +2731,10 @@ function EducatorOverview({
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
           <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
             <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900 min-w-0">
-              <AlertCircle size={14} className="sm:w-4 sm:h-4 shrink-0 text-rose-600" />
+              <AlertCircle
+                size={14}
+                className="sm:w-4 sm:h-4 shrink-0 text-rose-600"
+              />
               <span className="truncate">Students Needing Attention</span>
             </h2>
 
@@ -2790,7 +2827,10 @@ function EducatorOverview({
           <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
             <div className="min-w-0">
               <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900">
-                <Banknote size={15} className="sm:w-[17px] sm:h-[17px] shrink-0 text-emerald-600" />
+                <Banknote
+                  size={15}
+                  className="sm:w-[17px] sm:h-[17px] shrink-0 text-emerald-600"
+                />
                 My Earnings
               </h2>
 
@@ -2822,29 +2862,29 @@ function EducatorOverview({
             <div className="mt-4 grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-                  <CheckCircle2 size={17} />
+                  <CalendarDays size={17} />
                 </div>
 
                 <p className="mt-3 text-xl font-black text-slate-900">
-                  {dashboard.analytics?.operations?.completedLectures ?? 0}
+                  {monthlyEarnings}
                 </p>
 
                 <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                  Classes Completed
+                  Monthly Earnings
                 </p>
               </div>
 
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                  <CalendarDays size={17} />
+                  <IndianRupee size={17} />
                 </div>
 
                 <p className="mt-3 text-xl font-black text-slate-900">
-                  {dashboard.analytics?.operations?.scheduledLectures ?? 0}
+                  {totalEarnings}
                 </p>
 
                 <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                  Classes Scheduled
+                  Total Earnings
                 </p>
               </div>
             </div>
@@ -2865,7 +2905,10 @@ function EducatorOverview({
           <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
             <div className="min-w-0">
               <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900">
-                <Home size={15} className="sm:w-[17px] sm:h-[17px] shrink-0 text-violet-600" />
+                <Home
+                  size={15}
+                  className="sm:w-[17px] sm:h-[17px] shrink-0 text-violet-600"
+                />
                 Today&apos;s Home Tutoring
               </h2>
 
@@ -2993,7 +3036,14 @@ function EducatorOverview({
       <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[#F1F5F9] gap-2">
           <h2 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 min-w-0">
-            <Clock size={14} className="sm:w-4 sm:h-4 shrink-0" style={{ color: "#D97706" }} /> <span className="truncate">Pending Homework Reviews ({pendingReviews})</span>
+            <Clock
+              size={14}
+              className="sm:w-4 sm:h-4 shrink-0"
+              style={{ color: "#D97706" }}
+            />{" "}
+            <span className="truncate">
+              Pending Homework Reviews ({pendingReviews})
+            </span>
           </h2>
           <button
             onClick={() => onSetActiveSection("homework")}
