@@ -1267,9 +1267,7 @@ function StudentOverview({
                     {batchInfo}
                   </p>
                 ) : null}
-                <p className="mt-1 text-[11px] sm:text-xs text-teal-200">
-                  {dateStr}
-                </p>
+
                 {/* Enrollment Number */}
                 <p className="text-[10px] sm:text-xs text-teal-200/70 font-medium shrink-0">
                   Enrollment no: {admissionNo}
