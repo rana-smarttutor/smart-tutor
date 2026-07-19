@@ -625,6 +625,7 @@ export type DashboardBundle = {
   notifications?: AppNotification[];
   analytics?: DashboardAnalytics;
   certificates?: Certificate[];
+  staffAttendanceRecords?: StaffAttendanceRecord[];
 };
 
 // =========================
@@ -985,7 +986,8 @@ export type AppNotificationType =
   | "fees"
   | "payment"
   | "placement"
-  | "ptm";
+  | "ptm"
+  | "doubt"; 
 
 export type AppNotification = {
   id: string;
@@ -1240,7 +1242,68 @@ export type HomeworkSubmission = {
   gradedBy?: string;
   gradedAt?: string;
 };
+// =========================
+// Doubt Box System
+// =========================
 
+export type DoubtStatus =
+  | "open"
+  | "answered"
+  | "resolved"
+  | "closed";
+
+export type DoubtAnswerAuthorRole =
+  | "student"
+  | "educator"
+  | "admin"
+  | "ai";
+
+export type DoubtAnswer = {
+  id: string;
+  doubtId: string;
+
+  authorId: string;
+  authorName: string;
+  authorRole: DoubtAnswerAuthorRole;
+
+  content: string;
+  attachmentUrl?: string;
+
+  isAccepted: boolean;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type DoubtItem = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+
+  batchId?: string;
+  batchName?: string;
+
+  subject: string;
+  title: string;
+  description: string;
+  attachmentUrl?: string;
+
+  status: DoubtStatus;
+  isLocked: boolean;
+
+  acceptedAnswerId?: string;
+
+  aiAnswerRequestedAt?: string;
+
+  answerCount?: number;
+  answers?: DoubtAnswer[];
+
+  createdAt: string;
+  updatedAt?: string;
+  resolvedAt?: string;
+  closedAt?: string;
+};
 export type GamificationActivity =
   | "exam_pass"
   | "full_attendance"
@@ -1389,16 +1452,17 @@ export type AvailableModule =
   | "performance"
   | "daily-activities"
   | "homework"
+  | "doubt-box"
   | "student-feedback"
   | "teacher-payouts"
   | "placement-jobs"
   | "sales-crm"
   | "gamification"
   | "ptm"
-    | "complaints"
-    | "chat-monitor"
-    | "password-reset-requests"
-    | "certificates";
+  | "complaints"
+  | "chat-monitor"
+  | "password-reset-requests"
+  | "certificates";
 
 export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -1421,6 +1485,7 @@ export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "performance", label: "Performance" },
   { id: "daily-activities", label: "Daily Activities" },
   { id: "homework", label: "Homework" },
+  { id: "doubt-box", label: "Doubt Box" },
   { id: "student-feedback", label: "Feedback" },
   { id: "teacher-payouts", label: "Teacher Payouts" },
   { id: "placement-jobs", label: "Placement Jobs" },

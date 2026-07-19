@@ -104,8 +104,10 @@ PlacementApplication,
   PaymentMode,
   FeeDeletionAuditLog,
   Certificate,
+  DoubtItem,
+  DoubtAnswer,
+  DoubtStatus,
 } from "@/lib/types";
-
 import type {
   CrmDashboardSummary,
   CrmLead,
@@ -193,6 +195,10 @@ feeInstallmentPlans: "feeInstallmentPlans",
   passwordResetRequests: "passwordResetRequests",
   homework: "homework",
   homeworkSubmissions: "homeworkSubmissions",
+
+  // Doubt Box
+  doubts: "doubts",
+  doubtAnswers: "doubtAnswers",
   authLogs: "authLogs",
   gamificationPoints: "gamification_points",
   gamificationBadges: "gamification_badges",
@@ -8369,4 +8375,593 @@ export async function getFeeDeletionAuditLogStats() {
     totalNetReversed: all.reduce((s, l) => s + (l.netReversed || 0), 0),
     totalFineReversed: all.reduce((s, l) => s + (l.fineAmount || 0), 0),
   };
+}
+
+
+// =========================
+// Doubt Box Data-Store
+// =========================
+
+export async function getDoubts() {
+  const doubtCollection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const answerCollection = await getCollection<DoubtAnswer>(
+    COLLECTIONS.doubtAnswers,
+  );
+
+  const doubts = stripMongoIds(
+    await doubtCollection
+      .find({})
+      .sort({
+        createdAt: -1,
+      })
+      .toArray(),
+  ) as DoubtItem[];
+
+  if (!doubts.length) {
+    return [];
+  }
+
+  const doubtIds = doubts.map((doubt) => doubt.id);
+
+  const answers = stripMongoIds(
+    await answerCollection
+      .find({
+        doubtId: {
+          $in: doubtIds,
+        },
+      })
+      .sort({
+        createdAt: 1,
+      })
+      .toArray(),
+  ) as DoubtAnswer[];
+
+  const answersByDoubtId = new Map<string, DoubtAnswer[]>();
+
+  for (const answer of answers) {
+    const currentAnswers =
+      answersByDoubtId.get(answer.doubtId) ?? [];
+
+    currentAnswers.push(answer);
+    answersByDoubtId.set(answer.doubtId, currentAnswers);
+  }
+
+  return doubts.map((doubt) => {
+    const doubtAnswers =
+      answersByDoubtId.get(doubt.id) ?? [];
+
+    return {
+      ...doubt,
+      answerCount: doubtAnswers.length,
+      answers: doubtAnswers,
+    };
+  });
+}
+
+export async function getDoubtById(doubtId: string) {
+  const normalizedDoubtId = doubtId.trim();
+
+  if (!normalizedDoubtId) {
+    return null;
+  }
+
+  const doubtCollection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const answerCollection = await getCollection<DoubtAnswer>(
+    COLLECTIONS.doubtAnswers,
+  );
+
+  const doubt = await doubtCollection.findOne({
+    id: normalizedDoubtId,
+  });
+
+  if (!doubt) {
+    return null;
+  }
+
+  const answers = stripMongoIds(
+    await answerCollection
+      .find({
+        doubtId: normalizedDoubtId,
+      })
+      .sort({
+        createdAt: 1,
+      })
+      .toArray(),
+  ) as DoubtAnswer[];
+
+  return {
+    ...stripMongoId(doubt),
+    answerCount: answers.length,
+    answers,
+  } satisfies DoubtItem;
+}
+
+export async function createDoubt(input: {
+  studentId: string;
+  studentName: string;
+  subject: string;
+  title: string;
+  description: string;
+  attachmentUrl?: string;
+  batchId?: string;
+  batchName?: string;
+}) {
+  const studentId = input.studentId.trim();
+  const studentName = input.studentName.trim();
+  const subject = input.subject.trim();
+  const title = input.title.trim();
+  const description = input.description.trim();
+
+  if (!studentId) {
+    throw new Error("Student is required.");
+  }
+
+  if (!studentName) {
+    throw new Error("Student name is required.");
+  }
+
+  if (!subject) {
+    throw new Error("Subject is required.");
+  }
+
+  if (!title) {
+    throw new Error("Doubt title is required.");
+  }
+
+  if (!description) {
+    throw new Error("Doubt details are required.");
+  }
+
+  const now = new Date().toISOString();
+
+  const doubt: DoubtItem = {
+    id: `doubt-${randomUUID()}`,
+
+    studentId,
+    studentName,
+
+    batchId: input.batchId?.trim() || undefined,
+    batchName: input.batchName?.trim() || undefined,
+
+    subject,
+    title,
+    description,
+
+    attachmentUrl:
+      input.attachmentUrl?.trim() || undefined,
+
+    status: "open",
+    isLocked: false,
+
+    answerCount: 0,
+    answers: [],
+
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const collection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  await collection.insertOne(doubt);
+
+  return stripMongoId(doubt);
+}
+
+export async function createDoubtAnswer(input: {
+  doubtId: string;
+  authorId: string;
+  authorName: string;
+  authorRole: DoubtAnswer["authorRole"];
+  content: string;
+  attachmentUrl?: string;
+}) {
+  const doubtId = input.doubtId.trim();
+  const authorId = input.authorId.trim();
+  const authorName = input.authorName.trim();
+  const content = input.content.trim();
+
+  if (!doubtId) {
+    throw new Error("Doubt is required.");
+  }
+
+  if (!authorId) {
+    throw new Error("Answer author is required.");
+  }
+
+  if (!authorName) {
+    throw new Error("Answer author name is required.");
+  }
+
+  if (!content) {
+    throw new Error("Answer cannot be empty.");
+  }
+
+  const doubtCollection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const answerCollection = await getCollection<DoubtAnswer>(
+    COLLECTIONS.doubtAnswers,
+  );
+
+  const doubt = await doubtCollection.findOne({
+    id: doubtId,
+  });
+
+  if (!doubt) {
+    throw new Error("Doubt could not be found.");
+  }
+
+  if (doubt.isLocked || doubt.status === "closed") {
+    throw new Error("This discussion is closed.");
+  }
+
+  const currentAnswerCount =
+    await answerCollection.countDocuments({
+      doubtId,
+    });
+
+  const now = new Date().toISOString();
+
+  const answer: DoubtAnswer = {
+    id: `doubt-answer-${randomUUID()}`,
+
+    doubtId,
+
+    authorId,
+    authorName,
+    authorRole: input.authorRole,
+
+    content,
+
+    attachmentUrl:
+      input.attachmentUrl?.trim() || undefined,
+
+    isAccepted: false,
+
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await answerCollection.insertOne(answer);
+
+  await doubtCollection.updateOne(
+    {
+      id: doubtId,
+    },
+    {
+      $set: {
+        status:
+          doubt.status === "open"
+            ? "answered"
+            : doubt.status,
+
+        answerCount:
+          currentAnswerCount + 1,
+
+        updatedAt: now,
+      },
+    },
+  );
+
+  return stripMongoId(answer);
+}
+
+export async function acceptDoubtAnswer(
+  doubtId: string,
+  answerId: string,
+) {
+  const normalizedDoubtId = doubtId.trim();
+  const normalizedAnswerId = answerId.trim();
+
+  const doubtCollection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const answerCollection = await getCollection<DoubtAnswer>(
+    COLLECTIONS.doubtAnswers,
+  );
+
+  const doubt = await doubtCollection.findOne({
+    id: normalizedDoubtId,
+  });
+
+  if (!doubt) {
+    throw new Error("Doubt could not be found.");
+  }
+
+  const selectedAnswer = await answerCollection.findOne({
+    id: normalizedAnswerId,
+    doubtId: normalizedDoubtId,
+  });
+
+  if (!selectedAnswer) {
+    throw new Error("Answer could not be found.");
+  }
+
+  const now = new Date().toISOString();
+
+  await answerCollection.updateMany(
+    {
+      doubtId: normalizedDoubtId,
+    },
+    {
+      $set: {
+        isAccepted: false,
+        updatedAt: now,
+      },
+    },
+  );
+
+  await answerCollection.updateOne(
+    {
+      id: normalizedAnswerId,
+      doubtId: normalizedDoubtId,
+    },
+    {
+      $set: {
+        isAccepted: true,
+        updatedAt: now,
+      },
+    },
+  );
+
+  await doubtCollection.updateOne(
+    {
+      id: normalizedDoubtId,
+    },
+    {
+      $set: {
+        acceptedAnswerId: normalizedAnswerId,
+        status: "resolved",
+        resolvedAt: now,
+        updatedAt: now,
+      },
+    },
+  );
+
+  return getDoubtById(normalizedDoubtId);
+}
+
+export async function updateDoubtState(
+  doubtId: string,
+  input: {
+    status?: DoubtStatus;
+    isLocked?: boolean;
+  },
+) {
+  const normalizedDoubtId = doubtId.trim();
+
+  if (!normalizedDoubtId) {
+    return null;
+  }
+
+  const collection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const existingDoubt = await collection.findOne({
+    id: normalizedDoubtId,
+  });
+
+  if (!existingDoubt) {
+    return null;
+  }
+
+  const validStatuses: DoubtStatus[] = [
+    "open",
+    "answered",
+    "resolved",
+    "closed",
+  ];
+
+  const now = new Date().toISOString();
+
+  const updates: Partial<DoubtItem> = {
+    updatedAt: now,
+  };
+
+  const unsetFields: Record<string, ""> = {};
+
+  if (
+    input.status &&
+    validStatuses.includes(input.status)
+  ) {
+    updates.status = input.status;
+
+    if (input.status === "resolved") {
+      updates.resolvedAt = now;
+      unsetFields.closedAt = "";
+    }
+
+    if (input.status === "closed") {
+      updates.closedAt = now;
+    }
+
+    if (
+      input.status === "open" ||
+      input.status === "answered"
+    ) {
+      unsetFields.resolvedAt = "";
+      unsetFields.closedAt = "";
+      unsetFields.acceptedAnswerId = "";
+    }
+  }
+
+  if (typeof input.isLocked === "boolean") {
+    updates.isLocked = input.isLocked;
+  }
+
+  const updateOperation: {
+    $set: Partial<DoubtItem>;
+    $unset?: Record<string, "">;
+  } = {
+    $set: updates,
+  };
+
+  if (Object.keys(unsetFields).length > 0) {
+    updateOperation.$unset = unsetFields;
+  }
+
+  await collection.updateOne(
+    {
+      id: normalizedDoubtId,
+    },
+    updateOperation,
+  );
+
+  return getDoubtById(normalizedDoubtId);
+}
+
+export async function markDoubtAiRequested(
+  doubtId: string,
+) {
+  const normalizedDoubtId = doubtId.trim();
+
+  const collection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const result = await collection.updateOne(
+    {
+      id: normalizedDoubtId,
+    },
+    {
+      $set: {
+        aiAnswerRequestedAt:
+          new Date().toISOString(),
+
+        updatedAt:
+          new Date().toISOString(),
+      },
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    return null;
+  }
+
+  return getDoubtById(normalizedDoubtId);
+}
+
+export async function deleteDoubt(
+  doubtId: string,
+) {
+  const normalizedDoubtId = doubtId.trim();
+
+  const doubtCollection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const answerCollection = await getCollection<DoubtAnswer>(
+    COLLECTIONS.doubtAnswers,
+  );
+
+  const result = await doubtCollection.deleteOne({
+    id: normalizedDoubtId,
+  });
+
+  if (result.deletedCount === 0) {
+    return false;
+  }
+
+  await answerCollection.deleteMany({
+    doubtId: normalizedDoubtId,
+  });
+
+  return true;
+}
+
+export async function deleteDoubtAnswer(
+  answerId: string,
+) {
+  const normalizedAnswerId = answerId.trim();
+
+  const answerCollection = await getCollection<DoubtAnswer>(
+    COLLECTIONS.doubtAnswers,
+  );
+
+  const doubtCollection = await getCollection<DoubtItem>(
+    COLLECTIONS.doubts,
+  );
+
+  const answer = await answerCollection.findOne({
+    id: normalizedAnswerId,
+  });
+
+  if (!answer) {
+    return null;
+  }
+
+  await answerCollection.deleteOne({
+    id: normalizedAnswerId,
+  });
+
+  const remainingAnswerCount =
+    await answerCollection.countDocuments({
+      doubtId: answer.doubtId,
+    });
+
+  const doubt = await doubtCollection.findOne({
+    id: answer.doubtId,
+  });
+
+  if (!doubt) {
+    return stripMongoId(answer);
+  }
+
+  const now = new Date().toISOString();
+
+  const updates: Partial<DoubtItem> = {
+    answerCount: remainingAnswerCount,
+    updatedAt: now,
+  };
+
+  const unsetFields: Record<string, ""> = {};
+
+  if (
+    doubt.acceptedAnswerId ===
+    normalizedAnswerId
+  ) {
+    updates.status =
+      remainingAnswerCount > 0
+        ? "answered"
+        : "open";
+
+    unsetFields.acceptedAnswerId = "";
+    unsetFields.resolvedAt = "";
+  } else if (
+    remainingAnswerCount === 0 &&
+    doubt.status === "answered"
+  ) {
+    updates.status = "open";
+  }
+
+  const updateOperation: {
+    $set: Partial<DoubtItem>;
+    $unset?: Record<string, "">;
+  } = {
+    $set: updates,
+  };
+
+  if (Object.keys(unsetFields).length > 0) {
+    updateOperation.$unset = unsetFields;
+  }
+
+  await doubtCollection.updateOne(
+    {
+      id: answer.doubtId,
+    },
+    updateOperation,
+  );
+
+  return stripMongoId(answer);
 }

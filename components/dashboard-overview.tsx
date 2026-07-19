@@ -49,6 +49,7 @@ import type {
   SessionUser,
   Role,
   MessageItem,
+  StaffAttendanceRecord,
 } from "@/lib/types";
 
 type Props = {
@@ -1179,7 +1180,7 @@ function StudentOverview({
     {
       label: "Doubts",
       icon: HelpCircle,
-      section: "messages",
+      section: "doubt-box",
       color: "#06B6D4",
     },
     {
@@ -2283,12 +2284,89 @@ function EducatorOverview({
   onSetActiveSection: (section: string) => void;
   managedUsers?: ManagedUser[];
 }) {
-  const [mounted, setMounted] = useState(false);
+  const [educatorAttendanceRecords, setEducatorAttendanceRecords] = useState<
+    StaffAttendanceRecord[]
+  >([]);
+
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
+  const [attendanceError, setAttendanceError] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const userId = session?.id?.trim() ?? "";
 
+    if (!userId) {
+      setEducatorAttendanceRecords([]);
+      setAttendanceLoading(false);
+      setAttendanceError("Educator account was not found.");
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadEducatorAttendance() {
+      try {
+        const response = await fetch(
+          `/api/staff-attendance/my?userId=${encodeURIComponent(userId)}`,
+          {
+            credentials: "same-origin",
+            cache: "no-store",
+          },
+        );
+
+        const data = (await response.json().catch(() => ({}))) as {
+          records?: StaffAttendanceRecord[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+              `Unable to load attendance. Server returned ${response.status}.`,
+          );
+        }
+
+        if (!cancelled) {
+          setEducatorAttendanceRecords(
+            Array.isArray(data.records) ? data.records : [],
+          );
+
+          setAttendanceError("");
+        }
+      } catch (error) {
+        console.error("Educator overview attendance error:", error);
+
+        if (!cancelled) {
+          setAttendanceError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load attendance.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setAttendanceLoading(false);
+        }
+      }
+    }
+
+    void loadEducatorAttendance();
+
+    const intervalId = window.setInterval(() => {
+      void loadEducatorAttendance();
+    }, 15000);
+
+    function handleWindowFocus() {
+      void loadEducatorAttendance();
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [session?.id]);
   const capitalizeWords = (value: string) =>
     value
       .trim()
@@ -2318,15 +2396,100 @@ function EducatorOverview({
     dashboard.submissions?.filter((s) => s.status === "submitted").length ?? 0;
   const gradedSubs =
     dashboard.submissions?.filter((s) => s.score != null) ?? [];
-  const totalSubmissions = dashboard.submissions?.length ?? 0;
-  const reviewedFraction =
-    totalSubmissions > 0 ? gradedSubs.length / totalSubmissions : 0;
+
   const avgScore = gradedSubs.length
     ? Math.round(
         gradedSubs.reduce((a, s) => a + ((s.score ?? 0) / s.total) * 100, 0) /
           gradedSubs.length,
       )
     : 0;
+  const WORK_START_MINUTES = 7 * 60;
+  const WORK_END_MINUTES = 21 * 60;
+
+  function getTimeMinutes(value?: string) {
+    if (!value) {
+      return null;
+    }
+
+    const simpleTimeMatch = value.match(/^(\d{1,2}):(\d{2})/);
+
+    if (simpleTimeMatch) {
+      const hours = Number(simpleTimeMatch[1]);
+      const minutes = Number(simpleTimeMatch[2]);
+
+      return hours * 60 + minutes;
+    }
+
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    return parsedDate.getHours() * 60 + parsedDate.getMinutes();
+  }
+
+  function formatAttendanceTime(value?: string) {
+    if (!value) {
+      return "Not marked";
+    }
+
+    const simpleTimeMatch = value.match(/^(\d{1,2}):(\d{2})/);
+
+    if (simpleTimeMatch) {
+      const hours = Number(simpleTimeMatch[1]);
+      const minutes = simpleTimeMatch[2];
+
+      const suffix = hours >= 12 ? "PM" : "AM";
+      const displayHour = hours % 12 || 12;
+
+      return `${displayHour}:${minutes} ${suffix}`;
+    }
+
+    const parsedDate = new Date(value);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return value;
+    }
+
+    return parsedDate.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  const checkedInRecords = educatorAttendanceRecords.filter((record) =>
+    Boolean(record.checkIn),
+  );
+
+  const checkedOutRecords = educatorAttendanceRecords.filter((record) =>
+    Boolean(record.checkOut),
+  );
+
+  const lateCheckInRecords = educatorAttendanceRecords.filter((record) => {
+    const checkInMinutes = getTimeMinutes(record.checkIn);
+
+    return checkInMinutes !== null && checkInMinutes > WORK_START_MINUTES;
+  });
+
+  const lateCheckOutRecords = educatorAttendanceRecords.filter((record) => {
+    const checkOutMinutes = getTimeMinutes(record.checkOut);
+
+    return checkOutMinutes !== null && checkOutMinutes > WORK_END_MINUTES;
+  });
+
+  const todayDate = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+  });
+
+  const todayEducatorAttendance = educatorAttendanceRecords.find(
+    (record) => record.date === todayDate,
+  );
+
+  const onTimeCheckIns = checkedInRecords.length - lateCheckInRecords.length;
+
+  const onTimeFraction =
+    checkedInRecords.length > 0 ? onTimeCheckIns / checkedInRecords.length : 0;
   const attendanceByStudent = new Map<
     string,
     {
@@ -2583,7 +2746,7 @@ function EducatorOverview({
             icon: Users,
           },
           {
-            label: "Pending Homework Reviews",
+            label: "Homework Reviews",
             value: pendingReviews,
             color: "#D97706",
             icon: Clock,
@@ -2632,94 +2795,161 @@ function EducatorOverview({
 
       {/* ── Charts Row ── */}
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
-        {/* Homework Evaluation Status */}
+        {/* Educator Attendance Report */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
-            <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900 min-w-0">
+          <div className="flex items-center justify-between gap-2 border-b border-[#F1F5F9] px-4 py-3 sm:px-5 sm:py-4">
+            <h2 className="flex min-w-0 items-center gap-1.5 text-xs font-bold text-slate-900 sm:gap-2 sm:text-sm">
               <BarChart3
                 size={14}
-                className="sm:w-4 sm:h-4 shrink-0"
-                style={{ color: "#D97706" }}
+                className="shrink-0 sm:h-4 sm:w-4"
+                style={{ color: "#2563EB" }}
               />
-              <span className="truncate">Homework Evaluation Status</span>
+
+              <span className="truncate">My Attendance Report</span>
             </h2>
 
-            <span className="text-[10px] sm:text-xs text-slate-400 shrink-0 hidden sm:inline">
-              Reviewed vs Pending
+            <span className="hidden shrink-0 text-[10px] text-slate-400 sm:inline sm:text-xs">
+              Check-In & Check-Out
             </span>
           </div>
 
-          <div className="flex h-[170px] items-center gap-6 p-5">
-            <div className="relative h-24 w-24 shrink-0">
-              <svg viewBox="0 0 120 120" className="h-full w-full">
-                <g transform="rotate(-90 60 60)">
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="48"
-                    fill="none"
-                    stroke="#E8EDF2"
-                    strokeWidth="10"
-                  />
+          <div className="p-5">
+            {attendanceError ? (
+              <div className="mx-5 mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
+                {attendanceError}
+              </div>
+            ) : null}
+            <div className="flex items-center gap-6">
+              <div className="relative h-24 w-24 shrink-0">
+                <svg viewBox="0 0 120 120" className="h-full w-full">
+                  <g transform="rotate(-90 60 60)">
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="48"
+                      fill="none"
+                      stroke="#E8EDF2"
+                      strokeWidth="10"
+                    />
 
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="48"
-                    fill="none"
-                    stroke="#059669"
-                    strokeWidth="10"
-                    strokeDasharray={`${2 * Math.PI * 48}`}
-                    strokeDashoffset={`${2 * Math.PI * 48 * (1 - reviewedFraction)}`}
-                    strokeLinecap="round"
-                    className="transition-all duration-700"
-                  />
-                </g>
-              </svg>
+                    <circle
+                      cx="60"
+                      cy="60"
+                      r="48"
+                      fill="none"
+                      stroke="#2563EB"
+                      strokeWidth="10"
+                      strokeDasharray={`${2 * Math.PI * 48}`}
+                      strokeDashoffset={`${
+                        2 * Math.PI * 48 * (1 - onTimeFraction)
+                      }`}
+                      strokeLinecap="round"
+                      className="transition-all duration-700"
+                    />
+                  </g>
+                </svg>
 
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-base font-black text-[#1D4ED8]">
-                  {dashboard.submissions?.length ?? 0}
-                </p>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-base font-black text-[#1D4ED8]">
+                    {attendanceLoading
+                      ? "..."
+                      : educatorAttendanceRecords.length}
+                  </p>
 
-                <p className="text-[8px] font-bold tracking-wider text-slate-400">
-                  SUBMITTED
-                </p>
+                  <p className="text-[8px] font-bold tracking-wider text-slate-400">
+                    DAYS
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-2.5">
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold text-emerald-600">
+                    <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                    Check-Ins
+                  </span>
+
+                  <span className="font-bold text-emerald-600">
+                    {checkedInRecords.length}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold text-blue-600">
+                    <span className="h-2 w-2 rounded-full bg-blue-600" />
+                    Check-Outs
+                  </span>
+
+                  <span className="font-bold text-blue-600">
+                    {checkedOutRecords.length}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold text-amber-600">
+                    <span className="h-2 w-2 rounded-full bg-amber-500" />
+                    Late Check-In
+                  </span>
+
+                  <span className="font-bold text-amber-600">
+                    {lateCheckInRecords.length}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold text-rose-600">
+                    <span className="h-2 w-2 rounded-full bg-rose-500" />
+                    Late Check-Out
+                  </span>
+
+                  <span className="font-bold text-rose-600">
+                    {lateCheckOutRecords.length}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex-1 space-y-3">
-              <div className="flex justify-between text-xs">
-                <span className="flex items-center gap-1 font-semibold text-emerald-600">
-                  <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                  Reviewed
-                </span>
+            <div className="mt-5 grid grid-cols-2 gap-3 border-t border-dashed border-slate-200 pt-4">
+              <div className="rounded-xl bg-emerald-50 px-3 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">
+                  Today’s Check-In
+                </p>
 
-                <span className="font-bold text-emerald-600">
-                  {gradedSubs.length}
-                </span>
+                <p className="mt-1 text-sm font-black text-slate-900">
+                  {attendanceLoading
+                    ? "Loading..."
+                    : formatAttendanceTime(todayEducatorAttendance?.checkIn)}
+                </p>
+
+                {todayEducatorAttendance?.checkIn &&
+                getTimeMinutes(todayEducatorAttendance.checkIn) !== null &&
+                getTimeMinutes(todayEducatorAttendance.checkIn)! >
+                  WORK_START_MINUTES ? (
+                  <p className="mt-1 text-[10px] font-semibold text-amber-600">
+                    Late check-in
+                  </p>
+                ) : null}
               </div>
 
-              <div className="flex justify-between text-xs">
-                <span className="flex items-center gap-1 font-semibold text-amber-600">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" />
-                  Pending
-                </span>
+              <div className="rounded-xl bg-blue-50 px-3 py-3">
+                <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">
+                  Today’s Check-Out
+                </p>
 
-                <span className="font-bold text-amber-600">
-                  {pendingReviews}
-                </span>
-              </div>
+                <p className="mt-1 text-sm font-black text-slate-900">
+                  {attendanceLoading
+                    ? "Loading..."
+                    : formatAttendanceTime(todayEducatorAttendance?.checkOut)}
+                </p>
 
-              <div className="flex justify-between border-t border-dashed border-slate-200 pt-3 text-xs">
-                <span className="flex items-center gap-1 font-semibold text-slate-500">
-                  <span className="h-2 w-2 rounded-full bg-slate-400" />
-                  Total
-                </span>
-
-                <span className="font-bold text-slate-500">
-                  {dashboard.submissions?.length ?? 0}
-                </span>
+                {todayEducatorAttendance?.checkOut &&
+                getTimeMinutes(todayEducatorAttendance.checkOut) !== null &&
+                getTimeMinutes(todayEducatorAttendance.checkOut)! >
+                  WORK_END_MINUTES ? (
+                  <p className="mt-1 text-[10px] font-semibold text-rose-600">
+                    Late check-out
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
