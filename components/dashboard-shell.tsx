@@ -12,6 +12,7 @@ import {
   CalendarDays,
   FileBarChart2,
   Menu,
+  MessageCircleQuestion,
   Sparkles,
   TrendingUp,
   X,
@@ -243,7 +244,13 @@ const HomeworkSection = dynamic(
     ssr: false,
   },
 );
-
+const DoubtBox = dynamic(
+  () => import("@/components/doubt-box").then((module) => module.DoubtBox),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
 const TimetableManager = dynamic(
   () =>
     import("@/components/timetable-manager").then(
@@ -328,6 +335,7 @@ const sidebarByRole = {
     { id: "chat", label: "Chat" },
     { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
+    { id: "doubt-box", label: "Doubt Box" },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback" },
@@ -347,6 +355,7 @@ const sidebarByRole = {
     { id: "timetable", label: "Timetable" },
     { id: "courses", label: "Courses" },
     { id: "homework", label: "Homework" },
+    { id: "doubt-box", label: "Doubt Box" },
     { id: "tests", label: "Question Papers" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "results", label: " Student's Results" },
@@ -385,6 +394,7 @@ const sidebarByRole = {
     { id: "password-reset-requests", label: "Password Reset Requests" },
     { id: "biometric", label: "Biometric" },
     { id: "leave", label: "Leave" },
+    { id: "doubt-box", label: "Doubt Box" },
     { id: "courses", label: "Courses" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
@@ -428,17 +438,12 @@ function getDefaultDashboardSection(role: Role) {
   return sidebarByRole[role][0]?.id ?? "overview";
 }
 
-function isValidDashboardSection(
-  role: Role,
-  section: string,
-) {
+function isValidDashboardSection(role: Role, section: string) {
   if (section === "notifications") {
     return true;
   }
 
-  return sidebarByRole[role].some(
-    (item) => item.id === section,
-  );
+  return sidebarByRole[role].some((item) => item.id === section);
 }
 function getRoleFocus(role: Role) {
   if (role === "admin") {
@@ -491,46 +496,47 @@ const menuSections = [
     items: [
       "accounts",
       "overview",
-      "complaints",
+      "daily-activities",
+      "chat",
       "gamification",
       "messages",
-      "chat",
-      "chat-monitor",
-      "ptm",
       "attendance",
+      "homework",
+      "tests",
+      "weekly-tests",
+      "chat-monitor",
       "staff-attendance",
       "biometric",
-      "leave",
     ],
   },
   {
     label: "Academics",
     items: [
+      "library",
       "lectures",
       "timetable",
-      "homework",
-      "tests",
-      "weekly-tests",
-      "results",
-      "daily-activities",
-      "student-feedback",
-      "courses",
-      "batches",
-      "library",
       "performance",
       "certificates",
+      "results",
+      "courses",
+      "batches",
     ],
   },
   {
-    label: "People",
+    label: "Support & Communication",
     items: [
+      "complaints",
+      "ptm",
+      "doubt-box",
+      "student-feedback",
+      "leave",
       "enquiries",
       "password-reset-requests",
       "sales-crm",
-      "placement-jobs",
     ],
   },
   { label: "Finance", items: ["fees", "receipts", "teacher-payouts"] },
+  { label: "Placement", items: ["placement-jobs"] },
 ];
 
 const navIcons: Record<string, React.ReactNode> = {
@@ -624,6 +630,7 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  "doubt-box": <MessageCircleQuestion className="h-4 w-4 shrink-0" />,
   "chat-monitor": (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1080,73 +1087,39 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
-const defaultSection =
-  getDefaultDashboardSection(role);
+  const defaultSection = getDefaultDashboardSection(role);
 
-const [activeSection, setActiveSection] =
-  useState<string>(defaultSection);
+  const [activeSection, setActiveSection] = useState<string>(defaultSection);
 
-const [
-  hasRestoredActiveSection,
-  setHasRestoredActiveSection,
-] = useState(false);
-useEffect(() => {
-  const storageKey = `smart-tutor-dashboard-section:${
-    session?.id ?? role
-  }`;
+  const [hasRestoredActiveSection, setHasRestoredActiveSection] =
+    useState(false);
+  useEffect(() => {
+    const storageKey = `smart-tutor-dashboard-section:${session?.id ?? role}`;
 
-  const savedSection =
-    window.sessionStorage.getItem(
-      storageKey,
-    );
+    const savedSection = window.sessionStorage.getItem(storageKey);
 
-  if (
-    savedSection &&
-    isValidDashboardSection(
-      role,
-      savedSection,
-    )
-  ) {
-    setActiveSection(savedSection);
-  } else {
-    setActiveSection(defaultSection);
-  }
+    if (savedSection && isValidDashboardSection(role, savedSection)) {
+      setActiveSection(savedSection);
+    } else {
+      setActiveSection(defaultSection);
+    }
 
-  setHasRestoredActiveSection(true);
-}, [
-  defaultSection,
-  role,
-  session?.id,
-]);
+    setHasRestoredActiveSection(true);
+  }, [defaultSection, role, session?.id]);
 
-useEffect(() => {
-  if (!hasRestoredActiveSection) {
-    return;
-  }
+  useEffect(() => {
+    if (!hasRestoredActiveSection) {
+      return;
+    }
 
-  if (
-    !isValidDashboardSection(
-      role,
-      activeSection,
-    )
-  ) {
-    return;
-  }
+    if (!isValidDashboardSection(role, activeSection)) {
+      return;
+    }
 
-  const storageKey = `smart-tutor-dashboard-section:${
-    session?.id ?? role
-  }`;
+    const storageKey = `smart-tutor-dashboard-section:${session?.id ?? role}`;
 
-  window.sessionStorage.setItem(
-    storageKey,
-    activeSection,
-  );
-}, [
-  activeSection,
-  hasRestoredActiveSection,
-  role,
-  session?.id,
-]);
+    window.sessionStorage.setItem(storageKey, activeSection);
+  }, [activeSection, hasRestoredActiveSection, role, session?.id]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -1197,6 +1170,7 @@ useEffect(() => {
   const showOverview = activeSection === "overview";
   const showMessages = activeSection === "messages";
   const showChat = activeSection === "chat";
+  const showDoubtBox = activeSection === "doubt-box";
   const showChatMonitor = activeSection === "chat-monitor";
   const showGamification = activeSection === "gamification";
   const showHomework = activeSection === "homework";
@@ -1805,14 +1779,18 @@ useEffect(() => {
 
           {showHomework &&
           (role === "student" || role === "educator" || role === "parent") ? (
-            <HomeworkSection
-              session={session}
-              role={role}
-              studentDirectory={studentDirectory}
-              onDashboardRefresh={triggerDashboardRefresh}
-            />
+<HomeworkSection
+  session={session}
+  role={role}
+  dashboard={dashboard}
+  studentDirectory={studentDirectory}
+  onDashboardRefresh={triggerDashboardRefresh}
+/>
           ) : null}
-
+          {showDoubtBox &&
+          (role === "student" || role === "educator" || role === "admin") ? (
+            <DoubtBox session={session} role={role} />
+          ) : null}
           {showGamification && (role === "admin" || role === "educator") ? (
             <GamificationSection session={session} />
           ) : null}
@@ -1845,7 +1823,8 @@ useEffect(() => {
             <AdminCertificateManager allUsers={managedUsers} />
           ) : null}
 
-          {showCertificates && (role === "student" || role === "educator" || role === "parent") ? (
+          {showCertificates &&
+          (role === "student" || role === "educator" || role === "parent") ? (
             <DashboardCertificatesSection
               certificates={dashboard.certificates ?? []}
               userName={session?.name ?? ""}

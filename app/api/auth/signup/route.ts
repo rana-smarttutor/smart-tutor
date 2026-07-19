@@ -285,7 +285,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const status = "pending";
+    const status = role === "student" ? "active" : "pending";
 
     const user = await createUserRecord({
       name,
@@ -317,7 +317,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const response = createSessionResponse({
+    const sessionUser = {
       id: user.id,
       name: user.name,
       email: user.email,
@@ -325,14 +325,30 @@ export async function POST(request: Request) {
       label: user.label,
       status: user.status,
       verified: user.verified,
-    });
+    };
 
-    const responseData = await response.json();
+    if (role === "student") {
+      const sessionResponse = createSessionResponse(sessionUser);
+
+      const finalResponse = NextResponse.json({
+        user: sessionUser,
+        message: "Student account created successfully.",
+        redirectTo: "/dashboard",
+      });
+
+      const setCookieHeader = sessionResponse.headers.get("set-cookie");
+
+      if (setCookieHeader) {
+        finalResponse.headers.set("set-cookie", setCookieHeader);
+      }
+
+      return finalResponse;
+    }
 
     return NextResponse.json({
-      ...responseData,
+      user: sessionUser,
       message:
-        "Registration submitted for admin approval. You will be notified once your account is activated.",
+        "Faculty registration submitted for admin approval. You will be notified once your account is activated.",
       redirectTo: "/application-submitted",
     });
   } catch (error) {
