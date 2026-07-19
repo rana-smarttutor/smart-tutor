@@ -27,7 +27,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "New password must be at least 8 characters." }, { status: 400 });
   }
 
-  const user = await findUserByCredentials(session.email, currentPassword);
+const user = await findUserByCredentials(
+  session.email,
+  currentPassword,
+  session.role,
+);
   if (!user) {
     return NextResponse.json({ error: "Current password is incorrect." }, { status: 403 });
   }

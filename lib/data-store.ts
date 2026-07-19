@@ -755,28 +755,53 @@ export async function getDemoCredentials() {
     ) as DemoCredential[];
 }
 
-export async function findUserByCredentials(login: string, password: string) {
-  const collection = await getUsersCollection();
-  const normalizedLogin = login.toLowerCase();
-  const mobileLogin = normalizedLogin.replace(/[^\d]/g, "").slice(-10);
-  const emailLocalPart = normalizedLogin.includes("@")
-    ? normalizedLogin.split("@")[0]
-    : normalizedLogin;
+export async function findUserByCredentials(
+  login: string,
+  password: string,
+  role: Role,
+) {
+  const collection =
+    await getUsersCollection();
 
-  const query: any = {
+  const normalizedLogin =
+    login.trim().toLowerCase();
+
+  const mobileLogin =
+    normalizedLogin
+      .replace(/[^\d]/g, "")
+      .slice(-10);
+
+  const emailLocalPart =
+    normalizedLogin.includes("@")
+      ? normalizedLogin.split("@")[0]
+      : normalizedLogin;
+
+  const query: Record<string, unknown> = {
     password,
+    role,
     $or: [
       { mobile: mobileLogin },
       { mobileKey: mobileLogin },
       { email: normalizedLogin },
       { emailKey: normalizedLogin },
-      { name: login },
+      { name: login.trim() },
       { name: normalizedLogin },
       {
         $expr: {
           $eq: [
             {
-              $arrayElemAt: [{ $split: [{ $toLower: "$email" }, "@"] }, 0],
+              $arrayElemAt: [
+                {
+                  $split: [
+                    {
+                      $toLower:
+                        "$email",
+                    },
+                    "@",
+                  ],
+                },
+                0,
+              ],
             },
             emailLocalPart,
           ],
@@ -785,9 +810,14 @@ export async function findUserByCredentials(login: string, password: string) {
     ],
   };
 
-  const user = await collection.findOne(query);
-  return user ? toSessionUser(user) : null;
+  const user =
+    await collection.findOne(query);
+
+  return user
+    ? toSessionUser(user)
+    : null;
 }
+
 
 export async function findUserById(id: string) {
   const collection = await getUsersCollection();
@@ -4145,7 +4175,7 @@ function buildDashboardAnalytics(input: {
       {
         label: "Pending Earnings",
         value: formatAnalyticsCurrency(pendingPayout),
-        detail: "Outstanding teacher payout amount",
+        detail: "",
       },
     ];
   } else {

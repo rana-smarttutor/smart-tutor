@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 
 import { createSessionResponse } from "@/lib/auth";
 import {
+  createEducatorReferral,
+  validateEducatorReferralCode,
+} from "@/lib/reward-store";
+import {
   createUserRecord,
   findUserDocumentByEmail,
   findUserDocumentByMobile,
@@ -34,6 +38,7 @@ export async function POST(request: Request) {
       courseWanted?: string;
       courseWantedTitle?: string;
       studentType?: string;
+      referralCode?: string;
       weakSubjects?: string[];
       strongSubjects?: string[];
 
@@ -54,10 +59,22 @@ export async function POST(request: Request) {
       photoIdBackUrl?: string;
       experience?: string;
       subjects?: string[];
-      examQualifications?: { examName: string; score?: string; year?: string }[];
+      examQualifications?: {
+        examName: string;
+        score?: string;
+        year?: string;
+      }[];
     };
 
     const role = body.role === "educator" ? "educator" : "student";
+
+    const referralCode =
+      role === "student"
+        ? sanitizeTextInput(body.referralCode, 40)
+            .trim()
+            .toUpperCase()
+            .replace(/[^A-Z0-9-]/g, "")
+        : "";
 
     const name = sanitizeTextInput(body.name, 100);
     const email = sanitizeEmailInput(body.email);
@@ -173,6 +190,22 @@ export async function POST(request: Request) {
         );
       }
 
+      if (referralCode) {
+        const validReferral = await validateEducatorReferralCode(referralCode);
+
+        if (!validReferral) {
+          return NextResponse.json(
+            {
+              error:
+                "The referral code is invalid or inactive. Correct it or leave the field blank.",
+            },
+            { status: 400 },
+          );
+        }
+
+        profile.referralCode = validReferral.referralCode;
+      }
+
       profile.parentEmail = parentEmail;
       profile.parentMobile = parentMobile;
 
@@ -189,7 +222,10 @@ export async function POST(request: Request) {
         );
       }
 
-      if (body.studentType === "online" || body.studentType === "centre-based") {
+      if (
+        body.studentType === "online" ||
+        body.studentType === "centre-based"
+      ) {
         profile.studentType = body.studentType;
       }
 
@@ -297,7 +333,26 @@ export async function POST(request: Request) {
       status,
       profile: profile as import("@/lib/types").UserProfile,
     });
+    if (role === "student" && referralCode) {
+      await createEducatorReferral({
+        referralCode,
 
+        studentId: user.id,
+        studentName: user.name,
+        studentEmail: user.email,
+        studentMobile: mobile,
+
+        programId:
+          typeof profile.courseWanted === "string"
+            ? profile.courseWanted
+            : undefined,
+
+        programTitle:
+          typeof profile.courseWantedTitle === "string"
+            ? profile.courseWantedTitle
+            : undefined,
+      });
+    }
     if (role === "student" && parentEmail) {
       const parentAccountName = parentName || `Parent of ${name}`;
       const existingParentEmail = await findUserDocumentByEmail(parentEmail);

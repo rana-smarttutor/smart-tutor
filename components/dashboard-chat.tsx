@@ -29,6 +29,87 @@ type ChatContact = Pick<
   ManagedUser,
   "id" | "name" | "role" | "status" | "verified"
 >;
+type StudentChatFilter =
+  | "all"
+  | "6"
+  | "7"
+  | "8"
+  | "9"
+  | "10"
+  | "11"
+  | "12"
+  | "gov-exams"
+  | "skill-programs";
+
+const STUDENT_CHAT_FILTER_OPTIONS: Array<{
+  value: StudentChatFilter;
+  label: string;
+}> = [
+  { value: "all", label: "All Students" },
+  { value: "6", label: "Class 6" },
+  { value: "7", label: "Class 7" },
+  { value: "8", label: "Class 8" },
+  { value: "9", label: "Class 9" },
+  { value: "10", label: "Class 10" },
+  { value: "11", label: "Class 11" },
+  { value: "12", label: "Class 12" },
+  { value: "gov-exams", label: "Govt Exams" },
+  { value: "skill-programs", label: "Skill Programs" },
+];
+
+function getStudentCourseText(student: ManagedUser) {
+  return [student.profile?.courseWanted, student.profile?.courseWantedTitle]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    )
+    .join(" ")
+    .toLowerCase();
+}
+
+function getStudentClassNumber(student: ManagedUser) {
+  const courseKey = student.profile?.courseWanted?.trim().toLowerCase() ?? "";
+
+  const keyMatch = courseKey.match(/class[-\s]*(6|7|8|9|10|11|12)(?:-|$)/);
+
+  if (keyMatch?.[1]) {
+    return keyMatch[1];
+  }
+
+  const courseTitle =
+    student.profile?.courseWantedTitle?.trim().toLowerCase() ?? "";
+
+  const titleMatch = courseTitle.match(
+    /\bclass[\s-]*(6|7|8|9|10|11|12)(?:st|nd|rd|th)?\b/,
+  );
+
+  return titleMatch?.[1] ?? "";
+}
+
+function matchesStudentChatFilter(
+  student: ManagedUser,
+  filter: StudentChatFilter,
+) {
+  if (filter === "all") {
+    return true;
+  }
+
+  const courseText = getStudentCourseText(student);
+
+  if (filter === "gov-exams") {
+    return /\b(upsc|ssc|railway|banking|bank exam|government exam|govt exam|police|army bharti|nda|cds|afcat|state psc|civil services)\b/i.test(
+      courseText,
+    );
+  }
+
+  if (filter === "skill-programs") {
+    return /\b(skill|spoken english|coding|robotics|artificial intelligence|video editing|graphic design|digital marketing|personality development|interview preparation|web development|computer course)\b/i.test(
+      courseText,
+    );
+  }
+
+  return getStudentClassNumber(student) === filter;
+}
 export function ChatView({
   session,
   role,
@@ -39,6 +120,8 @@ export function ChatView({
   assignedFacultyIds,
 }: ChatViewProps) {
   const [chatContactId, setChatContactId] = useState<string | null>(null);
+  const [studentChatFilter, setStudentChatFilter] =
+    useState<StudentChatFilter>("all");
   const [chatInput, setChatInput] = useState("");
   const [sendingChat, setSendingChat] = useState(false);
   const [lastReadTimestamps, setLastReadTimestamps] = useState<
@@ -138,12 +221,28 @@ export function ChatView({
       return [...educators, ...students];
     }
     if (role === "educator") {
-      const admins = (managedUsers ?? []).filter((u) => u.role === "admin");
-      const students = studentDirectory.filter(
-        (u) =>
-          u.role === "student" &&
-          (u.assignedFacultyIds ?? []).includes(session?.id ?? ""),
+      /*
+       * studentDirectory can contain only assigned students.
+       * managedUsers contains the complete registered-user list.
+       * Merge both sources and remove duplicate users.
+       */
+      const allAvailableUsers = [...(managedUsers ?? []), ...studentDirectory];
+
+      const uniqueUsers = [
+        ...new Map(allAvailableUsers.map((user) => [user.id, user])).values(),
+      ];
+
+      const admins = uniqueUsers.filter(
+        (user) => user.role === "admin" && user.status !== "rejected",
       );
+
+      const students = uniqueUsers.filter(
+        (user) =>
+          user.role === "student" &&
+          user.status !== "rejected" &&
+          matchesStudentChatFilter(user, studentChatFilter),
+      );
+
       return [...admins, ...students];
     }
     if (role === "student") {
@@ -179,6 +278,7 @@ export function ChatView({
     assignedFacultyIds,
     databaseContacts,
     session?.id,
+    studentChatFilter,
   ]);
 
   const sortedContacts = useMemo(() => {
@@ -214,8 +314,20 @@ export function ChatView({
   }, [chatContacts, messages, session]);
 
   useEffect(() => {
-    if (!chatContactId && sortedContacts.length > 0) {
-      const adminContact = sortedContacts.find((c) => c.role === "admin");
+    if (sortedContacts.length === 0) {
+      setChatContactId(null);
+      return;
+    }
+
+    const selectedContactIsVisible = sortedContacts.some(
+      (contact) => contact.id === chatContactId,
+    );
+
+    if (!chatContactId || !selectedContactIsVisible) {
+      const adminContact = sortedContacts.find(
+        (contact) => contact.role === "admin",
+      );
+
       setChatContactId(adminContact?.id ?? sortedContacts[0].id);
     }
   }, [sortedContacts, chatContactId]);
@@ -548,10 +660,43 @@ export function ChatView({
             chatContactId ? "hidden lg:flex" : ""
           }`}
         >
-          <div className="p-4 border-b border-[var(--color-border)]">
-            <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-              Chats
-            </p>
+          <div className="flex items-center justify-between gap-2 border-b border-[var(--color-border)] p-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                Chats
+              </p>
+
+              {role === "educator" ? (
+                <p className="mt-0.5 text-[10px] font-medium text-[var(--color-muted)]">
+                  {(() => {
+                    const studentCount = sortedContacts.filter(
+                      (contact) => contact.role === "student",
+                    ).length;
+
+                    return `${studentCount} ${
+                      studentCount === 1 ? "student" : "students"
+                    }`;
+                  })()}
+                </p>
+              ) : null}
+            </div>
+
+            {role === "educator" ? (
+              <select
+                value={studentChatFilter}
+                onChange={(event) =>
+                  setStudentChatFilter(event.target.value as StudentChatFilter)
+                }
+                aria-label="Filter students by class or program"
+                className="h-9 min-w-0 max-w-[155px] rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-2 text-[11px] font-bold text-[var(--color-heading)] outline-none transition focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
+              >
+                {STUDENT_CHAT_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            ) : null}
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-none">
             {sortedContacts.length > 0 ? (
