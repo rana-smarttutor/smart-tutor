@@ -33,7 +33,11 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await findUserByCredentials(session.email, body.password);
+ const user = await findUserByCredentials(
+  session.email,
+  body.password,
+  session.role,
+);
   if (!user) {
     return NextResponse.json(
       { error: "Password is incorrect." },

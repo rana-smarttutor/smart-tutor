@@ -2,32 +2,26 @@
 
 import { useEffect, useState } from "react";
 import {
-  AlignLeft,
   AlertCircle,
   Award,
   BookOpen,
   CheckCircle2,
   ClipboardList,
+  Download,
   ExternalLink,
-  FileCheck2,
   FileUp,
   Hourglass,
-  ListChecks,
   Loader2,
   MessageSquareText,
   Paperclip,
   Plus,
-  Search,
   Send,
-  Target,
-  Trash2,
   UploadCloud,
   Users,
   X,
 } from "lucide-react";
 
 import type {
-  DashboardBundle,
   HomeworkItem,
   HomeworkSubmission,
   HomeworkType,
@@ -46,7 +40,6 @@ type EnrichedHomework = HomeworkItem & {
 type Props = {
   session: SessionUser | null;
   role: Role;
-  dashboard: DashboardBundle;
   studentDirectory: ManagedUser[];
   onDashboardRefresh?: () => void;
 };
@@ -59,162 +52,8 @@ const HW_TYPE_LABELS: Record<HomeworkType, string> = {
   test: "Test",
 };
 
-const HW_TYPE_COLORS: Record<string, string> = {
-  homework: "#4F46E5",
-  assignment: "#059669",
-  classwork: "#D97706",
-  project: "#6D28D9",
-  test: "#DC2626",
-};
-
 const DEMO_HOMEWORK_ID = "demo-homework-task-1";
-function removeDuplicateSubjects(values: Array<string | null | undefined>) {
-  const subjects: string[] = [];
-  const addedSubjects = new Set<string>();
 
-  for (const value of values) {
-    const subject = value?.trim();
-
-    if (!subject) {
-      continue;
-    }
-
-    const normalizedSubject = subject.toLowerCase();
-
-    if (addedSubjects.has(normalizedSubject)) {
-      continue;
-    }
-
-    addedSubjects.add(normalizedSubject);
-    subjects.push(subject);
-  }
-
-  return subjects;
-}
-
-function getStudentAcademicSubjects(dashboard: DashboardBundle) {
-  const profile = dashboard.profile;
-
-  const wantedCourseKey = profile?.courseWanted?.trim().toLowerCase() ?? "";
-
-  const wantedCourseTitle =
-    profile?.courseWantedTitle?.trim().toLowerCase() ?? "";
-
-  const matchedCourse = dashboard.courses.find((course) => {
-    const courseId = course.id.trim().toLowerCase();
-    const standardKey = course.standardKey.trim().toLowerCase();
-    const courseTitle = course.title.trim().toLowerCase();
-
-    const keyMatches =
-      Boolean(wantedCourseKey) &&
-      (courseId === wantedCourseKey || standardKey === wantedCourseKey);
-
-    const titleMatches =
-      Boolean(wantedCourseTitle) &&
-      (courseTitle === wantedCourseTitle ||
-        courseTitle.includes(wantedCourseTitle) ||
-        wantedCourseTitle.includes(courseTitle));
-
-    return keyMatches || titleMatches;
-  });
-
-  const profileMentionedSubjects = removeDuplicateSubjects([
-    ...(profile?.strongSubjects ?? []),
-    ...(profile?.weakSubjects ?? []),
-  ]);
-
-  /*
-   * The subjects stored against the selected course are the
-   * primary and most accurate source.
-   */
-  const courseSubjects = removeDuplicateSubjects(
-    matchedCourse?.subjectsCovered ?? [],
-  );
-
-  if (courseSubjects.length > 0) {
-    return removeDuplicateSubjects([
-      ...courseSubjects,
-      ...profileMentionedSubjects,
-    ]);
-  }
-
-  /*
-   * Fallback when the selected course does not yet contain
-   * subjectsCovered in the database.
-   */
-  const studentCourseText = [
-    profile?.courseWanted,
-    profile?.courseWantedTitle,
-    dashboard.heroTitle,
-    matchedCourse?.title,
-    matchedCourse?.stream,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-
-  let fallbackSubjects: string[] = [];
-
-  const isSeniorSecondary = /\b(11|12|11th|12th|xi|xii)\b/.test(
-    studentCourseText,
-  );
-
-  if (isSeniorSecondary && studentCourseText.includes("science")) {
-    fallbackSubjects = [
-      "English",
-      "Physics",
-      "Chemistry",
-      "Mathematics",
-      "Biology",
-      "Computer Science",
-    ];
-  } else if (isSeniorSecondary && studentCourseText.includes("commerce")) {
-    fallbackSubjects = [
-      "English",
-      "Accountancy",
-      "Business Studies",
-      "Economics",
-      "Mathematics",
-    ];
-  } else if (
-    isSeniorSecondary &&
-    (studentCourseText.includes("arts") ||
-      studentCourseText.includes("humanities"))
-  ) {
-    fallbackSubjects = [
-      "English",
-      "History",
-      "Political Science",
-      "Geography",
-      "Economics",
-      "Sociology",
-      "Psychology",
-    ];
-  } else if (/\b(9|10|9th|10th|ix|x)\b/.test(studentCourseText)) {
-    fallbackSubjects = [
-      "English",
-      "Hindi",
-      "Mathematics",
-      "Science",
-      "Social Science",
-      "Computer Science",
-    ];
-  } else if (/\b(6|7|8|6th|7th|8th|vi|vii|viii)\b/.test(studentCourseText)) {
-    fallbackSubjects = [
-      "English",
-      "Hindi",
-      "Mathematics",
-      "Science",
-      "Social Science",
-      "Computer Science",
-    ];
-  }
-
-  return removeDuplicateSubjects([
-    ...fallbackSubjects,
-    ...profileMentionedSubjects,
-  ]);
-}
 function getDemoDueDate() {
   const dueDate = new Date();
   dueDate.setDate(dueDate.getDate() + 7);
@@ -225,41 +64,7 @@ function getDemoDueDate() {
 
   return `${year}-${month}-${day}`;
 }
-function getDueDateState(value?: string) {
-  if (!value) {
-    return {
-      daysRemaining: null,
-      isNear: false,
-      isOverdue: false,
-    };
-  }
 
-  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return {
-      daysRemaining: null,
-      isNear: false,
-      isOverdue: false,
-    };
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const dueDate = new Date(year, month - 1, day);
-  dueDate.setHours(0, 0, 0, 0);
-
-  const daysRemaining = Math.round(
-    (dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  );
-
-  return {
-    daysRemaining,
-    isOverdue: daysRemaining < 0,
-    isNear: daysRemaining >= 0 && daysRemaining <= 3,
-  };
-}
 function createDemoHomework(): EnrichedHomework {
   return {
     id: DEMO_HOMEWORK_ID,
@@ -294,15 +99,13 @@ function createDemoHomework(): EnrichedHomework {
 export function HomeworkSection({
   session,
   role,
-  dashboard,
   studentDirectory,
   onDashboardRefresh,
 }: Props) {
   const [homework, setHomework] = useState<EnrichedHomework[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [filterType, setFilterType] = useState("");
+
   const [filterSubject, setFilterSubject] = useState("");
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
@@ -330,14 +133,12 @@ export function HomeworkSection({
 
   const [gradeModal, setGradeModal] = useState<{
     homeworkTitle: string;
+    maxMarks: number;
     submission: HomeworkSubmission;
   } | null>(null);
   const [gradeMarks, setGradeMarks] = useState(0);
   const [gradeFeedback, setGradeFeedback] = useState("");
   const [grading, setGrading] = useState(false);
-
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   const isEducator = role === "educator" || role === "admin";
   const isStudent = role === "student";
@@ -599,12 +400,24 @@ export function HomeworkSection({
   }
 
   async function handleGrade() {
-    if (!gradeModal || gradeMarks < 0) return;
+    if (!gradeModal || grading) {
+      return;
+    }
+
+    if (gradeMarks < 0 || gradeMarks > gradeModal.maxMarks) {
+      setError(`Marks must be between 0 and ${gradeModal.maxMarks}.`);
+      return;
+    }
+
     setGrading(true);
+    setError("");
+
     try {
       const res = await fetch("/api/homework/submissions", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "same-origin",
         body: JSON.stringify({
           submissionId: gradeModal.submission.id,
@@ -612,89 +425,67 @@ export function HomeworkSection({
           feedback: gradeFeedback.trim() || undefined,
         }),
       });
-      if (!res.ok) return;
+
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+
+      if (!res.ok) {
+        throw new Error(
+          payload.error ?? "Unable to publish marks and feedback.",
+        );
+      }
+
       setGradeModal(null);
       setGradeMarks(0);
       setGradeFeedback("");
+
       await loadHomework();
-    } catch {
-      /* ignore */
+      onDashboardRefresh?.();
+    } catch (gradeError) {
+      setError(
+        gradeError instanceof Error
+          ? gradeError.message
+          : "Unable to publish marks and feedback.",
+      );
     } finally {
       setGrading(false);
     }
   }
 
-  async function handleDelete(id: string) {
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/homework/${id}`, {
-        method: "DELETE",
-        credentials: "same-origin",
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        setError(d.error ?? "Delete failed.");
-        setDeleteConfirmId(null);
-        return;
-      }
-      setDeleteConfirmId(null);
-      await loadHomework();
-      onDashboardRefresh?.();
-    } catch {
-      setError("Network error.");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  const homeworkSubjects = removeDuplicateSubjects(
-    homework.map((item) => item.subject),
-  );
-
-  const studentAcademicSubjects = isStudent
-    ? getStudentAcademicSubjects(dashboard)
-    : [];
-
-  const visibleHomeworkSubjects =
-    studentAcademicSubjects.length > 0
-      ? homeworkSubjects.filter(
-          (subject) => subject.toLowerCase() !== "general",
-        )
-      : homeworkSubjects;
-
-  const subjectOptions = isStudent
-    ? removeDuplicateSubjects([
-        ...studentAcademicSubjects,
-        ...visibleHomeworkSubjects,
-      ])
-    : [...homeworkSubjects].sort((left, right) => left.localeCompare(right));
+  const subjectOptions = [
+    ...new Set(
+      homework
+        .map((item) => item.subject?.trim())
+        .filter((subject): subject is string => Boolean(subject)),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
   const filtered = homework.filter((hw) => {
-    if (search && !hw.title.toLowerCase().includes(search.toLowerCase()))
-      return false;
-    if (filterType && hw.hwType !== filterType) return false;
-    if (filterSubject && hw.subject?.trim() !== filterSubject) {
+    if (
+      filterSubject &&
+      hw.subject?.trim().toLowerCase() !== filterSubject.trim().toLowerCase()
+    ) {
       return false;
     }
+
     return true;
   });
-  const detailsTask =
-    homework.find((item) => item.id === expandedTaskId) ?? null;
-
-  const detailsDueDateState = detailsTask
-    ? getDueDateState(detailsTask.dueDate)
+  const detailsTask = isStudent
+    ? (filtered.find((item) => item.id === expandedTaskId) ?? null)
     : null;
+const selectedEducatorTask = isEducator
+  ? homework.find((item) => item.id === expandedTaskId) ?? null
+  : null;
 
+function toggleEducatorTask(homeworkId: string) {
+  setExpandedTaskId((currentId) =>
+    currentId === homeworkId ? null : homeworkId,
+  );
+}
   const selectedStudentFile =
     detailsTask && submittingId === detailsTask.id ? submitFile : null;
+
   const totalAssigned = homework.length;
-
-  const today = new Date();
-
-  const todayDate = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
 
   const submissionCount = isEducator
     ? homework.reduce((sum, hw) => sum + (hw.submissions?.length ?? 0), 0)
@@ -710,22 +501,76 @@ export function HomeworkSection({
         0,
       )
     : homework.filter((hw) => !hw.mySubmission).length;
+  const educatorSubmissionRows = homework
+    .flatMap((homeworkItem) =>
+      (homeworkItem.submissions ?? []).map((submission) => ({
+        homeworkItem,
+        submission,
+      })),
+    )
+    .sort((left, right) => {
+      const leftTime = new Date(left.submission.submittedAt).getTime();
 
-  function HWTypeBadge({ hwType }: { hwType: string }) {
-    return (
-      <span
-        className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold"
-        style={{
-          background: `${HW_TYPE_COLORS[hwType] ?? "#64748B"}14`,
-          color: HW_TYPE_COLORS[hwType] ?? "#64748B",
-          border: `1px solid ${HW_TYPE_COLORS[hwType] ?? "#64748B"}30`,
-        }}
-      >
-        {HW_TYPE_LABELS[hwType as HomeworkType] ?? hwType}
-      </span>
+      const rightTime = new Date(right.submission.submittedAt).getTime();
+
+      return (
+        (Number.isNaN(rightTime) ? 0 : rightTime) -
+        (Number.isNaN(leftTime) ? 0 : leftTime)
+      );
+    });
+
+  const downloadableSubmissionRows = educatorSubmissionRows.filter(
+    ({ submission }) => Boolean(submission.attachmentUrl),
+  );
+
+  function openSubmissionReview(
+    homeworkItem: EnrichedHomework,
+    submission: HomeworkSubmission,
+  ) {
+    setGradeModal({
+      homeworkTitle: homeworkItem.title,
+      maxMarks: homeworkItem.maxMarks,
+      submission,
+    });
+
+    setGradeMarks(submission.marks ?? 0);
+    setGradeFeedback(submission.feedback ?? "");
+    setError("");
+  }
+  function handleDownloadAllSubmissions() {
+    if (downloadableSubmissionRows.length === 0) {
+      setError("No submitted files are available to download.");
+      return;
+    }
+
+    downloadableSubmissionRows.forEach(
+      ({ homeworkItem, submission }, index) => {
+        window.setTimeout(() => {
+          const attachmentUrl = submission.attachmentUrl;
+
+          if (!attachmentUrl) {
+            return;
+          }
+
+          const link = document.createElement("a");
+
+          link.href = attachmentUrl;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+
+          link.download =
+            `${submission.studentName}-${homeworkItem.title}`
+              .replace(/[^a-zA-Z0-9-_ ]/g, "")
+              .trim() || "homework-submission";
+
+          document.body.appendChild(link);
+
+          link.click();
+          link.remove();
+        }, index * 250);
+      },
     );
   }
-
   function StatCard({
     label,
     value,
@@ -786,7 +631,34 @@ export function HomeworkSection({
       ...(includeYear ? { year: "numeric" as const } : {}),
     });
   }
+  function getHomeworkStatus(dueDate?: string) {
+    if (!dueDate) {
+      return {
+        label: "Active",
+        isExpired: false,
+      };
+    }
 
+    const normalizedDueDate = dueDate.includes("T")
+      ? dueDate
+      : `${dueDate}T23:59:59`;
+
+    const date = new Date(normalizedDueDate);
+
+    if (Number.isNaN(date.getTime())) {
+      return {
+        label: "Active",
+        isExpired: false,
+      };
+    }
+
+    const isExpired = date.getTime() < Date.now();
+
+    return {
+      label: isExpired ? "Expired" : "Active",
+      isExpired,
+    };
+  }
   function getAttachmentName(url?: string) {
     if (!url) return "Uploaded homework";
 
@@ -848,42 +720,33 @@ export function HomeworkSection({
         </div>
       ) : null}
 
-      {/* Summary cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard
-          label="Total Tasks"
-          value={totalAssigned}
-          icon={<BookOpen size={22} style={{ color: "#2563EB" }} />}
-          color="#2563EB"
-          description={
-            isEducator ? "Tasks created by you" : "All assignments given to you"
-          }
-        />
+      {isStudent ? (
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <StatCard
+            label="Total Tasks"
+            value={totalAssigned}
+            icon={<BookOpen size={22} style={{ color: "#2563EB" }} />}
+            color="#2563EB"
+            description="All assignments given to you"
+          />
 
-        <StatCard
-          label="Submitted"
-          value={submissionCount}
-          icon={<CheckCircle2 size={22} style={{ color: "#059669" }} />}
-          color="#059669"
-          description={
-            isEducator
-              ? "Student submissions received"
-              : "Assignments you have submitted"
-          }
-        />
+          <StatCard
+            label="Submitted"
+            value={submissionCount}
+            icon={<CheckCircle2 size={22} style={{ color: "#059669" }} />}
+            color="#059669"
+            description="Assignments you have submitted"
+          />
 
-        <StatCard
-          label={isEducator ? "Pending Review" : "Pending"}
-          value={pendingCount}
-          icon={<Hourglass size={22} style={{ color: "#EA8A00" }} />}
-          color="#EA8A00"
-          description={
-            isEducator
-              ? "Submissions waiting for review"
-              : "Assignments pending submission"
-          }
-        />
-      </div>
+          <StatCard
+            label="Pending"
+            value={pendingCount}
+            icon={<Hourglass size={22} style={{ color: "#EA8A00" }} />}
+            color="#EA8A00"
+            description="Assignments pending submission"
+          />
+        </div>
+      ) : null}
 
       {isStudent ? (
         <>
@@ -992,7 +855,7 @@ export function HomeworkSection({
                               ? "Submitted"
                               : "Pending";
                         const isSelected = detailsTask?.id === hw.id;
-                        const dueDateState = getDueDateState(hw.dueDate);
+
                         return (
                           <tr
                             key={hw.id}
@@ -1028,27 +891,8 @@ export function HomeworkSection({
                               {formatHomeworkDate(hw.createdAt)}
                             </td>
 
-                            <td
-                              className={`px-4 py-4 text-xs font-bold ${
-                                dueDateState.isNear || dueDateState.isOverdue
-                                  ? "text-rose-600"
-                                  : "text-slate-600"
-                              }`}
-                            >
+                            <td className="px-4 py-4 text-xs font-bold text-rose-600">
                               {formatHomeworkDate(hw.dueDate)}
-
-                              {dueDateState.isNear &&
-                              !dueDateState.isOverdue ? (
-                                <span className="ml-2 rounded-md bg-rose-50 px-2 py-1 text-[9px] font-black uppercase text-rose-600">
-                                  Due soon
-                                </span>
-                              ) : null}
-
-                              {dueDateState.isOverdue ? (
-                                <span className="ml-2 rounded-md bg-rose-50 px-2 py-1 text-[9px] font-black uppercase text-rose-600">
-                                  Overdue
-                                </span>
-                              ) : null}
                             </td>
 
                             <td className="px-4 py-4">
@@ -1111,51 +955,13 @@ export function HomeworkSection({
                         </p>
                       </div>
 
-                      <div className="flex items-start gap-4">
-                        <div className="text-left sm:text-right">
-                          <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                            Due Date
-                          </p>
-
-                          <p
-                            className={`mt-1 text-sm font-black ${
-                              detailsDueDateState?.isNear ||
-                              detailsDueDateState?.isOverdue
-                                ? "text-rose-600"
-                                : "text-slate-700"
-                            }`}
-                          >
-                            {formatHomeworkDate(detailsTask.dueDate)}
-                          </p>
-
-                          {detailsDueDateState?.isNear &&
-                          !detailsDueDateState.isOverdue ? (
-                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-rose-600">
-                              Due soon
-                            </p>
-                          ) : null}
-
-                          {detailsDueDateState?.isOverdue ? (
-                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-rose-600">
-                              Overdue
-                            </p>
-                          ) : null}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExpandedTaskId(null);
-                            setSubmittingId("");
-                            setSubmitFile(null);
-                            setSubmitContent("");
-                            setError("");
-                          }}
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800"
-                          aria-label="Close assignment details"
-                        >
-                          <X size={17} />
-                        </button>
+                      <div className="text-left sm:text-right">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                          Due Date
+                        </p>
+                        <p className="mt-1 text-sm font-black text-rose-600">
+                          {formatHomeworkDate(detailsTask.dueDate)}
+                        </p>
                       </div>
                     </div>
 
@@ -1456,614 +1262,434 @@ export function HomeworkSection({
             </>
           )}
         </>
-      ) : (
-        <>
-          {/* Educator filters */}
-          <div className="surface-soft mb-5 rounded-[1.75rem] p-4">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <div className="relative flex-1">
-                <Search
-                  size={14}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-white px-9 py-2.5 text-sm outline-none focus:border-[var(--color-primary)]"
-                />
+      ) : isEducator ? (
+        <div className="space-y-6">
+{/* Assigned Tasks */}
+<section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0B40A1]">
+      <BookOpen size={22} />
+    </div>
+
+    <div>
+      <h3 className="text-lg font-black text-slate-900 sm:text-xl">
+        Assigned Tasks
+      </h3>
+
+      <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+        Click a task to view its complete details.
+      </p>
+    </div>
+  </div>
+
+  {loading ? (
+    <div className="flex min-h-[140px] items-center justify-center">
+      <Loader2 size={26} className="animate-spin text-[#0B40A1]" />
+    </div>
+  ) : homework.length === 0 ? (
+    <div className="px-5 py-10 text-center">
+      <ClipboardList size={27} className="mx-auto text-slate-300" />
+
+      <p className="mt-3 text-sm font-bold text-slate-600">
+        No tasks created yet
+      </p>
+    </div>
+  ) : (
+    <>
+      <div className="p-4 sm:p-5">
+        <div className="overflow-hidden rounded-xl border border-slate-200">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] border-collapse bg-white">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-left">
+                  {[
+                    "Task Title",
+                    "Subject",
+                    "Due Date",
+                    "Status",
+                  ].map((heading, index, headings) => (
+                    <th
+                      key={heading}
+                      className={`px-4 py-3 text-xs font-black text-slate-800 ${
+                        index !== headings.length - 1
+                          ? "border-r border-slate-200"
+                          : ""
+                      }`}
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {homework.map((homeworkItem) => {
+                  const taskStatus = getHomeworkStatus(
+                    homeworkItem.dueDate,
+                  );
+
+                  const isSelected =
+                    selectedEducatorTask?.id === homeworkItem.id;
+
+                  return (
+                    <tr
+                      key={homeworkItem.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggleEducatorTask(homeworkItem.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          toggleEducatorTask(homeworkItem.id);
+                        }
+                      }}
+                      className={`cursor-pointer border-b border-slate-200 transition last:border-b-0 ${
+                        isSelected
+                          ? "bg-blue-50/60"
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
+                      <td className="border-r border-slate-200 px-4 py-3">
+                        <p className="text-sm font-black text-slate-900">
+                          {homeworkItem.title}
+                        </p>
+
+                        <p className="mt-0.5 text-[11px] font-semibold text-slate-500">
+                          {HW_TYPE_LABELS[homeworkItem.hwType] ??
+                            "Assignment"}
+                          {homeworkItem.taskNumber
+                            ? ` ${homeworkItem.taskNumber}`
+                            : ""}
+                        </p>
+                      </td>
+
+                      <td className="border-r border-slate-200 px-4 py-3">
+                        <span className="inline-flex rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                          {homeworkItem.subject || "General"}
+                        </span>
+                      </td>
+
+                      <td className="border-r border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700">
+                        {formatHomeworkDate(homeworkItem.dueDate)}
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex min-w-[76px] items-center justify-center rounded-full border px-2.5 py-1 text-[11px] font-black ${
+                            taskStatus.isExpired
+                              ? "border-red-200 bg-red-50 text-red-700"
+                              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          }`}
+                        >
+                          {taskStatus.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {selectedEducatorTask ? (
+        <div className="border-t border-slate-200 bg-slate-50/40 px-4 py-4 sm:px-5">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#0B40A1]">
+                  Assignment Details
+                </p>
+
+                <h4 className="mt-1 text-lg font-black text-slate-900">
+                  {selectedEducatorTask.title}
+                </h4>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+                    {selectedEducatorTask.subject || "General"}
+                  </span>
+
+                  <span className="text-xs font-semibold text-slate-500">
+                    Maximum marks: {selectedEducatorTask.maxMarks}
+                  </span>
+
+                  {selectedEducatorTask.estimatedHours ? (
+                    <span className="text-xs font-semibold text-slate-500">
+                      Estimated time: {selectedEducatorTask.estimatedHours}h
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
-              <select
-                value={filterType}
-                onChange={(event) => setFilterType(event.target.value)}
-                className="min-w-[130px] rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm outline-none"
+              <button
+                type="button"
+                onClick={() => setExpandedTaskId(null)}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Close assignment details"
               >
-                <option value="">All Types</option>
-                {Object.entries(HW_TYPE_LABELS).map(([key, value]) => (
-                  <option key={key} value={key}>
-                    {value}
-                  </option>
-                ))}
-              </select>
+                <X size={15} />
+              </button>
+            </div>
 
-              <select
-                value={filterSubject}
-                onChange={(event) => setFilterSubject(event.target.value)}
-                className="min-w-[150px] rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm outline-none"
-              >
-                <option value="">All Subjects</option>
-                {subjectOptions.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
-                  </option>
-                ))}
-              </select>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  Due Date
+                </p>
 
-              {search || filterType || filterSubject ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    setFilterType("");
-                    setFilterSubject("");
-                  }}
-                  className="btn-surface btn-sm font-bold"
-                >
-                  Clear
-                </button>
+                <p className="mt-1 text-sm font-bold text-slate-800">
+                  {formatHomeworkDate(selectedEducatorTask.dueDate)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  Status
+                </p>
+
+                {(() => {
+                  const status = getHomeworkStatus(
+                    selectedEducatorTask.dueDate,
+                  );
+
+                  return (
+                    <span
+                      className={`mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-black ${
+                        status.isExpired
+                          ? "border-red-200 bg-red-50 text-red-700"
+                          : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      }`}
+                    >
+                      {status.label}
+                    </span>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {selectedEducatorTask.objective ? (
+              <div className="mt-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  Objective
+                </p>
+
+                <p className="mt-1 text-sm leading-6 text-slate-700">
+                  {selectedEducatorTask.objective}
+                </p>
+              </div>
+            ) : null}
+
+            {selectedEducatorTask.description ? (
+              <div className="mt-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  Description
+                </p>
+
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                  {selectedEducatorTask.description}
+                </p>
+              </div>
+            ) : null}
+
+            {selectedEducatorTask.keySteps?.length ? (
+              <div className="mt-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                  Key Steps
+                </p>
+
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm leading-6 text-slate-700">
+                  {selectedEducatorTask.keySteps.map((step, index) => (
+                    <li key={`${selectedEducatorTask.id}-${index}`}>
+                      {step}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {selectedEducatorTask.deliverables ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                    Deliverables
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-slate-700">
+                    {selectedEducatorTask.deliverables}
+                  </p>
+                </div>
+              ) : null}
+
+              {selectedEducatorTask.evaluationCriteria ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[11px] font-black uppercase tracking-wide text-slate-500">
+                    Evaluation Criteria
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-slate-700">
+                    {selectedEducatorTask.evaluationCriteria}
+                  </p>
+                </div>
               ) : null}
             </div>
           </div>
+        </div>
+      ) : null}
+    </>
+  )}
+</section>
 
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-primary)]" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="surface-soft rounded-[1.75rem] py-16 text-center">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--primary-3)]">
-                <BookOpen size={36} style={{ color: "var(--primary)" }} />
+          {/* Student Submissions */}
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-6">
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
+                  <Users size={28} />
+                </div>
+
+                <div className="min-w-0">
+                  <h3 className="text-xl font-black text-slate-900 sm:text-2xl">
+                    Student Submissions
+                  </h3>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Track and review student submissions for this assignment.
+                  </p>
+                </div>
               </div>
-              <h5 className="mb-2 text-lg font-bold text-[var(--color-heading)]">
-                No tasks created yet
-              </h5>
-              <p className="mx-auto mb-4 max-w-md text-sm text-[var(--color-muted)]">
-                Create structured assignments with objectives, key steps, and
-                evaluation criteria.
-              </p>
+
               <button
                 type="button"
-                onClick={() => setShowAssign(true)}
-                className="btn-action btn-md font-bold"
+                onClick={handleDownloadAllSubmissions}
+                disabled={downloadableSubmissionRows.length === 0}
+                className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-black text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Plus size={15} className="mr-2" />
-                Create First Task
+                <Download size={18} />
+                Download All
               </button>
             </div>
-          ) : (
-            <div className="grid gap-4">
-              {filtered.map((hw, index) => {
-                const isOverdue = hw.dueDate < todayDate;
-                const subs = hw.submissions ?? [];
-                const gradedSubs = subs.filter(
-                  (submission) => submission.status === "graded",
-                );
-                const ungradedSubs = subs.filter(
-                  (submission) => submission.status !== "graded",
-                );
-                const isDemoTask = hw.id === DEMO_HOMEWORK_ID;
-                const canDelete = !isDemoTask;
-                const submission = hw.mySubmission ?? null;
 
-                return (
-                  <div key={hw.id} className="exam-card p-0">
-                    {/* Card Header */}
-                    <div
-                      className="exam-card-header flex items-center justify-between"
-                      style={{
-                        background: isOverdue ? "#FEF2F2" : "#F8FAFC",
-                        padding: "16px 20px 12px",
-                      }}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="inline-flex min-w-[88px] shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-black text-[#0B40A1] shadow-sm">
-                          {hw.hwType === "assignment" ? "Assignment" : "Task"}{" "}
-                          {hw.taskNumber ?? index + 1}
-                        </span>
-                        <div className="min-w-0">
-                          <h3 className="text-base font-bold text-[var(--color-heading)] truncate">
-                            {hw.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                            <HWTypeBadge hwType={hw.hwType} />
-                            {hw.subject && (
-                              <span className="text-xs text-slate-500">
-                                {hw.subject}
-                              </span>
-                            )}
-                            {hw.estimatedHours && (
-                              <span className="text-xs text-slate-400">
-                                · {hw.estimatedHours}h
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-3">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                            isOverdue
-                              ? "bg-red-50 text-red-700 border border-red-200"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          }`}
-                        >
-                          {isOverdue ? (
-                            <AlertCircle size={10} />
-                          ) : (
-                            <CheckCircle2 size={10} />
-                          )}
-                          {isOverdue ? "Overdue" : "Active"}
-                        </span>
-                        <span className="text-[11px] text-slate-400 whitespace-nowrap">
-                          Due{" "}
-                          {new Date(hw.dueDate).toLocaleDateString("en-IN", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </span>
-                      </div>
-                    </div>
+            {loading ? (
+              <div className="flex min-h-[260px] items-center justify-center border-t border-slate-200">
+                <Loader2 size={30} className="animate-spin text-indigo-600" />
+              </div>
+            ) : educatorSubmissionRows.length === 0 ? (
+              <div className="flex min-h-[300px] flex-col items-center justify-center border-t border-slate-200 px-6 text-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <Users size={30} />
+                </div>
 
-                    {/* Card Body */}
-                    <div className="p-4 space-y-3">
-                      {hw.objective && (
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1">
-                            <Target size={11} /> Objective
-                          </p>
-                          <p className="text-sm text-[var(--color-heading)]">
-                            {hw.objective}
-                          </p>
-                        </div>
-                      )}
+                <h4 className="mt-5 text-base font-black text-slate-800">
+                  No student submissions
+                </h4>
 
-                      <div className="grid sm:grid-cols-2 gap-3">
-                        {hw.keySteps && hw.keySteps.length > 0 && (
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1">
-                              <ListChecks size={11} /> Key Steps
-                            </p>
-                            <ol className="list-decimal list-inside text-sm text-[var(--color-muted)] space-y-0.5">
-                              {hw.keySteps.map((step, i) => (
-                                <li key={i}>{step}</li>
-                              ))}
-                            </ol>
-                          </div>
-                        )}
-                        <div className="space-y-2">
-                          {hw.deliverables && (
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-0.5 flex items-center gap-1">
-                                <ClipboardList size={11} /> Deliverables
-                              </p>
-                              <p className="text-sm text-[var(--color-muted)]">
-                                {hw.deliverables}
-                              </p>
-                            </div>
-                          )}
-                          {hw.evaluationCriteria && (
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-0.5 flex items-center gap-1">
-                                <Award size={11} /> Evaluation Criteria
-                              </p>
-                              <p className="text-sm text-[var(--color-muted)]">
-                                {hw.evaluationCriteria}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                  Student submissions will appear here after students upload
+                  their completed assignments.
+                </p>
+              </div>
+            ) : (
+              <div className="border-t border-slate-200 px-5 pb-5 pt-5 sm:px-7 sm:pb-7">
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[850px] border-collapse bg-white">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-left">
+                          {[
+                            "Student Name",
+                            "Subject",
+                            "Assignment",
+                            "Submitted On",
+                            "Status",
+                          ].map((heading, index, headings) => (
+                            <th
+                              key={heading}
+                              className={`px-6 py-5 text-sm font-black text-slate-900 ${
+                                index !== headings.length - 1
+                                  ? "border-r border-slate-200"
+                                  : ""
+                              }`}
+                            >
+                              {heading}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
 
-                      {hw.description && (
-                        <div>
-                          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 flex items-center gap-1">
-                            <AlignLeft size={11} /> Description
-                          </p>
-                          <p className="text-sm text-[var(--color-muted)]">
-                            {hw.description}
-                          </p>
-                        </div>
-                      )}
+                      <tbody>
+                        {educatorSubmissionRows.map(
+                          ({ homeworkItem, submission }) => {
+                            const isReviewed = submission.status === "graded";
 
-                      {/* Meta chips */}
-                      <div className="flex flex-wrap items-center gap-3 pt-1">
-                        <span className="meta-chip">
-                          <Award size={11} /> Max {hw.maxMarks} marks
-                        </span>
-                        {hw.estimatedHours && (
-                          <span className="meta-chip">
-                            <Hourglass size={11} /> ~{hw.estimatedHours}h
-                          </span>
-                        )}
-                        {subs.length > 0 && (
-                          <span className="meta-chip">
-                            <Users size={11} /> {gradedSubs.length}/
-                            {subs.length} graded
-                          </span>
-                        )}
-                      </div>
+                            return (
+                              <tr
+                                key={`${homeworkItem.id}-${submission.id}`}
+                                className="border-b border-slate-200 transition last:border-b-0 hover:bg-slate-50/70"
+                              >
+                                <td className="border-r border-slate-200 px-6 py-5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-black text-indigo-700">
+                                      {(submission.studentName || "S")
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                    </div>
 
-                      {/* Student: submission area */}
-                      {isStudent && (
-                        <div className="border-t border-[var(--color-border)] pt-4">
-                          {submission ? (
-                            <div className="space-y-3">
-                              <div className="flex flex-wrap items-center gap-3">
-                                <span
-                                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${
-                                    submission.status === "graded"
-                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                      : "border-amber-200 bg-amber-50 text-amber-700"
-                                  }`}
-                                >
-                                  {submission.status === "graded" ? (
-                                    <>
-                                      <CheckCircle2 size={12} /> Checked by
-                                      teacher
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Hourglass size={12} /> Submitted for
-                                      review
-                                    </>
-                                  )}
-                                </span>
-
-                                {submission.status === "graded" ? (
-                                  <span className="text-sm font-black text-emerald-700">
-                                    {submission.marks ?? 0}/{hw.maxMarks} marks
-                                  </span>
-                                ) : null}
-                              </div>
-
-                              {(submission.content ||
-                                submission.attachmentUrl) && (
-                                <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                                  <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
-                                    Your Submission
-                                  </p>
-
-                                  {submission.content ? (
-                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                                      {submission.content}
-                                    </p>
-                                  ) : null}
-
-                                  {submission.attachmentUrl ? (
-                                    <a
-                                      href={submission.attachmentUrl}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="mt-3 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs font-black text-[#0B40A1] transition hover:bg-blue-50"
-                                    >
-                                      <Paperclip size={14} />
-                                      Open uploaded homework
-                                      <ExternalLink size={13} />
-                                    </a>
-                                  ) : null}
-                                </div>
-                              )}
-
-                              {submission.status === "graded" ? (
-                                <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
-                                  <div className="flex items-center gap-2 text-[#0B40A1]">
-                                    <MessageSquareText size={16} />
-                                    <p className="text-xs font-black uppercase tracking-[0.12em]">
-                                      Teacher&apos;s Feedback
-                                    </p>
+                                    <span className="text-sm font-bold text-slate-800">
+                                      {submission.studentName || "Student"}
+                                    </span>
                                   </div>
+                                </td>
 
-                                  <p className="mt-2 whitespace-pre-wrap text-sm font-medium leading-6 text-slate-700">
-                                    {submission.feedback?.trim() ||
-                                      "Your teacher checked this task but did not add written feedback."}
-                                  </p>
-                                </div>
-                              ) : (
-                                <p className="text-xs font-semibold text-slate-500">
-                                  Your teacher will review the file and publish
-                                  marks and feedback here.
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#0B40A1] shadow-sm">
-                                  <UploadCloud size={19} />
-                                </div>
+                                <td className="border-r border-slate-200 px-6 py-5 text-sm text-slate-700">
+                                  {homeworkItem.subject || "General"}
+                                </td>
 
-                                <div>
-                                  <p className="text-sm font-black text-slate-800">
-                                    Upload your completed work
-                                  </p>
-                                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                                    Add an optional note and upload one file up
-                                    to 10 MB.
-                                  </p>
-                                </div>
-                              </div>
+                                <td className="border-r border-slate-200 px-6 py-5 text-sm font-semibold text-slate-800">
+                                  {homeworkItem.title}
+                                </td>
 
-                              <textarea
-                                rows={3}
-                                placeholder="Write a note for your teacher (optional)..."
-                                value={
-                                  submittingId === hw.id ? submitContent : ""
-                                }
-                                onChange={(event) => {
-                                  setSubmitContent(
-                                    event.target.value.slice(0, 1000),
-                                  );
-                                  setSubmittingId(hw.id);
-                                  if (submittingId !== hw.id) {
-                                    setSubmitFile(null);
-                                  }
-                                }}
-                                className="mt-4 w-full resize-y rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)]"
-                              />
+                                <td className="border-r border-slate-200 px-6 py-5 text-sm text-slate-700">
+                                  {formatHomeworkDate(submission.submittedAt)}
+                                </td>
 
-                              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-[#0B40A1] transition hover:bg-blue-50">
-                                  <FileUp size={15} />
-                                  {submittingId === hw.id && submitFile
-                                    ? "Change File"
-                                    : "Choose File"}
-                                  <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg,.webp,.txt"
-                                    className="hidden"
-                                    onChange={(event) =>
-                                      handleSubmissionFile(
-                                        hw.id,
-                                        event.target.files?.[0] ?? null,
+                                <td className="px-6 py-5">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openSubmissionReview(
+                                        homeworkItem,
+                                        submission,
                                       )
                                     }
-                                  />
-                                </label>
-
-                                {submittingId === hw.id && submitFile ? (
-                                  <div className="flex min-w-0 items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-slate-600">
-                                    <Paperclip
-                                      size={14}
-                                      className="shrink-0 text-blue-500"
-                                    />
-                                    <span className="max-w-[220px] truncate">
-                                      {submitFile.name}
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => setSubmitFile(null)}
-                                      className="shrink-0 text-slate-400 transition hover:text-red-500"
-                                      aria-label="Remove selected file"
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  </div>
-                                ) : null}
-
-                                <button
-                                  type="button"
-                                  onClick={() => void handleSubmit(hw.id)}
-                                  disabled={
-                                    submitting && submittingId === hw.id
-                                  }
-                                  className="btn-action btn-md inline-flex items-center justify-center font-bold disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {submitting && submittingId === hw.id ? (
-                                    <>
-                                      <Loader2
-                                        size={15}
-                                        className="mr-2 animate-spin"
-                                      />
-                                      {uploadingFile
-                                        ? "Uploading..."
-                                        : "Submitting..."}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Send size={14} className="mr-2" />
-                                      Submit Task
-                                    </>
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Educator: submissions */}
-                      {isEducator && subs.length > 0 && (
-                        <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div>
-                              <p className="text-sm font-black text-slate-800">
-                                Student Submissions
-                              </p>
-                              <p className="mt-0.5 text-xs text-slate-500">
-                                {ungradedSubs.length} waiting for review ·{" "}
-                                {gradedSubs.length} checked
-                              </p>
-                            </div>
-
-                            {ungradedSubs.length > 0 ? (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const submissionToReview = ungradedSubs[0];
-                                  setGradeModal({
-                                    homeworkTitle: hw.title,
-                                    submission: submissionToReview,
-                                  });
-                                  setGradeMarks(submissionToReview.marks ?? 0);
-                                  setGradeFeedback(
-                                    submissionToReview.feedback ?? "",
-                                  );
-                                }}
-                                className="btn-surface btn-sm font-bold text-xs"
-                              >
-                                Review Next
-                              </button>
-                            ) : null}
-                          </div>
-
-                          {subs.slice(0, 5).map((submissionItem) => (
-                            <article
-                              key={submissionItem.id}
-                              className="rounded-2xl border border-[#E8EDF2] bg-[#F8FAFC] p-4"
-                            >
-                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="flex min-w-0 items-start gap-3">
-                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-600">
-                                    {submissionItem.studentName
-                                      .charAt(0)
-                                      .toUpperCase()}
-                                  </div>
-
-                                  <div className="min-w-0">
-                                    <p className="truncate text-sm font-black text-[var(--color-heading)]">
-                                      {submissionItem.studentName}
-                                    </p>
-
-                                    <p className="mt-0.5 text-[11px] text-slate-400">
-                                      Submitted{" "}
-                                      {new Date(
-                                        submissionItem.submittedAt,
-                                      ).toLocaleDateString("en-IN", {
-                                        day: "numeric",
-                                        month: "short",
-                                        year: "numeric",
-                                      })}
-                                    </p>
-
-                                    {submissionItem.content ? (
-                                      <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-600">
-                                        {submissionItem.content}
-                                      </p>
-                                    ) : null}
-
-                                    {submissionItem.attachmentUrl ? (
-                                      <a
-                                        href={submissionItem.attachmentUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-black text-[#0B40A1] hover:underline"
-                                      >
-                                        <Paperclip size={13} />
-                                        Open submitted file
-                                        <ExternalLink size={12} />
-                                      </a>
-                                    ) : null}
-
-                                    {submissionItem.status === "graded" &&
-                                    submissionItem.feedback ? (
-                                      <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-slate-700">
-                                        <span className="font-black text-[#0B40A1]">
-                                          Feedback:{" "}
-                                        </span>
-                                        {submissionItem.feedback}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                </div>
-
-                                <div className="flex shrink-0 items-center gap-2">
-                                  {submissionItem.status === "graded" ? (
-                                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700">
-                                      <FileCheck2 size={13} />
-                                      {submissionItem.marks ?? 0}/{hw.maxMarks}
-                                    </span>
-                                  ) : (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setGradeModal({
-                                          homeworkTitle: hw.title,
-                                          submission: submissionItem,
-                                        });
-                                        setGradeMarks(
-                                          submissionItem.marks ?? 0,
-                                        );
-                                        setGradeFeedback(
-                                          submissionItem.feedback ?? "",
-                                        );
-                                      }}
-                                      className="btn-action btn-sm font-bold text-xs"
-                                    >
-                                      Check &amp; Give Feedback
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </article>
-                          ))}
-
-                          {subs.length > 5 ? (
-                            <p className="text-center text-xs text-slate-400">
-                              +{subs.length - 5} more submissions
-                            </p>
-                          ) : null}
-                        </div>
-                      )}
-
-                      {/* Educator: actions */}
-                      {isEducator && (
-                        <div className="flex justify-end gap-2 border-t border-[var(--color-border)] pt-3">
-                          {deleteConfirmId === hw.id ? (
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-red-600">
-                                Delete this task?
-                              </span>
-                              <button
-                                onClick={() => handleDelete(hw.id)}
-                                disabled={deleting}
-                                className="btn-action btn-sm font-bold text-xs bg-red-600 hover:bg-red-700"
-                              >
-                                {deleting ? "..." : "Confirm"}
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(null)}
-                                className="btn-surface btn-sm font-bold text-xs"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setDeleteConfirmId(hw.id)}
-                              disabled={!canDelete}
-                              className="btn-surface btn-sm font-bold text-xs text-red-600 border-red-200 hover:bg-red-50 disabled:opacity-40"
-                              title={
-                                isDemoTask
-                                  ? "The demo task cannot be deleted."
-                                  : !canDelete
-                                    ? "Grade all submissions first"
-                                    : "Delete"
-                              }
-                            >
-                              <Trash2 size={12} className="mr-1" /> Delete
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                                    className={`inline-flex min-w-[108px] items-center justify-center rounded-xl border px-5 py-2.5 text-sm font-black transition ${
+                                      isReviewed
+                                        ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                        : "border-indigo-500 bg-white text-indigo-700 hover:bg-indigo-50"
+                                    }`}
+                                  >
+                                    {isReviewed ? "Reviewed" : "Review"}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          },
+                        )}
+                      </tbody>
+                    </table>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </>
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center">
+          <p className="text-sm font-semibold text-slate-500">
+            Homework is not available for this account.
+          </p>
+        </div>
       )}
 
       {/* ── Assign Modal ── */}
@@ -2360,14 +1986,24 @@ Clarity of presentation..."
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                  Marks Awarded
+                  Marks Awarded — Maximum {gradeModal.maxMarks}
                 </label>
+
                 <input
                   type="number"
                   min={0}
+                  max={gradeModal.maxMarks}
                   value={gradeMarks}
-                  onChange={(e) =>
-                    setGradeMarks(Math.max(0, Number(e.target.value)))
+                  onChange={(event) =>
+                    setGradeMarks(
+                      Math.max(
+                        0,
+                        Math.min(
+                          gradeModal.maxMarks,
+                          Number(event.target.value) || 0,
+                        ),
+                      ),
+                    )
                   }
                   className="w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]"
                 />
@@ -2413,31 +2049,6 @@ Clarity of presentation..."
           </div>
         </div>
       )}
-
-      {/* ── Embedded Styles ── */}
-      <style>{`
-        .exam-card {
-          border-radius: 14px;
-          border: 1px solid var(--color-border);
-          background: var(--color-surface);
-          transition: box-shadow .2s, transform .2s;
-        }
-        .exam-card:hover {
-          box-shadow: 0 8px 28px rgba(79,70,229,.10);
-          transform: translateY(-2px);
-        }
-        .exam-card-header {
-          border-radius: 14px 14px 0 0;
-        }
-        .meta-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 11px;
-          color: var(--color-muted);
-          font-weight: 500;
-        }
-      `}</style>
     </section>
   );
 }

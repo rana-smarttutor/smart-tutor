@@ -34,6 +34,7 @@ type SignupFormData = {
   courseWanted: string;
   courseWantedTitle: string;
   studentType: string;
+  referralCode: string;
 
   weakSubjects: string;
   strongSubjects: string;
@@ -172,6 +173,7 @@ function getInitialFormData(): SignupFormData {
     courseWanted: "",
     courseWantedTitle: "",
     studentType: "",
+    referralCode: "",
 
     weakSubjects: "",
     strongSubjects: "",
@@ -201,6 +203,11 @@ export function RegistrationForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [referralStatus, setReferralStatus] = useState<
+    "idle" | "checking" | "valid" | "invalid"
+  >("idle");
+
+  const [referralEducatorName, setReferralEducatorName] = useState("");
 
   const [courseSearch, setCourseSearch] = useState("");
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
@@ -293,7 +300,59 @@ export function RegistrationForm() {
       [key]: value,
     }));
   }
+  async function validateReferralCode(value: string) {
+    const normalizedCode = value.trim().toUpperCase();
 
+    if (!normalizedCode) {
+      setReferralStatus("idle");
+      setReferralEducatorName("");
+      return true;
+    }
+
+    setReferralStatus("checking");
+    setReferralEducatorName("");
+
+    try {
+      const response = await fetch(
+        `/api/referrals/validate?code=${encodeURIComponent(normalizedCode)}`,
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
+
+      const payload = (await response.json()) as {
+        valid?: boolean;
+        error?: string;
+        referral?: {
+          referralCode?: string;
+          educatorName?: string;
+        };
+      };
+
+      if (!response.ok || !payload.valid) {
+        setReferralStatus("invalid");
+        setReferralEducatorName("");
+        return false;
+      }
+
+      setReferralStatus("valid");
+
+      setReferralEducatorName(payload.referral?.educatorName ?? "");
+
+      setForm((previous) => ({
+        ...previous,
+        referralCode: payload.referral?.referralCode ?? normalizedCode,
+      }));
+
+      return true;
+    } catch {
+      setReferralStatus("invalid");
+      setReferralEducatorName("");
+      return false;
+    }
+  }
   function selectCourse(course: CourseOption) {
     setForm((previous) => ({
       ...previous,
@@ -386,7 +445,8 @@ export function RegistrationForm() {
   }
 
   async function handlePhotoIdUpload(file: File, side: "front" | "back") {
-    const setUploading = side === "front" ? setUploadingPhotoIdFront : setUploadingPhotoIdBack;
+    const setUploading =
+      side === "front" ? setUploadingPhotoIdFront : setUploadingPhotoIdBack;
     setUploading(true);
     setError("");
 
@@ -407,7 +467,10 @@ export function RegistrationForm() {
       };
 
       if (data.success && data.url) {
-        updateField(side === "front" ? "photoIdFrontUrl" : "photoIdBackUrl", data.url);
+        updateField(
+          side === "front" ? "photoIdFrontUrl" : "photoIdBackUrl",
+          data.url,
+        );
       } else {
         setError(data.message || `Photo ID ${side} upload failed.`);
       }
@@ -467,7 +530,16 @@ export function RegistrationForm() {
           );
           return;
         }
+        if (form.referralCode.trim()) {
+          const referralIsValid = await validateReferralCode(form.referralCode);
 
+          if (!referralIsValid) {
+            setError(
+              "The referral code is invalid. Correct it or leave the field blank.",
+            );
+            return;
+          }
+        }
         if (
           !form.parentEmail ||
           !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.parentEmail)
@@ -507,7 +579,9 @@ export function RegistrationForm() {
         }
 
         if (!form.photoIdFrontUrl) {
-          setError("Photo ID front image is required for faculty verification.");
+          setError(
+            "Photo ID front image is required for faculty verification.",
+          );
           return;
         }
 
@@ -518,7 +592,9 @@ export function RegistrationForm() {
       }
 
       if (!consentAccepted) {
-        setError("You must accept the Terms & Conditions, Privacy Policy, and consent to data collection to create an account.");
+        setError(
+          "You must accept the Terms & Conditions, Privacy Policy, and consent to data collection to create an account.",
+        );
         return;
       }
 
@@ -546,6 +622,10 @@ export function RegistrationForm() {
         body.courseWanted = form.courseWanted;
         body.courseWantedTitle = form.courseWantedTitle;
         body.studentType = form.studentType;
+
+        if (form.referralCode.trim()) {
+          body.referralCode = form.referralCode.trim().toUpperCase();
+        }
 
         body.weakSubjects = form.weakSubjects
           ? form.weakSubjects
@@ -863,6 +943,79 @@ export function RegistrationForm() {
               </h3>
 
               <div className="space-y-4">
+                <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
+                  <label
+                    htmlFor="student-referral-code"
+                    className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-violet-700"
+                  >
+                    Referral Code{" "}
+                    <span className="normal-case font-semibold text-slate-400">
+                      (Optional)
+                    </span>
+                  </label>
+
+                  <input
+                    id="student-referral-code"
+                    type="text"
+                    value={form.referralCode}
+                    onChange={(event) => {
+                      const normalizedValue = event.target.value
+                        .toUpperCase()
+                        .replace(/[^A-Z0-9-]/g, "")
+                        .slice(0, 40);
+
+                      updateField("referralCode", normalizedValue);
+
+                      setReferralStatus("idle");
+                      setReferralEducatorName("");
+                    }}
+                    onBlur={() => {
+                      if (form.referralCode.trim()) {
+                        void validateReferralCode(form.referralCode);
+                      }
+                    }}
+                    placeholder="Enter educator referral code"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    maxLength={40}
+                    className={`w-full rounded-2xl border bg-white px-5 py-3.5 text-sm font-bold uppercase tracking-wide text-slate-900 outline-none transition-all placeholder:normal-case placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300 focus:ring-4 ${
+                      referralStatus === "valid"
+                        ? "border-emerald-300 ring-emerald-500/10"
+                        : referralStatus === "invalid"
+                          ? "border-rose-300 ring-rose-500/10"
+                          : "border-violet-100 ring-violet-500/10"
+                    }`}
+                  />
+
+                  {referralStatus === "checking" ? (
+                    <p className="ml-1 mt-2 text-[11px] font-semibold text-violet-600">
+                      Checking referral code...
+                    </p>
+                  ) : null}
+
+                  {referralStatus === "valid" ? (
+                    <p className="ml-1 mt-2 text-[11px] font-bold text-emerald-600">
+                      Valid referral code
+                      {referralEducatorName
+                        ? ` — Referred by ${referralEducatorName}`
+                        : ""}
+                    </p>
+                  ) : null}
+
+                  {referralStatus === "invalid" ? (
+                    <p className="ml-1 mt-2 text-[11px] font-bold text-rose-600">
+                      This referral code is invalid or inactive.
+                    </p>
+                  ) : null}
+
+                  {referralStatus === "idle" ? (
+                    <p className="ml-1 mt-2 text-[10px] leading-4 text-slate-400">
+                      Leave this blank when no educator referred you.
+                    </p>
+                  ) : null}
+                </div>
+
                 <div ref={courseDropdownRef} className="relative">
                   <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
                     Class / Board / Exam / Skill Program{" "}
@@ -1224,10 +1377,13 @@ export function RegistrationForm() {
               <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
                 <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-amber-700">
                   <i className="bi bi-shield-lock me-1" />
-                  Photo ID for Verification <span className="text-red-500">*</span>
+                  Photo ID for Verification{" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <p className="mb-3 text-[11px] text-amber-600/80">
-                  Upload front and back images of a valid photo ID such as Aadhar Card, PAN Card, Passport, or Driver's License. This is required for account verification.
+                  Upload front and back images of a valid photo ID such as
+                  Aadhar Card, PAN Card, Passport, or Driver's License. This is
+                  required for account verification.
                 </p>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -1242,7 +1398,9 @@ export function RegistrationForm() {
                         disabled={uploadingPhotoIdFront}
                         className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
                       >
-                        {uploadingPhotoIdFront ? "Uploading..." : "Choose Front Image"}
+                        {uploadingPhotoIdFront
+                          ? "Uploading..."
+                          : "Choose Front Image"}
                       </button>
                       <input
                         ref={photoIdFrontInputRef}
@@ -1253,7 +1411,8 @@ export function RegistrationForm() {
                       />
                       {form.photoIdFrontUrl && (
                         <span className="text-[11px] text-emerald-600">
-                          <i className="bi bi-check-circle me-1" />Uploaded
+                          <i className="bi bi-check-circle me-1" />
+                          Uploaded
                         </span>
                       )}
                     </div>
@@ -1270,7 +1429,9 @@ export function RegistrationForm() {
                         disabled={uploadingPhotoIdBack}
                         className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
                       >
-                        {uploadingPhotoIdBack ? "Uploading..." : "Choose Back Image"}
+                        {uploadingPhotoIdBack
+                          ? "Uploading..."
+                          : "Choose Back Image"}
                       </button>
                       <input
                         ref={photoIdBackInputRef}
@@ -1281,7 +1442,8 @@ export function RegistrationForm() {
                       />
                       {form.photoIdBackUrl && (
                         <span className="text-[11px] text-emerald-600">
-                          <i className="bi bi-check-circle me-1" />Uploaded
+                          <i className="bi bi-check-circle me-1" />
+                          Uploaded
                         </span>
                       )}
                     </div>
@@ -1289,7 +1451,9 @@ export function RegistrationForm() {
                 </div>
 
                 <p className="mt-2 text-[10px] text-slate-400">
-                  Accepted IDs: Aadhar Card, PAN Card, Passport, Voter ID, Driver's License. Images must be clear and readable. (PNG, JPG, WEBP — max 5MB each)
+                  Accepted IDs: Aadhar Card, PAN Card, Passport, Voter ID,
+                  Driver's License. Images must be clear and readable. (PNG,
+                  JPG, WEBP — max 5MB each)
                 </p>
               </div>
             </div>
@@ -1350,19 +1514,38 @@ export function RegistrationForm() {
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
             />
             <span className="text-xs leading-5 text-[var(--color-muted)]">
-              I acknowledge and consent to the collection, storage, and processing of my personal data and uploaded documents (including resume/CV and photo ID images) by Smart Tutors as described in the{" "}
-              <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:text-blue-700 underline">
+              I acknowledge and consent to the collection, storage, and
+              processing of my personal data and uploaded documents (including
+              resume/CV and photo ID images) by Smart Tutors as described in the{" "}
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-blue-600 hover:text-blue-700 underline"
+              >
                 Terms &amp; Conditions
               </a>
               ,{" "}
-              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:text-blue-700 underline">
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-blue-600 hover:text-blue-700 underline"
+              >
                 Privacy Policy
               </a>
               , and{" "}
-              <a href="/eula" target="_blank" rel="noopener noreferrer" className="font-bold text-blue-600 hover:text-blue-700 underline">
+              <a
+                href="/eula"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold text-blue-600 hover:text-blue-700 underline"
+              >
                 EULA
               </a>
-              . I understand that Smart Tutors is not liable for any loss or misuse of the documents I submit. <span className="text-red-500 font-bold">*</span>
+              . I understand that Smart Tutors is not liable for any loss or
+              misuse of the documents I submit.{" "}
+              <span className="text-red-500 font-bold">*</span>
             </span>
           </label>
         </div>

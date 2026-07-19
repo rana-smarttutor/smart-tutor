@@ -50,8 +50,8 @@ import type {
   Role,
   MessageItem,
   StaffAttendanceRecord,
+  DoubtItem,
 } from "@/lib/types";
-
 type Props = {
   session: SessionUser | null;
   role: Role;
@@ -129,7 +129,46 @@ function getInitials(name?: string | null) {
     .toUpperCase()
     .slice(0, 2);
 }
+function formatRelativeTime(value?: string) {
+  if (!value) {
+    return "Recently";
+  }
 
+  const createdTime = new Date(value).getTime();
+
+  if (Number.isNaN(createdTime)) {
+    return "Recently";
+  }
+
+  const differenceMs = Math.max(0, Date.now() - createdTime);
+
+  const minutes = Math.floor(differenceMs / (1000 * 60));
+
+  if (minutes < 1) {
+    return "Now";
+  }
+
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+
+  if (days < 7) {
+    return `${days}d ago`;
+  }
+
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
+}
 function Sparkline({
   values,
   color = "#4F46E5",
@@ -2289,8 +2328,18 @@ function EducatorOverview({
   >([]);
 
   const [attendanceLoading, setAttendanceLoading] = useState(true);
+
   const [attendanceError, setAttendanceError] = useState("");
 
+  const [educatorDoubts, setEducatorDoubts] = useState<DoubtItem[]>([]);
+
+  const [doubtsLoading, setDoubtsLoading] = useState(true);
+
+  const [doubtsError, setDoubtsError] = useState("");
+
+  /*
+   * Load educator attendance.
+   */
   useEffect(() => {
     const userId = session?.id?.trim() ?? "";
 
@@ -2363,7 +2412,81 @@ function EducatorOverview({
 
     return () => {
       cancelled = true;
+
       window.clearInterval(intervalId);
+
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [session?.id]);
+
+  /*
+   * Load student doubts.
+   * This must be a separate top-level effect.
+   */
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadEducatorDoubts() {
+      try {
+        const response = await fetch("/api/doubts", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        const payload = (await response.json().catch(() => ({}))) as {
+          doubts?: DoubtItem[];
+          error?: string;
+        };
+
+        if (!response.ok) {
+          throw new Error(
+            payload.error ||
+              `Unable to load doubts. Server returned ${response.status}.`,
+          );
+        }
+
+        if (!cancelled) {
+          setEducatorDoubts(
+            Array.isArray(payload.doubts) ? payload.doubts : [],
+          );
+
+          setDoubtsError("");
+        }
+      } catch (error) {
+        console.error("Educator doubt-list error:", error);
+
+        if (!cancelled) {
+          setDoubtsError(
+            error instanceof Error
+              ? error.message
+              : "Unable to load student doubts.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setDoubtsLoading(false);
+        }
+      }
+    }
+
+    void loadEducatorDoubts();
+
+    const intervalId = window.setInterval(() => {
+      void loadEducatorDoubts();
+    }, 15000);
+
+    function handleWindowFocus() {
+      void loadEducatorDoubts();
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      cancelled = true;
+
+      window.clearInterval(intervalId);
+
       window.removeEventListener("focus", handleWindowFocus);
     };
   }, [session?.id]);
@@ -2458,12 +2581,15 @@ function EducatorOverview({
     });
   }
 
-  const checkedInRecords = educatorAttendanceRecords.filter((record) =>
-    Boolean(record.checkIn),
+  const presentRecords = educatorAttendanceRecords.filter(
+    (record) =>
+      record.status === "present" ||
+      record.status === "late" ||
+      record.status === "half_day",
   );
 
-  const checkedOutRecords = educatorAttendanceRecords.filter((record) =>
-    Boolean(record.checkOut),
+  const absentRecords = educatorAttendanceRecords.filter(
+    (record) => record.status === "absent",
   );
 
   const lateCheckInRecords = educatorAttendanceRecords.filter((record) => {
@@ -2478,6 +2604,13 @@ function EducatorOverview({
     return checkOutMinutes !== null && checkOutMinutes > WORK_END_MINUTES;
   });
 
+  const attendanceChartTotal = presentRecords.length + absentRecords.length;
+
+  const presentChartPercentage =
+    attendanceChartTotal > 0
+      ? (presentRecords.length / attendanceChartTotal) * 100
+      : 0;
+
   const todayDate = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Kolkata",
   });
@@ -2485,63 +2618,6 @@ function EducatorOverview({
   const todayEducatorAttendance = educatorAttendanceRecords.find(
     (record) => record.date === todayDate,
   );
-
-  const onTimeCheckIns = checkedInRecords.length - lateCheckInRecords.length;
-
-  const onTimeFraction =
-    checkedInRecords.length > 0 ? onTimeCheckIns / checkedInRecords.length : 0;
-  const attendanceByStudent = new Map<
-    string,
-    {
-      attended: number;
-      total: number;
-    }
-  >();
-
-  for (const sheet of dashboard.attendanceSheets ?? []) {
-    for (const record of sheet.records ?? []) {
-      const current = attendanceByStudent.get(record.studentId) ?? {
-        attended: 0,
-        total: 0,
-      };
-
-      current.total += 1;
-
-      if (
-        record.status === "present" ||
-        record.status === "late" ||
-        record.status === "excused"
-      ) {
-        current.attended += 1;
-      }
-
-      attendanceByStudent.set(record.studentId, current);
-    }
-  }
-
-  const lowAttendanceStudents = Array.from(attendanceByStudent.values()).filter(
-    ({ attended, total }) => total > 0 && (attended / total) * 100 < 75,
-  ).length;
-
-  const pendingReviewStudents = new Set(
-    (dashboard.submissions ?? [])
-      .filter((submission) => submission.status === "submitted")
-      .map((submission) => submission.studentId),
-  ).size;
-
-  const lowScoreStudents = new Set(
-    (dashboard.submissions ?? [])
-      .filter(
-        (submission) =>
-          submission.score != null &&
-          submission.total > 0 &&
-          (submission.score / submission.total) * 100 < 40,
-      )
-      .map((submission) => submission.studentId),
-  ).size;
-
-  const totalAttentionAlerts =
-    lowAttendanceStudents + pendingReviewStudents + lowScoreStudents;
 
   const pendingEarningsMetric = dashboard.analytics?.metrics?.find(
     (metric) => metric.label === "Pending Earnings",
@@ -2672,7 +2748,25 @@ function EducatorOverview({
       color: "#D97706",
     },
   ];
+  const recentEducatorDoubts: DoubtItem[] = [...educatorDoubts]
+    .sort((left, right) => {
+      const leftTime = new Date(left.createdAt).getTime();
 
+      const rightTime = new Date(right.createdAt).getTime();
+
+      const safeLeftTime = Number.isNaN(leftTime) ? 0 : leftTime;
+
+      const safeRightTime = Number.isNaN(rightTime) ? 0 : rightTime;
+
+      return safeRightTime - safeLeftTime;
+    })
+    .slice(0, 3);
+
+  const doubtAvatarStyles: string[] = [
+    "bg-violet-50 text-violet-700",
+    "bg-amber-50 text-amber-700",
+    "bg-emerald-50 text-emerald-700",
+  ];
   return (
     <div className="space-y-5">
       {/* ── Hero ── */}
@@ -2821,43 +2915,34 @@ function EducatorOverview({
             ) : null}
             <div className="flex items-center gap-6">
               <div className="relative h-24 w-24 shrink-0">
-                <svg viewBox="0 0 120 120" className="h-full w-full">
-                  <g transform="rotate(-90 60 60)">
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="48"
-                      fill="none"
-                      stroke="#E8EDF2"
-                      strokeWidth="10"
-                    />
+                {/* Coloured Present/Absent donut */}
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: attendanceLoading
+                      ? "#E8EDF2"
+                      : attendanceChartTotal > 0
+                        ? `conic-gradient(
+              #059669 0% ${presentChartPercentage}%,
+              #2563EB ${presentChartPercentage}% 100%
+            )`
+                        : "#E8EDF2",
+                  }}
+                />
 
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="48"
-                      fill="none"
-                      stroke="#2563EB"
-                      strokeWidth="10"
-                      strokeDasharray={`${2 * Math.PI * 48}`}
-                      strokeDashoffset={`${
-                        2 * Math.PI * 48 * (1 - onTimeFraction)
-                      }`}
-                      strokeLinecap="round"
-                      className="transition-all duration-700"
-                    />
-                  </g>
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-base font-black text-[#1D4ED8]">
-                    {attendanceLoading
-                      ? "..."
-                      : educatorAttendanceRecords.length}
+                {/* White centre with number and DAYS */}
+                <div
+                  className="absolute z-10 flex flex-col items-center justify-center rounded-full bg-white shadow-inner"
+                  style={{
+                    inset: "10px",
+                  }}
+                >
+                  <p className="text-xl font-black leading-none text-[#1D4ED8]">
+                    {attendanceLoading ? "..." : attendanceChartTotal}
                   </p>
 
-                  <p className="text-[8px] font-bold tracking-wider text-slate-400">
-                    DAYS
+                  <p className="mt-1 text-[8px] font-bold uppercase tracking-wider text-slate-400">
+                    Days
                   </p>
                 </div>
               </div>
@@ -2866,22 +2951,22 @@ function EducatorOverview({
                 <div className="flex justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-semibold text-emerald-600">
                     <span className="h-2 w-2 rounded-full bg-emerald-600" />
-                    Check-Ins
+                    Present
                   </span>
 
                   <span className="font-bold text-emerald-600">
-                    {checkedInRecords.length}
+                    {presentRecords.length}
                   </span>
                 </div>
 
                 <div className="flex justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-semibold text-blue-600">
                     <span className="h-2 w-2 rounded-full bg-blue-600" />
-                    Check-Outs
+                    Absent
                   </span>
 
                   <span className="font-bold text-blue-600">
-                    {checkedOutRecords.length}
+                    {absentRecords.length}
                   </span>
                 </div>
 
@@ -2956,95 +3041,130 @@ function EducatorOverview({
         </div>
 
         {/* Students Needing Attention */}
+        {/* Student's Doubt List */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
-          <div className="flex items-center justify-between border-b border-[#F1F5F9] px-4 sm:px-5 py-3 sm:py-4 gap-2">
-            <h2 className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-bold text-slate-900 min-w-0">
-              <AlertCircle
-                size={14}
-                className="sm:w-4 sm:h-4 shrink-0 text-rose-600"
-              />
-              <span className="truncate">Students Needing Attention</span>
+          <div className="flex items-center justify-between gap-3 border-b border-[#E8EDF2] px-5 py-4">
+            <h2 className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-900 sm:text-base">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-rose-200 text-rose-500">
+                <HelpCircle size={14} />
+              </span>
+
+              <span className="truncate">Student&apos;s Doubt List</span>
             </h2>
 
-            <span
-              className={`rounded-full px-3 py-1 text-[10px] font-black ${
-                totalAttentionAlerts > 0
-                  ? "bg-rose-50 text-rose-700"
-                  : "bg-emerald-50 text-emerald-700"
-              }`}
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("doubt-box")}
+              className="flex shrink-0 items-center gap-2 text-xs font-black text-[#4338CA] transition hover:text-[#312E81]"
             >
-              {totalAttentionAlerts > 0
-                ? `${totalAttentionAlerts} Alerts`
-                : "All Clear"}
-            </span>
+              View all
+              <span aria-hidden="true" className="text-base leading-none">
+                →
+              </span>
+            </button>
           </div>
 
-          <div className="grid h-[170px] grid-cols-1 gap-2 p-4 sm:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => onSetActiveSection("attendance")}
-              className="flex flex-col items-center justify-center rounded-xl border border-rose-100 bg-rose-50 px-3 py-3 text-center transition hover:bg-rose-100"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-100 text-rose-600">
-                <UserCheck size={17} />
+          {doubtsError ? (
+            <div className="mx-5 mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
+              {doubtsError}
+            </div>
+          ) : null}
+
+          <div className="px-5">
+            {doubtsLoading ? (
+              <div className="divide-y divide-slate-100">
+                {[0, 1, 2].map((item) => (
+                  <div
+                    key={item}
+                    className="flex animate-pulse items-center gap-3 py-4"
+                  >
+                    <div className="h-11 w-11 shrink-0 rounded-xl bg-slate-100" />
+
+                    <div className="flex-1">
+                      <div className="h-3 w-24 rounded bg-slate-100" />
+                      <div className="mt-2 h-2.5 w-40 rounded bg-slate-100" />
+                    </div>
+
+                    <div className="h-8 w-20 rounded-lg bg-slate-100" />
+                  </div>
+                ))}
               </div>
+            ) : recentEducatorDoubts.length > 0 ? (
+              <div className="divide-y divide-slate-100">
+                {recentEducatorDoubts.map((doubt, index) => {
+                  const isResolved =
+                    doubt.status === "resolved" || doubt.status === "closed";
 
-              <span className="mt-2 text-xl font-black text-rose-600">
-                {lowAttendanceStudents}
-              </span>
+                  const avatarClass =
+                    doubtAvatarStyles[index % doubtAvatarStyles.length];
 
-              <span className="text-xs font-bold text-slate-800">
-                Low Attendance
-              </span>
+                  return (
+                    <div
+                      key={doubt.id}
+                      className="flex min-h-[78px] items-center gap-3 py-3.5"
+                    >
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-base font-black ${avatarClass}`}
+                      >
+                        {getInitials(doubt.studentName).slice(0, 1)}
+                      </div>
 
-              <span className="mt-0.5 text-[10px] text-slate-500">
-                Below 75%
-              </span>
-            </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-black text-slate-900">
+                          {doubt.studentName}
+                        </p>
 
-            <button
-              type="button"
-              onClick={() => onSetActiveSection("tests")}
-              className="flex flex-col items-center justify-center rounded-xl border border-amber-100 bg-amber-50 px-3 py-3 text-center transition hover:bg-amber-100"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                <Clock size={17} />
+                        <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
+                          {doubt.subject || "General"}
+                          {" — "}
+                          {doubt.title}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`hidden min-w-[58px] shrink-0 text-right text-[11px] font-bold sm:block ${
+                          isResolved
+                            ? "text-emerald-600"
+                            : index === 0
+                              ? "text-rose-500"
+                              : index === 1
+                                ? "text-amber-600"
+                                : "text-emerald-600"
+                        }`}
+                      >
+                        {formatRelativeTime(doubt.createdAt)}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => onSetActiveSection("doubt-box")}
+                        className={`flex h-9 min-w-[86px] shrink-0 items-center justify-center rounded-lg border px-4 text-xs font-black transition ${
+                          isResolved
+                            ? "border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50"
+                            : "border-indigo-300 bg-white text-indigo-700 hover:border-indigo-500 hover:bg-indigo-50"
+                        }`}
+                      >
+                        {isResolved ? "Resolved" : "View"}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
+            ) : (
+              <div className="flex min-h-[235px] flex-col items-center justify-center px-6 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                  <HelpCircle size={22} />
+                </div>
 
-              <span className="mt-2 text-xl font-black text-amber-600">
-                {pendingReviewStudents}
-              </span>
+                <p className="mt-3 text-sm font-black text-slate-800">
+                  No student doubts
+                </p>
 
-              <span className="text-xs font-bold text-slate-800">
-                Pending Reviews
-              </span>
-
-              <span className="mt-0.5 text-[10px] text-slate-500">
-                Awaiting review
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onSetActiveSection("tests")}
-              className="flex flex-col items-center justify-center rounded-xl border border-violet-100 bg-violet-50 px-3 py-3 text-center transition hover:bg-violet-100"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                <TrendingUp size={17} />
+                <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">
+                  New questions submitted by students will appear here.
+                </p>
               </div>
-
-              <span className="mt-2 text-xl font-black text-violet-600">
-                {lowScoreStudents}
-              </span>
-
-              <span className="text-xs font-bold text-slate-800">
-                Low Scores
-              </span>
-
-              <span className="mt-0.5 text-[10px] text-slate-500">
-                Below 40%
-              </span>
-            </button>
+            )}
           </div>
         </div>
       </div>
@@ -3075,7 +3195,7 @@ function EducatorOverview({
           <div className="p-5">
             <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-sm">
               <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-100">
-                Pending Earnings
+                My Earnings
               </p>
 
               <p className="mt-2 text-3xl font-black tracking-tight">

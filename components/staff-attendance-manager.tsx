@@ -374,7 +374,7 @@ export function StaffAttendanceManager({
     },
     { label: "Late", value: stats.late, color: "#0EA5E9", bg: "#F0F9FF" },
     {
-      label: "On Leave",
+      label: "Leave",
       value: stats.onLeave,
       color: "#8B5CF6",
       bg: "#F5F3FF",

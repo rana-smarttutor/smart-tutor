@@ -11,6 +11,7 @@ import {
   BarChart3,
   CalendarDays,
   FileBarChart2,
+  Gift,
   Menu,
   MessageCircleQuestion,
   Sparkles,
@@ -244,6 +245,16 @@ const HomeworkSection = dynamic(
     ssr: false,
   },
 );
+const RewardsManager = dynamic(
+  () =>
+    import("@/components/rewards-manager").then(
+      (module) => module.RewardsManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
 const DoubtBox = dynamic(
   () => import("@/components/doubt-box").then((module) => module.DoubtBox),
   {
@@ -360,6 +371,7 @@ const sidebarByRole = {
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "results", label: " Student's Results" },
     { id: "teacher-payouts", label: "My Earnings" },
+    { id: "rewards", label: "Rewards" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
     { id: "attendance", label: "Attendance" },
@@ -535,7 +547,15 @@ const menuSections = [
       "sales-crm",
     ],
   },
-  { label: "Finance", items: ["fees", "receipts", "teacher-payouts"] },
+  {
+    label: "Finance",
+    items: [
+      "fees",
+      "receipts",
+      "teacher-payouts",
+      "rewards",
+    ],
+  },
   { label: "Placement", items: ["placement-jobs"] },
 ];
 
@@ -570,6 +590,7 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  rewards: <Gift className="h-4 w-4 shrink-0" />,
   lectures: (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1202,6 +1223,7 @@ export function DashboardShell({
   const showFeeInstallments = activeSection === "fee-installments";
   const showReceipts = activeSection === "receipts";
   const showTeacherPayouts = activeSection === "teacher-payouts";
+  const showRewards = activeSection === "rewards";
   const showStaffPayroll = activeSection === "staff-payroll";
   const showStaffPayouts = activeSection === "staff-payouts";
   const showFeeDeletionAudit = activeSection === "fee-deletion-audit";
@@ -1779,13 +1801,12 @@ export function DashboardShell({
 
           {showHomework &&
           (role === "student" || role === "educator" || role === "parent") ? (
-<HomeworkSection
-  session={session}
-  role={role}
-  dashboard={dashboard}
-  studentDirectory={studentDirectory}
-  onDashboardRefresh={triggerDashboardRefresh}
-/>
+            <HomeworkSection
+              session={session}
+              role={role}
+              studentDirectory={studentDirectory}
+              onDashboardRefresh={triggerDashboardRefresh}
+            />
           ) : null}
           {showDoubtBox &&
           (role === "student" || role === "educator" || role === "admin") ? (
@@ -2104,7 +2125,7 @@ export function DashboardShell({
           {showTeacherPayouts && (role === "admin" || role === "educator") ? (
             <TeacherPayoutManager role={role} managedUsers={managedUsers} />
           ) : null}
-
+          {showRewards && role === "educator" ? <RewardsManager /> : null}
           {showStaffPayroll && (role === "admin" || role === "educator") ? (
             <StaffPayrollManager
               role={role}
