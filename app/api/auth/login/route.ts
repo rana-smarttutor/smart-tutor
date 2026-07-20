@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 
 import { createSessionResponse } from "@/lib/auth";
 import { findUserByCredentials } from "@/lib/data-store";
-import type { Role } from "@/lib/types";
 import {
   sanitizePasswordInput,
   sanitizeTextInput,
@@ -15,39 +14,7 @@ type LoginPayload = {
   login?: string;
   email?: string;
   password?: string;
-  role?: string;
 };
-
-function normalizeLoginRole(value?: string): Role | null {
-  const normalizedRole = value?.trim().toLowerCase();
-
-  if (normalizedRole === "student") {
-    return "student";
-  }
-
-  if (normalizedRole === "parent") {
-    return "parent";
-  }
-
-  // The login UI calls it Faculty,
-  // but MongoDB stores the role as educator.
-  if (
-    normalizedRole === "faculty" ||
-    normalizedRole === "educator"
-  ) {
-    return "educator";
-  }
-
-  if (normalizedRole === "admin") {
-    return "admin";
-  }
-
-  if (normalizedRole === "counsellor") {
-    return "counsellor";
-  }
-
-  return null;
-}
 
 export async function POST(request: Request) {
   let body: LoginPayload;
@@ -68,20 +35,19 @@ export async function POST(request: Request) {
   const login = sanitizeTextInput(
     body.login ?? body.email,
     120,
-  ).toLowerCase();
+  )
+    .trim()
+    .toLowerCase();
 
   const password = sanitizePasswordInput(
     body.password,
   );
 
-  const selectedRole = normalizeLoginRole(
-    body.role,
-  );
-
   if (!login || !password) {
     return NextResponse.json(
       {
-        error: "Email or mobile number and password are required.",
+        error:
+          "Email or mobile number and password are required.",
       },
       {
         status: 400,
@@ -89,36 +55,23 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!selectedRole) {
-    return NextResponse.json(
-      {
-        error: "Select Student, Parent, or Faculty before logging in.",
-      },
-      {
-        status: 400,
-      },
-    );
-  }
-
+  /*
+   * Authenticate using credentials only.
+   *
+   * Student, Parent and Faculty cards on the login page
+   * are decorative and do not decide the account role.
+   */
   const user = await findUserByCredentials(
     login,
     password,
-    selectedRole,
+    undefined as any,
   );
 
   if (!user) {
-    const roleLabel =
-      selectedRole === "educator"
-        ? "Faculty"
-        : selectedRole === "parent"
-          ? "Parent"
-          : selectedRole === "student"
-            ? "Student"
-            : selectedRole;
-
     return NextResponse.json(
       {
-        error: `These credentials do not belong to a ${roleLabel} account. Select the correct account type and try again.`,
+        error:
+          "The email/mobile number or password is incorrect.",
       },
       {
         status: 401,
@@ -130,33 +83,36 @@ export async function POST(request: Request) {
     const isRejected =
       user.status === "rejected";
 
-    const roleLabel =
+    const accountLabel =
       user.role === "educator"
-        ? "faculty"
+        ? "faculty account"
         : "account";
 
     return NextResponse.json(
       {
         error: isRejected
-          ? `Your ${roleLabel} request was rejected by admin.`
-          : `Your ${roleLabel} is waiting for admin approval.`,
+          ? `Your ${accountLabel} request was rejected by admin.`
+          : `Your ${accountLabel} is waiting for admin approval.`,
 
-        pendingApproval:
-          !isRejected,
+        pendingApproval: !isRejected,
 
-        redirectTo:
-          isRejected
-            ? "/login"
-            : "/application-submitted",
+        redirectTo: isRejected
+          ? "/login"
+          : "/application-submitted",
       },
       {
-        status:
-          isRejected
-            ? 403
-            : 200,
+        status: isRejected ? 403 : 200,
       },
     );
   }
 
+  /*
+   * createSessionResponse uses user.role from MongoDB.
+   *
+   * Admin credentials create an admin session.
+   * Student credentials create a student session.
+   * Faculty credentials create an educator session.
+   * Parent credentials create a parent session.
+   */
   return createSessionResponse(user);
 }
