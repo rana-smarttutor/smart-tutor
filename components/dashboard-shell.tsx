@@ -1852,12 +1852,13 @@ export function DashboardShell({
 
           {showHomework &&
           (role === "student" || role === "educator" || role === "parent") ? (
-            <HomeworkSection
-              session={session}
-              role={role}
-              studentDirectory={studentDirectory}
-              onDashboardRefresh={triggerDashboardRefresh}
-            />
+<HomeworkSection
+  session={session}
+  role={role}
+  studentDirectory={studentDirectory}
+  managedUsers={localManagedUsers}
+  onDashboardRefresh={triggerDashboardRefresh}
+/>
           ) : null}
           {showDoubtBox &&
           (role === "student" || role === "educator" || role === "admin") ? (

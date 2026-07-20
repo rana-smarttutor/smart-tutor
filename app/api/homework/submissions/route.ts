@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
+  getHomeworkById,
   getStudentDirectory,
   getSubmissionForStudent,
   getSubmissionsForHomework,
@@ -49,7 +50,33 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+const homework =
+  await getHomeworkById(homeworkId);
 
+if (!homework) {
+  return NextResponse.json(
+    {
+      error:
+        "The selected homework could not be found.",
+    },
+    { status: 404 },
+  );
+}
+
+if (
+  homework.assignedStudentIds?.length &&
+  !homework.assignedStudentIds.includes(
+    session.id,
+  )
+) {
+  return NextResponse.json(
+    {
+      error:
+        "This homework was not assigned to you.",
+    },
+    { status: 403 },
+  );
+}
   const submission = await submitHomework({
     homeworkId,
     studentId: session.id,

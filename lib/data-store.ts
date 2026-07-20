@@ -7042,6 +7042,9 @@ export async function getAdminNotificationRecipientIds() {
 // =========================
 
 export async function createHomework(input: {
+  assignedStudentIds: string[];
+  assignedStudentNames?: string[];
+
   title: string;
   description?: string;
   objective?: string;
@@ -7051,7 +7054,7 @@ export async function createHomework(input: {
   estimatedHours?: number;
   taskNumber?: number;
   subject?: string;
-  hwType: string;
+  hwType: HomeworkItem["hwType"];
   maxMarks: number;
   dueDate: string;
   allowLateSubmission: boolean;
@@ -7060,10 +7063,17 @@ export async function createHomework(input: {
   createdByName?: string;
 }) {
   const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
-  const homework: HomeworkItem = {
-    id: randomUUID(),
-    title: input.title,
-    description: input.description,
+const homework: HomeworkItem = {
+  id: randomUUID(),
+
+  assignedStudentIds: [
+    ...new Set(input.assignedStudentIds),
+  ],
+  assignedStudentNames:
+    input.assignedStudentNames,
+
+  title: input.title,
+  description: input.description,
     objective: input.objective,
     keySteps: input.keySteps,
     deliverables: input.deliverables,
@@ -7071,7 +7081,7 @@ export async function createHomework(input: {
     estimatedHours: input.estimatedHours,
     taskNumber: input.taskNumber,
     subject: input.subject,
-    hwType: input.hwType as HomeworkItem["hwType"],
+    hwType: input.hwType,
     maxMarks: input.maxMarks,
     dueDate: input.dueDate,
     allowLateSubmission: input.allowLateSubmission,
@@ -7108,12 +7118,58 @@ export async function getHomeworkForTeacher(teacherId: string) {
   return items.map(stripMongoId);
 }
 
-export async function getHomeworkForStudent(studentBatchIds: string[]) {
-  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
+export async function getHomeworkForStudent(
+  studentId: string,
+  studentBatchIds: string[] = [],
+) {
+  const collection =
+    await getCollection<HomeworkItem>(
+      COLLECTIONS.homework,
+    );
+
+  const normalizedStudentId =
+    studentId.trim();
+
+  if (!normalizedStudentId) {
+    return [];
+  }
+
+  const query =
+    studentBatchIds.length > 0
+      ? {
+          $or: [
+            /*
+             * New individually assigned homework.
+             */
+            {
+              assignedStudentIds:
+                normalizedStudentId,
+            },
+
+            /*
+             * Backward compatibility for old
+             * batch-based homework only.
+             */
+            {
+              assignedStudentIds: {
+                $exists: false,
+              },
+              batchId: {
+                $in: studentBatchIds,
+              },
+            },
+          ],
+        }
+      : {
+          assignedStudentIds:
+            normalizedStudentId,
+        };
+
   const items = await collection
-    .find({ batchId: { $in: studentBatchIds } })
+    .find(query as any)
     .sort({ createdAt: -1 })
     .toArray();
+
   return items.map(stripMongoId);
 }
 
