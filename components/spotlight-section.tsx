@@ -72,15 +72,12 @@ function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
   if (stream === "All") {
     return true;
   }
-function isPreferredCommerceSpotlight(course: CourseItem) {
-  const title = normaliseValue(course.title);
-  const stream = normaliseValue(course.stream);
+  function isPreferredCommerceSpotlight(course: CourseItem) {
+    const title = normaliseValue(course.title);
+    const stream = normaliseValue(course.stream);
 
-  return (
-    stream === "commerce" &&
-    title.includes("foundationforcacscma")
-  );
-}
+    return stream === "commerce" && title.includes("foundationforcacscma");
+  }
   const selectedStreamKey = normaliseValue(stream);
   const courseStreamKey = normaliseValue(course.stream);
 
@@ -148,10 +145,7 @@ function isPreferredCommerceSpotlight(course: CourseItem) {
   const title = normaliseValue(course.title);
   const stream = normaliseValue(course.stream);
 
-  return (
-    stream === "commerce" &&
-    title.includes("foundationforcacscma")
-  );
+  return stream === "commerce" && title.includes("foundationforcacscma");
 }
 
 const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
@@ -219,47 +213,47 @@ export default function SpotlightSection({
 
     const priorityStandardKey = priorityKeys[activeTab] ?? null;
 
-if (priorityStandardKey) {
-  filteredCourses.sort((firstCourse, secondCourse) => {
-    const isFirstPriority =
-      firstCourse.standardKey === priorityStandardKey;
+    if (priorityStandardKey) {
+      filteredCourses.sort((firstCourse, secondCourse) => {
+        const isFirstPriority = firstCourse.standardKey === priorityStandardKey;
 
-    const isSecondPriority =
-      secondCourse.standardKey === priorityStandardKey;
+        const isSecondPriority =
+          secondCourse.standardKey === priorityStandardKey;
 
-    if (isFirstPriority && !isSecondPriority) {
-      return -1;
+        if (isFirstPriority && !isSecondPriority) {
+          return -1;
+        }
+
+        if (!isFirstPriority && isSecondPriority) {
+          return 1;
+        }
+
+        return 0;
+      });
     }
 
-    if (!isFirstPriority && isSecondPriority) {
-      return 1;
+    if (
+      (activeTab === "Class 11" || activeTab === "Class 12") &&
+      activeStream === "Commerce"
+    ) {
+      filteredCourses.sort((firstCourse, secondCourse) => {
+        const firstIsPreferred = isPreferredCommerceSpotlight(firstCourse);
+
+        const secondIsPreferred = isPreferredCommerceSpotlight(secondCourse);
+
+        if (firstIsPreferred && !secondIsPreferred) {
+          return -1;
+        }
+
+        if (!firstIsPreferred && secondIsPreferred) {
+          return 1;
+        }
+
+        return 0;
+      });
     }
 
-    return 0;
-  });
-}
-
-if ((activeTab === "Class 11" || activeTab === "Class 12") && activeStream === "Commerce") {
-  filteredCourses.sort((firstCourse, secondCourse) => {
-    const firstIsPreferred =
-      isPreferredCommerceSpotlight(firstCourse);
-
-    const secondIsPreferred =
-      isPreferredCommerceSpotlight(secondCourse);
-
-    if (firstIsPreferred && !secondIsPreferred) {
-      return -1;
-    }
-
-    if (!firstIsPreferred && secondIsPreferred) {
-      return 1;
-    }
-
-    return 0;
-  });
-}
-
-setTabCourses(filteredCourses);
+    setTabCourses(filteredCourses);
     setSpotlightIndex(0);
   }, [activeTab, activeStream, allCourses]);
 
@@ -271,27 +265,27 @@ setTabCourses(filteredCourses);
 
   const currentSpotlight = tabCourses[spotlightIndex];
   useEffect(() => {
-  if (activeTab !== "Class 11-12" || !currentSpotlight) {
-    return;
-  }
+    if (activeTab !== "Class 11-12" || !currentSpotlight) {
+      return;
+    }
 
-  const text = [
-    currentSpotlight.standardKey,
-    currentSpotlight.title,
-    currentSpotlight.audienceLabel,
-    ...(currentSpotlight.sections ?? []),
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+    const text = [
+      currentSpotlight.standardKey,
+      currentSpotlight.title,
+      currentSpotlight.audienceLabel,
+      ...(currentSpotlight.sections ?? []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
 
-  const isClass12 =
-    text.includes("class-12") ||
-    text.includes("class 12") ||
-    text.includes("class12");
+    const isClass12 =
+      text.includes("class-12") ||
+      text.includes("class 12") ||
+      text.includes("class12");
 
-  onSeniorClassChange?.(isClass12 ? "Class 12" : "Class 11");
-}, [activeTab, currentSpotlight, onSeniorClassChange]);
+    onSeniorClassChange?.(isClass12 ? "Class 12" : "Class 11");
+  }, [activeTab, currentSpotlight, onSeniorClassChange]);
 
   const nextSpotlight = () => {
     if (tabCourses.length > 1) {
@@ -603,7 +597,10 @@ setTabCourses(filteredCourses);
 
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {currentSpotlight.mode.split("/").map((m) => (
-                      <span key={m.trim()} className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-bold text-slate-600">
+                      <span
+                        key={m.trim()}
+                        className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-bold text-slate-600"
+                      >
                         {m.trim()}
                       </span>
                     ))}
@@ -692,114 +689,116 @@ setTabCourses(filteredCourses);
         </div>
       )}
 
- 
+      {activeTab !== "Class 11-12" &&
+        activeTab !== "Skills" &&
+        tabCourses.length > 1 && (
+          <div className="space-y-4 pt-4">
+            <h4 className="font-display text-xs font-semibold uppercase tracking-tight text-slate-900">
+              Additional Programs in {activeTab}
+            </h4>
 
-      {activeTab !== "Class 11-12" && tabCourses.length > 1 && (
-        <div className="space-y-4 pt-4">
-          <h4 className="font-display text-xs font-semibold uppercase tracking-tight text-slate-900">
-            Additional Programs in {activeTab}
-          </h4>
-
-          {(() => {
-            const threshold = activeTab === "Skills" ? 4 : 6;
-            const otherCourses = tabCourses.filter(
-              (_, i) => i !== spotlightIndex,
-            );
-            const visibleCourses = showAllCourses
-              ? otherCourses
-              : otherCourses.slice(0, threshold);
-            const hiddenCount = otherCourses.length - visibleCourses.length;
-
-            return (
-              <>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {visibleCourses.map((course) => {
-              return (
-                <motion.div
-                  key={course.id}
-                  whileHover={{
-                    y: -3,
-                    boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
-                  }}
-                  className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="space-y-2">
-                    <span className="inline-block rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                      {course.duration}
-                    </span>
-
-                    <h5 className="font-display text-[14px] font-bold leading-tight text-slate-800">
-                      {course.title}
-                    </h5>
-
-                    <p className="line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500">
-                      {course.summary}
-                    </p>
-
-                    {/* Course names as buttons */}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
-                      {course.courseNamesIncluded.map((name) => (
-                        <button
-                          key={name}
-                          type="button"
-                          onClick={() => onSelectCourse(course)}
-                          className="rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-[10px] font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
-                        >
-                          {name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <div className="flex flex-wrap gap-1">
-                      {course.mode.split("/").map((m) => (
-                        <span key={m.trim()} className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[9px] font-bold text-slate-500">
-                          {m.trim()}
-                        </span>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => onSelectCourse(course)}
-                      className="flex cursor-pointer items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-700"
-                    >
-                      <span>Enroll</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </motion.div>
+            {(() => {
+              const threshold = activeTab === "Skills" ? 4 : 6;
+              const otherCourses = tabCourses.filter(
+                (_, i) => i !== spotlightIndex,
               );
-            })}
-          </div>
+              const visibleCourses = showAllCourses
+                ? otherCourses
+                : otherCourses.slice(0, threshold);
+              const hiddenCount = otherCourses.length - visibleCourses.length;
 
-                {hiddenCount > 0 && activeTab !== "Skills" && (
-                  <div className="flex justify-center pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllCourses(!showAllCourses)}
-                      className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-blue-600 shadow-sm transition-all hover:bg-blue-50 hover:border-blue-200"
-                    >
-                      {showAllCourses ? (
-                        <>Show Less</>
-                      ) : (
-                        <>Show All {otherCourses.length} Courses</>
-                      )}
-                      <ChevronRight
-                        className={`h-3.5 w-3.5 transition-transform ${
-                          showAllCourses ? "rotate-90" : ""
-                        }`}
-                      />
-                    </button>
+              return (
+                <>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {visibleCourses.map((course) => {
+                      return (
+                        <motion.div
+                          key={course.id}
+                          whileHover={{
+                            y: -3,
+                            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
+                          }}
+                          className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                        >
+                          <div className="space-y-2">
+                            <span className="inline-block rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              {course.duration}
+                            </span>
+
+                            <h5 className="font-display text-[14px] font-bold leading-tight text-slate-800">
+                              {course.title}
+                            </h5>
+
+                            <p className="line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500">
+                              {course.summary}
+                            </p>
+
+                            {/* Course names as buttons */}
+                            <div className="flex flex-wrap gap-1.5 pt-1">
+                              {course.courseNamesIncluded.map((name) => (
+                                <button
+                                  key={name}
+                                  type="button"
+                                  onClick={() => onSelectCourse(course)}
+                                  className="rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-[10px] font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
+                                >
+                                  {name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                            <div className="flex flex-wrap gap-1">
+                              {course.mode.split("/").map((m) => (
+                                <span
+                                  key={m.trim()}
+                                  className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[9px] font-bold text-slate-500"
+                                >
+                                  {m.trim()}
+                                </span>
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => onSelectCourse(course)}
+                              className="flex cursor-pointer items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                            >
+                              <span>Enroll</span>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
-                )}
-              </>
-            );
-          })()}
-        </div>
-      )}
 
+                  {hiddenCount > 0 && activeTab !== "Skills" && (
+                    <div className="flex justify-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllCourses(!showAllCourses)}
+                        className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-blue-600 shadow-sm transition-all hover:bg-blue-50 hover:border-blue-200"
+                      >
+                        {showAllCourses ? (
+                          <>Show Less</>
+                        ) : (
+                          <>Show All {otherCourses.length} Courses</>
+                        )}
+                        <ChevronRight
+                          className={`h-3.5 w-3.5 transition-transform ${
+                            showAllCourses ? "rotate-90" : ""
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+          </div>
+        )}
     </div>
   );
 }

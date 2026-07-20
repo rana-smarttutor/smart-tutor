@@ -446,6 +446,22 @@ const sidebarByRole = {
     { id: "certificates", label: "Certificates" },
   ],
 } as const;
+function isGovernmentExamCourse(
+  courseWanted?: string,
+  courseWantedTitle?: string,
+) {
+  const courseText = [courseWanted, courseWantedTitle]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" && value.trim().length > 0,
+    )
+    .join(" ")
+    .toLowerCase();
+
+  return /\b(govt|government|upsc|ssc|railway|rrb|banking|bank exam|ibps|sbi|rbi|police|army|nda|cds|afcat|psc|civil services|defence)\b/i.test(
+    courseText,
+  );
+}
 function getDefaultDashboardSection(role: Role) {
   return sidebarByRole[role][0]?.id ?? "overview";
 }
@@ -549,12 +565,7 @@ const menuSections = [
   },
   {
     label: "Finance",
-    items: [
-      "fees",
-      "receipts",
-      "teacher-payouts",
-      "rewards",
-    ],
+    items: ["fees", "receipts", "teacher-payouts", "rewards"],
   },
   { label: "Placement", items: ["placement-jobs"] },
 ];
@@ -1110,6 +1121,13 @@ export function DashboardShell({
   const [sidebarSearch, setSidebarSearch] = useState("");
   const defaultSection = getDefaultDashboardSection(role);
 
+  const isGovExamStudent =
+    role === "student" &&
+    isGovernmentExamCourse(
+      dashboard.profile?.courseWanted,
+      dashboard.profile?.courseWantedTitle,
+    );
+
   const [activeSection, setActiveSection] = useState<string>(defaultSection);
 
   const [hasRestoredActiveSection, setHasRestoredActiveSection] =
@@ -1567,41 +1585,56 @@ export function DashboardShell({
                     {section.label}
                   </div>
                 )}
-                {filteredItems.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    data-label={item.label.toLowerCase()}
-                    className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
-                      sidebarCollapsed ? "justify-center" : ""
-                    } ${
-                      activeSection === item.id
-                        ? "bg-[#0B40A1] text-white shadow-md"
-                        : "text-slate-400 hover:bg-white/5 hover:text-white"
-                    }`}
-                    onClick={() => setActiveSection(item.id)}
-                    title={sidebarCollapsed ? item.label : undefined}
-                  >
-                    {navIcons[item.id] || (
-                      <svg
-                        className="h-5 w-5 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                        />
-                      </svg>
-                    )}
-                    {!sidebarCollapsed && (
-                      <span className="truncate">{item.label}</span>
-                    )}
-                  </button>
-                ))}
+                {filteredItems.map((item) => {
+                  const itemLabel =
+                    isGovExamStudent && item.id === "tests"
+                      ? "Mock Test"
+                      : item.label;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-label={itemLabel.toLowerCase()}
+                      className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                        sidebarCollapsed ? "justify-center" : ""
+                      } ${
+                        activeSection === item.id
+                          ? "bg-[#0B40A1] text-white shadow-md"
+                          : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      }`}
+                      onClick={() => {
+                        if (isGovExamStudent && item.id === "tests") {
+                          window.location.assign("/mock-test");
+                          return;
+                        }
+
+                        setActiveSection(item.id);
+                      }}
+                      title={sidebarCollapsed ? itemLabel : undefined}
+                    >
+                      {navIcons[item.id] || (
+                        <svg
+                          className="h-5 w-5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          />
+                        </svg>
+                      )}
+
+                      {!sidebarCollapsed && (
+                        <span className="truncate">{itemLabel}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             );
           })}
@@ -1715,12 +1748,30 @@ export function DashboardShell({
           </nav>
 
           {/* User controls */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            {role === "educator" ? (
+              <button
+                type="button"
+                aria-label="Earn ₹1,000"
+                title="Earn ₹1,000"
+                className="group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-3 text-xs font-black text-white shadow-lg shadow-purple-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/30 active:translate-y-0 sm:h-11 sm:rounded-2xl sm:px-4 sm:text-sm"
+              >
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                <span className="relative flex h-6 w-6 items-center justify-center rounded-lg bg-white/15 ring-1 ring-white/20">
+                  <Gift className="h-3.5 w-3.5" />
+                </span>
+
+                <span className="relative whitespace-nowrap">Earn ₹1,000</span>
+              </button>
+            ) : null}
+
             <NotificationBell
               onOpenNotifications={() => setActiveSection("notifications")}
               onOpenChat={() => setActiveSection("chat")}
               refreshKey={notifRefreshKey}
             />
+
             {session ? (
               <UserMenu
                 session={session}

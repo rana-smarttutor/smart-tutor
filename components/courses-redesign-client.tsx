@@ -100,8 +100,7 @@ const CREATIVE_DIGITAL_SKILLS_COURSE: CourseItem = {
   title: "Creative & Digital Skills",
   tagline: "Create, Design, Innovate",
   schedule: "Flexible Timing",
-  summary:
-    "Master digital tools and creative technologies for modern careers.",
+  summary: "Master digital tools and creative technologies for modern careers.",
   description:
     "Learn industry-relevant creative and digital skills including graphic design, video production, animation, game development, UI design, motion graphics, photography, videography, and content creation.",
   duration: "3-6 Months",
@@ -930,13 +929,9 @@ function getProgramStreamLabel(title: string) {
   }
 
   if (
-    [
-      "NDA",
-      "Police/Army Bharti",
-      "UPSC Foundation",
-      "SSC",
-      "Railway",
-    ].includes(title)
+    ["NDA", "Police/Army Bharti", "UPSC Foundation", "SSC", "Railway"].includes(
+      title,
+    )
   ) {
     return "Govt / Defence";
   }
@@ -980,8 +975,7 @@ function getProgramSummary(title: string) {
     NPAT: "Management and commerce entrance preparation with aptitude, English, and reasoning.",
     "UPSC Foundation":
       "Early UPSC foundation with history, polity, geography, economics, and current affairs.",
-    "SSC":
-      "Government exam preparation with reasoning, maths, English, and general awareness.",
+    SSC: "Government exam preparation with reasoning, maths, English, and general awareness.",
     Railway:
       "Railway exam foundation with maths, reasoning, general science, and general awareness.",
     "Video Editing":
@@ -1174,7 +1168,9 @@ function getProgramTopics(title: string): string[] {
   );
 }
 
-function getAdditionalProgramGroups(activeTab: string): AdditionalProgramGroup[] {
+function getAdditionalProgramGroups(
+  activeTab: string,
+): AdditionalProgramGroup[] {
   switch (activeTab) {
     case "Class 6":
       return [
@@ -1253,7 +1249,11 @@ function AdditionalProgramsSection({
   activeTab: string;
   searchQuery: string;
   allCourses: CourseItem[];
-  onSelectCourse: (course: CourseItem, additionalProgram?: string, topics?: string[]) => void;
+  onSelectCourse: (
+    course: CourseItem,
+    additionalProgram?: string,
+    topics?: string[],
+  ) => void;
 }) {
   const groups = useMemo(() => {
     const baseGroups = getAdditionalProgramGroups(activeTab);
@@ -1271,9 +1271,7 @@ function AdditionalProgramsSection({
             program.title.toLowerCase().includes(q) ||
             program.streamLabel.toLowerCase().includes(q) ||
             program.summary.toLowerCase().includes(q) ||
-            program.topics?.some((topic) =>
-              topic.toLowerCase().includes(q),
-            ),
+            program.topics?.some((topic) => topic.toLowerCase().includes(q)),
         ),
       }))
       .filter((group) => group.programs.length > 0);
@@ -1283,15 +1281,19 @@ function AdditionalProgramsSection({
     return null;
   }
 
-function openEnrollment(standardKey: string, programTitle: string, topics: string[] = []) {
-  const matchingCourse = allCourses.find(
-    (course) => course.standardKey === standardKey,
-  );
+  function openEnrollment(
+    standardKey: string,
+    programTitle: string,
+    topics: string[] = [],
+  ) {
+    const matchingCourse = allCourses.find(
+      (course) => course.standardKey === standardKey,
+    );
 
-  if (matchingCourse) {
-    onSelectCourse(matchingCourse, programTitle, topics);
+    if (matchingCourse) {
+      onSelectCourse(matchingCourse, programTitle, topics);
+    }
   }
-}
 
   return (
     <section className="space-y-8">
@@ -1345,7 +1347,13 @@ function openEnrollment(standardKey: string, programTitle: string, topics: strin
 
                   <button
                     type="button"
-                    onClick={() => openEnrollment(group.standardKey, program.title, program.topics ?? [])}
+                    onClick={() =>
+                      openEnrollment(
+                        group.standardKey,
+                        program.title,
+                        program.topics ?? [],
+                      )
+                    }
                     className="inline-flex items-center gap-1 text-[11px] font-black text-blue-600 transition-colors hover:text-blue-800"
                   >
                     Enroll Now
@@ -1369,12 +1377,13 @@ export default function CoursesRedesignClient({
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get("tab");
 
-const [activeTab, setActiveTab] = useState("Class 6");
-const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
-const [selectedAdditionalProgram, setSelectedAdditionalProgram] =
-  useState<string>("");
-const [selectedProgramTopics, setSelectedProgramTopics] =
-  useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState("Class 6");
+  const [selectedCourse, setSelectedCourse] = useState<CourseItem | null>(null);
+  const [selectedAdditionalProgram, setSelectedAdditionalProgram] =
+    useState<string>("");
+  const [selectedProgramTopics, setSelectedProgramTopics] = useState<string[]>(
+    [],
+  );
 
   useEffect(() => {
     if (isCourseTab(requestedTab)) {
@@ -1439,28 +1448,26 @@ const [selectedProgramTopics, setSelectedProgramTopics] =
       className="flex min-h-screen flex-col bg-slate-50/50 font-sans selection:bg-blue-100 selection:text-blue-950"
     >
       <main className="mx-auto flex-1 w-full max-w-7xl space-y-12 px-4 pb-8 pt-4 sm:space-y-16 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8">
-<SpotlightSection
-  activeTab={activeTab}
-  setActiveTab={setActiveTab}
-  onSelectCourse={(course) => {
-    setSelectedAdditionalProgram("");
-    setSelectedCourse(course);
-  }}
-  allCourses={filteredCourses}
-/>
+        <SpotlightSection
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onSelectCourse={(course) => {
+            setSelectedAdditionalProgram("");
+            setSelectedCourse(course);
+          }}
+          allCourses={filteredCourses}
+        />
 
-<AdditionalProgramsSection
-  activeTab={activeTab}
-  searchQuery={searchQuery}
-  allCourses={coursesWithRequiredSkills}
-  onSelectCourse={(course, additionalProgram, topics) => {
-    setSelectedAdditionalProgram(additionalProgram ?? "");
-    setSelectedProgramTopics(topics ?? []);
-    setSelectedCourse(course);
-  }}
-/>
-
-
+        <AdditionalProgramsSection
+          activeTab={activeTab}
+          searchQuery={searchQuery}
+          allCourses={coursesWithRequiredSkills}
+          onSelectCourse={(course, additionalProgram, topics) => {
+            setSelectedAdditionalProgram(additionalProgram ?? "");
+            setSelectedProgramTopics(topics ?? []);
+            setSelectedCourse(course);
+          }}
+        />
 
         <section>
           <WhyChooseSmartTutors />
@@ -1524,16 +1531,16 @@ const [selectedProgramTopics, setSelectedProgramTopics] =
         </section>
       </main>
 
-<CourseModal
-  course={selectedCourse}
-  initialAdditionalCourse={selectedAdditionalProgram}
-  programTopics={selectedProgramTopics}
-  onClose={() => {
-    setSelectedCourse(null);
-    setSelectedAdditionalProgram("");
-    setSelectedProgramTopics([]);
-  }}
-/>
+      <CourseModal
+        course={selectedCourse}
+        initialAdditionalCourse={selectedAdditionalProgram}
+        programTopics={selectedProgramTopics}
+        onClose={() => {
+          setSelectedCourse(null);
+          setSelectedAdditionalProgram("");
+          setSelectedProgramTopics([]);
+        }}
+      />
 
       <SmartTutorsAIChatbot />
       <WhatsAppFAB currentCourseTitle={selectedCourse?.title} />

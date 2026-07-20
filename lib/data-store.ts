@@ -463,7 +463,20 @@ const STANDARD_ADDITIONAL_COURSE_KEYS = new Set([
   "class-12-additional",
 ]);
 
-function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
+const FORCE_LIBRARY_COURSE_KEYS = new Set([
+  "banking-exams",
+  "ssc",
+  "state-psc-exams",
+  "regulatory-insurance-exams",
+  "teaching-academic-exams",
+  "gate-postgraduate-technical-exams",
+  "railways-exams",
+  "defence-paramilitary-exams",
+]);
+
+function hydrateCourse(
+  document: Partial<CourseItem> & { id: string },
+) {
   const templateKey =
     document.standardKey ??
     inferCourseTemplateKey(document.title) ??
@@ -471,20 +484,31 @@ function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
 
   const template =
     getCourseTemplateByKey(templateKey) ??
-    getCourseTemplateByKey(DEFAULT_COURSE_TEMPLATE_KEY);
+    getCourseTemplateByKey(
+      DEFAULT_COURSE_TEMPLATE_KEY,
+    );
 
   if (!template) {
-    throw new Error("Default course template could not be resolved.");
+    throw new Error(
+      "Default course template could not be resolved.",
+    );
   }
 
-  // Class 6–12 programme pages must always use current library data.
-  // This prevents old MongoDB course information from appearing.
-  if (STANDARD_ADDITIONAL_COURSE_KEYS.has(template.standardKey)) {
+  if (
+    STANDARD_ADDITIONAL_COURSE_KEYS.has(
+      template.standardKey,
+    ) ||
+    FORCE_LIBRARY_COURSE_KEYS.has(
+      template.standardKey,
+    )
+  ) {
     return {
       id: document.id,
       ...template,
     } satisfies CourseItem;
   }
+
+  // Keep the rest of your existing hydrateCourse code here.
 
   return {
     id: document.id,
@@ -823,13 +847,30 @@ export async function findUserById(id: string) {
   return user ? toSessionUser(user) : null;
 }
 
+const HIDDEN_PUBLIC_COURSE_KEYS = new Set([
+  "skills-tech-future",
+  "skills-global",
+  "skills-career",
+  "skills-arts-hobby",
+]);
+
 export async function getCoursesForRole(role: Role) {
   await ensureStandardCoursesBackfilled();
-  const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
+
+  const collection = await getCollection<CourseItem>(
+    COLLECTIONS.courses,
+  );
+
   const hydrated = stripMongoIds(
     await collection.find({ audience: role }).toArray(),
   ).map((course) => hydrateCourse(course));
-  return dedupeAndSortCourses(hydrated);
+
+  const visibleCourses = hydrated.filter(
+    (course) =>
+      !HIDDEN_PUBLIC_COURSE_KEYS.has(course.standardKey),
+  );
+
+  return dedupeAndSortCourses(visibleCourses);
 }
 
 export async function createCourse(input: {

@@ -88,15 +88,43 @@ function matchesStudentChatFilter(
     return true;
   }
 
-  const courseText = getStudentCourseText(student);
+  const courseKey =
+    student.profile?.courseWanted
+      ?.trim()
+      .toLowerCase() ?? "";
+
+  const courseTitle =
+    student.profile?.courseWantedTitle
+      ?.trim()
+      .toLowerCase() ?? "";
+
+  const courseText = `${courseKey} ${courseTitle}`.trim();
 
   if (filter === "gov-exams") {
-    return /\b(upsc|ssc|railway|banking|bank exam|government exam|govt exam|police|army bharti|nda|cds|afcat|state psc|civil services)\b/i.test(
+    /*
+     * Registration stores government-exam students using:
+     * Govt Exams | EXAM-KEY
+     *
+     * Checking the prefix is more reliable than relying only
+     * on individual exam keywords.
+     */
+    if (
+      courseKey.startsWith("govt exams |") ||
+      courseKey.startsWith("government exams |")
+    ) {
+      return true;
+    }
+
+    return /\b(govt\s*exams?|government\s*exams?|upsc|civil\s*services|state\s*psc|mpsc|uppsc|bpsc|rpsc|mppsc|gpsc|wbpsc|kpsc|tnpsc|ssc|banking|bank\s*exams?|ibps|sbi|rrb\s*po|rrb\s*clerk|rbi|nabard|sebi|regulatory|insurance|irdai|lic|niacl|gic|railways?|rrb\s*ntpc|rrb\s*group\s*d|rrb\s*alp|rrb\s*technician|rrb\s*je|rpf|police|army\s*bharti|defence|paramilitary|nda|cds|afcat|capf|agniveer|coast\s*guard|ctet|state\s*tet|dsssb|kvs|nvs|ugc\s*net|csir\s*net)\b/i.test(
       courseText,
     );
   }
 
   if (filter === "skill-programs") {
+    if (courseKey.startsWith("skills |")) {
+      return true;
+    }
+
     return /\b(skill|spoken english|coding|robotics|artificial intelligence|video editing|graphic design|digital marketing|personality development|interview preparation|web development|computer course)\b/i.test(
       courseText,
     );
@@ -269,23 +297,37 @@ export function ChatView({
 
       return [...admins, ...students];
     }
-    if (role === "student") {
-      const contactSource =
-        databaseContacts.length > 0 ? databaseContacts : (managedUsers ?? []);
+if (role === "student") {
+  const contactSource =
+    databaseContacts.length > 0 ? databaseContacts : (managedUsers ?? []);
 
-      const admins = contactSource.filter(
-        (user) =>
-          user.role === "admin" &&
-          user.status === "active" &&
-          user.verified !== false,
-      );
+  const admins = contactSource.filter(
+    (user) =>
+      user.role === "admin" &&
+      user.status === "active" &&
+      user.verified !== false,
+  );
 
-      const contacts = [...admins, ...studentEducators];
+  const classmates = databaseContacts.filter(
+    (user) =>
+      user.role === "student" &&
+      user.id !== session?.id &&
+      user.status === "active" &&
+      user.verified !== false,
+  );
 
-      return [
-        ...new Map(contacts.map((contact) => [contact.id, contact])).values(),
-      ];
-    }
+  const contacts = [
+    ...admins,
+    ...studentEducators,
+    ...classmates,
+  ];
+
+  return [
+    ...new Map(
+      contacts.map((contact) => [contact.id, contact]),
+    ).values(),
+  ];
+}
     if (role === "parent") {
       const admins = (managedUsers ?? []).filter((u) => u.role === "admin");
       const educators = (managedUsers ?? []).filter(
