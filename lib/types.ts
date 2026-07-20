@@ -1220,6 +1220,10 @@ export type HomeworkItem = {
   dueDate: string;
   allowLateSubmission: boolean;
   attachmentUrl?: string;
+
+  assignedStudentIds: string[];
+  assignedStudentNames?: string[];
+
   createdBy: string;
   createdByName?: string;
   createdAt: string;
