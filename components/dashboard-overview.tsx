@@ -2619,13 +2619,6 @@ function EducatorOverview({
     (record) => record.date === todayDate,
   );
 
-  const pendingEarningsMetric = dashboard.analytics?.metrics?.find(
-    (metric) => metric.label === "Pending Earnings",
-  );
-
-  const pendingEarnings = pendingEarningsMetric?.value ?? "₹0";
-  const pendingEarningsDetail =
-    pendingEarningsMetric?.detail ?? "No outstanding teacher payout";
   const monthlyEarningsMetric = dashboard.analytics?.metrics?.find(
     (metric) =>
       metric.label === "Monthly Earnings" ||
@@ -3193,21 +3186,7 @@ function EducatorOverview({
           </div>
 
           <div className="p-5">
-            <div className="rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 p-5 text-white shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-100">
-                My Earnings
-              </p>
-
-              <p className="mt-2 text-3xl font-black tracking-tight">
-                {pendingEarnings}
-              </p>
-
-              <p className="mt-2 text-xs leading-5 text-emerald-100">
-                {pendingEarningsDetail}
-              </p>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                   <CalendarDays size={17} />

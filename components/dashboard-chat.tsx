@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type {
-  ManagedUser,
-  MessageItem,
-  Role,
-  SessionUser,
-  ChatAttachment,
-} from "@/lib/types";
+import type { ManagedUser, MessageItem, Role, SessionUser } from "@/lib/types";
 
 type ChatViewProps = {
   session: SessionUser | null;
@@ -136,9 +130,7 @@ export function ChatView({
     }
   });
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [attachments, setAttachments] = useState<Map<string, ChatAttachment[]>>(
-    new Map(),
-  );
+
   const [uploadingFile, setUploadingFile] = useState(false);
   const [fileWarning, setFileWarning] = useState<string | null>(null);
   const [validationWarning, setValidationWarning] = useState<ValidationWarning>(
@@ -149,6 +141,38 @@ export function ChatView({
   const [databaseContacts, setDatabaseContacts] = useState<ChatContact[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [uploadingVoice, setUploadingVoice] = useState(false);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const microphoneStreamRef = useRef<MediaStream | null>(null);
+  const recordedAudioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<number | null>(null);
+  const discardRecordingRef = useRef(false);
+  const recordingContactIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    return () => {
+      discardRecordingRef.current = true;
+
+      if (recordingTimerRef.current !== null) {
+        window.clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+
+      const recorder = mediaRecorderRef.current;
+
+      if (recorder && recorder.state !== "inactive") {
+        recorder.stop();
+      }
+
+      microphoneStreamRef.current?.getTracks().forEach((track) => {
+        track.stop();
+      });
+
+      microphoneStreamRef.current = null;
+    };
+  }, []);
 
   const studentEducators = useMemo(() => {
     if (role !== "student") {
@@ -433,7 +457,13 @@ export function ChatView({
       );
     if (msgs.length === 0) return null;
     const body = msgs[0].body;
-    if (body.startsWith("[File:")) return "Sent a file";
+    if (body.startsWith("[File: voice-note-")) {
+      return "🎤 Voice note";
+    }
+
+    if (body.startsWith("[File:")) {
+      return "Sent a file";
+    }
     return body.length > 40 ? body.slice(0, 40) + "..." : body;
   };
 
@@ -445,64 +475,89 @@ export function ChatView({
     }));
   }
 
-  async function validateAndSend() {
-    if (!chatInput.trim() || !chatContactId || !session) return;
+async function validateAndSend() {
+  const body = chatInput.trim();
 
-    // Validate content
-    try {
-      const { validateChatContent } = await import("@/lib/chat-validation");
-      const result = validateChatContent(chatInput);
-      if (result.hasSensitiveContent) {
-        setValidationWarning({
-          show: true,
-          reasons: result.reasons.map((r) => {
-            if (r.type === "phone") return `Phone number detected: ${r.detail}`;
-            if (r.type === "email")
-              return `Email address detected: ${r.detail}`;
-            if (r.type === "link") return `External link detected: ${r.detail}`;
-            return r.detail;
-          }),
-          originalBody: chatInput,
-        });
-        return; // Don't send yet - show warning
-      }
-    } catch {
-      // If validation module fails, proceed without validation
-    }
-
-    await sendMessage(chatInput);
+  if (
+    !body ||
+    !chatContactId ||
+    !session ||
+    sendingChat ||
+    chatBlocked
+  ) {
+    return;
   }
 
-  async function sendMessage(body: string) {
-    if (!chatContactId || !session) return;
+  /*
+   * Do not perform the restricted-content check only in the browser.
+   * Send the attempt to /api/chat so the server can:
+   * 1. reject the message,
+   * 2. count the warning,
+   * 3. block the user on the third attempt.
+   */
+  await sendMessage(body, chatContactId);
+}
+
+  async function sendMessage(
+    body: string,
+    receiverId: string | null = chatContactId,
+  ) {
+    if (!receiverId || !session) {
+      return;
+    }
+
     setSendingChat(true);
+
     try {
-      const targetUser = chatContacts.find((c) => c.id === chatContactId);
-      if (!targetUser) return;
+      const targetUser = [
+        ...chatContacts,
+        ...(managedUsers ?? []),
+        ...studentDirectory,
+        ...databaseContacts,
+      ].find((contact) => contact.id === receiverId);
+
+      if (!targetUser) {
+        setFileWarning("The selected chat contact is no longer available.");
+        return;
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          receiverId: chatContactId,
+          receiverId,
           receiverRole: targetUser.role,
           body,
         }),
       });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        if (errData.reasons) {
+
+      const data = (await response.json().catch(() => ({}))) as {
+        message?: MessageItem;
+        error?: string;
+        reasons?: string[];
+      };
+
+      if (!response.ok || !data.message) {
+        if (Array.isArray(data.reasons)) {
           setValidationWarning({
             show: true,
-            reasons: errData.reasons,
+            reasons: data.reasons,
             originalBody: body,
           });
+        } else {
+          setFileWarning(data.error || "Unable to send the message.");
         }
+
         return;
       }
-      const data = (await response.json()) as { message: MessageItem };
+
       onMessagesChange([data.message, ...messages]);
       setChatInput("");
+    } catch {
+      setFileWarning("Unable to send the message. Please try again.");
     } finally {
       setSendingChat(false);
     }
@@ -554,11 +609,267 @@ export function ChatView({
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
+  function formatRecordingTime(totalSeconds: number) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
 
-  function formatFileSize(bytes: number): string {
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0",
+    )}`;
+  }
+
+  function stopRecordingTimer() {
+    if (recordingTimerRef.current !== null) {
+      window.clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  }
+
+  function stopMicrophoneStream() {
+    microphoneStreamRef.current?.getTracks().forEach((track) => {
+      track.stop();
+    });
+
+    microphoneStreamRef.current = null;
+  }
+
+  async function uploadVoiceNote(file: File, receiverId: string) {
+    if (!receiverId || !session) {
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setFileWarning("Voice note exceeds the 20MB limit.");
+      return;
+    }
+
+    setUploadingVoice(true);
+    setFileWarning(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/chat/upload", {
+        method: "POST",
+        credentials: "same-origin",
+        body: formData,
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error || "Voice note upload failed.");
+      }
+
+      await sendMessage(`[File: ${file.name}] ${payload.url}`, receiverId);
+    } catch (error) {
+      setFileWarning(
+        error instanceof Error
+          ? error.message
+          : "Voice note upload failed. Please try again.",
+      );
+    } finally {
+      setUploadingVoice(false);
+    }
+  }
+
+  async function startVoiceRecording() {
+    if (
+      !chatContactId ||
+      !session ||
+      chatBlocked ||
+      uploadingFile ||
+      uploadingVoice ||
+      sendingChat
+    ) {
+      return;
+    }
+
+    if (
+      typeof MediaRecorder === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      setFileWarning(
+        "Voice recording is not supported by this browser. Please use Chrome, Edge, Safari, or Firefox.",
+      );
+      return;
+    }
+
+    try {
+      const receiverId = chatContactId;
+
+      if (!receiverId) {
+        return;
+      }
+
+      recordingContactIdRef.current = receiverId;
+      setFileWarning(null);
+      discardRecordingRef.current = false;
+      recordedAudioChunksRef.current = [];
+      setRecordingSeconds(0);
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      microphoneStreamRef.current = stream;
+
+      const supportedMimeTypes = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ];
+
+      const selectedMimeType = supportedMimeTypes.find((mimeType) =>
+        MediaRecorder.isTypeSupported(mimeType),
+      );
+
+      const recorder = selectedMimeType
+        ? new MediaRecorder(stream, { mimeType: selectedMimeType })
+        : new MediaRecorder(stream);
+
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          recordedAudioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        discardRecordingRef.current = true;
+        recordingContactIdRef.current = null;
+        recordedAudioChunksRef.current = [];
+
+        stopRecordingTimer();
+        stopMicrophoneStream();
+
+        setIsRecordingVoice(false);
+        setRecordingSeconds(0);
+        setFileWarning("Voice recording failed. Please try again.");
+
+        if (recorder.state !== "inactive") {
+          recorder.stop();
+        }
+      };
+
+      recorder.onstop = async () => {
+        stopRecordingTimer();
+        stopMicrophoneStream();
+        setIsRecordingVoice(false);
+        const receiverId = recordingContactIdRef.current;
+        recordingContactIdRef.current = null;
+
+        const shouldDiscard = discardRecordingRef.current;
+        discardRecordingRef.current = false;
+        mediaRecorderRef.current = null;
+
+        if (shouldDiscard) {
+          recordedAudioChunksRef.current = [];
+          setRecordingSeconds(0);
+          return;
+        }
+
+        const audioType = recorder.mimeType || selectedMimeType || "audio/webm";
+
+        const audioBlob = new Blob(recordedAudioChunksRef.current, {
+          type: audioType,
+        });
+
+        recordedAudioChunksRef.current = [];
+
+        if (audioBlob.size === 0) {
+          setFileWarning(
+            "No audio was recorded. Please check your microphone and try again.",
+          );
+          setRecordingSeconds(0);
+          return;
+        }
+
+        let extension = "webm";
+
+        if (audioType.includes("mp4")) {
+          extension = "m4a";
+        } else if (audioType.includes("ogg")) {
+          extension = "ogg";
+        } else if (audioType.includes("wav")) {
+          extension = "wav";
+        }
+
+        const voiceFile = new File(
+          [audioBlob],
+          `voice-note-${Date.now()}.${extension}`,
+          {
+            type: audioType,
+          },
+        );
+
+        setRecordingSeconds(0);
+        if (!receiverId) {
+          setFileWarning("The voice-note recipient could not be identified.");
+          return;
+        }
+
+        await uploadVoiceNote(voiceFile, receiverId);
+      };
+
+      recorder.start(250);
+      setIsRecordingVoice(true);
+
+      recordingTimerRef.current = window.setInterval(() => {
+        setRecordingSeconds((currentSeconds) => {
+          const nextSeconds = currentSeconds + 1;
+
+          if (nextSeconds >= 120) {
+            stopRecordingTimer();
+
+            window.setTimeout(() => {
+              stopVoiceRecording();
+            }, 0);
+
+            return 120;
+          }
+
+          return nextSeconds;
+        });
+      }, 1000);
+    } catch (error) {
+      recordingContactIdRef.current = null;
+      stopRecordingTimer();
+      stopMicrophoneStream();
+      setIsRecordingVoice(false);
+
+      setFileWarning(
+        error instanceof DOMException &&
+          (error.name === "NotAllowedError" ||
+            error.name === "PermissionDeniedError")
+          ? "Microphone permission was denied. Allow microphone access and try again."
+          : "Unable to start voice recording. Please check your microphone.",
+      );
+    }
+  }
+
+  function stopVoiceRecording() {
+    const recorder = mediaRecorderRef.current;
+
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    }
+  }
+
+  function cancelVoiceRecording() {
+    discardRecordingRef.current = true;
+    stopVoiceRecording();
   }
 
   function renderMessageBody(body: string) {
@@ -566,12 +877,42 @@ export function ChatView({
     const fileMatch = body.match(/^\[File: (.+?)\] (.+)$/);
     if (fileMatch) {
       const [, fileName, fileUrl] = fileMatch;
+      const isVoiceNote =
+        fileName.toLowerCase().startsWith("voice-note-") ||
+        /\.(mp3|wav|m4a|aac|oga)$/i.test(fileName);
+
       const isImage = /\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i.test(fileName);
       const isVideo = /\.(mp4|webm|ogg|mov|avi)$/i.test(fileName);
 
       return (
         <div>
-          {isImage ? (
+          {isVoiceNote ? (
+            <div className="min-w-[230px]">
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)]">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 14a3 3 0 003-3V5a3 3 0 00-6 0v6a3 3 0 003 3zm0 0v4m-4 0h8"
+                  />
+                </svg>
+                Voice note
+              </div>
+
+              <audio
+                src={fileUrl}
+                controls
+                preload="metadata"
+                className="mt-2 h-10 w-full max-w-[280px]"
+              />
+            </div>
+          ) : isImage ? (
             <a href={fileUrl} target="_blank" rel="noopener noreferrer">
               <img
                 src={fileUrl}
@@ -620,7 +961,7 @@ export function ChatView({
     return (
       <p className="break-words whitespace-pre-wrap">
         {parts.map((part, i) => {
-          if (urlRegex.test(part)) {
+          if (part.startsWith("http://") || part.startsWith("https://")) {
             return (
               <a
                 key={i}
@@ -940,7 +1281,13 @@ export function ChatView({
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingFile || chatBlocked}
+                    disabled={
+                      uploadingFile ||
+                      uploadingVoice ||
+                      isRecordingVoice ||
+                      sendingChat ||
+                      chatBlocked
+                    }
                     aria-label="Attach file"
                     title="Attach file (max 20MB)"
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition disabled:opacity-40 disabled:cursor-not-allowed"
@@ -981,28 +1328,153 @@ export function ChatView({
                       </svg>
                     )}
                   </button>
+                  <button
+                    type="button"
+                    onClick={
+                      isRecordingVoice
+                        ? stopVoiceRecording
+                        : startVoiceRecording
+                    }
+                    disabled={
+                      uploadingFile ||
+                      uploadingVoice ||
+                      sendingChat ||
+                      chatBlocked
+                    }
+                    aria-label={
+                      isRecordingVoice
+                        ? "Stop and send voice note"
+                        : "Record voice note"
+                    }
+                    title={
+                      isRecordingVoice
+                        ? "Stop and send voice note"
+                        : "Record voice note"
+                    }
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                      isRecordingVoice
+                        ? "animate-pulse border-red-300 bg-red-500 text-white"
+                        : "border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+                    }`}
+                  >
+                    {uploadingVoice ? (
+                      <svg
+                        className="h-5 w-5 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
+                      </svg>
+                    ) : isRecordingVoice ? (
+                      <svg
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <rect x="7" y="7" width="10" height="10" rx="1.5" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12 15.25C14.0711 15.25 15.75 13.5711 15.75 11.5V7.75C15.75 5.67893 14.0711 4 12 4C9.92893 4 8.25 5.67893 8.25 7.75V11.5C8.25 13.5711 9.92893 15.25 12 15.25Z"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M6 11.5C6 14.8137 8.68629 17.5 12 17.5C15.3137 17.5 18 14.8137 18 11.5"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M12 17.5V20"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M9.5 20H14.5"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                  <input
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value.slice(0, 500))}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        if (!chatBlocked) validateAndSend();
+                  {isRecordingVoice ? (
+                    <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-red-500" />
+
+                        <span className="truncate text-sm font-bold text-red-700">
+                          Recording {formatRecordingTime(recordingSeconds)}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={cancelVoiceRecording}
+                        className="shrink-0 text-xs font-black text-red-600 hover:underline"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <input
+                      value={chatInput}
+                      onChange={(event) =>
+                        setChatInput(event.target.value.slice(0, 500))
                       }
-                    }}
-                    disabled={chatBlocked}
-                    placeholder={
-                      chatBlocked ? "Chat is blocked" : "Type a message..."
-                    }
-                    className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-w-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                  />
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+
+                          if (!chatBlocked) {
+                            void validateAndSend();
+                          }
+                        }
+                      }}
+                      disabled={chatBlocked || uploadingVoice}
+                      placeholder={
+                        uploadingVoice
+                          ? "Sending voice note..."
+                          : chatBlocked
+                            ? "Chat is blocked"
+                            : "Type a message..."
+                      }
+                      className="min-w-0 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={validateAndSend}
@@ -1010,6 +1482,8 @@ export function ChatView({
                       sendingChat ||
                       !chatInput.trim() ||
                       uploadingFile ||
+                      uploadingVoice ||
+                      isRecordingVoice ||
                       chatBlocked
                     }
                     aria-label="Send message"
@@ -1052,9 +1526,9 @@ export function ChatView({
                     )}
                   </button>
                 </div>
-                <p className="mt-2 text-[10px] text-[var(--color-muted)] text-center">
-                  Files up to 20MB. Sharing contact info or external links is
-                  against policy.
+                <p className="mt-2 text-center text-[10px] text-[var(--color-muted)]">
+                  Files and voice notes up to 20MB. Voice notes are limited to 2
+                  minutes. Sent chat messages cannot be deleted.
                 </p>
               </div>
             </>
