@@ -228,9 +228,6 @@ export function StudentFeeReceiptsView({
   const hasFees = totalFees > 0;
 
   function downloadInvoiceReceipt(invoice: FeeInvoice) {
-    const popup = window.open("", "_blank", "width=1280,height=900");
-    if (!popup) return;
-
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
@@ -465,8 +462,37 @@ export function StudentFeeReceiptsView({
 </body>
 </html>`;
 
-    popup.document.write(receiptHtml);
-    popup.document.close();
+    const receiptBlob = new Blob([receiptHtml], {
+      type: "text/html;charset=utf-8",
+    });
+
+    const receiptUrl = URL.createObjectURL(receiptBlob);
+
+    /*
+     * Opening the finished Blob directly is more reliable on
+     * iPhone and iPad than writing HTML into an about:blank popup.
+     */
+    const receiptWindow = window.open(receiptUrl, "_blank");
+
+    if (!receiptWindow) {
+      // Popup blocked: open receipt in the current tab.
+      window.location.assign(receiptUrl);
+      return;
+    }
+
+    try {
+      receiptWindow.opener = null;
+    } catch {
+      // Some mobile browsers do not allow changing opener.
+    }
+
+    /*
+     * Allow enough time for the new tab to load before releasing
+     * the temporary browser URL.
+     */
+    window.setTimeout(() => {
+      URL.revokeObjectURL(receiptUrl);
+    }, 60_000);
   }
 
   return (
@@ -781,10 +807,13 @@ export function StudentFeeReceiptsView({
                                   instStatus === "partial") &&
                                 matchedInvoice ? (
                                   <button
-                                    onClick={() =>
-                                      downloadInvoiceReceipt(matchedInvoice)
-                                    }
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      downloadInvoiceReceipt(matchedInvoice);
+                                    }}
+                                    className="inline-flex touch-manipulation items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
                                   >
                                     <svg
                                       className="w-3.5 h-3.5"
@@ -929,8 +958,13 @@ export function StudentFeeReceiptsView({
                         <td className="px-4 py-3">
                           {invStatus === "paid" || invStatus === "partial" ? (
                             <button
-                              onClick={() => downloadInvoiceReceipt(inv)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                              type="button"
+                              onClick={(event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                downloadInvoiceReceipt(inv);
+                              }}
+                              className="inline-flex touch-manipulation items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
                             >
                               <svg
                                 className="w-3.5 h-3.5"
