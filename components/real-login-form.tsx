@@ -171,12 +171,10 @@ export function RealLoginForm({
               "Content-Type":
                 "application/json",
             },
-            body: JSON.stringify({
-              login:
-                normalizedLogin,
-              password,
-              role: activeRole,
-            }),
+body: JSON.stringify({
+  login: normalizedLogin,
+  password,
+}),
           },
         );
 
@@ -247,19 +245,14 @@ export function RealLoginForm({
               "Content-Type":
                 "application/json",
             },
-            body: JSON.stringify({
-              name:
-                forgotForm.name.trim(),
-              email:
-                forgotForm.email
-                  .trim()
-                  .toLowerCase(),
-              phone:
-                forgotForm.phone.trim(),
-              lastPassword:
-                forgotForm.lastPassword,
-              role: activeRole,
-            }),
+body: JSON.stringify({
+  name: forgotForm.name.trim(),
+  email: forgotForm.email
+    .trim()
+    .toLowerCase(),
+  phone: forgotForm.phone.trim(),
+  lastPassword: forgotForm.lastPassword,
+}),
           },
         );
 
@@ -321,18 +314,9 @@ export function RealLoginForm({
             password.
           </p>
 
-          <p className="text-xs font-bold text-blue-600">
-            Requesting support for
-            the{" "}
-            {activeRole ===
-            "educator"
-              ? "Faculty"
-              : activeRole ===
-                  "parent"
-                ? "Parent"
-                : "Student"}{" "}
-            portal
-          </p>
+<p className="text-xs font-bold text-blue-600">
+  Requesting account recovery support
+</p>
         </div>
 
         <form

@@ -758,27 +758,29 @@ export async function getDemoCredentials() {
 export async function findUserByCredentials(
   login: string,
   password: string,
-  role: Role,
+  role?: Role,
 ) {
-  const collection =
-    await getUsersCollection();
+  const collection = await getUsersCollection();
 
-  const normalizedLogin =
-    login.trim().toLowerCase();
+  const normalizedLogin = login.trim().toLowerCase();
 
-  const mobileLogin =
-    normalizedLogin
-      .replace(/[^\d]/g, "")
-      .slice(-10);
+  const mobileLogin = normalizedLogin
+    .replace(/[^\d]/g, "")
+    .slice(-10);
 
-  const emailLocalPart =
-    normalizedLogin.includes("@")
-      ? normalizedLogin.split("@")[0]
-      : normalizedLogin;
+  const emailLocalPart = normalizedLogin.includes("@")
+    ? normalizedLogin.split("@")[0]
+    : normalizedLogin;
 
   const query: Record<string, unknown> = {
     password,
-    role,
+
+    /*
+     * Add the role restriction only when a role
+     * was intentionally supplied.
+     */
+    ...(role ? { role } : {}),
+
     $or: [
       { mobile: mobileLogin },
       { mobileKey: mobileLogin },
@@ -794,8 +796,7 @@ export async function findUserByCredentials(
                 {
                   $split: [
                     {
-                      $toLower:
-                        "$email",
+                      $toLower: "$email",
                     },
                     "@",
                   ],
@@ -810,12 +811,9 @@ export async function findUserByCredentials(
     ],
   };
 
-  const user =
-    await collection.findOne(query);
+  const user = await collection.findOne(query);
 
-  return user
-    ? toSessionUser(user)
-    : null;
+  return user ? toSessionUser(user) : null;
 }
 
 
