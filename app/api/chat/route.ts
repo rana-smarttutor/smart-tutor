@@ -10,6 +10,7 @@ import {
 } from "@/lib/data-store";
 import { validateChatContent } from "@/lib/chat-validation";
 import { sanitizeTextareaInput } from "@/lib/validation";
+import type { ManagedUser } from "@/lib/types";
 
 const CHAT_WARNING_LIMIT = 2;
 const CHAT_BLOCK_ATTEMPT = 3;
@@ -24,7 +25,33 @@ async function getPolicyViolationCount(userId: string) {
       flag.messageId.startsWith("blocked-"),
   ).length;
 }
+function getStudentClassNumber(
+  student: ManagedUser,
+): string {
+  const courseKey =
+    student.profile?.courseWanted
+      ?.trim()
+      .toLowerCase() ?? "";
 
+  const keyMatch = courseKey.match(
+    /class[-\s]*(6|7|8|9|10|11|12)(?:-|$)/,
+  );
+
+  if (keyMatch?.[1]) {
+    return keyMatch[1];
+  }
+
+  const courseTitle =
+    student.profile?.courseWantedTitle
+      ?.trim()
+      .toLowerCase() ?? "";
+
+  const titleMatch = courseTitle.match(
+    /\bclass[\s-]*(6|7|8|9|10|11|12)(?:st|nd|rd|th)?\b/,
+  );
+
+  return titleMatch?.[1] ?? "";
+}
 export async function GET() {
   const session = await getSessionUser();
 
@@ -44,51 +71,84 @@ export async function GET() {
     (message) => message.channel === "Chat",
   );
 
-  let contacts: Array<{
-    id: string;
-    name: string;
-    role: "admin" | "educator";
-    status?: string;
-    verified?: boolean;
-  }> = [];
+let contacts: Array<{
+  id: string;
+  name: string;
+  role: "admin" | "educator" | "student";
+  status?: string;
+  verified?: boolean;
+}> = [];
 
-  if (session.role === "student") {
-    const users = await getUsersForAdmin();
+if (session.role === "student") {
+  const users = await getUsersForAdmin();
 
-    contacts = users
-      .filter(
-        (user) =>
-          (user.role === "admin" ||
-            user.role === "educator") &&
-          user.status === "active" &&
-          user.verified !== false,
-      )
-      .map((user) => ({
-        id: user.id,
-        name: user.name,
-        role: user.role as "admin" | "educator",
-        status: user.status,
-        verified: user.verified,
-      }))
-      .sort((left, right) => {
-        if (
-          left.role === "admin" &&
-          right.role !== "admin"
-        ) {
-          return -1;
-        }
+  const currentStudent = users.find(
+    (user) =>
+      user.id === session.id &&
+      user.role === "student",
+  );
 
-        if (
-          right.role === "admin" &&
-          left.role !== "admin"
-        ) {
-          return 1;
-        }
+  const currentStudentClass = currentStudent
+    ? getStudentClassNumber(currentStudent)
+    : "";
 
-        return left.name.localeCompare(right.name);
-      });
-  }
+  contacts = users
+    .filter((user) => {
+      if (
+        user.status !== "active" ||
+        user.verified === false
+      ) {
+        return false;
+      }
 
+      if (
+        user.role === "admin" ||
+        user.role === "educator"
+      ) {
+        return true;
+      }
+
+      if (
+        user.role === "student" &&
+        user.id !== session.id &&
+        currentStudentClass
+      ) {
+        return (
+          getStudentClassNumber(user) ===
+          currentStudentClass
+        );
+      }
+
+      return false;
+    })
+    .map((user) => ({
+      id: user.id,
+      name: user.name,
+      role: user.role as
+        | "admin"
+        | "educator"
+        | "student",
+      status: user.status,
+      verified: user.verified,
+    }))
+    .sort((left, right) => {
+      const roleOrder = {
+        admin: 0,
+        educator: 1,
+        student: 2,
+      };
+
+      const roleDifference =
+        roleOrder[left.role] -
+        roleOrder[right.role];
+
+      if (roleDifference !== 0) {
+        return roleDifference;
+      }
+
+      return left.name.localeCompare(right.name);
+    });
+}
   let violationCount = 0;
 
   try {
@@ -230,7 +290,77 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+if (
+  session.role === "student" &&
+  body.receiverRole === "student"
+) {
+  if (body.receiverId === session.id) {
+    return NextResponse.json(
+      {
+        error:
+          "You cannot send a chat message to yourself.",
+      },
+      { status: 400 },
+    );
+  }
 
+  const users = await getUsersForAdmin();
+
+  const senderStudent = users.find(
+    (user) =>
+      user.id === session.id &&
+      user.role === "student",
+  );
+
+  const receiverStudent = users.find(
+    (user) =>
+      user.id === body.receiverId &&
+      user.role === "student",
+  );
+
+  if (!senderStudent || !receiverStudent) {
+    return NextResponse.json(
+      {
+        error:
+          "Student account could not be verified.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (
+    receiverStudent.status !== "active" ||
+    receiverStudent.verified === false
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "This student is not currently available for chat.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const senderClass =
+    getStudentClassNumber(senderStudent);
+
+  const receiverClass =
+    getStudentClassNumber(receiverStudent);
+
+  if (
+    !senderClass ||
+    !receiverClass ||
+    senderClass !== receiverClass
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Students can only chat with other students from the same class.",
+      },
+      { status: 403 },
+    );
+  }
+}
   /*
    * Validate before creating the message.
    * Restricted messages never reach createChatMessage().

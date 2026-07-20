@@ -9,7 +9,11 @@ import {
   type FormEvent,
 } from "react";
 
-type CourseGroup = "School / Board" | "Government Exams" | "Skill Development";
+type CourseGroup =
+  | "School / Board"
+  | "Government Exams"
+  | "Competitive Exams"
+  | "Skill Development";
 
 type CourseOption = {
   key: string;
@@ -79,41 +83,433 @@ const SENIOR_BOARDS = [
 ];
 
 const GOVT_EXAM_OPTIONS = [
-  { key: "UPSC", label: "UPSC Civil Services" },
-  { key: "MPSC", label: "MPSC State Services" },
-  { key: "STATE-PSC", label: "Other State PSC Exams" },
+  // UPSC
+  {
+    key: "UPSC-COMPLETE",
+    label: "UPSC Civil Services — Complete Preparation",
+  },
 
-  { key: "SSC-CGL", label: "SSC CGL" },
-  { key: "SSC-CHSL", label: "SSC CHSL" },
-  { key: "SSC-GD", label: "SSC GD Constable" },
-  { key: "SSC-MTS", label: "SSC MTS" },
-  { key: "SSC-CPO", label: "SSC CPO / Sub Inspector" },
+  // State PSC
+  {
+    key: "ALL-STATE-PSC",
+    label: "All State PSC Exams",
+  },
+  {
+    key: "MPSC",
+    label: "MPSC",
+  },
+  {
+    key: "UPPSC",
+    label: "UPPSC",
+  },
+  {
+    key: "BPSC",
+    label: "BPSC",
+  },
+  {
+    key: "RPSC",
+    label: "RPSC",
+  },
+  {
+    key: "MPPSC",
+    label: "MPPSC",
+  },
+  {
+    key: "GPSC",
+    label: "GPSC",
+  },
+  {
+    key: "WBPSC",
+    label: "WBPSC",
+  },
+  {
+    key: "KPSC",
+    label: "KPSC",
+  },
+  {
+    key: "TNPSC",
+    label: "TNPSC",
+  },
+  {
+    key: "OTHER-STATE-PSC",
+    label: "Other State PSC Exams",
+  },
 
-  { key: "NDA", label: "NDA" },
-  { key: "CDS", label: "CDS" },
-  { key: "AFCAT", label: "AFCAT" },
-  { key: "ARMY-AGNIVEER", label: "Indian Army Agniveer" },
-  { key: "NAVY-AGNIVEER", label: "Indian Navy Agniveer" },
-  { key: "AIRFORCE-AGNIVEER", label: "Indian Air Force Agniveer" },
-  { key: "CAPF", label: "CAPF / Paramilitary Forces" },
+  // Banking
+  {
+    key: "ALL-BANKING",
+    label: "All Banking Exams",
+  },
+  {
+    key: "IBPS-PO",
+    label: "IBPS PO",
+  },
+  {
+    key: "IBPS-CLERK",
+    label: "IBPS Clerk",
+  },
+  {
+    key: "IBPS-SO",
+    label: "IBPS Specialist Officer",
+  },
+  {
+    key: "SBI-PO",
+    label: "SBI PO",
+  },
+  {
+    key: "SBI-CLERK",
+    label: "SBI Clerk",
+  },
+  {
+    key: "RRB-PO",
+    label: "RRB PO",
+  },
+  {
+    key: "RRB-CLERK",
+    label: "RRB Clerk",
+  },
 
-  { key: "IBPS-PO", label: "IBPS PO" },
-  { key: "IBPS-CLERK", label: "IBPS Clerk" },
-  { key: "SBI-PO", label: "SBI PO" },
-  { key: "SBI-CLERK", label: "SBI Clerk" },
-  { key: "RBI", label: "RBI Grade B / Assistant" },
+  // Regulatory and Insurance
+  {
+    key: "ALL-REGULATORY-INSURANCE",
+    label: "All Regulatory & Insurance Exams",
+  },
+  {
+    key: "RBI-GRADE-B",
+    label: "RBI Grade B",
+  },
+  {
+    key: "RBI-ASSISTANT",
+    label: "RBI Assistant",
+  },
+  {
+    key: "NABARD-GRADE-A",
+    label: "NABARD Grade A",
+  },
+  {
+    key: "SEBI-GRADE-A",
+    label: "SEBI Grade A",
+  },
+  {
+    key: "IRDAI-ASSISTANT-MANAGER",
+    label: "IRDAI Assistant Manager",
+  },
+  {
+    key: "LIC-AAO",
+    label: "LIC AAO",
+  },
+  {
+    key: "LIC-ADO",
+    label: "LIC ADO",
+  },
+  {
+    key: "NIACL-AO",
+    label: "NIACL AO",
+  },
+  {
+    key: "GIC-ASSISTANT-MANAGER",
+    label: "GIC Assistant Manager",
+  },
 
-  { key: "RAILWAY-NTPC", label: "Railway NTPC" },
-  { key: "RAILWAY-GROUP-D", label: "Railway Group D" },
-  { key: "RAILWAY-ALP", label: "Railway ALP / Technician" },
+  // SSC
+  {
+    key: "ALL-SSC",
+    label: "All SSC Exams",
+  },
+  {
+    key: "SSC-CGL",
+    label: "SSC CGL",
+  },
+  {
+    key: "SSC-CHSL",
+    label: "SSC CHSL",
+  },
+  {
+    key: "SSC-MTS",
+    label: "SSC MTS",
+  },
+  {
+    key: "SSC-CPO",
+    label: "SSC CPO / Sub Inspector",
+  },
+  {
+    key: "SSC-GD",
+    label: "SSC GD Constable",
+  },
+  {
+    key: "SSC-STENOGRAPHER",
+    label: "SSC Stenographer",
+  },
+  {
+    key: "SSC-JE",
+    label: "SSC Junior Engineer",
+  },
+  {
+    key: "SSC-SELECTION-POST",
+    label: "SSC Selection Post",
+  },
 
-  { key: "POLICE-BHARTI", label: "Police Bharti" },
-  { key: "POLICE-SI", label: "Police Sub Inspector" },
+  // Teaching and Academic Eligibility
+  {
+    key: "ALL-TEACHING-ACADEMIC",
+    label: "All Teaching & Academic Eligibility Exams",
+  },
+  {
+    key: "CTET",
+    label: "CTET",
+  },
+  {
+    key: "STATE-TET",
+    label: "State TET",
+  },
+  {
+    key: "DSSSB",
+    label: "DSSSB",
+  },
+  {
+    key: "KVS",
+    label: "KVS",
+  },
+  {
+    key: "NVS",
+    label: "NVS",
+  },
+  {
+    key: "UGC-NET",
+    label: "UGC NET",
+  },
+  {
+    key: "CSIR-NET",
+    label: "CSIR NET",
+  },
+  {
+    key: "SET",
+    label: "SET",
+  },
 
-  { key: "CTET", label: "CTET / TET" },
-  { key: "UGC-NET", label: "UGC NET / SET" },
+  // Police and Army Bharti
+  {
+    key: "ALL-POLICE-ARMY-BHARTI",
+    label: "All Police / Army Bharti Exams",
+  },
+  {
+    key: "POLICE-BHARTI",
+    label: "Police Bharti",
+  },
+  {
+    key: "ARMY-BHARTI",
+    label: "Army Bharti",
+  },
+  {
+    key: "POLICE-SI",
+    label: "Police Sub Inspector",
+  },
+  {
+    key: "POLICE-CONSTABLE",
+    label: "Police Constable",
+  },
+
+  // Railways
+  {
+    key: "ALL-RAILWAY",
+    label: "All Railway Exams",
+  },
+  {
+    key: "RRB-NTPC",
+    label: "RRB NTPC",
+  },
+  {
+    key: "RRB-GROUP-D",
+    label: "RRB Group D",
+  },
+  {
+    key: "RRB-ALP",
+    label: "RRB ALP",
+  },
+  {
+    key: "RRB-TECHNICIAN",
+    label: "RRB Technician",
+  },
+  {
+    key: "RRB-JE",
+    label: "RRB Junior Engineer",
+  },
+  {
+    key: "RPF-CONSTABLE",
+    label: "RPF Constable",
+  },
+  {
+    key: "RPF-SUB-INSPECTOR",
+    label: "RPF Sub Inspector",
+  },
+
+  // Defence and Paramilitary
+  {
+    key: "ALL-DEFENCE-PARAMILITARY",
+    label: "All Defence & Paramilitary Exams",
+  },
+  {
+    key: "NDA",
+    label: "NDA",
+  },
+  {
+    key: "CDS",
+    label: "CDS",
+  },
+  {
+    key: "AFCAT",
+    label: "AFCAT",
+  },
+  {
+    key: "CAPF-AC",
+    label: "CAPF Assistant Commandant",
+  },
+  {
+    key: "ARMY-AGNIVEER",
+    label: "Army Agniveer",
+  },
+  {
+    key: "NAVY-AGNIVEER",
+    label: "Navy Agniveer",
+  },
+  {
+    key: "AIRFORCE-AGNIVEER",
+    label: "Air Force Agniveer",
+  },
+  {
+    key: "INDIAN-COAST-GUARD",
+    label: "Indian Coast Guard",
+  },
+  {
+    key: "SSB-INTERVIEW",
+    label: "SSB Interview Preparation",
+  },
 ];
+const COMPETITIVE_EXAM_OPTIONS = [
+  // LLB and Law Entrance Exams
+  {
+    key: "ALL-LAW-ENTRANCE",
+    label: "All LLB & Law Entrance Exams",
+  },
+  {
+    key: "MH-CET-LAW-3-YEAR",
+    label: "MH CET Law 3 Year",
+  },
+  {
+    key: "MH-CET-LAW-5-YEAR",
+    label: "MH CET Law 5 Year",
+  },
+  {
+    key: "CLAT",
+    label: "CLAT",
+  },
+  {
+    key: "AILET",
+    label: "AILET",
+  },
+  {
+    key: "LSAT-INDIA",
+    label: "LSAT India",
+  },
 
+  // MBA Entrance Exams
+  {
+    key: "ALL-MBA-ENTRANCE",
+    label: "All MBA Entrance Exams",
+  },
+  {
+    key: "MBA-CET",
+    label: "MBA CET",
+  },
+  {
+    key: "CAT",
+    label: "CAT",
+  },
+  {
+    key: "CMAT",
+    label: "CMAT",
+  },
+  {
+    key: "MAT",
+    label: "MAT",
+  },
+  {
+    key: "XAT",
+    label: "XAT",
+  },
+  {
+    key: "SNAP",
+    label: "SNAP",
+  },
+  {
+    key: "NMAT",
+    label: "NMAT",
+  },
+  {
+    key: "ATMA",
+    label: "ATMA",
+  },
+
+  // GATE and Postgraduate Technical Exams
+  {
+    key: "ALL-GATE-PG-TECHNICAL",
+    label: "All GATE & Postgraduate Technical Exams",
+  },
+  {
+    key: "GATE",
+    label: "GATE",
+  },
+  {
+    key: "IIT-JAM",
+    label: "IIT JAM",
+  },
+  {
+    key: "CEED",
+    label: "CEED",
+  },
+  {
+    key: "PGCET",
+    label: "PGCET",
+  },
+  {
+    key: "PSU-THROUGH-GATE",
+    label: "PSU Recruitment through GATE",
+  },
+
+  // MHT CET Categories
+  {
+    key: "ALL-MHT-CET",
+    label: "All MHT CET Exam Categories",
+  },
+  {
+    key: "MHT-CET-ENGINEERING",
+    label: "MHT CET Engineering",
+  },
+  {
+    key: "MHT-CET-PHARMACY",
+    label: "MHT CET Pharmacy",
+  },
+  {
+    key: "MHT-CET-BBA-BCA-BMS",
+    label: "MHT CET BBA / BCA / BMS",
+  },
+  {
+    key: "MHT-CET-DESIGN",
+    label: "MHT CET Design",
+  },
+  {
+    key: "MHT-CET-HOTEL-MANAGEMENT",
+    label: "MHT CET Hotel Management",
+  },
+  {
+    key: "MHT-CET-NURSING",
+    label: "MHT CET Nursing",
+  },
+  {
+    key: "MHT-CET-EDUCATION",
+    label: "MHT CET B.Ed / B.P.Ed",
+  },
+];
 const SKILL_PROGRAMS = [
   "Coding & Robotics",
   "AI & Data Science",
@@ -146,6 +542,12 @@ const COURSE_SECTIONS: CourseOption[] = [
     key: `Govt Exams | ${exam.key}`,
     label: exam.label,
     group: "Government Exams" as const,
+  })),
+
+  ...COMPETITIVE_EXAM_OPTIONS.map((exam) => ({
+    key: `Competitive Exams | ${exam.key}`,
+    label: exam.label,
+    group: "Competitive Exams" as const,
   })),
 
   ...SKILL_PROGRAMS.map((skill) => ({
@@ -289,6 +691,7 @@ export function RegistrationForm() {
       {
         "School / Board": [],
         "Government Exams": [],
+        "Competitive Exams": [],
         "Skill Development": [],
       },
     );
@@ -526,7 +929,7 @@ export function RegistrationForm() {
       if (activeTab === "student") {
         if (!form.courseWanted) {
           setError(
-            "Please select a class, board, government exam, or skill program.",
+            "Please select a class, board, government exam, competitive exam, or skill program.",
           );
           return;
         }
@@ -1018,7 +1421,8 @@ export function RegistrationForm() {
 
                 <div ref={courseDropdownRef} className="relative">
                   <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                    Class / Board / Exam / Skill Program{" "}
+                    Class / Board / Government / Competitive Exam / Skill
+                    Program
                     <span className="text-red-500">*</span>
                   </label>
 
@@ -1037,7 +1441,7 @@ export function RegistrationForm() {
                     }}
                     onFocus={() => setShowCourseDropdown(true)}
                     className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                    placeholder="Search class, board, govt exam, or skill..."
+                    placeholder="Search class, board, government exam, competitive exam, or skill..."
                   />
 
                   {showCourseDropdown && filteredCourses.length > 0 && (
@@ -1194,8 +1598,10 @@ export function RegistrationForm() {
                           </option>
                         </>
                       )}
-
-                      {form.courseWanted.startsWith("Govt Exams |") && (
+                      {(form.courseWanted.startsWith("Govt Exams |") ||
+                        form.courseWanted.startsWith(
+                          "Competitive Exams |",
+                        )) && (
                         <>
                           <option value="Class 10">Class 10</option>
                           <option value="Class 12">Class 12</option>
@@ -1203,6 +1609,9 @@ export function RegistrationForm() {
                           <option value="Graduation">Graduation</option>
                           <option value="Post Graduation">
                             Post Graduation
+                          </option>
+                          <option value="Final Year Graduation">
+                            Final Year Graduation
                           </option>
                         </>
                       )}
