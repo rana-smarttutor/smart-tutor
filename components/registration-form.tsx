@@ -72,6 +72,7 @@ const SENIOR_CLASSES = [
   { key: "Class 12 Commerce", label: "Class 12th Commerce" },
   { key: "Class 11 Arts", label: "Class 11th Arts" },
   { key: "Class 12 Arts", label: "Class 12th Arts" },
+
 ];
 
 const SENIOR_BOARDS = [
@@ -386,6 +387,20 @@ const GOVT_EXAM_OPTIONS = [
   },
 ];
 const COMPETITIVE_EXAM_OPTIONS = [
+  // Engineering and Medical Entrance Exams
+  {
+    key: "JEE",
+    label: "JEE Main & Advanced Preparation",
+  },
+  {
+    key: "NEET",
+    label: "NEET UG Preparation",
+  },
+  {
+    key: "MHT-CET",
+    label: "MHT CET Preparation",
+  },
+
   // LLB and Law Entrance Exams
   {
     key: "ALL-LAW-ENTRANCE",
