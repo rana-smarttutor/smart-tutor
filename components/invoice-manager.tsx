@@ -20,6 +20,22 @@ type StudentFeeDetails = {
   rollNo: string;
   academicYear: string;
   mobileNo: string;
+  enrollmentDate: string;
+  email: string;
+  address: string;
+  admissionType: string;
+  batchTiming: string;
+  courseDuration: string;
+};
+
+type ReceiptFeeInvoice = FeeInvoice & {
+  batch?: string;
+  enrollmentDate?: string;
+  email?: string;
+  address?: string;
+  admissionType?: string;
+  batchTiming?: string;
+  courseDuration?: string;
 };
 
 type InvoiceDraft = {
@@ -610,13 +626,14 @@ export function InvoiceManager({
   }
 
   function downloadReceipt(invoice: FeeInvoice) {
-    const popup = window.open("", "_blank", "width=1280,height=900");
+    const popup = window.open("", "_blank", "width=1280,height=960");
 
     if (!popup) {
       showMessage("error", "Allow pop-ups to open the fee receipt.");
       return;
     }
 
+    const receiptInvoice = invoice as ReceiptFeeInvoice;
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
@@ -624,267 +641,530 @@ export function InvoiceManager({
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
     const now = new Date();
-    const printDateStr =
-      now.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }) +
-      ", " +
-      now.toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
 
+    const printDateStr = `${now.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })}, ${now.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    })}`;
+
+    const academicYear = receiptInvoice.academicYear || "—";
+    const academicStartYear = Number(academicYear.split("-")[0]);
+    const generatedCourseDuration = Number.isFinite(academicStartYear)
+      ? `April ${academicStartYear} – March ${academicStartYear + 1}`
+      : "—";
+
+    const enrollmentNo =
+      receiptInvoice.rollNo?.trim() ||
+      invoice.studentId
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .slice(0, 14)
+        .toUpperCase() ||
+      "—";
+
+    const paymentMode =
+      receiptInvoice.paymentMode || transactions.at(-1)?.paymentMode || "—";
+
+    const monthLabel =
+      invoice.month ||
+      new Intl.DateTimeFormat("en-IN", {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(`${invoice.dueDate}T12:00:00`));
+
+    const classBoard = formatReceiptClassBoard(receiptInvoice.classCourse);
     const statusLabels: Record<string, string> = {
       paid: "PAID",
       partial: "PAID (Partially)",
       unpaid: "UNPAID",
       overdue: "OVERDUE",
     };
-    const statusBadgeColors: Record<string, string> = {
-      paid: "background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;",
-      partial: "background:#dbeafe;color:#1e40af;border:1px solid #93c5fd;",
-      unpaid: "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;",
-      overdue: "background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;",
-    };
-    const badgeStyle =
-      statusBadgeColors[invoice.status] ?? statusBadgeColors.unpaid;
     const statusLabel = statusLabels[invoice.status] ?? "UNPAID";
 
-    function renderTransactionRows(): string {
-      if (!transactions.length) return "";
-      const rows = transactions
-        .map(
-          (t, i) => `
-        <tr>
-          <td class="hist-td">${i + 1}</td>
-          <td class="hist-td">${escapeHtml(formatReceiptDate(t.paidDate))}</td>
-          <td class="hist-td" style="text-align:right;font-weight:700;">${escapeHtml(formatCurrency(t.paidAmount))}</td>
-          <td class="hist-td">${escapeHtml(t.paymentMode)}</td>
-          <td class="hist-td">${escapeHtml(t.transactionId || t.chequeNumber || "-")}</td>
-          <td class="hist-td">${escapeHtml(t.bankName || "-")}</td>
-        </tr>`,
-        )
-        .join("");
+    const historyRows = transactions.length
+      ? transactions
+          .map(
+            (transaction, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${escapeHtml(formatReceiptDate(transaction.paidDate))}</td>
+                <td>${escapeHtml(formatCurrency(transaction.paidAmount))}</td>
+                <td>${escapeHtml(transaction.paymentMode)}</td>
+                <td>${escapeHtml(
+                  transaction.transactionId || transaction.chequeNumber || "—",
+                )}</td>
+                <td>${escapeHtml(transaction.bankName || "—")}</td>
+              </tr>`,
+          )
+          .join("")
+      : `
+          <tr>
+            <td>1</td>
+            <td>${paidAmount > 0 ? escapeHtml(formatReceiptDate(invoice.createdAt)) : "—"}</td>
+            <td>${paidAmount > 0 ? escapeHtml(formatCurrency(paidAmount)) : "—"}</td>
+            <td>${paidAmount > 0 ? escapeHtml(paymentMode) : "—"}</td>
+            <td>${escapeHtml(receiptInvoice.transactionId || "—")}</td>
+            <td>—</td>
+          </tr>`;
 
-      return `
-      <div style="margin-top:20px;">
-        <div class="sec-head">Payment History</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #d1d5db;">
-          <thead><tr>
-            <th class="hist-th" style="width:40px;">#</th>
-            <th class="hist-th">Date</th>
-            <th class="hist-th" style="text-align:right;">Amount</th>
-            <th class="hist-th">Mode</th>
-            <th class="hist-th">Transaction Ref</th>
-            <th class="hist-th">Bank</th>
-          </tr></thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-    }
+    const NAVY = "#071a52";
+    const LINE = "#9eabc2";
 
-    const NAVY = "#0f1f45";
     const receiptHtml = `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Fee Receipt - ${escapeHtml(receiptNo)}</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { padding: 24px; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
-    .receipt-wrap { max-width: 850px; margin: 0 auto; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-.receipt-logo-wrap {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
-  background: #fff;
+    @page { size: A4 portrait; margin: 7mm; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #d9dde5;
+      color: ${NAVY};
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .toolbar {
+      width: min(210mm, calc(100% - 24px));
+      margin: 14px auto 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .print-button {
+      border: 0;
+      border-radius: 8px;
+      background: ${NAVY};
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 20px;
+    }
+    .receipt-page {
+      width: min(210mm, calc(100% - 24px));
+      min-height: 297mm;
+      margin: 0 auto 20px;
+      padding: 0 5mm 4mm;
+      overflow: hidden;
+      border: 1.6px solid ${NAVY};
+      background: #fff;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, .18);
+    }
+    .top-strip {
+      height: 7mm;
+      margin: 0 -5mm;
+      background: ${NAVY};
+    }
+    .brand {
+      height: 54mm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .brand img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .brand-divider { border-top: 1.5px solid ${NAVY}; }
+    .receipt-title {
+      margin: 4mm 0 2.5mm;
+      text-align: center;
+      color: ${NAVY};
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: .02em;
+    }
+    .receipt-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 0 2mm 3.5mm;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .receipt-meta > div:last-child { text-align: right; }
+    .meta-value { margin-left: 8px; font-weight: 500; }
+    .section-heading {
+      margin-top: 3mm;
+      padding: 2.4mm 3mm;
+      background: ${NAVY};
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .035em;
+      text-transform: uppercase;
+    }
+    .details-table {
+      border-right: 1px solid ${LINE};
+      border-bottom: 1px solid ${LINE};
+      border-left: 1px solid ${LINE};
+    }
+    .details-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid ${LINE};
+    }
+    .details-row:first-child { border-top: 0; }
+    .detail-item {
+      min-height: 10.3mm;
+      display: grid;
+      grid-template-columns: 35mm 5mm 1fr;
+      align-items: center;
+      padding: 1.5mm 2.5mm;
+    }
+    .detail-item:first-child { border-right: 1px solid ${LINE}; }
+    .detail-label { font-weight: 900; }
+    .detail-separator { text-align: center; }
+    .detail-value {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      color: #172b60;
+      font-weight: 500;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    .fee-table th {
+      padding: 2.6mm 1.5mm;
+      border: 1px solid #fff;
+      background: ${NAVY};
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .fee-table td {
+      min-height: 13mm;
+      padding: 2.5mm 1.5mm;
+      border: 1px solid ${LINE};
+      color: #142758;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .fee-table td.particulars { text-align: left; font-weight: 700; }
+    .fee-table td.money { text-align: right; font-weight: 800; white-space: nowrap; }
+    .amount-words {
+      display: grid;
+      grid-template-columns: 34mm 1fr;
+      align-items: center;
+      min-height: 10mm;
+      padding: 1.5mm 2.5mm;
+      border-right: 1px solid ${LINE};
+      border-bottom: 1px solid ${LINE};
+      border-left: 1px solid ${LINE};
+    }
+    .amount-words strong { font-weight: 900; }
+    .summary {
+      margin-top: 4mm;
+      padding: 3mm 2mm 2mm;
+      border-top: 1.5px solid ${NAVY};
+    }
+    .summary-main {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr 1fr;
+      align-items: center;
+      gap: 4mm;
+      font-weight: 900;
+    }
+    .summary-item { display: flex; align-items: center; gap: 2mm; }
+    .summary-item:nth-child(2) { justify-content: center; }
+    .summary-item:nth-child(3) { justify-content: flex-end; }
+    .paid-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 1.5mm;
+      padding: 1.2mm 3mm;
+      border-radius: 999px;
+      border: 1px solid #a7e3b1;
+      background: #dff7e3;
+      color: #16932f;
+      font-weight: 900;
+    }
+    .paid-check {
+      width: 5.5mm;
+      height: 5.5mm;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #16a34a;
+      color: #fff;
+      font-size: 10px;
+      line-height: 1;
+    }
+    .summary-green { color: #07983a; }
+    .summary-red { color: #d11f2d; }
+    .summary-dates {
+      display: flex;
+      gap: 6mm;
+      align-items: center;
+      margin-top: 3mm;
+      font-weight: 800;
+    }
+    .summary-dates .divider { color: ${LINE}; }
+    .history-table th {
+      padding: 2.2mm 1.6mm;
+      border: 1px solid ${LINE};
+      background: #f7f8fb;
+      color: ${NAVY};
+      font-size: 10px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .history-table td {
+      padding: 2.2mm 1.6mm;
+      border: 1px solid ${LINE};
+      text-align: center;
+      color: #142758;
+    }
+.footer {
+  display: grid;
+  grid-template-columns: 1fr 50mm;
+  gap: 8mm;
+  align-items: end;
+  margin-top: 3.5mm;
+  padding: 2.5mm 2mm 0;
+  border-top: 1.5px solid ${NAVY};
+}
+    .terms { font-size: 8.6px; line-height: 1.75; }
+    .terms ul { margin: 0; padding-left: 4mm; }
+.signature {
+  width: 54mm;
+  justify-self: end;
+  text-align: center;
+  color: ${NAVY};
 }
 
-.receipt-logo {
+.signature img {
   display: block;
-  width: 100%;
-  max-width: 100%;
-  height: auto;
-  margin: 0;
-  transform: none;
+  width: 47mm;
+  height: 19mm;
+  margin: 0 auto;
+  object-fit: contain;
 }
-    .receipt-box { border: 1.5px solid ${NAVY}; margin: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .sec-head { background: ${NAVY} !important; color: #fff !important; padding: 6px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .detail-cell { flex: 1; display: flex; padding: 7px 12px; align-items: center; }
-    .detail-cell:first-child { border-right: 1px solid #d1d5db; }
-    .detail-lbl { width: 120px; font-weight: 700; color: #374151; white-space: nowrap; }
-    .detail-sep { margin: 0 6px; color: #9ca3af; }
-    .detail-val { color: #475569; }
-    .fee-th { border: 1px solid #d1d5db; padding: 8px 10px; background: ${NAVY} !important; color: #fff !important; font-weight: 600; text-align: center; font-size: 12px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .fee-td { border: 1px solid #d1d5db; padding: 8px 10px; text-align: center; font-size: 13px; }
-    .hist-th { padding: 8px 10px; border: 1px solid #d1d5db; background: #f1f5f9 !important; font-size: 12px; text-align: center; font-weight: 700; color: #334155; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .hist-td { padding: 8px 10px; border: 1px solid #d1d5db; text-align: center; font-size: 13px; }
-    .badge { display: inline-block; padding: 3px 12px; border-radius: 9999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    .print-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 24px; background: ${NAVY} !important; color: #fff !important; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; margin-bottom: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+.signature-rule {
+  width: 48mm;
+  margin: 0 auto 1.2mm;
+  border-top: 1.2px solid ${NAVY};
+}
+
+.signature strong {
+  display: block;
+  margin-bottom: 0.7mm;
+  font-size: 9.5px;
+  line-height: 1.2;
+}
+
+.signature span {
+  display: block;
+  font-size: 7.8px;
+  line-height: 1.35;
+}
+.bottom-note {
+  padding: 2.5mm 2mm 0;
+  color: #697794;
+  font-size: 7px;
+  text-align: center;
+}
+    @media (max-width: 760px) {
+      body { background: #fff; }
+      .toolbar { width: calc(100% - 16px); }
+      .receipt-page { width: calc(100% - 8px); margin-bottom: 0; padding: 0 3mm 3mm; }
+      .top-strip { margin: 0 -3mm; }
+      .brand { height: 42mm; }
+      .detail-item { grid-template-columns: 30mm 4mm 1fr; font-size: 9px; }
+      .fee-table, .history-table { font-size: 8px; }
+    }
     @media print {
-      body { padding: 0; background: #fff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .print-btn { display: none !important; }
-      .receipt-wrap { margin: 0; border: none; }
-      .receipt-box { margin: 0; border: none; }
-.receipt-logo {
-  width: 100% !important;
-  max-width: 100% !important;
-  height: auto !important;
-  margin: 0 !important;
-  transform: none !important;
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
+      body { background: #fff !important; }
+      .toolbar { display: none !important; }
+      .receipt-page {
+        width: 100%;
+        min-height: 0;
+        margin: 0;
+        padding: 0 4mm 3mm;
+        border: 1.4px solid ${NAVY};
+        box-shadow: none;
+      }
+      .top-strip { margin: 0 -4mm; }
+      .brand { height: 50mm; }
+      .receipt-title { margin-top: 3mm; }
     }
   </style>
 </head>
 <body>
-  <div style="max-width:850px;margin:0 auto;">
-    <button class="print-btn" onclick="window.print();">Print Receipt</button>
+  <div class="toolbar">
+    <button class="print-button" onclick="window.print()">Print Receipt</button>
   </div>
 
-  <div class="receipt-wrap">
-    <div class="receipt-box">
+  <main class="receipt-page">
+    <div class="top-strip"></div>
 
-      <!-- Full-width Header Banner -->
-<div class="receipt-logo-wrap">
+    <div class="brand">
+      <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors Pvt. Ltd." />
+    </div>
+
+    <div class="brand-divider"></div>
+    <h1 class="receipt-title">FEE RECEIPT</h1>
+
+    <div class="receipt-meta">
+      <div>Receipt No. <span class="meta-value">: &nbsp;${escapeHtml(receiptNo)}</span></div>
+      <div>Receipt Date <span class="meta-value">: &nbsp;${escapeHtml(
+        formatReceiptDate(invoice.createdAt || invoice.dueDate),
+      )}</span></div>
+    </div>
+
+    <div class="section-heading">Student Details</div>
+    <section class="details-table">
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Student Name</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(invoice.studentName || "—")}</span></div>
+        <div class="detail-item"><span class="detail-label">Parent Name</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.parentName || "—")}</span></div>
+      </div>
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Class / Board</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(classBoard)}</span></div>
+        <div class="detail-item"><span class="detail-label">Enrollment Date</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(formatReceiptDate(receiptInvoice.enrollmentDate || invoice.createdAt))}</span></div>
+      </div>
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Enrollment No.</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(enrollmentNo)}</span></div>
+        <div class="detail-item"><span class="detail-label">Academic Year</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(academicYear)}</span></div>
+      </div>
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Mobile No.</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.mobileNo || "—")}</span></div>
+        <div class="detail-item"><span class="detail-label">Payment Mode</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(paymentMode)}</span></div>
+      </div>
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Email ID</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.email || "—")}</span></div>
+        <div class="detail-item"><span class="detail-label">Admission Type</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.admissionType || "Regular")}</span></div>
+      </div>
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Address</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.address || "—")}</span></div>
+        <div class="detail-item"><span class="detail-label">Batch Timing</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.batchTiming || receiptInvoice.batch || "—")}</span></div>
+      </div>
+      <div class="details-row">
+        <div class="detail-item"><span class="detail-label">Course Duration</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.courseDuration || generatedCourseDuration)}</span></div>
+        <div class="detail-item"><span class="detail-label">Batch</span><span class="detail-separator">:</span><span class="detail-value">${escapeHtml(receiptInvoice.batch || "—")}</span></div>
+      </div>
+    </section>
+
+    <div class="section-heading">Fee Details</div>
+    <table class="fee-table">
+      <colgroup>
+        <col style="width:8%" />
+        <col style="width:21%" />
+        <col style="width:13%" />
+        <col style="width:14%" />
+        <col style="width:12%" />
+        <col style="width:11%" />
+        <col style="width:10.5%" />
+        <col style="width:10.5%" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Sr. No.</th>
+          <th>Particulars</th>
+          <th>Course</th>
+          <th>Installment</th>
+          <th>Due Date</th>
+          <th>Total Fee (₹)</th>
+          <th>Paid (₹)</th>
+          <th>Balance (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td class="particulars">${escapeHtml(invoice.particulars || invoice.title || "Fee")}</td>
+          <td>${escapeHtml(classBoard)}</td>
+          <td>${escapeHtml(monthLabel)}</td>
+          <td>${escapeHtml(formatReceiptDate(invoice.dueDate))}</td>
+          <td class="money">${escapeHtml(formatCurrency(invoice.amount))}</td>
+          <td class="money">${escapeHtml(formatCurrency(paidAmount))}</td>
+          <td class="money">${escapeHtml(formatCurrency(balance))}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="amount-words">
+      <strong>Amount in Words</strong>
+      <span>: &nbsp;${escapeHtml(amountToWords(invoice.amount))}</span>
+    </div>
+
+    <section class="summary">
+      <div class="summary-main">
+        <div class="summary-item">
+          <span>Payment Status&nbsp; :</span>
+          <span class="paid-pill"><span class="paid-check">✓</span>${escapeHtml(statusLabel)}</span>
+        </div>
+        <div class="summary-item">Total Paid&nbsp; : <span class="summary-green">${escapeHtml(formatCurrency(paidAmount))}</span></div>
+        <div class="summary-item">Balance Due&nbsp; : <span class="${balance > 0 ? "summary-red" : "summary-green"}">${escapeHtml(formatCurrency(balance))}</span></div>
+      </div>
+      <div class="summary-dates">
+        <span>Due Date&nbsp; : &nbsp;${escapeHtml(formatReceiptDate(invoice.dueDate))}</span>
+        <span class="divider">|</span>
+        <span>Print Date&nbsp; : &nbsp;${escapeHtml(printDateStr)}</span>
+      </div>
+    </section>
+
+    <div class="section-heading">Payment History</div>
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th style="width:8%">#</th>
+          <th style="width:18%">Date</th>
+          <th style="width:18%">Amount (₹)</th>
+          <th style="width:17%">Mode</th>
+          <th style="width:25%">Transaction Ref</th>
+          <th style="width:14%">Bank</th>
+        </tr>
+      </thead>
+      <tbody>${historyRows}</tbody>
+    </table>
+
+    <footer class="footer">
+      <div class="terms">
+        <ul>
+          <li>This is a computer-generated receipt and does not require a physical signature.</li>
+          <li>Fees once paid are non-refundable under any circumstances.</li>
+          <li>Thank you for choosing Smart Tutors Pvt. Ltd. We appreciate your trust.</li>
+        </ul>
+      </div>
+
+<div class="signature">
   <img
-    src="${escapeHtml(logoUrl)}"
-    alt="Smart Tutors Pvt. Ltd."
-    class="receipt-logo"
+    src="${escapeHtml(signatureUrl)}"
+    alt="Ravi Rana signature"
   />
+
+  <div class="signature-rule"></div>
+
+  <strong>Authorized Signatory</strong>
+  <span>Mr. Ravi Rana</span>
+  <span>Director &amp; Founder</span>
+  <span>Smart Tutors Pvt. Ltd.</span>
 </div>
 
-      <!-- Content Area -->
-      <div style="padding:20px 24px;">
+    </footer>
 
-        <!-- Title -->
-        <div style="text-align:center;font-size:22px;font-weight:900;color:${NAVY};margin:12px 0 14px;letter-spacing:0.08em;">FEE RECEIPT</div>
-
-        <!-- Receipt Meta -->
-        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
-          <div><span>Receipt No.</span><span style="margin:0 8px;">:</span><span style="font-weight:500;color:#475569;">${escapeHtml(receiptNo)}</span></div>
-          <div><span>Receipt Date</span><span style="margin:0 8px;">:</span><span style="font-weight:500;color:#475569;">${escapeHtml(formatReceiptDate(invoice.createdAt || invoice.dueDate))}</span></div>
-        </div>
-
-        <!-- Student Details -->
-        <div class="sec-head">Student Details</div>
-        <div style="border:1px solid #d1d5db;font-size:13px;margin-bottom:16px;">
-          <div style="display:flex;border-bottom:1px solid #d1d5db;">
-            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Student Name</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.studentName || "\u2014")}</span></div>
-            <div class="detail-cell"><span class="detail-lbl">Parent Name</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.parentName || "\u2014")}</span></div>
-          </div>
-          <div style="display:flex;border-bottom:1px solid #d1d5db;">
-            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Class / Board</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(
-              formatReceiptClassBoard(invoice.classCourse),
-            )}</span></div>
-            <div class="detail-cell"><span class="detail-lbl">Enrollment No.</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml((invoice.studentId || "\u2014").replace("-", "").substring(0, 8).toUpperCase())}</span></div>
-          </div>
-          <div style="display:flex;border-bottom:1px solid #d1d5db;">
-            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Academic Year</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.academicYear || "\u2014")}</span></div>
-            <div class="detail-cell"><span class="detail-lbl">Payment Mode</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.paymentMode || "\u2014")}</span></div>
-          </div>
-          <div style="display:flex;">
-            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Mobile No.</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.mobileNo || "\u2014")}</span></div>
-            <div class="detail-cell"><span class="detail-lbl">Invoice ID</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.id || "\u2014")}</span></div>
-          </div>
-        </div>
-
-        <!-- Fee Details -->
-        <div class="sec-head">Fee Details</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;border:1px solid #d1d5db;">
-          <thead>
-            <tr>
-              <th class="fee-th" style="width:50px;">Sr No.</th>
-              <th class="fee-th" style="text-align:left;">Particulars</th>
-              <th class="fee-th">Month</th>
-              <th class="fee-th">Due Date</th>
-              <th class="fee-th" style="text-align:right;">Amount</th>
-              <th class="fee-th" style="text-align:right;">Paid</th>
-              <th class="fee-th" style="text-align:right;">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="fee-td">1</td>
-              <td class="fee-td" style="text-align:left;font-weight:600;">${escapeHtml(invoice.title || "Fee")}${invoice.particulars ? " \u2014 " + escapeHtml(invoice.particulars) : ""}</td>
-              <td class="fee-td">${escapeHtml(invoice.month || "\u2014")}</td>
-              <td class="fee-td">${escapeHtml(formatReceiptDate(invoice.dueDate))}</td>
-              <td class="fee-td" style="text-align:right;font-weight:700;">${escapeHtml(formatCurrency(invoice.amount))}</td>
-              <td class="fee-td" style="text-align:right;font-weight:700;">${escapeHtml(formatCurrency(paidAmount))}</td>
-              <td class="fee-td" style="text-align:right;font-weight:700;color:${balance > 0 ? "#dc2626" : "#16a34a"};">${escapeHtml(formatCurrency(balance))}</td>
-            </tr>
-          </tbody>
-        </table>
-        <!-- Amount in Words -->
-        <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:8px 12px;background:#f8fafc !important;border:1px solid #d1d5db;border-top:none;margin-bottom:16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-          <span style="color:#374151;white-space:nowrap;">Amount in Words :</span>
-          <span style="color:#475569;font-weight:500;">${escapeHtml(amountToWords(invoice.amount))}</span>
-        </div>
-
-        <!-- Payment Summary -->
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#1e293b;padding:10px 2px;border-top:2px solid ${NAVY};margin-bottom:4px;">
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="color:#64748b;">Payment Status</span><span style="color:#9ca3af;margin:0 2px;">:</span>
-            <span class="badge" style="${badgeStyle}">${escapeHtml(statusLabel)}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="color:#64748b;">Total Paid</span><span style="color:#9ca3af;margin:0 2px;">:</span>
-            <span style="font-weight:800;color:#16a34a;">${escapeHtml(formatCurrency(paidAmount))}</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span style="color:#64748b;">Balance Due</span><span style="color:#9ca3af;margin:0 2px;">:</span>
-            <span style="font-weight:800;color:${balance > 0 ? "#dc2626" : "#16a34a"};">${escapeHtml(formatCurrency(balance))}</span>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:16px;font-size:13px;font-weight:700;color:#1e293b;padding:4px 2px 16px;border-bottom:1px solid #e5e7eb;margin-bottom:20px;">
-          <div><span style="color:#64748b;">Due Date</span><span style="color:#d1d5db;margin:0 4px;">:</span><span>${escapeHtml(formatReceiptDate(invoice.dueDate))}</span></div>
-          <span style="color:#d1d5db;">|</span>
-          <div><span style="color:#64748b;">Print Date</span><span style="color:#d1d5db;margin:0 4px;">:</span><span>${escapeHtml(printDateStr)}</span></div>
-        </div>
-
-        <!-- Payment History -->
-        ${renderTransactionRows()}
-      </div>
-
-      <!-- Footer -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:16px 24px 0;border-top:2px solid ${NAVY};margin-top:16px;min-height:120px;">
-        <div style="max-width:50%;font-size:11px;font-weight:600;color:#64748b;">
-          <p style="margin:3px 0;">This is a computer-generated receipt and does not require a physical signature.</p>
-          <p style="margin:3px 0;font-weight:800;color:#1e293b;font-size:12px;">FEES ONCE PAID ARE NON-REFUNDABLE UNDER ANY CIRCUMSTANCES.</p>
-          <p style="margin:8px 3px 3px;">Thank you for choosing Smart Tutors Pvt. Ltd.</p>
-          <p style="margin:3px 0;">We appreciate your trust.</p>
-        </div>
-        <div style="text-align:center;width:220px;">
-          <img src="${escapeHtml(signatureUrl)}" alt="Founder Signature" style="display:block;width:180px;height:64px;margin:0 auto 6px;object-fit:contain;" />
-          <div style="border-top:1.5px solid #334155;margin-top:4px;padding-top:6px;">
-            <div style="font-size:13px;font-weight:800;color:#1e293b;">Mr. Ravi Rana</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px;">Director &amp; Founder</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px;">Smart Tutors Pvt. Ltd.</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Terms -->
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;padding:10px 24px 14px;">
-        <span>Smart Tutors Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
-        <span>www.smarttutors.co.in</span>
-      </div>
-
-    </div>
-  </div>
+<div class="bottom-note">
+  www.smarttutors.co.in
+</div>
+  </main>
 </body>
 </html>`;
 
     const receiptBlob = new Blob([receiptHtml], {
       type: "text/html;charset=utf-8",
     });
-
     const receiptUrl = URL.createObjectURL(receiptBlob);
 
     popup.location.replace(receiptUrl);
