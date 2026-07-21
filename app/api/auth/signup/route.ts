@@ -222,12 +222,13 @@ export async function POST(request: Request) {
         );
       }
 
-      if (
-        body.studentType === "online" ||
-        body.studentType === "centre-based"
-      ) {
-        profile.studentType = body.studentType;
-      }
+if (
+  body.studentType === "online" ||
+  body.studentType === "centre-based" ||
+  body.studentType === "home"
+) {
+  profile.studentType = body.studentType;
+}
 
       if (body.weakSubjects?.length) {
         profile.weakSubjects = body.weakSubjects
