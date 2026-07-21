@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Users, X } from "lucide-react";
 
 import type {
   ManagedUser,
@@ -12,6 +13,7 @@ import type {
 type WeeklyTestManagerProps = {
   role: Role;
   studentDirectory: ManagedUser[];
+  managedUsers?: ManagedUser[];
   userId?: string;
   linkedStudentId?: string;
   initialWeeklyTests?: WeeklyTest[];
@@ -24,7 +26,90 @@ type ResultDraft = {
   obtainedMarks: string;
   remarks: string;
 };
+type TestTargetMode = "individual" | "class-section";
 
+function getStudentClassLabel(student: ManagedUser) {
+  const courseKey = student.profile?.courseWanted?.trim() ?? "";
+
+  const courseTitle = student.profile?.courseWantedTitle?.trim() ?? "";
+
+  const program = student.program?.trim() ?? "";
+
+  const combinedText = `${courseKey} ${courseTitle} ${program}`;
+
+  const classMatch = combinedText.match(
+    /\bclass[\s-]*(6|7|8|9|10|11|12)(?:st|nd|rd|th)?\b/i,
+  );
+
+  if (classMatch?.[1]) {
+    return `Class ${classMatch[1]}`;
+  }
+
+  if (
+    courseKey.toLowerCase().startsWith("govt exams |") ||
+    /\b(govt|government)\s*exams?\b/i.test(combinedText)
+  ) {
+    return "Government Exams";
+  }
+
+  if (courseKey.toLowerCase().startsWith("competitive exams |")) {
+    return "Competitive Exams";
+  }
+
+  if (courseKey.toLowerCase().startsWith("skills |")) {
+    return "Skills";
+  }
+
+  return program || courseTitle || "Other Programs";
+}
+
+function getStudentSectionLabel(student: ManagedUser) {
+  const courseKey = student.profile?.courseWanted?.trim() ?? "";
+
+  const courseTitle = student.profile?.courseWantedTitle?.trim() ?? "";
+
+  const program = student.program?.trim() ?? "";
+
+  const classLabel = getStudentClassLabel(student);
+
+  if (classLabel.startsWith("Class ")) {
+    const classNumber = classLabel.replace("Class ", "");
+
+    const remainingTitle = courseTitle
+      .replace(
+        new RegExp(`class[\\s-]*${classNumber}(?:st|nd|rd|th)?`, "i"),
+        "",
+      )
+      .replace(/^[\s|:—–-]+/, "")
+      .trim();
+
+    if (remainingTitle) {
+      return remainingTitle;
+    }
+
+    if (program && !program.toLowerCase().includes(`class ${classNumber}`)) {
+      return program;
+    }
+
+    return "General";
+  }
+
+  if (
+    classLabel === "Government Exams" ||
+    classLabel === "Competitive Exams" ||
+    classLabel === "Skills"
+  ) {
+    const cleanedTitle = courseTitle
+      .replace(/^(government|govt|competitive)?\s*exams?\s*[|:—–-]*/i, "")
+      .trim();
+
+    return (
+      cleanedTitle || courseKey.split("|")[1]?.trim() || program || "General"
+    );
+  }
+
+  return courseTitle || program || "General";
+}
 const fieldClass =
   "w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none placeholder:text-[var(--color-muted)] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20";
 
@@ -52,10 +137,7 @@ function formatTestDate(value: string) {
   });
 }
 
-function getPercentage(
-  obtainedMarks: number | undefined,
-  totalMarks: number,
-) {
+function getPercentage(obtainedMarks: number | undefined, totalMarks: number) {
   if (
     typeof obtainedMarks !== "number" ||
     !Number.isFinite(obtainedMarks) ||
@@ -67,19 +149,10 @@ function getPercentage(
   return Math.round((obtainedMarks / totalMarks) * 100);
 }
 
-function createDraftResults(students: ManagedUser[]): ResultDraft[] {
-  return students.map((student) => ({
-    studentId: student.id,
-    studentName: student.name,
-    status: "present",
-    obtainedMarks: "",
-    remarks: "",
-  }));
-}
-
 export function WeeklyTestManager({
   role,
   studentDirectory,
+  managedUsers,
   userId,
   linkedStudentId,
   initialWeeklyTests = [],
@@ -95,17 +168,135 @@ export function WeeklyTestManager({
   const [totalMarks, setTotalMarks] = useState("100");
   const [publishNow, setPublishNow] = useState(false);
   const [results, setResults] = useState<ResultDraft[]>([]);
+  const [targetMode, setTargetMode] = useState<TestTargetMode>("individual");
+
+  const [classFilter, setClassFilter] = useState("");
+
+  const [sectionFilter, setSectionFilter] = useState("");
+
+  const [studentSearch, setStudentSearch] = useState("");
+
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   const allStudents = useMemo(() => {
-    return studentDirectory.filter(
-      (student) => student.role === "student",
-    );
-  }, [studentDirectory]);
+    const combinedStudents = [...(managedUsers ?? []), ...studentDirectory];
 
+    return [
+      ...new Map(
+        combinedStudents
+          .filter(
+            (student) =>
+              student.role === "student" &&
+              student.status !== "pending" &&
+              student.status !== "rejected" &&
+              student.verified !== false,
+          )
+          .map((student) => [student.id, student]),
+      ).values(),
+    ].sort((left, right) => (left.name ?? "").localeCompare(right.name ?? ""));
+  }, [managedUsers, studentDirectory]);
+  const classOptions = useMemo(() => {
+    return [
+      ...new Set(allStudents.map((student) => getStudentClassLabel(student))),
+    ].sort((left, right) =>
+      left.localeCompare(right, undefined, {
+        numeric: true,
+      }),
+    );
+  }, [allStudents]);
+
+  const sectionOptions = useMemo(() => {
+    if (!classFilter) {
+      return [];
+    }
+
+    return [
+      ...new Set(
+        allStudents
+          .filter((student) => getStudentClassLabel(student) === classFilter)
+          .map((student) => getStudentSectionLabel(student)),
+      ),
+    ].sort((left, right) =>
+      left.localeCompare(right, undefined, {
+        numeric: true,
+      }),
+    );
+  }, [allStudents, classFilter]);
+
+  const studentsInSelectedSection = useMemo(() => {
+    if (!classFilter || !sectionFilter) {
+      return [];
+    }
+
+    return allStudents.filter(
+      (student) =>
+        getStudentClassLabel(student) === classFilter &&
+        getStudentSectionLabel(student) === sectionFilter,
+    );
+  }, [allStudents, classFilter, sectionFilter]);
+
+  const visibleStudents = useMemo(() => {
+    const source =
+      targetMode === "class-section" ? studentsInSelectedSection : allStudents;
+
+    const query = studentSearch.trim().toLowerCase();
+
+    if (!query) {
+      return source;
+    }
+
+    return source.filter((student) => {
+      const searchableText = [
+        student.name,
+        student.email,
+        student.program,
+        student.profile?.courseWanted,
+        student.profile?.courseWantedTitle,
+        getStudentClassLabel(student),
+        getStudentSectionLabel(student),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchableText.includes(query);
+    });
+  }, [targetMode, allStudents, studentsInSelectedSection, studentSearch]);
+
+  const selectedStudents = allStudents.filter((student) =>
+    selectedStudentIds.includes(student.id),
+  );
+  useEffect(() => {
+    setResults((currentResults) =>
+      selectedStudentIds
+        .map((studentId) => {
+          const student = allStudents.find((item) => item.id === studentId);
+
+          if (!student) {
+            return null;
+          }
+
+          const existingResult = currentResults.find(
+            (result) => result.studentId === studentId,
+          );
+
+          return (
+            existingResult ?? {
+              studentId: student.id,
+              studentName: student.name,
+              status: "present" as const,
+              obtainedMarks: "",
+              remarks: "",
+            }
+          );
+        })
+        .filter((result): result is ResultDraft => result !== null),
+    );
+  }, [selectedStudentIds, allStudents]);
   const viewerStudentId =
     linkedStudentId ?? (role === "student" ? userId : undefined);
 
@@ -122,8 +313,6 @@ export function WeeklyTestManager({
       test.results.some((result) => result.studentId === viewerStudentId),
     );
   }, [canManage, viewerStudentId, weeklyTests]);
-
-
 
   useEffect(() => {
     let cancelled = false;
@@ -171,11 +360,51 @@ export function WeeklyTestManager({
       cancelled = true;
     };
   }, [canManage]);
+  function toggleStudent(studentId: string) {
+    setSelectedStudentIds((current) =>
+      current.includes(studentId)
+        ? current.filter((id) => id !== studentId)
+        : [...current, studentId],
+    );
+  }
 
-  function updateResult(
-    studentId: string,
-    updates: Partial<ResultDraft>,
-  ) {
+  function selectAllVisibleStudents() {
+    setSelectedStudentIds((current) => [
+      ...new Set([...current, ...visibleStudents.map((student) => student.id)]),
+    ]);
+  }
+
+  function selectWholeSection() {
+    if (!classFilter || !sectionFilter) {
+      setMessage("Choose a class and section first.");
+      return;
+    }
+
+    if (studentsInSelectedSection.length === 0) {
+      setMessage("No students are available in this section.");
+      return;
+    }
+
+    setMessage("");
+
+    setSelectedStudentIds(
+      studentsInSelectedSection.map((student) => student.id),
+    );
+  }
+
+  function resetStudentSelection() {
+    setSelectedStudentIds([]);
+    setStudentSearch("");
+    setClassFilter("");
+    setSectionFilter("");
+    setMessage("");
+  }
+
+  function changeTargetMode(nextMode: TestTargetMode) {
+    setTargetMode(nextMode);
+    resetStudentSelection();
+  }
+  function updateResult(studentId: string, updates: Partial<ResultDraft>) {
     setResults((current) =>
       current.map((result) =>
         result.studentId === studentId
@@ -209,10 +438,17 @@ export function WeeklyTestManager({
 
   function resetForm() {
     setTitle("");
+    setSubject("");
     setTestDate(getToday());
     setTotalMarks("100");
     setPublishNow(false);
-    setResults(createDraftResults(allStudents));
+
+    setTargetMode("individual");
+    setSelectedStudentIds([]);
+    setStudentSearch("");
+    setClassFilter("");
+    setSectionFilter("");
+    setResults([]);
   }
 
   async function saveWeeklyTest() {
@@ -229,6 +465,10 @@ export function WeeklyTestManager({
       setMessage("Subject is required.");
       return;
     }
+    if (!testDate) {
+      setMessage("Test date is required.");
+      return;
+    }
 
     const parsedTotalMarks = Number(totalMarks);
 
@@ -237,8 +477,10 @@ export function WeeklyTestManager({
       return;
     }
 
-    if (!results.length) {
-      setMessage("No students available to create the test.");
+    if (selectedStudentIds.length === 0 || results.length === 0) {
+      setMessage(
+        "Select at least one student or a whole class before saving the test.",
+      );
       return;
     }
 
@@ -324,7 +566,7 @@ export function WeeklyTestManager({
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Test Title
+                  Test Title*
                 </span>
 
                 <input
@@ -337,7 +579,7 @@ export function WeeklyTestManager({
 
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Subject
+                  Subject*
                 </span>
 
                 <input
@@ -350,7 +592,7 @@ export function WeeklyTestManager({
 
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Test Date
+                  Test Date*
                 </span>
 
                 <input
@@ -363,7 +605,7 @@ export function WeeklyTestManager({
 
               <label className="space-y-2">
                 <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Total Marks
+                  Total Marks*
                 </span>
 
                 <input
@@ -375,7 +617,261 @@ export function WeeklyTestManager({
                 />
               </label>
             </div>
+            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-blue-50/40">
+              <div className="flex flex-col gap-3 border-b border-blue-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0B40A1] text-white">
+                    <Users size={18} />
+                  </div>
 
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.08em] text-slate-700">
+                      Assign Test To <span className="text-red-500">*</span>
+                    </p>
+
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      Select individual students or a whole class and section
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full border border-blue-200 bg-white px-3 py-1.5 text-[10px] font-black text-[#0B40A1]">
+                    {selectedStudentIds.length} selected
+                  </span>
+
+                  {selectedStudentIds.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={resetStudentSelection}
+                      className="text-[10px] font-black text-rose-600 hover:underline"
+                    >
+                      Clear Selection
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="p-4">
+                <div className="grid grid-cols-2 rounded-xl border border-slate-200 bg-white p-1">
+                  <button
+                    type="button"
+                    onClick={() => changeTargetMode("individual")}
+                    className={`rounded-lg px-3 py-2.5 text-xs font-black transition ${
+                      targetMode === "individual"
+                        ? "bg-[#0B40A1] text-white shadow-sm"
+                        : "text-slate-500 hover:bg-slate-50"
+                    }`}
+                  >
+                    Individual Students
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeTargetMode("class-section")}
+                    className={`rounded-lg px-3 py-2.5 text-xs font-black transition ${
+                      targetMode === "class-section"
+                        ? "bg-[#0B40A1] text-white shadow-sm"
+                        : "text-slate-500 hover:bg-slate-50"
+                    }`}
+                  >
+                    Class / Section
+                  </button>
+                </div>
+
+                {targetMode === "class-section" ? (
+                  <>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                          Select Class / Program
+                        </label>
+
+                        <select
+                          value={classFilter}
+                          onChange={(event) => {
+                            setClassFilter(event.target.value);
+                            setSectionFilter("");
+                            setSelectedStudentIds([]);
+                            setStudentSearch("");
+                          }}
+                          className={fieldClass}
+                        >
+                          <option value="">Choose class or program</option>
+
+                          {classOptions.map((classLabel) => (
+                            <option key={classLabel} value={classLabel}>
+                              {classLabel}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="mb-1 block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                          Select Section
+                        </label>
+
+                        <select
+                          value={sectionFilter}
+                          disabled={!classFilter}
+                          onChange={(event) => {
+                            setSectionFilter(event.target.value);
+                            setSelectedStudentIds([]);
+                            setStudentSearch("");
+                          }}
+                          className={`${fieldClass} disabled:cursor-not-allowed disabled:bg-slate-100`}
+                        >
+                          <option value="">Choose section</option>
+
+                          {sectionOptions.map((sectionLabel) => (
+                            <option key={sectionLabel} value={sectionLabel}>
+                              {sectionLabel}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-col gap-3 rounded-xl border border-blue-100 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-xs font-black text-slate-800">
+                          {classFilter && sectionFilter
+                            ? `${classFilter} — ${sectionFilter}`
+                            : "Choose a class and section"}
+                        </p>
+
+                        <p className="mt-0.5 text-[10px] text-slate-500">
+                          {studentsInSelectedSection.length}{" "}
+                          {studentsInSelectedSection.length === 1
+                            ? "student"
+                            : "students"}{" "}
+                          available
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={selectWholeSection}
+                        disabled={studentsInSelectedSection.length === 0}
+                        className="h-10 rounded-xl bg-[#0B40A1] px-4 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Select Whole Section
+                      </button>
+                    </div>
+                  </>
+                ) : null}
+
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="search"
+                    value={studentSearch}
+                    onChange={(event) =>
+                      setStudentSearch(event.target.value.slice(0, 100))
+                    }
+                    disabled={
+                      targetMode === "class-section" &&
+                      (!classFilter || !sectionFilter)
+                    }
+                    placeholder={
+                      targetMode === "class-section"
+                        ? "Search within this section..."
+                        : "Search by student name, class or program..."
+                    }
+                    className={`${fieldClass} min-w-0 flex-1`}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={selectAllVisibleStudents}
+                    disabled={visibleStudents.length === 0}
+                    className="h-12 shrink-0 rounded-xl border border-blue-200 bg-white px-4 text-xs font-black text-[#0B40A1] disabled:opacity-40"
+                  >
+                    Select Shown
+                  </button>
+                </div>
+
+                {selectedStudents.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedStudents.map((student) => (
+                      <button
+                        key={student.id}
+                        type="button"
+                        onClick={() => toggleStudent(student.id)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B40A1] px-2.5 py-1.5 text-[10px] font-bold text-white"
+                      >
+                        <span className="max-w-[150px] truncate">
+                          {student.name}
+                        </span>
+
+                        <X size={11} />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+
+                <div className="mt-3 max-h-60 space-y-2 overflow-y-auto pr-1">
+                  {visibleStudents.length > 0 ? (
+                    visibleStudents.map((student) => {
+                      const isSelected = selectedStudentIds.includes(
+                        student.id,
+                      );
+
+                      return (
+                        <label
+                          key={student.id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 transition ${
+                            isSelected
+                              ? "border-blue-300 bg-blue-50"
+                              : "border-slate-200 bg-white hover:bg-slate-50"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleStudent(student.id)}
+                            className="h-4 w-4 accent-[#0B40A1]"
+                          />
+
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-black text-indigo-700">
+                            {(student.name || "S").charAt(0).toUpperCase()}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-black text-slate-800">
+                              {student.name}
+                            </p>
+
+                            <p className="mt-0.5 truncate text-[10px] text-slate-500">
+                              {getStudentClassLabel(student)} —{" "}
+                              {getStudentSectionLabel(student)}
+                            </p>
+                          </div>
+
+                          {isSelected ? (
+                            <CheckCircle2
+                              size={17}
+                              className="text-[#0B40A1]"
+                            />
+                          ) : null}
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
+                      <Users size={24} className="mx-auto text-slate-300" />
+
+                      <p className="mt-2 text-xs font-bold text-slate-600">
+                        {targetMode === "class-section" &&
+                        (!classFilter || !sectionFilter)
+                          ? "Choose a class and section"
+                          : "No students found"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
             {results.length > 0 ? (
               <div className="overflow-x-auto rounded-[1.5rem] border border-[var(--color-border)]">
                 <table className="w-full min-w-[840px] text-left text-sm">
@@ -412,9 +908,7 @@ export function WeeklyTestManager({
                           >
                             <option value="present">Present</option>
                             <option value="absent">Absent</option>
-                            <option value="not-submitted">
-                              Not Submitted
-                            </option>
+                            <option value="not-submitted">Not Submitted</option>
                           </select>
                         </td>
 
@@ -454,7 +948,7 @@ export function WeeklyTestManager({
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-[var(--color-border)] p-8 text-center text-sm text-[var(--color-muted)]">
-                No students available. Add students to the system first.
+                Select one or more students above to enter their marks.
               </div>
             )}
 
@@ -483,7 +977,7 @@ export function WeeklyTestManager({
             <button
               type="button"
               onClick={() => void saveWeeklyTest()}
-              disabled={isSaving || !results.length}
+              disabled={isSaving}
               className="action-button w-full px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isSaving
@@ -571,8 +1065,7 @@ export function WeeklyTestManager({
                     </h4>
 
                     <p className="mt-1 text-sm text-[var(--color-muted)]">
-                      {test.subject} •{" "}
-                      {formatTestDate(test.testDate)}
+                      {test.subject} • {formatTestDate(test.testDate)}
                     </p>
                   </div>
 

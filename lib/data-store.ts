@@ -44,9 +44,9 @@ import type {
   TeacherFeedback,
   TeacherPayout,
   AppNotification,
-StudentDailyActivity,
-StudentDailyRoutine,
-PlacementApplication,
+  StudentDailyActivity,
+  StudentDailyRoutine,
+  PlacementApplication,
   PlacementJob,
   PlacementApplicationStatus,
   DashboardAnalytics,
@@ -169,16 +169,15 @@ export const COLLECTIONS = {
   ptmSessions: "ptmSessions",
 
   weeklyTests: "weeklyTests",
- teacherFeedback: "teacherFeedback",
+  teacherFeedback: "teacherFeedback",
 
+  // Teacher-created daily learning records
+  dailyActivities: "dailyActivities",
 
-// Teacher-created daily learning records
-dailyActivities: "dailyActivities",
+  // Student-created personal routine records
+  studentDailyRoutines: "studentDailyRoutines",
 
-// Student-created personal routine records
-studentDailyRoutines: "studentDailyRoutines",
-
-feeInstallmentPlans: "feeInstallmentPlans",
+  feeInstallmentPlans: "feeInstallmentPlans",
   teacherPayouts: "teacherPayouts",
   notifications: "notifications",
 
@@ -474,9 +473,7 @@ const FORCE_LIBRARY_COURSE_KEYS = new Set([
   "defence-paramilitary-exams",
 ]);
 
-function hydrateCourse(
-  document: Partial<CourseItem> & { id: string },
-) {
+function hydrateCourse(document: Partial<CourseItem> & { id: string }) {
   const templateKey =
     document.standardKey ??
     inferCourseTemplateKey(document.title) ??
@@ -484,23 +481,15 @@ function hydrateCourse(
 
   const template =
     getCourseTemplateByKey(templateKey) ??
-    getCourseTemplateByKey(
-      DEFAULT_COURSE_TEMPLATE_KEY,
-    );
+    getCourseTemplateByKey(DEFAULT_COURSE_TEMPLATE_KEY);
 
   if (!template) {
-    throw new Error(
-      "Default course template could not be resolved.",
-    );
+    throw new Error("Default course template could not be resolved.");
   }
 
   if (
-    STANDARD_ADDITIONAL_COURSE_KEYS.has(
-      template.standardKey,
-    ) ||
-    FORCE_LIBRARY_COURSE_KEYS.has(
-      template.standardKey,
-    )
+    STANDARD_ADDITIONAL_COURSE_KEYS.has(template.standardKey) ||
+    FORCE_LIBRARY_COURSE_KEYS.has(template.standardKey)
   ) {
     return {
       id: document.id,
@@ -520,9 +509,7 @@ function hydrateCourse(
             template.sections.includes(section),
           );
 
-          return validSections.length
-            ? validSections
-            : template.sections;
+          return validSections.length ? validSections : template.sections;
         })()
       : template.sections,
     statusLabel: document.statusLabel ?? template.statusLabel,
@@ -545,9 +532,7 @@ function hydrateCourse(
       ? document.subjectsCovered
       : template.subjectsCovered,
     points: document.points?.length ? document.points : template.points,
-    audience: document.audience?.length
-      ? document.audience
-      : template.audience,
+    audience: document.audience?.length ? document.audience : template.audience,
   } satisfies CourseItem;
 }
 
@@ -788,9 +773,7 @@ export async function findUserByCredentials(
 
   const normalizedLogin = login.trim().toLowerCase();
 
-  const mobileLogin = normalizedLogin
-    .replace(/[^\d]/g, "")
-    .slice(-10);
+  const mobileLogin = normalizedLogin.replace(/[^\d]/g, "").slice(-10);
 
   const emailLocalPart = normalizedLogin.includes("@")
     ? normalizedLogin.split("@")[0]
@@ -840,7 +823,6 @@ export async function findUserByCredentials(
   return user ? toSessionUser(user) : null;
 }
 
-
 export async function findUserById(id: string) {
   const collection = await getUsersCollection();
   const user = await collection.findOne({ id });
@@ -857,17 +839,14 @@ const HIDDEN_PUBLIC_COURSE_KEYS = new Set([
 export async function getCoursesForRole(role: Role) {
   await ensureStandardCoursesBackfilled();
 
-  const collection = await getCollection<CourseItem>(
-    COLLECTIONS.courses,
-  );
+  const collection = await getCollection<CourseItem>(COLLECTIONS.courses);
 
   const hydrated = stripMongoIds(
     await collection.find({ audience: role }).toArray(),
   ).map((course) => hydrateCourse(course));
 
   const visibleCourses = hydrated.filter(
-    (course) =>
-      !HIDDEN_PUBLIC_COURSE_KEYS.has(course.standardKey),
+    (course) => !HIDDEN_PUBLIC_COURSE_KEYS.has(course.standardKey),
   );
 
   return dedupeAndSortCourses(visibleCourses);
@@ -1066,24 +1045,18 @@ export async function createTest(input: {
   assignedUserIds: string[];
   questions: TestQuestion[];
 }) {
-const test: TestItem & { createdAt: string } = {
-  id: randomUUID(),
+  const test: TestItem & { createdAt: string } = {
+    id: randomUUID(),
 
-  title: input.title,
+    title: input.title,
 
-  status: input.status,
+    status: input.status,
 
-  summary: input.summary,
+    summary: input.summary,
 
-  examType:
-    input.examType,
+    examType: input.examType,
 
-  audience: [
-    "student",
-    "educator",
-    "admin",
-    "parent",
-  ],
+    audience: ["student", "educator", "admin", "parent"],
     assignedUserIds: input.assignedUserIds,
     createdBy: input.createdBy,
     questions: input.questions,
@@ -1104,14 +1077,11 @@ export async function updateTest(
 
     summary?: string;
 
-    examType?:
-      TestItem["examType"];
+    examType?: TestItem["examType"];
 
-    assignedUserIds?:
-      string[];
+    assignedUserIds?: string[];
 
-    questions?:
-      TestQuestion[];
+    questions?: TestQuestion[];
   },
 ) {
   const collection = await getCollection(COLLECTIONS.tests);
@@ -1121,29 +1091,17 @@ export async function updateTest(
 
   if (input.title !== undefined) update.title = input.title;
   if (input.status !== undefined) update.status = input.status;
-if (
-  input.summary !==
-  undefined
-) {
-  update.summary =
-    input.summary;
-}
+  if (input.summary !== undefined) {
+    update.summary = input.summary;
+  }
 
-if (
-  input.examType !==
-  undefined
-) {
-  update.examType =
-    input.examType;
-}
+  if (input.examType !== undefined) {
+    update.examType = input.examType;
+  }
 
-if (
-  input.assignedUserIds !==
-  undefined
-) {
-  update.assignedUserIds =
-    input.assignedUserIds;
-}
+  if (input.assignedUserIds !== undefined) {
+    update.assignedUserIds = input.assignedUserIds;
+  }
   if (input.questions !== undefined) update.questions = input.questions;
 
   const result = await collection.updateOne({ id: testId }, { $set: update });
@@ -1339,7 +1297,10 @@ export async function unblockChat(participantIds: string[]) {
 export async function isChatBlocked(participantIds: string[]) {
   const collection = await getCollection<ChatBlock>("chat_blocks");
   const sortedIds = [...participantIds].sort();
-  const block = await collection.findOne({ participantIds: sortedIds, blocked: true });
+  const block = await collection.findOne({
+    participantIds: sortedIds,
+    blocked: true,
+  });
   return block ? (stripMongoId(block) as ChatBlock) : null;
 }
 
@@ -1353,7 +1314,10 @@ export async function getAllBlockedChats() {
 export async function getAllChatMessagesForAdmin() {
   const collection = await getCollection<MessageItem>("messages");
   const allMessages = stripMongoIds(
-    await collection.find({ channel: "Chat" }).sort({ createdAt: -1 }).toArray(),
+    await collection
+      .find({ channel: "Chat" })
+      .sort({ createdAt: -1 })
+      .toArray(),
   ) as MessageItem[];
   return allMessages;
 }
@@ -1420,9 +1384,7 @@ export async function deleteMessage(messageId: string) {
 // =========================
 
 export async function getComplaintsForAdmin() {
-  const collection = await getCollection<ComplaintItem>(
-    COLLECTIONS.complaints,
-  );
+  const collection = await getCollection<ComplaintItem>(COLLECTIONS.complaints);
 
   return stripMongoIds(
     await collection
@@ -1434,226 +1396,142 @@ export async function getComplaintsForAdmin() {
   );
 }
 
-export async function getComplaintById(
-  complaintId: string,
-) {
-  const collection = await getCollection<ComplaintItem>(
-    COLLECTIONS.complaints,
-  );
+export async function getComplaintById(complaintId: string) {
+  const collection = await getCollection<ComplaintItem>(COLLECTIONS.complaints);
 
   const complaint = await collection.findOne({
     id: complaintId,
   });
 
-  return complaint
-    ? stripMongoId(complaint)
-    : null;
+  return complaint ? stripMongoId(complaint) : null;
 }
 
 export async function createComplaint(input: {
   submittedById: string;
   submittedByName: string;
 
-  submittedByRole:
-    | "student"
-    | "parent"
-    | "educator";
+  submittedByRole: "student" | "parent" | "educator";
 
-  category:
-    ComplaintItem["category"];
+  category: ComplaintItem["category"];
 
   subject: string;
   description: string;
 
-  priority:
-    ComplaintItem["priority"];
+  priority: ComplaintItem["priority"];
 }) {
-  if (
-    !input.submittedById.trim()
-  ) {
-    throw new Error(
-      "Complaint submitter is required.",
-    );
+  if (!input.submittedById.trim()) {
+    throw new Error("Complaint submitter is required.");
+  }
+
+  if (!input.submittedByName.trim()) {
+    throw new Error("Complaint submitter name is required.");
   }
 
   if (
-    !input.submittedByName.trim()
-  ) {
-    throw new Error(
-      "Complaint submitter name is required.",
-    );
-  }
-
-  if (
-    input.submittedByRole !==
-      "student" &&
-    input.submittedByRole !==
-      "parent" &&
-    input.submittedByRole !==
-      "educator"
+    input.submittedByRole !== "student" &&
+    input.submittedByRole !== "parent" &&
+    input.submittedByRole !== "educator"
   ) {
     throw new Error(
       "Only students, parents, and educators can submit complaints.",
     );
   }
 
-  if (
-    !input.subject.trim()
-  ) {
-    throw new Error(
-      "Complaint subject is required.",
-    );
+  if (!input.subject.trim()) {
+    throw new Error("Complaint subject is required.");
   }
 
-  if (
-    !input.description.trim()
-  ) {
-    throw new Error(
-      "Complaint details are required.",
-    );
+  if (!input.description.trim()) {
+    throw new Error("Complaint details are required.");
   }
 
-  const now =
-    new Date().toISOString();
+  const now = new Date().toISOString();
 
   const complaint: ComplaintItem = {
-    id:
-      `complaint-${randomUUID()}`,
+    id: `complaint-${randomUUID()}`,
 
-    submittedById:
-      input.submittedById,
+    submittedById: input.submittedById,
 
-    submittedByName:
-      input.submittedByName.trim(),
+    submittedByName: input.submittedByName.trim(),
 
-    submittedByRole:
-      input.submittedByRole,
+    submittedByRole: input.submittedByRole,
 
-    category:
-      input.category,
+    category: input.category,
 
-    subject:
-      input.subject.trim(),
+    subject: input.subject.trim(),
 
-    description:
-      input.description.trim(),
+    description: input.description.trim(),
 
-    priority:
-      input.priority,
+    priority: input.priority,
 
-    status:
-      "submitted",
+    status: "submitted",
 
-    createdAt:
-      now,
+    createdAt: now,
 
-    updatedAt:
-      now,
+    updatedAt: now,
   };
 
-  const collection =
-    await getCollection<ComplaintItem>(
-      COLLECTIONS.complaints,
-    );
+  const collection = await getCollection<ComplaintItem>(COLLECTIONS.complaints);
 
-  await collection.insertOne(
-    complaint,
-  );
+  await collection.insertOne(complaint);
 
-  return stripMongoId(
-    complaint,
-  );
+  return stripMongoId(complaint);
 }
 
 export async function updateComplaint(
   complaintId: string,
 
   input: Partial<{
-    status:
-      ComplaintItem["status"];
+    status: ComplaintItem["status"];
 
-    adminNote:
-      string;
+    adminNote: string;
 
-    reviewedBy:
-      string;
+    reviewedBy: string;
 
-    reviewedByName:
-      string;
+    reviewedByName: string;
   }>,
 ) {
-  const collection =
-    await getCollection<ComplaintItem>(
-      COLLECTIONS.complaints,
-    );
+  const collection = await getCollection<ComplaintItem>(COLLECTIONS.complaints);
 
-  const existingComplaint =
-    await collection.findOne({
-      id: complaintId,
-    });
+  const existingComplaint = await collection.findOne({
+    id: complaintId,
+  });
 
-  if (
-    !existingComplaint
-  ) {
+  if (!existingComplaint) {
     return null;
   }
 
   const updates: Partial<ComplaintItem> = {
-    updatedAt:
-      new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   if (
-    input.status ===
-      "submitted" ||
-    input.status ===
-      "under-review" ||
-    input.status ===
-      "resolved" ||
-    input.status ===
-      "closed"
+    input.status === "submitted" ||
+    input.status === "under-review" ||
+    input.status === "resolved" ||
+    input.status === "closed"
   ) {
-    updates.status =
-      input.status;
+    updates.status = input.status;
+  }
+
+  if (typeof input.adminNote === "string") {
+    updates.adminNote = input.adminNote.trim() || undefined;
+  }
+
+  if (typeof input.reviewedBy === "string" && input.reviewedBy.trim()) {
+    updates.reviewedBy = input.reviewedBy.trim();
+  }
+
+  if (typeof input.reviewedByName === "string" && input.reviewedByName.trim()) {
+    updates.reviewedByName = input.reviewedByName.trim();
   }
 
   if (
-    typeof input.adminNote ===
-    "string"
+    input.status === "under-review" ||
+    input.status === "resolved" ||
+    input.status === "closed"
   ) {
-    updates.adminNote =
-      input.adminNote.trim() ||
-      undefined;
-  }
-
-  if (
-    typeof input.reviewedBy ===
-      "string" &&
-    input.reviewedBy.trim()
-  ) {
-    updates.reviewedBy =
-      input.reviewedBy.trim();
-  }
-
-  if (
-    typeof input.reviewedByName ===
-      "string" &&
-    input.reviewedByName.trim()
-  ) {
-    updates.reviewedByName =
-      input.reviewedByName.trim();
-  }
-
-  if (
-    input.status ===
-      "under-review" ||
-    input.status ===
-      "resolved" ||
-    input.status ===
-      "closed"
-  ) {
-    updates.reviewedAt =
-      new Date().toISOString();
+    updates.reviewedAt = new Date().toISOString();
   }
 
   await collection.updateOne(
@@ -1662,40 +1540,25 @@ export async function updateComplaint(
     },
 
     {
-      $set:
-        updates,
+      $set: updates,
     },
   );
 
-  const updatedComplaint =
-    await collection.findOne({
-      id: complaintId,
-    });
+  const updatedComplaint = await collection.findOne({
+    id: complaintId,
+  });
 
-  return updatedComplaint
-    ? stripMongoId(
-        updatedComplaint,
-      )
-    : null;
+  return updatedComplaint ? stripMongoId(updatedComplaint) : null;
 }
 
-export async function deleteComplaint(
-  complaintId: string,
-) {
-  const collection =
-    await getCollection<ComplaintItem>(
-      COLLECTIONS.complaints,
-    );
+export async function deleteComplaint(complaintId: string) {
+  const collection = await getCollection<ComplaintItem>(COLLECTIONS.complaints);
 
-  const result =
-    await collection.deleteOne({
-      id: complaintId,
-    });
+  const result = await collection.deleteOne({
+    id: complaintId,
+  });
 
-  return (
-    result.deletedCount >
-    0
-  );
+  return result.deletedCount > 0;
 }
 type NotificationTargetMode = "everyone" | "selected-users";
 
@@ -2286,7 +2149,9 @@ export async function getStudentDirectoryV2(filters?: {
     photoUrl: (s as any).photoUrl ?? undefined,
   })) satisfies StudentDirectoryEntry[];
 
-  const invoiceCollection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
+  const invoiceCollection = await getCollection<FeeInvoice>(
+    COLLECTIONS.feeInvoices,
+  );
   for (const entry of managed) {
     const invoices = await invoiceCollection
       .find({ studentId: entry.id })
@@ -2680,13 +2545,8 @@ async function getLinkedStudentIdForViewer(role: Role, userId?: string) {
 // Parent-Teacher Meetings
 // =========================
 
-export async function getPtmSessionsForRole(
-  role: Role,
-  userId?: string,
-) {
-  const collection = await getCollection<PtmSession>(
-    COLLECTIONS.ptmSessions,
-  );
+export async function getPtmSessionsForRole(role: Role, userId?: string) {
+  const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
   if (role === "admin") {
     return stripMongoIds(
@@ -2708,10 +2568,7 @@ export async function getPtmSessionsForRole(
     return stripMongoIds(
       await collection
         .find({
-          $or: [
-            { teacherId: userId },
-            { createdBy: userId },
-          ],
+          $or: [{ teacherId: userId }, { createdBy: userId }],
         })
         .sort({
           startsAt: -1,
@@ -2721,11 +2578,7 @@ export async function getPtmSessionsForRole(
     );
   }
 
-  const linkedStudentId =
-    await getLinkedStudentIdForViewer(
-      role,
-      userId,
-    );
+  const linkedStudentId = await getLinkedStudentIdForViewer(role, userId);
 
   if (!linkedStudentId) {
     return [];
@@ -2744,20 +2597,14 @@ export async function getPtmSessionsForRole(
   );
 }
 
-export async function getPtmSessionById(
-  ptmId: string,
-) {
-  const collection = await getCollection<PtmSession>(
-    COLLECTIONS.ptmSessions,
-  );
+export async function getPtmSessionById(ptmId: string) {
+  const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
   const ptm = await collection.findOne({
     id: ptmId,
   });
 
-  return ptm
-    ? stripMongoId(ptm)
-    : null;
+  return ptm ? stripMongoId(ptm) : null;
 }
 
 export async function createPtmSession(input: {
@@ -2788,160 +2635,102 @@ export async function createPtmSession(input: {
   createdBy: string;
 }) {
   if (!input.title.trim()) {
-    throw new Error(
-      "PTM title is required.",
-    );
+    throw new Error("PTM title is required.");
   }
 
   if (!input.studentId.trim()) {
-    throw new Error(
-      "Student is required.",
-    );
+    throw new Error("Student is required.");
   }
 
   if (!input.teacherId.trim()) {
-    throw new Error(
-      "Teacher is required.",
-    );
+    throw new Error("Teacher is required.");
   }
 
   if (!input.startsAt.trim()) {
-    throw new Error(
-      "PTM date and time are required.",
-    );
+    throw new Error("PTM date and time are required.");
   }
 
-  if (
-    input.mode === "online" &&
-    !input.meetingLink?.trim()
-  ) {
-    throw new Error(
-      "Meeting link is required for an online PTM.",
-    );
+  if (input.mode === "online" && !input.meetingLink?.trim()) {
+    throw new Error("Meeting link is required for an online PTM.");
   }
 
-  if (
-    input.mode === "offline" &&
-    !input.location?.trim()
-  ) {
-    throw new Error(
-      "Location is required for an offline PTM.",
-    );
+  if (input.mode === "offline" && !input.location?.trim()) {
+    throw new Error("Location is required for an offline PTM.");
   }
 
-  const users =
-    await getUsersCollection();
+  const users = await getUsersCollection();
 
-  const student =
-    await users.findOne({
-      id: input.studentId,
-      role: "student",
-    });
+  const student = await users.findOne({
+    id: input.studentId,
+    role: "student",
+  });
 
   if (!student) {
-    throw new Error(
-      "Selected student could not be found.",
-    );
+    throw new Error("Selected student could not be found.");
   }
 
-  const linkedParent =
-    await users.findOne({
-      role: "parent",
-      linkedStudentId:
-        input.studentId,
-    });
+  const linkedParent = await users.findOne({
+    role: "parent",
+    linkedStudentId: input.studentId,
+  });
 
-  const now =
-    new Date().toISOString();
+  const now = new Date().toISOString();
 
   const ptm: PtmSession = {
     id: `ptm-${randomUUID()}`,
 
-    title:
-      input.title.trim(),
+    title: input.title.trim(),
 
-    studentId:
-      student.id,
+    studentId: student.id,
 
-    studentName:
-      student.name,
+    studentName: student.name,
 
-    parentId:
-      linkedParent?.id,
+    parentId: linkedParent?.id,
 
-    parentName:
-      linkedParent?.name,
+    parentName: linkedParent?.name,
 
-    teacherId:
-      input.teacherId,
+    teacherId: input.teacherId,
 
-    teacherName:
-      input.teacherName.trim(),
+    teacherName: input.teacherName.trim(),
 
-    batchId:
-      input.batchId?.trim() ||
-      undefined,
+    batchId: input.batchId?.trim() || undefined,
 
-    batchName:
-      input.batchName?.trim() ||
-      undefined,
+    batchName: input.batchName?.trim() || undefined,
 
-    startsAt:
-      input.startsAt,
+    startsAt: input.startsAt,
 
-    endsAt:
-      input.endsAt?.trim() ||
-      undefined,
+    endsAt: input.endsAt?.trim() || undefined,
 
-    mode:
-      input.mode,
+    mode: input.mode,
 
     meetingLink:
       input.mode === "online"
-        ? input.meetingLink?.trim() ||
-          undefined
+        ? input.meetingLink?.trim() || undefined
         : undefined,
 
     location:
       input.mode === "offline"
-        ? input.location?.trim() ||
-          undefined
+        ? input.location?.trim() || undefined
         : undefined,
 
-    agenda:
-      input.agenda?.trim() ||
-      undefined,
+    agenda: input.agenda?.trim() || undefined,
 
-    notes:
-      input.notes?.trim() ||
-      undefined,
+    notes: input.notes?.trim() || undefined,
 
-    status:
-      input.status ??
-      "scheduled",
+    status: input.status ?? "scheduled",
 
-    createdBy:
-      input.createdBy,
+    createdBy: input.createdBy,
 
-    createdAt:
-      now,
+    createdAt: now,
 
-    updatedAt:
-      now,
+    updatedAt: now,
   };
 
-  const collection =
-    await getCollection<PtmSession>(
-      COLLECTIONS.ptmSessions,
-    );
+  const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
-  await collection.insertOne(
-    ptm,
-  );
+  await collection.insertOne(ptm);
 
-  return stripMongoId(
-    ptm,
-  );
+  return stripMongoId(ptm);
 }
 
 export async function updatePtmSession(
@@ -2963,116 +2752,66 @@ export async function updatePtmSession(
     status: PtmSession["status"];
   }>,
 ) {
-  const collection =
-    await getCollection<PtmSession>(
-      COLLECTIONS.ptmSessions,
-    );
+  const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
-  const existing =
-    await collection.findOne({
-      id: ptmId,
-    });
+  const existing = await collection.findOne({
+    id: ptmId,
+  });
 
   if (!existing) {
     return null;
   }
 
   const updates: Partial<PtmSession> = {
-    updatedAt:
-      new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
-  if (
-    typeof input.title ===
-    "string"
-  ) {
+  if (typeof input.title === "string") {
     if (!input.title.trim()) {
-      throw new Error(
-        "PTM title cannot be empty.",
-      );
+      throw new Error("PTM title cannot be empty.");
     }
 
-    updates.title =
-      input.title.trim();
+    updates.title = input.title.trim();
   }
 
-  if (
-    typeof input.startsAt ===
-    "string"
-  ) {
+  if (typeof input.startsAt === "string") {
     if (!input.startsAt.trim()) {
-      throw new Error(
-        "PTM date and time are required.",
-      );
+      throw new Error("PTM date and time are required.");
     }
 
-    updates.startsAt =
-      input.startsAt;
+    updates.startsAt = input.startsAt;
+  }
+
+  if (typeof input.endsAt === "string") {
+    updates.endsAt = input.endsAt.trim() || undefined;
+  }
+
+  if (input.mode === "online" || input.mode === "offline") {
+    updates.mode = input.mode;
+  }
+
+  if (typeof input.meetingLink === "string") {
+    updates.meetingLink = input.meetingLink.trim() || undefined;
+  }
+
+  if (typeof input.location === "string") {
+    updates.location = input.location.trim() || undefined;
+  }
+
+  if (typeof input.agenda === "string") {
+    updates.agenda = input.agenda.trim() || undefined;
+  }
+
+  if (typeof input.notes === "string") {
+    updates.notes = input.notes.trim() || undefined;
   }
 
   if (
-    typeof input.endsAt ===
-    "string"
+    input.status === "scheduled" ||
+    input.status === "completed" ||
+    input.status === "cancelled"
   ) {
-    updates.endsAt =
-      input.endsAt.trim() ||
-      undefined;
-  }
-
-  if (
-    input.mode === "online" ||
-    input.mode === "offline"
-  ) {
-    updates.mode =
-      input.mode;
-  }
-
-  if (
-    typeof input.meetingLink ===
-    "string"
-  ) {
-    updates.meetingLink =
-      input.meetingLink.trim() ||
-      undefined;
-  }
-
-  if (
-    typeof input.location ===
-    "string"
-  ) {
-    updates.location =
-      input.location.trim() ||
-      undefined;
-  }
-
-  if (
-    typeof input.agenda ===
-    "string"
-  ) {
-    updates.agenda =
-      input.agenda.trim() ||
-      undefined;
-  }
-
-  if (
-    typeof input.notes ===
-    "string"
-  ) {
-    updates.notes =
-      input.notes.trim() ||
-      undefined;
-  }
-
-  if (
-    input.status ===
-      "scheduled" ||
-    input.status ===
-      "completed" ||
-    input.status ===
-      "cancelled"
-  ) {
-    updates.status =
-      input.status;
+    updates.status = input.status;
   }
 
   await collection.updateOne(
@@ -3084,33 +2823,21 @@ export async function updatePtmSession(
     },
   );
 
-  const updated =
-    await collection.findOne({
-      id: ptmId,
-    });
+  const updated = await collection.findOne({
+    id: ptmId,
+  });
 
-  return updated
-    ? stripMongoId(updated)
-    : null;
+  return updated ? stripMongoId(updated) : null;
 }
 
-export async function deletePtmSession(
-  ptmId: string,
-) {
-  const collection =
-    await getCollection<PtmSession>(
-      COLLECTIONS.ptmSessions,
-    );
+export async function deletePtmSession(ptmId: string) {
+  const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
-  const result =
-    await collection.deleteOne({
-      id: ptmId,
-    });
+  const result = await collection.deleteOne({
+    id: ptmId,
+  });
 
-  return (
-    result.deletedCount >
-    0
-  );
+  return result.deletedCount > 0;
 }
 export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
   const collection = await getCollection<AttendanceSheet>(
@@ -3209,7 +2936,9 @@ export async function deleteAttendanceSheet(attendanceId: string) {
 // =========================
 
 export async function getLeaveRequestsForRole(role: Role, userId?: string) {
-  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  const collection = await getCollection<LeaveRequest>(
+    COLLECTIONS.leaveRequests,
+  );
 
   if (role === "admin") {
     return stripMongoIds(
@@ -3236,7 +2965,9 @@ export async function createLeaveRequest(input: {
   reason: string;
   documentUrl?: string;
 }) {
-  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  const collection = await getCollection<LeaveRequest>(
+    COLLECTIONS.leaveRequests,
+  );
   const now = new Date().toISOString();
   const request: LeaveRequest = {
     id: `leave-${Date.now()}`,
@@ -3257,7 +2988,9 @@ export async function updateLeaveRequestStatus(
     approvedBy?: string;
   },
 ) {
-  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  const collection = await getCollection<LeaveRequest>(
+    COLLECTIONS.leaveRequests,
+  );
   const setFields: Record<string, unknown> = {
     status: update.status,
     updatedAt: new Date().toISOString(),
@@ -3281,9 +3014,7 @@ export async function getLeaveTypes() {
 
 export async function getAllLeaveTypes() {
   const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
-  return stripMongoIds(
-    await collection.find({}).sort({ name: 1 }).toArray(),
-  );
+  return stripMongoIds(await collection.find({}).sort({ name: 1 }).toArray());
 }
 
 export async function createLeaveType(input: {
@@ -3303,7 +3034,10 @@ export async function createLeaveType(input: {
   return stripMongoId(item);
 }
 
-export async function updateLeaveType(id: string, input: Partial<LeaveTypeItem>) {
+export async function updateLeaveType(
+  id: string,
+  input: Partial<LeaveTypeItem>,
+) {
   const collection = await getCollection<LeaveTypeItem>(COLLECTIONS.leaveTypes);
   await collection.updateOne({ id }, { $set: input });
   const updated = await collection.findOne({ id });
@@ -3318,9 +3052,7 @@ export async function deleteLeaveType(id: string) {
 
 export async function getHolidays() {
   const collection = await getCollection<HolidayItem>(COLLECTIONS.holidays);
-  return stripMongoIds(
-    await collection.find({}).sort({ date: 1 }).toArray(),
-  );
+  return stripMongoIds(await collection.find({}).sort({ date: 1 }).toArray());
 }
 
 export async function createHoliday(input: {
@@ -3345,7 +3077,9 @@ export async function deleteHoliday(id: string) {
 }
 
 export async function getLeaveBalancesForRole(role: Role, userId?: string) {
-  const collection = await getCollection<LeaveBalanceItem>(COLLECTIONS.leaveBalances);
+  const collection = await getCollection<LeaveBalanceItem>(
+    COLLECTIONS.leaveBalances,
+  );
 
   if (role === "admin") {
     return stripMongoIds(
@@ -3368,7 +3102,9 @@ export async function createLeaveBalance(input: {
   daysAllowed: number;
   note?: string;
 }) {
-  const collection = await getCollection<LeaveBalanceItem>(COLLECTIONS.leaveBalances);
+  const collection = await getCollection<LeaveBalanceItem>(
+    COLLECTIONS.leaveBalances,
+  );
   const item: LeaveBalanceItem = {
     id: `leavebalance-${Date.now()}`,
     ...input,
@@ -3379,7 +3115,9 @@ export async function createLeaveBalance(input: {
 }
 
 export async function getPendingLeaveCount() {
-  const collection = await getCollection<LeaveRequest>(COLLECTIONS.leaveRequests);
+  const collection = await getCollection<LeaveRequest>(
+    COLLECTIONS.leaveRequests,
+  );
   return await collection.countDocuments({ status: "pending" });
 }
 
@@ -3398,9 +3136,7 @@ export function getLeaveStats(requests: LeaveRequest[]) {
 
 export async function getAllCustomRoles() {
   const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
-  return stripMongoIds(
-    await collection.find({}).sort({ name: 1 }).toArray(),
-  );
+  return stripMongoIds(await collection.find({}).sort({ name: 1 }).toArray());
 }
 
 export async function getActiveCustomRoles() {
@@ -3430,10 +3166,7 @@ export async function createCustomRole(input: {
   return stripMongoId(role);
 }
 
-export async function updateCustomRole(
-  id: string,
-  input: Partial<CustomRole>,
-) {
+export async function updateCustomRole(id: string, input: Partial<CustomRole>) {
   const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
   const update = { ...input, updatedAt: new Date().toISOString() };
   await collection.updateOne({ id }, { $set: update });
@@ -3460,9 +3193,7 @@ export async function getRoleAssignmentsForUser(userId: string) {
   const collection = await getCollection<CustomRoleAssignment>(
     COLLECTIONS.roleAssignments,
   );
-  return stripMongoIds(
-    await collection.find({ userId }).toArray(),
-  );
+  return stripMongoIds(await collection.find({ userId }).toArray());
 }
 
 export async function assignRoleToUser(input: {
@@ -3502,7 +3233,9 @@ export async function getCustomRolesForUser(userId: string) {
   const assignments = await getRoleAssignmentsForUser(userId);
   if (assignments.length === 0) return [];
 
-  const roleCollection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const roleCollection = await getCollection<CustomRole>(
+    COLLECTIONS.customRoles,
+  );
   const roleIds = assignments.map((a) => a.roleId);
   const roles = await roleCollection
     .find({ id: { $in: roleIds }, isActive: true })
@@ -3511,7 +3244,9 @@ export async function getCustomRolesForUser(userId: string) {
 }
 
 export async function getRolesDashboardStats() {
-  const roleCollection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
+  const roleCollection = await getCollection<CustomRole>(
+    COLLECTIONS.customRoles,
+  );
   const assignCollection = await getCollection<CustomRoleAssignment>(
     COLLECTIONS.roleAssignments,
   );
@@ -3605,8 +3340,12 @@ export async function getFeeInvoiceStudentDetails(
 
     parentName: parent?.name || student.profile?.parentName || "",
 
-    classCourse:
-      student.program?.trim() || "",
+    classCourse: normalizeInvoiceClassCourse(
+      student.program?.trim() ||
+        student.profile?.courseWanted?.trim() ||
+        student.profile?.courseWantedTitle?.trim() ||
+        "",
+    ),
 
     rollNo: "",
 
@@ -3621,7 +3360,23 @@ export async function getFeeInvoiceStudentDetails(
       "",
   };
 }
+function normalizeInvoiceClassCourse(value?: string) {
+  const normalizedValue = value?.trim() ?? "";
 
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const examMatch = normalizedValue.match(
+    /^(?:competitive exams?|govt exams?|government exams?)\s*\|\s*(.+)$/i,
+  );
+
+  if (!examMatch?.[1]) {
+    return normalizedValue;
+  }
+
+  return examMatch[1].replace(/-/g, " ").replace(/\s+/g, " ").trim();
+}
 export async function createFeeInvoice(input: {
   studentId: string;
   studentName: string;
@@ -3713,7 +3468,10 @@ export async function updateFeeInvoice(
   if (input.notes !== undefined) updateFields.notes = input.notes;
 
   if (input.transaction) {
-    const transactions = [...(existingInvoice.transactions ?? []), input.transaction];
+    const transactions = [
+      ...(existingInvoice.transactions ?? []),
+      input.transaction,
+    ];
     updateFields.transactions = transactions;
 
     const totalPaid = transactions.reduce((sum, t) => sum + t.paidAmount, 0);
@@ -3730,9 +3488,11 @@ export async function updateFeeInvoice(
 
     updateFields.paymentMode = input.transaction.paymentMode;
   } else {
-    if (input.paidAmount !== undefined) updateFields.paidAmount = input.paidAmount;
+    if (input.paidAmount !== undefined)
+      updateFields.paidAmount = input.paidAmount;
     if (input.status !== undefined) updateFields.status = input.status;
-    if (input.paymentMode !== undefined) updateFields.paymentMode = input.paymentMode;
+    if (input.paymentMode !== undefined)
+      updateFields.paymentMode = input.paymentMode;
   }
 
   await collection.updateOne({ id: invoiceId }, { $set: updateFields });
@@ -4462,15 +4222,28 @@ export async function getDashboardBundle(
     }
   }
 
-  let linkedStudentProfile: { name?: string; email?: string; phone?: string; course?: string; attendance?: number | null } | undefined;
+  let linkedStudentProfile:
+    | {
+        name?: string;
+        email?: string;
+        phone?: string;
+        course?: string;
+        attendance?: number | null;
+      }
+    | undefined;
   if (role === "parent" && userDoc?.linkedStudentId) {
     const linkedStudentDoc = await findFullUserById(userDoc.linkedStudentId);
     if (linkedStudentDoc) {
       linkedStudentProfile = {
         name: linkedStudentDoc.name,
         email: linkedStudentDoc.email,
-        phone: linkedStudentDoc.profile?.guardianPhone ?? linkedStudentDoc.parentMobile ?? linkedStudentDoc.mobile,
-        course: linkedStudentDoc.profile?.courseWantedTitle ?? linkedStudentDoc.profile?.courseWanted,
+        phone:
+          linkedStudentDoc.profile?.guardianPhone ??
+          linkedStudentDoc.parentMobile ??
+          linkedStudentDoc.mobile,
+        course:
+          linkedStudentDoc.profile?.courseWantedTitle ??
+          linkedStudentDoc.profile?.courseWanted,
       };
     }
   }
@@ -4494,11 +4267,16 @@ export async function getDashboardBundle(
     linkedStudentProfile,
     assignedFacultyIds,
     assignedFacultyNames,
-    profile: userDoc?.profile ? {
-      ...userDoc.profile,
-      guardianPhone: userDoc.profile.guardianPhone ?? userDoc.parentMobile ?? userDoc.mobile,
-      parentMobile: userDoc.profile.parentMobile ?? userDoc.parentMobile,
-    } : undefined,
+    profile: userDoc?.profile
+      ? {
+          ...userDoc.profile,
+          guardianPhone:
+            userDoc.profile.guardianPhone ??
+            userDoc.parentMobile ??
+            userDoc.mobile,
+          parentMobile: userDoc.profile.parentMobile ?? userDoc.parentMobile,
+        }
+      : undefined,
     analytics,
     certificates,
   };
@@ -4947,10 +4725,6 @@ export async function deleteTeacherFeedback(feedbackId: string) {
   return result.deletedCount > 0;
 }
 
-
-
-
-
 export async function getDailyActivitiesForRole(role: Role, userId?: string) {
   const collection = await getCollection<StudentDailyActivity>(
     COLLECTIONS.dailyActivities,
@@ -5179,13 +4953,10 @@ export async function deleteDailyActivity(activityId: string) {
 // Student Daily Routine
 // =========================
 
-export async function getStudentDailyRoutines(
-  studentId: string,
-) {
-  const collection =
-    await getCollection<StudentDailyRoutine>(
-      COLLECTIONS.studentDailyRoutines,
-    );
+export async function getStudentDailyRoutines(studentId: string) {
+  const collection = await getCollection<StudentDailyRoutine>(
+    COLLECTIONS.studentDailyRoutines,
+  );
 
   return stripMongoIds(
     await collection
@@ -5204,127 +4975,88 @@ export async function getStudentDailyRoutineById(
   routineId: string,
   studentId: string,
 ) {
-  const collection =
-    await getCollection<StudentDailyRoutine>(
-      COLLECTIONS.studentDailyRoutines,
-    );
+  const collection = await getCollection<StudentDailyRoutine>(
+    COLLECTIONS.studentDailyRoutines,
+  );
 
-  const routine =
-    await collection.findOne({
-      id: routineId,
-      studentId,
-    });
+  const routine = await collection.findOne({
+    id: routineId,
+    studentId,
+  });
 
-  return routine
-    ? stripMongoId(routine)
-    : null;
+  return routine ? stripMongoId(routine) : null;
 }
 
 export async function createStudentDailyRoutine(
-  input: Omit<
-    StudentDailyRoutine,
-    "id" | "createdAt" | "updatedAt"
-  >,
+  input: Omit<StudentDailyRoutine, "id" | "createdAt" | "updatedAt">,
 ) {
   if (!input.studentId.trim()) {
-    throw new Error(
-      "Student is required.",
-    );
+    throw new Error("Student is required.");
   }
 
   if (!input.studentName.trim()) {
-    throw new Error(
-      "Student name is required.",
-    );
+    throw new Error("Student name is required.");
   }
 
   if (!input.date.trim()) {
-    throw new Error(
-      "Routine date is required.",
-    );
+    throw new Error("Routine date is required.");
   }
 
-  const collection =
-    await getCollection<StudentDailyRoutine>(
-      COLLECTIONS.studentDailyRoutines,
-    );
+  const collection = await getCollection<StudentDailyRoutine>(
+    COLLECTIONS.studentDailyRoutines,
+  );
 
   /*
    * One routine entry per student per date.
    */
-  const existingRoutine =
-    await collection.findOne({
-      studentId: input.studentId,
-      date: input.date,
-    });
+  const existingRoutine = await collection.findOne({
+    studentId: input.studentId,
+    date: input.date,
+  });
 
   if (existingRoutine) {
-    throw new Error(
-      "A daily routine has already been saved for this date.",
-    );
+    throw new Error("A daily routine has already been saved for this date.");
   }
 
-  const now =
-    new Date().toISOString();
+  const now = new Date().toISOString();
 
   const routine: StudentDailyRoutine = {
     id: `daily-routine-${randomUUID()}`,
 
-    studentId:
-      input.studentId,
+    studentId: input.studentId,
 
-    studentName:
-      input.studentName.trim(),
+    studentName: input.studentName.trim(),
 
-    date:
-      input.date,
+    date: input.date,
 
-    wakeUpTime:
-      input.wakeUpTime,
+    wakeUpTime: input.wakeUpTime,
 
-    bedTime:
-      input.bedTime,
+    bedTime: input.bedTime,
 
-    sleepMinutes:
-      input.sleepMinutes,
+    sleepMinutes: input.sleepMinutes,
 
-    studyMinutes:
-      input.studyMinutes,
+    studyMinutes: input.studyMinutes,
 
-    screenMinutes:
-      input.screenMinutes,
+    screenMinutes: input.screenMinutes,
 
-    exerciseMinutes:
-      input.exerciseMinutes,
+    exerciseMinutes: input.exerciseMinutes,
 
-    tasksCompleted:
-      input.tasksCompleted,
+    tasksCompleted: input.tasksCompleted,
 
-    mood:
-      input.mood,
+    mood: input.mood,
 
-    mainGoal:
-      input.mainGoal?.trim() ||
-      undefined,
+    mainGoal: input.mainGoal?.trim() || undefined,
 
-    reflection:
-      input.reflection?.trim() ||
-      undefined,
+    reflection: input.reflection?.trim() || undefined,
 
-    createdAt:
-      now,
+    createdAt: now,
 
-    updatedAt:
-      now,
+    updatedAt: now,
   };
 
-  await collection.insertOne(
-    routine,
-  );
+  await collection.insertOne(routine);
 
-  return stripMongoId(
-    routine,
-  );
+  return stripMongoId(routine);
 }
 
 export async function updateStudentDailyRoutine(
@@ -5333,24 +5065,18 @@ export async function updateStudentDailyRoutine(
   input: Partial<
     Omit<
       StudentDailyRoutine,
-      | "id"
-      | "studentId"
-      | "studentName"
-      | "createdAt"
-      | "updatedAt"
+      "id" | "studentId" | "studentName" | "createdAt" | "updatedAt"
     >
   >,
 ) {
-  const collection =
-    await getCollection<StudentDailyRoutine>(
-      COLLECTIONS.studentDailyRoutines,
-    );
+  const collection = await getCollection<StudentDailyRoutine>(
+    COLLECTIONS.studentDailyRoutines,
+  );
 
-  const existingRoutine =
-    await collection.findOne({
-      id: routineId,
-      studentId,
-    });
+  const existingRoutine = await collection.findOne({
+    id: routineId,
+    studentId,
+  });
 
   if (!existingRoutine) {
     return null;
@@ -5360,49 +5086,35 @@ export async function updateStudentDailyRoutine(
    * Prevent two routine records
    * for the same student and date.
    */
-  if (
-    typeof input.date ===
-      "string" &&
-    input.date !==
-      existingRoutine.date
-  ) {
-    const duplicate =
-      await collection.findOne({
-        studentId,
-        date: input.date,
-        id: {
-          $ne: routineId,
-        } as any,
-      });
+  if (typeof input.date === "string" && input.date !== existingRoutine.date) {
+    const duplicate = await collection.findOne({
+      studentId,
+      date: input.date,
+      id: {
+        $ne: routineId,
+      } as any,
+    });
 
     if (duplicate) {
-      throw new Error(
-        "A daily routine has already been saved for this date.",
-      );
+      throw new Error("A daily routine has already been saved for this date.");
     }
   }
 
-  const updates: Partial<StudentDailyRoutine> =
-    {
-      ...input,
+  const updates: Partial<StudentDailyRoutine> = {
+    ...input,
 
-      mainGoal:
-        typeof input.mainGoal ===
-        "string"
-          ? input.mainGoal.trim() ||
-            undefined
-          : input.mainGoal,
+    mainGoal:
+      typeof input.mainGoal === "string"
+        ? input.mainGoal.trim() || undefined
+        : input.mainGoal,
 
-      reflection:
-        typeof input.reflection ===
-        "string"
-          ? input.reflection.trim() ||
-            undefined
-          : input.reflection,
+    reflection:
+      typeof input.reflection === "string"
+        ? input.reflection.trim() || undefined
+        : input.reflection,
 
-      updatedAt:
-        new Date().toISOString(),
-    };
+    updatedAt: new Date().toISOString(),
+  };
 
   await collection.updateOne(
     {
@@ -5414,33 +5126,26 @@ export async function updateStudentDailyRoutine(
     },
   );
 
-  const updatedRoutine =
-    await collection.findOne({
-      id: routineId,
-      studentId,
-    });
+  const updatedRoutine = await collection.findOne({
+    id: routineId,
+    studentId,
+  });
 
-  return updatedRoutine
-    ? stripMongoId(
-        updatedRoutine,
-      )
-    : null;
+  return updatedRoutine ? stripMongoId(updatedRoutine) : null;
 }
 
 export async function deleteStudentDailyRoutine(
   routineId: string,
   studentId: string,
 ) {
-  const collection =
-    await getCollection<StudentDailyRoutine>(
-      COLLECTIONS.studentDailyRoutines,
-    );
+  const collection = await getCollection<StudentDailyRoutine>(
+    COLLECTIONS.studentDailyRoutines,
+  );
 
-  const result =
-    await collection.deleteOne({
-      id: routineId,
-      studentId,
-    });
+  const result = await collection.deleteOne({
+    id: routineId,
+    studentId,
+  });
 
   return result.deletedCount > 0;
 }
@@ -5911,13 +5616,14 @@ export async function getTeacherPayoutsForRole(role: Role, userId?: string) {
 }
 
 export async function getCertificatesForRole(role: Role, userId?: string) {
-  const collection = await getCollection<Certificate>(
-    COLLECTIONS.certificates,
-  );
+  const collection = await getCollection<Certificate>(COLLECTIONS.certificates);
 
   if (role === "admin") {
     return stripMongoIds(
-      await collection.find({ status: "issued" }).sort({ createdAt: -1 }).toArray(),
+      await collection
+        .find({ status: "issued" })
+        .sort({ createdAt: -1 })
+        .toArray(),
     );
   }
 
@@ -7063,17 +6769,14 @@ export async function createHomework(input: {
   createdByName?: string;
 }) {
   const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
-const homework: HomeworkItem = {
-  id: randomUUID(),
+  const homework: HomeworkItem = {
+    id: randomUUID(),
 
-  assignedStudentIds: [
-    ...new Set(input.assignedStudentIds),
-  ],
-  assignedStudentNames:
-    input.assignedStudentNames,
+    assignedStudentIds: [...new Set(input.assignedStudentIds)],
+    assignedStudentNames: input.assignedStudentNames,
 
-  title: input.title,
-  description: input.description,
+    title: input.title,
+    description: input.description,
     objective: input.objective,
     keySteps: input.keySteps,
     deliverables: input.deliverables,
@@ -7122,13 +6825,9 @@ export async function getHomeworkForStudent(
   studentId: string,
   studentBatchIds: string[] = [],
 ) {
-  const collection =
-    await getCollection<HomeworkItem>(
-      COLLECTIONS.homework,
-    );
+  const collection = await getCollection<HomeworkItem>(COLLECTIONS.homework);
 
-  const normalizedStudentId =
-    studentId.trim();
+  const normalizedStudentId = studentId.trim();
 
   if (!normalizedStudentId) {
     return [];
@@ -7142,8 +6841,7 @@ export async function getHomeworkForStudent(
              * New individually assigned homework.
              */
             {
-              assignedStudentIds:
-                normalizedStudentId,
+              assignedStudentIds: normalizedStudentId,
             },
 
             /*
@@ -7161,8 +6859,7 @@ export async function getHomeworkForStudent(
           ],
         }
       : {
-          assignedStudentIds:
-            normalizedStudentId,
+          assignedStudentIds: normalizedStudentId,
         };
 
   const items = await collection
@@ -7320,7 +7017,9 @@ export async function awardGamificationPoints(input: {
   awardedBy: string;
   awardedByName?: string;
 }) {
-  const collection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const collection = await getCollection<GamificationPointEntry>(
+    COLLECTIONS.gamificationPoints,
+  );
   const entry: GamificationPointEntry = {
     id: randomUUID(),
     studentId: input.studentId,
@@ -7336,13 +7035,17 @@ export async function awardGamificationPoints(input: {
 }
 
 export async function getStudentTotalPoints(studentId: string) {
-  const collection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const collection = await getCollection<GamificationPointEntry>(
+    COLLECTIONS.gamificationPoints,
+  );
   const entries = await collection.find({ studentId }).toArray();
   return entries.reduce((sum, e) => sum + e.points, 0);
 }
 
 export async function getAllStudentsPoints() {
-  const collection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
+  const collection = await getCollection<GamificationPointEntry>(
+    COLLECTIONS.gamificationPoints,
+  );
   const entries = await collection.find({}).toArray();
   const map = new Map<string, number>();
   for (const e of entries) {
@@ -7357,7 +7060,9 @@ export async function getGamificationLeaderboard(batchId?: string) {
   if (batchId) studentQuery.program = batchId;
   const students = await usersCollection.find(studentQuery).toArray();
   const pointsMap = await getAllStudentsPoints();
-  const badgesCollection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const badgesCollection = await getCollection<GamificationStudentBadge>(
+    COLLECTIONS.gamificationStudentBadges,
+  );
   const allBadges = await badgesCollection.find({}).toArray();
   const badgeCountMap = new Map<string, number>();
   for (const b of allBadges) {
@@ -7378,7 +7083,9 @@ export async function getGamificationLeaderboard(batchId?: string) {
     };
   });
   entries.sort((a, b) => b.points - a.points);
-  entries.forEach((e, i) => { e.rank = i + 1; });
+  entries.forEach((e, i) => {
+    e.rank = i + 1;
+  });
   return entries;
 }
 
@@ -7390,7 +7097,9 @@ export async function createGamificationBadge(input: {
   criteriaValue: number;
   color: string;
 }) {
-  const collection = await getCollection<GamificationBadge>(COLLECTIONS.gamificationBadges);
+  const collection = await getCollection<GamificationBadge>(
+    COLLECTIONS.gamificationBadges,
+  );
   const badge: GamificationBadge = {
     id: randomUUID(),
     name: input.name,
@@ -7406,8 +7115,12 @@ export async function createGamificationBadge(input: {
 }
 
 export async function getAllGamificationBadges() {
-  const collection = await getCollection<GamificationBadge>(COLLECTIONS.gamificationBadges);
-  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+  const collection = await getCollection<GamificationBadge>(
+    COLLECTIONS.gamificationBadges,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ createdAt: -1 }).toArray(),
+  );
 }
 
 export async function awardBadgeToStudent(input: {
@@ -7416,10 +7129,14 @@ export async function awardBadgeToStudent(input: {
   reason?: string;
   awardedBy: string;
 }) {
-  const badgesCollection = await getCollection<GamificationBadge>(COLLECTIONS.gamificationBadges);
+  const badgesCollection = await getCollection<GamificationBadge>(
+    COLLECTIONS.gamificationBadges,
+  );
   const badge = await badgesCollection.findOne({ id: input.badgeId });
   if (!badge) throw new Error("Badge not found");
-  const collection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const collection = await getCollection<GamificationStudentBadge>(
+    COLLECTIONS.gamificationStudentBadges,
+  );
   const sb: GamificationStudentBadge = {
     id: randomUUID(),
     studentId: input.studentId,
@@ -7436,12 +7153,16 @@ export async function awardBadgeToStudent(input: {
 }
 
 export async function getStudentBadges(studentId: string) {
-  const collection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const collection = await getCollection<GamificationStudentBadge>(
+    COLLECTIONS.gamificationStudentBadges,
+  );
   return stripMongoIds(await collection.find({ studentId }).toArray());
 }
 
 export async function getAllStudentBadges() {
-  const collection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const collection = await getCollection<GamificationStudentBadge>(
+    COLLECTIONS.gamificationStudentBadges,
+  );
   return stripMongoIds(await collection.find({}).toArray());
 }
 
@@ -7451,7 +7172,9 @@ export async function createGamificationAutoAwardRule(input: {
   points: number;
   badgeId?: string;
 }) {
-  const collection = await getCollection<GamificationAutoAwardRule>(COLLECTIONS.gamificationRules);
+  const collection = await getCollection<GamificationAutoAwardRule>(
+    COLLECTIONS.gamificationRules,
+  );
   const rule: GamificationAutoAwardRule = {
     id: randomUUID(),
     name: input.name,
@@ -7465,21 +7188,36 @@ export async function createGamificationAutoAwardRule(input: {
 }
 
 export async function getAllGamificationAutoAwardRules() {
-  const collection = await getCollection<GamificationAutoAwardRule>(COLLECTIONS.gamificationRules);
-  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+  const collection = await getCollection<GamificationAutoAwardRule>(
+    COLLECTIONS.gamificationRules,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ createdAt: -1 }).toArray(),
+  );
 }
 
 export async function getGamificationStats() {
-  const pointsCollection = await getCollection<GamificationPointEntry>(COLLECTIONS.gamificationPoints);
-  const totalPointsAgg = await pointsCollection.aggregate([
-    { $group: { _id: null, total: { $sum: "$points" } } },
-  ]).toArray();
+  const pointsCollection = await getCollection<GamificationPointEntry>(
+    COLLECTIONS.gamificationPoints,
+  );
+  const totalPointsAgg = await pointsCollection
+    .aggregate([{ $group: { _id: null, total: { $sum: "$points" } } }])
+    .toArray();
   const totalPointsAwarded = totalPointsAgg[0]?.total || 0;
   const usersCollection = await getUsersCollection();
-  const activeStudents = await usersCollection.countDocuments({ role: "student", status: "active" });
-  const badgesCollection = await getCollection<GamificationStudentBadge>(COLLECTIONS.gamificationStudentBadges);
+  const activeStudents = await usersCollection.countDocuments({
+    role: "student",
+    status: "active",
+  });
+  const badgesCollection = await getCollection<GamificationStudentBadge>(
+    COLLECTIONS.gamificationStudentBadges,
+  );
   const totalBadgesGiven = await badgesCollection.countDocuments({});
-  const stats: GamificationStats = { totalPointsAwarded, activeStudents, totalBadgesGiven };
+  const stats: GamificationStats = {
+    totalPointsAwarded,
+    activeStudents,
+    totalBadgesGiven,
+  };
   return stats;
 }
 
@@ -7499,14 +7237,22 @@ function getEmploymentType(_user: any): EmploymentType {
 }
 
 export async function getStaffAttendanceForDate(date: string) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   return stripMongoIds(
     await collection.find({ date }).sort({ userName: 1 }).toArray(),
   );
 }
 
-export async function getStaffAttendanceForDateRange(startDate: string, endDate: string, userId?: string) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+export async function getStaffAttendanceForDateRange(
+  startDate: string,
+  endDate: string,
+  userId?: string,
+) {
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   const query: Record<string, unknown> = {
     date: { $gte: startDate, $lte: endDate },
   };
@@ -7517,18 +7263,18 @@ export async function getStaffAttendanceForDateRange(startDate: string, endDate:
 }
 
 export async function getStaffAttendanceForUser(userId: string, limit = 30) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   return stripMongoIds(
-    await collection
-      .find({ userId })
-      .sort({ date: -1 })
-      .limit(limit)
-      .toArray(),
+    await collection.find({ userId }).sort({ date: -1 }).limit(limit).toArray(),
   );
 }
 
 export async function getStaffAttendanceForToday(userId: string, date: string) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   const doc = await collection.findOne({ userId, date } as any);
   if (!doc) return null;
   const { _id, ...rest } = doc;
@@ -7536,13 +7282,17 @@ export async function getStaffAttendanceForToday(userId: string, date: string) {
 }
 
 export async function upsertStaffAttendance(record: StaffAttendanceRecord) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
-  const existing = await collection.findOne({ userId: record.userId, date: record.date } as any);
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
+  const existing = await collection.findOne({
+    userId: record.userId,
+    date: record.date,
+  } as any);
   if (existing) {
-    await collection.updateOne(
-      { _id: existing._id } as any,
-      { $set: { ...record, updatedAt: new Date().toISOString() } },
-    );
+    await collection.updateOne({ _id: existing._id } as any, {
+      $set: { ...record, updatedAt: new Date().toISOString() },
+    });
     return { ...record, id: existing.id };
   }
   await collection.insertOne(record);
@@ -7550,11 +7300,22 @@ export async function upsertStaffAttendance(record: StaffAttendanceRecord) {
 }
 
 export async function bulkMarkStaffAttendance(
-  records: { userId: string; userName: string; userEmail: string; category: StaffCategory; employmentType: EmploymentType; status: StaffAttendanceStatus; checkIn?: string; checkOut?: string }[],
+  records: {
+    userId: string;
+    userName: string;
+    userEmail: string;
+    category: StaffCategory;
+    employmentType: EmploymentType;
+    status: StaffAttendanceStatus;
+    checkIn?: string;
+    checkOut?: string;
+  }[],
   date: string,
   markedBy: string,
 ) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   const now = new Date().toISOString();
   const results: StaffAttendanceRecord[] = [];
   for (const rec of records) {
@@ -7566,12 +7327,20 @@ export async function bulkMarkStaffAttendance(
       markedBy,
       markedAt: now,
     };
-    const existing = await collection.findOne({ userId: rec.userId, date } as any);
+    const existing = await collection.findOne({
+      userId: rec.userId,
+      date,
+    } as any);
     if (existing) {
-      await collection.updateOne(
-        { _id: existing._id } as any,
-        { $set: { status: rec.status, checkIn: rec.checkIn, checkOut: rec.checkOut, updatedAt: now, markedBy } },
-      );
+      await collection.updateOne({ _id: existing._id } as any, {
+        $set: {
+          status: rec.status,
+          checkIn: rec.checkIn,
+          checkOut: rec.checkOut,
+          updatedAt: now,
+          markedBy,
+        },
+      });
       results.push({ ...doc, id: existing.id });
     } else {
       await collection.insertOne(doc);
@@ -7581,18 +7350,29 @@ export async function bulkMarkStaffAttendance(
   return results;
 }
 
-export async function selfCheckIn(userId: string, userName: string, userEmail: string, role: Role, date: string) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+export async function selfCheckIn(
+  userId: string,
+  userName: string,
+  userEmail: string,
+  role: Role,
+  date: string,
+) {
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   const existing = await collection.findOne({ userId, date } as any);
   const now = new Date();
   const timeStr = now.toTimeString().slice(0, 5);
   const id = existing?.id ?? randomUUID();
   const category = getStaffCategory(role);
   if (existing) {
-    await collection.updateOne(
-      { _id: existing._id } as any,
-      { $set: { checkIn: timeStr, status: "present", updatedAt: now.toISOString() } },
-    );
+    await collection.updateOne({ _id: existing._id } as any, {
+      $set: {
+        checkIn: timeStr,
+        status: "present",
+        updatedAt: now.toISOString(),
+      },
+    });
   } else {
     await collection.insertOne({
       id,
@@ -7612,7 +7392,9 @@ export async function selfCheckIn(userId: string, userName: string, userEmail: s
 }
 
 export async function selfCheckOut(userId: string, date: string) {
-  const collection = await getCollection<StaffAttendanceRecord>(COLLECTIONS.staffAttendance);
+  const collection = await getCollection<StaffAttendanceRecord>(
+    COLLECTIONS.staffAttendance,
+  );
   const existing = await collection.findOne({ userId, date } as any);
   if (!existing) return null;
   const now = new Date();
@@ -7620,11 +7402,15 @@ export async function selfCheckOut(userId: string, date: string) {
   const checkIn = existing.checkIn || "00:00";
   const [h1, m1] = checkIn.split(":").map(Number);
   const [h2, m2] = timeStr.split(":").map(Number);
-  const hoursWorked = Math.round(((h2 * 60 + m2) - (h1 * 60 + m1)) / 60 * 10) / 10;
-  await collection.updateOne(
-    { _id: existing._id } as any,
-    { $set: { checkOut: timeStr, hoursWorked: Math.max(0, hoursWorked), updatedAt: now.toISOString() } },
-  );
+  const hoursWorked =
+    Math.round(((h2 * 60 + m2 - (h1 * 60 + m1)) / 60) * 10) / 10;
+  await collection.updateOne({ _id: existing._id } as any, {
+    $set: {
+      checkOut: timeStr,
+      hoursWorked: Math.max(0, hoursWorked),
+      updatedAt: now.toISOString(),
+    },
+  });
   return existing.id;
 }
 
@@ -7655,8 +7441,12 @@ export async function getStaffAttendanceStats(date: string) {
 // =========================
 
 export async function getAllBiometricDevices() {
-  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
-  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+  const collection = await getCollection<BiometricDevice>(
+    COLLECTIONS.biometricDevices,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ createdAt: -1 }).toArray(),
+  );
 }
 
 export async function createBiometricDevice(input: {
@@ -7666,7 +7456,9 @@ export async function createBiometricDevice(input: {
   sendParentSms?: boolean;
   sendStaffSms?: boolean;
 }) {
-  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
+  const collection = await getCollection<BiometricDevice>(
+    COLLECTIONS.biometricDevices,
+  );
   const device: BiometricDevice = {
     id: randomUUID(),
     name: input.name,
@@ -7687,30 +7479,42 @@ export async function createBiometricDevice(input: {
   return device;
 }
 
-export async function updateBiometricDevice(id: string, updates: Partial<BiometricDevice>) {
-  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
-  await collection.updateOne(
-    { id } as any,
-    { $set: { ...updates, updatedAt: new Date().toISOString() } },
+export async function updateBiometricDevice(
+  id: string,
+  updates: Partial<BiometricDevice>,
+) {
+  const collection = await getCollection<BiometricDevice>(
+    COLLECTIONS.biometricDevices,
   );
+  await collection.updateOne({ id } as any, {
+    $set: { ...updates, updatedAt: new Date().toISOString() },
+  });
 }
 
 export async function deleteBiometricDevice(id: string) {
-  const collection = await getCollection<BiometricDevice>(COLLECTIONS.biometricDevices);
+  const collection = await getCollection<BiometricDevice>(
+    COLLECTIONS.biometricDevices,
+  );
   await collection.deleteOne({ id } as any);
-  const punchCollection = await getCollection<BiometricPunchLog>(COLLECTIONS.biometricPunchLogs);
+  const punchCollection = await getCollection<BiometricPunchLog>(
+    COLLECTIONS.biometricPunchLogs,
+  );
   await punchCollection.deleteMany({ deviceId: id } as any);
 }
 
 export async function getPunchLogs(limit = 20) {
-  const collection = await getCollection<BiometricPunchLog>(COLLECTIONS.biometricPunchLogs);
+  const collection = await getCollection<BiometricPunchLog>(
+    COLLECTIONS.biometricPunchLogs,
+  );
   return stripMongoIds(
     await collection.find({}).sort({ punchedAt: -1 }).limit(limit).toArray(),
   );
 }
 
 export async function createPunchLog(log: BiometricPunchLog) {
-  const collection = await getCollection<BiometricPunchLog>(COLLECTIONS.biometricPunchLogs);
+  const collection = await getCollection<BiometricPunchLog>(
+    COLLECTIONS.biometricPunchLogs,
+  );
   await collection.insertOne(log);
   return log;
 }
@@ -7736,7 +7540,9 @@ export async function createRegularisationRequest(input: {
     status: "pending",
     createdAt: new Date().toISOString(),
   };
-  const collection = await getCollection<RegularisationRequest>(COLLECTIONS.regularisationRequests);
+  const collection = await getCollection<RegularisationRequest>(
+    COLLECTIONS.regularisationRequests,
+  );
   await collection.insertOne(request);
   return request;
 }
@@ -7745,7 +7551,9 @@ export async function getRegularisationRequests(filter?: {
   status?: "pending" | "approved" | "rejected";
   userId?: string;
 }): Promise<RegularisationRequest[]> {
-  const collection = await getCollection<RegularisationRequest>(COLLECTIONS.regularisationRequests);
+  const collection = await getCollection<RegularisationRequest>(
+    COLLECTIONS.regularisationRequests,
+  );
   const query: any = {};
   if (filter?.status) query.status = filter.status;
   if (filter?.userId) query.userId = filter.userId;
@@ -7760,18 +7568,17 @@ export async function reviewRegularisationRequest(
   status: "approved" | "rejected",
   reviewComment?: string,
 ): Promise<boolean> {
-  const collection = await getCollection<RegularisationRequest>(COLLECTIONS.regularisationRequests);
-  const result = await collection.updateOne(
-    { id: requestId } as any,
-    {
-      $set: {
-        status,
-        reviewedBy,
-        reviewedAt: new Date().toISOString(),
-        reviewComment: reviewComment || "",
-      },
-    },
+  const collection = await getCollection<RegularisationRequest>(
+    COLLECTIONS.regularisationRequests,
   );
+  const result = await collection.updateOne({ id: requestId } as any, {
+    $set: {
+      status,
+      reviewedBy,
+      reviewedAt: new Date().toISOString(),
+      reviewComment: reviewComment || "",
+    },
+  });
   return result.matchedCount > 0;
 }
 
@@ -7780,12 +7587,18 @@ export async function reviewRegularisationRequest(
 // =========================
 
 export async function getStaffPayrollProfiles() {
-  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
-  return stripMongoIds(await collection.find({}).sort({ userName: 1 }).toArray());
+  const collection = await getCollection<StaffPayrollProfile>(
+    COLLECTIONS.staffPayrollProfiles,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ userName: 1 }).toArray(),
+  );
 }
 
 export async function getStaffPayrollProfileByUserId(userId: string) {
-  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const collection = await getCollection<StaffPayrollProfile>(
+    COLLECTIONS.staffPayrollProfiles,
+  );
   const profile = await collection.findOne({ userId });
   return profile ? stripMongoId(profile) : null;
 }
@@ -7807,7 +7620,9 @@ export async function createStaffPayrollProfile(input: {
   tdsEnabled: boolean;
   notes?: string;
 }) {
-  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const collection = await getCollection<StaffPayrollProfile>(
+    COLLECTIONS.staffPayrollProfiles,
+  );
   const now = new Date().toISOString();
 
   const profile: StaffPayrollProfile = {
@@ -7815,7 +7630,8 @@ export async function createStaffPayrollProfile(input: {
     userId: input.userId,
     userName: input.userName,
     employeeId: input.employeeId?.trim() || undefined,
-    employmentType: input.employmentType as StaffPayrollProfile["employmentType"],
+    employmentType:
+      input.employmentType as StaffPayrollProfile["employmentType"],
     salaryType: input.salaryType as StaffPayrollProfile["salaryType"],
     monthlySalary: input.monthlySalary,
     hourlyRate: input.hourlyRate,
@@ -7854,26 +7670,42 @@ export async function updateStaffPayrollProfile(
     tdsEnabled: boolean;
     notes: string;
     isActive: boolean;
-  }>
+  }>,
 ) {
-  const collection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const collection = await getCollection<StaffPayrollProfile>(
+    COLLECTIONS.staffPayrollProfiles,
+  );
   const existing = await collection.findOne({ id: profileId });
   if (!existing) return null;
 
-  const updateFields: Record<string, unknown> = { updatedAt: new Date().toISOString() };
-  if (input.employeeId !== undefined) updateFields.employeeId = input.employeeId?.trim() || undefined;
-  if (input.employmentType !== undefined) updateFields.employmentType = input.employmentType;
-  if (input.salaryType !== undefined) updateFields.salaryType = input.salaryType;
-  if (input.monthlySalary !== undefined) updateFields.monthlySalary = input.monthlySalary;
-  if (input.hourlyRate !== undefined) updateFields.hourlyRate = input.hourlyRate;
-  if (input.perClassRate !== undefined) updateFields.perClassRate = input.perClassRate;
-  if (input.bankName !== undefined) updateFields.bankName = input.bankName?.trim() || undefined;
-  if (input.accountNumber !== undefined) updateFields.accountNumber = input.accountNumber?.trim() || undefined;
-  if (input.ifscCode !== undefined) updateFields.ifscCode = input.ifscCode?.trim() || undefined;
-  if (input.panNumber !== undefined) updateFields.panNumber = input.panNumber?.trim() || undefined;
+  const updateFields: Record<string, unknown> = {
+    updatedAt: new Date().toISOString(),
+  };
+  if (input.employeeId !== undefined)
+    updateFields.employeeId = input.employeeId?.trim() || undefined;
+  if (input.employmentType !== undefined)
+    updateFields.employmentType = input.employmentType;
+  if (input.salaryType !== undefined)
+    updateFields.salaryType = input.salaryType;
+  if (input.monthlySalary !== undefined)
+    updateFields.monthlySalary = input.monthlySalary;
+  if (input.hourlyRate !== undefined)
+    updateFields.hourlyRate = input.hourlyRate;
+  if (input.perClassRate !== undefined)
+    updateFields.perClassRate = input.perClassRate;
+  if (input.bankName !== undefined)
+    updateFields.bankName = input.bankName?.trim() || undefined;
+  if (input.accountNumber !== undefined)
+    updateFields.accountNumber = input.accountNumber?.trim() || undefined;
+  if (input.ifscCode !== undefined)
+    updateFields.ifscCode = input.ifscCode?.trim() || undefined;
+  if (input.panNumber !== undefined)
+    updateFields.panNumber = input.panNumber?.trim() || undefined;
   if (input.pfEnabled !== undefined) updateFields.pfEnabled = input.pfEnabled;
-  if (input.tdsEnabled !== undefined) updateFields.tdsEnabled = input.tdsEnabled;
-  if (input.notes !== undefined) updateFields.notes = input.notes?.trim() || undefined;
+  if (input.tdsEnabled !== undefined)
+    updateFields.tdsEnabled = input.tdsEnabled;
+  if (input.notes !== undefined)
+    updateFields.notes = input.notes?.trim() || undefined;
   if (input.isActive !== undefined) updateFields.isActive = input.isActive;
 
   await collection.updateOne({ id: profileId }, { $set: updateFields });
@@ -7885,7 +7717,9 @@ export async function getPayrollRuns(month?: number, year?: number) {
   const query: Record<string, unknown> = {};
   if (month) query.month = month;
   if (year) query.year = year;
-  return stripMongoIds(await collection.find(query).sort({ year: -1, month: -1 }).toArray());
+  return stripMongoIds(
+    await collection.find(query).sort({ year: -1, month: -1 }).toArray(),
+  );
 }
 
 export async function getPayrollRunById(runId: string) {
@@ -7902,26 +7736,45 @@ export async function createPayrollRun(input: {
 }) {
   const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
   const profiles = await getStaffPayrollProfiles();
-  const activeProfiles = profiles.filter(p => p.isActive);
+  const activeProfiles = profiles.filter((p) => p.isActive);
   const now = new Date().toISOString();
 
-  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
   const label = `${monthNames[input.month - 1]} ${input.year}`;
 
-  const existingRun = await collection.findOne({ month: input.month, year: input.year });
+  const existingRun = await collection.findOne({
+    month: input.month,
+    year: input.year,
+  });
   if (existingRun) {
-    throw new Error(`A payroll run already exists for ${label}. Rollback or edit the existing one.`);
+    throw new Error(
+      `A payroll run already exists for ${label}. Rollback or edit the existing one.`,
+    );
   }
 
-  const slips: PayrollSlip[] = activeProfiles.map(profile => {
+  const slips: PayrollSlip[] = activeProfiles.map((profile) => {
     const attendancePercent = 0;
-    const grossPay = profile.salaryType === "monthly"
-      ? profile.monthlySalary
-      : profile.salaryType === "hourly"
-        ? profile.hourlyRate * 8 * input.workingDays
-        : profile.perClassRate * 0;
+    const grossPay =
+      profile.salaryType === "monthly"
+        ? profile.monthlySalary
+        : profile.salaryType === "hourly"
+          ? profile.hourlyRate * 8 * input.workingDays
+          : profile.perClassRate * 0;
     const pfDeduction = profile.pfEnabled ? Math.round(grossPay * 0.12) : 0;
-    const tdsDeduction = profile.tdsEnabled ? Math.round(grossPay * 0.10) : 0;
+    const tdsDeduction = profile.tdsEnabled ? Math.round(grossPay * 0.1) : 0;
     const totalDeductions = pfDeduction + tdsDeduction;
     const netPay = Math.max(0, grossPay - totalDeductions);
 
@@ -7963,7 +7816,9 @@ export async function createPayrollRun(input: {
     label,
     status: "draft",
     totalStaff: activeProfiles.length,
-    profilesSetUp: activeProfiles.filter(p => p.monthlySalary > 0 || p.hourlyRate > 0 || p.perClassRate > 0).length,
+    profilesSetUp: activeProfiles.filter(
+      (p) => p.monthlySalary > 0 || p.hourlyRate > 0 || p.perClassRate > 0,
+    ).length,
     workingDays: input.workingDays,
     totalGross,
     totalDeductions,
@@ -7976,7 +7831,9 @@ export async function createPayrollRun(input: {
   };
 
   // Set payrollRunId on each slip
-  run.slips.forEach(s => { s.payrollRunId = run.id; });
+  run.slips.forEach((s) => {
+    s.payrollRunId = run.id;
+  });
 
   await collection.insertOne(run);
   return stripMongoId(run);
@@ -7998,38 +7855,46 @@ export async function updatePayrollSlip(
     transactionRef: string;
     notes: string;
     status: string;
-  }>
+  }>,
 ) {
   const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
   const run = await collection.findOne({ id: runId });
   if (!run) return null;
 
-  const slipIndex = run.slips.findIndex(s => s.id === slipId);
+  const slipIndex = run.slips.findIndex((s) => s.id === slipId);
   if (slipIndex === -1) return null;
 
   const slip = run.slips[slipIndex];
   if (input.presentDays !== undefined) {
     slip.presentDays = input.presentDays;
-    slip.attendancePercent = slip.workingDays > 0 ? Math.round((input.presentDays / slip.workingDays) * 100) : 0;
+    slip.attendancePercent =
+      slip.workingDays > 0
+        ? Math.round((input.presentDays / slip.workingDays) * 100)
+        : 0;
   }
   if (input.grossPay !== undefined) slip.grossPay = input.grossPay;
   if (input.pfDeduction !== undefined) slip.pfDeduction = input.pfDeduction;
   if (input.tdsDeduction !== undefined) slip.tdsDeduction = input.tdsDeduction;
-  if (input.advanceRecovery !== undefined) slip.advanceRecovery = input.advanceRecovery;
+  if (input.advanceRecovery !== undefined)
+    slip.advanceRecovery = input.advanceRecovery;
   if (input.netPay !== undefined) slip.netPay = input.netPay;
   if (input.paidAmount !== undefined) slip.paidAmount = input.paidAmount;
   if (input.paidDate !== undefined) slip.paidDate = input.paidDate;
   if (input.paymentMode !== undefined) slip.paymentMode = input.paymentMode;
-  if (input.transactionRef !== undefined) slip.transactionRef = input.transactionRef;
+  if (input.transactionRef !== undefined)
+    slip.transactionRef = input.transactionRef;
   if (input.notes !== undefined) slip.notes = input.notes;
-  if (input.status !== undefined) slip.status = input.status as PayrollSlipStatus;
+  if (input.status !== undefined)
+    slip.status = input.status as PayrollSlipStatus;
   slip.updatedAt = new Date().toISOString();
 
   // Recalculate totals
   run.totalGross = run.slips.reduce((s, sl) => s + sl.grossPay, 0);
   run.totalDeductions = run.slips.reduce((s, sl) => s + sl.totalDeductions, 0);
   run.totalNet = run.slips.reduce((s, sl) => s + sl.netPay, 0);
-  run.totalSettled = run.slips.filter(s => s.status === "paid").reduce((s, sl) => s + sl.paidAmount, 0);
+  run.totalSettled = run.slips
+    .filter((s) => s.status === "paid")
+    .reduce((s, sl) => s + sl.paidAmount, 0);
   run.updatedAt = new Date().toISOString();
 
   await collection.updateOne({ id: runId }, { $set: run });
@@ -8040,7 +7905,7 @@ export async function updatePayrollRunStatus(
   runId: string,
   status: PayrollRunStatus,
   userId: string,
-  reason?: string
+  reason?: string,
 ) {
   const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
   const run = await collection.findOne({ id: runId });
@@ -8064,7 +7929,7 @@ export async function updatePayrollRunStatus(
     run.rolledBackAt = now;
     run.rollbackReason = reason;
     run.status = "draft";
-    run.slips.forEach(s => {
+    run.slips.forEach((s) => {
       s.status = "pending";
       s.paidAmount = 0;
       s.paidDate = undefined;
@@ -8080,14 +7945,17 @@ export async function updatePayrollRunStatus(
 
 export async function getPayrollRunsForFaculty(userId: string) {
   const collection = await getCollection<PayrollRun>(COLLECTIONS.payrollRuns);
-  const runs = await collection.find({}).sort({ year: -1, month: -1 }).toArray();
+  const runs = await collection
+    .find({})
+    .sort({ year: -1, month: -1 })
+    .toArray();
   return stripMongoIds(
     runs
-      .map(run => ({
+      .map((run) => ({
         ...run,
-        slips: run.slips.filter(s => s.userId === userId),
+        slips: run.slips.filter((s) => s.userId === userId),
       }))
-      .filter(run => run.slips.length > 0)
+      .filter((run) => run.slips.length > 0),
   );
 }
 
@@ -8098,7 +7966,9 @@ export async function createSalaryAdvance(input: {
   reason: string;
   createdBy: string;
 }) {
-  const collection = await getCollection<SalaryAdvance>(COLLECTIONS.salaryAdvances);
+  const collection = await getCollection<SalaryAdvance>(
+    COLLECTIONS.salaryAdvances,
+  );
   const now = new Date().toISOString();
   const advance: SalaryAdvance = {
     id: `sa-${randomUUID()}`,
@@ -8115,8 +7985,12 @@ export async function createSalaryAdvance(input: {
 }
 
 export async function getSalaryAdvances() {
-  const collection = await getCollection<SalaryAdvance>(COLLECTIONS.salaryAdvances);
-  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+  const collection = await getCollection<SalaryAdvance>(
+    COLLECTIONS.salaryAdvances,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ createdAt: -1 }).toArray(),
+  );
 }
 
 export async function createSalaryIncrement(input: {
@@ -8128,7 +8002,9 @@ export async function createSalaryIncrement(input: {
   reason?: string;
   createdBy: string;
 }) {
-  const collection = await getCollection<SalaryIncrement>(COLLECTIONS.salaryIncrements);
+  const collection = await getCollection<SalaryIncrement>(
+    COLLECTIONS.salaryIncrements,
+  );
   const now = new Date().toISOString();
   const increment: SalaryIncrement = {
     id: `si-${randomUUID()}`,
@@ -8144,12 +8020,14 @@ export async function createSalaryIncrement(input: {
   await collection.insertOne(increment);
 
   // Also update the payroll profile
-  const profileCollection = await getCollection<StaffPayrollProfile>(COLLECTIONS.staffPayrollProfiles);
+  const profileCollection = await getCollection<StaffPayrollProfile>(
+    COLLECTIONS.staffPayrollProfiles,
+  );
   const profile = await profileCollection.findOne({ userId: input.userId });
   if (profile) {
     await profileCollection.updateOne(
       { userId: input.userId },
-      { $set: { monthlySalary: input.newSalary, updatedAt: now } }
+      { $set: { monthlySalary: input.newSalary, updatedAt: now } },
     );
   }
 
@@ -8157,8 +8035,12 @@ export async function createSalaryIncrement(input: {
 }
 
 export async function getSalaryIncrements() {
-  const collection = await getCollection<SalaryIncrement>(COLLECTIONS.salaryIncrements);
-  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+  const collection = await getCollection<SalaryIncrement>(
+    COLLECTIONS.salaryIncrements,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ createdAt: -1 }).toArray(),
+  );
 }
 
 export async function createSalaryTransfer(input: {
@@ -8172,7 +8054,9 @@ export async function createSalaryTransfer(input: {
   transferredBy: string;
   transferredByName: string;
 }) {
-  const collection = await getCollection<SalaryTransfer>(COLLECTIONS.salaryTransfers);
+  const collection = await getCollection<SalaryTransfer>(
+    COLLECTIONS.salaryTransfers,
+  );
   const now = new Date().toISOString();
   const transfer: SalaryTransfer = {
     id: `st-${randomUUID()}`,
@@ -8193,8 +8077,12 @@ export async function createSalaryTransfer(input: {
 }
 
 export async function getSalaryTransfers() {
-  const collection = await getCollection<SalaryTransfer>(COLLECTIONS.salaryTransfers);
-  return stripMongoIds(await collection.find({}).sort({ createdAt: -1 }).toArray());
+  const collection = await getCollection<SalaryTransfer>(
+    COLLECTIONS.salaryTransfers,
+  );
+  return stripMongoIds(
+    await collection.find({}).sort({ createdAt: -1 }).toArray(),
+  );
 }
 
 // =========================
@@ -8228,7 +8116,10 @@ export async function getStaffPayoutsForRole(role: Role, userId?: string) {
   }
   if (role === "educator" && userId) {
     return stripMongoIds(
-      await collection.find({ staffId: userId }).sort({ createdAt: -1 }).toArray(),
+      await collection
+        .find({ staffId: userId })
+        .sort({ createdAt: -1 })
+        .toArray(),
     );
   }
   return [];
@@ -8311,7 +8202,8 @@ export async function updateStaffPayout(
 
   let transactions = [...(current.transactions || [])];
   if (hasPayment) {
-    const alreadyHasPayment = transactions.length > 0 && current.status === "paid";
+    const alreadyHasPayment =
+      transactions.length > 0 && current.status === "paid";
     if (!alreadyHasPayment) {
       transactions.push({
         paidAmount: updatedAmount,
@@ -8326,9 +8218,7 @@ export async function updateStaffPayout(
 
   const totalPaid = transactions.reduce((s, t) => s + (t.paidAmount || 0), 0);
   const status: StaffPayoutStatus =
-    totalPaid >= updatedAmount ? "paid"
-    : totalPaid > 0 ? "partial"
-    : "unpaid";
+    totalPaid >= updatedAmount ? "paid" : totalPaid > 0 ? "partial" : "unpaid";
 
   const updateData: Record<string, unknown> = {
     title: input.title ?? current.title,
@@ -8338,8 +8228,12 @@ export async function updateStaffPayout(
     paidAmount: totalPaid,
     status,
     transactions,
-    paymentMode: hasPayment ? input.paymentMode : (current.paymentMode ?? undefined),
-    transactionId: hasPayment ? (input.transactionId ?? undefined) : (current.transactionId ?? undefined),
+    paymentMode: hasPayment
+      ? input.paymentMode
+      : (current.paymentMode ?? undefined),
+    transactionId: hasPayment
+      ? (input.transactionId ?? undefined)
+      : (current.transactionId ?? undefined),
     paidDate: hasPayment ? input.paidDate : (current.paidDate ?? undefined),
     updatedAt: now,
   };
@@ -8419,7 +8313,8 @@ export async function getStaffPayoutAuditLogs(filters?: {
   if (filters?.dateFrom || filters?.dateTo) {
     query.createdAt = {};
     if (filters.dateFrom) (query.createdAt as any).$gte = filters.dateFrom;
-    if (filters.dateTo) (query.createdAt as any).$lte = filters.dateTo + "T23:59:59.999Z";
+    if (filters.dateTo)
+      (query.createdAt as any).$lte = filters.dateTo + "T23:59:59.999Z";
   }
   const limit = Math.min(filters?.limit || 200, 500);
   return stripMongoIds(
@@ -8440,8 +8335,12 @@ export async function getStaffPayoutAuditLogsByPayout(
 
 // ═══ Fee Deletion Audit Log ═══
 
-export async function appendFeeDeletionAuditLog(entry: Omit<FeeDeletionAuditLog, "id" | "createdAt">) {
-  const collection = await getCollection<FeeDeletionAuditLog>(COLLECTIONS.feeDeletionAuditLogs);
+export async function appendFeeDeletionAuditLog(
+  entry: Omit<FeeDeletionAuditLog, "id" | "createdAt">,
+) {
+  const collection = await getCollection<FeeDeletionAuditLog>(
+    COLLECTIONS.feeDeletionAuditLogs,
+  );
   const log: FeeDeletionAuditLog = {
     id: `fdl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     ...entry,
@@ -8459,7 +8358,9 @@ export async function getFeeDeletionAuditLogs(filters?: {
   paymentMode?: string;
   limit?: number;
 }) {
-  const collection = await getCollection<FeeDeletionAuditLog>(COLLECTIONS.feeDeletionAuditLogs);
+  const collection = await getCollection<FeeDeletionAuditLog>(
+    COLLECTIONS.feeDeletionAuditLogs,
+  );
   const query: Record<string, unknown> = {};
 
   if (filters?.studentSearch) {
@@ -8474,43 +8375,54 @@ export async function getFeeDeletionAuditLogs(filters?: {
   }
   if (filters?.dateFrom || filters?.dateTo) {
     query.createdAt = {};
-    if (filters.dateFrom) (query.createdAt as Record<string, unknown>).$gte = filters.dateFrom;
-    if (filters.dateTo) (query.createdAt as Record<string, unknown>).$lte = filters.dateTo + "T23:59:59.999Z";
+    if (filters.dateFrom)
+      (query.createdAt as Record<string, unknown>).$gte = filters.dateFrom;
+    if (filters.dateTo)
+      (query.createdAt as Record<string, unknown>).$lte =
+        filters.dateTo + "T23:59:59.999Z";
   }
   if (filters?.paymentMode) {
     query.paymentMode = { $regex: filters.paymentMode, $options: "i" };
   }
 
-  const logs = await collection.find(query).sort({ createdAt: -1 }).limit(filters?.limit ?? 200).toArray();
+  const logs = await collection
+    .find(query)
+    .sort({ createdAt: -1 })
+    .limit(filters?.limit ?? 200)
+    .toArray();
   return stripMongoIds(logs);
 }
 
 export async function getFeeDeletionAuditLogStats() {
-  const collection = await getCollection<FeeDeletionAuditLog>(COLLECTIONS.feeDeletionAuditLogs);
+  const collection = await getCollection<FeeDeletionAuditLog>(
+    COLLECTIONS.feeDeletionAuditLogs,
+  );
   const all = await collection.find({}).toArray();
   const now = new Date();
   const thisMonth = all.filter((l) => {
     const d = new Date(l.createdAt);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return (
+      d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+    );
   });
   return {
     totalDeletions: all.length,
     thisMonth: thisMonth.length,
-    totalPrincipalDeleted: all.reduce((s, l) => s + (l.principalAmount || 0), 0),
+    totalPrincipalDeleted: all.reduce(
+      (s, l) => s + (l.principalAmount || 0),
+      0,
+    ),
     totalNetReversed: all.reduce((s, l) => s + (l.netReversed || 0), 0),
     totalFineReversed: all.reduce((s, l) => s + (l.fineAmount || 0), 0),
   };
 }
-
 
 // =========================
 // Doubt Box Data-Store
 // =========================
 
 export async function getDoubts() {
-  const doubtCollection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const doubtCollection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const answerCollection = await getCollection<DoubtAnswer>(
     COLLECTIONS.doubtAnswers,
@@ -8547,16 +8459,14 @@ export async function getDoubts() {
   const answersByDoubtId = new Map<string, DoubtAnswer[]>();
 
   for (const answer of answers) {
-    const currentAnswers =
-      answersByDoubtId.get(answer.doubtId) ?? [];
+    const currentAnswers = answersByDoubtId.get(answer.doubtId) ?? [];
 
     currentAnswers.push(answer);
     answersByDoubtId.set(answer.doubtId, currentAnswers);
   }
 
   return doubts.map((doubt) => {
-    const doubtAnswers =
-      answersByDoubtId.get(doubt.id) ?? [];
+    const doubtAnswers = answersByDoubtId.get(doubt.id) ?? [];
 
     return {
       ...doubt,
@@ -8573,9 +8483,7 @@ export async function getDoubtById(doubtId: string) {
     return null;
   }
 
-  const doubtCollection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const doubtCollection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const answerCollection = await getCollection<DoubtAnswer>(
     COLLECTIONS.doubtAnswers,
@@ -8658,8 +8566,7 @@ export async function createDoubt(input: {
     title,
     description,
 
-    attachmentUrl:
-      input.attachmentUrl?.trim() || undefined,
+    attachmentUrl: input.attachmentUrl?.trim() || undefined,
 
     status: "open",
     isLocked: false,
@@ -8671,9 +8578,7 @@ export async function createDoubt(input: {
     updatedAt: now,
   };
 
-  const collection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const collection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   await collection.insertOne(doubt);
 
@@ -8709,9 +8614,7 @@ export async function createDoubtAnswer(input: {
     throw new Error("Answer cannot be empty.");
   }
 
-  const doubtCollection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const doubtCollection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const answerCollection = await getCollection<DoubtAnswer>(
     COLLECTIONS.doubtAnswers,
@@ -8729,10 +8632,9 @@ export async function createDoubtAnswer(input: {
     throw new Error("This discussion is closed.");
   }
 
-  const currentAnswerCount =
-    await answerCollection.countDocuments({
-      doubtId,
-    });
+  const currentAnswerCount = await answerCollection.countDocuments({
+    doubtId,
+  });
 
   const now = new Date().toISOString();
 
@@ -8747,8 +8649,7 @@ export async function createDoubtAnswer(input: {
 
     content,
 
-    attachmentUrl:
-      input.attachmentUrl?.trim() || undefined,
+    attachmentUrl: input.attachmentUrl?.trim() || undefined,
 
     isAccepted: false,
 
@@ -8764,13 +8665,9 @@ export async function createDoubtAnswer(input: {
     },
     {
       $set: {
-        status:
-          doubt.status === "open"
-            ? "answered"
-            : doubt.status,
+        status: doubt.status === "open" ? "answered" : doubt.status,
 
-        answerCount:
-          currentAnswerCount + 1,
+        answerCount: currentAnswerCount + 1,
 
         updatedAt: now,
       },
@@ -8780,16 +8677,11 @@ export async function createDoubtAnswer(input: {
   return stripMongoId(answer);
 }
 
-export async function acceptDoubtAnswer(
-  doubtId: string,
-  answerId: string,
-) {
+export async function acceptDoubtAnswer(doubtId: string, answerId: string) {
   const normalizedDoubtId = doubtId.trim();
   const normalizedAnswerId = answerId.trim();
 
-  const doubtCollection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const doubtCollection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const answerCollection = await getCollection<DoubtAnswer>(
     COLLECTIONS.doubtAnswers,
@@ -8869,9 +8761,7 @@ export async function updateDoubtState(
     return null;
   }
 
-  const collection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const collection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const existingDoubt = await collection.findOne({
     id: normalizedDoubtId,
@@ -8896,10 +8786,7 @@ export async function updateDoubtState(
 
   const unsetFields: Record<string, ""> = {};
 
-  if (
-    input.status &&
-    validStatuses.includes(input.status)
-  ) {
+  if (input.status && validStatuses.includes(input.status)) {
     updates.status = input.status;
 
     if (input.status === "resolved") {
@@ -8911,10 +8798,7 @@ export async function updateDoubtState(
       updates.closedAt = now;
     }
 
-    if (
-      input.status === "open" ||
-      input.status === "answered"
-    ) {
+    if (input.status === "open" || input.status === "answered") {
       unsetFields.resolvedAt = "";
       unsetFields.closedAt = "";
       unsetFields.acceptedAnswerId = "";
@@ -8946,14 +8830,10 @@ export async function updateDoubtState(
   return getDoubtById(normalizedDoubtId);
 }
 
-export async function markDoubtAiRequested(
-  doubtId: string,
-) {
+export async function markDoubtAiRequested(doubtId: string) {
   const normalizedDoubtId = doubtId.trim();
 
-  const collection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const collection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const result = await collection.updateOne(
     {
@@ -8961,11 +8841,9 @@ export async function markDoubtAiRequested(
     },
     {
       $set: {
-        aiAnswerRequestedAt:
-          new Date().toISOString(),
+        aiAnswerRequestedAt: new Date().toISOString(),
 
-        updatedAt:
-          new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
     },
   );
@@ -8977,14 +8855,10 @@ export async function markDoubtAiRequested(
   return getDoubtById(normalizedDoubtId);
 }
 
-export async function deleteDoubt(
-  doubtId: string,
-) {
+export async function deleteDoubt(doubtId: string) {
   const normalizedDoubtId = doubtId.trim();
 
-  const doubtCollection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const doubtCollection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const answerCollection = await getCollection<DoubtAnswer>(
     COLLECTIONS.doubtAnswers,
@@ -9005,18 +8879,14 @@ export async function deleteDoubt(
   return true;
 }
 
-export async function deleteDoubtAnswer(
-  answerId: string,
-) {
+export async function deleteDoubtAnswer(answerId: string) {
   const normalizedAnswerId = answerId.trim();
 
   const answerCollection = await getCollection<DoubtAnswer>(
     COLLECTIONS.doubtAnswers,
   );
 
-  const doubtCollection = await getCollection<DoubtItem>(
-    COLLECTIONS.doubts,
-  );
+  const doubtCollection = await getCollection<DoubtItem>(COLLECTIONS.doubts);
 
   const answer = await answerCollection.findOne({
     id: normalizedAnswerId,
@@ -9030,10 +8900,9 @@ export async function deleteDoubtAnswer(
     id: normalizedAnswerId,
   });
 
-  const remainingAnswerCount =
-    await answerCollection.countDocuments({
-      doubtId: answer.doubtId,
-    });
+  const remainingAnswerCount = await answerCollection.countDocuments({
+    doubtId: answer.doubtId,
+  });
 
   const doubt = await doubtCollection.findOne({
     id: answer.doubtId,
@@ -9052,21 +8921,12 @@ export async function deleteDoubtAnswer(
 
   const unsetFields: Record<string, ""> = {};
 
-  if (
-    doubt.acceptedAnswerId ===
-    normalizedAnswerId
-  ) {
-    updates.status =
-      remainingAnswerCount > 0
-        ? "answered"
-        : "open";
+  if (doubt.acceptedAnswerId === normalizedAnswerId) {
+    updates.status = remainingAnswerCount > 0 ? "answered" : "open";
 
     unsetFields.acceptedAnswerId = "";
     unsetFields.resolvedAt = "";
-  } else if (
-    remainingAnswerCount === 0 &&
-    doubt.status === "answered"
-  ) {
+  } else if (remainingAnswerCount === 0 && doubt.status === "answered") {
     updates.status = "open";
   }
 

@@ -110,7 +110,39 @@ function formatReceiptDate(value?: string | null) {
 
   return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 }
+function formatReceiptClassBoard(value?: string) {
+  const text = value?.trim() ?? "";
 
+  if (!text) {
+    return "—";
+  }
+
+  const parts = text
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  const category = parts[0]?.toLowerCase();
+
+  const isExamCategory =
+    category === "competitive exams" ||
+    category === "competitive exam" ||
+    category === "govt exams" ||
+    category === "govt exam" ||
+    category === "government exams" ||
+    category === "government exam";
+
+  if (isExamCategory && parts.length > 1) {
+    return parts
+      .slice(1)
+      .join(" | ")
+      .replace(/-/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  return text;
+}
 function escapeHtml(value: string | number | null | undefined) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -453,10 +485,7 @@ export function InvoiceManager({
       setStudentDetails(null);
       setDraft(createDraft(studentOptions[0]?.id ?? ""));
 
-      showMessage(
-        "success",
-        "Invoice created with student and batch details.",
-      );
+      showMessage("success", "Invoice created with student and batch details.");
     } catch (error) {
       showMessage(
         "error",
@@ -595,7 +624,18 @@ export function InvoiceManager({
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
     const now = new Date();
-    const printDateStr = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) + ", " + now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const printDateStr =
+      now.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }) +
+      ", " +
+      now.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
 
     const statusLabels: Record<string, string> = {
       paid: "PAID",
@@ -609,7 +649,8 @@ export function InvoiceManager({
       unpaid: "background:#fef3c7;color:#92400e;border:1px solid #fcd34d;",
       overdue: "background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;",
     };
-    const badgeStyle = statusBadgeColors[invoice.status] ?? statusBadgeColors.unpaid;
+    const badgeStyle =
+      statusBadgeColors[invoice.status] ?? statusBadgeColors.unpaid;
     const statusLabel = statusLabels[invoice.status] ?? "UNPAID";
 
     function renderTransactionRows(): string {
@@ -655,6 +696,23 @@ export function InvoiceManager({
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { padding: 24px; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
     .receipt-wrap { max-width: 850px; margin: 0 auto; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+.receipt-logo-wrap {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  background: #fff;
+}
+
+.receipt-logo {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  transform: none;
+}
     .receipt-box { border: 1.5px solid ${NAVY}; margin: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .sec-head { background: ${NAVY} !important; color: #fff !important; padding: 6px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .detail-cell { flex: 1; display: flex; padding: 7px 12px; align-items: center; }
@@ -673,7 +731,15 @@ export function InvoiceManager({
       .print-btn { display: none !important; }
       .receipt-wrap { margin: 0; border: none; }
       .receipt-box { margin: 0; border: none; }
-      .receipt-box img { width: 100% !important; height: auto !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+.receipt-logo {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  margin: 0 !important;
+  transform: none !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
     }
   </style>
 </head>
@@ -686,9 +752,13 @@ export function InvoiceManager({
     <div class="receipt-box">
 
       <!-- Full-width Header Banner -->
-      <div style="width:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors" style="width:100%;display:block;height:auto;" />
-      </div>
+<div class="receipt-logo-wrap">
+  <img
+    src="${escapeHtml(logoUrl)}"
+    alt="Smart Tutors Pvt. Ltd."
+    class="receipt-logo"
+  />
+</div>
 
       <!-- Content Area -->
       <div style="padding:20px 24px;">
@@ -710,7 +780,9 @@ export function InvoiceManager({
             <div class="detail-cell"><span class="detail-lbl">Parent Name</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.parentName || "\u2014")}</span></div>
           </div>
           <div style="display:flex;border-bottom:1px solid #d1d5db;">
-            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Class / Board</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.classCourse || "\u2014")}</span></div>
+            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Class / Board</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(
+              formatReceiptClassBoard(invoice.classCourse),
+            )}</span></div>
             <div class="detail-cell"><span class="detail-lbl">Enrollment No.</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml((invoice.studentId || "\u2014").replace("-", "").substring(0, 8).toUpperCase())}</span></div>
           </div>
           <div style="display:flex;border-bottom:1px solid #d1d5db;">
@@ -947,9 +1019,7 @@ export function InvoiceManager({
               <input
                 type="date"
                 value={draft.dueDate}
-                onChange={(event) =>
-                  updateDraft("dueDate", event.target.value)
-                }
+                onChange={(event) => updateDraft("dueDate", event.target.value)}
                 className={fieldClass}
               />
             </FieldLabel>
@@ -958,7 +1028,10 @@ export function InvoiceManager({
               <select
                 value={draft.paymentMode}
                 onChange={(event) =>
-                  updateDraft("paymentMode", event.target.value as PaymentMode | "")
+                  updateDraft(
+                    "paymentMode",
+                    event.target.value as PaymentMode | "",
+                  )
                 }
                 className={fieldClass}
               >
@@ -1124,9 +1197,7 @@ export function InvoiceManager({
                     {invoice.studentName}
                   </td>
 
-                  <td className="px-5 py-4 text-slate-600">
-                    {invoice.title}
-                  </td>
+                  <td className="px-5 py-4 text-slate-600">{invoice.title}</td>
 
                   <td className="px-5 py-4 font-bold text-slate-950">
                     {formatCurrency(invoice.amount)}
@@ -1220,9 +1291,7 @@ export function InvoiceManager({
                 onClick={() => void deleteInvoice(invoiceToDelete.id)}
                 className="rounded-full bg-rose-600 px-4 py-2 text-sm font-black text-white disabled:opacity-60"
               >
-                {deletingId === invoiceToDelete.id
-                  ? "Deleting..."
-                  : "Delete"}
+                {deletingId === invoiceToDelete.id ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

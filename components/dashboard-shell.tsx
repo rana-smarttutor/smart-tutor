@@ -1852,13 +1852,13 @@ export function DashboardShell({
 
           {showHomework &&
           (role === "student" || role === "educator" || role === "parent") ? (
-<HomeworkSection
-  session={session}
-  role={role}
-  studentDirectory={studentDirectory}
-  managedUsers={localManagedUsers}
-  onDashboardRefresh={triggerDashboardRefresh}
-/>
+            <HomeworkSection
+              session={session}
+              role={role}
+              studentDirectory={studentDirectory}
+              managedUsers={localManagedUsers}
+              onDashboardRefresh={triggerDashboardRefresh}
+            />
           ) : null}
           {showDoubtBox &&
           (role === "student" || role === "educator" || role === "admin") ? (
@@ -2094,11 +2094,11 @@ export function DashboardShell({
             <WeeklyTestManager
               role={role}
               studentDirectory={studentDirectory}
+              managedUsers={localManagedUsers}
               userId={session?.id}
               linkedStudentId={dashboard.linkedStudentId}
             />
           ) : null}
-
           {showStudentFeedback ? (
             <StudentFeedbackManager
               role={role}
