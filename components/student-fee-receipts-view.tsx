@@ -28,7 +28,26 @@ function formatReceiptDate(iso: string) {
     year: "numeric",
   });
 }
+function formatReceiptClassBoard(value?: string) {
+  const normalizedValue = value?.trim() ?? "";
 
+  if (!normalizedValue) {
+    return "—";
+  }
+
+  const examMatch = normalizedValue.match(
+    /^(?:competitive exams?|govt exams?|government exams?)\s*\|\s*(.+)$/i,
+  );
+
+  if (!examMatch?.[1]) {
+    return normalizedValue;
+  }
+
+  return examMatch[1]
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 function statusColor(s: string) {
   if (s === "paid")
     return {
@@ -308,6 +327,22 @@ export function StudentFeeReceiptsView({
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { padding: 24px; background: #e5e7eb; color: #111827; font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
     .receipt-wrap { max-width: 850px; margin: 0 auto; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    .receipt-logo-wrap {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.receipt-logo {
+  display: block;
+  width: 108%;
+  max-width: none;
+  height: auto;
+  margin-left: -4%;
+}
     .receipt-box { border: 1.5px solid ${NAVY}; margin: 8px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .sec-head { background: ${NAVY} !important; color: #fff !important; padding: 6px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     .detail-cell { flex: 1; display: flex; padding: 7px 12px; align-items: center; }
@@ -326,7 +361,14 @@ export function StudentFeeReceiptsView({
       .print-btn { display: none !important; }
       .receipt-wrap { margin: 0; border: none; }
       .receipt-box { margin: 0; border: none; }
-      .receipt-box img { width: 100% !important; height: auto !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .receipt-logo {
+  width: 108% !important;
+  max-width: none !important;
+  height: auto !important;
+  margin-left: -4% !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
     }
   </style>
 </head>
@@ -339,9 +381,13 @@ export function StudentFeeReceiptsView({
     <div class="receipt-box">
 
       <!-- Full-width Header Banner -->
-      <div style="width:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-        <img src="${escapeHtml(logoUrl)}" alt="Smart Tutors" style="width:100%;display:block;height:auto;" />
-      </div>
+<div class="receipt-logo-wrap">
+  <img
+    src="${escapeHtml(logoUrl)}"
+    alt="Smart Tutors Pvt. Ltd."
+    class="receipt-logo"
+  />
+</div>
 
       <!-- Content Area -->
       <div style="padding:20px 24px;">
@@ -363,7 +409,7 @@ export function StudentFeeReceiptsView({
             <div class="detail-cell"><span class="detail-lbl">Parent Name</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.parentName || "\u2014")}</span></div>
           </div>
           <div style="display:flex;border-bottom:1px solid #d1d5db;">
-            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Class / Board</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(invoice.classCourse || "\u2014")}</span></div>
+            <div class="detail-cell" style="border-right:1px solid #d1d5db;"><span class="detail-lbl">Class / Board</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml(formatReceiptClassBoard(invoice.classCourse))}</span></div>
             <div class="detail-cell"><span class="detail-lbl">Enrollment No.</span><span class="detail-sep">:</span><span class="detail-val">${escapeHtml((invoice.studentId || "\u2014").replace("-", "").substring(0, 8).toUpperCase())}</span></div>
           </div>
           <div style="display:flex;border-bottom:1px solid #d1d5db;">

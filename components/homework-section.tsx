@@ -564,8 +564,10 @@ export function HomeworkSection({
   }
   async function handleAssign(e: React.FormEvent) {
     e.preventDefault();
-    if (!assignTitle.trim() || !assignDueDate) {
-      setError("Title and due date are required.");
+    if (!assignTitle.trim() || !assignSubject.trim() || !assignDueDate) {
+      setError(
+        "Fill the form properly. Title, subject and due date are required.",
+      );
       return;
     }
 
@@ -2116,7 +2118,13 @@ export function HomeworkSection({
                 <X size={20} />
               </button>
             </div>
+            {error ? (
+              <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
 
+                <span>{error}</span>
+              </div>
+            ) : null}
             <form onSubmit={handleAssign} className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
@@ -2129,7 +2137,6 @@ export function HomeworkSection({
                       setAssignTitle(e.target.value.slice(0, 120))
                     }
                     placeholder="e.g. Week 1: Strategic Communication Roadmap"
-                    required
                     className="w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
@@ -2446,7 +2453,7 @@ export function HomeworkSection({
                 </div>
                 <div>
                   <label className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 block">
-                    Subject
+                    Subject*
                   </label>
                   <input
                     value={assignSubject}
@@ -2499,7 +2506,6 @@ export function HomeworkSection({
                     type="date"
                     value={assignDueDate}
                     onChange={(e) => setAssignDueDate(e.target.value)}
-                    required
                     className="w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]"
                   />
                 </div>
@@ -2695,13 +2701,7 @@ Clarity of presentation..."
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
-                  disabled={
-                    assigning ||
-                    assignUploadingDocument ||
-                    assignStudentIds.length === 0 ||
-                    !assignTitle.trim() ||
-                    !assignDueDate
-                  }
+                  disabled={assigning || assignUploadingDocument}
                   className="btn-action btn-md font-bold flex-1"
                 >
                   {assigning ? (
