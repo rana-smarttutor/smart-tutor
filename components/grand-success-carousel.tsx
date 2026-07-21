@@ -41,11 +41,6 @@ const RESULT_CATEGORIES = [
     image: "/hof/jee-main.png",
   },
   {
-    id: "neet",
-    label: "NEET",
-    image: "/hof/NEET.png",
-  },
-  {
     id: "cet",
     label: "CET",
     image: "/hof/CET.png",
