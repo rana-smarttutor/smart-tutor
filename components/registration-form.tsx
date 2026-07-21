@@ -72,7 +72,6 @@ const SENIOR_CLASSES = [
   { key: "Class 12 Commerce", label: "Class 12th Commerce" },
   { key: "Class 11 Arts", label: "Class 11th Arts" },
   { key: "Class 12 Arts", label: "Class 12th Arts" },
-
 ];
 
 const SENIOR_BOARDS = [
@@ -1525,6 +1524,7 @@ export function RegistrationForm() {
                     <option value="">Select type</option>
                     <option value="online">Online Learning</option>
                     <option value="centre-based">Centre-Based Learning</option>
+                    <option value="home">Home Tutor</option>
                   </select>
                 </div>
 
