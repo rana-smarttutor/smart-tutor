@@ -256,7 +256,7 @@ export default async function Home() {
 
           <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex items-center justify-center min-h-[300px]">
             <Image
-              src="/WhySmartTutor3.png"
+              src="/Page.png"
               alt="Why Choose Smart Tutors"
               width={1280}
               height={1180}

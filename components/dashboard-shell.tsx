@@ -316,7 +316,16 @@ const DashboardCertificatesSection = dynamic(
     ssr: false,
   },
 );
-
+const AdminProfitLossManager = dynamic(
+  () =>
+    import("@/components/admin-profit-loss-manager").then(
+      (module) => module.AdminProfitLossManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
 type StandaloneStudentReport = {
   id: string;
   title: string;
@@ -417,6 +426,7 @@ const sidebarByRole = {
     { id: "chat-monitor", label: "Chat Monitor" },
     { id: "ptm", label: "PTM" },
     { id: "fees", label: "Billing Hub" },
+    { id: "profit-loss", label: "Profit & Loss" },
     { id: "fee-deletion-audit", label: "Fee Deletion Audit" },
     { id: "staff-payouts", label: "Staff Payouts" },
     { id: "sales-crm", label: "Sales CRM" },
@@ -565,7 +575,15 @@ const menuSections = [
   },
   {
     label: "Finance",
-    items: ["fees", "receipts", "teacher-payouts", "rewards"],
+    items: [
+      "fees",
+      "profit-loss",
+      "fee-deletion-audit",
+      "staff-payouts",
+      "receipts",
+      "teacher-payouts",
+      "rewards",
+    ],
   },
   { label: "Placement", items: ["placement-jobs"] },
 ];
@@ -999,6 +1017,7 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  "profit-loss": <BarChart3 className="h-4 w-4 shrink-0" />,
   "fee-installments": (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1233,6 +1252,7 @@ export function DashboardShell({
   const showBiometric = activeSection === "biometric";
   const showRoles = activeSection === "roles";
   const showFees = activeSection === "fees";
+  const showProfitLoss = activeSection === "profit-loss";
   const showLectures = activeSection === "lectures";
   const showTimetable = activeSection === "timetable";
   const showWeeklyTests = activeSection === "weekly-tests";
@@ -2157,7 +2177,9 @@ export function DashboardShell({
               managedUsers={localManagedUsers}
             />
           ) : null}
-
+          {showProfitLoss && role === "admin" ? (
+            <AdminProfitLossManager />
+          ) : null}
           {showFees && role === "admin" ? (
             <AdminFeeHub
               role={role}

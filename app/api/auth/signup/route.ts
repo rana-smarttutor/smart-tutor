@@ -35,10 +35,11 @@ export async function POST(request: Request) {
       parentMobile?: string;
       parentPassword?: string;
 
-      courseWanted?: string;
-      courseWantedTitle?: string;
-      studentType?: string;
-      referralCode?: string;
+courseWanted?: string;
+courseWantedTitle?: string;
+studentType?: string;
+campusLocation?: string;
+referralCode?: string;
       weakSubjects?: string[];
       strongSubjects?: string[];
 
@@ -222,12 +223,45 @@ export async function POST(request: Request) {
         );
       }
 
+const studentType = sanitizeTextInput(
+  body.studentType,
+  30,
+);
+
 if (
-  body.studentType === "online" ||
-  body.studentType === "centre-based" ||
-  body.studentType === "home"
+  studentType !== "online" &&
+  studentType !== "campus" &&
+  studentType !== "home"
 ) {
-  profile.studentType = body.studentType;
+  return NextResponse.json(
+    {
+      error: "Please select a valid student type.",
+    },
+    { status: 400 },
+  );
+}
+
+profile.studentType = studentType;
+
+if (studentType === "campus") {
+  const campusLocation = sanitizeTextInput(
+    body.campusLocation,
+    50,
+  );
+
+  if (
+    campusLocation !== "vashi" &&
+    campusLocation !== "panvel"
+  ) {
+    return NextResponse.json(
+      {
+        error: "Please select a valid campus location.",
+      },
+      { status: 400 },
+    );
+  }
+
+  profile.campusLocation = campusLocation;
 }
 
       if (body.weakSubjects?.length) {

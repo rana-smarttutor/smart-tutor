@@ -16,6 +16,7 @@ import {
 } from "@/lib/course-library";
 import type {
   AttendanceSheet,
+  BusinessExpense,
   CourseItem,
   ComplaintItem,
   DashboardMetric,
@@ -234,9 +235,11 @@ export const COLLECTIONS = {
   salaryIncrements: "salaryIncrements",
   salaryTransfers: "salaryTransfers",
 
-  // Unified Staff Payouts
-  staffPayouts: "staffPayouts",
+// Unified Staff Payouts
+staffPayouts: "staffPayouts",
 
+// Business Expenses / Profit & Loss
+businessExpenses: "businessExpenses",
   // Staff Payout Audit Logs
   staffPayoutAuditLogs: "staffPayoutAuditLogs",
 
@@ -8955,4 +8958,227 @@ export async function deleteDoubtAnswer(answerId: string) {
   );
 
   return stripMongoId(answer);
+}
+
+
+// =========================
+// Business Expense Management
+// =========================
+
+export async function getBusinessExpenses(filters?: {
+  fromDate?: string;
+  toDate?: string;
+  category?: BusinessExpense["category"];
+  limit?: number;
+}): Promise<BusinessExpense[]> {
+  const collection = await getCollection<BusinessExpense>(
+    COLLECTIONS.businessExpenses,
+  );
+
+  const query: Record<string, unknown> = {};
+
+  if (filters?.fromDate || filters?.toDate) {
+    const expenseDateQuery: {
+      $gte?: string;
+      $lte?: string;
+    } = {};
+
+    if (filters.fromDate) {
+      expenseDateQuery.$gte = filters.fromDate;
+    }
+
+    if (filters.toDate) {
+      expenseDateQuery.$lte = filters.toDate;
+    }
+
+    query.expenseDate = expenseDateQuery;
+  }
+
+  if (filters?.category) {
+    query.category = filters.category;
+  }
+
+  const limit = Math.min(
+    Math.max(filters?.limit ?? 500, 1),
+    2000,
+  );
+
+  const expenses = await collection
+    .find(query)
+    .sort({
+      expenseDate: -1,
+      createdAt: -1,
+    })
+    .limit(limit)
+    .toArray();
+
+  return stripMongoIds(expenses) as BusinessExpense[];
+}
+
+export async function getBusinessExpenseById(
+  expenseId: string,
+): Promise<BusinessExpense | null> {
+  const collection = await getCollection<BusinessExpense>(
+    COLLECTIONS.businessExpenses,
+  );
+
+  const expense = await collection.findOne({
+    id: expenseId,
+  });
+
+  return expense ? stripMongoId(expense) : null;
+}
+
+export async function createBusinessExpense(input: {
+  title: string;
+  category: BusinessExpense["category"];
+
+  amount: number;
+  expenseDate: string;
+
+  paymentMode: BusinessExpense["paymentMode"];
+  transactionId?: string;
+
+  vendor?: string;
+  notes?: string;
+  receiptUrl?: string;
+
+  createdBy: string;
+  createdByName?: string;
+}): Promise<BusinessExpense> {
+  const collection = await getCollection<BusinessExpense>(
+    COLLECTIONS.businessExpenses,
+  );
+
+  const now = new Date().toISOString();
+
+  const expense: BusinessExpense = {
+    id: `expense-${randomUUID()}`,
+
+    title: input.title.trim(),
+    category: input.category,
+
+    amount: input.amount,
+    expenseDate: input.expenseDate,
+
+    paymentMode: input.paymentMode,
+    transactionId: input.transactionId?.trim() || undefined,
+
+    vendor: input.vendor?.trim() || undefined,
+    notes: input.notes?.trim() || undefined,
+    receiptUrl: input.receiptUrl?.trim() || undefined,
+
+    createdBy: input.createdBy,
+    createdByName: input.createdByName?.trim() || undefined,
+
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(expense);
+
+  return stripMongoId(expense);
+}
+
+export async function updateBusinessExpense(
+  expenseId: string,
+  input: Partial<{
+    title: string;
+    category: BusinessExpense["category"];
+
+    amount: number;
+    expenseDate: string;
+
+    paymentMode: BusinessExpense["paymentMode"];
+    transactionId: string;
+
+    vendor: string;
+    notes: string;
+    receiptUrl: string;
+  }>,
+): Promise<BusinessExpense | null> {
+  const collection = await getCollection<BusinessExpense>(
+    COLLECTIONS.businessExpenses,
+  );
+
+  const existingExpense = await collection.findOne({
+    id: expenseId,
+  });
+
+  if (!existingExpense) {
+    return null;
+  }
+
+  const updates: Partial<BusinessExpense> = {
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (input.title !== undefined) {
+    updates.title = input.title.trim();
+  }
+
+  if (input.category !== undefined) {
+    updates.category = input.category;
+  }
+
+  if (input.amount !== undefined) {
+    updates.amount = input.amount;
+  }
+
+  if (input.expenseDate !== undefined) {
+    updates.expenseDate = input.expenseDate;
+  }
+
+  if (input.paymentMode !== undefined) {
+    updates.paymentMode = input.paymentMode;
+  }
+
+  if (input.transactionId !== undefined) {
+    updates.transactionId =
+      input.transactionId.trim() || undefined;
+  }
+
+  if (input.vendor !== undefined) {
+    updates.vendor = input.vendor.trim() || undefined;
+  }
+
+  if (input.notes !== undefined) {
+    updates.notes = input.notes.trim() || undefined;
+  }
+
+  if (input.receiptUrl !== undefined) {
+    updates.receiptUrl =
+      input.receiptUrl.trim() || undefined;
+  }
+
+  await collection.updateOne(
+    {
+      id: expenseId,
+    },
+    {
+      $set: updates,
+    },
+  );
+
+  const updatedExpense = await collection.findOne({
+    id: expenseId,
+  });
+
+  return updatedExpense
+    ? stripMongoId(updatedExpense)
+    : null;
+}
+
+export async function deleteBusinessExpense(
+  expenseId: string,
+): Promise<boolean> {
+  const collection = await getCollection<BusinessExpense>(
+    COLLECTIONS.businessExpenses,
+  );
+
+  const result = await collection.deleteOne({
+    id: expenseId,
+  });
+
+  return result.deletedCount > 0;
 }

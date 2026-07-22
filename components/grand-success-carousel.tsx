@@ -38,7 +38,12 @@ const RESULT_CATEGORIES = [
   {
     id: "jee",
     label: "JEE Main",
-    image: "/hof/jee-main.png",
+    image: "/hof/JEE 2.jpg",
+  },
+   {
+    id: "NEET",
+    label: "NEEt",
+    image: "/hof/NEET 2.jpg",
   },
   {
     id: "cet",
