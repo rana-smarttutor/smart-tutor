@@ -43,10 +43,7 @@ function formatReceiptClassBoard(value?: string) {
     return normalizedValue;
   }
 
-  return examMatch[1]
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
+  return examMatch[1].replace(/-/g, " ").replace(/\s+/g, " ").trim();
 }
 function statusColor(s: string) {
   if (s === "paid")
@@ -140,18 +137,55 @@ export function StudentFeeReceiptsView({
 
   const invoices = useMemo(() => feeInvoices ?? [], [feeInvoices]);
   const plans = useMemo(() => feeInstallmentPlans ?? [], [feeInstallmentPlans]);
+  const installmentReceiptNumbers = useMemo(
+  () =>
+    new Set(
+      plans
+        .flatMap((plan) => plan.installments)
+        .map((installment) => installment.receiptNumber?.trim())
+        .filter((value): value is string => Boolean(value)),
+    ),
+  [plans],
+);
 
-  const totalFees = useMemo(() => {
-    const fromInvoices = invoices.reduce((s, i) => s + i.amount, 0);
-    const fromPlans = plans.reduce((s, p) => s + p.totalFee, 0);
-    return fromInvoices + fromPlans;
-  }, [invoices, plans]);
+const standaloneInvoices = useMemo(
+  () =>
+    invoices.filter((invoice) => {
+      const invoiceReference = invoice.receiptNo || invoice.id;
 
-  const totalPaid = useMemo(() => {
-    const fromInvoices = invoices.reduce((s, i) => s + (i.paidAmount ?? 0), 0);
-    const fromPlans = plans.reduce((s, p) => s + p.paidAmount, 0);
-    return fromInvoices + fromPlans;
-  }, [invoices, plans]);
+      return !installmentReceiptNumbers.has(invoiceReference);
+    }),
+  [invoices, installmentReceiptNumbers],
+);
+
+const totalFees = useMemo(() => {
+  const fromInvoices = standaloneInvoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
+
+  const fromPlans = plans.reduce(
+    (sum, plan) => sum + plan.totalFee,
+    0,
+  );
+
+  return fromInvoices + fromPlans;
+}, [standaloneInvoices, plans]);
+
+const totalPaid = useMemo(() => {
+  const fromInvoices = standaloneInvoices.reduce(
+    (sum, invoice) =>
+      sum + (invoice.paidAmount ?? 0),
+    0,
+  );
+
+  const fromPlans = plans.reduce(
+    (sum, plan) => sum + plan.paidAmount,
+    0,
+  );
+
+  return fromInvoices + fromPlans;
+}, [standaloneInvoices, plans]);
 
   const totalDue = Math.max(totalFees - totalPaid, 0);
 
@@ -244,6 +278,38 @@ export function StudentFeeReceiptsView({
       isProjected: true,
     };
   }, [invoices, plans]);
+  const hasInstallmentPlan = plans.length > 0;
+
+  const primaryFeeLabel = hasInstallmentPlan
+    ? "Total Course Fee"
+    : "Monthly Fees";
+
+  const nextFeeLabel = hasInstallmentPlan
+    ? "Next Installment"
+    : "Next Monthly Fee";
+
+  const primaryFeeAmount = useMemo(() => {
+    if (plans.length > 0) {
+      return plans.reduce((sum, plan) => sum + plan.totalFee, 0);
+    }
+
+    const latestInvoice = [...invoices]
+      .filter((invoice) => invoice.amount > 0)
+      .sort((first, second) => {
+        const firstDate = new Date(
+          first.dueDate || first.createdAt || "",
+        ).getTime();
+
+        const secondDate = new Date(
+          second.dueDate || second.createdAt || "",
+        ).getTime();
+
+        return secondDate - firstDate;
+      })[0];
+
+    return latestInvoice?.amount ?? 0;
+  }, [invoices, plans]);
+
   const hasFees = totalFees > 0;
 
   function downloadInvoiceReceipt(invoice: FeeInvoice) {
@@ -567,11 +633,11 @@ export function StudentFeeReceiptsView({
 
             <div className="min-w-0">
               <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Monthly Fees
+                {primaryFeeLabel}
               </p>
 
               <p className="mt-1 truncate text-2xl font-black text-slate-800">
-                {formatCurrency(totalFees)}
+                {formatCurrency(primaryFeeAmount)}
               </p>
             </div>
           </div>
@@ -659,7 +725,7 @@ export function StudentFeeReceiptsView({
 
             <div className="min-w-0">
               <p className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Next Monthly Fee
+                {nextFeeLabel}
               </p>
 
               <p className="mt-1 truncate text-2xl font-black text-amber-600">
@@ -673,7 +739,9 @@ export function StudentFeeReceiptsView({
                   ? `${nextMonthlyFee.isProjected ? "Expected" : "Due"} ${formatReceiptDate(
                       nextMonthlyFee.dueDate,
                     )}`
-                  : "No monthly fee record available"}
+                  : hasInstallmentPlan
+                    ? "No next installment scheduled"
+                    : "No monthly fee scheduled"}
               </p>
             </div>
           </div>

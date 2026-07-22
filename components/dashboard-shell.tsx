@@ -1752,8 +1752,9 @@ export function DashboardShell({
             {role === "educator" ? (
               <button
                 type="button"
-                aria-label="Earn ₹1,000"
-                title="Earn ₹1,000"
+                onClick={() => setActiveSection("rewards")}
+                aria-label="Open Rewards"
+                title="Open Rewards"
                 className="group relative inline-flex h-10 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 px-3 text-xs font-black text-white shadow-lg shadow-purple-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-500/30 active:translate-y-0 sm:h-11 sm:rounded-2xl sm:px-4 sm:text-sm"
               >
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
