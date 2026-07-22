@@ -56,8 +56,9 @@ function getOptionalNumber(value: unknown) {
 function parseInstallments(value: unknown): Array<
   Pick<
     FeeInstallment,
-    | "installmentNumber"
-    | "amount"
+| "installmentNumber"
+| "installmentTitle"
+| "amount"
     | "paidAmount"
     | "dueDate"
     | "paidDate"
@@ -106,10 +107,13 @@ function parseInstallments(value: unknown): Array<
       );
     }
 
-    return {
-      installmentNumber,
-      amount,
-      paidAmount,
+return {
+  installmentNumber,
+  installmentTitle:
+    getOptionalText(installment.installmentTitle) ??
+    `Installment ${installmentNumber}`,
+  amount,
+  paidAmount,
       dueDate,
       paidDate:
         paidAmount > 0

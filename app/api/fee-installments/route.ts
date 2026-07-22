@@ -20,9 +20,7 @@ function getRequiredText(value: unknown, label: string) {
 }
 
 function getOptionalText(value: unknown) {
-  return typeof value === "string" && value.trim()
-    ? value.trim()
-    : undefined;
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
 function getOptionalNumber(value: unknown) {
@@ -39,10 +37,13 @@ function getOptionalNumber(value: unknown) {
   return number;
 }
 
-function parseInstallments(value: unknown): Array<
+function parseInstallments(
+  value: unknown,
+): Array<
   Pick<
     FeeInstallment,
     | "installmentNumber"
+    | "installmentTitle"
     | "amount"
     | "paidAmount"
     | "dueDate"
@@ -73,10 +74,7 @@ function parseInstallments(value: unknown): Array<
       `Due date for installment ${index + 1}`,
     );
 
-    if (
-      !Number.isInteger(installmentNumber) ||
-      installmentNumber < 1
-    ) {
+    if (!Number.isInteger(installmentNumber) || installmentNumber < 1) {
       throw new Error(
         `Installment ${index + 1} must have a valid installment number.`,
       );
@@ -96,13 +94,14 @@ function parseInstallments(value: unknown): Array<
 
     return {
       installmentNumber,
+      installmentTitle:
+        getOptionalText(installment.installmentTitle) ??
+        `Installment ${installmentNumber}`,
       amount,
       paidAmount,
       dueDate,
       paidDate:
-        paidAmount > 0
-          ? getOptionalText(installment.paidDate)
-          : undefined,
+        paidAmount > 0 ? getOptionalText(installment.paidDate) : undefined,
       receiptNumber: getOptionalText(installment.receiptNumber),
       paymentMode: getOptionalText(installment.paymentMode),
       notes: getOptionalText(installment.notes),
@@ -184,10 +183,7 @@ export async function POST(request: Request) {
       installments,
     });
 
-    return NextResponse.json(
-      { feeInstallmentPlan },
-      { status: 201 },
-    );
+    return NextResponse.json({ feeInstallmentPlan }, { status: 201 });
   } catch (error) {
     console.error("Create fee installment plan error:", error);
 

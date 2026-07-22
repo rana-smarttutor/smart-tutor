@@ -17,6 +17,7 @@ type FeeInstallmentManagerProps = {
 
 type InstallmentDraft = {
   installmentNumber: number;
+  installmentTitle: string;
   amount: string;
   paidAmount: string;
   dueDate: string;
@@ -100,11 +101,10 @@ function getInstallmentStatusClass(status: FeeInstallment["status"]) {
   return "bg-amber-100 text-amber-700";
 }
 
-function createEmptyInstallment(
-  installmentNumber: number,
-): InstallmentDraft {
+function createEmptyInstallment(installmentNumber: number): InstallmentDraft {
   return {
     installmentNumber,
+    installmentTitle: `Installment ${installmentNumber}`,
     amount: "",
     paidAmount: "0",
     dueDate: getToday(),
@@ -115,11 +115,12 @@ function createEmptyInstallment(
   };
 }
 
-function toInstallmentDraft(
-  installment: FeeInstallment,
-): InstallmentDraft {
+function toInstallmentDraft(installment: FeeInstallment): InstallmentDraft {
   return {
     installmentNumber: installment.installmentNumber,
+    installmentTitle:
+      installment.installmentTitle ||
+      `Installment ${installment.installmentNumber}`,
     amount: String(installment.amount),
     paidAmount: String(installment.paidAmount ?? 0),
     dueDate: installment.dueDate,
@@ -172,18 +173,22 @@ export function FeeInstallmentManager({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
-  const [paymentPlan, setPaymentPlan] = useState<FeeInstallmentPlan | null>(null);
-  const [paymentInstallment, setPaymentInstallment] = useState<FeeInstallment | null>(null);
-  const [installmentPaymentDraft, setInstallmentPaymentDraft] = useState<InstallmentPaymentDraft>({
-    paidAmount: "",
-    paidDate: getToday(),
-    paymentMode: "Cash",
-    transactionId: "",
-    chequeNumber: "",
-    bankName: "",
-    accountLast4: "",
-    notes: "",
-  });
+  const [paymentPlan, setPaymentPlan] = useState<FeeInstallmentPlan | null>(
+    null,
+  );
+  const [paymentInstallment, setPaymentInstallment] =
+    useState<FeeInstallment | null>(null);
+  const [installmentPaymentDraft, setInstallmentPaymentDraft] =
+    useState<InstallmentPaymentDraft>({
+      paidAmount: "",
+      paidDate: getToday(),
+      paymentMode: "Cash",
+      transactionId: "",
+      chequeNumber: "",
+      bankName: "",
+      accountLast4: "",
+      notes: "",
+    });
   const [isRecordingPayment, setIsRecordingPayment] = useState(false);
 
   const selectedStudent = useMemo(
@@ -299,8 +304,7 @@ export function FeeInstallmentManager({
     setInstallments((current) =>
       current
         .filter(
-          (installment) =>
-            installment.installmentNumber !== installmentNumber,
+          (installment) => installment.installmentNumber !== installmentNumber,
         )
         .map((installment, index) => ({
           ...installment,
@@ -331,6 +335,9 @@ export function FeeInstallmentManager({
     }
 
     for (const installment of installments) {
+      if (!installment.installmentTitle.trim()) {
+        return `Enter a title for installment ${installment.installmentNumber}.`;
+      }
       const amount = Number(installment.amount);
       const paidAmount = Number(installment.paidAmount || 0);
 
@@ -381,6 +388,7 @@ export function FeeInstallmentManager({
 
     const normalizedInstallments = installments.map((installment) => ({
       installmentNumber: installment.installmentNumber,
+      installmentTitle: installment.installmentTitle.trim(),
       amount: Number(installment.amount),
       paidAmount: Number(installment.paidAmount || 0),
       dueDate: installment.dueDate,
@@ -550,9 +558,7 @@ export function FeeInstallmentManager({
         return;
       }
 
-      setPlans((current) =>
-        current.filter((item) => item.id !== plan.id),
-      );
+      setPlans((current) => current.filter((item) => item.id !== plan.id));
 
       if (editingPlanId === plan.id) {
         resetForm();
@@ -585,10 +591,9 @@ export function FeeInstallmentManager({
     });
   }
 
-  function updateInstallmentPaymentDraft<K extends keyof InstallmentPaymentDraft>(
-    key: K,
-    value: InstallmentPaymentDraft[K],
-  ) {
+  function updateInstallmentPaymentDraft<
+    K extends keyof InstallmentPaymentDraft,
+  >(key: K, value: InstallmentPaymentDraft[K]) {
     setInstallmentPaymentDraft((current) => ({ ...current, [key]: value }));
   }
 
@@ -702,9 +707,7 @@ export function FeeInstallmentManager({
 
                 <select
                   value={selectedStudentId}
-                  onChange={(event) =>
-                    setSelectedStudentId(event.target.value)
-                  }
+                  onChange={(event) => setSelectedStudentId(event.target.value)}
                   disabled={Boolean(editingPlanId)}
                   className={fieldClass}
                 >
@@ -787,11 +790,12 @@ export function FeeInstallmentManager({
               />
             </label>
 
-           <div className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-[1.5rem] border border-[var(--color-border)]">
-  <table className="w-full min-w-[1050px] text-left text-sm">
+            <div className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain rounded-[1.5rem] border border-[var(--color-border)]">
+              <table className="w-full min-w-[1230px] text-left text-sm">
                 <thead className="bg-[var(--color-panel)]">
                   <tr className="border-b border-[var(--color-border)] text-[10px] font-black uppercase tracking-[0.14em] text-[var(--color-muted)]">
                     <th className="px-4 py-4">No.</th>
+                    <th className="px-4 py-4">Title</th>
                     <th className="px-4 py-4">Amount</th>
                     <th className="px-4 py-4">Paid Amount</th>
                     <th className="px-4 py-4">Due Date</th>
@@ -814,14 +818,27 @@ export function FeeInstallmentManager({
 
                       <td className="px-4 py-3">
                         <input
+                          type="text"
+                          value={installment.installmentTitle}
+                          onChange={(event) =>
+                            updateInstallment(installment.installmentNumber, {
+                              installmentTitle: event.target.value,
+                            })
+                          }
+                          placeholder="e.g. Admission Fee"
+                          className={`${compactFieldClass} min-w-40`}
+                        />
+                      </td>
+
+                      <td className="px-4 py-3">
+                        <input
                           type="number"
                           min="1"
                           value={installment.amount}
                           onChange={(event) =>
-                            updateInstallment(
-                              installment.installmentNumber,
-                              { amount: event.target.value },
-                            )
+                            updateInstallment(installment.installmentNumber, {
+                              amount: event.target.value,
+                            })
                           }
                           placeholder="Amount"
                           className={`${compactFieldClass} min-w-28`}
@@ -834,16 +851,13 @@ export function FeeInstallmentManager({
                           min="0"
                           value={installment.paidAmount}
                           onChange={(event) =>
-                            updateInstallment(
-                              installment.installmentNumber,
-                              {
-                                paidAmount: event.target.value,
-                                paidDate:
-                                  Number(event.target.value) > 0
-                                    ? installment.paidDate || getToday()
-                                    : "",
-                              },
-                            )
+                            updateInstallment(installment.installmentNumber, {
+                              paidAmount: event.target.value,
+                              paidDate:
+                                Number(event.target.value) > 0
+                                  ? installment.paidDate || getToday()
+                                  : "",
+                            })
                           }
                           placeholder="0"
                           className={`${compactFieldClass} min-w-28`}
@@ -855,10 +869,9 @@ export function FeeInstallmentManager({
                           type="date"
                           value={installment.dueDate}
                           onChange={(event) =>
-                            updateInstallment(
-                              installment.installmentNumber,
-                              { dueDate: event.target.value },
-                            )
+                            updateInstallment(installment.installmentNumber, {
+                              dueDate: event.target.value,
+                            })
                           }
                           className={compactFieldClass}
                         />
@@ -870,10 +883,9 @@ export function FeeInstallmentManager({
                           disabled={Number(installment.paidAmount) <= 0}
                           value={installment.paidDate}
                           onChange={(event) =>
-                            updateInstallment(
-                              installment.installmentNumber,
-                              { paidDate: event.target.value },
-                            )
+                            updateInstallment(installment.installmentNumber, {
+                              paidDate: event.target.value,
+                            })
                           }
                           className={`${compactFieldClass} disabled:cursor-not-allowed disabled:opacity-50`}
                         />
@@ -883,10 +895,9 @@ export function FeeInstallmentManager({
                         <input
                           value={installment.paymentMode}
                           onChange={(event) =>
-                            updateInstallment(
-                              installment.installmentNumber,
-                              { paymentMode: event.target.value },
-                            )
+                            updateInstallment(installment.installmentNumber, {
+                              paymentMode: event.target.value,
+                            })
                           }
                           placeholder="Cash / UPI"
                           className={`${compactFieldClass} min-w-32`}
@@ -897,10 +908,9 @@ export function FeeInstallmentManager({
                         <input
                           value={installment.receiptNumber}
                           onChange={(event) =>
-                            updateInstallment(
-                              installment.installmentNumber,
-                              { receiptNumber: event.target.value },
-                            )
+                            updateInstallment(installment.installmentNumber, {
+                              receiptNumber: event.target.value,
+                            })
                           }
                           placeholder="Optional"
                           className={`${compactFieldClass} min-w-32`}
@@ -911,9 +921,7 @@ export function FeeInstallmentManager({
                         <button
                           type="button"
                           onClick={() =>
-                            removeInstallment(
-                              installment.installmentNumber,
-                            )
+                            removeInstallment(installment.installmentNumber)
                           }
                           className="rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-black text-rose-600 hover:bg-rose-100"
                         >
@@ -1089,8 +1097,15 @@ export function FeeInstallmentManager({
                         key={installment.installmentNumber}
                         className="border-b border-[var(--color-border)] last:border-0"
                       >
-                        <td className="px-4 py-3 font-black text-[var(--color-heading)]">
-                          #{installment.installmentNumber}
+                        <td className="px-4 py-3">
+                          <div className="font-black text-[var(--color-heading)]">
+                            {installment.installmentTitle ||
+                              `Installment ${installment.installmentNumber}`}
+                          </div>
+
+                          <div className="mt-0.5 text-[10px] font-semibold text-[var(--color-muted)]">
+                            Installment #{installment.installmentNumber}
+                          </div>
                         </td>
 
                         <td className="px-4 py-3 text-[var(--color-muted)]">
@@ -1190,14 +1205,19 @@ export function FeeInstallmentManager({
             </p>
 
             <h3 className="mt-2 text-xl font-black text-slate-950">
-              Installment #{paymentInstallment.installmentNumber} — {paymentPlan.studentName}
+              {paymentInstallment.installmentTitle ||
+                `Installment ${paymentInstallment.installmentNumber}`}{" "}
+              — {paymentPlan.studentName}
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
               Outstanding balance:{" "}
               <strong>
                 {formatCurrency(
-                  Math.max(0, paymentInstallment.amount - paymentInstallment.paidAmount),
+                  Math.max(
+                    0,
+                    paymentInstallment.amount - paymentInstallment.paidAmount,
+                  ),
                 )}
               </strong>
             </p>
@@ -1212,7 +1232,10 @@ export function FeeInstallmentManager({
                   min="1"
                   value={installmentPaymentDraft.paidAmount}
                   onChange={(event) =>
-                    updateInstallmentPaymentDraft("paidAmount", event.target.value)
+                    updateInstallmentPaymentDraft(
+                      "paidAmount",
+                      event.target.value,
+                    )
                   }
                   className={fieldClass}
                 />
@@ -1226,7 +1249,10 @@ export function FeeInstallmentManager({
                   type="date"
                   value={installmentPaymentDraft.paidDate}
                   onChange={(event) =>
-                    updateInstallmentPaymentDraft("paidDate", event.target.value)
+                    updateInstallmentPaymentDraft(
+                      "paidDate",
+                      event.target.value,
+                    )
                   }
                   className={fieldClass}
                 />
@@ -1285,7 +1311,10 @@ export function FeeInstallmentManager({
                       <input
                         value={installmentPaymentDraft.chequeNumber}
                         onChange={(event) =>
-                          updateInstallmentPaymentDraft("chequeNumber", event.target.value)
+                          updateInstallmentPaymentDraft(
+                            "chequeNumber",
+                            event.target.value,
+                          )
                         }
                         className={fieldClass}
                         placeholder="Cheque number"
@@ -1300,7 +1329,10 @@ export function FeeInstallmentManager({
                     <input
                       value={installmentPaymentDraft.transactionId}
                       onChange={(event) =>
-                        updateInstallmentPaymentDraft("transactionId", event.target.value)
+                        updateInstallmentPaymentDraft(
+                          "transactionId",
+                          event.target.value,
+                        )
                       }
                       className={fieldClass}
                       placeholder="UPI ref, NEFT/RTGS ref, etc."
@@ -1314,7 +1346,10 @@ export function FeeInstallmentManager({
                     <input
                       value={installmentPaymentDraft.bankName}
                       onChange={(event) =>
-                        updateInstallmentPaymentDraft("bankName", event.target.value)
+                        updateInstallmentPaymentDraft(
+                          "bankName",
+                          event.target.value,
+                        )
                       }
                       className={fieldClass}
                       placeholder="Bank name"
@@ -1328,7 +1363,10 @@ export function FeeInstallmentManager({
                     <input
                       value={installmentPaymentDraft.accountLast4}
                       onChange={(event) =>
-                        updateInstallmentPaymentDraft("accountLast4", event.target.value)
+                        updateInstallmentPaymentDraft(
+                          "accountLast4",
+                          event.target.value,
+                        )
                       }
                       className={fieldClass}
                       placeholder="XXXX"

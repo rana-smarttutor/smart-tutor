@@ -5177,6 +5177,7 @@ function normalizeInstallments(
     Pick<
       FeeInstallment,
       | "installmentNumber"
+      | "installmentTitle"
       | "amount"
       | "paidAmount"
       | "dueDate"
@@ -5238,6 +5239,9 @@ function normalizeInstallments(
 
       return {
         installmentNumber,
+        installmentTitle:
+          installment.installmentTitle?.trim() ||
+          `Installment ${installmentNumber}`,
         amount,
         paidAmount,
         pendingAmount,
@@ -5337,6 +5341,7 @@ export async function createFeeInstallmentPlan(input: {
     Pick<
       FeeInstallment,
       | "installmentNumber"
+      | "installmentTitle"
       | "amount"
       | "paidAmount"
       | "dueDate"
@@ -5415,6 +5420,7 @@ export async function updateFeeInstallmentPlan(
       Pick<
         FeeInstallment,
         | "installmentNumber"
+        | "installmentTitle"
         | "amount"
         | "paidAmount"
         | "dueDate"
