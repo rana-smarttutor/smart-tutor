@@ -1,9 +1,4 @@
-export type Role =
-  | "student"
-  | "educator"
-  | "admin"
-  | "parent"
-  | "counsellor";
+export type Role = "student" | "educator" | "admin" | "parent" | "counsellor";
 
 export type UserStatus = "active" | "pending" | "rejected";
 
@@ -65,7 +60,12 @@ export type DashboardAnalytics = {
     absent: number;
     late: number;
     excused: number;
-    dailyRecords?: Array<{ date: string; rate: number; present: number; total: number }>;
+    dailyRecords?: Array<{
+      date: string;
+      rate: number;
+      present: number;
+      total: number;
+    }>;
   };
 
   assessments: {
@@ -142,11 +142,7 @@ export type CourseItem = {
 // Exam Types
 // =========================
 
-export type ExamType =
-  | "unit-1"
-  | "semester-1"
-  | "unit-2"
-  | "semester-2";
+export type ExamType = "unit-1" | "semester-1" | "unit-2" | "semester-2";
 
 export type TestItem = {
   id: string;
@@ -469,7 +465,7 @@ export type FeeInvoice = {
   particulars?: string;
   month?: string;
   paymentMode?: string;
-transactionId?: string;
+  transactionId?: string;
 
   title: string;
   amount: number;
@@ -565,7 +561,12 @@ export type UserProfile = {
   parentMobile?: string;
   courseWanted?: string;
   courseWantedTitle?: string;
-  studentType?: "online" | "centre-based" | "home" | "on-campus";
+  studentType?: "online" | "campus" | "home" | "centre-based" | "on-campus";
+
+  campusLocation?: "vashi" | "panvel";
+
+  campusLocationTitle?: "Vashi Campus" | "Panvel Campus";
+
   weakSubjects?: string[];
   strongSubjects?: string[];
   latestQualification?: string;
@@ -632,10 +633,7 @@ export type DashboardBundle = {
 // weeklyy test items
 // =========================
 
-export type WeeklyTestResultStatus =
-  | "present"
-  | "absent"
-  | "not-submitted";
+export type WeeklyTestResultStatus = "present" | "absent" | "not-submitted";
 
 export type WeeklyTestResult = {
   studentId: string;
@@ -693,9 +691,6 @@ export type TeacherFeedback = {
   updatedAt?: string;
 };
 
-
-
-
 // =========================
 // StudentDailyActivity
 // =========================
@@ -741,11 +736,7 @@ export type StudentDailyActivity = {
 // Student Daily Routine
 // =========================
 
-export type DailyRoutineMood =
-  | "difficult"
-  | "okay"
-  | "good"
-  | "great";
+export type DailyRoutineMood = "difficult" | "okay" | "good" | "great";
 
 export type StudentDailyRoutine = {
   id: string;
@@ -773,7 +764,6 @@ export type StudentDailyRoutine = {
   createdAt: string;
   updatedAt?: string;
 };
-
 
 // =========================
 //  TeacherPayout
@@ -867,14 +857,99 @@ export type StaffPayoutAuditLog = {
 };
 
 // =========================
+// Business Expenses
+// =========================
+
+export type BusinessExpenseCategory =
+  | "Rent"
+  | "Electricity"
+  | "Internet"
+  | "Marketing"
+  | "Software"
+  | "Office Supplies"
+  | "Travel"
+  | "Maintenance"
+  | "Taxes"
+  | "Other";
+
+export type BusinessExpense = {
+  id: string;
+
+  title: string;
+  category: BusinessExpenseCategory;
+
+  amount: number;
+  expenseDate: string;
+
+  paymentMode: PaymentMode;
+  transactionId?: string;
+
+  vendor?: string;
+  notes?: string;
+  receiptUrl?: string;
+
+  createdBy: string;
+  createdByName?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
+// Profit & Loss
+// =========================
+
+export type ProfitLossMonthlyRow = {
+  month: string;
+  monthLabel: string;
+
+  invoiceIncome: number;
+  installmentIncome: number;
+  totalIncome: number;
+
+  staffExpense: number;
+  businessExpense: number;
+  totalExpense: number;
+
+  netProfit: number;
+};
+
+export type ProfitLossSummary = {
+  fromDate: string;
+  toDate: string;
+  generatedAt: string;
+
+  income: {
+    invoicePayments: number;
+    installmentPayments: number;
+    total: number;
+  };
+
+  expenses: {
+    staffPayouts: number;
+    businessExpenses: number;
+    total: number;
+  };
+
+  pendingFees: {
+    invoices: number;
+    installments: number;
+    total: number;
+  };
+
+  netProfit: number;
+  profitMargin: number;
+
+  monthly: ProfitLossMonthlyRow[];
+
+  recentExpenses: BusinessExpense[];
+};
+
+// =========================
 // Fee Installment Plans
 // =========================
 
-export type FeeInstallmentStatus =
-  | "paid"
-  | "partial"
-  | "due"
-  | "overdue";
+export type FeeInstallmentStatus = "paid" | "partial" | "due" | "overdue";
 
 export type FeeInstallment = {
   installmentNumber: number;
@@ -895,10 +970,7 @@ export type FeeInstallment = {
   notes?: string;
 };
 
-export type FeeInstallmentPlanStatus =
-  | "active"
-  | "completed"
-  | "cancelled";
+export type FeeInstallmentPlanStatus = "active" | "completed" | "cancelled";
 
 export type FeeInstallmentPlan = {
   id: string;
@@ -934,10 +1006,7 @@ export type FeeInstallmentPlan = {
 
 export type PtmMode = "online" | "offline";
 
-export type PtmStatus =
-  | "scheduled"
-  | "completed"
-  | "cancelled";
+export type PtmStatus = "scheduled" | "completed" | "cancelled";
 
 export type PtmSession = {
   id: string;
@@ -988,7 +1057,7 @@ export type AppNotificationType =
   | "payment"
   | "placement"
   | "ptm"
-  | "doubt"; 
+  | "doubt";
 
 export type AppNotification = {
   id: string;
@@ -1000,8 +1069,6 @@ export type AppNotification = {
   read: boolean;
   createdAt: string;
 };
-
-
 
 // =========================
 // Complaint Box System
@@ -1017,11 +1084,7 @@ export type ComplaintCategory =
   | "safety"
   | "other";
 
-export type ComplaintPriority =
-  | "low"
-  | "medium"
-  | "high"
-  | "urgent";
+export type ComplaintPriority = "low" | "medium" | "high" | "urgent";
 
 export type ComplaintStatus =
   | "submitted"
@@ -1034,10 +1097,7 @@ export type ComplaintItem = {
 
   submittedById: string;
   submittedByName: string;
-  submittedByRole:
-    | "student"
-    | "parent"
-    | "educator";
+  submittedByRole: "student" | "parent" | "educator";
 
   category: ComplaintCategory;
 
@@ -1203,7 +1263,12 @@ export type PasswordResetRequest = {
 // Homework / Assignment System
 // =========================
 
-export type HomeworkType = "homework" | "assignment" | "classwork" | "project" | "test";
+export type HomeworkType =
+  | "homework"
+  | "assignment"
+  | "classwork"
+  | "project"
+  | "test";
 
 export type HomeworkItem = {
   id: string;
@@ -1251,17 +1316,9 @@ export type HomeworkSubmission = {
 // Doubt Box System
 // =========================
 
-export type DoubtStatus =
-  | "open"
-  | "answered"
-  | "resolved"
-  | "closed";
+export type DoubtStatus = "open" | "answered" | "resolved" | "closed";
 
-export type DoubtAnswerAuthorRole =
-  | "student"
-  | "educator"
-  | "admin"
-  | "ai";
+export type DoubtAnswerAuthorRole = "student" | "educator" | "admin" | "ai";
 
 export type DoubtAnswer = {
   id: string;
@@ -1582,8 +1639,18 @@ export type LeaveBalanceItem = {
 // Staff Attendance System
 // =========================
 
-export type StaffAttendanceStatus = "present" | "absent" | "half_day" | "late" | "on_leave" | "holiday";
-export type EmploymentType = "full_time" | "part_time" | "contractual" | "hourly";
+export type StaffAttendanceStatus =
+  | "present"
+  | "absent"
+  | "half_day"
+  | "late"
+  | "on_leave"
+  | "holiday";
+export type EmploymentType =
+  | "full_time"
+  | "part_time"
+  | "contractual"
+  | "hourly";
 export type StaffCategory = "Teacher" | "Staff" | "Admin" | "Counsellor";
 
 export type StaffAttendanceRecord = {
@@ -1677,7 +1744,11 @@ export type RegularisationRequest = {
 // Staff Payroll / Salary Management System
 // =========================
 
-export type PayrollEmploymentType = "full_time" | "part_time" | "contractual" | "hourly";
+export type PayrollEmploymentType =
+  | "full_time"
+  | "part_time"
+  | "contractual"
+  | "hourly";
 
 export type PayrollSalaryType = "monthly" | "hourly" | "per_class";
 
@@ -1705,9 +1776,19 @@ export type StaffPayrollProfile = {
   updatedAt?: string;
 };
 
-export type PayrollRunStatus = "draft" | "approved" | "finalized" | "settled" | "rolled_back";
+export type PayrollRunStatus =
+  | "draft"
+  | "approved"
+  | "finalized"
+  | "settled"
+  | "rolled_back";
 
-export type PayrollSlipStatus = "pending" | "generated" | "approved" | "paid" | "held";
+export type PayrollSlipStatus =
+  | "pending"
+  | "generated"
+  | "approved"
+  | "paid"
+  | "held";
 
 export type PayrollSlip = {
   id: string;
@@ -1841,7 +1922,10 @@ export type FeeDeletionAuditLog = {
 // Certificate System
 // =========================
 
-export type CertificateTemplateId = "classic-gold" | "modern-blue" | "professional-dark";
+export type CertificateTemplateId =
+  | "classic-gold"
+  | "modern-blue"
+  | "professional-dark";
 
 export type CertificateRecipientType = "student" | "educator" | "parent";
 

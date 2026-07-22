@@ -38,6 +38,7 @@ type SignupFormData = {
   courseWanted: string;
   courseWantedTitle: string;
   studentType: string;
+  campusLocation: string;
   referralCode: string;
 
   weakSubjects: string;
@@ -589,8 +590,8 @@ function getInitialFormData(): SignupFormData {
     courseWanted: "",
     courseWantedTitle: "",
     studentType: "",
+    campusLocation: "",
     referralCode: "",
-
     weakSubjects: "",
     strongSubjects: "",
     latestQualification: "",
@@ -947,6 +948,16 @@ export function RegistrationForm() {
           );
           return;
         }
+
+        if (!form.studentType) {
+          setError("Please select the student type.");
+          return;
+        }
+
+        if (form.studentType === "campus" && !form.campusLocation) {
+          setError("Please select a campus location.");
+          return;
+        }
         if (form.referralCode.trim()) {
           const referralIsValid = await validateReferralCode(form.referralCode);
 
@@ -1039,6 +1050,9 @@ export function RegistrationForm() {
         body.courseWanted = form.courseWanted;
         body.courseWantedTitle = form.courseWantedTitle;
         body.studentType = form.studentType;
+
+        body.campusLocation =
+          form.studentType === "campus" ? form.campusLocation : "";
 
         if (form.referralCode.trim()) {
           body.referralCode = form.referralCode.trim().toUpperCase();
@@ -1509,23 +1523,63 @@ export function RegistrationForm() {
                   )}
                 </div>
 
-                <div>
-                  <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                    Student Type
-                  </label>
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                      Student Type <span className="text-red-500">*</span>
+                    </label>
 
-                  <select
-                    value={form.studentType}
-                    onChange={(event) =>
-                      updateField("studentType", event.target.value)
-                    }
-                    className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
-                  >
-                    <option value="">Select type</option>
-                    <option value="online">Online Learning</option>
-                    <option value="centre-based">Centre-Based Learning</option>
-                    <option value="home">Home Tutor</option>
-                  </select>
+                    <select
+                      required
+                      value={form.studentType}
+                      onChange={(event) => {
+                        const selectedType = event.target.value;
+
+                        setForm((previous) => ({
+                          ...previous,
+                          studentType: selectedType,
+                          campusLocation:
+                            selectedType === "campus"
+                              ? previous.campusLocation
+                              : "",
+                        }));
+                      }}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+                    >
+                      <option value="">Select type</option>
+                      <option value="online">Online Learning</option>
+                      <option value="campus">Campus Learning</option>
+                      <option value="home">Home Tutor</option>
+                    </select>
+                  </div>
+
+                  {form.studentType === "campus" ? (
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50/30 p-4">
+                      <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-blue-700">
+                        Campus Location <span className="text-red-500">*</span>
+                      </label>
+
+                      <select
+                        required
+                        value={form.campusLocation}
+                        onChange={(event) =>
+                          updateField("campusLocation", event.target.value)
+                        }
+                        className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+                      >
+                        <option value="">Select campus</option>
+
+                        <option value="vashi">Vashi Campus</option>
+
+                        <option value="panvel">Panvel Campus</option>
+                      </select>
+
+                      <p className="ml-1 mt-2 text-[10px] text-slate-400">
+                        Select the campus where the student will attend physical
+                        classes.
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
