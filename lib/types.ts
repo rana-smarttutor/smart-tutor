@@ -878,6 +878,7 @@ export type FeeInstallmentStatus =
 
 export type FeeInstallment = {
   installmentNumber: number;
+  installmentTitle?: string;
 
   amount: number;
   paidAmount: number;
