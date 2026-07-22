@@ -147,7 +147,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 w-full">
+      <header className="fixed inset-x-0 top-0 z-[100] w-full overflow-visible">
         <div className="header-progress-track" aria-hidden="true">
           <div
             className="header-progress-bar"
@@ -157,7 +157,10 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
 
         <div className="px-2 pt-2 sm:px-3 sm:pt-3">
           <div className="section-shell ">
-            <div className="surface shell-bar rounded-[1.75rem]  lg:rounded-full ">
+            <div
+              className="surface shell-bar relative overflow-visible rounded-[1.75rem] lg:rounded-full"
+              style={{ overflow: "visible" }}
+            >
               <div className="flex min-h-[3.5rem] h-full px-3 items-center justify-between gap-3">
                 <Link
                   href="/"
@@ -198,7 +201,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
                   </nav>
                 </div>
 
-                <div className="hidden items-center gap-3 lg:flex">
+                <div className="relative hidden items-center gap-3 overflow-visible lg:flex">
                   {session ? (
                     <UserMenu session={session} profilePhoto={profilePhoto} />
                   ) : null}

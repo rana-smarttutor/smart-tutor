@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SessionUser, DashboardBundle } from "@/lib/types";
 
 function getInitials(name?: string) {
@@ -58,6 +58,9 @@ export function MyProfileClient({ session }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [profilePhoto, setProfilePhoto] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const [name, setName] = useState(session.name);
   const [email] = useState(session.email);
@@ -113,6 +116,7 @@ export function MyProfileClient({ session }: Props) {
           setDashboard(d);
           const p = d.profile;
           if (p) {
+            setProfilePhoto(p.profilePhoto ?? "");
             setPhone(p.guardianPhone ?? "");
             setGender(p.gender ?? "");
             setDob(p.dob ?? p.dateOfBirth ?? "");
@@ -186,7 +190,85 @@ export function MyProfileClient({ session }: Props) {
   function removeStrong(s: string) {
     setStrongSubjects((prev) => prev.filter((x) => x !== s));
   }
+  async function handleProfilePhotoChange(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = event.target.files?.[0];
 
+    event.target.value = "";
+
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    if (!allowedTypes.includes(file.type)) {
+      setStatus("Please select a JPG, PNG, or WebP image.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setStatus("Profile picture must be smaller than 5 MB.");
+      return;
+    }
+
+    try {
+      setUploadingPhoto(true);
+      setStatus("");
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("field", "photo");
+
+      const uploadResponse = await fetch("/api/upload/signup", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = (await uploadResponse.json()) as {
+        success?: boolean;
+        url?: string;
+        message?: string;
+        error?: string;
+      };
+
+      if (!uploadResponse.ok || !uploadData.success || !uploadData.url) {
+        throw new Error(
+          uploadData.message || uploadData.error || "Photo upload failed.",
+        );
+      }
+
+      const profileResponse = await fetch("/api/profile", {
+        method: "PATCH",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          profilePhoto: uploadData.url,
+        }),
+      });
+
+      const profileData = (await profileResponse.json()) as {
+        error?: string;
+      };
+
+      if (!profileResponse.ok) {
+        throw new Error(profileData.error || "Unable to save profile picture.");
+      }
+
+      setProfilePhoto(uploadData.url);
+      setStatus("Profile picture updated successfully!");
+      router.refresh();
+    } catch (error) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : "Profile picture update failed.",
+      );
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
   async function handleSave() {
     setSaving(true);
     setStatus("");
@@ -370,23 +452,67 @@ export function MyProfileClient({ session }: Props) {
           {/* Left sidebar */}
           <div className="space-y-6">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
-              {p?.profilePhoto ? (
-                <div className="mx-auto h-24 w-24 overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-white">
-                  <img
-                    src={p.profilePhoto}
-                    alt={`${session.name} profile`}
-                    className="h-full w-full object-cover object-top"
-                  />
-                </div>
-              ) : (
-                <div
-                  className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br ${roleColor} shadow-lg ring-4 ring-white/80`}
+              <div className="relative mx-auto h-24 w-24">
+                {profilePhoto ? (
+                  <div className="h-24 w-24 overflow-hidden rounded-full bg-white shadow-lg ring-4 ring-white">
+                    <img
+                      src={profilePhoto}
+                      alt={`${session.name} profile`}
+                      className="h-full w-full object-cover object-top"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className={`flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br ${roleColor} shadow-lg ring-4 ring-white/80`}
+                  >
+                    <span className="text-3xl font-black text-white">
+                      {getInitials(session.name)}
+                    </span>
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  aria-label="Update profile picture"
+                  title="Update profile picture"
+                  className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border-[3px] border-white bg-indigo-600 text-white shadow-lg transition hover:scale-110 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <span className="text-3xl font-black text-white">
-                    {getInitials(session.name)}
-                  </span>
-                </div>
-              )}
+                  {uploadingPhoto ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  ) : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.2}
+                        d="M16.862 3.487a2.121 2.121 0 0 1 3 3L8.5 17.85 4 19l1.15-4.5L16.862 3.487Z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.2}
+                        d="m14.75 5.6 3.65 3.65"
+                      />
+                    </svg>
+                  )}
+                </button>
+
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleProfilePhotoChange}
+                  className="hidden"
+                />
+              </div>
               <h2 className="mt-4 text-xl font-bold text-slate-900">
                 {session.name}
               </h2>
