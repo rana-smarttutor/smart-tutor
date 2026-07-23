@@ -214,10 +214,12 @@ export function DashboardAccountDirectory({
       role: draft.role,
       program: draft.program,
       status: draft.status,
-      password: draft.passwordHint,
       verified: draft.verified,
       assignedFacultyIds: draft.assignedFacultyIds ?? null,
     };
+    if (draft.passwordHint && draft.passwordHint.trim()) {
+      payloadData.password = draft.passwordHint;
+    }
     if (draft.profilePhoto !== undefined) {
       payloadData.profilePhoto = draft.profilePhoto;
     }
@@ -670,7 +672,7 @@ export function DashboardAccountDirectory({
                     onChange={(e) =>
                       setDrafts((c) => ({ ...c, [user.id]: { ...d, passwordHint: e.target.value.slice(0, 24) } }))
                     }
-                    placeholder="Password"
+                    placeholder="New Password (blank = keep current)"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                 </div>

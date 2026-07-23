@@ -138,6 +138,7 @@ type UserDocument = SessionUser & {
   emailKey?: string;
   status?: "active" | "pending" | "rejected";
   verified?: boolean;
+  deletedAt?: string;
   permissions?: PermissionItem[];
   createdAt?: string;
   updatedAt?: string;
@@ -397,6 +398,7 @@ function toSessionUser(user: UserDocument): SessionUser {
     label: user.label,
     status: user.status,
     verified: user.verified,
+    deletedAt: user.deletedAt,
   };
 }
 
@@ -405,7 +407,6 @@ function toManagedUser(user: UserDocument): ManagedUser {
     ...toSessionUser(user),
     program: user.program,
     status: (user.status === "rejected" ? "pending" : user.status) ?? "active",
-    passwordHint: user.password,
     linkedStudentId: user.linkedStudentId,
     assignedFacultyIds: user.assignedFacultyIds,
     mobile: user.mobile,
@@ -783,7 +784,7 @@ export async function findUserByCredentials(
     : normalizedLogin;
 
   const query: Record<string, unknown> = {
-    password,
+    deletedAt: { $exists: false },
 
     /*
      * Add the role restriction only when a role
@@ -821,14 +822,21 @@ export async function findUserByCredentials(
     ],
   };
 
-  const user = await collection.findOne(query);
+  const user = await collection.findOne<UserDocument>(query);
 
-  return user ? toSessionUser(user) : null;
+  if (!user) return null;
+
+  const { comparePassword } = await import("@/lib/auth");
+  const matches = await comparePassword(password, user.password);
+  return matches ? toSessionUser(user) : null;
 }
 
 export async function findUserById(id: string) {
   const collection = await getUsersCollection();
-  const user = await collection.findOne({ id });
+  const user = await collection.findOne<UserDocument>({
+    id,
+    deletedAt: { $exists: false },
+  });
   return user ? toSessionUser(user) : null;
 }
 
@@ -1797,7 +1805,10 @@ async function enrichWithFacultyNames(
 export async function getUsersForAdmin() {
   const collection = await getUsersCollection();
 
-  const users = await collection.find({}).sort({ name: 1 }).toArray();
+  const users = await collection
+    .find({ deletedAt: { $exists: false } } as any)
+    .sort({ name: 1 })
+    .toArray();
 
   return enrichWithFacultyNames(users.map(toManagedUser));
 }
@@ -1930,7 +1941,7 @@ export async function toggleUserVerification(
 
 export async function getStudentDirectory(educatorId?: string) {
   const collection = await getUsersCollection();
-  const query: any = { role: "student" };
+  const query: any = { role: "student", deletedAt: { $exists: false } };
   if (educatorId) {
     query.assignedFacultyIds = { $in: [educatorId] };
   }
@@ -1976,6 +1987,11 @@ export async function createUserRecord(input: {
   profile?: UserProfile;
   assignedFacultyIds?: string[];
 }) {
+  const { isBcryptHash, hashPassword } = await import("@/lib/auth");
+  const hashedPassword = isBcryptHash(input.password)
+    ? input.password
+    : await hashPassword(input.password);
+
   const document: UserDocument = {
     id: randomUUID(),
     name: input.name,
@@ -1988,7 +2004,7 @@ export async function createUserRecord(input: {
     linkedStudentMobile: input.linkedStudentMobile,
     role: input.role,
     label: getRoleLabel(input.role),
-    password: input.password,
+    password: hashedPassword,
     program: input.program,
     status: input.status ?? "active",
     createdAt: new Date().toISOString(),
@@ -2023,11 +2039,17 @@ export async function updateUserRecord(input: {
     emailKey: input.email.toLowerCase(),
     role: input.role,
     label: getRoleLabel(input.role),
-    password: input.password,
     program: input.program,
     status: input.status ?? "active",
     updatedAt: new Date().toISOString(),
   };
+
+  if (input.password && input.password.trim()) {
+    const { isBcryptHash, hashPassword } = await import("@/lib/auth");
+    setFields.password = isBcryptHash(input.password)
+      ? input.password
+      : await hashPassword(input.password);
+  }
 
   if (input.verified !== undefined) {
     setFields.verified = input.verified;
@@ -2378,7 +2400,34 @@ export async function bulkUpdateStudentsFromCsv(
 
 export async function deleteUserRecord(userId: string): Promise<boolean> {
   const collection = await getUsersCollection();
-  const result = await collection.deleteOne({ id: userId });
+  const result = await collection.updateOne(
+    { id: userId, deletedAt: { $exists: false } },
+    { $set: { deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } },
+  );
+  return result.matchedCount > 0;
+}
+
+export async function restoreUserRecord(userId: string): Promise<boolean> {
+  const collection = await getUsersCollection();
+  const result = await collection.updateOne(
+    { id: userId, deletedAt: { $exists: true } },
+    { $unset: { deletedAt: "" }, $set: { updatedAt: new Date().toISOString() } },
+  );
+  return result.matchedCount > 0;
+}
+
+export async function getDeletedUsers() {
+  const collection = await getUsersCollection();
+  const users = await collection
+    .find({ deletedAt: { $exists: true, $ne: null } } as any)
+    .sort({ deletedAt: -1 })
+    .toArray();
+  return users.map(toManagedUser);
+}
+
+export async function permanentDeleteUserRecord(userId: string): Promise<boolean> {
+  const collection = await getUsersCollection();
+  const result = await collection.deleteOne({ id: userId, deletedAt: { $exists: true } } as any);
   return result.deletedCount > 0;
 }
 

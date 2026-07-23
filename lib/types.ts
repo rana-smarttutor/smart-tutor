@@ -10,6 +10,7 @@ export type SessionUser = {
   label: string;
   status?: UserStatus;
   verified?: boolean;
+  deletedAt?: string;
 };
 
 export type DemoCredential = {

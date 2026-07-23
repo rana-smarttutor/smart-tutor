@@ -1,12 +1,33 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createHmac } from "crypto";
+import bcrypt from "bcryptjs";
 
 import { findUserById } from "@/lib/data-store";
 import type { Role, SessionUser } from "@/lib/types";
 
 export const SESSION_COOKIE = "smart_tutor_session";
 const SESSION_SECRET = process.env.SESSION_SECRET || "smart_tutor_dev_fallback_secret_32_chars_long";
+
+const BCRYPT_ROUNDS = 10;
+
+export function isBcryptHash(value: string): boolean {
+  return /^\$2[abxy]\$\d{2}\$/.test(value);
+}
+
+export async function hashPassword(plaintext: string): Promise<string> {
+  return bcrypt.hash(plaintext, BCRYPT_ROUNDS);
+}
+
+export async function comparePassword(
+  candidate: string,
+  stored: string,
+): Promise<boolean> {
+  if (isBcryptHash(stored)) {
+    return bcrypt.compare(candidate, stored);
+  }
+  return candidate === stored;
+}
 
 function signId(id: string) {
   return createHmac("sha256", SESSION_SECRET).update(id).digest("base64url");

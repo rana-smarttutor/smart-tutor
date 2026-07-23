@@ -1,5 +1,6 @@
 import { getTemplateSeedData } from "@/lib/mock-data";
 import { getMongoDatabase } from "@/lib/mongodb";
+import { hashPassword, isBcryptHash } from "@/lib/auth";
 
 const COLLECTIONS = {
   content: "content",
@@ -55,13 +56,16 @@ export async function seedMongoTemplateCollections(options?: { replaceExisting?:
   }
 
   await Promise.all(
-    template.users.map((document) =>
-      db.collection(COLLECTIONS.users).replaceOne(
+    template.users.map(async (document) => {
+      const hashedPassword = isBcryptHash(document.password)
+        ? document.password
+        : await hashPassword(document.password);
+      return db.collection(COLLECTIONS.users).replaceOne(
         { id: document.id } as any,
-        { ...document, emailKey: document.email.toLowerCase() },
+        { ...document, password: hashedPassword, emailKey: document.email.toLowerCase() },
         { upsert: true },
-      ),
-    ),
+      );
+    }),
   );
 
   await Promise.all([
