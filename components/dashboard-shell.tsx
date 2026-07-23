@@ -16,6 +16,7 @@ import {
   MessageCircleQuestion,
   Sparkles,
   TrendingUp,
+  UserRoundCheck,
   X,
 } from "lucide-react";
 import { LiveClock } from "@/components/live-clock";
@@ -262,6 +263,16 @@ const DoubtBox = dynamic(
     ssr: false,
   },
 );
+const PersonalMentorship = dynamic(
+  () =>
+    import("@/components/personal-mentorship").then(
+      (module) => module.PersonalMentorship,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
 const TimetableManager = dynamic(
   () =>
     import("@/components/timetable-manager").then(
@@ -356,6 +367,10 @@ const sidebarByRole = {
     { id: "ptm", label: "PTM" },
     { id: "homework", label: "Homework" },
     { id: "doubt-box", label: "Doubt Box" },
+    {
+      id: "personal-mentorship",
+      label: "Personal Mentorship",
+    },
     { id: "tests", label: "Exams" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "student-feedback", label: "Feedback" },
@@ -376,6 +391,10 @@ const sidebarByRole = {
     { id: "courses", label: "Courses" },
     { id: "homework", label: "Homework" },
     { id: "doubt-box", label: "Doubt Box" },
+    {
+      id: "personal-mentorship",
+      label: "Mentorship Requests",
+    },
     { id: "tests", label: "Question Papers" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "results", label: " Student's Results" },
@@ -566,6 +585,7 @@ const menuSections = [
       "complaints",
       "ptm",
       "doubt-box",
+      "personal-mentorship",
       "student-feedback",
       "leave",
       "enquiries",
@@ -681,6 +701,7 @@ const navIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   "doubt-box": <MessageCircleQuestion className="h-4 w-4 shrink-0" />,
+  "personal-mentorship": <UserRoundCheck className="h-4 w-4 shrink-0" />,
   "chat-monitor": (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1229,6 +1250,7 @@ export function DashboardShell({
   const showMessages = activeSection === "messages";
   const showChat = activeSection === "chat";
   const showDoubtBox = activeSection === "doubt-box";
+  const showPersonalMentorship = activeSection === "personal-mentorship";
   const showChatMonitor = activeSection === "chat-monitor";
   const showGamification = activeSection === "gamification";
   const showHomework = activeSection === "homework";
@@ -1884,6 +1906,10 @@ export function DashboardShell({
           {showDoubtBox &&
           (role === "student" || role === "educator" || role === "admin") ? (
             <DoubtBox session={session} role={role} />
+          ) : null}
+          {showPersonalMentorship &&
+          (role === "student" || role === "educator") ? (
+            <PersonalMentorship session={session} role={role} />
           ) : null}
           {showGamification && (role === "admin" || role === "educator") ? (
             <GamificationSection session={session} />
