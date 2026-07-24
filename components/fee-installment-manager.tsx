@@ -157,7 +157,6 @@ export function FeeInstallmentManager({
 
   const [plans, setPlans] = useState<FeeInstallmentPlan[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [title, setTitle] = useState("");
   const [courseName, setCourseName] = useState("");
   const [academicYear, setAcademicYear] = useState("");
   const [notes, setNotes] = useState("");
@@ -262,7 +261,6 @@ export function FeeInstallmentManager({
   function resetForm() {
     setEditingPlanId(null);
     setSelectedStudentId("");
-    setTitle("");
     setCourseName("");
     setAcademicYear("");
     setNotes("");
@@ -316,7 +314,6 @@ export function FeeInstallmentManager({
   function openEditor(plan: FeeInstallmentPlan) {
     setEditingPlanId(plan.id);
     setSelectedStudentId(plan.studentId);
-    setTitle(plan.title);
     setCourseName(plan.courseName ?? "");
     setAcademicYear(plan.academicYear ?? "");
     setNotes(plan.notes ?? "");
@@ -371,8 +368,8 @@ export function FeeInstallmentManager({
       return;
     }
 
-    if (!title.trim()) {
-      setMessage("Fee plan title is required.");
+    if (!courseName.trim()) {
+      setMessage("Course name is required.");
       return;
     }
 
@@ -416,18 +413,18 @@ export function FeeInstallmentManager({
           body: JSON.stringify(
             isEditing
               ? {
-                  title: title.trim(),
-                  courseName,
-                  academicYear,
-                  notes,
+                  title: "Fee Installment Plan",
+                  courseName: courseName.trim(),
+                  academicYear: academicYear.trim(),
+                  notes: notes.trim(),
                   installments: normalizedInstallments,
                 }
               : {
                   studentId: selectedStudent!.id,
-                  title: title.trim(),
-                  courseName,
-                  academicYear,
-                  notes,
+                  title: "Fee Installment Plan",
+                  courseName: courseName.trim(),
+                  academicYear: academicYear.trim(),
+                  notes: notes.trim(),
                   installments: normalizedInstallments,
                 },
           ),
@@ -479,9 +476,8 @@ export function FeeInstallmentManager({
       );
       return;
     }
-
     const confirmed = window.confirm(
-      `Cancel the fee plan "${plan.title}" for ${plan.studentName}?`,
+      `Cancel this fee plan for ${plan.studentName}?`,
     );
 
     if (!confirmed) {
@@ -534,7 +530,7 @@ export function FeeInstallmentManager({
     }
 
     const confirmed = window.confirm(
-      `Delete the fee plan "${plan.title}" for ${plan.studentName}? This cannot be undone.`,
+      `Delete this fee plan for ${plan.studentName}? This cannot be undone.`,
     );
 
     if (!confirmed) {
@@ -721,19 +717,6 @@ export function FeeInstallmentManager({
                       </option>
                     ))}
                 </select>
-              </label>
-
-              <label className="space-y-2">
-                <span className="block text-xs font-black uppercase tracking-[0.18em] text-blue-500">
-                  Fee Plan Title
-                </span>
-
-                <input
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="e.g. Class 10 Annual Fee 2026"
-                  className={fieldClass}
-                />
               </label>
 
               <label className="space-y-2">
@@ -1014,10 +997,6 @@ export function FeeInstallmentManager({
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <h4 className="text-lg font-black text-[var(--color-heading)]">
-                      {plan.title}
-                    </h4>
-
                     <span
                       className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getPlanStatusClass(
                         plan.status,
@@ -1027,11 +1006,17 @@ export function FeeInstallmentManager({
                     </span>
                   </div>
 
-                  <p className="mt-2 text-sm text-[var(--color-muted)]">
-                    {canManage ? plan.studentName : "Student Fee Plan"}
-                    {plan.courseName ? ` • ${plan.courseName}` : ""}
-                    {plan.academicYear ? ` • ${plan.academicYear}` : ""}
-                  </p>
+                  {canManage || plan.courseName || plan.academicYear ? (
+                    <p className="mt-2 text-sm text-[var(--color-muted)]">
+                      {canManage ? plan.studentName : ""}
+                      {canManage && plan.courseName ? " • " : ""}
+                      {plan.courseName ?? ""}
+                      {(canManage || plan.courseName) && plan.academicYear
+                        ? " • "
+                        : ""}
+                      {plan.academicYear ?? ""}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="grid grid-cols-3 gap-3 text-center">

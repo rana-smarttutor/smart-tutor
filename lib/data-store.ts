@@ -108,6 +108,11 @@ import type {
   DoubtItem,
   DoubtAnswer,
   DoubtStatus,
+  FacultyMentorshipProfile,
+  MentorshipFacultyCard,
+  MentorshipRequest,
+  MentorshipMode,
+  MentorshipRequestStatus,
 } from "@/lib/types";
 import type {
   CrmDashboardSummary,
@@ -236,11 +241,11 @@ export const COLLECTIONS = {
   salaryIncrements: "salaryIncrements",
   salaryTransfers: "salaryTransfers",
 
-// Unified Staff Payouts
-staffPayouts: "staffPayouts",
+  // Unified Staff Payouts
+  staffPayouts: "staffPayouts",
 
-// Business Expenses / Profit & Loss
-businessExpenses: "businessExpenses",
+  // Business Expenses / Profit & Loss
+  businessExpenses: "businessExpenses",
   // Staff Payout Audit Logs
   staffPayoutAuditLogs: "staffPayoutAuditLogs",
 
@@ -249,8 +254,11 @@ businessExpenses: "businessExpenses",
 
   // Certificates
   certificates: "certificates",
+
+  // Personal Mentorship
+  mentorshipProfiles: "mentorshipProfiles",
+  mentorshipRequests: "mentorshipRequests",
 } as const;
-// ... (existing code)
 
 export async function createEnquiry(input: {
   name: string;
@@ -2594,17 +2602,1116 @@ async function getLinkedStudentIdForViewer(role: Role, userId?: string) {
 
   if (role === "parent") {
     const users = await getUsersCollection();
-    const parent = await users.findOne({ id: userId });
+
+    const parent = await users.findOne({
+      id: userId,
+      role: "parent",
+    });
 
     return parent?.linkedStudentId ?? null;
   }
 
   return null;
 }
+
+// =========================
+// Personal Mentorship
+// =========================
+
+export async function getMentorshipProfileByFacultyId(
+  facultyId: string,
+) {
+  const normalizedFacultyId = facultyId.trim();
+
+  if (!normalizedFacultyId) {
+    return null;
+  }
+
+  const collection = await getCollection<FacultyMentorshipProfile>(
+    COLLECTIONS.mentorshipProfiles,
+  );
+
+  const profile = await collection.findOne({
+    facultyId: normalizedFacultyId,
+  });
+
+  return profile ? stripMongoId(profile) : null;
+}
+
+export async function saveFacultyMentorshipProfile(input: {
+  facultyId: string;
+  facultyName: string;
+
+  isAvailable: boolean;
+
+  subjects: string[];
+  modes: MentorshipMode[];
+
+  availableDays: string[];
+  availableFrom?: string;
+  availableTo?: string;
+
+  maximumActiveStudents: number;
+
+  bio?: string;
+  languages?: string[];
+}) {
+  const facultyId = input.facultyId.trim();
+
+  if (!facultyId) {
+    throw new Error("Faculty account is required.");
+  }
+
+  const users = await getUsersCollection();
+
+  const faculty = await users.findOne({
+    id: facultyId,
+    role: "educator",
+    verified: {
+      $ne: false,
+    },
+    status: {
+      $ne: "rejected",
+    },
+  } as any);
+
+  if (!faculty) {
+    throw new Error("Faculty account could not be found.");
+  }
+
+  const subjects = [
+    ...new Set(
+      input.subjects
+        .filter((subject): subject is string => typeof subject === "string")
+        .map((subject) => subject.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!subjects.length) {
+    throw new Error("Add at least one mentorship subject.");
+  }
+
+  const validModes: MentorshipMode[] = [
+    "online",
+    "vashi-campus",
+    "panvel-campus",
+  ];
+
+  const modes = [
+    ...new Set(
+      input.modes.filter((mode) => validModes.includes(mode)),
+    ),
+  ];
+
+  if (!modes.length) {
+    throw new Error("Select at least one mentorship mode.");
+  }
+
+  const availableDays = [
+    ...new Set(
+      input.availableDays
+        .filter((day): day is string => typeof day === "string")
+        .map((day) => day.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (!availableDays.length) {
+    throw new Error("Select at least one available day.");
+  }
+
+  const maximumActiveStudents = Number(
+    input.maximumActiveStudents,
+  );
+
+  if (
+    !Number.isInteger(maximumActiveStudents) ||
+    maximumActiveStudents < 1 ||
+    maximumActiveStudents > 100
+  ) {
+    throw new Error(
+      "Maximum active students must be between 1 and 100.",
+    );
+  }
+
+  const availableFrom = input.availableFrom?.trim() || "";
+  const availableTo = input.availableTo?.trim() || "";
+  const bio = input.bio?.trim() || "";
+
+  const languages = [
+    ...new Set(
+      (input.languages ?? [])
+        .filter(
+          (language): language is string =>
+            typeof language === "string",
+        )
+        .map((language) => language.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  const collection = await getCollection<FacultyMentorshipProfile>(
+    COLLECTIONS.mentorshipProfiles,
+  );
+
+  const existing = await collection.findOne({
+    facultyId,
+  });
+
+  const now = new Date().toISOString();
+
+  if (existing) {
+    const setFields: Partial<FacultyMentorshipProfile> = {
+      facultyName: faculty.name,
+      isAvailable: input.isAvailable,
+      subjects,
+      modes,
+      availableDays,
+      maximumActiveStudents,
+      updatedAt: now,
+    };
+
+    const unsetFields: Record<string, ""> = {};
+
+    if (availableFrom) {
+      setFields.availableFrom = availableFrom;
+    } else {
+      unsetFields.availableFrom = "";
+    }
+
+    if (availableTo) {
+      setFields.availableTo = availableTo;
+    } else {
+      unsetFields.availableTo = "";
+    }
+
+    if (bio) {
+      setFields.bio = bio;
+    } else {
+      unsetFields.bio = "";
+    }
+
+    if (languages.length) {
+      setFields.languages = languages;
+    } else {
+      unsetFields.languages = "";
+    }
+
+    await collection.updateOne(
+      {
+        facultyId,
+      },
+      {
+        $set: setFields,
+        ...(Object.keys(unsetFields).length
+          ? {
+              $unset: unsetFields,
+            }
+          : {}),
+      } as any,
+    );
+  } else {
+    const profile: FacultyMentorshipProfile = {
+      id: `mentorship-profile-${randomUUID()}`,
+
+      facultyId: faculty.id,
+      facultyName: faculty.name,
+
+      isAvailable: input.isAvailable,
+
+      subjects,
+      modes,
+
+      availableDays,
+
+      ...(availableFrom
+        ? {
+            availableFrom,
+          }
+        : {}),
+
+      ...(availableTo
+        ? {
+            availableTo,
+          }
+        : {}),
+
+      maximumActiveStudents,
+
+      ...(bio
+        ? {
+            bio,
+          }
+        : {}),
+
+      ...(languages.length
+        ? {
+            languages,
+          }
+        : {}),
+
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await collection.insertOne(profile);
+  }
+
+  const savedProfile = await collection.findOne({
+    facultyId,
+  });
+
+  return savedProfile ? stripMongoId(savedProfile) : null;
+}
+
+export async function getAvailableMentorshipFaculty(): Promise<
+  MentorshipFacultyCard[]
+> {
+  const users = await getUsersCollection();
+
+  const profileCollection =
+    await getCollection<FacultyMentorshipProfile>(
+      COLLECTIONS.mentorshipProfiles,
+    );
+
+  const requestCollection =
+    await getCollection<MentorshipRequest>(
+      COLLECTIONS.mentorshipRequests,
+    );
+
+  /*
+   * Load faculty directly from the users collection.
+   * A separate mentorship profile is not required for the
+   * faculty member to appear.
+   */
+  const facultyUsers = await users
+    .find({
+      role: "educator",
+
+      verified: {
+        $ne: false,
+      },
+
+      $or: [
+        {
+          status: "active",
+        },
+        {
+          status: {
+            $exists: false,
+          },
+        },
+        {
+          status: null,
+        },
+      ],
+    } as any)
+    .sort({
+      name: 1,
+    })
+    .toArray();
+
+  if (!facultyUsers.length) {
+    return [];
+  }
+
+  const facultyIds = facultyUsers.map(
+    (faculty) => faculty.id,
+  );
+
+  const savedProfiles = stripMongoIds(
+    await profileCollection
+      .find({
+        facultyId: {
+          $in: facultyIds,
+        },
+      })
+      .toArray(),
+  );
+
+  const profileMap = new Map(
+    savedProfiles.map((profile) => [
+      profile.facultyId,
+      profile,
+    ]),
+  );
+
+  const acceptedRequests = await requestCollection
+    .find({
+      facultyId: {
+        $in: facultyIds,
+      },
+
+      status: "accepted",
+    })
+    .toArray();
+
+  const activeCountMap = new Map<string, number>();
+
+  for (const request of acceptedRequests) {
+    activeCountMap.set(
+      request.facultyId,
+      (activeCountMap.get(request.facultyId) ?? 0) + 1,
+    );
+  }
+
+  const defaultDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  return facultyUsers.flatMap((faculty) => {
+    const savedProfile = profileMap.get(faculty.id);
+
+    /*
+     * Hide the faculty only when they have deliberately
+     * disabled mentorship.
+     */
+    if (
+      savedProfile &&
+      savedProfile.isAvailable === false
+    ) {
+      return [];
+    }
+
+    const subjects =
+      savedProfile?.subjects?.length
+        ? savedProfile.subjects
+        : faculty.profile?.subjects?.length
+          ? faculty.profile.subjects
+          : ["General Mentorship"];
+
+    const modes: MentorshipMode[] =
+      savedProfile?.modes?.length
+        ? savedProfile.modes
+        : ["online"];
+
+    const availableDays =
+      savedProfile?.availableDays?.length
+        ? savedProfile.availableDays
+        : defaultDays;
+
+    const maximumActiveStudents =
+      savedProfile?.maximumActiveStudents ?? 20;
+
+    const activeStudentCount =
+      activeCountMap.get(faculty.id) ?? 0;
+
+    const remainingCapacity = Math.max(
+      0,
+      maximumActiveStudents - activeStudentCount,
+    );
+
+    if (remainingCapacity <= 0) {
+      return [];
+    }
+
+    const createdAt =
+      savedProfile?.createdAt ??
+      faculty.createdAt ??
+      new Date().toISOString();
+
+    const card: MentorshipFacultyCard = {
+      id:
+        savedProfile?.id ??
+        `mentorship-profile-${faculty.id}`,
+
+      facultyId: faculty.id,
+      facultyName: faculty.name,
+
+      isAvailable: true,
+
+      subjects,
+      modes,
+      availableDays,
+
+      maximumActiveStudents,
+
+      ...(savedProfile?.availableFrom
+        ? {
+            availableFrom:
+              savedProfile.availableFrom,
+          }
+        : {}),
+
+      ...(savedProfile?.availableTo
+        ? {
+            availableTo:
+              savedProfile.availableTo,
+          }
+        : {}),
+
+      ...(savedProfile?.bio
+        ? {
+            bio: savedProfile.bio,
+          }
+        : {}),
+
+      ...(savedProfile?.languages?.length
+        ? {
+            languages:
+              savedProfile.languages,
+          }
+        : {}),
+
+      createdAt,
+
+      ...(savedProfile?.updatedAt
+        ? {
+            updatedAt:
+              savedProfile.updatedAt,
+          }
+        : {}),
+
+      facultyEmail: faculty.email,
+
+      facultyPhoto:
+        faculty.profile?.profilePhoto,
+
+      qualification:
+        faculty.profile?.qualification,
+
+      experience:
+        faculty.profile?.experience,
+
+      activeStudentCount,
+      remainingCapacity,
+    };
+
+    return [card];
+  });
+}
+export async function getMentorshipRequestById(
+  requestId: string,
+) {
+  const normalizedRequestId = requestId.trim();
+
+  if (!normalizedRequestId) {
+    return null;
+  }
+
+  const collection = await getCollection<MentorshipRequest>(
+    COLLECTIONS.mentorshipRequests,
+  );
+
+  const mentorshipRequest = await collection.findOne({
+    id: normalizedRequestId,
+  });
+
+  return mentorshipRequest
+    ? stripMongoId(mentorshipRequest)
+    : null;
+}
+
+export async function getMentorshipRequestsForRole(
+  role: Role,
+  userId?: string,
+) {
+  if (!userId) {
+    return [];
+  }
+
+  const collection = await getCollection<MentorshipRequest>(
+    COLLECTIONS.mentorshipRequests,
+  );
+
+  if (role === "student") {
+    return stripMongoIds(
+      await collection
+        .find({
+          studentId: userId,
+        })
+        .sort({
+          createdAt: -1,
+        })
+        .toArray(),
+    );
+  }
+
+  if (role === "educator") {
+    return stripMongoIds(
+      await collection
+        .find({
+          facultyId: userId,
+        })
+        .sort({
+          createdAt: -1,
+        })
+        .toArray(),
+    );
+  }
+
+  if (role === "admin") {
+    return stripMongoIds(
+      await collection
+        .find({})
+        .sort({
+          createdAt: -1,
+        })
+        .toArray(),
+    );
+  }
+
+  return [];
+}
+
+export async function createMentorshipRequest(input: {
+  studentId: string;
+  facultyId: string;
+
+  subject: string;
+  goal: string;
+  message?: string;
+
+  preferredMode: MentorshipMode;
+  preferredDate?: string;
+  preferredTime?: string;
+}) {
+  const studentId = input.studentId.trim();
+  const facultyId = input.facultyId.trim();
+
+  if (!studentId) {
+    throw new Error("Student account is required.");
+  }
+
+  if (!facultyId) {
+    throw new Error("Select a faculty mentor.");
+  }
+
+  const users = await getUsersCollection();
+
+  const [student, faculty] = await Promise.all([
+    users.findOne({
+      id: studentId,
+      role: "student",
+    }),
+
+    users.findOne({
+      id: facultyId,
+      role: "educator",
+
+      verified: {
+        $ne: false,
+      },
+
+      $or: [
+        {
+          status: "active",
+        },
+        {
+          status: {
+            $exists: false,
+          },
+        },
+        {
+          status: null,
+        },
+      ],
+    } as any),
+  ]);
+
+  if (!student) {
+    throw new Error("Student account could not be found.");
+  }
+
+  if (!faculty) {
+    throw new Error("Selected faculty could not be found.");
+  }
+
+  const subject = input.subject.trim();
+  const goal = input.goal.trim();
+  const message = input.message?.trim() || "";
+  const preferredDate =
+    input.preferredDate?.trim() || "";
+  const preferredTime =
+    input.preferredTime?.trim() || "";
+
+  if (!subject) {
+    throw new Error("Mentorship subject is required.");
+  }
+
+  if (!goal) {
+    throw new Error("Tell the mentor what help you need.");
+  }
+
+  const validModes: MentorshipMode[] = [
+    "online",
+    "vashi-campus",
+    "panvel-campus",
+  ];
+
+  if (!validModes.includes(input.preferredMode)) {
+    throw new Error("Select a valid mentorship mode.");
+  }
+
+const mentorshipProfile =
+  await getMentorshipProfileByFacultyId(
+    facultyId,
+  );
+
+if (
+  mentorshipProfile &&
+  mentorshipProfile.isAvailable === false
+) {
+  throw new Error(
+    "This faculty member is currently unavailable for mentorship.",
+  );
+}
+
+const availableSubjects =
+  mentorshipProfile?.subjects?.length
+    ? mentorshipProfile.subjects
+    : faculty.profile?.subjects?.length
+      ? faculty.profile.subjects
+      : ["General Mentorship"];
+
+const availableModes: MentorshipMode[] =
+  mentorshipProfile?.modes?.length
+    ? mentorshipProfile.modes
+    : ["online"];
+
+const maximumActiveStudents =
+  mentorshipProfile?.maximumActiveStudents ?? 20;
+
+const subjectAvailable = availableSubjects.some(
+  (facultySubject) =>
+    facultySubject.trim().toLowerCase() ===
+    subject.toLowerCase(),
+);
+
+if (!subjectAvailable) {
+  throw new Error(
+    "This faculty member is not available for the selected subject.",
+  );
+}
+
+if (!availableModes.includes(input.preferredMode)) {
+  throw new Error(
+    "This faculty member does not support the selected mentorship mode.",
+  );
+}
+
+  const collection = await getCollection<MentorshipRequest>(
+    COLLECTIONS.mentorshipRequests,
+  );
+
+  const escapedSubject = subject.replace(
+    /[.*+?^${}()|[\]\\]/g,
+    "\\$&",
+  );
+
+  const existingSubjectRequest = await collection.findOne({
+    studentId: student.id,
+
+    subject: {
+      $regex: `^${escapedSubject}$`,
+      $options: "i",
+    },
+
+    status: {
+      $in: ["pending", "accepted"],
+    },
+  });
+
+  if (existingSubjectRequest) {
+    throw new Error(
+      "You already have an active or pending mentor request for this subject.",
+    );
+  }
+
+  const studentActiveRequestCount =
+    await collection.countDocuments({
+      studentId: student.id,
+
+      status: {
+        $in: ["pending", "accepted"],
+      },
+    });
+
+  if (studentActiveRequestCount >= 2) {
+    throw new Error(
+      "You can have a maximum of two active or pending mentorships.",
+    );
+  }
+
+  const facultyActiveCount =
+    await collection.countDocuments({
+      facultyId: faculty.id,
+      status: "accepted",
+    });
+
+if (
+  facultyActiveCount >= maximumActiveStudents
+) {
+    throw new Error(
+      "This faculty member has reached their mentorship capacity.",
+    );
+  }
+
+  const now = new Date().toISOString();
+
+  const mentorshipRequest: MentorshipRequest = {
+    id: `mentorship-request-${randomUUID()}`,
+
+    studentId: student.id,
+    studentName: student.name,
+    studentEmail: student.email,
+
+    facultyId: faculty.id,
+    facultyName: faculty.name,
+
+    subject,
+    goal,
+
+    ...(message
+      ? {
+          message,
+        }
+      : {}),
+
+    preferredMode: input.preferredMode,
+
+    ...(preferredDate
+      ? {
+          preferredDate,
+        }
+      : {}),
+
+    ...(preferredTime
+      ? {
+          preferredTime,
+        }
+      : {}),
+
+    status: "pending",
+
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await collection.insertOne(mentorshipRequest);
+
+  await createNotifications({
+    userIds: [faculty.id],
+
+    title: "New mentorship request",
+
+    message: `${student.name} requested personal mentorship for ${subject}.`,
+
+    type: "mentorship",
+
+    link: "/dashboard?section=personal-mentorship",
+  });
+
+  return stripMongoId(mentorshipRequest);
+}
+
+export async function updateMentorshipRequest(input: {
+  requestId: string;
+
+  actorId: string;
+  actorRole: Role;
+
+  status: MentorshipRequestStatus;
+
+  facultyResponse?: string;
+
+  scheduledAt?: string;
+  meetingLink?: string;
+  location?: string;
+}) {
+  const requestId = input.requestId.trim();
+  const actorId = input.actorId.trim();
+
+  if (!requestId) {
+    throw new Error("Mentorship request is required.");
+  }
+
+  if (!actorId) {
+    throw new Error("Request updater is required.");
+  }
+
+  const collection = await getCollection<MentorshipRequest>(
+    COLLECTIONS.mentorshipRequests,
+  );
+
+  const existing = await collection.findOne({
+    id: requestId,
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  const isStudentOwner =
+    input.actorRole === "student" &&
+    existing.studentId === actorId;
+
+  const isFacultyOwner =
+    input.actorRole === "educator" &&
+    existing.facultyId === actorId;
+
+  const isAdmin = input.actorRole === "admin";
+
+  if (!isStudentOwner && !isFacultyOwner && !isAdmin) {
+    throw new Error(
+      "You do not have permission to update this mentorship request.",
+    );
+  }
+
+  if (
+    input.actorRole === "student" &&
+    input.status !== "cancelled"
+  ) {
+    throw new Error(
+      "Students can only cancel their mentorship request.",
+    );
+  }
+
+  if (
+    input.actorRole === "educator" &&
+    !["accepted", "declined", "completed"].includes(
+      input.status,
+    )
+  ) {
+    throw new Error(
+      "Faculty can accept, decline, or complete mentorship requests.",
+    );
+  }
+
+  if (
+    input.status === "accepted" &&
+    existing.status !== "pending"
+  ) {
+    throw new Error(
+      "Only pending mentorship requests can be accepted.",
+    );
+  }
+
+  if (
+    input.status === "declined" &&
+    existing.status !== "pending"
+  ) {
+    throw new Error(
+      "Only pending mentorship requests can be declined.",
+    );
+  }
+
+  if (
+    input.status === "completed" &&
+    existing.status !== "accepted"
+  ) {
+    throw new Error(
+      "Only accepted mentorships can be completed.",
+    );
+  }
+
+  if (
+    input.status === "cancelled" &&
+    !["pending", "accepted"].includes(existing.status)
+  ) {
+    throw new Error(
+      "This mentorship request can no longer be cancelled.",
+    );
+  }
+
+if (input.status === "accepted") {
+  const mentorshipProfile =
+    await getMentorshipProfileByFacultyId(
+      existing.facultyId,
+    );
+
+  if (
+    mentorshipProfile &&
+    mentorshipProfile.isAvailable === false
+  ) {
+    throw new Error(
+      "Your mentorship availability is currently disabled.",
+    );
+  }
+
+  const maximumActiveStudents =
+    mentorshipProfile?.maximumActiveStudents ?? 20;
+
+  const activeFacultyCount =
+    await collection.countDocuments({
+      facultyId: existing.facultyId,
+      status: "accepted",
+
+      id: {
+        $ne: existing.id,
+      },
+    });
+
+  if (
+    activeFacultyCount >= maximumActiveStudents
+  ) {
+      throw new Error(
+        "Your mentorship capacity has already been reached.",
+      );
+    }
+
+    const studentAcceptedCount =
+      await collection.countDocuments({
+        studentId: existing.studentId,
+        status: "accepted",
+
+        id: {
+          $ne: existing.id,
+        },
+      });
+
+    if (studentAcceptedCount >= 2) {
+      throw new Error(
+        "This student already has two active mentorships.",
+      );
+    }
+
+    const escapedSubject = existing.subject.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&",
+    );
+
+    const sameSubjectMentorship =
+      await collection.findOne({
+        studentId: existing.studentId,
+
+        subject: {
+          $regex: `^${escapedSubject}$`,
+          $options: "i",
+        },
+
+        status: "accepted",
+
+        id: {
+          $ne: existing.id,
+        },
+      });
+
+    if (sameSubjectMentorship) {
+      throw new Error(
+        "This student already has an active mentor for this subject.",
+      );
+    }
+  }
+
+  const now = new Date().toISOString();
+
+  const setFields: Partial<MentorshipRequest> = {
+    status: input.status,
+    updatedAt: now,
+  };
+
+  const unsetFields: Record<string, ""> = {};
+
+  if (typeof input.facultyResponse === "string") {
+    const facultyResponse =
+      input.facultyResponse.trim();
+
+    if (facultyResponse) {
+      setFields.facultyResponse = facultyResponse;
+    } else {
+      unsetFields.facultyResponse = "";
+    }
+  }
+
+  if (typeof input.scheduledAt === "string") {
+    const scheduledAt = input.scheduledAt.trim();
+
+    if (scheduledAt) {
+      setFields.scheduledAt = scheduledAt;
+    } else {
+      unsetFields.scheduledAt = "";
+    }
+  }
+
+  if (typeof input.meetingLink === "string") {
+    const meetingLink = input.meetingLink.trim();
+
+    if (meetingLink) {
+      setFields.meetingLink = meetingLink;
+    } else {
+      unsetFields.meetingLink = "";
+    }
+  }
+
+  if (typeof input.location === "string") {
+    const location = input.location.trim();
+
+    if (location) {
+      setFields.location = location;
+    } else {
+      unsetFields.location = "";
+    }
+  }
+
+  if (input.status === "accepted") {
+    setFields.acceptedAt = now;
+  }
+
+  if (input.status === "declined") {
+    setFields.declinedAt = now;
+  }
+
+  if (input.status === "cancelled") {
+    setFields.cancelledAt = now;
+  }
+
+  if (input.status === "completed") {
+    setFields.completedAt = now;
+  }
+
+  await collection.updateOne(
+    {
+      id: requestId,
+    },
+    {
+      $set: setFields,
+
+      ...(Object.keys(unsetFields).length
+        ? {
+            $unset: unsetFields,
+          }
+        : {}),
+    } as any,
+  );
+
+  const updated = await collection.findOne({
+    id: requestId,
+  });
+
+  if (!updated) {
+    return null;
+  }
+
+  const notificationRecipient =
+    input.actorRole === "student"
+      ? existing.facultyId
+      : existing.studentId;
+
+  await createNotifications({
+    userIds: [notificationRecipient],
+
+    title: "Mentorship request updated",
+
+    message: `${existing.subject} mentorship is now ${input.status}.`,
+
+    type: "mentorship",
+
+    link: "/dashboard?section=personal-mentorship",
+  });
+
+  return stripMongoId(updated);
+}
+
 // =========================
 // Parent-Teacher Meetings
 // =========================
-
 export async function getPtmSessionsForRole(role: Role, userId?: string) {
   const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
@@ -9019,7 +10126,6 @@ export async function deleteDoubtAnswer(answerId: string) {
   return stripMongoId(answer);
 }
 
-
 // =========================
 // Business Expense Management
 // =========================
@@ -9057,10 +10163,7 @@ export async function getBusinessExpenses(filters?: {
     query.category = filters.category;
   }
 
-  const limit = Math.min(
-    Math.max(filters?.limit ?? 500, 1),
-    2000,
-  );
+  const limit = Math.min(Math.max(filters?.limit ?? 500, 1), 2000);
 
   const expenses = await collection
     .find(query)
@@ -9193,8 +10296,7 @@ export async function updateBusinessExpense(
   }
 
   if (input.transactionId !== undefined) {
-    updates.transactionId =
-      input.transactionId.trim() || undefined;
+    updates.transactionId = input.transactionId.trim() || undefined;
   }
 
   if (input.vendor !== undefined) {
@@ -9206,8 +10308,7 @@ export async function updateBusinessExpense(
   }
 
   if (input.receiptUrl !== undefined) {
-    updates.receiptUrl =
-      input.receiptUrl.trim() || undefined;
+    updates.receiptUrl = input.receiptUrl.trim() || undefined;
   }
 
   await collection.updateOne(
@@ -9223,9 +10324,7 @@ export async function updateBusinessExpense(
     id: expenseId,
   });
 
-  return updatedExpense
-    ? stripMongoId(updatedExpense)
-    : null;
+  return updatedExpense ? stripMongoId(updatedExpense) : null;
 }
 
 export async function deleteBusinessExpense(

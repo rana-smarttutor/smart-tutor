@@ -138,54 +138,47 @@ export function StudentFeeReceiptsView({
   const invoices = useMemo(() => feeInvoices ?? [], [feeInvoices]);
   const plans = useMemo(() => feeInstallmentPlans ?? [], [feeInstallmentPlans]);
   const installmentReceiptNumbers = useMemo(
-  () =>
-    new Set(
-      plans
-        .flatMap((plan) => plan.installments)
-        .map((installment) => installment.receiptNumber?.trim())
-        .filter((value): value is string => Boolean(value)),
-    ),
-  [plans],
-);
-
-const standaloneInvoices = useMemo(
-  () =>
-    invoices.filter((invoice) => {
-      const invoiceReference = invoice.receiptNo || invoice.id;
-
-      return !installmentReceiptNumbers.has(invoiceReference);
-    }),
-  [invoices, installmentReceiptNumbers],
-);
-
-const totalFees = useMemo(() => {
-  const fromInvoices = standaloneInvoices.reduce(
-    (sum, invoice) => sum + invoice.amount,
-    0,
+    () =>
+      new Set(
+        plans
+          .flatMap((plan) => plan.installments)
+          .map((installment) => installment.receiptNumber?.trim())
+          .filter((value): value is string => Boolean(value)),
+      ),
+    [plans],
   );
 
-  const fromPlans = plans.reduce(
-    (sum, plan) => sum + plan.totalFee,
-    0,
+  const standaloneInvoices = useMemo(
+    () =>
+      invoices.filter((invoice) => {
+        const invoiceReference = invoice.receiptNo || invoice.id;
+
+        return !installmentReceiptNumbers.has(invoiceReference);
+      }),
+    [invoices, installmentReceiptNumbers],
   );
 
-  return fromInvoices + fromPlans;
-}, [standaloneInvoices, plans]);
+  const totalFees = useMemo(() => {
+    const fromInvoices = standaloneInvoices.reduce(
+      (sum, invoice) => sum + invoice.amount,
+      0,
+    );
 
-const totalPaid = useMemo(() => {
-  const fromInvoices = standaloneInvoices.reduce(
-    (sum, invoice) =>
-      sum + (invoice.paidAmount ?? 0),
-    0,
-  );
+    const fromPlans = plans.reduce((sum, plan) => sum + plan.totalFee, 0);
 
-  const fromPlans = plans.reduce(
-    (sum, plan) => sum + plan.paidAmount,
-    0,
-  );
+    return fromInvoices + fromPlans;
+  }, [standaloneInvoices, plans]);
 
-  return fromInvoices + fromPlans;
-}, [standaloneInvoices, plans]);
+  const totalPaid = useMemo(() => {
+    const fromInvoices = standaloneInvoices.reduce(
+      (sum, invoice) => sum + (invoice.paidAmount ?? 0),
+      0,
+    );
+
+    const fromPlans = plans.reduce((sum, plan) => sum + plan.paidAmount, 0);
+
+    return fromInvoices + fromPlans;
+  }, [standaloneInvoices, plans]);
 
   const totalDue = Math.max(totalFees - totalPaid, 0);
 
@@ -788,13 +781,13 @@ const totalPaid = useMemo(() => {
               >
                 <div className="px-4 py-3 border-b border-[var(--color-border)] flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <div className="text-sm font-bold text-slate-800">
-                      {plan.title}
-                    </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
-                      {plan.courseName ? `${plan.courseName}` : ""}
-                      {plan.academicYear ? ` \u00B7 ${plan.academicYear}` : ""}
-                    </div>
+                    {plan.courseName || plan.academicYear ? (
+                      <div className="text-[11px] text-slate-500">
+                        {plan.courseName ?? ""}
+                        {plan.courseName && plan.academicYear ? " · " : ""}
+                        {plan.academicYear ?? ""}
+                      </div>
+                    ) : null}
                   </div>
                   <div className="flex items-center gap-3 text-[12px]">
                     <span className="text-slate-500">
@@ -874,11 +867,11 @@ const totalPaid = useMemo(() => {
                             <tr className="border-t border-[var(--color-border)]">
                               <td className="px-4 py-3">
                                 <div className="font-semibold text-slate-800">
-                                  {plan.title}
+                                  {inst.installmentTitle ||
+                                    `Installment ${inst.installmentNumber}`}
                                 </div>
-                                <div className="text-[11px] text-slate-400">
-                                  Installment {inst.installmentNumber}
-                                </div>
+
+    
                               </td>
                               <td className="px-4 py-3 text-right">
                                 {formatCurrency(inst.amount)}

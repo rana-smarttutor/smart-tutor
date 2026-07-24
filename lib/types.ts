@@ -1002,6 +1002,92 @@ export type FeeInstallmentPlan = {
 };
 
 // =========================
+// Personal Mentorship System
+// =========================
+
+export type MentorshipMode =
+  | "online"
+  | "vashi-campus"
+  | "panvel-campus";
+
+export type MentorshipRequestStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "cancelled"
+  | "completed";
+
+export type FacultyMentorshipProfile = {
+  id: string;
+
+  facultyId: string;
+  facultyName: string;
+
+  isAvailable: boolean;
+
+  subjects: string[];
+  modes: MentorshipMode[];
+
+  availableDays: string[];
+  availableFrom?: string;
+  availableTo?: string;
+
+  maximumActiveStudents: number;
+
+  bio?: string;
+  languages?: string[];
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type MentorshipFacultyCard =
+  FacultyMentorshipProfile & {
+    facultyEmail?: string;
+    facultyPhoto?: string;
+    qualification?: string;
+    experience?: string;
+
+    activeStudentCount: number;
+    remainingCapacity: number;
+  };
+
+export type MentorshipRequest = {
+  id: string;
+
+  studentId: string;
+  studentName: string;
+  studentEmail?: string;
+
+  facultyId: string;
+  facultyName: string;
+
+  subject: string;
+  goal: string;
+  message?: string;
+
+  preferredMode: MentorshipMode;
+  preferredDate?: string;
+  preferredTime?: string;
+
+  status: MentorshipRequestStatus;
+
+  facultyResponse?: string;
+
+  scheduledAt?: string;
+  meetingLink?: string;
+  location?: string;
+
+  acceptedAt?: string;
+  declinedAt?: string;
+  cancelledAt?: string;
+  completedAt?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+};
+
+// =========================
 // Parent-Teacher Meeting System
 // =========================
 
@@ -1058,7 +1144,8 @@ export type AppNotificationType =
   | "payment"
   | "placement"
   | "ptm"
-  | "doubt";
+  | "doubt"
+  | "mentorship";
 
 export type AppNotification = {
   id: string;
@@ -1516,6 +1603,7 @@ export type AvailableModule =
   | "daily-activities"
   | "homework"
   | "doubt-box"
+  | "personal-mentorship"
   | "student-feedback"
   | "teacher-payouts"
   | "placement-jobs"
@@ -1548,8 +1636,12 @@ export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "performance", label: "Performance" },
   { id: "daily-activities", label: "Daily Activities" },
   { id: "homework", label: "Homework" },
-  { id: "doubt-box", label: "Doubt Box" },
-  { id: "student-feedback", label: "Feedback" },
+{ id: "doubt-box", label: "Doubt Box" },
+{
+  id: "personal-mentorship",
+  label: "Personal Mentorship",
+},
+{ id: "student-feedback", label: "Feedback" },
   { id: "teacher-payouts", label: "Teacher Payouts" },
   { id: "placement-jobs", label: "Placement Jobs" },
   { id: "sales-crm", label: "Sales CRM" },
