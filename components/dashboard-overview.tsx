@@ -995,7 +995,7 @@ function StudentOverview({
       ? Math.round(dashboard.analytics.attendance.rate)
       : null;
 
-  const classRank = dashboard.stats[1]?.value || "—";
+  const testsTaken = dashboard.stats[1]?.value || "—";
   const avgScore =
     dashboard.analytics?.assessments?.averageScore != null
       ? `${Math.round(dashboard.analytics.assessments.averageScore)}%`
@@ -1027,8 +1027,8 @@ function StudentOverview({
         : [60, 65, 70, 72, 78, 75, 80],
     },
     {
-      label: "Class Rank",
-      value: classRank,
+      label: "Tests Taken",
+      value: testsTaken,
       color: "#D97706",
       bg: "bg-amber-50",
       text: "text-amber-600",
@@ -1319,7 +1319,7 @@ function StudentOverview({
             <div className="flex flex-wrap gap-2 sm:justify-end">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
                 <Award size={12} className="sm:w-3.5 sm:h-3.5" />
-                Rank: {classRank}
+                Tests: {testsTaken}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-semibold backdrop-blur-sm">
                 <TrendingUp size={12} className="sm:w-3.5 sm:h-3.5" />

@@ -3807,6 +3807,8 @@ function buildDashboardAnalytics(input: {
     assessmentTotalMarks,
   );
 
+  const testsTaken = assessmentRows.length;
+
   const subjectMap = new Map<
     string,
     {
@@ -4045,9 +4047,9 @@ function buildDashboardAnalytics(input: {
         detail: `${attendanceRecords.length} recorded attendance entries`,
       },
       {
-        label: "Test Average",
-        value: assessmentValue,
-        detail: `${assessmentRows.length} marked weekly-test results`,
+        label: "Tests Taken",
+        value: `${testsTaken}`,
+        detail: `${testsTaken} marked weekly-test results`,
       },
       {
         label: "Learning Completion",
