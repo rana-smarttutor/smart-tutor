@@ -259,7 +259,6 @@ export const COLLECTIONS = {
   mentorshipProfiles: "mentorshipProfiles",
   mentorshipRequests: "mentorshipRequests",
 } as const;
-// ... (existing code)
 
 export async function createEnquiry(input: {
   name: string;
@@ -2869,42 +2868,25 @@ export async function saveFacultyMentorshipProfile(input: {
 export async function getAvailableMentorshipFaculty(): Promise<
   MentorshipFacultyCard[]
 > {
+  const users = await getUsersCollection();
+
   const profileCollection =
     await getCollection<FacultyMentorshipProfile>(
       COLLECTIONS.mentorshipProfiles,
     );
 
-  const requestCollection = await getCollection<MentorshipRequest>(
-    COLLECTIONS.mentorshipRequests,
-  );
+  const requestCollection =
+    await getCollection<MentorshipRequest>(
+      COLLECTIONS.mentorshipRequests,
+    );
 
-  const profiles = stripMongoIds(
-    await profileCollection
-      .find({
-        isAvailable: true,
-      })
-      .sort({
-        facultyName: 1,
-      })
-      .toArray(),
-  );
-
-  if (!profiles.length) {
-    return [];
-  }
-
-  const facultyIds = profiles.map(
-    (profile) => profile.facultyId,
-  );
-
-  const users = await getUsersCollection();
-
+  /*
+   * Load faculty directly from the users collection.
+   * A separate mentorship profile is not required for the
+   * faculty member to appear.
+   */
   const facultyUsers = await users
     .find({
-      id: {
-        $in: facultyIds,
-      },
-
       role: "educator",
 
       verified: {
@@ -2925,12 +2907,33 @@ export async function getAvailableMentorshipFaculty(): Promise<
         },
       ],
     } as any)
+    .sort({
+      name: 1,
+    })
     .toArray();
 
-  const facultyMap = new Map(
-    facultyUsers.map((faculty) => [
-      faculty.id,
-      faculty,
+  if (!facultyUsers.length) {
+    return [];
+  }
+
+  const facultyIds = facultyUsers.map(
+    (faculty) => faculty.id,
+  );
+
+  const savedProfiles = stripMongoIds(
+    await profileCollection
+      .find({
+        facultyId: {
+          $in: facultyIds,
+        },
+      })
+      .toArray(),
+  );
+
+  const profileMap = new Map(
+    savedProfiles.map((profile) => [
+      profile.facultyId,
+      profile,
     ]),
   );
 
@@ -2953,27 +2956,117 @@ export async function getAvailableMentorshipFaculty(): Promise<
     );
   }
 
-  return profiles.flatMap((profile) => {
-    const faculty = facultyMap.get(profile.facultyId);
+  const defaultDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
 
-    if (!faculty) {
+  return facultyUsers.flatMap((faculty) => {
+    const savedProfile = profileMap.get(faculty.id);
+
+    /*
+     * Hide the faculty only when they have deliberately
+     * disabled mentorship.
+     */
+    if (
+      savedProfile &&
+      savedProfile.isAvailable === false
+    ) {
       return [];
     }
 
+    const subjects =
+      savedProfile?.subjects?.length
+        ? savedProfile.subjects
+        : faculty.profile?.subjects?.length
+          ? faculty.profile.subjects
+          : ["General Mentorship"];
+
+    const modes: MentorshipMode[] =
+      savedProfile?.modes?.length
+        ? savedProfile.modes
+        : ["online"];
+
+    const availableDays =
+      savedProfile?.availableDays?.length
+        ? savedProfile.availableDays
+        : defaultDays;
+
+    const maximumActiveStudents =
+      savedProfile?.maximumActiveStudents ?? 20;
+
     const activeStudentCount =
-      activeCountMap.get(profile.facultyId) ?? 0;
+      activeCountMap.get(faculty.id) ?? 0;
 
     const remainingCapacity = Math.max(
       0,
-      profile.maximumActiveStudents - activeStudentCount,
+      maximumActiveStudents - activeStudentCount,
     );
 
     if (remainingCapacity <= 0) {
       return [];
     }
 
+    const createdAt =
+      savedProfile?.createdAt ??
+      faculty.createdAt ??
+      new Date().toISOString();
+
     const card: MentorshipFacultyCard = {
-      ...profile,
+      id:
+        savedProfile?.id ??
+        `mentorship-profile-${faculty.id}`,
+
+      facultyId: faculty.id,
+      facultyName: faculty.name,
+
+      isAvailable: true,
+
+      subjects,
+      modes,
+      availableDays,
+
+      maximumActiveStudents,
+
+      ...(savedProfile?.availableFrom
+        ? {
+            availableFrom:
+              savedProfile.availableFrom,
+          }
+        : {}),
+
+      ...(savedProfile?.availableTo
+        ? {
+            availableTo:
+              savedProfile.availableTo,
+          }
+        : {}),
+
+      ...(savedProfile?.bio
+        ? {
+            bio: savedProfile.bio,
+          }
+        : {}),
+
+      ...(savedProfile?.languages?.length
+        ? {
+            languages:
+              savedProfile.languages,
+          }
+        : {}),
+
+      createdAt,
+
+      ...(savedProfile?.updatedAt
+        ? {
+            updatedAt:
+              savedProfile.updatedAt,
+          }
+        : {}),
 
       facultyEmail: faculty.email,
 
@@ -2993,7 +3086,6 @@ export async function getAvailableMentorshipFaculty(): Promise<
     return [card];
   });
 }
-
 export async function getMentorshipRequestById(
   requestId: string,
 ) {
@@ -3157,33 +3249,52 @@ export async function createMentorshipRequest(input: {
     throw new Error("Select a valid mentorship mode.");
   }
 
-  const profile = await getMentorshipProfileByFacultyId(
+const mentorshipProfile =
+  await getMentorshipProfileByFacultyId(
     facultyId,
   );
 
-  if (!profile || !profile.isAvailable) {
-    throw new Error(
-      "This faculty member is currently unavailable for mentorship.",
-    );
-  }
-
-  const subjectAvailable = profile.subjects.some(
-    (facultySubject) =>
-      facultySubject.trim().toLowerCase() ===
-      subject.toLowerCase(),
+if (
+  mentorshipProfile &&
+  mentorshipProfile.isAvailable === false
+) {
+  throw new Error(
+    "This faculty member is currently unavailable for mentorship.",
   );
+}
 
-  if (!subjectAvailable) {
-    throw new Error(
-      "This faculty member is not available for the selected subject.",
-    );
-  }
+const availableSubjects =
+  mentorshipProfile?.subjects?.length
+    ? mentorshipProfile.subjects
+    : faculty.profile?.subjects?.length
+      ? faculty.profile.subjects
+      : ["General Mentorship"];
 
-  if (!profile.modes.includes(input.preferredMode)) {
-    throw new Error(
-      "This faculty member does not support the selected mentorship mode.",
-    );
-  }
+const availableModes: MentorshipMode[] =
+  mentorshipProfile?.modes?.length
+    ? mentorshipProfile.modes
+    : ["online"];
+
+const maximumActiveStudents =
+  mentorshipProfile?.maximumActiveStudents ?? 20;
+
+const subjectAvailable = availableSubjects.some(
+  (facultySubject) =>
+    facultySubject.trim().toLowerCase() ===
+    subject.toLowerCase(),
+);
+
+if (!subjectAvailable) {
+  throw new Error(
+    "This faculty member is not available for the selected subject.",
+  );
+}
+
+if (!availableModes.includes(input.preferredMode)) {
+  throw new Error(
+    "This faculty member does not support the selected mentorship mode.",
+  );
+}
 
   const collection = await getCollection<MentorshipRequest>(
     COLLECTIONS.mentorshipRequests,
@@ -3234,10 +3345,9 @@ export async function createMentorshipRequest(input: {
       status: "accepted",
     });
 
-  if (
-    facultyActiveCount >=
-    profile.maximumActiveStudents
-  ) {
+if (
+  facultyActiveCount >= maximumActiveStudents
+) {
     throw new Error(
       "This faculty member has reached their mentorship capacity.",
     );
@@ -3410,32 +3520,37 @@ export async function updateMentorshipRequest(input: {
     );
   }
 
-  if (input.status === "accepted") {
-    const profile =
-      await getMentorshipProfileByFacultyId(
-        existing.facultyId,
-      );
+if (input.status === "accepted") {
+  const mentorshipProfile =
+    await getMentorshipProfileByFacultyId(
+      existing.facultyId,
+    );
 
-    if (!profile || !profile.isAvailable) {
-      throw new Error(
-        "Your mentorship availability is currently disabled.",
-      );
-    }
+  if (
+    mentorshipProfile &&
+    mentorshipProfile.isAvailable === false
+  ) {
+    throw new Error(
+      "Your mentorship availability is currently disabled.",
+    );
+  }
 
-    const activeFacultyCount =
-      await collection.countDocuments({
-        facultyId: existing.facultyId,
-        status: "accepted",
+  const maximumActiveStudents =
+    mentorshipProfile?.maximumActiveStudents ?? 20;
 
-        id: {
-          $ne: existing.id,
-        },
-      });
+  const activeFacultyCount =
+    await collection.countDocuments({
+      facultyId: existing.facultyId,
+      status: "accepted",
 
-    if (
-      activeFacultyCount >=
-      profile.maximumActiveStudents
-    ) {
+      id: {
+        $ne: existing.id,
+      },
+    });
+
+  if (
+    activeFacultyCount >= maximumActiveStudents
+  ) {
       throw new Error(
         "Your mentorship capacity has already been reached.",
       );
