@@ -1115,7 +1115,6 @@ export function createUserDraft(input: {
           ? "Educator Desk"
           : "Student Workspace",
     program: input.program?.trim() || "New Registration",
-    passwordHint: defaultPassword,
     status: input.status ?? "active",
     permissions: rolePermissions[role],
     createdAt: new Date().toISOString(),
@@ -1137,7 +1136,6 @@ function toManagedUser(user: DemoUserRecord): ManagedUser {
     ...sanitizeUser(user),
     program: user.program,
     status: "active",
-    passwordHint: user.password,
   };
 }
 

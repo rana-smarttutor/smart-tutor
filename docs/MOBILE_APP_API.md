@@ -365,16 +365,21 @@ Authentication: HTTP-only cookie (`smart_tutor_session`) set on login. All authe
 
 ## 22. Admin
 
-### GET /api/admin/user-requests — Pending students
-### POST /api/admin/user-requests/approve — `{ userId }`
-### POST /api/admin/user-requests/reject — `{ userId }`
-### GET /api/admin/educator-requests — Pending educators
-### POST /api/admin/educator-requests/approve — `{ userId }`
-### POST /api/admin/educator-requests/reject — `{ userId }`
+### GET /api/admin/user-requests — Pending students (excludes soft-deleted)
+### POST /api/admin/user-requests/approve — `{ userId }` (rejects if soft-deleted)
+### POST /api/admin/user-requests/reject — `{ userId }` (soft-deletes, NOT permanent delete)
+### GET /api/admin/educator-requests — Pending educators (excludes soft-deleted)
+### POST /api/admin/educator-requests/approve — `{ userId }` (rejects if soft-deleted)
+### POST /api/admin/educator-requests/reject — `{ userId }` (soft-deletes + sets status "rejected")
 ### GET /api/admin/password-reset-requests
 ### PATCH /api/admin/password-reset-requests — `{ id, status, adminNote? }`
 ### GET /api/admin/mongo-status
 ### GET|POST /api/admin/bootstrap — Seed database (requires bootstrap key)
+
+### Account Bin (Soft-Delete Management)
+### GET /api/admin/account-bin — List all soft-deleted users
+### PATCH /api/admin/account-bin — `{ id }` — Restore a soft-deleted user
+### DELETE /api/admin/account-bin — `{ id }` — Permanently delete a user from bin
 
 ---
 
@@ -523,3 +528,50 @@ Certificates appear in the `DashboardBundle.certificates` array. Student, educat
 - Notifications are pushed via API polling (no WebSocket yet)
 - Cookie-based auth means no token management needed on mobile — just use cookie storage
 - Pagination is not implemented yet — all list endpoints return full datasets
+
+---
+
+## Changelog — July 2026 Update
+
+### Soft-Delete System (Breaking Behavioral Changes)
+
+**What changed:**
+- Rejecting a user request now **soft-deletes** the user (sets `deletedAt` field) instead of permanently deleting them from the database.
+- All admin user listing endpoints now **exclude soft-deleted users** automatically.
+- A new **Account Bin** system allows admins to view, restore, or permanently delete soft-deleted users.
+
+**Impact on mobile app:**
+
+| Endpoint | Before | After |
+|---|---|---|
+| `POST /api/admin/user-requests/reject` | Permanent `deleteOne` | Soft-delete (`deletedAt` set) |
+| `POST /api/admin/educator-requests/reject` | Sets `status: "rejected"` | Sets `status: "rejected"` + `deletedAt` |
+| `GET /api/users` | Included all users | Excludes soft-deleted users |
+| `GET /api/admin/user-requests` | Included all pending | Excludes soft-deleted pending |
+| `GET /api/admin/educator-requests` | Included all pending | Excludes soft-deleted pending |
+
+**New endpoints for admin:**
+
+```
+GET    /api/admin/account-bin     → { users: ManagedUser[] }
+PATCH  /api/admin/account-bin     → { id } → restores user
+DELETE /api/admin/account-bin     → { id } → permanent delete
+```
+
+### Caching / Service Worker Update
+
+**What changed:**
+- Service worker (`/sw.js`) rewritten with network-first strategy for HTML pages.
+- Old service worker used cache-first and cached the HTML shell — caused stale styling after deployments.
+- New SW auto-activates via `skipWaiting()` + `clients.claim()` and cleans old caches.
+
+**Impact on mobile app:**
+- If using WebView/PWA: Users will auto-get the new SW on next visit. No manual cache clear needed.
+- If using native app calling API: No impact — API responses are not cached by the SW.
+
+### Password Handling (Internal — No API Change)
+
+- All passwords are now bcrypt-hashed server-side before storage.
+- Login flow transparently handles both plaintext (legacy) and bcrypt passwords.
+- No API response changes — `passwordHint` field removed from admin user responses.
+- Mobile app login flow is **unchanged**.

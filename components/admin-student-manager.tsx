@@ -405,7 +405,7 @@ export default function AdminStudentManager({ initialStudents }: Props) {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="font-mono text-xs font-semibold text-slate-600">{student.admissionNo || student.passwordHint?.slice(0, 8) || "—"}</span>
+                      <span className="font-mono text-xs font-semibold text-slate-600">{student.admissionNo || "—"}</span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
                       {attendanceBar(student.attendancePercent ?? 0)}

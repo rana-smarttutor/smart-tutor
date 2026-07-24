@@ -4,7 +4,6 @@ import {
   getSessionUser,
 } from "@/lib/auth";
 import { deleteUserRecord, findUserByCredentials } from "@/lib/data-store";
-import { getMongoDatabase } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,17 +44,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const db = await getMongoDatabase();
-  await Promise.all([
-    deleteUserRecord(session.id),
-    db.collection("deleted_accounts").insertOne({
-      userId: session.id,
-      name: session.name,
-      email: session.email,
-      role: session.role,
-      deletedAt: new Date().toISOString(),
-    }),
-  ]);
+  await deleteUserRecord(session.id);
 
   const response = clearSessionResponse();
   return response;

@@ -87,7 +87,7 @@ export async function PATCH(request: Request) {
     name: updateData.name ?? existingUser.name,
     email: existingUser.email,
     role: existingUser.role as any,
-    password: existingUser.password,
+    password: "",
     program: existingUser.program,
     profilePhoto: updateData.profilePhoto,
     profile: updateData.profile as any,

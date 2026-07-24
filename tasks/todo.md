@@ -1,50 +1,25 @@
-# Plan: Remake Student Fee Payment Receipt Format
+# Todo: Auth Password Fix + Soft-Delete Account Bin
 
-## Goal
-Redesign the fee receipt popup to match the new professional design. The receipt appears when clicking "Receipt" in student, parent, and admin dashboards.
+## Status: 100% Complete
 
-## File to Modify
-- `components/student-fee-receipts-view.tsx` — rewrite the `downloadInvoiceReceipt()` function HTML (lines 55–243)
+## Completed Work
 
-## Design Spec
+### 1. `deletedAt` Filters Added to 9 Functions (lib/data-store.ts)
+- [x] `enrichWithFacultyNames()` — added filter on faculty lookup
+- [x] `approveEducatorRequest()` — filter on updateOne + findOne
+- [x] `rejectEducatorRequest()` — filter on updateOne + added `deletedAt` to $set (soft-delete)
+- [x] `getPendingUserRequests()` — filter on find
+- [x] `approveUserRequest()` — filter on updateOne + findOne
+- [x] `rejectUserRequest()` — converted from `deleteOne` to soft-delete (`updateOne` with `deletedAt`)
+- [x] `toggleUserVerification()` — filter on updateOne
+- [x] `getEducators()` — filter on find
+- [x] `getEducatorsForStudent()` — filter on findOne + find
 
-### Header
-- Full-width `stpl.jpeg` banner image (entire receipt width)
-- Address info below the banner (not side-by-side)
+### 2. Vercel Caching Fix
+- [x] Rewrote `public/sw.js` — network-first strategy, versioned caches, `skipWaiting()` + `clients.claim()`, stale cache cleanup
+- [x] Added `Cache-Control: no-cache, no-store, must-revalidate` to HTML pages in `vercel.json`
+- [x] Added `Cache-Control: public, max-age=31536000, immutable` to `_next/static/*` in `vercel.json`
 
-### Student Details (2-column grid)
-Fields available on FeeInvoice:
-1. Student Name (`studentName`) ✓
-2. Parent Name (`parentName`) ✓
-3. Class / Board (`classCourse`) ✓
-4. Enrollment No (derived from `studentId`) ✓
-5. Academic Year (`academicYear`) ✓
-6. Mobile No (`mobileNo`) ✓
-7. Payment Mode (`paymentMode`) ✓
-
-**Removed** (not on FeeInvoice / user said remove): Email, Address, Batch Timing, Course Duration, Admission Type
-
-### Fee Details Table
-Columns: Sr No | Particulars | Month | Due Date | Amount (₹) | Paid (₹) | Balance (₹)
-- Dark navy (#00072d) header
-- Amount in words below table
-
-### Payment Summary
-- Status badge (PAID/PARTIAL/UNPAID/OVERDUE) with color pill
-- Total Paid, Balance Due, Due Date, Print Date
-
-### Payment History Table
-Columns: # | Date | Amount (₹) | Mode | Transaction Ref | Bank
-- Gray header
-
-### Footer
-- Left: Terms + "FEES NOT REFUNDABLE" + thank you
-- Right: Signature block with founder-sign.png
-- **NO QR code**
-
-## Steps
-1. Rewrite `receiptHtml` in `downloadInvoiceReceipt()` with new design
-2. Add `numberToWords()` helper for amount-in-words
-3. Map all FeeInvoice fields to new layout
-4. Remove QR code entirely
-5. Verify receipt renders correctly
+### 3. Optional Cleanup
+- [ ] Remove dead `getDemoCredentials()` function
+- [ ] Verify demo login page still works (if used)

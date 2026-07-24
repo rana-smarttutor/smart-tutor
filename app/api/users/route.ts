@@ -236,10 +236,10 @@ export async function PATCH(request: Request) {
   const name = sanitizeTextInput(body.name, 60);
   const email = sanitizeEmailInput(body.email);
   const role = sanitizeRoleInput(body.role);
-  const password = sanitizePasswordInput(body.password);
+  const password = body.password ? sanitizePasswordInput(body.password) : "";
   const program = sanitizeTextInput(body.program, 60);
 
-  if (!name || !email || !role || !password || !program || !validateEmailFormat(email)) {
+  if (!name || !email || !role || !program || !validateEmailFormat(email)) {
     return NextResponse.json(
       { error: "Enter valid account details before updating this user." },
       { status: 400 },

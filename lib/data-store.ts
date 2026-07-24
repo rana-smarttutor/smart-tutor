@@ -143,6 +143,7 @@ type UserDocument = SessionUser & {
   emailKey?: string;
   status?: "active" | "pending" | "rejected";
   verified?: boolean;
+  deletedAt?: string;
   permissions?: PermissionItem[];
   createdAt?: string;
   updatedAt?: string;
@@ -406,6 +407,7 @@ function toSessionUser(user: UserDocument): SessionUser {
     label: user.label,
     status: user.status,
     verified: user.verified,
+    deletedAt: user.deletedAt,
   };
 }
 
@@ -414,7 +416,6 @@ function toManagedUser(user: UserDocument): ManagedUser {
     ...toSessionUser(user),
     program: user.program,
     status: (user.status === "rejected" ? "pending" : user.status) ?? "active",
-    passwordHint: user.password,
     linkedStudentId: user.linkedStudentId,
     assignedFacultyIds: user.assignedFacultyIds,
     mobile: user.mobile,
@@ -792,7 +793,7 @@ export async function findUserByCredentials(
     : normalizedLogin;
 
   const query: Record<string, unknown> = {
-    password,
+    deletedAt: { $exists: false },
 
     /*
      * Add the role restriction only when a role
@@ -830,14 +831,21 @@ export async function findUserByCredentials(
     ],
   };
 
-  const user = await collection.findOne(query);
+  const user = await collection.findOne<UserDocument>(query);
 
-  return user ? toSessionUser(user) : null;
+  if (!user) return null;
+
+  const { comparePassword } = await import("@/lib/auth");
+  const matches = await comparePassword(password, user.password);
+  return matches ? toSessionUser(user) : null;
 }
 
 export async function findUserById(id: string) {
   const collection = await getUsersCollection();
-  const user = await collection.findOne({ id });
+  const user = await collection.findOne<UserDocument>({
+    id,
+    deletedAt: { $exists: false },
+  });
   return user ? toSessionUser(user) : null;
 }
 
@@ -1793,7 +1801,7 @@ async function enrichWithFacultyNames(
   const collection = await getUsersCollection();
   const allIds = [...new Set(users.flatMap((u) => u.assignedFacultyIds ?? []))];
   if (!allIds.length) return users;
-  const facultyDocs = await collection.find({ id: { $in: allIds } }).toArray();
+  const facultyDocs = await collection.find({ id: { $in: allIds }, deletedAt: { $exists: false } } as any).toArray();
   const facultyMap = new Map(facultyDocs.map((f) => [f.id, f.name]));
   return users.map((u) => ({
     ...u,
@@ -1806,7 +1814,10 @@ async function enrichWithFacultyNames(
 export async function getUsersForAdmin() {
   const collection = await getUsersCollection();
 
-  const users = await collection.find({}).sort({ name: 1 }).toArray();
+  const users = await collection
+    .find({ deletedAt: { $exists: false } } as any)
+    .sort({ name: 1 })
+    .toArray();
 
   return enrichWithFacultyNames(users.map(toManagedUser));
 }
@@ -1818,7 +1829,8 @@ export async function getPendingEducatorRequests() {
     .find({
       role: "educator",
       status: "pending",
-    })
+      deletedAt: { $exists: false },
+    } as any)
     .sort({ createdAt: -1 })
     .toArray();
 
@@ -1832,7 +1844,8 @@ export async function approveEducatorRequest(userId: string) {
     {
       id: userId,
       role: "educator",
-    },
+      deletedAt: { $exists: false },
+    } as any,
     {
       $set: {
         status: "active",
@@ -1846,7 +1859,7 @@ export async function approveEducatorRequest(userId: string) {
     return null;
   }
 
-  const updatedUser = await collection.findOne({ id: userId });
+  const updatedUser = await collection.findOne({ id: userId, deletedAt: { $exists: false } } as any);
 
   return updatedUser ? toManagedUser(updatedUser) : null;
 }
@@ -1858,10 +1871,12 @@ export async function rejectEducatorRequest(userId: string) {
     {
       id: userId,
       role: "educator",
-    },
+      deletedAt: { $exists: false },
+    } as any,
     {
       $set: {
         status: "rejected",
+        deletedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
     },
@@ -1880,7 +1895,7 @@ export async function getPendingUserRequests() {
   const collection = await getUsersCollection();
 
   const users = await collection
-    .find({ status: "pending" })
+    .find({ status: "pending", deletedAt: { $exists: false } } as any)
     .sort({ createdAt: -1 })
     .toArray();
 
@@ -1891,7 +1906,7 @@ export async function approveUserRequest(userId: string) {
   const collection = await getUsersCollection();
 
   const result = await collection.updateOne(
-    { id: userId },
+    { id: userId, deletedAt: { $exists: false } } as any,
     {
       $set: {
         status: "active",
@@ -1905,7 +1920,7 @@ export async function approveUserRequest(userId: string) {
     return null;
   }
 
-  const updatedUser = await collection.findOne({ id: userId });
+  const updatedUser = await collection.findOne({ id: userId, deletedAt: { $exists: false } } as any);
 
   return updatedUser ? toManagedUser(updatedUser) : null;
 }
@@ -1913,9 +1928,12 @@ export async function approveUserRequest(userId: string) {
 export async function rejectUserRequest(userId: string) {
   const collection = await getUsersCollection();
 
-  const result = await collection.deleteOne({ id: userId });
+  const result = await collection.updateOne(
+    { id: userId, deletedAt: { $exists: false } } as any,
+    { $set: { deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } },
+  );
 
-  return result.deletedCount > 0;
+  return result.matchedCount > 0;
 }
 
 export async function toggleUserVerification(
@@ -1925,7 +1943,7 @@ export async function toggleUserVerification(
   const collection = await getUsersCollection();
 
   const result = await collection.updateOne(
-    { id: userId },
+    { id: userId, deletedAt: { $exists: false } } as any,
     {
       $set: {
         verified,
@@ -1939,7 +1957,7 @@ export async function toggleUserVerification(
 
 export async function getStudentDirectory(educatorId?: string) {
   const collection = await getUsersCollection();
-  const query: any = { role: "student" };
+  const query: any = { role: "student", deletedAt: { $exists: false } };
   if (educatorId) {
     query.assignedFacultyIds = { $in: [educatorId] };
   }
@@ -1954,7 +1972,7 @@ export async function getStudentDirectory(educatorId?: string) {
 export async function getEducators() {
   const collection = await getUsersCollection();
   const educators = await collection
-    .find({ role: "educator" })
+    .find({ role: "educator", deletedAt: { $exists: false } } as any)
     .sort({ name: 1 })
     .toArray();
   return educators.map(toManagedUser);
@@ -1962,11 +1980,11 @@ export async function getEducators() {
 
 export async function getEducatorsForStudent(studentId: string) {
   const collection = await getUsersCollection();
-  const student = await collection.findOne({ id: studentId, role: "student" });
+  const student = await collection.findOne({ id: studentId, role: "student", deletedAt: { $exists: false } } as any);
   const facultyIds = student?.assignedFacultyIds ?? [];
   if (!facultyIds.length) return [];
   const educators = await collection
-    .find({ id: { $in: facultyIds }, role: "educator" })
+    .find({ id: { $in: facultyIds }, role: "educator", deletedAt: { $exists: false } } as any)
     .toArray();
   return educators.map(toManagedUser);
 }
@@ -1985,6 +2003,11 @@ export async function createUserRecord(input: {
   profile?: UserProfile;
   assignedFacultyIds?: string[];
 }) {
+  const { isBcryptHash, hashPassword } = await import("@/lib/auth");
+  const hashedPassword = isBcryptHash(input.password)
+    ? input.password
+    : await hashPassword(input.password);
+
   const document: UserDocument = {
     id: randomUUID(),
     name: input.name,
@@ -1997,7 +2020,7 @@ export async function createUserRecord(input: {
     linkedStudentMobile: input.linkedStudentMobile,
     role: input.role,
     label: getRoleLabel(input.role),
-    password: input.password,
+    password: hashedPassword,
     program: input.program,
     status: input.status ?? "active",
     createdAt: new Date().toISOString(),
@@ -2032,11 +2055,17 @@ export async function updateUserRecord(input: {
     emailKey: input.email.toLowerCase(),
     role: input.role,
     label: getRoleLabel(input.role),
-    password: input.password,
     program: input.program,
     status: input.status ?? "active",
     updatedAt: new Date().toISOString(),
   };
+
+  if (input.password && input.password.trim()) {
+    const { isBcryptHash, hashPassword } = await import("@/lib/auth");
+    setFields.password = isBcryptHash(input.password)
+      ? input.password
+      : await hashPassword(input.password);
+  }
 
   if (input.verified !== undefined) {
     setFields.verified = input.verified;
@@ -2080,7 +2109,7 @@ export async function assignStudentsToFaculty(
 ): Promise<number> {
   const collection = await getUsersCollection();
   const currentStudentDocs = await collection
-    .find({ assignedFacultyIds: facultyId, role: "student" })
+    .find({ assignedFacultyIds: facultyId, role: "student", deletedAt: { $exists: false } } as any)
     .toArray();
   const currentIds = new Set(currentStudentDocs.map((d) => d.id));
   const targetIds = new Set(studentIds);
@@ -2090,14 +2119,14 @@ export async function assignStudentsToFaculty(
 
   if (toRemove.length > 0) {
     await collection.updateMany(
-      { id: { $in: toRemove }, role: "student" },
+      { id: { $in: toRemove }, role: "student", deletedAt: { $exists: false } } as any,
       { $pull: { assignedFacultyIds: facultyId } },
     );
   }
 
   if (toAdd.length > 0) {
     await collection.updateMany(
-      { id: { $in: toAdd }, role: "student" },
+      { id: { $in: toAdd }, role: "student", deletedAt: { $exists: false } } as any,
       { $addToSet: { assignedFacultyIds: facultyId } },
     );
   }
@@ -2113,7 +2142,7 @@ export async function getStudentStats(): Promise<StudentStats> {
     now.getMonth(),
     1,
   ).toISOString();
-  const students = await collection.find({ role: "student" }).toArray();
+  const students = await collection.find({ role: "student", deletedAt: { $exists: false } }).toArray();
   return {
     total: students.length,
     active: students.filter((s) => s.status === "active").length,
@@ -2133,7 +2162,7 @@ export async function getStudentDirectoryV2(filters?: {
   status?: string;
 }): Promise<StudentDirectoryEntry[]> {
   const collection = await getUsersCollection();
-  const query: any = { role: "student" };
+  const query: any = { role: "student", deletedAt: { $exists: false } };
   if (filters?.status && filters.status !== "all") {
     if (filters.status === "active") query.status = "active";
     else if (filters.status === "inactive") query.status = "inactive";
@@ -2191,7 +2220,7 @@ export async function computeStudentRiskScores(): Promise<
   { studentId: string; riskLevel: StudentRiskLevel; score: number }[]
 > {
   const collection = await getUsersCollection();
-  const students = await collection.find({ role: "student" }).toArray();
+  const students = await collection.find({ role: "student", deletedAt: { $exists: false } }).toArray();
   const results: {
     studentId: string;
     riskLevel: StudentRiskLevel;
@@ -2230,7 +2259,7 @@ export async function computeStudentRiskScores(): Promise<
 export async function exportStudentsCsv(): Promise<string> {
   const collection = await getUsersCollection();
   const students = await collection
-    .find({ role: "student" })
+    .find({ role: "student", deletedAt: { $exists: false } })
     .sort({ name: 1 })
     .toArray();
   const headers = [
@@ -2387,13 +2416,40 @@ export async function bulkUpdateStudentsFromCsv(
 
 export async function deleteUserRecord(userId: string): Promise<boolean> {
   const collection = await getUsersCollection();
-  const result = await collection.deleteOne({ id: userId });
+  const result = await collection.updateOne(
+    { id: userId, deletedAt: { $exists: false } },
+    { $set: { deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } },
+  );
+  return result.matchedCount > 0;
+}
+
+export async function restoreUserRecord(userId: string): Promise<boolean> {
+  const collection = await getUsersCollection();
+  const result = await collection.updateOne(
+    { id: userId, deletedAt: { $exists: true } },
+    { $unset: { deletedAt: "" }, $set: { updatedAt: new Date().toISOString() } },
+  );
+  return result.matchedCount > 0;
+}
+
+export async function getDeletedUsers() {
+  const collection = await getUsersCollection();
+  const users = await collection
+    .find({ deletedAt: { $exists: true, $ne: null } } as any)
+    .sort({ deletedAt: -1 })
+    .toArray();
+  return users.map(toManagedUser);
+}
+
+export async function permanentDeleteUserRecord(userId: string): Promise<boolean> {
+  const collection = await getUsersCollection();
+  const result = await collection.deleteOne({ id: userId, deletedAt: { $exists: true } } as any);
   return result.deletedCount > 0;
 }
 
 export async function findUserDocumentByEmail(email: string) {
   const collection = await getUsersCollection();
-  return collection.findOne({ emailKey: email.toLowerCase() });
+  return collection.findOne({ emailKey: email.toLowerCase(), deletedAt: { $exists: false } } as any);
 }
 
 export async function findUserDocumentByMobile(mobile: string) {
@@ -2402,7 +2458,8 @@ export async function findUserDocumentByMobile(mobile: string) {
 
   return collection.findOne({
     $or: [{ mobile: mobileKey }, { mobileKey }],
-  });
+    deletedAt: { $exists: false },
+  } as any);
 }
 
 export async function getTestSubmissionsForRole(role: Role, userId?: string) {
@@ -4742,6 +4799,8 @@ function buildDashboardAnalytics(input: {
     assessmentTotalMarks,
   );
 
+  const testsTaken = assessmentRows.length;
+
   const subjectMap = new Map<
     string,
     {
@@ -4980,9 +5039,9 @@ function buildDashboardAnalytics(input: {
         detail: `${attendanceRecords.length} recorded attendance entries`,
       },
       {
-        label: "Test Average",
-        value: assessmentValue,
-        detail: `${assessmentRows.length} marked weekly-test results`,
+        label: "Tests Taken",
+        value: `${testsTaken}`,
+        detail: `${testsTaken} marked weekly-test results`,
       },
       {
         label: "Learning Completion",
@@ -5279,7 +5338,7 @@ export async function getDashboardBundle(
 
 export async function findFullUserById(id: string) {
   const collection = await getUsersCollection();
-  const user = await collection.findOne({ id });
+  const user = await collection.findOne({ id, deletedAt: { $exists: false } } as any);
   return user as UserDocument | null;
 }
 

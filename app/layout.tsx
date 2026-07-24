@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalLayout } from "@/components/conditional-layout";
+import { PageLoader } from "@/components/page-loader";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -488,6 +489,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
+<PageLoader />
 <Script
   src="https://www.googletagmanager.com/gtag/js?id=G-9P82PKFSD9"
   strategy="lazyOnload"
