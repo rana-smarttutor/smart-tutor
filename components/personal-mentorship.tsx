@@ -650,9 +650,9 @@ export function PersonalMentorship({ session, role }: PersonalMentorshipProps) {
                   {faculty.map((mentor) => (
                     <article
                       key={mentor.facultyId}
-                      className="flex flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                      className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
                     >
-                      <div className="flex items-start gap-4">
+                      <div className="flex min-h-[72px] items-start gap-4">
                         {mentor.facultyPhoto ? (
                           <img
                             src={mentor.facultyPhoto}
@@ -670,38 +670,39 @@ export function PersonalMentorship({ session, role }: PersonalMentorshipProps) {
                             {mentor.facultyName}
                           </h4>
 
-                          <p className="mt-1 text-xs font-semibold text-slate-500">
+                          <p className="mt-1 min-h-[32px] line-clamp-2 text-xs font-semibold leading-4 text-slate-500">
                             {mentor.qualification || "Faculty Mentor"}
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-5 space-y-3 text-sm">
-                        <div className="flex items-start gap-2">
+                      <div className="mt-5 flex flex-1 flex-col gap-3 text-sm">
+                        <div className="flex min-h-[72px] items-start gap-2">
                           <BookOpenCheck className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
 
-                          <span className="text-slate-600">
+                          <span className="line-clamp-4 leading-6 text-slate-600">
                             {mentor.subjects.join(", ")}
                           </span>
                         </div>
 
-                        <div className="flex items-start gap-2">
-                          <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+                        <div className="flex min-h-[24px] items-start gap-2">
+                          <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
 
-                          <span className="text-slate-600">
-                            {mentor.availableDays.join(", ")}
+                          <span className="leading-5 text-slate-600">
+                            {mentor.experience?.trim() ||
+                              "Experience not specified"}
                           </span>
                         </div>
 
-                        <div className="flex items-start gap-2">
+                        <div className="flex min-h-[24px] items-start gap-2">
                           <Monitor className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
 
-                          <span className="text-slate-600">
+                          <span className="leading-5 text-slate-600">
                             {mentor.modes.map(getModeLabel).join(", ")}
                           </span>
                         </div>
 
-                        <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
+                        <div className="mt-auto flex min-h-[40px] items-center rounded-2xl bg-slate-50 px-3 py-2 text-xs font-bold text-slate-600">
                           {mentor.remainingCapacity} mentorship
                           {mentor.remainingCapacity === 1
                             ? " seat"
@@ -710,7 +711,7 @@ export function PersonalMentorship({ session, role }: PersonalMentorshipProps) {
                         </div>
                       </div>
 
-                      <div className="mt-auto grid grid-cols-2 gap-3 pt-5">
+                      <div className="grid grid-cols-2 gap-3 pt-5">
                         <button
                           type="button"
                           onClick={() => setViewingFaculty(mentor)}

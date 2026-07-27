@@ -382,7 +382,7 @@ export function StaffAttendanceManager({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {!embedded ? (
         <div>
           <p className="section-label">
@@ -401,12 +401,12 @@ export function StaffAttendanceManager({
 
       {/* Self Check-in/out */}
       {(role === "educator" || role === "counsellor" || role === "admin") && (
-        <div className="surface rounded-[2rem] p-5">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF]">
+        <div className="surface rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:p-6">
+          <div className="flex min-h-[90px] flex-col justify-center gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#EEF2FF]">
                 <svg
-                  className="h-6 w-6"
+                  className="h-7 w-7"
                   fill="none"
                   stroke="#4F46E5"
                   viewBox="0 0 24 24"
@@ -419,27 +419,32 @@ export function StaffAttendanceManager({
                   />
                 </svg>
               </div>
-              <div>
-                <div className="text-sm font-bold text-[var(--color-heading)]">
+
+              <div className="min-w-0">
+                <div className="truncate text-base font-black text-[var(--color-heading)] sm:text-lg">
                   {userName || "Self Check-in"}
                 </div>
-                <div className="text-xs text-[var(--color-muted)]">
+
+                <div className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
                   {date} &middot;{" "}
                   {myRecord
-                    ? `Checked in at ${myRecord.checkIn || "—"}${myRecord.checkOut ? `, out at ${myRecord.checkOut}` : ""}`
+                    ? `Checked in at ${myRecord.checkIn || "—"}${
+                        myRecord.checkOut ? `, out at ${myRecord.checkOut}` : ""
+                      }`
                     : "Not checked in yet"}
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
+
+            <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:flex-nowrap">
               <button
                 type="button"
                 onClick={handleSelfCheckin}
                 disabled={checkingIn || !!myRecord?.checkIn}
-                className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
+                className={`min-w-[118px] flex-1 rounded-full px-6 py-3.5 text-sm font-black transition sm:flex-none ${
                   myRecord?.checkIn
-                    ? "bg-[#ECFDF5] text-[#059669] cursor-default"
-                    : "bg-[var(--color-primary)] text-white hover:opacity-90"
+                    ? "cursor-default bg-[#ECFDF5] text-[#059669]"
+                    : "bg-[var(--color-primary)] text-white shadow-md hover:opacity-90"
                 }`}
               >
                 {checkingIn
@@ -448,16 +453,17 @@ export function StaffAttendanceManager({
                     ? "Checked In"
                     : "Check In"}
               </button>
+
               <button
                 type="button"
                 onClick={handleSelfCheckout}
                 disabled={
                   checkingIn || !myRecord?.checkIn || !!myRecord?.checkOut
                 }
-                className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${
+                className={`min-w-[118px] flex-1 rounded-full px-6 py-3.5 text-sm font-black transition sm:flex-none ${
                   myRecord?.checkOut
-                    ? "bg-[#F0F9FF] text-[#0EA5E9] cursor-default"
-                    : "border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
+                    ? "cursor-default bg-[#F0F9FF] text-[#0EA5E9]"
+                    : "border border-[var(--color-primary)] bg-white text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10"
                 }`}
               >
                 {checkingIn
@@ -472,25 +478,24 @@ export function StaffAttendanceManager({
       )}
 
       {/* Stats cards */}
-      <div className="grid grid-cols-3 gap-3 max-md:grid-cols-2 sm:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {statCards.map((s) => (
           <div
             key={s.label}
-            className="surface rounded-2xl p-4 flex items-start gap-3"
+            className="surface flex min-h-[84px] items-center gap-4 rounded-[1.35rem] border border-slate-200/80 bg-white p-5 shadow-[0_6px_18px_rgba(15,23,42,0.07)]"
           >
             <div
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
               style={{ background: s.bg }}
             >
-              <span className="text-xs font-bold" style={{ color: s.color }}>
+              <span className="text-sm font-black" style={{ color: s.color }}>
                 {s.value}
               </span>
             </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                {s.label}
-              </p>
-            </div>
+
+            <p className="whitespace-nowrap text-xs font-black uppercase tracking-[0.08em] text-[var(--color-muted)]">
+              {s.label}
+            </p>
           </div>
         ))}
       </div>
@@ -734,54 +739,61 @@ export function StaffAttendanceManager({
 
       {/* My History */}
       {(viewTab === "mine" || role !== "admin") && (
-        <div className="surface rounded-[2rem] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-[var(--color-heading)]">
+        <div className="surface rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.07)] sm:p-6">
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-xl font-black tracking-[-0.02em] text-[var(--color-heading)] sm:text-2xl">
               My Attendance History
             </h3>
-            <div className="flex gap-2">
+
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => setShowRequestsPanel(!showRequestsPanel)}
-                className="rounded-lg bg-[#F5F3FF] px-3 py-1.5 text-xs font-bold text-[#7C3AED] hover:bg-[#EDE9FE] transition-colors"
+                className="rounded-xl bg-[#F5F3FF] px-4 py-2.5 text-xs font-black text-[#7C3AED] transition-colors hover:bg-[#EDE9FE] sm:text-sm"
               >
                 My Requests ({regularisationRequests.length})
               </button>
+
               <button
                 type="button"
                 onClick={() => {
                   setShowRegulariseModal(true);
                   setRegulariseDate(date);
                 }}
-                className="rounded-lg bg-[var(--color-primary)] px-3 py-1.5 text-xs font-bold text-white hover:opacity-90 transition-colors"
+                className="rounded-xl bg-[var(--color-primary)] px-4 py-2.5 text-xs font-black text-white shadow-sm transition hover:opacity-90 sm:text-sm"
               >
                 + Regularise
               </button>
             </div>
           </div>
+
           {myAttendance.length === 0 ? (
-            <p className="text-sm text-[var(--color-muted)]">
-              No attendance records yet.
-            </p>
+            <div className="flex min-h-[140px] items-center justify-center rounded-2xl border border-dashed border-[var(--color-border)]">
+              <p className="text-sm font-semibold text-[var(--color-muted)]">
+                No attendance records yet.
+              </p>
+            </div>
           ) : (
             <div className="space-y-3">
               {myAttendance.slice(0, 15).map((r) => (
                 <div
                   key={r.id}
-                  className="flex items-center justify-between rounded-2xl border border-[var(--color-border)] px-4 py-3"
+                  className="flex min-h-[76px] flex-col justify-center gap-3 rounded-2xl border border-[var(--color-border)] bg-white px-5 py-4 transition hover:border-blue-200 hover:bg-blue-50/20 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
-                    <div className="text-sm font-semibold text-[var(--color-heading)]">
+                    <div className="text-base font-black text-[var(--color-heading)]">
                       {r.date}
                     </div>
-                    <div className="text-[11px] text-[var(--color-muted)]">
-                      {r.checkIn ? `In: ${r.checkIn}` : "—"} &middot;{" "}
-                      {r.checkOut ? `Out: ${r.checkOut}` : "—"}
+
+                    <div className="mt-1 text-xs font-medium text-[var(--color-muted)] sm:text-sm">
+                      {r.checkIn ? `In: ${r.checkIn}` : "In: —"} &middot;{" "}
+                      {r.checkOut ? `Out: ${r.checkOut}` : "Out: —"}
                       {r.hoursWorked ? ` (${r.hoursWorked}h)` : ""}
                     </div>
                   </div>
+
                   <span
-                    className={`rounded-full px-3 py-1 text-[10px] font-bold ${
+                    className={`w-fit rounded-full px-4 py-1.5 text-[11px] font-black capitalize ${
                       r.status === "present"
                         ? "bg-[#ECFDF5] text-[#059669]"
                         : r.status === "absent"
