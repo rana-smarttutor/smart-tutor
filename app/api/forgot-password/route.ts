@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
+
 import { createPasswordResetRequest } from "@/lib/data-store";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, phone, lastPassword, role } = body;
+    const body = (await request.json()) as {
+      name?: string;
+      email?: string;
+      phone?: string;
+      role?: string;
+    };
 
-    if (!name || !email || !phone || !lastPassword) {
+    const name = body.name?.trim();
+    const email = body.email?.trim().toLowerCase();
+    const phone = body.phone?.trim();
+    const role = body.role?.trim() || "student";
+
+    if (!name || !email || !phone) {
       return NextResponse.json(
-        { error: "All fields are required." },
-        { status: 400 },
+        {
+          error: "Name, email and phone number are required.",
+        },
+        {
+          status: 400,
+        },
       );
     }
 
@@ -17,18 +31,23 @@ export async function POST(request: Request) {
       name,
       email,
       phone,
-      lastPassword,
-      role: role ?? "student",
+      role,
     });
 
     return NextResponse.json({
       message:
-        "Your request has been submitted. Our technical team will verify the details and contact you back to reset your password.",
+        "Your request has been submitted. Our technical team will verify the details and contact you to reset your password.",
     });
-  } catch {
+  } catch (error) {
+    console.error("Forgot-password request failed:", error);
+
     return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
-      { status: 500 },
+      {
+        error: "Something went wrong. Please try again.",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }

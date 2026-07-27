@@ -31,7 +31,6 @@ import { AdminFeeHub } from "./admin-fee-hub";
 import { LectureManager } from "@/components/lecture-manager";
 import { DailyLearningActivityManager } from "./daily-learning-activity-manager";
 import { FeeInstallmentManager } from "./fee-installment-manager";
-import { TeacherPayoutManager } from "./teacher-payout-manager";
 import { NotificationCenter } from "./notification-center";
 import { NotificationBell } from "./notification-bell";
 import { DashboardAnalytics } from "./dashboard-analytics";
@@ -398,7 +397,6 @@ const sidebarByRole = {
     { id: "tests", label: "Question Papers" },
     { id: "weekly-tests", label: "Weekly Tests" },
     { id: "results", label: " Student's Results" },
-    { id: "teacher-payouts", label: "My Earnings" },
     { id: "rewards", label: "Rewards" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
@@ -1069,21 +1067,7 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
-  "teacher-payouts": (
-    <svg
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  ),
+
   "staff-attendance": (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1282,7 +1266,6 @@ export function DashboardShell({
   const showDailyActivities = activeSection === "daily-activities";
   const showFeeInstallments = activeSection === "fee-installments";
   const showReceipts = activeSection === "receipts";
-  const showTeacherPayouts = activeSection === "teacher-payouts";
   const showRewards = activeSection === "rewards";
   const showStaffPayroll = activeSection === "staff-payroll";
   const showStaffPayouts = activeSection === "staff-payouts";
@@ -1805,7 +1788,7 @@ export function DashboardShell({
                   <Gift className="h-3.5 w-3.5" />
                 </span>
 
-                <span className="relative whitespace-nowrap">Earn ₹1,000</span>
+                <span className="relative whitespace-nowrap">Earn ₹2,000</span>
               </button>
             ) : null}
 
@@ -2223,9 +2206,6 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showTeacherPayouts && (role === "admin" || role === "educator") ? (
-            <TeacherPayoutManager role={role} managedUsers={managedUsers} />
-          ) : null}
           {showRewards && role === "educator" ? <RewardsManager /> : null}
           {showStaffPayroll && (role === "admin" || role === "educator") ? (
             <StaffPayrollManager

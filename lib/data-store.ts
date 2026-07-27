@@ -6,6 +6,7 @@ import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 
 import { getPublicInstituteData as getTemplatePublicInstituteData } from "@/lib/mock-data";
 import { getMongoDatabase } from "@/lib/mongodb";
+import { hashPassword, isBcryptPassword, verifyPassword } from "@/lib/password";
 import {
   DEFAULT_COURSE_TEMPLATE_KEY,
   getCourseTemplateByKey,
@@ -291,16 +292,21 @@ export async function createPasswordResetRequest(input: {
   name: string;
   email: string;
   phone: string;
-  lastPassword: string;
   role: string;
 }) {
   const collection = await getCollection(COLLECTIONS.passwordResetRequests);
+
   const request = {
-    ...input,
+    name: input.name.trim(),
+    email: input.email.trim().toLowerCase(),
+    phone: input.phone.trim(),
+    role: input.role,
     status: "new",
     createdAt: new Date().toISOString(),
   };
+
   await collection.insertOne(request);
+
   return request;
 }
 
@@ -356,7 +362,13 @@ async function ensureUserIndexes() {
       await collection.updateMany({}, [
         {
           $set: {
-            emailKey: { $toLower: "$email" },
+            emailKey: {
+              $toLower: {
+                $trim: {
+                  input: "$email",
+                },
+              },
+            },
           },
         },
       ]);
@@ -748,32 +760,8 @@ export async function getMockQuizQuestions() {
   return stripMongoIds(await collection.find({}).toArray());
 }
 
-export async function getDemoCredentials() {
-  const collection = await getUsersCollection();
-  const documents = await collection
-    .find({
-      role: { $in: ["student", "educator", "admin", "parent"] as Role[] },
-    })
-    .toArray();
-
-  const byRole = new Map(
-    documents.map((document) => [document.role, document]),
-  );
-
-  return (["student", "educator", "admin", "parent"] as const)
-    .map((role) => byRole.get(role))
-    .flatMap((document) =>
-      document
-        ? [
-            {
-              role: document.role,
-              label: document.label,
-              email: document.email,
-              password: document.password,
-            },
-          ]
-        : [],
-    ) as DemoCredential[];
+export async function getDemoCredentials(): Promise<DemoCredential[]> {
+  return [];
 }
 
 export async function findUserByCredentials(
@@ -783,60 +771,123 @@ export async function findUserByCredentials(
 ) {
   const collection = await getUsersCollection();
 
-  const normalizedLogin = login.trim().toLowerCase();
+  const trimmedLogin = login.trim();
+  const normalizedLogin = trimmedLogin.toLowerCase();
 
-  const mobileLogin = normalizedLogin.replace(/[^\d]/g, "").slice(-10);
+  const loginDigits = trimmedLogin.replace(/[^\d]/g, "");
+
+  const mobileLogin =
+    !trimmedLogin.includes("@") && loginDigits.length >= 10
+      ? loginDigits.slice(-10)
+      : "";
 
   const emailLocalPart = normalizedLogin.includes("@")
     ? normalizedLogin.split("@")[0]
     : normalizedLogin;
 
-  const query: Record<string, unknown> = {
-    deletedAt: { $exists: false },
+  const identityFilters: Document[] = [
+    {
+      emailKey: normalizedLogin,
+    },
+    {
+      email: normalizedLogin,
+    },
+    {
+      name: trimmedLogin,
+    },
+    {
+      name: normalizedLogin,
+    },
+    {
+      $expr: {
+        $eq: [
+          {
+            $arrayElemAt: [
+              {
+                $split: [
+                  {
+                    $toLower: "$email",
+                  },
+                  "@",
+                ],
+              },
+              0,
+            ],
+          },
+          emailLocalPart,
+        ],
+      },
+    },
+  ];
+
+  if (mobileLogin) {
+    identityFilters.unshift(
+      {
+        mobile: mobileLogin,
+      },
+      {
+        mobileKey: mobileLogin,
+      },
+    );
+  }
+
+  /*
+   * Find matching identities first.
+   * Password must not be included in the MongoDB query because
+   * bcrypt hashes cannot equal the entered plain-text password.
+   */
+  const candidates = await collection
+    .find({
+      deletedAt: {
+        $exists: false,
+      },
+
+      ...(role
+        ? {
+            role,
+          }
+        : {}),
+
+      $or: identityFilters,
+    } as any)
+    .limit(20)
+    .toArray();
+
+  for (const user of candidates) {
+    const storedPassword =
+      typeof user.password === "string" ? user.password : "";
+
+    const passwordMatches = await verifyPassword(password, storedPassword);
+
+    if (!passwordMatches) {
+      continue;
+    }
 
     /*
-     * Add the role restriction only when a role
-     * was intentionally supplied.
+     * Migration on successful login:
+     * plain-text passwords are upgraded to bcrypt.
      */
-    ...(role ? { role } : {}),
+    if (!isBcryptPassword(storedPassword)) {
+      const upgradedPassword = await hashPassword(password);
 
-    $or: [
-      { mobile: mobileLogin },
-      { mobileKey: mobileLogin },
-      { email: normalizedLogin },
-      { emailKey: normalizedLogin },
-      { name: login.trim() },
-      { name: normalizedLogin },
-      {
-        $expr: {
-          $eq: [
-            {
-              $arrayElemAt: [
-                {
-                  $split: [
-                    {
-                      $toLower: "$email",
-                    },
-                    "@",
-                  ],
-                },
-                0,
-              ],
-            },
-            emailLocalPart,
-          ],
+      await collection.updateOne(
+        {
+          id: user.id,
+          password: storedPassword,
         },
-      },
-    ],
-  };
+        {
+          $set: {
+            password: upgradedPassword,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      );
+    }
 
-  const user = await collection.findOne<UserDocument>(query);
+    return toSessionUser(user);
+  }
 
-  if (!user) return null;
-
-  const { comparePassword } = await import("@/lib/auth");
-  const matches = await comparePassword(password, user.password);
-  return matches ? toSessionUser(user) : null;
+  return null;
 }
 
 export async function findUserById(id: string) {
@@ -1800,7 +1851,9 @@ async function enrichWithFacultyNames(
   const collection = await getUsersCollection();
   const allIds = [...new Set(users.flatMap((u) => u.assignedFacultyIds ?? []))];
   if (!allIds.length) return users;
-  const facultyDocs = await collection.find({ id: { $in: allIds }, deletedAt: { $exists: false } } as any).toArray();
+  const facultyDocs = await collection
+    .find({ id: { $in: allIds }, deletedAt: { $exists: false } } as any)
+    .toArray();
   const facultyMap = new Map(facultyDocs.map((f) => [f.id, f.name]));
   return users.map((u) => ({
     ...u,
@@ -1858,7 +1911,10 @@ export async function approveEducatorRequest(userId: string) {
     return null;
   }
 
-  const updatedUser = await collection.findOne({ id: userId, deletedAt: { $exists: false } } as any);
+  const updatedUser = await collection.findOne({
+    id: userId,
+    deletedAt: { $exists: false },
+  } as any);
 
   return updatedUser ? toManagedUser(updatedUser) : null;
 }
@@ -1919,7 +1975,10 @@ export async function approveUserRequest(userId: string) {
     return null;
   }
 
-  const updatedUser = await collection.findOne({ id: userId, deletedAt: { $exists: false } } as any);
+  const updatedUser = await collection.findOne({
+    id: userId,
+    deletedAt: { $exists: false },
+  } as any);
 
   return updatedUser ? toManagedUser(updatedUser) : null;
 }
@@ -1929,7 +1988,12 @@ export async function rejectUserRequest(userId: string) {
 
   const result = await collection.updateOne(
     { id: userId, deletedAt: { $exists: false } } as any,
-    { $set: { deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } },
+    {
+      $set: {
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    },
   );
 
   return result.matchedCount > 0;
@@ -1979,11 +2043,19 @@ export async function getEducators() {
 
 export async function getEducatorsForStudent(studentId: string) {
   const collection = await getUsersCollection();
-  const student = await collection.findOne({ id: studentId, role: "student", deletedAt: { $exists: false } } as any);
+  const student = await collection.findOne({
+    id: studentId,
+    role: "student",
+    deletedAt: { $exists: false },
+  } as any);
   const facultyIds = student?.assignedFacultyIds ?? [];
   if (!facultyIds.length) return [];
   const educators = await collection
-    .find({ id: { $in: facultyIds }, role: "educator", deletedAt: { $exists: false } } as any)
+    .find({
+      id: { $in: facultyIds },
+      role: "educator",
+      deletedAt: { $exists: false },
+    } as any)
     .toArray();
   return educators.map(toManagedUser);
 }
@@ -2002,16 +2074,14 @@ export async function createUserRecord(input: {
   profile?: UserProfile;
   assignedFacultyIds?: string[];
 }) {
-  const { isBcryptHash, hashPassword } = await import("@/lib/auth");
-  const hashedPassword = isBcryptHash(input.password)
-    ? input.password
-    : await hashPassword(input.password);
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const hashedPassword = await hashPassword(input.password);
 
   const document: UserDocument = {
     id: randomUUID(),
-    name: input.name,
-    email: input.email,
-    emailKey: input.email.toLowerCase(),
+    name: input.name.trim(),
+    email: normalizedEmail,
+    emailKey: normalizedEmail,
     mobile: input.mobile,
     mobileKey: input.mobile?.replace(/[^\d]/g, "").slice(-10),
     parentMobile: input.parentMobile,
@@ -2030,6 +2100,7 @@ export async function createUserRecord(input: {
 
   const collection = await getUsersCollection();
   await collection.insertOne(document);
+
   return toManagedUser(document);
 }
 
@@ -2038,7 +2109,7 @@ export async function updateUserRecord(input: {
   name: string;
   email: string;
   role: Role;
-  password: string;
+  password?: string;
   program: string;
   status?: "active" | "pending" | "rejected";
   verified?: boolean;
@@ -2047,11 +2118,12 @@ export async function updateUserRecord(input: {
   profile?: Partial<UserProfile> | null;
 }) {
   const collection = await getUsersCollection();
+  const normalizedEmail = input.email.trim().toLowerCase();
 
   const setFields: Record<string, unknown> = {
-    name: input.name,
-    email: input.email,
-    emailKey: input.email.toLowerCase(),
+    name: input.name.trim(),
+    email: normalizedEmail,
+    emailKey: normalizedEmail,
     role: input.role,
     label: getRoleLabel(input.role),
     program: input.program,
@@ -2059,11 +2131,12 @@ export async function updateUserRecord(input: {
     updatedAt: new Date().toISOString(),
   };
 
-  if (input.password && input.password.trim()) {
-    const { isBcryptHash, hashPassword } = await import("@/lib/auth");
-    setFields.password = isBcryptHash(input.password)
-      ? input.password
-      : await hashPassword(input.password);
+  if (
+    typeof input.password === "string" &&
+    input.password.trim().length > 0 &&
+    input.password !== "••••••••"
+  ) {
+    setFields.password = await hashPassword(input.password);
   }
 
   if (input.verified !== undefined) {
@@ -2108,7 +2181,11 @@ export async function assignStudentsToFaculty(
 ): Promise<number> {
   const collection = await getUsersCollection();
   const currentStudentDocs = await collection
-    .find({ assignedFacultyIds: facultyId, role: "student", deletedAt: { $exists: false } } as any)
+    .find({
+      assignedFacultyIds: facultyId,
+      role: "student",
+      deletedAt: { $exists: false },
+    } as any)
     .toArray();
   const currentIds = new Set(currentStudentDocs.map((d) => d.id));
   const targetIds = new Set(studentIds);
@@ -2118,14 +2195,22 @@ export async function assignStudentsToFaculty(
 
   if (toRemove.length > 0) {
     await collection.updateMany(
-      { id: { $in: toRemove }, role: "student", deletedAt: { $exists: false } } as any,
+      {
+        id: { $in: toRemove },
+        role: "student",
+        deletedAt: { $exists: false },
+      } as any,
       { $pull: { assignedFacultyIds: facultyId } },
     );
   }
 
   if (toAdd.length > 0) {
     await collection.updateMany(
-      { id: { $in: toAdd }, role: "student", deletedAt: { $exists: false } } as any,
+      {
+        id: { $in: toAdd },
+        role: "student",
+        deletedAt: { $exists: false },
+      } as any,
       { $addToSet: { assignedFacultyIds: facultyId } },
     );
   }
@@ -2141,7 +2226,9 @@ export async function getStudentStats(): Promise<StudentStats> {
     now.getMonth(),
     1,
   ).toISOString();
-  const students = await collection.find({ role: "student", deletedAt: { $exists: false } }).toArray();
+  const students = await collection
+    .find({ role: "student", deletedAt: { $exists: false } })
+    .toArray();
   return {
     total: students.length,
     active: students.filter((s) => s.status === "active").length,
@@ -2219,7 +2306,9 @@ export async function computeStudentRiskScores(): Promise<
   { studentId: string; riskLevel: StudentRiskLevel; score: number }[]
 > {
   const collection = await getUsersCollection();
-  const students = await collection.find({ role: "student", deletedAt: { $exists: false } }).toArray();
+  const students = await collection
+    .find({ role: "student", deletedAt: { $exists: false } })
+    .toArray();
   const results: {
     studentId: string;
     riskLevel: StudentRiskLevel;
@@ -2417,7 +2506,12 @@ export async function deleteUserRecord(userId: string): Promise<boolean> {
   const collection = await getUsersCollection();
   const result = await collection.updateOne(
     { id: userId, deletedAt: { $exists: false } },
-    { $set: { deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } },
+    {
+      $set: {
+        deletedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    },
   );
   return result.matchedCount > 0;
 }
@@ -2426,7 +2520,10 @@ export async function restoreUserRecord(userId: string): Promise<boolean> {
   const collection = await getUsersCollection();
   const result = await collection.updateOne(
     { id: userId, deletedAt: { $exists: true } },
-    { $unset: { deletedAt: "" }, $set: { updatedAt: new Date().toISOString() } },
+    {
+      $unset: { deletedAt: "" },
+      $set: { updatedAt: new Date().toISOString() },
+    },
   );
   return result.matchedCount > 0;
 }
@@ -2440,15 +2537,23 @@ export async function getDeletedUsers() {
   return users.map(toManagedUser);
 }
 
-export async function permanentDeleteUserRecord(userId: string): Promise<boolean> {
+export async function permanentDeleteUserRecord(
+  userId: string,
+): Promise<boolean> {
   const collection = await getUsersCollection();
-  const result = await collection.deleteOne({ id: userId, deletedAt: { $exists: true } } as any);
+  const result = await collection.deleteOne({
+    id: userId,
+    deletedAt: { $exists: true },
+  } as any);
   return result.deletedCount > 0;
 }
 
 export async function findUserDocumentByEmail(email: string) {
   const collection = await getUsersCollection();
-  return collection.findOne({ emailKey: email.toLowerCase(), deletedAt: { $exists: false } } as any);
+  return collection.findOne({
+    emailKey: email.toLowerCase(),
+    deletedAt: { $exists: false },
+  } as any);
 }
 
 export async function findUserDocumentByMobile(mobile: string) {
@@ -2618,9 +2723,7 @@ async function getLinkedStudentIdForViewer(role: Role, userId?: string) {
 // Personal Mentorship
 // =========================
 
-export async function getMentorshipProfileByFacultyId(
-  facultyId: string,
-) {
+export async function getMentorshipProfileByFacultyId(facultyId: string) {
   const normalizedFacultyId = facultyId.trim();
 
   if (!normalizedFacultyId) {
@@ -2699,9 +2802,7 @@ export async function saveFacultyMentorshipProfile(input: {
   ];
 
   const modes = [
-    ...new Set(
-      input.modes.filter((mode) => validModes.includes(mode)),
-    ),
+    ...new Set(input.modes.filter((mode) => validModes.includes(mode))),
   ];
 
   if (!modes.length) {
@@ -2721,18 +2822,14 @@ export async function saveFacultyMentorshipProfile(input: {
     throw new Error("Select at least one available day.");
   }
 
-  const maximumActiveStudents = Number(
-    input.maximumActiveStudents,
-  );
+  const maximumActiveStudents = Number(input.maximumActiveStudents);
 
   if (
     !Number.isInteger(maximumActiveStudents) ||
     maximumActiveStudents < 1 ||
     maximumActiveStudents > 100
   ) {
-    throw new Error(
-      "Maximum active students must be between 1 and 100.",
-    );
+    throw new Error("Maximum active students must be between 1 and 100.");
   }
 
   const availableFrom = input.availableFrom?.trim() || "";
@@ -2742,10 +2839,7 @@ export async function saveFacultyMentorshipProfile(input: {
   const languages = [
     ...new Set(
       (input.languages ?? [])
-        .filter(
-          (language): language is string =>
-            typeof language === "string",
-        )
+        .filter((language): language is string => typeof language === "string")
         .map((language) => language.trim())
         .filter(Boolean),
     ),
@@ -2870,15 +2964,13 @@ export async function getAvailableMentorshipFaculty(): Promise<
 > {
   const users = await getUsersCollection();
 
-  const profileCollection =
-    await getCollection<FacultyMentorshipProfile>(
-      COLLECTIONS.mentorshipProfiles,
-    );
+  const profileCollection = await getCollection<FacultyMentorshipProfile>(
+    COLLECTIONS.mentorshipProfiles,
+  );
 
-  const requestCollection =
-    await getCollection<MentorshipRequest>(
-      COLLECTIONS.mentorshipRequests,
-    );
+  const requestCollection = await getCollection<MentorshipRequest>(
+    COLLECTIONS.mentorshipRequests,
+  );
 
   /*
    * Load faculty directly from the users collection.
@@ -2916,9 +3008,7 @@ export async function getAvailableMentorshipFaculty(): Promise<
     return [];
   }
 
-  const facultyIds = facultyUsers.map(
-    (faculty) => faculty.id,
-  );
+  const facultyIds = facultyUsers.map((faculty) => faculty.id);
 
   const savedProfiles = stripMongoIds(
     await profileCollection
@@ -2931,10 +3021,7 @@ export async function getAvailableMentorshipFaculty(): Promise<
   );
 
   const profileMap = new Map(
-    savedProfiles.map((profile) => [
-      profile.facultyId,
-      profile,
-    ]),
+    savedProfiles.map((profile) => [profile.facultyId, profile]),
   );
 
   const acceptedRequests = await requestCollection
@@ -2972,35 +3059,27 @@ export async function getAvailableMentorshipFaculty(): Promise<
      * Hide the faculty only when they have deliberately
      * disabled mentorship.
      */
-    if (
-      savedProfile &&
-      savedProfile.isAvailable === false
-    ) {
+    if (savedProfile && savedProfile.isAvailable === false) {
       return [];
     }
 
-    const subjects =
-      savedProfile?.subjects?.length
-        ? savedProfile.subjects
-        : faculty.profile?.subjects?.length
-          ? faculty.profile.subjects
-          : ["General Mentorship"];
+    const subjects = savedProfile?.subjects?.length
+      ? savedProfile.subjects
+      : faculty.profile?.subjects?.length
+        ? faculty.profile.subjects
+        : ["General Mentorship"];
 
-    const modes: MentorshipMode[] =
-      savedProfile?.modes?.length
-        ? savedProfile.modes
-        : ["online"];
+    const modes: MentorshipMode[] = savedProfile?.modes?.length
+      ? savedProfile.modes
+      : ["online"];
 
-    const availableDays =
-      savedProfile?.availableDays?.length
-        ? savedProfile.availableDays
-        : defaultDays;
+    const availableDays = savedProfile?.availableDays?.length
+      ? savedProfile.availableDays
+      : defaultDays;
 
-    const maximumActiveStudents =
-      savedProfile?.maximumActiveStudents ?? 20;
+    const maximumActiveStudents = savedProfile?.maximumActiveStudents ?? 20;
 
-    const activeStudentCount =
-      activeCountMap.get(faculty.id) ?? 0;
+    const activeStudentCount = activeCountMap.get(faculty.id) ?? 0;
 
     const remainingCapacity = Math.max(
       0,
@@ -3012,14 +3091,10 @@ export async function getAvailableMentorshipFaculty(): Promise<
     }
 
     const createdAt =
-      savedProfile?.createdAt ??
-      faculty.createdAt ??
-      new Date().toISOString();
+      savedProfile?.createdAt ?? faculty.createdAt ?? new Date().toISOString();
 
     const card: MentorshipFacultyCard = {
-      id:
-        savedProfile?.id ??
-        `mentorship-profile-${faculty.id}`,
+      id: savedProfile?.id ?? `mentorship-profile-${faculty.id}`,
 
       facultyId: faculty.id,
       facultyName: faculty.name,
@@ -3034,15 +3109,13 @@ export async function getAvailableMentorshipFaculty(): Promise<
 
       ...(savedProfile?.availableFrom
         ? {
-            availableFrom:
-              savedProfile.availableFrom,
+            availableFrom: savedProfile.availableFrom,
           }
         : {}),
 
       ...(savedProfile?.availableTo
         ? {
-            availableTo:
-              savedProfile.availableTo,
+            availableTo: savedProfile.availableTo,
           }
         : {}),
 
@@ -3054,8 +3127,7 @@ export async function getAvailableMentorshipFaculty(): Promise<
 
       ...(savedProfile?.languages?.length
         ? {
-            languages:
-              savedProfile.languages,
+            languages: savedProfile.languages,
           }
         : {}),
 
@@ -3063,21 +3135,17 @@ export async function getAvailableMentorshipFaculty(): Promise<
 
       ...(savedProfile?.updatedAt
         ? {
-            updatedAt:
-              savedProfile.updatedAt,
+            updatedAt: savedProfile.updatedAt,
           }
         : {}),
 
       facultyEmail: faculty.email,
 
-      facultyPhoto:
-        faculty.profile?.profilePhoto,
+      facultyPhoto: faculty.profile?.profilePhoto,
 
-      qualification:
-        faculty.profile?.qualification,
+      qualification: faculty.profile?.qualification,
 
-      experience:
-        faculty.profile?.experience,
+      experience: faculty.profile?.experience,
 
       activeStudentCount,
       remainingCapacity,
@@ -3086,9 +3154,7 @@ export async function getAvailableMentorshipFaculty(): Promise<
     return [card];
   });
 }
-export async function getMentorshipRequestById(
-  requestId: string,
-) {
+export async function getMentorshipRequestById(requestId: string) {
   const normalizedRequestId = requestId.trim();
 
   if (!normalizedRequestId) {
@@ -3103,9 +3169,7 @@ export async function getMentorshipRequestById(
     id: normalizedRequestId,
   });
 
-  return mentorshipRequest
-    ? stripMongoId(mentorshipRequest)
-    : null;
+  return mentorshipRequest ? stripMongoId(mentorshipRequest) : null;
 }
 
 export async function getMentorshipRequestsForRole(
@@ -3226,10 +3290,8 @@ export async function createMentorshipRequest(input: {
   const subject = input.subject.trim();
   const goal = input.goal.trim();
   const message = input.message?.trim() || "";
-  const preferredDate =
-    input.preferredDate?.trim() || "";
-  const preferredTime =
-    input.preferredTime?.trim() || "";
+  const preferredDate = input.preferredDate?.trim() || "";
+  const preferredTime = input.preferredTime?.trim() || "";
 
   if (!subject) {
     throw new Error("Mentorship subject is required.");
@@ -3249,61 +3311,48 @@ export async function createMentorshipRequest(input: {
     throw new Error("Select a valid mentorship mode.");
   }
 
-const mentorshipProfile =
-  await getMentorshipProfileByFacultyId(
-    facultyId,
-  );
+  const mentorshipProfile = await getMentorshipProfileByFacultyId(facultyId);
 
-if (
-  mentorshipProfile &&
-  mentorshipProfile.isAvailable === false
-) {
-  throw new Error(
-    "This faculty member is currently unavailable for mentorship.",
-  );
-}
+  if (mentorshipProfile && mentorshipProfile.isAvailable === false) {
+    throw new Error(
+      "This faculty member is currently unavailable for mentorship.",
+    );
+  }
 
-const availableSubjects =
-  mentorshipProfile?.subjects?.length
+  const availableSubjects = mentorshipProfile?.subjects?.length
     ? mentorshipProfile.subjects
     : faculty.profile?.subjects?.length
       ? faculty.profile.subjects
       : ["General Mentorship"];
 
-const availableModes: MentorshipMode[] =
-  mentorshipProfile?.modes?.length
+  const availableModes: MentorshipMode[] = mentorshipProfile?.modes?.length
     ? mentorshipProfile.modes
     : ["online"];
 
-const maximumActiveStudents =
-  mentorshipProfile?.maximumActiveStudents ?? 20;
+  const maximumActiveStudents = mentorshipProfile?.maximumActiveStudents ?? 20;
 
-const subjectAvailable = availableSubjects.some(
-  (facultySubject) =>
-    facultySubject.trim().toLowerCase() ===
-    subject.toLowerCase(),
-);
-
-if (!subjectAvailable) {
-  throw new Error(
-    "This faculty member is not available for the selected subject.",
+  const subjectAvailable = availableSubjects.some(
+    (facultySubject) =>
+      facultySubject.trim().toLowerCase() === subject.toLowerCase(),
   );
-}
 
-if (!availableModes.includes(input.preferredMode)) {
-  throw new Error(
-    "This faculty member does not support the selected mentorship mode.",
-  );
-}
+  if (!subjectAvailable) {
+    throw new Error(
+      "This faculty member is not available for the selected subject.",
+    );
+  }
+
+  if (!availableModes.includes(input.preferredMode)) {
+    throw new Error(
+      "This faculty member does not support the selected mentorship mode.",
+    );
+  }
 
   const collection = await getCollection<MentorshipRequest>(
     COLLECTIONS.mentorshipRequests,
   );
 
-  const escapedSubject = subject.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&",
-  );
+  const escapedSubject = subject.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const existingSubjectRequest = await collection.findOne({
     studentId: student.id,
@@ -3324,14 +3373,13 @@ if (!availableModes.includes(input.preferredMode)) {
     );
   }
 
-  const studentActiveRequestCount =
-    await collection.countDocuments({
-      studentId: student.id,
+  const studentActiveRequestCount = await collection.countDocuments({
+    studentId: student.id,
 
-      status: {
-        $in: ["pending", "accepted"],
-      },
-    });
+    status: {
+      $in: ["pending", "accepted"],
+    },
+  });
 
   if (studentActiveRequestCount >= 2) {
     throw new Error(
@@ -3339,15 +3387,12 @@ if (!availableModes.includes(input.preferredMode)) {
     );
   }
 
-  const facultyActiveCount =
-    await collection.countDocuments({
-      facultyId: faculty.id,
-      status: "accepted",
-    });
+  const facultyActiveCount = await collection.countDocuments({
+    facultyId: faculty.id,
+    status: "accepted",
+  });
 
-if (
-  facultyActiveCount >= maximumActiveStudents
-) {
+  if (facultyActiveCount >= maximumActiveStudents) {
     throw new Error(
       "This faculty member has reached their mentorship capacity.",
     );
@@ -3449,12 +3494,10 @@ export async function updateMentorshipRequest(input: {
   }
 
   const isStudentOwner =
-    input.actorRole === "student" &&
-    existing.studentId === actorId;
+    input.actorRole === "student" && existing.studentId === actorId;
 
   const isFacultyOwner =
-    input.actorRole === "educator" &&
-    existing.facultyId === actorId;
+    input.actorRole === "educator" && existing.facultyId === actorId;
 
   const isAdmin = input.actorRole === "admin";
 
@@ -3464,82 +3507,51 @@ export async function updateMentorshipRequest(input: {
     );
   }
 
-  if (
-    input.actorRole === "student" &&
-    input.status !== "cancelled"
-  ) {
-    throw new Error(
-      "Students can only cancel their mentorship request.",
-    );
+  if (input.actorRole === "student" && input.status !== "cancelled") {
+    throw new Error("Students can only cancel their mentorship request.");
   }
 
   if (
     input.actorRole === "educator" &&
-    !["accepted", "declined", "completed"].includes(
-      input.status,
-    )
+    !["accepted", "declined", "completed"].includes(input.status)
   ) {
     throw new Error(
       "Faculty can accept, decline, or complete mentorship requests.",
     );
   }
 
-  if (
-    input.status === "accepted" &&
-    existing.status !== "pending"
-  ) {
-    throw new Error(
-      "Only pending mentorship requests can be accepted.",
-    );
+  if (input.status === "accepted" && existing.status !== "pending") {
+    throw new Error("Only pending mentorship requests can be accepted.");
   }
 
-  if (
-    input.status === "declined" &&
-    existing.status !== "pending"
-  ) {
-    throw new Error(
-      "Only pending mentorship requests can be declined.",
-    );
+  if (input.status === "declined" && existing.status !== "pending") {
+    throw new Error("Only pending mentorship requests can be declined.");
   }
 
-  if (
-    input.status === "completed" &&
-    existing.status !== "accepted"
-  ) {
-    throw new Error(
-      "Only accepted mentorships can be completed.",
-    );
+  if (input.status === "completed" && existing.status !== "accepted") {
+    throw new Error("Only accepted mentorships can be completed.");
   }
 
   if (
     input.status === "cancelled" &&
     !["pending", "accepted"].includes(existing.status)
   ) {
-    throw new Error(
-      "This mentorship request can no longer be cancelled.",
-    );
+    throw new Error("This mentorship request can no longer be cancelled.");
   }
 
-if (input.status === "accepted") {
-  const mentorshipProfile =
-    await getMentorshipProfileByFacultyId(
+  if (input.status === "accepted") {
+    const mentorshipProfile = await getMentorshipProfileByFacultyId(
       existing.facultyId,
     );
 
-  if (
-    mentorshipProfile &&
-    mentorshipProfile.isAvailable === false
-  ) {
-    throw new Error(
-      "Your mentorship availability is currently disabled.",
-    );
-  }
+    if (mentorshipProfile && mentorshipProfile.isAvailable === false) {
+      throw new Error("Your mentorship availability is currently disabled.");
+    }
 
-  const maximumActiveStudents =
-    mentorshipProfile?.maximumActiveStudents ?? 20;
+    const maximumActiveStudents =
+      mentorshipProfile?.maximumActiveStudents ?? 20;
 
-  const activeFacultyCount =
-    await collection.countDocuments({
+    const activeFacultyCount = await collection.countDocuments({
       facultyId: existing.facultyId,
       status: "accepted",
 
@@ -3548,28 +3560,21 @@ if (input.status === "accepted") {
       },
     });
 
-  if (
-    activeFacultyCount >= maximumActiveStudents
-  ) {
-      throw new Error(
-        "Your mentorship capacity has already been reached.",
-      );
+    if (activeFacultyCount >= maximumActiveStudents) {
+      throw new Error("Your mentorship capacity has already been reached.");
     }
 
-    const studentAcceptedCount =
-      await collection.countDocuments({
-        studentId: existing.studentId,
-        status: "accepted",
+    const studentAcceptedCount = await collection.countDocuments({
+      studentId: existing.studentId,
+      status: "accepted",
 
-        id: {
-          $ne: existing.id,
-        },
-      });
+      id: {
+        $ne: existing.id,
+      },
+    });
 
     if (studentAcceptedCount >= 2) {
-      throw new Error(
-        "This student already has two active mentorships.",
-      );
+      throw new Error("This student already has two active mentorships.");
     }
 
     const escapedSubject = existing.subject.replace(
@@ -3577,21 +3582,20 @@ if (input.status === "accepted") {
       "\\$&",
     );
 
-    const sameSubjectMentorship =
-      await collection.findOne({
-        studentId: existing.studentId,
+    const sameSubjectMentorship = await collection.findOne({
+      studentId: existing.studentId,
 
-        subject: {
-          $regex: `^${escapedSubject}$`,
-          $options: "i",
-        },
+      subject: {
+        $regex: `^${escapedSubject}$`,
+        $options: "i",
+      },
 
-        status: "accepted",
+      status: "accepted",
 
-        id: {
-          $ne: existing.id,
-        },
-      });
+      id: {
+        $ne: existing.id,
+      },
+    });
 
     if (sameSubjectMentorship) {
       throw new Error(
@@ -3610,8 +3614,7 @@ if (input.status === "accepted") {
   const unsetFields: Record<string, ""> = {};
 
   if (typeof input.facultyResponse === "string") {
-    const facultyResponse =
-      input.facultyResponse.trim();
+    const facultyResponse = input.facultyResponse.trim();
 
     if (facultyResponse) {
       setFields.facultyResponse = facultyResponse;
@@ -3690,9 +3693,7 @@ if (input.status === "accepted") {
   }
 
   const notificationRecipient =
-    input.actorRole === "student"
-      ? existing.facultyId
-      : existing.studentId;
+    input.actorRole === "student" ? existing.facultyId : existing.studentId;
 
   await createNotifications({
     userIds: [notificationRecipient],
@@ -5453,7 +5454,10 @@ export async function getDashboardBundle(
 
 export async function findFullUserById(id: string) {
   const collection = await getUsersCollection();
-  const user = await collection.findOne({ id, deletedAt: { $exists: false } } as any);
+  const user = await collection.findOne({
+    id,
+    deletedAt: { $exists: false },
+  } as any);
   return user as UserDocument | null;
 }
 

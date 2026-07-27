@@ -75,40 +75,6 @@ export function AttendanceHub({
               </p>
             </div>
           </div>
-
-          <div className="inline-flex w-full rounded-2xl border border-white/15 bg-white/10 p-1.5 backdrop-blur sm:w-auto">
-            <button
-              type="button"
-              onClick={() =>
-                setActiveTab("staff")
-              }
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black transition sm:min-w-44 ${
-                activeTab === "staff"
-                  ? "bg-white text-[#0B40A1] shadow-lg"
-                  : "text-white hover:bg-white/10"
-              }`}
-            >
-              <Clock3 size={17} />
-
-              {staffTabLabel}
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setActiveTab("students")
-              }
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black transition sm:min-w-44 ${
-                activeTab === "students"
-                  ? "bg-white text-[#0B40A1] shadow-lg"
-                  : "text-white hover:bg-white/10"
-              }`}
-            >
-              <GraduationCap size={18} />
-
-              Student Attendance
-            </button>
-          </div>
         </div>
       </div>
 

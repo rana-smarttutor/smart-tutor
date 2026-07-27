@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import {
   AlarmClock,
@@ -14,7 +9,6 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  Dumbbell,
   FileText,
   Flame,
   ListChecks,
@@ -30,10 +24,7 @@ import {
   X,
 } from "lucide-react";
 
-import type {
-  DailyRoutineMood,
-  StudentDailyRoutine,
-} from "@/lib/types";
+import type { DailyRoutineMood, StudentDailyRoutine } from "@/lib/types";
 
 const fieldClass =
   "w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--color-heading)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15";
@@ -144,65 +135,37 @@ function getToday() {
 
   const year = now.getFullYear();
 
-  const month = String(
-    now.getMonth() + 1,
-  ).padStart(2, "0");
+  const month = String(now.getMonth() + 1).padStart(2, "0");
 
-  const day = String(
-    now.getDate(),
-  ).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 }
 
-function formatDate(
-  value: string,
-) {
-  const date = new Date(
-    `${value}T12:00:00`,
-  );
+function formatDate(value: string) {
+  const date = new Date(`${value}T12:00:00`);
 
-  if (
-    Number.isNaN(
-      date.getTime(),
-    )
-  ) {
+  if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    },
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-function formatMinutes(
-  totalMinutes: number,
-) {
-  const safeMinutes =
-    Number.isFinite(totalMinutes)
-      ? Math.max(
-          0,
-          Math.round(totalMinutes),
-        )
-      : 0;
+function formatMinutes(totalMinutes: number) {
+  const safeMinutes = Number.isFinite(totalMinutes)
+    ? Math.max(0, Math.round(totalMinutes))
+    : 0;
 
-  const hours =
-    Math.floor(
-      safeMinutes / 60,
-    );
+  const hours = Math.floor(safeMinutes / 60);
 
-  const minutes =
-    safeMinutes % 60;
+  const minutes = safeMinutes % 60;
 
-  if (
-    hours > 0 &&
-    minutes > 0
-  ) {
+  if (hours > 0 && minutes > 0) {
     return `${hours}h ${minutes}m`;
   }
 
@@ -213,27 +176,13 @@ function formatMinutes(
   return `${minutes}m`;
 }
 
-function splitMinutes(
-  totalMinutes: number,
-) {
-  const safeMinutes =
-    Math.max(
-      0,
-      Math.round(
-        totalMinutes,
-      ),
-    );
+function splitMinutes(totalMinutes: number) {
+  const safeMinutes = Math.max(0, Math.round(totalMinutes));
 
   return {
-    hours: String(
-      Math.floor(
-        safeMinutes / 60,
-      ),
-    ),
+    hours: String(Math.floor(safeMinutes / 60)),
 
-    minutes: String(
-      safeMinutes % 60,
-    ),
+    minutes: String(safeMinutes % 60),
   };
 }
 
@@ -242,162 +191,76 @@ function getDurationMinutes(
   minutesValue: string,
   label: string,
 ) {
-  const hours =
-    hoursValue.trim() === ""
-      ? 0
-      : Number(hoursValue);
+  const hours = hoursValue.trim() === "" ? 0 : Number(hoursValue);
 
-  const minutes =
-    minutesValue.trim() === ""
-      ? 0
-      : Number(minutesValue);
+  const minutes = minutesValue.trim() === "" ? 0 : Number(minutesValue);
 
-  if (
-    !Number.isInteger(hours) ||
-    hours < 0
-  ) {
-    throw new Error(
-      `${label} hours must be zero or greater.`,
-    );
+  if (!Number.isInteger(hours) || hours < 0) {
+    throw new Error(`${label} hours must be zero or greater.`);
   }
 
-  if (
-    !Number.isInteger(minutes) ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    throw new Error(
-      `${label} minutes must be between 0 and 59.`,
-    );
+  if (!Number.isInteger(minutes) || minutes < 0 || minutes > 59) {
+    throw new Error(`${label} minutes must be between 0 and 59.`);
   }
 
-  return (
-    hours * 60 +
-    minutes
-  );
+  return hours * 60 + minutes;
 }
 
-function getSleepPreview(
-  bedTime: string,
-  wakeUpTime: string,
-) {
-  if (
-    !bedTime ||
-    !wakeUpTime
-  ) {
+function getSleepPreview(bedTime: string, wakeUpTime: string) {
+  if (!bedTime || !wakeUpTime) {
     return null;
   }
 
-  const [
-    bedHour,
-    bedMinute,
-  ] = bedTime
-    .split(":")
-    .map(Number);
+  const [bedHour, bedMinute] = bedTime.split(":").map(Number);
 
-  const [
-    wakeHour,
-    wakeMinute,
-  ] = wakeUpTime
-    .split(":")
-    .map(Number);
+  const [wakeHour, wakeMinute] = wakeUpTime.split(":").map(Number);
 
-  const bedTotal =
-    bedHour * 60 +
-    bedMinute;
+  const bedTotal = bedHour * 60 + bedMinute;
 
-  const wakeTotal =
-    wakeHour * 60 +
-    wakeMinute;
+  const wakeTotal = wakeHour * 60 + wakeMinute;
 
-  if (
-    bedTotal === wakeTotal
-  ) {
+  if (bedTotal === wakeTotal) {
     return null;
   }
 
-  let sleepMinutes =
-    wakeTotal -
-    bedTotal;
+  let sleepMinutes = wakeTotal - bedTotal;
 
-  if (
-    sleepMinutes < 0
-  ) {
-    sleepMinutes +=
-      24 * 60;
+  if (sleepMinutes < 0) {
+    sleepMinutes += 24 * 60;
   }
 
   return sleepMinutes;
 }
 
-function getDayNumber(
-  date: string,
-) {
-  return Math.floor(
-    new Date(
-      `${date}T12:00:00`,
-    ).getTime() /
-      86_400_000,
-  );
+function getDayNumber(date: string) {
+  return Math.floor(new Date(`${date}T12:00:00`).getTime() / 86_400_000);
 }
 
-function calculateRoutineStreak(
-  routines: StudentDailyRoutine[],
-) {
+function calculateRoutineStreak(routines: StudentDailyRoutine[]) {
   const uniqueDates = [
-    ...new Set(
-      routines.map(
-        (routine) =>
-          routine.date,
-      ),
-    ),
-  ].sort(
-    (left, right) =>
-      right.localeCompare(
-        left,
-      ),
-  );
+    ...new Set(routines.map((routine) => routine.date)),
+  ].sort((left, right) => right.localeCompare(left));
 
-  if (
-    uniqueDates.length === 0
-  ) {
+  if (uniqueDates.length === 0) {
     return 0;
   }
 
-  const todayNumber =
-    getDayNumber(
-      getToday(),
-    );
+  const todayNumber = getDayNumber(getToday());
 
-  const latestNumber =
-    getDayNumber(
-      uniqueDates[0],
-    );
+  const latestNumber = getDayNumber(uniqueDates[0]);
 
-  if (
-    todayNumber -
-      latestNumber >
-    1
-  ) {
+  if (todayNumber - latestNumber > 1) {
     return 0;
   }
 
-  let expectedDay =
-    latestNumber;
+  let expectedDay = latestNumber;
 
   let streak = 0;
 
-  for (
-    const date of
-    uniqueDates
-  ) {
-    const dayNumber =
-      getDayNumber(date);
+  for (const date of uniqueDates) {
+    const dayNumber = getDayNumber(date);
 
-    if (
-      dayNumber ===
-      expectedDay
-    ) {
+    if (dayNumber === expectedDay) {
       streak += 1;
 
       expectedDay -= 1;
@@ -405,10 +268,7 @@ function calculateRoutineStreak(
       continue;
     }
 
-    if (
-      dayNumber <
-      expectedDay
-    ) {
+    if (dayNumber < expectedDay) {
       break;
     }
   }
@@ -416,167 +276,82 @@ function calculateRoutineStreak(
   return streak;
 }
 
-function getMoodDetails(
-  mood: DailyRoutineMood,
-) {
+function getMoodDetails(mood: DailyRoutineMood) {
   return (
-    MOOD_OPTIONS.find(
-      (option) =>
-        option.value === mood,
-    ) ??
-    MOOD_OPTIONS[2]
+    MOOD_OPTIONS.find((option) => option.value === mood) ?? MOOD_OPTIONS[2]
   );
 }
 
 export function StudentDailyRoutine() {
-  const today =
-    getToday();
+  const today = getToday();
 
-  const [
-    routines,
-    setRoutines,
-  ] = useState<
-    StudentDailyRoutine[]
-  >([]);
+  const [routines, setRoutines] = useState<StudentDailyRoutine[]>([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
+const [saving, setSaving] = useState(false);
 
-  const [
-    deletingId,
-    setDeletingId,
-  ] = useState<
-    string | null
-  >(null);
+const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const [
-    editingId,
-    setEditingId,
-  ] = useState<
-    string | null
-  >(null);
+const [updatingTaskKey, setUpdatingTaskKey] = useState<string | null>(null);
 
-  const [
-    message,
-    setMessage,
-  ] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [
-    messageType,
-    setMessageType,
-  ] = useState<
-    "success" | "error"
-  >("success");
+  const [message, setMessage] = useState("");
 
-  const [
-    date,
-    setDate,
-  ] = useState(today);
+  const [messageType, setMessageType] = useState<"success" | "error">(
+    "success",
+  );
 
-  const [
-    wakeUpTime,
-    setWakeUpTime,
-  ] = useState("");
+  const [date, setDate] = useState(today);
 
-  const [
-    bedTime,
-    setBedTime,
-  ] = useState("");
+  const [wakeUpTime, setWakeUpTime] = useState("");
 
-  const [
-    studyHours,
-    setStudyHours,
-  ] = useState("");
+  const [bedTime, setBedTime] = useState("");
 
-  const [
-    studyMinutePart,
-    setStudyMinutePart,
-  ] = useState("");
+  const [studyHours, setStudyHours] = useState("");
 
-  const [
-    screenHours,
-    setScreenHours,
-  ] = useState("");
+  const [studyMinutePart, setStudyMinutePart] = useState("");
 
-  const [
-    screenMinutePart,
-    setScreenMinutePart,
-  ] = useState("");
+  const [screenHours, setScreenHours] = useState("");
 
-  const [
-    exerciseMinutes,
-    setExerciseMinutes,
-  ] = useState("");
+  const [screenMinutePart, setScreenMinutePart] = useState("");
 
-  const [
-    mood,
-    setMood,
-  ] =
-    useState<DailyRoutineMood>(
-      "good",
-    );
+  const [exerciseMinutes, setExerciseMinutes] = useState("");
 
-  const [
-    goalTasks,
-    setGoalTasks,
-  ] = useState<GoalTask[]>([
+  const [mood, setMood] = useState<DailyRoutineMood>("good");
+
+  const [goalTasks, setGoalTasks] = useState<GoalTask[]>([
     createEmptyGoalTask(),
   ]);
 
-  const [
-    reflection,
-    setReflection,
-  ] = useState("");
+  const [reflection, setReflection] = useState("");
 
   async function loadRoutines() {
     setLoading(true);
 
     try {
-      const response =
-        await fetch(
-          "/api/daily-routines",
-          {
-            method: "GET",
+      const response = await fetch("/api/daily-routines", {
+        method: "GET",
 
-            credentials:
-              "same-origin",
+        credentials: "same-origin",
 
-            cache:
-              "no-store",
-          },
-        );
+        cache: "no-store",
+      });
 
-      const payload =
-        (await response.json()) as {
-          routines?: StudentDailyRoutine[];
+      const payload = (await response.json()) as {
+        routines?: StudentDailyRoutine[];
 
-          error?: string;
-        };
+        error?: string;
+      };
 
-      if (
-        !response.ok
-      ) {
-        throw new Error(
-          payload.error ??
-            "Unable to load daily routines.",
-        );
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Unable to load daily routines.");
       }
 
-      setRoutines(
-        payload.routines ??
-          [],
-      );
+      setRoutines(payload.routines ?? []);
     } catch (error) {
-      setMessageType(
-        "error",
-      );
+      setMessageType("error");
 
       setMessage(
         error instanceof Error
@@ -592,84 +367,50 @@ export function StudentDailyRoutine() {
     void loadRoutines();
   }, []);
 
-  const todayRoutine =
-    useMemo(
-      () =>
-        routines.find(
-          (routine) =>
-            routine.date ===
-            today,
-        ) ?? null,
-      [
-        routines,
-        today,
-      ],
-    );
+  const todayRoutine = useMemo(
+    () => routines.find((routine) => routine.date === today) ?? null,
+    [routines, today],
+  );
 
-  const routineStreak =
-    useMemo(
-      () =>
-        calculateRoutineStreak(
-          routines,
-        ),
-      [routines],
-    );
+  const routineStreak = useMemo(
+    () => calculateRoutineStreak(routines),
+    [routines],
+  );
 
-  const sleepPreview =
-    useMemo(
-      () =>
-        getSleepPreview(
-          bedTime,
-          wakeUpTime,
-        ),
-      [
-        bedTime,
-        wakeUpTime,
-      ],
-    );
+  const sleepPreview = useMemo(
+    () => getSleepPreview(bedTime, wakeUpTime),
+    [bedTime, wakeUpTime],
+  );
 
-  const completedGoalTaskCount =
-    useMemo(
-      () =>
-        goalTasks.filter(
-          (task) =>
-            task.text.trim().length > 0 &&
-            task.completed,
-        ).length,
-      [goalTasks],
-    );
+  const completedGoalTaskCount = useMemo(
+    () =>
+      goalTasks.filter((task) => task.text.trim().length > 0 && task.completed)
+        .length,
+    [goalTasks],
+  );
 
-  function updateGoalTask(
-    index: number,
-    value: string,
-  ) {
+  function updateGoalTask(index: number, value: string) {
     setGoalTasks((current) =>
       current.map((task, taskIndex) =>
         taskIndex === index
           ? {
               text: value.slice(0, MAX_GOAL_TASK_LENGTH),
-              completed:
-                value.trim().length > 0
-                  ? task.completed
-                  : false,
+              completed: value.trim().length > 0 ? task.completed : false,
             }
           : task,
       ),
     );
   }
 
-  function toggleGoalTask(index: number) {
-    setGoalTasks((current) =>
-      current.map((task, taskIndex) =>
-        taskIndex === index && task.text.trim().length > 0
-          ? {
-              ...task,
-              completed: !task.completed,
-            }
-          : task,
-      ),
-    );
-  }
+function removeGoalTask(index: number) {
+  setGoalTasks((current) => {
+    if (current.length === 1) {
+      return [createEmptyGoalTask()];
+    }
+
+    return current.filter((_, taskIndex) => taskIndex !== index);
+  });
+}
 
   function addGoalTask() {
     setGoalTasks((current) =>
@@ -679,15 +420,7 @@ export function StudentDailyRoutine() {
     );
   }
 
-  function removeGoalTask(index: number) {
-    setGoalTasks((current) => {
-      if (current.length === 1) {
-        return [createEmptyGoalTask()];
-      }
 
-      return current.filter((_, taskIndex) => taskIndex !== index);
-    });
-  }
 
   function resetForm() {
     setEditingId(null);
@@ -710,97 +443,54 @@ export function StudentDailyRoutine() {
 
     setMood("good");
 
-    setGoalTasks([
-      createEmptyGoalTask(),
-    ]);
+    setGoalTasks([createEmptyGoalTask()]);
 
     setReflection("");
   }
 
-  function startEditing(
-    routine: StudentDailyRoutine,
-  ) {
-    const study =
-      splitMinutes(
-        routine.studyMinutes,
-      );
+  function startEditing(routine: StudentDailyRoutine) {
+    const study = splitMinutes(routine.studyMinutes);
 
-    const screen =
-      splitMinutes(
-        routine.screenMinutes,
-      );
+    const screen = splitMinutes(routine.screenMinutes);
 
-    setEditingId(
-      routine.id,
-    );
+    setEditingId(routine.id);
 
-    setDate(
-      routine.date,
-    );
+    setDate(routine.date);
 
-    setWakeUpTime(
-      routine.wakeUpTime,
-    );
+    setWakeUpTime(routine.wakeUpTime);
 
-    setBedTime(
-      routine.bedTime,
-    );
+    setBedTime(routine.bedTime);
 
-    setStudyHours(
-      study.hours,
-    );
+    setStudyHours(study.hours);
 
-    setStudyMinutePart(
-      study.minutes,
-    );
+    setStudyMinutePart(study.minutes);
 
-    setScreenHours(
-      screen.hours,
-    );
+    setScreenHours(screen.hours);
 
-    setScreenMinutePart(
-      screen.minutes,
-    );
+    setScreenMinutePart(screen.minutes);
 
-    setExerciseMinutes(
-      String(
-        routine.exerciseMinutes,
-      ),
-    );
+    setExerciseMinutes(String(routine.exerciseMinutes));
 
-    setMood(
-      routine.mood,
-    );
+    setMood(routine.mood);
 
-    const savedGoalTasks =
-      parseGoalTasks(
-        routine.mainGoal,
-      );
+    const savedGoalTasks = parseGoalTasks(routine.mainGoal);
 
     setGoalTasks(
-      savedGoalTasks.length > 0
-        ? savedGoalTasks
-        : [createEmptyGoalTask()],
+      savedGoalTasks.length > 0 ? savedGoalTasks : [createEmptyGoalTask()],
     );
 
-    setReflection(
-      routine.reflection ??
-        "",
-    );
+    setReflection(routine.reflection ?? "");
 
     setMessage("");
 
     window.scrollTo({
       top: 0,
 
-      behavior:
-        "smooth",
+      behavior: "smooth",
     });
   }
 
-  async function saveRoutine(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function saveRoutine(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setMessage("");
@@ -810,23 +500,19 @@ export function StudentDailyRoutine() {
     let screenMinutes = 0;
 
     try {
-      studyMinutes =
-        getDurationMinutes(
-          studyHours,
-          studyMinutePart,
-          "Study time",
-        );
-
-      screenMinutes =
-        getDurationMinutes(
-          screenHours,
-          screenMinutePart,
-          "Screen time",
-        );
-    } catch (error) {
-      setMessageType(
-        "error",
+      studyMinutes = getDurationMinutes(
+        studyHours,
+        studyMinutePart,
+        "Study time",
       );
+
+      screenMinutes = getDurationMinutes(
+        screenHours,
+        screenMinutePart,
+        "Screen time",
+      );
+    } catch (error) {
+      setMessageType("error");
 
       setMessage(
         error instanceof Error
@@ -837,17 +523,10 @@ export function StudentDailyRoutine() {
       return;
     }
 
-    if (
-      !wakeUpTime ||
-      !bedTime
-    ) {
-      setMessageType(
-        "error",
-      );
+    if (!wakeUpTime || !bedTime) {
+      setMessageType("error");
 
-      setMessage(
-        "Enter both wake-up time and bedtime.",
-      );
+      setMessage("Enter both wake-up time and bedtime.");
 
       return;
     }
@@ -855,122 +534,69 @@ export function StudentDailyRoutine() {
     setSaving(true);
 
     try {
-      const response =
-        await fetch(
-          editingId
-            ? `/api/daily-routines/${editingId}`
-            : "/api/daily-routines",
-          {
-            method:
-              editingId
-                ? "PATCH"
-                : "POST",
+      const response = await fetch(
+        editingId ? `/api/daily-routines/${editingId}` : "/api/daily-routines",
+        {
+          method: editingId ? "PATCH" : "POST",
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            credentials:
-              "same-origin",
-
-            body:
-              JSON.stringify({
-                date,
-
-                wakeUpTime,
-
-                bedTime,
-
-                studyMinutes,
-
-                screenMinutes,
-
-                exerciseMinutes:
-                  exerciseMinutes.trim() ===
-                  ""
-                    ? 0
-                    : Number(
-                        exerciseMinutes,
-                      ),
-
-                tasksCompleted:
-                  completedGoalTaskCount,
-
-                mood,
-
-                mainGoal:
-                  serializeGoalTasks(
-                    goalTasks,
-                  ),
-
-                reflection,
-              }),
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
 
-      const payload =
-        (await response.json()) as {
-          routine?: StudentDailyRoutine;
+          credentials: "same-origin",
 
-          error?: string;
-        };
+          body: JSON.stringify({
+            date,
 
-      if (
-        !response.ok ||
-        !payload.routine
-      ) {
-        throw new Error(
-          payload.error ??
-            "Unable to save daily routine.",
-        );
+            wakeUpTime,
+
+            bedTime,
+
+            studyMinutes,
+
+            screenMinutes,
+
+            exerciseMinutes:
+              exerciseMinutes.trim() === "" ? 0 : Number(exerciseMinutes),
+
+            tasksCompleted: completedGoalTaskCount,
+
+            mood,
+
+            mainGoal: serializeGoalTasks(goalTasks),
+
+            reflection,
+          }),
+        },
+      );
+
+      const payload = (await response.json()) as {
+        routine?: StudentDailyRoutine;
+
+        error?: string;
+      };
+
+      if (!response.ok || !payload.routine) {
+        throw new Error(payload.error ?? "Unable to save daily routine.");
       }
 
       if (editingId) {
-        setRoutines(
-          (current) =>
-            current
-              .map(
-                (routine) =>
-                  routine.id ===
-                  payload
-                    .routine!
-                    .id
-                    ? payload
-                        .routine!
-                    : routine,
-              )
-              .sort(
-                (
-                  left,
-                  right,
-                ) =>
-                  right.date.localeCompare(
-                    left.date,
-                  ),
-              ),
+        setRoutines((current) =>
+          current
+            .map((routine) =>
+              routine.id === payload.routine!.id ? payload.routine! : routine,
+            )
+            .sort((left, right) => right.date.localeCompare(left.date)),
         );
       } else {
-        setRoutines(
-          (current) =>
-            [
-              payload.routine!,
-              ...current,
-            ].sort(
-              (
-                left,
-                right,
-              ) =>
-                right.date.localeCompare(
-                  left.date,
-                ),
-            ),
+        setRoutines((current) =>
+          [payload.routine!, ...current].sort((left, right) =>
+            right.date.localeCompare(left.date),
+          ),
         );
       }
 
-      setMessageType(
-        "success",
-      );
+      setMessageType("success");
 
       setMessage(
         editingId
@@ -980,9 +606,7 @@ export function StudentDailyRoutine() {
 
       resetForm();
     } catch (error) {
-      setMessageType(
-        "error",
-      );
+      setMessageType("error");
 
       setMessage(
         error instanceof Error
@@ -993,82 +617,127 @@ export function StudentDailyRoutine() {
       setSaving(false);
     }
   }
-
-  async function deleteRoutine(
-    routineId: string,
+  async function updateSavedTaskStatus(
+    routine: StudentDailyRoutine,
+    taskIndex: number,
+    completed: boolean,
   ) {
-    const confirmed =
-      window.confirm(
-        "Delete this daily routine? This cannot be undone.",
+    const savedTasks = parseGoalTasks(routine.mainGoal);
+
+    if (!savedTasks[taskIndex]) {
+      return;
+    }
+
+    const updatedTasks = savedTasks.map((task, index) =>
+      index === taskIndex
+        ? {
+            ...task,
+            completed,
+          }
+        : task,
+    );
+
+    const taskKey = `${routine.id}-${taskIndex}`;
+
+    setUpdatingTaskKey(taskKey);
+    setMessage("");
+
+    try {
+      const response = await fetch(`/api/daily-routines/${routine.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          date: routine.date,
+          wakeUpTime: routine.wakeUpTime,
+          bedTime: routine.bedTime,
+          studyMinutes: routine.studyMinutes,
+          screenMinutes: routine.screenMinutes,
+          exerciseMinutes: routine.exerciseMinutes,
+          mood: routine.mood,
+          mainGoal: serializeGoalTasks(updatedTasks),
+          tasksCompleted: updatedTasks.filter(
+            (task) => task.text.trim() && task.completed,
+          ).length,
+          reflection: routine.reflection ?? "",
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        routine?: StudentDailyRoutine;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.routine) {
+        throw new Error(payload.error ?? "Unable to update task status.");
+      }
+
+      setRoutines((current) =>
+        current.map((item) =>
+          item.id === payload.routine!.id ? payload.routine! : item,
+        ),
       );
+
+      setMessageType("success");
+      setMessage(
+        completed ? "Task marked as completed." : "Task marked as incomplete.",
+      );
+    } catch (error) {
+      setMessageType("error");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to update task status.",
+      );
+    } finally {
+      setUpdatingTaskKey(null);
+    }
+  }
+  async function deleteRoutine(routineId: string) {
+    const confirmed = window.confirm(
+      "Delete this daily routine? This cannot be undone.",
+    );
 
     if (!confirmed) {
       return;
     }
 
-    setDeletingId(
-      routineId,
-    );
+    setDeletingId(routineId);
 
     setMessage("");
 
     try {
-      const response =
-        await fetch(
-          `/api/daily-routines/${routineId}`,
-          {
-            method:
-              "DELETE",
+      const response = await fetch(`/api/daily-routines/${routineId}`, {
+        method: "DELETE",
 
-            credentials:
-              "same-origin",
-          },
-        );
+        credentials: "same-origin",
+      });
 
-      const payload =
-        (await response.json()) as {
-          success?: boolean;
+      const payload = (await response.json()) as {
+        success?: boolean;
 
-          error?: string;
-        };
+        error?: string;
+      };
 
-      if (
-        !response.ok ||
-        !payload.success
-      ) {
-        throw new Error(
-          payload.error ??
-            "Unable to delete daily routine.",
-        );
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.error ?? "Unable to delete daily routine.");
       }
 
-      setRoutines(
-        (current) =>
-          current.filter(
-            (routine) =>
-              routine.id !==
-              routineId,
-          ),
+      setRoutines((current) =>
+        current.filter((routine) => routine.id !== routineId),
       );
 
-      if (
-        editingId ===
-        routineId
-      ) {
+      if (editingId === routineId) {
         resetForm();
       }
 
-      setMessageType(
-        "success",
-      );
+      setMessageType("success");
 
-      setMessage(
-        "Daily routine deleted.",
-      );
+      setMessage("Daily routine deleted.");
     } catch (error) {
-      setMessageType(
-        "error",
-      );
+      setMessageType("error");
 
       setMessage(
         error instanceof Error
@@ -1076,9 +745,7 @@ export function StudentDailyRoutine() {
           : "Unable to delete daily routine.",
       );
     } finally {
-      setDeletingId(
-        null,
-      );
+      setDeletingId(null);
     }
   }
 
@@ -1087,20 +754,15 @@ export function StudentDailyRoutine() {
       <div className="surface overflow-hidden rounded-[2rem] p-5 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="section-label">
-              Personal Routine Tracker
-            </p>
+            <p className="section-label">Personal Routine Tracker</p>
 
             <h2 className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-heading)] sm:text-3xl">
               My Daily Routine
             </h2>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-muted)]">
-              Record your sleep,
-              study, screen time,
-              exercise, daily tasks,
-              mood, and personal
-              progress.
+              Record your sleep, study, screen time, exercise, daily tasks,
+              mood, and personal progress.
             </p>
           </div>
 
@@ -1124,28 +786,18 @@ export function StudentDailyRoutine() {
         {message ? (
           <div
             className={`mt-5 flex items-start gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold ${
-              messageType ===
-              "success"
+              messageType === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : "border-red-200 bg-red-50 text-red-700"
             }`}
           >
-            {messageType ===
-            "success" ? (
-              <CheckCircle2
-                size={17}
-                className="mt-0.5 shrink-0"
-              />
+            {messageType === "success" ? (
+              <CheckCircle2 size={17} className="mt-0.5 shrink-0" />
             ) : (
-              <AlertCircle
-                size={17}
-                className="mt-0.5 shrink-0"
-              />
+              <AlertCircle size={17} className="mt-0.5 shrink-0" />
             )}
 
-            <span>
-              {message}
-            </span>
+            <span>{message}</span>
           </div>
         ) : null}
 
@@ -1153,68 +805,34 @@ export function StudentDailyRoutine() {
           <SummaryCard
             label="Sleep Today"
             value={
-              todayRoutine
-                ? formatMinutes(
-                    todayRoutine.sleepMinutes,
-                  )
-                : "—"
+              todayRoutine ? formatMinutes(todayRoutine.sleepMinutes) : "—"
             }
-            icon={
-              <Moon
-                size={18}
-              />
-            }
+            icon={<Moon size={18} />}
             iconClass="bg-indigo-50 text-indigo-600"
           />
 
           <SummaryCard
             label="Study Today"
             value={
-              todayRoutine
-                ? formatMinutes(
-                    todayRoutine.studyMinutes,
-                  )
-                : "—"
+              todayRoutine ? formatMinutes(todayRoutine.studyMinutes) : "—"
             }
-            icon={
-              <BookOpen
-                size={18}
-              />
-            }
+            icon={<BookOpen size={18} />}
             iconClass="bg-emerald-50 text-emerald-600"
           />
 
           <SummaryCard
             label="Screen Today"
             value={
-              todayRoutine
-                ? formatMinutes(
-                    todayRoutine.screenMinutes,
-                  )
-                : "—"
+              todayRoutine ? formatMinutes(todayRoutine.screenMinutes) : "—"
             }
-            icon={
-              <Smartphone
-                size={18}
-              />
-            }
+            icon={<Smartphone size={18} />}
             iconClass="bg-sky-50 text-sky-600"
           />
 
           <SummaryCard
             label="Tasks Today"
-            value={
-              todayRoutine
-                ? String(
-                    todayRoutine.tasksCompleted,
-                  )
-                : "—"
-            }
-            icon={
-              <ListChecks
-                size={18}
-              />
-            }
+            value={todayRoutine ? String(todayRoutine.tasksCompleted) : "—"}
+            icon={<ListChecks size={18} />}
             iconClass="bg-amber-50 text-amber-600"
           />
         </div>
@@ -1223,14 +841,10 @@ export function StudentDailyRoutine() {
       <div className="surface rounded-[2rem] p-5 sm:p-6">
         <div className="flex flex-col gap-3 border-b border-[var(--color-border)] pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="section-label">
-              Daily Form
-            </p>
+            <p className="section-label">Daily Form</p>
 
             <h3 className="mt-1 text-xl font-black text-[var(--color-heading)]">
-              {editingId
-                ? "Edit Daily Routine"
-                : "Fill Today’s Routine"}
+              {editingId ? "Edit Daily Routine" : "Fill Today’s Routine"}
             </h3>
           </div>
 
@@ -1245,97 +859,41 @@ export function StudentDailyRoutine() {
               className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-black text-[var(--color-heading)] transition hover:bg-slate-50"
             >
               <X size={14} />
-
               Cancel Edit
             </button>
           ) : null}
         </div>
 
-        <form
-          onSubmit={
-            saveRoutine
-          }
-          className="mt-6 space-y-6"
-        >
+        <form onSubmit={saveRoutine} className="mt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <FormField
-              label="Routine Date"
-              icon={
-                <CalendarDays
-                  size={14}
-                />
-              }
-            >
+            <FormField label="Routine Date" icon={<CalendarDays size={14} />}>
               <input
                 type="date"
                 value={date}
                 max={today}
-                onChange={(
-                  event,
-                ) =>
-                  setDate(
-                    event.target
-                      .value,
-                  )
-                }
+                onChange={(event) => setDate(event.target.value)}
                 required
-                className={
-                  fieldClass
-                }
+                className={fieldClass}
               />
             </FormField>
 
-            <FormField
-              label="Wake-up Time"
-              icon={
-                <AlarmClock
-                  size={14}
-                />
-              }
-            >
+            <FormField label="Wake-up Time" icon={<AlarmClock size={14} />}>
               <input
                 type="time"
-                value={
-                  wakeUpTime
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setWakeUpTime(
-                    event.target
-                      .value,
-                  )
-                }
+                value={wakeUpTime}
+                onChange={(event) => setWakeUpTime(event.target.value)}
                 required
-                className={
-                  fieldClass
-                }
+                className={fieldClass}
               />
             </FormField>
 
-            <FormField
-              label="Bedtime"
-              icon={
-                <Moon
-                  size={14}
-                />
-              }
-            >
+            <FormField label="Bedtime" icon={<Moon size={14} />}>
               <input
                 type="time"
                 value={bedTime}
-                onChange={(
-                  event,
-                ) =>
-                  setBedTime(
-                    event.target
-                      .value,
-                  )
-                }
+                onChange={(event) => setBedTime(event.target.value)}
                 required
-                className={
-                  fieldClass
-                }
+                className={fieldClass}
               />
             </FormField>
           </div>
@@ -1343,9 +901,7 @@ export function StudentDailyRoutine() {
           <div className="rounded-[1.5rem] border border-indigo-100 bg-indigo-50/60 p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
-                <Clock
-                  size={18}
-                />
+                <Clock size={18} />
               </div>
 
               <div>
@@ -1354,11 +910,8 @@ export function StudentDailyRoutine() {
                 </p>
 
                 <p className="mt-0.5 text-lg font-black text-indigo-900">
-                  {sleepPreview !==
-                  null
-                    ? formatMinutes(
-                        sleepPreview,
-                      )
+                  {sleepPreview !== null
+                    ? formatMinutes(sleepPreview)
                     : "Enter wake-up time and bedtime"}
                 </p>
               </div>
@@ -1369,57 +922,27 @@ export function StudentDailyRoutine() {
             <DurationField
               label="Study Time"
               description="Total time spent studying today"
-              icon={
-                <BookOpen
-                  size={18}
-                />
-              }
-              hours={
-                studyHours
-              }
-              minutes={
-                studyMinutePart
-              }
-              onHoursChange={
-                setStudyHours
-              }
-              onMinutesChange={
-                setStudyMinutePart
-              }
+              icon={<BookOpen size={18} />}
+              hours={studyHours}
+              minutes={studyMinutePart}
+              onHoursChange={setStudyHours}
+              onMinutesChange={setStudyMinutePart}
             />
 
             <DurationField
               label="Screen Time"
               description="Phone, social media, games, and entertainment"
-              icon={
-                <Smartphone
-                  size={18}
-                />
-              }
-              hours={
-                screenHours
-              }
-              minutes={
-                screenMinutePart
-              }
-              onHoursChange={
-                setScreenHours
-              }
-              onMinutesChange={
-                setScreenMinutePart
-              }
+              icon={<Smartphone size={18} />}
+              hours={screenHours}
+              minutes={screenMinutePart}
+              onHoursChange={setScreenHours}
+              onMinutesChange={setScreenMinutePart}
             />
           </div>
 
-
-
-
           <div>
             <div className="mb-3 flex items-center gap-2">
-              <Smile
-                size={15}
-                className="text-blue-500"
-              />
+              <Smile size={15} className="text-blue-500" />
 
               <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-500">
                 How Was Your Day?
@@ -1427,97 +950,54 @@ export function StudentDailyRoutine() {
             </div>
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {MOOD_OPTIONS.map(
-                (option) => {
-                  const selected =
-                    mood ===
-                    option.value;
+              {MOOD_OPTIONS.map((option) => {
+                const selected = mood === option.value;
 
-                  return (
-                    <button
-                      key={
-                        option.value
-                      }
-                      type="button"
-                      onClick={() =>
-                        setMood(
-                          option.value,
-                        )
-                      }
-                      className={`rounded-2xl border p-4 text-left transition ${
-                        selected
-                          ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
-                          : "border-[var(--color-border)] bg-white hover:border-blue-200 hover:bg-blue-50/40"
-                      }`}
-                    >
-                      <span className="text-3xl">
-                        {
-                          option.emoji
-                        }
-                      </span>
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setMood(option.value)}
+                    className={`rounded-2xl border p-4 text-left transition ${
+                      selected
+                        ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
+                        : "border-[var(--color-border)] bg-white hover:border-blue-200 hover:bg-blue-50/40"
+                    }`}
+                  >
+                    <span className="text-3xl">{option.emoji}</span>
 
-                      <p className="mt-2 text-sm font-black text-[var(--color-heading)]">
-                        {
-                          option.label
-                        }
-                      </p>
+                    <p className="mt-2 text-sm font-black text-[var(--color-heading)]">
+                      {option.label}
+                    </p>
 
-                      <p className="mt-1 text-xs text-[var(--color-muted)]">
-                        {
-                          option.description
-                        }
-                      </p>
-                    </button>
-                  );
-                },
-              )}
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      {option.description}
+                    </p>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-6">
             <GoalChecklist
               tasks={goalTasks}
-              onTextChange={
-                updateGoalTask
-              }
-              onToggle={
-                toggleGoalTask
-              }
-              onAdd={
-                addGoalTask
-              }
-              onRemove={
-                removeGoalTask
-              }
+              onTextChange={updateGoalTask}
+              onAdd={addGoalTask}
             />
 
             <FormField
               label="Task for Tomorrow"
-              icon={
-                <FileText
-                  size={14}
-                />
-              }
+              icon={<FileText size={14} />}
               hint="Optional"
             >
               <textarea
-                value={
-                  reflection
+                value={reflection}
+                onChange={(event) =>
+                  setReflection(event.target.value.slice(0, 1000))
                 }
-                onChange={(
-                  event,
-                ) =>
-                  setReflection(
-                    event.target.value.slice(
-                      0,
-                      1000,
-                    ),
-                  )
-                }
-                placeholder="What went well today, and what would you improve tomorrow?"
-                className={
-                  textareaClass
-                }
+                placeholder="Write the task you want to complete tomorrow."
+                className={textareaClass}
               />
             </FormField>
           </div>
@@ -1529,22 +1009,14 @@ export function StudentDailyRoutine() {
           >
             {saving ? (
               <>
-                <Loader2
-                  size={16}
-                  className="animate-spin"
-                />
-
+                <Loader2 size={16} className="animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save
-                  size={16}
-                />
+                <Save size={16} />
 
-                {editingId
-                  ? "Update Daily Routine"
-                  : "Save Today’s Routine"}
+                {editingId ? "Update Daily Routine" : "Save Today’s Routine"}
               </>
             )}
           </button>
@@ -1554,9 +1026,7 @@ export function StudentDailyRoutine() {
       <div className="surface rounded-[2rem] p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="section-label">
-              Routine History
-            </p>
+            <p className="section-label">Routine History</p>
 
             <h3 className="mt-1 text-xl font-black text-[var(--color-heading)]">
               My Previous Entries
@@ -1564,33 +1034,21 @@ export function StudentDailyRoutine() {
           </div>
 
           <span className="pill w-fit">
-            {routines.length}{" "}
-            {routines.length ===
-            1
-              ? "Entry"
-              : "Entries"}
+            {routines.length} {routines.length === 1 ? "Entry" : "Entries"}
           </span>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center gap-3 py-16 text-sm font-semibold text-[var(--color-muted)]">
-            <Loader2
-              size={20}
-              className="animate-spin"
-            />
-
+            <Loader2 size={20} className="animate-spin" />
             Loading routines...
           </div>
         ) : null}
 
-        {!loading &&
-        routines.length ===
-          0 ? (
+        {!loading && routines.length === 0 ? (
           <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--color-border)] px-5 py-14 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <CalendarDays
-                size={28}
-              />
+              <CalendarDays size={28} />
             </div>
 
             <h4 className="mt-4 font-black text-[var(--color-heading)]">
@@ -1598,151 +1056,97 @@ export function StudentDailyRoutine() {
             </h4>
 
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[var(--color-muted)]">
-              Fill the daily form
-              above to start
-              building a healthy and
+              Fill the daily form above to start building a healthy and
               consistent routine.
             </p>
           </div>
         ) : null}
 
         <div className="mt-6 grid gap-4 xl:grid-cols-2">
-          {routines.map(
-            (routine) => {
-              const moodDetails =
-                getMoodDetails(
-                  routine.mood,
-                );
+          {routines.map((routine) => {
+            const moodDetails = getMoodDetails(routine.mood);
 
-              const routineGoalTasks =
-                parseGoalTasks(
-                  routine.mainGoal,
-                );
+            const routineGoalTasks = parseGoalTasks(routine.mainGoal);
 
-              return (
-                <article
-                  key={
-                    routine.id
-                  }
-                  className="rounded-[1.5rem] border border-[var(--color-border)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CalendarDays
-                          size={
-                            15
-                          }
-                          className="text-blue-500"
-                        />
+            return (
+              <article
+                key={routine.id}
+                className="rounded-[1.5rem] border border-[var(--color-border)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CalendarDays size={15} className="text-blue-500" />
 
-                        <h4 className="font-black text-[var(--color-heading)]">
-                          {formatDate(
-                            routine.date,
-                          )}
-                        </h4>
-                      </div>
-
-                      <p className="mt-2 text-xs font-semibold text-[var(--color-muted)]">
-                        Wake{" "}
-                        {
-                          routine.wakeUpTime
-                        }{" "}
-                        • Bed{" "}
-                        {
-                          routine.bedTime
-                        }
-                      </p>
+                      <h4 className="font-black text-[var(--color-heading)]">
+                        {formatDate(routine.date)}
+                      </h4>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center">
-                      <span className="text-2xl">
-                        {
-                          moodDetails.emoji
-                        }
-                      </span>
-
-                      <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
-                        {
-                          moodDetails.label
-                        }
-                      </p>
-                    </div>
+                    <p className="mt-2 text-xs font-semibold text-[var(--color-muted)]">
+                      Wake {routine.wakeUpTime} • Bed {routine.bedTime}
+                    </p>
                   </div>
 
-                  <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <RoutineMetric
-                      label="Sleep"
-                      value={formatMinutes(
-                        routine.sleepMinutes,
-                      )}
-                    />
+                  <div className="rounded-2xl bg-slate-50 px-3 py-2 text-center">
+                    <span className="text-2xl">{moodDetails.emoji}</span>
 
-                    <RoutineMetric
-                      label="Study"
-                      value={formatMinutes(
-                        routine.studyMinutes,
-                      )}
-                    />
-
-                    <RoutineMetric
-                      label="Screen"
-                      value={formatMinutes(
-                        routine.screenMinutes,
-                      )}
-                    />
-
-                    <RoutineMetric
-                      label="Exercise"
-                      value={formatMinutes(
-                        routine.exerciseMinutes,
-                      )}
-                    />
+                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      {moodDetails.label}
+                    </p>
                   </div>
+                </div>
 
-                  <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
-                    <ListChecks
-                      size={15}
-                    />
+                <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <RoutineMetric
+                    label="Sleep"
+                    value={formatMinutes(routine.sleepMinutes)}
+                  />
 
-                    {
-                      routine.tasksCompleted
-                    }{" "}
-                    Tasks Completed
-                  </div>
+                  <RoutineMetric
+                    label="Study"
+                    value={formatMinutes(routine.studyMinutes)}
+                  />
 
-                  {routineGoalTasks.length > 0 ? (
-                    <div className="mt-4">
-                      <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-blue-500">
-                        <Target
-                          size={12}
-                        />
+                  <RoutineMetric
+                    label="Screen"
+                    value={formatMinutes(routine.screenMinutes)}
+                  />
 
-                        Main Goals
-                      </p>
+                  <RoutineMetric
+                    label="Exercise"
+                    value={formatMinutes(routine.exerciseMinutes)}
+                  />
+                </div>
 
-                      <div className="mt-3 space-y-2">
-                        {routineGoalTasks.map((task, taskIndex) => (
+                <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-black text-amber-700">
+                  <ListChecks size={15} />
+                  {routine.tasksCompleted} Tasks Completed
+                </div>
+
+                {routineGoalTasks.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.14em] text-blue-500">
+                      <ListChecks size={12} />
+                      Today’s Tasks
+                    </p>
+
+                    <div className="mt-3 space-y-2">
+                      {routineGoalTasks.map((task, taskIndex) => {
+                        const taskKey = `${routine.id}-${taskIndex}`;
+                        const isUpdating = updatingTaskKey === taskKey;
+
+                        return (
                           <div
                             key={`${routine.id}-goal-${taskIndex}`}
-                            className={`flex items-start gap-3 rounded-xl border px-3 py-2.5 ${
+                            className={`flex items-center justify-between gap-4 rounded-xl border px-4 py-3 ${
                               task.completed
-                                ? "border-emerald-100 bg-emerald-50/70"
-                                : "border-slate-100 bg-slate-50"
+                                ? "border-emerald-200 bg-emerald-50/70"
+                                : "border-slate-200 bg-slate-50"
                             }`}
                           >
-                            <span
-                              className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border ${
-                                task.completed
-                                  ? "border-emerald-500 bg-emerald-500 text-white"
-                                  : "border-slate-300 bg-white text-transparent"
-                              }`}
-                            >
-                              <CheckCircle2 size={13} />
-                            </span>
-
                             <p
-                              className={`text-sm leading-5 ${
+                              className={`min-w-0 flex-1 text-sm leading-5 ${
                                 task.completed
                                   ? "text-slate-400 line-through"
                                   : "font-semibold text-[var(--color-heading)]"
@@ -1750,84 +1154,101 @@ export function StudentDailyRoutine() {
                             >
                               {task.text}
                             </p>
+
+                            <div className="flex shrink-0 items-center gap-2">
+                              <button
+                                type="button"
+                                disabled={isUpdating}
+                                onClick={() =>
+                                  void updateSavedTaskStatus(
+                                    routine,
+                                    taskIndex,
+                                    true,
+                                  )
+                                }
+                                aria-label={`Mark ${task.text} completed`}
+                                title="Mark completed"
+                                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition disabled:opacity-50 ${
+                                  task.completed
+                                    ? "border-emerald-500 bg-emerald-500 text-white"
+                                    : "border-emerald-200 bg-white text-emerald-600 hover:bg-emerald-50"
+                                }`}
+                              >
+                                {isUpdating ? (
+                                  <Loader2 size={16} className="animate-spin" />
+                                ) : (
+                                  <CheckCircle2 size={17} />
+                                )}
+                              </button>
+
+                              <button
+                                type="button"
+                                disabled={isUpdating}
+                                onClick={() =>
+                                  void updateSavedTaskStatus(
+                                    routine,
+                                    taskIndex,
+                                    false,
+                                  )
+                                }
+                                aria-label={`Mark ${task.text} incomplete`}
+                                title="Mark incomplete"
+                                className={`flex h-9 w-9 items-center justify-center rounded-xl border transition disabled:opacity-50 ${
+                                  !task.completed
+                                    ? "border-red-500 bg-red-500 text-white"
+                                    : "border-red-200 bg-white text-red-500 hover:bg-red-50"
+                                }`}
+                              >
+                                <X size={17} />
+                              </button>
+                            </div>
                           </div>
-                        ))}
-                      </div>
+                        );
+                      })}
                     </div>
-                  ) : null}
-
-                  {routine.reflection ? (
-                    <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                        Daily Reflection
-                      </p>
-
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                        {
-                          routine.reflection
-                        }
-                      </p>
-                    </div>
-                  ) : null}
-
-                  <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--color-border)] pt-4">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        startEditing(
-                          routine,
-                        )
-                      }
-                      className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-black text-blue-700 transition hover:bg-blue-100"
-                    >
-                      <Pencil
-                        size={
-                          13
-                        }
-                      />
-
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={
-                        deletingId ===
-                        routine.id
-                      }
-                      onClick={() =>
-                        void deleteRoutine(
-                          routine.id,
-                        )
-                      }
-                      className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-black text-red-600 transition hover:bg-red-100 disabled:opacity-60"
-                    >
-                      {deletingId ===
-                      routine.id ? (
-                        <Loader2
-                          size={
-                            13
-                          }
-                          className="animate-spin"
-                        />
-                      ) : (
-                        <Trash2
-                          size={
-                            13
-                          }
-                        />
-                      )}
-
-                      {deletingId ===
-                      routine.id
-                        ? "Deleting..."
-                        : "Delete"}
-                    </button>
                   </div>
-                </article>
-              );
-            },
-          )}
+                ) : null}
+
+                {routine.reflection ? (
+                  <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      Task for Tomorrow
+                    </p>
+
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                      {routine.reflection}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="mt-5 flex flex-wrap gap-2 border-t border-[var(--color-border)] pt-4">
+                  <button
+                    type="button"
+                    onClick={() => startEditing(routine)}
+                    className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-black text-blue-700 transition hover:bg-blue-100"
+                  >
+                    <Pencil size={13} />
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={deletingId === routine.id}
+                    onClick={() => void deleteRoutine(routine.id)}
+                    className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-black text-red-600 transition hover:bg-red-100 disabled:opacity-60"
+                  >
+                    {deletingId === routine.id ? (
+                      <Loader2 size={13} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={13} />
+                    )}
+
+                    {deletingId === routine.id ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -1909,18 +1330,14 @@ function FormField({
 function GoalChecklist({
   tasks,
   onTextChange,
-  onToggle,
   onAdd,
-  onRemove,
 }: {
   tasks: GoalTask[];
   onTextChange: (index: number, value: string) => void;
-  onToggle: (index: number) => void;
   onAdd: () => void;
-  onRemove: (index: number) => void;
 }) {
-  const completedCount = tasks.filter(
-    (task) => task.text.trim().length > 0 && task.completed,
+  const writtenTaskCount = tasks.filter(
+    (task) => task.text.trim().length > 0,
   ).length;
 
   return (
@@ -1928,17 +1345,18 @@ function GoalChecklist({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-blue-500">
-            <Target size={14} />
-            Main Goal
+            <ListChecks size={14} />
+            Today’s Tasks
           </p>
 
           <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
-            Add up to 10 tasks and tick them when completed.
+            Write your tasks first and save the routine. You can mark them
+            completed or incomplete after saving.
           </p>
         </div>
 
         <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[10px] font-black text-slate-500 shadow-sm">
-          {completedCount}/{tasks.length} Done
+          {writtenTaskCount}/{MAX_GOAL_TASKS} Tasks
         </span>
       </div>
 
@@ -1946,29 +1364,11 @@ function GoalChecklist({
         {tasks.map((task, index) => (
           <div
             key={index}
-            className={`flex items-center gap-3 rounded-2xl border bg-white p-3 transition ${
-              task.completed
-                ? "border-emerald-200 bg-emerald-50/40"
-                : "border-[var(--color-border)]"
-            }`}
+            className="flex items-center gap-3 rounded-2xl border border-[var(--color-border)] bg-white p-4"
           >
-            <button
-              type="button"
-              role="checkbox"
-              aria-checked={task.completed}
-              aria-label={`Mark task ${index + 1} as ${
-                task.completed ? "incomplete" : "complete"
-              }`}
-              disabled={task.text.trim().length === 0}
-              onClick={() => onToggle(index)}
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition disabled:cursor-not-allowed disabled:opacity-40 ${
-                task.completed
-                  ? "border-emerald-500 bg-emerald-500 text-white"
-                  : "border-slate-300 bg-white text-transparent hover:border-blue-400"
-              }`}
-            >
-              <CheckCircle2 size={15} />
-            </button>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-xs font-black text-blue-600">
+              {index + 1}
+            </span>
 
             <input
               type="text"
@@ -1976,21 +1376,8 @@ function GoalChecklist({
               maxLength={MAX_GOAL_TASK_LENGTH}
               onChange={(event) => onTextChange(index, event.target.value)}
               placeholder={`Write task ${index + 1}`}
-              className={`min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-slate-400 ${
-                task.completed
-                  ? "text-slate-400 line-through"
-                  : "text-[var(--color-heading)]"
-              }`}
+              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-[var(--color-heading)] outline-none placeholder:text-slate-400"
             />
-
-            <button
-              type="button"
-              onClick={() => onRemove(index)}
-              aria-label={`Remove task ${index + 1}`}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-50 hover:text-red-600"
-            >
-              <Trash2 size={15} />
-            </button>
           </div>
         ))}
       </div>
@@ -2002,13 +1389,12 @@ function GoalChecklist({
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 bg-blue-50/50 px-4 py-3 text-xs font-black text-blue-700 transition hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
       >
         <Plus size={15} />
-        {tasks.length >= MAX_GOAL_TASKS
-          ? "Task limit reached"
-          : "Add New Task"}
+
+        {tasks.length >= MAX_GOAL_TASKS ? "Task limit reached" : "Add New Task"}
       </button>
 
       <p className="mt-2 text-right text-[10px] font-bold text-slate-400">
-        {tasks.length}/{MAX_GOAL_TASKS} tasks
+        {tasks.length}/{MAX_GOAL_TASKS} task fields
       </p>
     </div>
   );
@@ -2033,13 +1419,9 @@ function DurationField({
 
   minutes: string;
 
-  onHoursChange: (
-    value: string,
-  ) => void;
+  onHoursChange: (value: string) => void;
 
-  onMinutesChange: (
-    value: string,
-  ) => void;
+  onMinutesChange: (value: string) => void;
 }) {
   return (
     <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-slate-50/70 p-5">
@@ -2049,9 +1431,7 @@ function DurationField({
         </div>
 
         <div>
-          <h4 className="font-black text-[var(--color-heading)]">
-            {label}
-          </h4>
+          <h4 className="font-black text-[var(--color-heading)]">{label}</h4>
 
           <p className="mt-1 text-xs leading-5 text-[var(--color-muted)]">
             {description}
@@ -2071,18 +1451,9 @@ function DurationField({
             max="24"
             step="1"
             value={hours}
-            onChange={(
-              event,
-            ) =>
-              onHoursChange(
-                event.target
-                  .value,
-              )
-            }
+            onChange={(event) => onHoursChange(event.target.value)}
             placeholder="0"
-            className={
-              fieldClass
-            }
+            className={fieldClass}
           />
         </label>
 
@@ -2097,18 +1468,9 @@ function DurationField({
             max="59"
             step="1"
             value={minutes}
-            onChange={(
-              event,
-            ) =>
-              onMinutesChange(
-                event.target
-                  .value,
-              )
-            }
+            onChange={(event) => onMinutesChange(event.target.value)}
             placeholder="0"
-            className={
-              fieldClass
-            }
+            className={fieldClass}
           />
         </label>
       </div>
@@ -2126,9 +1488,7 @@ function RoutineMetric({
 }) {
   return (
     <div className="rounded-xl bg-slate-50 px-3 py-3 text-center">
-      <p className="text-sm font-black text-[var(--color-heading)]">
-        {value}
-      </p>
+      <p className="text-sm font-black text-[var(--color-heading)]">{value}</p>
 
       <p className="mt-1 text-[9px] font-black uppercase tracking-wider text-slate-400">
         {label}
