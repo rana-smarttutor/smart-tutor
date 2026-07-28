@@ -38,6 +38,8 @@ const labels: Record<AppNotification["type"], string> = {
   ptm: "PTM",
   doubt: "Doubt",
   mentorship: "Mentorship",
+  enquiry: "Enquiry",
+  "password-reset": "Password Reset",
 };
 
   return labels[type];
