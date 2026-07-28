@@ -72,7 +72,7 @@ function attendanceBar(pct: number) {
   return (
     <div className="flex items-center gap-2">
       <div className="w-16 h-1.5 rounded-full bg-slate-200 overflow-hidden">
-        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
+        <div className="h-full transition-all" style={{ width: `${Math.min(100, pct)}%`, background: color, borderRadius: pct >= 100 ? "0" : "9999px" }} />
       </div>
       <span className="text-xs font-semibold" style={{ color }}>{pct}%</span>
     </div>

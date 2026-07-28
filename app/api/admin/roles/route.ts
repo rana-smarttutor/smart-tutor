@@ -7,7 +7,7 @@ import {
   getRoleAssignments,
   getRolesDashboardStats,
 } from "@/lib/data-store";
-import type { AvailableModule } from "@/lib/types";
+import type { AvailableModule, ModuleAccessLevel } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +47,9 @@ export async function POST(request: Request) {
     const color = String(body.color || "#4F46E5").trim();
     const description = String(body.description || "").trim();
     const modules = body.modules as AvailableModule[];
+    const moduleAccess = body.moduleAccess as
+      | Partial<Record<AvailableModule, ModuleAccessLevel>>
+      | undefined;
 
     if (!name) {
       return NextResponse.json(
@@ -67,6 +70,7 @@ export async function POST(request: Request) {
       description: description || undefined,
       color,
       modules,
+      moduleAccess,
     });
 
     return NextResponse.json({ role }, { status: 201 });

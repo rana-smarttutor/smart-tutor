@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { deleteCustomRole, updateCustomRole } from "@/lib/data-store";
-import type { AvailableModule } from "@/lib/types";
+import type { AvailableModule, ModuleAccessLevel } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +26,8 @@ export async function PUT(
       update.description = String(body.description).trim();
     if (body.color) update.color = String(body.color);
     if (Array.isArray(body.modules)) update.modules = body.modules;
+    if (body.moduleAccess && typeof body.moduleAccess === "object")
+      update.moduleAccess = body.moduleAccess;
     if (body.isActive !== undefined)
       update.isActive = body.isActive === true || body.isActive === "1";
 

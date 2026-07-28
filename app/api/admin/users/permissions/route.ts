@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getCollection, COLLECTIONS } from "@/lib/data-store";
-import type { AvailableModule } from "@/lib/types";
+import type { AvailableModule, ModuleAccessLevel } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +16,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Record<string, unknown>;
     const userId = String(body.userId || "").trim();
     const modules = body.modules as AvailableModule[] | undefined;
+    const moduleAccess = body.moduleAccess as
+      | Partial<Record<AvailableModule, ModuleAccessLevel>>
+      | undefined;
 
     if (!userId) {
       return NextResponse.json(
@@ -44,15 +47,18 @@ export async function POST(request: Request) {
       );
     }
 
-    await collection.updateOne(
-      { id: userId },
-      {
-        $set: {
-          customModules: modules,
-          updatedAt: new Date().toISOString(),
-        },
-      },
-    );
+    const setFields: Record<string, unknown> = {
+      customModules: modules,
+      updatedAt: new Date().toISOString(),
+    };
+
+    if (moduleAccess && typeof moduleAccess === "object") {
+      setFields.customModuleAccess = moduleAccess;
+    } else if (modules.length === 0) {
+      setFields.customModuleAccess = {};
+    }
+
+    await collection.updateOne({ id: userId }, { $set: setFields });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -84,7 +90,7 @@ export async function GET(request: Request) {
     const collection = await getCollection(COLLECTIONS.users);
     const user = await collection.findOne(
       { id: userId },
-      { projection: { customModules: 1 } },
+      { projection: { customModules: 1, customModuleAccess: 1 } },
     );
 
     if (!user) {
@@ -95,8 +101,12 @@ export async function GET(request: Request) {
     }
 
     const modules = (user.customModules as AvailableModule[]) || [];
+    const moduleAccess =
+      (user.customModuleAccess as Partial<
+        Record<AvailableModule, ModuleAccessLevel>
+      >) || {};
 
-    return NextResponse.json({ ok: true, modules });
+    return NextResponse.json({ ok: true, modules, moduleAccess });
   } catch (error) {
     console.error("Get user permissions error:", error);
     return NextResponse.json(

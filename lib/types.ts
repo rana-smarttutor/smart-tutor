@@ -1145,7 +1145,9 @@ export type AppNotificationType =
   | "placement"
   | "ptm"
   | "doubt"
-  | "mentorship";
+  | "mentorship"
+  | "enquiry"
+  | "password-reset";
 
 export type AppNotification = {
   id: string;
@@ -1653,12 +1655,15 @@ export const AVAILABLE_MODULES: { id: AvailableModule; label: string }[] = [
   { id: "certificates", label: "Certificates" },
 ];
 
+export type ModuleAccessLevel = "read" | "write";
+
 export type CustomRole = {
   id: string;
   name: string;
   description?: string;
   color: string;
   modules: AvailableModule[];
+  moduleAccess?: Partial<Record<AvailableModule, ModuleAccessLevel>>;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;

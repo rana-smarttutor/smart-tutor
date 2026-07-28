@@ -84,8 +84,11 @@ function ProgressRow({
 
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-border)]">
         <div
-          className="h-full rounded-full bg-[var(--color-primary)] transition-all"
-          style={{ width: `${clampPercent(value)}%` }}
+          className="h-full bg-[var(--color-primary)] transition-all"
+          style={{
+            width: `${clampPercent(value)}%`,
+            borderRadius: clampPercent(value) >= 100 ? "0" : "9999px",
+          }}
         />
       </div>
 

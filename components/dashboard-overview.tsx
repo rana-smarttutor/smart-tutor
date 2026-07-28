@@ -1826,10 +1826,11 @@ function StudentOverview({
                       </div>
                       <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
                         <div
-                          className="h-full rounded-full transition-all duration-1000 ease-out"
+                          className="h-full transition-all duration-1000 ease-out"
                           style={{
                             width: mounted ? `${score}%` : "0%",
                             backgroundColor: c,
+                            borderRadius: score >= 100 ? "0" : "9999px",
                           }}
                         />
                       </div>

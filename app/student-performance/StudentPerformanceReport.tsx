@@ -272,7 +272,10 @@ function SubjectBars({ subjects }: { subjects: Report["subjectWiseMarks"] }) {
             <div className="t5-bar-track">
               <div
                 className={`t5-bar-fill ${statusClass(Number(item.score || 0))}`}
-                style={{ width: `${Math.max(0, Math.min(100, item.score))}%` }}
+                style={{
+                  width: `${Math.max(0, Math.min(100, item.score))}%`,
+                  borderRadius: Math.min(100, Number(item.score || 0)) >= 100 ? "0" : undefined,
+                }}
               />
             </div>
 

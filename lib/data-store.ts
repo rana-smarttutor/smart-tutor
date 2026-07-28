@@ -6,7 +6,7 @@ import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 
 import { getPublicInstituteData as getTemplatePublicInstituteData } from "@/lib/mock-data";
 import { getMongoDatabase } from "@/lib/mongodb";
-import { hashPassword, isBcryptPassword, verifyPassword } from "@/lib/password";
+import { verifyPassword, hashPassword } from "@/lib/password";
 import {
   DEFAULT_COURSE_TEMPLATE_KEY,
   getCourseTemplateByKey,
@@ -146,6 +146,8 @@ type UserDocument = SessionUser & {
   verified?: boolean;
   deletedAt?: string;
   permissions?: PermissionItem[];
+  customModules?: string[];
+  customModuleAccess?: Partial<Record<string, "read" | "write">>;
   createdAt?: string;
   updatedAt?: string;
   profile?: UserProfile;
@@ -288,19 +290,42 @@ export async function getAllEnquiries() {
   return await collection.find({}).sort({ createdAt: -1 }).toArray();
 }
 
+export async function updateEnquiryStatus(
+  id: string,
+  status: string,
+): Promise<boolean> {
+  const collection = await getCollection(COLLECTIONS.enquiries);
+  const result = await collection.updateOne(
+    { id },
+    { $set: { status } } as any,
+  );
+  return result.modifiedCount > 0;
+}
+
+export async function deleteEnquiry(
+  id: string,
+): Promise<boolean> {
+  const collection = await getCollection(COLLECTIONS.enquiries);
+  const result = await collection.deleteOne({ id });
+  return result.deletedCount > 0;
+}
+
 export async function createPasswordResetRequest(input: {
   name: string;
   email: string;
   phone: string;
   role: string;
+  lastPassword?: string;
 }) {
   const collection = await getCollection(COLLECTIONS.passwordResetRequests);
 
   const request = {
+    id: `pwdreset-${randomUUID()}`,
     name: input.name.trim(),
     email: input.email.trim().toLowerCase(),
     phone: input.phone.trim(),
     role: input.role,
+    lastPassword: input.lastPassword?.trim() || "",
     status: "new",
     createdAt: new Date().toISOString(),
   };
@@ -312,7 +337,23 @@ export async function createPasswordResetRequest(input: {
 
 export async function getAllPasswordResetRequests() {
   const collection = await getCollection(COLLECTIONS.passwordResetRequests);
-  return await collection.find({}).sort({ createdAt: -1 }).toArray();
+  const docs = await collection.find({}).sort({ createdAt: -1 }).toArray();
+
+  const backfilled = await Promise.all(
+    docs.map(async (doc: any) => {
+      if (!doc.id && doc._id) {
+        const id = `pwdreset-${doc._id.toString()}`;
+        await collection.updateOne(
+          { _id: doc._id },
+          { $set: { id } },
+        );
+        return { ...doc, id };
+      }
+      return doc;
+    }),
+  );
+
+  return backfilled;
 }
 
 export async function updatePasswordResetRequest(
@@ -320,7 +361,58 @@ export async function updatePasswordResetRequest(
   update: { status?: string; adminNote?: string },
 ) {
   const collection = await getCollection(COLLECTIONS.passwordResetRequests);
-  await collection.updateOne({ id }, { $set: update });
+  const result = await collection.updateOne({ id } as any, { $set: update });
+
+  if (result.matchedCount === 0 && id.startsWith("pwdreset-")) {
+    const mongoId = id.replace("pwdreset-", "");
+    try {
+      const { ObjectId } = await import("mongodb");
+      await collection.updateOne(
+        { _id: new ObjectId(mongoId) } as any,
+        { $set: update },
+      );
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export async function deletePasswordResetRequest(
+  id: string,
+): Promise<boolean> {
+  const collection = await getCollection(COLLECTIONS.passwordResetRequests);
+
+  const result = await collection.deleteOne({ id } as any);
+  if (result.deletedCount > 0) return true;
+
+  if (id.startsWith("pwdreset-")) {
+    const mongoId = id.replace("pwdreset-", "");
+    try {
+      const { ObjectId } = await import("mongodb");
+      const fallback = await collection.deleteOne({
+        _id: new ObjectId(mongoId),
+      } as any);
+      return fallback.deletedCount > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+export async function getAdminUserIds(): Promise<string[]> {
+  const collection = await getUsersCollection();
+  const admins = await collection
+    .find(
+      {
+        role: "admin",
+        deletedAt: { $exists: false },
+      } as any,
+    )
+    .project({ id: 1 })
+    .toArray();
+  return admins.map((a: any) => a.id).filter(Boolean);
 }
 
 export { DEFAULT_HEURISTICS };
@@ -861,27 +953,6 @@ export async function findUserByCredentials(
 
     if (!passwordMatches) {
       continue;
-    }
-
-    /*
-     * Migration on successful login:
-     * plain-text passwords are upgraded to bcrypt.
-     */
-    if (!isBcryptPassword(storedPassword)) {
-      const upgradedPassword = await hashPassword(password);
-
-      await collection.updateOne(
-        {
-          id: user.id,
-          password: storedPassword,
-        },
-        {
-          $set: {
-            password: upgradedPassword,
-            updatedAt: new Date().toISOString(),
-          },
-        },
-      );
     }
 
     return toSessionUser(user);
@@ -2075,7 +2146,6 @@ export async function createUserRecord(input: {
   assignedFacultyIds?: string[];
 }) {
   const normalizedEmail = input.email.trim().toLowerCase();
-  const hashedPassword = await hashPassword(input.password);
 
   const document: UserDocument = {
     id: randomUUID(),
@@ -2089,7 +2159,7 @@ export async function createUserRecord(input: {
     linkedStudentMobile: input.linkedStudentMobile,
     role: input.role,
     label: getRoleLabel(input.role),
-    password: hashedPassword,
+    password: input.password,
     program: input.program,
     status: input.status ?? "active",
     createdAt: new Date().toISOString(),
@@ -2136,7 +2206,7 @@ export async function updateUserRecord(input: {
     input.password.trim().length > 0 &&
     input.password !== "••••••••"
   ) {
-    setFields.password = await hashPassword(input.password);
+    setFields.password = input.password;
   }
 
   if (input.verified !== undefined) {
@@ -2554,6 +2624,31 @@ export async function findUserDocumentByEmail(email: string) {
     emailKey: email.toLowerCase(),
     deletedAt: { $exists: false },
   } as any);
+}
+
+export async function resetUserPasswordByEmail(
+  email: string,
+  newPassword: string,
+): Promise<{ success: boolean; message: string }> {
+  const user = await findUserDocumentByEmail(email);
+  if (!user) {
+    return { success: false, message: `No account found for ${email}.` };
+  }
+
+  const hashedPassword = await hashPassword(newPassword);
+
+  const collection = await getUsersCollection();
+  await collection.updateOne(
+    { id: user.id },
+    {
+      $set: {
+        password: hashedPassword,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  );
+
+  return { success: true, message: "Password updated successfully." };
 }
 
 export async function findUserDocumentByMobile(mobile: string) {
@@ -4319,13 +4414,17 @@ export async function createCustomRole(input: {
   description?: string;
   color: string;
   modules: AvailableModule[];
+  moduleAccess?: Partial<Record<AvailableModule, "read" | "write">>;
 }) {
   const collection = await getCollection<CustomRole>(COLLECTIONS.customRoles);
   const now = new Date().toISOString();
   const role: CustomRole = {
     id: `role-${Date.now()}`,
-    ...input,
+    name: input.name,
     description: input.description || "",
+    color: input.color,
+    modules: input.modules,
+    moduleAccess: input.moduleAccess,
     isActive: true,
     createdAt: now,
     updatedAt: now,
@@ -4409,6 +4508,51 @@ export async function getCustomRolesForUser(userId: string) {
     .find({ id: { $in: roleIds }, isActive: true })
     .toArray();
   return stripMongoIds(roles);
+}
+
+export type EffectiveModuleAccess = {
+  module: AvailableModule;
+  access: "read" | "write";
+  source: "role" | "direct";
+};
+
+export async function getEffectiveModulesForUser(
+  userId: string,
+): Promise<EffectiveModuleAccess[]> {
+  const collection = await getCollection<UserDocument>(COLLECTIONS.users);
+  const user = await collection.findOne({ id: userId });
+  if (!user) return [];
+
+  const accessMap = new Map<AvailableModule, EffectiveModuleAccess>();
+
+  const customRoles = await getCustomRolesForUser(userId);
+  for (const role of customRoles) {
+    const roleModules = (role.modules || []) as AvailableModule[];
+    const roleAccess = (role.moduleAccess || {}) as Partial<
+      Record<AvailableModule, "read" | "write">
+    >;
+    for (const mod of roleModules) {
+      const level = roleAccess[mod] || "write";
+      const existing = accessMap.get(mod);
+      if (!existing || (level === "write" && existing.access === "read")) {
+        accessMap.set(mod, { module: mod, access: level, source: "role" });
+      }
+    }
+  }
+
+  const directModules = ((user as any).customModules || []) as AvailableModule[];
+  const directAccess = ((user as any).customModuleAccess || {}) as Partial<
+    Record<AvailableModule, "read" | "write">
+  >;
+  for (const mod of directModules) {
+    const level = directAccess[mod] || "write";
+    const existing = accessMap.get(mod);
+    if (!existing || (level === "write" && existing.access === "read")) {
+      accessMap.set(mod, { module: mod, access: level, source: "direct" });
+    }
+  }
+
+  return Array.from(accessMap.values());
 }
 
 export async function getRolesDashboardStats() {

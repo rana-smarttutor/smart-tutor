@@ -274,10 +274,11 @@ export function FacultyPerformanceManager() {
                     </div>
                     <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
                       <div
-                        className="h-full rounded-full transition-all duration-700 ease-out"
+                        className="h-full transition-all duration-700 ease-out"
                         style={{
                           width: `${f.performanceScore}%`,
                           background: `linear-gradient(90deg, ${scoreColor.bar}CC, ${scoreColor.bar})`,
+                          borderRadius: f.performanceScore >= 100 ? "0" : "9999px",
                         }}
                       />
                     </div>
