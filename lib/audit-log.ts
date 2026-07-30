@@ -19,7 +19,7 @@ const BUFFER_THRESHOLD = 50;
 
 let lastFlushTime = Date.now();
 
-// ── Geo-lookup cache ─────────────────────────────────────────────
+// ── Geo-lookup cache ────────────────────────────
 
 const geoCache = new Map<string, ActionLogEntry["geo"]>();
 
