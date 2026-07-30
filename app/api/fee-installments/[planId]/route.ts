@@ -5,7 +5,10 @@ import {
   deleteFeeInstallmentPlan,
   getFeeInstallmentPlanById,
   updateFeeInstallmentPlan,
+  appendFeeTransactionLog,
+  getRequestMetadata,
 } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 import type {
   FeeInstallment,
   FeeInstallmentPlan,
@@ -241,6 +244,40 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    // Log installment payment transactions
+    if (body.installmentTransaction) {
+      const { ipAddress, userAgent } = getRequestMetadata(request);
+      const it = body.installmentTransaction as Record<string, unknown>;
+      const t = it.transaction as Record<string, unknown>;
+      appendFeeTransactionLog({
+        transactionType: "installment_payment",
+        performedBy: session.id,
+        performedByName: session.name,
+        performedByEmail: session.email ?? "",
+        ipAddress,
+        userAgent,
+        amount: Number(t.paidAmount) || 0,
+        planId,
+        installmentNumber: Number(it.installmentNumber),
+        studentId: existingPlan.studentId,
+        studentName: existingPlan.studentName,
+        courseName: existingPlan.courseName,
+        paymentMode: (t.paymentMode as string) || "Cash",
+        paymentDate: (t.paidDate as string) || new Date().toISOString().slice(0, 10),
+      }).catch(() => {});
+
+      logAction({
+        action: "update",
+        category: "fees",
+        details: `Installment payment recorded for plan ${planId} (₹${Number(t.paidAmount) || 0})`,
+        path: "/api/fee-installments/" + planId,
+        method: "PATCH",
+        request,
+        session,
+        metadata: { planId, amount: Number(t.paidAmount) || 0, installmentNumber: Number(it.installmentNumber) },
+      });
+    }
+
     return NextResponse.json({ feeInstallmentPlan });
   } catch (error) {
     console.error("Update fee installment plan error:", error);
@@ -257,7 +294,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     const session = await getSessionUser();
 
@@ -293,14 +330,33 @@ export async function DELETE(_request: Request, context: RouteContext) {
       );
     }
 
-    const deleted = await deleteFeeInstallmentPlan(planId);
+    const { ipAddress, userAgent } = getRequestMetadata(request);
+    await deleteFeeInstallmentPlan(planId);
 
-    if (!deleted) {
-      return NextResponse.json(
-        { error: "Fee installment plan not found." },
-        { status: 404 },
-      );
-    }
+    appendFeeTransactionLog({
+      transactionType: "installment_plan_deleted",
+      performedBy: session.id,
+      performedByName: session.name,
+      performedByEmail: session.email ?? "",
+      ipAddress,
+      userAgent,
+      amount: existingPlan.totalFee || 0,
+      planId,
+      studentId: existingPlan.studentId,
+      studentName: existingPlan.studentName,
+      courseName: existingPlan.courseName,
+    }).catch(() => {});
+
+    logAction({
+      action: "delete",
+      category: "fees",
+      details: `Deleted fee installment plan ${planId}`,
+      path: "/api/fee-installments/" + planId,
+      method: "DELETE",
+      request,
+      session,
+      metadata: { planId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

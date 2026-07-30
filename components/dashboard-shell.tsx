@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import {
   ArrowUpRight,
@@ -35,6 +35,7 @@ import { NotificationCenter } from "./notification-center";
 import { NotificationBell } from "./notification-bell";
 import { DashboardAnalytics } from "./dashboard-analytics";
 import type {
+  AvailableModule,
   DashboardBundle,
   LibraryBook,
   ManagedUser,
@@ -45,6 +46,7 @@ import type {
   SessionUser,
   TestSubmission,
 } from "@/lib/types";
+import { moduleToSidebarItem } from "@/lib/sidebar-module-map";
 import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 import { StudentFeedbackManager } from "./student-feedback-manager";
 import { LeaveManager } from "@/components/leave-manager";
@@ -55,7 +57,8 @@ import { BiometricIntegration } from "@/components/biometric-integration";
 import { StaffPayrollManager } from "./staff-payroll-manager";
 import { FacultyPerformanceManager } from "./faculty-performance-manager";
 import { StaffPayoutManager } from "./staff-payout-manager";
-import { FeeDeletionAuditLogComponent as FeeDeletionAuditLogView } from "./fee-deletion-audit-log";
+import { FeeTransactionLogComponent as FeeTransactionLogView } from "./fee-transaction-log";
+import { AuditLogPanel } from "./audit-log-panel";
 function SectionLoading() {
   return (
     <div
@@ -412,13 +415,8 @@ const sidebarByRole = {
 
   counsellor: [
     { id: "overview", label: "Overview" },
-    { id: "profile", label: "Profile" },
-    { id: "sales-crm", label: "Sales CRM" },
-    { id: "enquiries", label: "Enquiries" },
-    { id: "ptm", label: "PTM" },
     { id: "staff-attendance", label: "My Attendance" },
-    { id: "messages", label: "Notice Board" },
-    { id: "chat", label: "Chat" },
+    { id: "staff-payouts", label: "My Payouts" },
   ],
 
   admin: [
@@ -443,8 +441,10 @@ const sidebarByRole = {
     { id: "chat-monitor", label: "Chat Monitor" },
     { id: "ptm", label: "PTM" },
     { id: "fees", label: "Billing Hub" },
+    { id: "fee-installments", label: "Installments" },
     { id: "profit-loss", label: "Profit & Loss" },
-    { id: "fee-deletion-audit", label: "Fee Deletion Audit" },
+    { id: "fee-deletion-audit", label: "Transaction Log" },
+    { id: "audit-log", label: "Audit Log" },
     { id: "staff-payouts", label: "Staff Payouts" },
     { id: "sales-crm", label: "Sales CRM" },
     { id: "placement-jobs", label: "Placement Jobs" },
@@ -563,6 +563,7 @@ const menuSections = [
       "staff-attendance",
       "biometric",
       "roles",
+      "audit-log",
     ],
   },
   {
@@ -596,6 +597,7 @@ const menuSections = [
     label: "Finance",
     items: [
       "fees",
+      "fee-installments",
       "profit-loss",
       "fee-deletion-audit",
       "staff-payouts",
@@ -1144,6 +1146,11 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  "audit-log": (
+    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    </svg>
+  ),
 };
 
 export function DashboardShell({
@@ -1159,14 +1166,36 @@ export function DashboardShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarSearch, setSidebarSearch] = useState("");
-  const defaultSection = getDefaultDashboardSection(role);
-
   const isGovExamStudent =
     role === "student" &&
     isGovernmentExamCourse(
       dashboard.profile?.courseWanted,
       dashboard.profile?.courseWantedTitle,
     );
+
+  const resolvedSidebarItems = useMemo(() => {
+    const base = sidebarByRole[role] ?? [];
+    const mods = dashboard.effectiveModules;
+    if (!mods || mods.length === 0) return base;
+    const baseIds = new Set<string>(base.map((item) => item.id));
+    const extras: { id: string; label: string }[] = [];
+    for (const mod of mods) {
+      const entry = moduleToSidebarItem[mod];
+      if (entry && !baseIds.has(entry.id)) {
+        extras.push(entry);
+        baseIds.add(entry.id);
+      }
+    }
+    return extras.length ? [...base, ...extras] : base;
+  }, [role, dashboard.effectiveModules]);
+
+  const validSectionIds = useMemo(() => {
+    const ids = new Set<string>(resolvedSidebarItems.map((item) => item.id));
+    ids.add("notifications");
+    return ids;
+  }, [resolvedSidebarItems]);
+
+  const defaultSection = resolvedSidebarItems[0]?.id ?? "overview";
 
   const [activeSection, setActiveSection] = useState<string>(defaultSection);
 
@@ -1177,28 +1206,28 @@ export function DashboardShell({
 
     const savedSection = window.sessionStorage.getItem(storageKey);
 
-    if (savedSection && isValidDashboardSection(role, savedSection)) {
+    if (savedSection && validSectionIds.has(savedSection)) {
       setActiveSection(savedSection);
     } else {
       setActiveSection(defaultSection);
     }
 
     setHasRestoredActiveSection(true);
-  }, [defaultSection, role, session?.id]);
+  }, [defaultSection, role, session?.id, validSectionIds]);
 
   useEffect(() => {
     if (!hasRestoredActiveSection) {
       return;
     }
 
-    if (!isValidDashboardSection(role, activeSection)) {
+    if (!validSectionIds.has(activeSection)) {
       return;
     }
 
     const storageKey = `smart-tutor-dashboard-section:${session?.id ?? role}`;
 
     window.sessionStorage.setItem(storageKey, activeSection);
-  }, [activeSection, hasRestoredActiveSection, role, session?.id]);
+  }, [activeSection, hasRestoredActiveSection, role, session?.id, validSectionIds]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -1286,6 +1315,7 @@ export function DashboardShell({
   const showStaffPayroll = activeSection === "staff-payroll";
   const showStaffPayouts = activeSection === "staff-payouts";
   const showFeeDeletionAudit = activeSection === "fee-deletion-audit";
+  const showAuditLog = activeSection === "audit-log";
   const showFacultyPerformance = activeSection === "faculty-performance";
   const showProfile = activeSection === "profile";
   const showCertificates = activeSection === "certificates";
@@ -1608,7 +1638,7 @@ export function DashboardShell({
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
           {menuSections.map((section) => {
-            const sectionItems = sidebarByRole[role].filter((item) =>
+            const sectionItems = resolvedSidebarItems.filter((item) =>
               section.items.includes(item.id),
             );
             const filteredItems = sidebarSearch
@@ -2183,7 +2213,7 @@ export function DashboardShell({
           ) : null}
 
           {showRoles && role === "admin" ? (
-            <RolesManager managedUsers={managedUsers} />
+            <RolesManager managedUsers={localManagedUsers} />
           ) : null}
 
           {showBiometric ? <BiometricIntegration role={role} /> : null}
@@ -2242,7 +2272,11 @@ export function DashboardShell({
           ) : null}
 
           {showFeeDeletionAudit && role === "admin" ? (
-            <FeeDeletionAuditLogView session={session} />
+            <FeeTransactionLogView session={session} />
+          ) : null}
+
+          {showAuditLog && role === "admin" ? (
+            <AuditLogPanel session={session} />
           ) : null}
 
           {showFacultyPerformance && role === "admin" ? (

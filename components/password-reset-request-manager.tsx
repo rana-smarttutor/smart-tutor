@@ -325,7 +325,7 @@ If you did not request this password reset, please contact our support team imme
                         className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs font-bold text-[var(--color-heading)] transition hover:opacity-80"
                         title="View in Accounts"
                       >
-                        <i className="bi bi-person mr-1" />
+                        <svg className="mr-1 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         View Profile
                       </button>
                     )}
@@ -337,7 +337,7 @@ If you did not request this password reset, please contact our support team imme
                           onClick={() => updateStatus(req.id || key, "contacted")}
                           className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
                         >
-                          <i className="bi bi-phone mr-1" />
+                          <svg className="mr-1 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                           Contacted
                         </button>
                         <button
@@ -347,7 +347,7 @@ If you did not request this password reset, please contact our support team imme
                           }
                           className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-violet-700"
                         >
-                          <i className="bi bi-shield-lock mr-1" />
+                          <svg className="mr-1 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                           {isExpanded ? "Close" : "Reset"}
                         </button>
                       </>
@@ -360,7 +360,7 @@ If you did not request this password reset, please contact our support team imme
                           onClick={() => updateStatus(req.id || key, "resolved")}
                           className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-bold text-green-700 transition hover:bg-green-100"
                         >
-                          <i className="bi bi-check-circle mr-1" />
+                          <svg className="mr-1 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           Close
                         </button>
                         <button
@@ -370,7 +370,7 @@ If you did not request this password reset, please contact our support team imme
                           }
                           className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-violet-700"
                         >
-                          <i className="bi bi-shield-lock mr-1" />
+                          <svg className="mr-1 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                           {isExpanded ? "Close" : "Reset"}
                         </button>
                       </>
@@ -378,7 +378,7 @@ If you did not request this password reset, please contact our support team imme
 
                     {req.status === "resolved" && (
                       <span className="rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-green-700">
-                        <i className="bi bi-check-circle-fill mr-1" />
+                        <svg className="mr-1 h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" /></svg>
                         Closed
                       </span>
                     )}
@@ -390,7 +390,7 @@ If you did not request this password reset, please contact our support team imme
                       className="rounded-lg border border-red-200 bg-red-50 p-2 text-red-500 transition hover:bg-red-100 hover:text-red-700 disabled:opacity-50"
                       title="Delete request"
                     >
-                      <i className="bi bi-trash text-sm" />
+                                            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   </div>
                 </div>
@@ -420,7 +420,7 @@ If you did not request this password reset, please contact our support team imme
                           disabled={isResetting || password.length < 8}
                           className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-violet-700 disabled:opacity-50"
                         >
-                          <i className="bi bi-shield-check" />
+                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.59 3.689 10.352 8.618 11.544a3 3 0 00.764 0C17.311 19.352 21 14.59 21 9a12.03 12.03 0 00-.382-2.016z" /></svg>
                           {isResetting ? "Resetting..." : "Reset & Notify"}
                         </button>
                       </div>
@@ -451,13 +451,18 @@ If you did not request this password reset, please contact our support team imme
                             }
                             className="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-[11px] font-bold text-violet-700 transition hover:bg-violet-50"
                           >
-                            <i
-                              className={`bi ${
-                                copiedId === key
-                                  ? "bi-check-circle-fill"
-                                  : "bi-clipboard"
-                              }`}
-                            />
+                            <svg
+                              className="h-3.5 w-3.5 shrink-0"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              {copiedId === key ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                              )}
+                            </svg>
                             {copiedId === key ? "Copied!" : "Copy Template"}
                           </button>
                         </div>

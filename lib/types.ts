@@ -628,6 +628,7 @@ export type DashboardBundle = {
   analytics?: DashboardAnalytics;
   certificates?: Certificate[];
   staffAttendanceRecords?: StaffAttendanceRecord[];
+  effectiveModules?: AvailableModule[];
 };
 
 // =========================
@@ -1986,33 +1987,72 @@ export type SalaryTransfer = {
 };
 
 // =========================
-// Fee Deletion Audit Log
+// Fee Transaction Log
 // =========================
 
-export type FeeDeletionAuditLog = {
+export type FeeTransactionType =
+  | "invoice_created"
+  | "invoice_deleted"
+  | "installment_payment"
+  | "installment_plan_deleted"
+  | "payout_created"
+  | "payout_updated"
+  | "payout_deleted"
+  | "payout_payment_recorded";
+
+export type FeeTransactionLog = {
   id: string;
-  receiptNo: string;
-  studentId: string;
-  studentName: string;
-  studentAdmNo?: string;
-  courseName?: string;
-  feeTitle: string;
-  feeType?: string;
-  principalAmount: number;
-  fineAmount: number;
-  discountAmount: number;
-  netReversed: number;
-  paymentMode: string;
-  paymentDate: string;
+
+  transactionType: FeeTransactionType;
+
+  // Performer
+  performedBy: string;
   performedByName: string;
   performedByEmail: string;
-  ipAddress?: string;
-  balanceBeforePaid: number;
-  balanceBeforeDue: number;
-  balanceAfterPaid: number;
-  balanceAfterDue: number;
-  previousFeeStatus: string;
-  newFeeStatus: string;
+
+  // Request metadata
+  ipAddress: string;
+  userAgent: string;
+
+  // Amount
+  amount: number;
+
+  // Invoice / Installment fields
+  invoiceId?: string;
+  receiptNo?: string;
+  studentId?: string;
+  studentName?: string;
+  studentAdmNo?: string;
+  courseName?: string;
+  feeTitle?: string;
+  feeType?: string;
+  principalAmount?: number;
+  fineAmount?: number;
+  discountAmount?: number;
+  netReversed?: number;
+  paymentMode?: string;
+  paymentDate?: string;
+  balanceBeforePaid?: number;
+  balanceBeforeDue?: number;
+  balanceAfterPaid?: number;
+  balanceAfterDue?: number;
+  previousFeeStatus?: string;
+  newFeeStatus?: string;
+
+  // Installment-specific
+  planId?: string;
+  installmentNumber?: number;
+  installmentTitle?: string;
+
+  // Payout-specific
+  payoutId?: string;
+  staffId?: string;
+  staffName?: string;
+  month?: string;
+  payoutTitle?: string;
+  particulars?: string;
+
+  // Timestamps
   createdAt: string;
 };
 

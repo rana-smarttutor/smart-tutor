@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { deleteFeeInvoice, updateFeeInvoice } from "@/lib/data-store";
+import {
+  deleteFeeInvoice,
+  updateFeeInvoice,
+  getFeeInvoiceById,
+  appendFeeTransactionLog,
+  getRequestMetadata,
+} from "@/lib/data-store";
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import type { PaymentTransaction } from "@/lib/types";
 
 type RouteContext = {
@@ -64,7 +71,7 @@ if (session.role !== "admin") {
   return NextResponse.json({ feeInvoice });
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   const session = await getSessionUser();
 
   if (!session) {
@@ -80,11 +87,44 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { invoiceId } = await context.params;
 
-  const deleted = await deleteFeeInvoice(invoiceId);
-
-  if (!deleted) {
+  const invoice = await getFeeInvoiceById(invoiceId);
+  if (!invoice) {
     return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
   }
+
+  const { ipAddress, userAgent } = getRequestMetadata(request);
+
+  await deleteFeeInvoice(invoiceId);
+
+  appendFeeTransactionLog({
+    transactionType: "invoice_deleted",
+    performedBy: session.id,
+    performedByName: session.name,
+    performedByEmail: session.email ?? "",
+    ipAddress,
+    userAgent,
+    amount: invoice.amount,
+    invoiceId: invoice.id,
+    receiptNo: invoice.receiptNo,
+    studentId: invoice.studentId,
+    studentName: invoice.studentName,
+    feeTitle: invoice.title,
+    feeType: invoice.particulars,
+      principalAmount: invoice.amount,
+      paymentMode: invoice.paymentMode || undefined,
+      paymentDate: invoice.dueDate,
+  }).catch(() => {});
+
+  logAction({
+    action: "delete",
+    category: "fees",
+    details: `Deleted invoice ${invoice.receiptNo || invoiceId} for ${invoice.studentName || "(unknown)"} (₹${invoice.amount})`,
+    path: "/api/invoices/" + invoiceId,
+    method: "DELETE",
+    request,
+    session,
+    metadata: { invoiceId, receiptNo: invoice.receiptNo, studentId: invoice.studentId, studentName: invoice.studentName, amount: invoice.amount },
+  });
 
   return NextResponse.json({ success: true });
 }

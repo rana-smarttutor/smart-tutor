@@ -6,6 +6,7 @@ import {
   sanitizePasswordInput,
   sanitizeTextInput,
 } from "@/lib/validation";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -114,5 +115,15 @@ export async function POST(request: Request) {
    * Faculty credentials create an educator session.
    * Parent credentials create a parent session.
    */
+  logAction({
+    action: "login",
+    category: "auth",
+    details: `User ${user.email} (${user.name || user.id}) logged in`,
+    path: "/api/auth/login",
+    method: "POST",
+    request,
+    session: user,
+  });
+
   return createSessionResponse(user);
 }

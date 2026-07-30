@@ -7,7 +7,10 @@ import {
   getFeeInvoiceStudentDetails,
   getFeeInvoicesForRole,
   getNotificationRecipientIdsForStudents,
+  appendFeeTransactionLog,
+  getRequestMetadata,
 } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 import type { PaymentTransaction } from "@/lib/types";
 
 function canManageFees(role: string | undefined) {
@@ -205,6 +208,36 @@ export async function POST(request: Request) {
         link: "/dashboard",
       });
     }
+
+    const { ipAddress, userAgent } = getRequestMetadata(request);
+    appendFeeTransactionLog({
+      transactionType: "invoice_created",
+      performedBy: session.id,
+      performedByName: session.name,
+      performedByEmail: session.email ?? "",
+      ipAddress,
+      userAgent,
+      amount: feeInvoice.amount,
+      invoiceId: feeInvoice.id,
+      receiptNo: feeInvoice.receiptNo,
+      studentId: feeInvoice.studentId,
+      studentName: feeInvoice.studentName,
+      feeTitle: feeInvoice.title,
+      feeType: feeInvoice.particulars,
+      paymentMode: feeInvoice.paymentMode || undefined,
+      paymentDate: feeInvoice.dueDate,
+    }).catch(() => {});
+
+    logAction({
+      action: "create",
+      category: "fees",
+      details: `Created invoice ${feeInvoice.receiptNo} for ${feeInvoice.studentName} (₹${feeInvoice.amount})`,
+      path: "/api/invoices",
+      method: "POST",
+      request,
+      session,
+      metadata: { invoiceId: feeInvoice.id, receiptNo: feeInvoice.receiptNo, studentId: feeInvoice.studentId, studentName: feeInvoice.studentName, amount: feeInvoice.amount },
+    });
 
     return NextResponse.json(
       {

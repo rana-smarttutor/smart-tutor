@@ -90,6 +90,9 @@ export function RolesManager({ managedUsers }: Props) {
   const [error, setError] = useState("");
 
   const [statusBanner, setStatusBanner] = useState<StatusBanner | null>(null);
+  const [roleSearch, setRoleSearch] = useState("");
+  const [staffSearch, setStaffSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const bannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   function showStatus(
@@ -189,6 +192,24 @@ export function RolesManager({ managedUsers }: Props) {
 
   const defaultUsers = managedUsers.filter((u) => !isUserCustomAccess(u.id));
   const customUsers = managedUsers.filter((u) => isUserCustomAccess(u.id));
+
+  const filteredRoles = roleSearch
+    ? roles.filter((r) => r.name.toLowerCase().includes(roleSearch.toLowerCase()))
+    : roles;
+  const staffFilter = (u: { name: string; email: string }) =>
+    !staffSearch
+      ? true
+      : u.name.toLowerCase().includes(staffSearch.toLowerCase()) ||
+        u.email.toLowerCase().includes(staffSearch.toLowerCase());
+  const filteredCustomUsers = customUsers.filter(staffFilter);
+  const filteredDefaultUsers = defaultUsers.filter(staffFilter);
+  const filteredManagedUsers = userSearch
+    ? managedUsers.filter(
+        (u) =>
+          u.name.toLowerCase().includes(userSearch.toLowerCase()) ||
+          u.email.toLowerCase().includes(userSearch.toLowerCase()),
+      )
+    : managedUsers;
 
   async function handleCreateRole(e: React.FormEvent) {
     e.preventDefault();
@@ -720,19 +741,40 @@ export function RolesManager({ managedUsers }: Props) {
       {/* ======================== ROLES TAB ======================== */}
       {activeTab === "roles" && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <div className="surface rounded-[2rem] p-6">
+            <div className="surface rounded-[2rem] p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-[var(--color-heading)]">
                 Custom Roles
               </h3>
             </div>
-            {roles.length === 0 ? (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-[var(--color-muted)]">
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search roles..."
+                  value={roleSearch}
+                  onChange={(e) => setRoleSearch(e.target.value)}
+                  className="w-full bg-transparent text-sm text-[var(--color-heading)] placeholder-[var(--color-muted)] outline-none"
+                />
+                {roleSearch && (
+                  <button type="button" onClick={() => setRoleSearch("")} className="text-[var(--color-muted)] hover:text-[var(--color-heading)]">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+            {filteredRoles.length === 0 ? (
               <p className="text-sm text-[var(--color-muted)]">
-                No custom roles created yet.
+                {roleSearch ? "No roles match your search." : "No custom roles created yet."}
               </p>
             ) : (
               <div className="space-y-4">
-                {roles.map((role) => {
+                {filteredRoles.map((role) => {
                   const assignedUsers = getAssignedUsers(role.id);
                   const roleModules = role.modules || [];
                   const access = role.moduleAccess || {};
@@ -977,9 +1019,9 @@ export function RolesManager({ managedUsers }: Props) {
                 <div className="max-h-64 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-3">
                   {renderModuleToggles(
                     newRole.modules,
-                    (v) => setNewRole({ ...newRole, modules: v }),
+                    (v) => setNewRole((prev) => ({ ...prev, modules: v })),
                     newRole.moduleAccess,
-                    (v) => setNewRole({ ...newRole, moduleAccess: v }),
+                    (v) => setNewRole((prev) => ({ ...prev, moduleAccess: v })),
                   )}
                 </div>
               </div>
@@ -997,7 +1039,26 @@ export function RolesManager({ managedUsers }: Props) {
       {/* ======================== STAFF TAB ======================== */}
       {activeTab === "staff" && (
         <div className="space-y-6">
-          {customUsers.length > 0 && (
+          <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-[var(--color-muted)]">
+            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search staff by name or email..."
+              value={staffSearch}
+              onChange={(e) => setStaffSearch(e.target.value)}
+              className="w-full bg-transparent text-sm text-[var(--color-heading)] placeholder-[var(--color-muted)] outline-none"
+            />
+            {staffSearch && (
+              <button type="button" onClick={() => setStaffSearch("")} className="text-[var(--color-muted)] hover:text-[var(--color-heading)]">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+          {filteredCustomUsers.length > 0 && (
             <div className="surface overflow-hidden rounded-[2rem]">
               <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
                 <div className="flex items-center gap-2">
@@ -1018,7 +1079,7 @@ export function RolesManager({ managedUsers }: Props) {
                     Custom Access Accounts
                   </span>
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                    {customUsers.length}
+                    {filteredCustomUsers.length}
                   </span>
                 </div>
                 <span className="text-xs text-[var(--color-muted)]">
@@ -1047,7 +1108,7 @@ export function RolesManager({ managedUsers }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {customUsers.map((user) => {
+                    {filteredCustomUsers.map((user) => {
                       const userAssignments = assignments.filter(
                         (a) => a.userId === user.id,
                       );
@@ -1184,15 +1245,15 @@ export function RolesManager({ managedUsers }: Props) {
                 <span className="text-sm font-bold text-[var(--color-heading)]">
                   Default Access Accounts
                 </span>
-                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  {defaultUsers.length}
-                </span>
+                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                    {filteredDefaultUsers.length}
+                  </span>
               </div>
               <span className="text-xs text-[var(--color-muted)]">
                 Follow system role permissions — no overrides
               </span>
             </div>
-            {defaultUsers.length === 0 ? (
+            {filteredDefaultUsers.length === 0 ? (
               <div className="p-8 text-center text-sm text-[var(--color-muted)]">
                 All staff members have custom access assignments.
               </div>
@@ -1216,7 +1277,7 @@ export function RolesManager({ managedUsers }: Props) {
                     </tr>
                   </thead>
                   <tbody>
-                    {defaultUsers.map((user) => {
+                    {filteredDefaultUsers.map((user) => {
                       const userAssignments = assignments.filter(
                         (a) => a.userId === user.id,
                       );
@@ -1338,6 +1399,27 @@ export function RolesManager({ managedUsers }: Props) {
               Set direct module access and read/write level per staff member
             </span>
           </div>
+          <div className="border-b border-[var(--color-border)] px-6 py-3">
+            <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-[var(--color-muted)]">
+              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search user by name or email..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="w-full bg-transparent text-sm text-[var(--color-heading)] placeholder-[var(--color-muted)] outline-none"
+              />
+              {userSearch && (
+                <button type="button" onClick={() => setUserSearch("")} className="text-[var(--color-muted)] hover:text-[var(--color-heading)]">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
@@ -1357,7 +1439,7 @@ export function RolesManager({ managedUsers }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {managedUsers.map((user) => {
+                {filteredManagedUsers.map((user) => {
                   const userAssignments = assignments.filter(
                     (a) => a.userId === user.id,
                   );

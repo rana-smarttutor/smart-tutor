@@ -6,7 +6,10 @@ import {
   createStaffPayout,
   appendStaffPayoutAuditLog,
   createNotifications,
+  appendFeeTransactionLog,
+  getRequestMetadata,
 } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 
@@ -92,8 +95,41 @@ export async function POST(request: Request) {
       createdBy: session.id,
     });
 
-    // Audit log
+    // Unified transaction log
     const receiptNo = (payout as any).receiptNo || "N/A";
+    const { ipAddress, userAgent } = getRequestMetadata(request);
+    const payoutTxType = paymentMode && paidDate ? "payout_payment_recorded" : "payout_created";
+    appendFeeTransactionLog({
+      transactionType: payoutTxType,
+      performedBy: session.id,
+      performedByName: session.name,
+      performedByEmail: session.email ?? "",
+      ipAddress,
+      userAgent,
+      amount: numAmount,
+      payoutId: payout.id,
+      receiptNo,
+      staffId,
+      staffName,
+      month,
+      payoutTitle: title,
+      particulars: particulars || "",
+      paymentMode: paymentMode || undefined,
+      paymentDate: paidDate || undefined,
+    }).catch(() => {});
+
+    logAction({
+      action: "create",
+      category: "payout",
+      details: `Created payout ${title} for ${staffName} (₹${numAmount})`,
+      path: "/api/staff-payouts",
+      method: "POST",
+      request,
+      session,
+      metadata: { payoutId: payout.id, staffId, staffName, amount: numAmount, month },
+    });
+
+    // Audit log
     await appendStaffPayoutAuditLog({
       payoutId: payout.id,
       receiptNo,

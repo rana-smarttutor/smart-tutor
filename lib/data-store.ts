@@ -104,7 +104,7 @@ import type {
   StaffPayoutAuditAction,
   PaymentTransaction,
   PaymentMode,
-  FeeDeletionAuditLog,
+  FeeTransactionLog,
   Certificate,
   DoubtItem,
   DoubtAnswer,
@@ -252,8 +252,11 @@ export const COLLECTIONS = {
   // Staff Payout Audit Logs
   staffPayoutAuditLogs: "staffPayoutAuditLogs",
 
-  // Fee Deletion Audit Logs
-  feeDeletionAuditLogs: "feeDeletionAuditLogs",
+  // Fee Transaction Logs
+  feeTransactionLogs: "feeTransactionLogs",
+
+  // Action Logs
+  actionLogs: "actionLogs",
 
   // Certificates
   certificates: "certificates",
@@ -9656,16 +9659,16 @@ export async function getStaffPayoutAuditLogsByPayout(
   );
 }
 
-// ═══ Fee Deletion Audit Log ═══
+// ═══ Fee Transaction Log ═══
 
-export async function appendFeeDeletionAuditLog(
-  entry: Omit<FeeDeletionAuditLog, "id" | "createdAt">,
+export async function appendFeeTransactionLog(
+  entry: Omit<FeeTransactionLog, "id" | "createdAt">,
 ) {
-  const collection = await getCollection<FeeDeletionAuditLog>(
-    COLLECTIONS.feeDeletionAuditLogs,
+  const collection = await getCollection<FeeTransactionLog>(
+    COLLECTIONS.feeTransactionLogs,
   );
-  const log: FeeDeletionAuditLog = {
-    id: `fdl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  const log: FeeTransactionLog = {
+    id: `ftl-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     ...entry,
     createdAt: new Date().toISOString(),
   };
@@ -9673,28 +9676,35 @@ export async function appendFeeDeletionAuditLog(
   return log;
 }
 
-export async function getFeeDeletionAuditLogs(filters?: {
-  studentSearch?: string;
-  deletedBy?: string;
+export async function getFeeTransactionLogs(filters?: {
+  transactionType?: string;
+  search?: string;
+  performedBy?: string;
   dateFrom?: string;
   dateTo?: string;
   paymentMode?: string;
   limit?: number;
 }) {
-  const collection = await getCollection<FeeDeletionAuditLog>(
-    COLLECTIONS.feeDeletionAuditLogs,
+  const collection = await getCollection<FeeTransactionLog>(
+    COLLECTIONS.feeTransactionLogs,
   );
   const query: Record<string, unknown> = {};
 
-  if (filters?.studentSearch) {
+  if (filters?.transactionType) {
+    query.transactionType = filters.transactionType;
+  }
+
+  if (filters?.search) {
     query.$or = [
-      { studentName: { $regex: filters.studentSearch, $options: "i" } },
-      { studentAdmNo: { $regex: filters.studentSearch, $options: "i" } },
-      { receiptNo: { $regex: filters.studentSearch, $options: "i" } },
+      { studentName: { $regex: filters.search, $options: "i" } },
+      { studentAdmNo: { $regex: filters.search, $options: "i" } },
+      { receiptNo: { $regex: filters.search, $options: "i" } },
+      { staffName: { $regex: filters.search, $options: "i" } },
+      { performedByName: { $regex: filters.search, $options: "i" } },
     ];
   }
-  if (filters?.deletedBy) {
-    query.performedByName = { $regex: filters.deletedBy, $options: "i" };
+  if (filters?.performedBy) {
+    query.performedByName = { $regex: filters.performedBy, $options: "i" };
   }
   if (filters?.dateFrom || filters?.dateTo) {
     query.createdAt = {};
@@ -9716,9 +9726,9 @@ export async function getFeeDeletionAuditLogs(filters?: {
   return stripMongoIds(logs);
 }
 
-export async function getFeeDeletionAuditLogStats() {
-  const collection = await getCollection<FeeDeletionAuditLog>(
-    COLLECTIONS.feeDeletionAuditLogs,
+export async function getFeeTransactionLogStats() {
+  const collection = await getCollection<FeeTransactionLog>(
+    COLLECTIONS.feeTransactionLogs,
   );
   const all = await collection.find({}).toArray();
   const now = new Date();
@@ -9728,16 +9738,28 @@ export async function getFeeDeletionAuditLogStats() {
       d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
     );
   });
+  const byType: Record<string, number> = {};
+  for (const l of all) {
+    byType[l.transactionType] = (byType[l.transactionType] || 0) + 1;
+  }
   return {
-    totalDeletions: all.length,
+    totalTransactions: all.length,
     thisMonth: thisMonth.length,
-    totalPrincipalDeleted: all.reduce(
-      (s, l) => s + (l.principalAmount || 0),
-      0,
-    ),
-    totalNetReversed: all.reduce((s, l) => s + (l.netReversed || 0), 0),
-    totalFineReversed: all.reduce((s, l) => s + (l.fineAmount || 0), 0),
+    totalAmount: all.reduce((s, l) => s + (l.amount || 0), 0),
+    byType,
   };
+}
+
+export function getRequestMetadata(request: Request) {
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ipAddress =
+    forwarded?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip") ||
+    request.headers.get("x-forwarded-host") ||
+    request.headers.get("host") ||
+    "unknown";
+  const userAgent = request.headers.get("user-agent") || "unknown";
+  return { ipAddress, userAgent };
 }
 
 // =========================
@@ -10487,4 +10509,104 @@ export async function deleteBusinessExpense(
   });
 
   return result.deletedCount > 0;
+}
+
+// ═══ Action Audit Log ═══
+
+export async function appendActionLogEntries(
+  entries: Record<string, unknown>[],
+) {
+  if (entries.length === 0) return;
+  const collection = await getCollection(COLLECTIONS.actionLogs);
+  await collection.insertMany(entries as any[], { ordered: false });
+}
+
+export async function getActionLogs(filters: {
+  userId?: string;
+  action?: string;
+  category?: string;
+  search?: string;
+  ip?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const collection = await getCollection(COLLECTIONS.actionLogs);
+  const query: Record<string, unknown> = {};
+
+  if (filters.userId) query.userId = filters.userId;
+  if (filters.action) query.action = filters.action;
+  if (filters.category) query.category = filters.category;
+  if (filters.ip) query.ip = { $regex: filters.ip, $options: "i" };
+
+  if (filters.search) {
+    query.$or = [
+      { details: { $regex: filters.search, $options: "i" } },
+      { userEmail: { $regex: filters.search, $options: "i" } },
+      { userName: { $regex: filters.search, $options: "i" } },
+      { ip: { $regex: filters.search, $options: "i" } },
+      { path: { $regex: filters.search, $options: "i" } },
+    ];
+  }
+
+  if (filters.dateFrom || filters.dateTo) {
+    query.timestamp = {};
+    if (filters.dateFrom)
+      (query.timestamp as Record<string, unknown>).$gte = filters.dateFrom;
+    if (filters.dateTo)
+      (query.timestamp as Record<string, unknown>).$lte =
+        filters.dateTo + "T23:59:59.999Z";
+  }
+
+  const page = Math.max(1, filters.page ?? 1);
+  const limit = Math.min(200, Math.max(1, filters.limit ?? 50));
+  const skip = (page - 1) * limit;
+
+  const [rawLogs, total] = await Promise.all([
+    collection
+      .find(query)
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray(),
+    collection.countDocuments(query),
+  ]);
+
+  return { logs: stripMongoIds(rawLogs), total, page, limit };
+}
+
+export async function getActionLogStats() {
+  const collection = await getCollection(COLLECTIONS.actionLogs);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+
+  const [allLogs, todayLogs] = await Promise.all([
+    collection.find({}).toArray(),
+    collection.find({ timestamp: { $gte: todayStart } }).toArray(),
+  ]);
+
+  const byAction: Record<string, number> = {};
+  const byCategory: Record<string, number> = {};
+  const userIds = new Set<string>();
+  const ips = new Set<string>();
+
+  for (const log of allLogs) {
+    const l = log as Record<string, unknown>;
+    byAction[String(l.action || "unknown")] =
+      (byAction[String(l.action || "unknown")] || 0) + 1;
+    byCategory[String(l.category || "unknown")] =
+      (byCategory[String(l.category || "unknown")] || 0) + 1;
+    if (l.userId) userIds.add(String(l.userId));
+    if (l.ip) ips.add(String(l.ip));
+  }
+
+  return {
+    total: allLogs.length,
+    today: todayLogs.length,
+    byAction,
+    byCategory,
+    uniqueUsers: userIds.size,
+    uniqueIps: ips.size,
+  };
 }

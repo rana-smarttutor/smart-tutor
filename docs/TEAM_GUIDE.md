@@ -1,5 +1,40 @@
 # Smart Tutors Team Guide
 
+## Data Logging & Privacy
+
+### Audit Log System
+
+The platform includes a comprehensive server‑side audit logging system that records all significant actions for security monitoring and incident investigation.
+
+**What is logged:**
+- Authentication events: login, logout, session expiry
+- CRUD operations: create, update, delete on fees, invoices, staff payouts, installment plans
+- API calls to audited endpoints
+- Bulk operations
+
+**What data is collected per entry:**
+- Timestamp (ISO 8601)
+- User ID, name, email, and role
+- Action type and category
+- IP address (from `x-forwarded-for` / `x-real-ip` / `cf-connecting-ip` headers)
+- User-Agent string (browser name + version, OS name + version, device type)
+- Referer and Accept-Language headers
+- Cloudflare country code (`cf-ipcountry`) when available
+- Request path and HTTP method
+- Response status code and duration
+- Best-effort IP geolocation (city, region, country via `ipapi.co` — non‑blocking, silently degrades)
+
+**How it is stored:**
+1. Each action is appended to a server‑side temporary file (`/tmp/audit-log.ndjson`) for the active server instance.
+2. Every 5 minutes (or when the buffer reaches 50 entries), the accumulated entries are flushed to the MongoDB `actionLogs` collection in a single `insertMany` batch.
+3. The temp file is truncated after a successful flush to prevent unbounded growth.
+
+**Data retention:** Logs are kept for 90 days by default (configurable via a TTL index on the `timestamp` field). Older logs are automatically purged by MongoDB.
+
+**Who can access:** Only users with the `admin` role can view the audit log panel in the dashboard. The data is served through `GET /api/admin/audit-logs` which enforces role‑based access control.
+
+**Privacy note:** IP geolocation is performed by a third‑party service (`ipapi.co`). The lookup is fire‑and‑forget (non‑blocking) and only resolves city / region / country — we do not store precise coordinates or associate geodata with personal identities beyond the user's authenticated session. If the geolocation service is unreachable, the entry is logged without location data.
+
 ## What exists now
 
 - Public landing page with polished institute storytelling and animated sections.

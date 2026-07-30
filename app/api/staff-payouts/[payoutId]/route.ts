@@ -7,7 +7,10 @@ import {
   appendStaffPayoutAuditLog,
   createNotifications,
   getStaffPayoutAuditLogsByPayout,
+  appendFeeTransactionLog,
+  getRequestMetadata,
 } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 
@@ -79,6 +82,38 @@ export async function PATCH(
     // Determine if this was a payment recording
     const isPaymentRecorded = body.paymentMode && body.paidDate && updated.status === "paid";
 
+    // Unified transaction log
+    const { ipAddress, userAgent } = getRequestMetadata(request);
+    const payoutTxType = isPaymentRecorded ? "payout_payment_recorded" : "payout_updated";
+    appendFeeTransactionLog({
+      transactionType: payoutTxType,
+      performedBy: session.id,
+      performedByName: session.name,
+      performedByEmail: session.email ?? "",
+      ipAddress,
+      userAgent,
+      amount: updated.amount,
+      payoutId,
+      receiptNo,
+      staffId,
+      staffName,
+      month: updated.month,
+      payoutTitle: updated.title,
+      paymentMode: body.paymentMode || undefined,
+      paymentDate: body.paidDate || undefined,
+    }).catch(() => {});
+
+    logAction({
+      action: "update",
+      category: "payout",
+      details: `Updated payout ${payoutId} - payment recorded`,
+      path: "/api/staff-payouts/" + payoutId,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { payoutId, amount: updated.amount },
+    });
+
     // Audit log
     await appendStaffPayoutAuditLog({
       payoutId,
@@ -144,7 +179,36 @@ export async function DELETE(
     const lastMonth = existingLogs.length > 0 ? existingLogs[0].month : undefined;
     const lastTitle = existingLogs.length > 0 ? existingLogs[0].title : undefined;
 
+    const { ipAddress, userAgent } = getRequestMetadata(request);
     await deleteStaffPayout(payoutId);
+
+    // Unified transaction log
+    appendFeeTransactionLog({
+      transactionType: "payout_deleted",
+      performedBy: session.id,
+      performedByName: session.name,
+      performedByEmail: session.email ?? "",
+      ipAddress,
+      userAgent,
+      amount: lastAmount || 0,
+      payoutId,
+      receiptNo,
+      staffId,
+      staffName,
+      month: lastMonth,
+      payoutTitle: lastTitle,
+    }).catch(() => {});
+
+    logAction({
+      action: "delete",
+      category: "payout",
+      details: `Deleted payout ${payoutId}`,
+      path: "/api/staff-payouts/" + payoutId,
+      method: "DELETE",
+      request,
+      session,
+      metadata: { payoutId },
+    });
 
     // Audit log for deletion (append-only, this entry survives the payout deletion)
     await appendStaffPayoutAuditLog({

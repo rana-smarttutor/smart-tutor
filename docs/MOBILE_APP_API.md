@@ -381,6 +381,60 @@ Authentication: HTTP-only cookie (`smart_tutor_session`) set on login. All authe
 ### PATCH /api/admin/account-bin — `{ id }` — Restore a soft-deleted user
 ### DELETE /api/admin/account-bin — `{ id }` — Permanently delete a user from bin
 
+### GET /api/admin/audit-logs — Audit log viewer (admin only)
+**Query:**
+- `?page=1&limit=50` — Pagination
+- `?action=login|logout|create|update|delete|payment` — Filter by action
+- `?category=auth|fee|invoice|payout|user|course|crm|test|system` — Filter by category
+- `?search=<text>` — Search across details, user name, email, IP, path
+- `?userId=<id>` — Filter by specific user
+- `?ip=<address>` — Filter by IP address
+- `?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD` — Date range filter
+- `?stats=true` — Returns aggregate stats instead of log entries
+
+**Response (paginated):**
+```json
+{
+  "logs": [
+    {
+      "id": "string",
+      "action": "login|logout|create|update|delete|payment",
+      "category": "auth|fee|invoice|payout|user|course|crm|test|system",
+      "userId": "string|null",
+      "userEmail": "string|null",
+      "userName": "string|null",
+      "userRole": "string|null",
+      "details": "string",
+      "metadata": { },
+      "ip": "string",
+      "userAgent": "string",
+      "browser": "string|null",
+      "os": "string|null",
+      "device": "string|null",
+      "referer": "string|null",
+      "path": "string",
+      "method": "string",
+      "timestamp": "ISO date string"
+    }
+  ],
+  "pagination": { "page": 1, "limit": 50, "total": 123 }
+}
+```
+
+**Response (`?stats=true`):**
+```json
+{
+  "totalLogs": 1234,
+  "todayLogs": 42,
+  "uniqueUsers": 56,
+  "uniqueIps": 89,
+  "topAction": "login",
+  "topCategory": "auth",
+  "byAction": { "login": 400, "logout": 380, ... },
+  "byCategory": { "auth": 780, "fee": 200, ... }
+}
+```
+
 ---
 
 ## 23. Certificates (Admin Issue + All Roles Download)

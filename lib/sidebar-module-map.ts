@@ -1,0 +1,45 @@
+import type { AvailableModule } from "./types";
+
+export const moduleToSidebarItem: Record<
+  AvailableModule,
+  { id: string; label: string } | null
+> = {
+  overview: { id: "overview", label: "Overview" },
+  accounts: { id: "accounts", label: "Accounts" },
+  students: { id: "students", label: "Students" },
+  attendance: { id: "attendance", label: "Attendance" },
+  leave: { id: "leave", label: "Leave" },
+  fees: { id: "fees", label: "Billing Hub" },
+  "fee-installments": { id: "fee-installments", label: "Installments" },
+  lectures: { id: "lectures", label: "Recorded Lectures" },
+  timetable: { id: "timetable", label: "Timetable" },
+  courses: { id: "courses", label: "Courses" },
+  tests: { id: "tests", label: "Exams" },
+  "weekly-tests": { id: "weekly-tests", label: "Weekly Tests" },
+  messages: { id: "messages", label: "Notice Board" },
+  chat: { id: "chat", label: "Chat" },
+  notifications: null,
+  enquiries: { id: "enquiries", label: "Enquiries" },
+  library: { id: "library", label: "Library" },
+  performance: { id: "performance", label: "Performance Reports" },
+  "daily-activities": { id: "daily-activities", label: "My Daily Routines" },
+  homework: { id: "homework", label: "Homework" },
+  "doubt-box": { id: "doubt-box", label: "Doubt Box" },
+  "personal-mentorship": {
+    id: "personal-mentorship",
+    label: "Personal Mentorship",
+  },
+  "student-feedback": { id: "student-feedback", label: "Feedback" },
+  "teacher-payouts": { id: "staff-payouts", label: "My Payouts" },
+  "placement-jobs": { id: "placement-jobs", label: "Placement Jobs" },
+  "sales-crm": { id: "sales-crm", label: "Sales CRM" },
+  gamification: { id: "gamification", label: "Rankers" },
+  ptm: { id: "ptm", label: "PTM" },
+  complaints: { id: "complaints", label: "Complaint Box" },
+  "chat-monitor": { id: "chat-monitor", label: "Chat Monitor" },
+  "password-reset-requests": {
+    id: "password-reset-requests",
+    label: "Password Reset Requests",
+  },
+  certificates: { id: "certificates", label: "Certificates" },
+};
