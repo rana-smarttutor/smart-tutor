@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { createTestSubmission, getTestSubmissionsForRole, gradeSubmission } from "@/lib/data-store";
 import { sanitizeTextInput, sanitizeTextareaInput } from "@/lib/validation";
@@ -62,6 +63,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Test could not be scored." }, { status: 404 });
   }
 
+  await logAction({
+    action: "create",
+    category: "exams",
+    details: `Test submission created for test ${testId}`,
+    path: "/api/test-submissions",
+    method: "POST",
+    request,
+    session,
+    metadata: { testId, submissionId: result.submission.id, studentId: session.id },
+  });
+
   return NextResponse.json({ submission: result.submission }, { status: 201 });
 }
 
@@ -112,6 +124,17 @@ export async function PATCH(request: Request) {
   if (!result) {
     return NextResponse.json({ error: "Submission could not be graded." }, { status: 404 });
   }
+
+  await logAction({
+    action: "update",
+    category: "exams",
+    details: `Test submission graded: ${submissionId}`,
+    path: "/api/test-submissions",
+    method: "PATCH",
+    request,
+    session,
+    metadata: { submissionId, score, gradedBy: session.name },
+  });
 
   return NextResponse.json(result, { status: 200 });
 }

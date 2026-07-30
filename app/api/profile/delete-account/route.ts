@@ -4,6 +4,7 @@ import {
   getSessionUser,
 } from "@/lib/auth";
 import { deleteUserRecord, findUserByCredentials } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,6 +46,17 @@ export async function POST(request: Request) {
   }
 
   await deleteUserRecord(session.id);
+
+  await logAction({
+    action: "delete",
+    category: "auth",
+    details: `Account deletion requested by ${session.email}`,
+    path: "/api/profile/delete-account",
+    method: "POST",
+    request,
+    session,
+    metadata: { userId: session.id, email: session.email },
+  });
 
   const response = clearSessionResponse();
   return response;

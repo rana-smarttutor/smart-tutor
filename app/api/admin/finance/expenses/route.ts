@@ -9,6 +9,7 @@ import type {
   BusinessExpense,
   PaymentMode,
 } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -270,6 +271,17 @@ export async function POST(request: Request) {
       receiptUrl: getOptionalText(body.receiptUrl),
       createdBy: authorization.session.id,
       createdByName: authorization.session.name,
+    });
+
+    await logAction({
+      action: "create",
+      category: "expenses",
+      details: `Expense created: ${title} (₹${amount})`,
+      path: "/api/admin/finance/expenses",
+      method: "POST",
+      request,
+      session: authorization.session,
+      metadata: { expenseId: expense.id, title, amount, category },
     });
 
     return NextResponse.json(

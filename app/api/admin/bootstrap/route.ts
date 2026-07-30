@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { seedMongoTemplateCollections } from "@/lib/seed-database";
 import { getMongoDatabase } from "@/lib/mongodb";
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 export async function GET(request: Request) {
   try {
@@ -75,6 +76,15 @@ export async function POST(request: Request) {
   try {
     const result = await seedMongoTemplateCollections({
       replaceExisting: Boolean(body.replaceExisting),
+    });
+
+    await logAction({
+      action: "create",
+      category: "settings",
+      details: "Database seeded via bootstrap",
+      path: "/api/admin/bootstrap",
+      method: "POST",
+      request,
     });
 
     return NextResponse.json(result, { status: 200 });

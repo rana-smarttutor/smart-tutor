@@ -10,6 +10,7 @@ import type {
   BusinessExpense,
   PaymentMode,
 } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -302,6 +303,17 @@ export async function PATCH(
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "expenses",
+      details: `Expense updated: ${normalizedExpenseId}`,
+      path: `/api/admin/finance/expenses/${normalizedExpenseId}`,
+      method: "PATCH",
+      request,
+      session: authorization.session,
+      metadata: { expenseId: normalizedExpenseId, updates: Object.keys(updates) },
+    });
+
     return NextResponse.json({
       expense,
       message: "Business expense updated successfully.",
@@ -372,6 +384,17 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "expenses",
+      details: `Expense deleted: ${normalizedExpenseId}`,
+      path: `/api/admin/finance/expenses/${normalizedExpenseId}`,
+      method: "DELETE",
+      request: _request,
+      session: authorization.session,
+      metadata: { expenseId: normalizedExpenseId },
+    });
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -181,6 +182,17 @@ export async function PATCH(request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "update",
+      category: "payroll",
+      details: `Payroll run ${runId} status updated to ${body.status}`,
+      path: "/api/staff-payroll/runs/[runId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { runId, status: body.status, reason: body.reason },
+    });
 
     return NextResponse.json({ run });
   } catch (error) {

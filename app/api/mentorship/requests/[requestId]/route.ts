@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   getMentorshipRequestById,
   updateMentorshipRequest,
@@ -176,6 +177,17 @@ export async function PATCH(
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "update",
+      category: "other",
+      details: `Mentorship request ${requestId} ${status} by ${session.name}`,
+      path: "/api/mentorship/requests/[requestId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { requestId, status },
+    });
 
     return NextResponse.json({
       mentorshipRequest,

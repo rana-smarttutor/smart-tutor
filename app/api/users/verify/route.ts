@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { toggleUserVerification } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,6 +41,17 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: body.verified ? "approve" : "update",
+      category: "users",
+      details: `User verified: ${body.userId}`,
+      path: "/api/users/verify",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId: body.userId, verified: body.verified },
+    });
 
     return NextResponse.json({
       ok: true,

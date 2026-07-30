@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       paymentDate: paidDate || undefined,
     }).catch(() => {});
 
-    logAction({
+    await logAction({
       action: "create",
       category: "payout",
       details: `Created payout ${title} for ${staffName} (₹${numAmount})`,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 import {
   createStudentDailyRoutine,
@@ -650,6 +651,17 @@ export async function POST(
             ),
         },
       );
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Daily routine created by ${session.name} on ${date}`,
+      path: "/api/daily-routines",
+      method: "POST",
+      request,
+      session,
+      metadata: { date, mood: rawMood, studyMinutes },
+    });
 
     return NextResponse.json(
       {

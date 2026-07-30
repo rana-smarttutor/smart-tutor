@@ -266,7 +266,7 @@ export async function PATCH(request: Request, context: RouteContext) {
         paymentDate: (t.paidDate as string) || new Date().toISOString().slice(0, 10),
       }).catch(() => {});
 
-      logAction({
+      await logAction({
         action: "update",
         category: "fees",
         details: `Installment payment recorded for plan ${planId} (₹${Number(t.paidAmount) || 0})`,
@@ -347,7 +347,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       courseName: existingPlan.courseName,
     }).catch(() => {});
 
-    logAction({
+    await logAction({
       action: "delete",
       category: "fees",
       details: `Deleted fee installment plan ${planId}`,

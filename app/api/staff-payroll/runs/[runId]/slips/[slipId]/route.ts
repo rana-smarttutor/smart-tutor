@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -177,6 +178,17 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const updatedSlip = result.slips.find((s: any) => s.id === slipId);
+
+    await logAction({
+      action: "update",
+      category: "payroll",
+      details: `Payroll slip ${slipId} in run ${runId} updated`,
+      path: "/api/staff-payroll/runs/[runId]/slips/[slipId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { runId, slipId },
+    });
 
     return NextResponse.json({ slip: updatedSlip, run: result });
   } catch (error) {

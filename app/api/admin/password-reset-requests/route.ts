@@ -7,6 +7,7 @@ import {
 } from "@/lib/data-store";
 import { getSessionUser } from "@/lib/auth";
 import { sanitizePasswordInput } from "@/lib/validation";
+import { logAction } from "@/lib/audit-log";
 
 export async function GET() {
   const session = await getSessionUser();
@@ -70,6 +71,17 @@ export async function PATCH(request: Request) {
 
   await updatePasswordResetRequest(id, { status, adminNote: note });
 
+  await logAction({
+    action: "update",
+    category: "auth",
+    details: `Password reset request ${id} updated to ${status}`,
+    path: "/api/admin/password-reset-requests",
+    method: "PATCH",
+    request,
+    session,
+    metadata: { requestId: id, status },
+  });
+
   return NextResponse.json({ success: true, resetResult });
 }
 
@@ -90,6 +102,17 @@ export async function DELETE(request: Request) {
   if (!deleted) {
     return NextResponse.json({ error: "Request not found." }, { status: 404 });
   }
+
+  await logAction({
+    action: "delete",
+    category: "auth",
+    details: `Password reset request deleted: ${id}`,
+    path: "/api/admin/password-reset-requests",
+    method: "DELETE",
+    request,
+    session,
+    metadata: { requestId: id },
+  });
 
   return NextResponse.json({ success: true });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createNotifications,
@@ -268,6 +269,17 @@ export async function POST(request: Request) {
         link: "/dashboard?section=placement-jobs",
       });
     }
+
+    await logAction({
+      action: "create",
+      category: "placement",
+      details: `Created placement application: ${application.studentName} for ${application.jobRole}`,
+      path: "/api/placement-applications",
+      method: "POST",
+      request,
+      session,
+      metadata: { applicationId: application.id, studentId: application.studentId, jobId },
+    });
 
     return NextResponse.json({ application }, { status: 201 });
   } catch (error) {

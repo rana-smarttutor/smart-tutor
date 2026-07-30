@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { deleteCustomRole, updateCustomRole } from "@/lib/data-store";
 import type { AvailableModule, ModuleAccessLevel } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,6 +40,17 @@ export async function PUT(
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "roles",
+      details: `Role updated: ${id}`,
+      path: `/api/admin/roles/${id}`,
+      method: "PUT",
+      request,
+      session,
+      metadata: { roleId: id },
+    });
+
     return NextResponse.json({ role: updated });
   } catch (error) {
     console.error("Update role error:", error);
@@ -67,6 +79,17 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "roles",
+      details: `Role deleted: ${id}`,
+      path: `/api/admin/roles/${id}`,
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { roleId: id },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

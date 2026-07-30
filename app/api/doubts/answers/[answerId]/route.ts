@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   deleteDoubtAnswer,
   getDoubts,
@@ -158,6 +159,17 @@ export async function DELETE(
         },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "other",
+      details: `Doubt answer ${answerId} deleted by ${session.name}`,
+      path: "/api/doubts/answers/[answerId]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { answerId },
+    });
 
     return NextResponse.json({
       deleted: true,

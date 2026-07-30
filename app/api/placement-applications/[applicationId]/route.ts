@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createNotifications,
@@ -76,6 +77,17 @@ export async function PATCH(
       message: `Your application for ${application.jobRole} at ${application.company} is now marked ${status}.`,
       type: "placement",
       link: "/placements",
+    });
+
+    await logAction({
+      action: "update",
+      category: "placement",
+      details: `Updated placement application ${applicationId} status to ${status}`,
+      path: `/api/placement-applications/${applicationId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { applicationId, status, studentId: application.studentId },
     });
 
     return NextResponse.json({ application });

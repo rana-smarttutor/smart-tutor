@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 import {
   createMessage,
@@ -538,6 +539,17 @@ export async function POST(
           "/dashboard",
       });
     }
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `PTM "${title}" scheduled for ${selectedStudent.name} by ${session.name}`,
+      path: "/api/ptm",
+      method: "POST",
+      request,
+      session,
+      metadata: { ptmId: ptm.id, studentId: selectedStudent.id, mode, startsAt },
+    });
 
     return NextResponse.json(
       {

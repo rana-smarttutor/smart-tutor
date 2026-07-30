@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 import {
   createComplaint,
@@ -315,6 +316,17 @@ export async function POST(
      * The complaint record remains visible
      * only inside the admin complaint dashboard.
      */
+    await logAction({
+      action: "create",
+      category: "complaints",
+      details: `Complaint "${subject}" submitted by ${session.name}`,
+      path: "/api/complaints",
+      method: "POST",
+      request,
+      session,
+      metadata: { complaintId: complaint.id, category, subject, priority },
+    });
+
     return NextResponse.json(
       {
         submitted:

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   deleteDailyActivity,
   getDailyActivitiesForRole,
@@ -227,6 +228,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "other",
+      details: `Daily activity ${activityId} updated`,
+      path: "/api/daily-activities/[activityId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { activityId },
+    });
+
     return NextResponse.json({ activity });
   } catch (error) {
     console.error("Update daily activity error:", error);
@@ -281,6 +293,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "other",
+      details: `Daily activity ${activityId} deleted`,
+      path: "/api/daily-activities/[activityId]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { activityId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 import {
   deleteComplaint,
@@ -212,6 +213,17 @@ export async function PUT(
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "complaints",
+      details: `Complaint ${complaintId} updated by ${session.name}`,
+      path: "/api/complaints/[complaintId]",
+      method: "PUT",
+      request,
+      session,
+      metadata: { complaintId, status, adminNote },
+    });
+
     return NextResponse.json({
       complaint:
         updatedComplaint,
@@ -318,6 +330,17 @@ export async function DELETE(
         },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "complaints",
+      details: `Complaint ${complaintId} deleted by ${session.name}`,
+      path: "/api/complaints/[complaintId]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { complaintId },
+    });
 
     return NextResponse.json({
       deleted:

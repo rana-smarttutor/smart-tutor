@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   deleteCrmLead,
@@ -427,6 +428,17 @@ const updates: Parameters<typeof updateCrmLead>[0]["updates"] = {};
       updates,
     });
 
+    await logAction({
+      action: "update",
+      category: "crm",
+      details: `Updated CRM lead: ${existingLead.studentName} (${leadId})`,
+      path: `/api/crm/leads/${leadId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { leadId, action: activityType, studentName: existingLead.studentName },
+    });
+
     return NextResponse.json({ lead });
   } catch (error) {
     console.error("Update CRM lead error:", error);
@@ -444,7 +456,7 @@ const updates: Parameters<typeof updateCrmLead>[0]["updates"] = {};
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: RouteContext,
 ) {
   const session = await getSessionUser();
@@ -465,6 +477,17 @@ export async function DELETE(
       { status: 404 },
     );
   }
+
+  await logAction({
+    action: "delete",
+    category: "crm",
+    details: `Deleted CRM lead: ${deletedLead.studentName} (${leadId})`,
+    path: `/api/crm/leads/${leadId}`,
+    method: "DELETE",
+    request,
+    session,
+    metadata: { leadId, studentName: deletedLead.studentName },
+  });
 
   return NextResponse.json({ success: true });
 }

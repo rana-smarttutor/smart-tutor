@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
   getHomeworkById,
@@ -83,6 +84,17 @@ if (
     studentName: session.name,
     content: content || undefined,
     attachmentUrl: attachmentUrl || undefined,
+  });
+
+  await logAction({
+    action: "create",
+    category: "homework",
+    details: `Homework submission created for homework ${homeworkId}`,
+    path: "/api/homework/submissions",
+    method: "POST",
+    request,
+    session,
+    metadata: { homeworkId, submissionId: submission?.id },
   });
 
   return NextResponse.json({ submission }, { status: 201 });
@@ -195,6 +207,17 @@ export async function PATCH(request: Request) {
       { status: 404 },
     );
   }
+
+  await logAction({
+    action: "update",
+    category: "homework",
+    details: `Homework submission graded: ${submissionId}`,
+    path: "/api/homework/submissions",
+    method: "PATCH",
+    request,
+    session,
+    metadata: { submissionId, marks, gradedBy: session.id },
+  });
 
   return NextResponse.json({ submission: graded });
 }

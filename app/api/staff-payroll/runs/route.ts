@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -150,6 +151,17 @@ export async function POST(request: Request) {
       year: body.year,
       workingDays: body.workingDays,
       createdBy: session.id,
+    });
+
+    await logAction({
+      action: "create",
+      category: "payroll",
+      details: `Payroll run created for ${body.month}/${body.year}`,
+      path: "/api/staff-payroll/runs",
+      method: "POST",
+      request,
+      session,
+      metadata: { month: body.month, year: body.year, workingDays: body.workingDays },
     });
 
     return NextResponse.json({ run }, { status: 201 });

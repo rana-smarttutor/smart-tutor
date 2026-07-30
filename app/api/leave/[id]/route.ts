@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { updateLeaveRequestStatus } from "@/lib/data-store";
 
 export const runtime = "nodejs";
@@ -43,6 +44,17 @@ export async function PATCH(
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "update",
+      category: "leave",
+      details: `Leave request ${id} ${status} by ${session.name}`,
+      path: "/api/leave/[id]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { leaveRequestId: id, status },
+    });
 
     return NextResponse.json({ leaveRequest: updated });
   } catch (error) {

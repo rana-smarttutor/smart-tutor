@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
+
 import {
   getSessionUser,
   hasAnyRole,
@@ -239,6 +241,17 @@ export async function POST(
 
       questions,
     });
+
+  await logAction({
+    action: "create",
+    category: "exams",
+    details: `Test created: ${title}`,
+    path: "/api/tests",
+    method: "POST",
+    request,
+    session,
+    metadata: { testId: test.id, title, examType },
+  });
 
   return NextResponse.json(
     {

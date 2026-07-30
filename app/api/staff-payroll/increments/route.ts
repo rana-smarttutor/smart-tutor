@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -156,6 +157,17 @@ export async function POST(request: Request) {
       effectiveDate: body.effectiveDate,
       reason: typeof body.reason === "string" ? body.reason : undefined,
       createdBy: session.id,
+    });
+
+    await logAction({
+      action: "create",
+      category: "payroll",
+      details: `Salary increment created for ${body.userName}: ${body.previousSalary} → ${body.newSalary}`,
+      path: "/api/staff-payroll/increments",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId: body.userId, previousSalary: body.previousSalary, newSalary: body.newSalary, effectiveDate: body.effectiveDate },
     });
 
     return NextResponse.json({ increment }, { status: 201 });

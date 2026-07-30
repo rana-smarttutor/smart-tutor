@@ -10531,6 +10531,8 @@ export async function getActionLogs(filters: {
   dateTo?: string;
   page?: number;
   limit?: number;
+  sortBy?: string;
+  sortOrder?: string;
 }) {
   const collection = await getCollection(COLLECTIONS.actionLogs);
   const query: Record<string, unknown> = {};
@@ -10559,6 +10561,12 @@ export async function getActionLogs(filters: {
         filters.dateTo + "T23:59:59.999Z";
   }
 
+  const allowedSortFields = ["timestamp", "action", "category", "userName", "email", "ip"];
+  const sortField = filters.sortBy && allowedSortFields.includes(filters.sortBy)
+    ? filters.sortBy
+    : "timestamp";
+  const sortDir = filters.sortOrder === "asc" ? 1 : -1;
+
   const page = Math.max(1, filters.page ?? 1);
   const limit = Math.min(200, Math.max(1, filters.limit ?? 50));
   const skip = (page - 1) * limit;
@@ -10566,7 +10574,7 @@ export async function getActionLogs(filters: {
   const [rawLogs, total] = await Promise.all([
     collection
       .find(query)
-      .sort({ timestamp: -1 })
+      .sort({ [sortField]: sortDir })
       .skip(skip)
       .limit(limit)
       .toArray(),

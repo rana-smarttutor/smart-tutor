@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { importStudentsFromCsv } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,6 +44,17 @@ export async function POST(request: NextRequest) {
       sendWelcomeEmail,
       skipDuplicates,
       autoGeneratePassword,
+    });
+
+    await logAction({
+      action: "import",
+      category: "students",
+      details: `Student import: ${result?.imported ?? 0} imported, ${result?.skipped ?? 0} skipped`,
+      path: "/api/admin/students/import",
+      method: "POST",
+      request,
+      session,
+      metadata: { rowCount: rows.length, result },
     });
 
     return NextResponse.json({ ok: true, result });

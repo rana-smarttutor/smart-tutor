@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import { getMongoDatabase } from "@/lib/mongodb";
 import type { Certificate } from "@/lib/types";
@@ -167,6 +168,17 @@ export async function POST(request: NextRequest) {
     };
 
     await db.collection("certificates").insertOne(certificate);
+
+    await logAction({
+      action: "create",
+      category: "certificates",
+      details: `Created certificate: ${certificate.title} for ${certificate.recipientName}`,
+      path: "/api/certificates",
+      method: "POST",
+      request,
+      session,
+      metadata: { certificateId: certificate.id, recipientName: certificate.recipientName, title: certificate.title, certificateNo: certificate.certificateNo },
+    });
 
     return NextResponse.json({ certificate }, { status: 201 });
   } catch (error) {

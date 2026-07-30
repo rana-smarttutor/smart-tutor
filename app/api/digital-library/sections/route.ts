@@ -1,6 +1,7 @@
 import { list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import { sanitizeTextInput } from "@/lib/validation";
 
@@ -189,6 +190,17 @@ export async function POST(request: Request) {
         allowOverwrite: true,
       },
     );
+
+    await logAction({
+      action: "create",
+      category: "library",
+      details: `Library section created: ${label}`,
+      path: "/api/digital-library/sections",
+      method: "POST",
+      request,
+      session,
+      metadata: { sectionId: id, label },
+    });
 
     return NextResponse.json({
       success: true,

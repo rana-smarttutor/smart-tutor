@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { createRewardRedemption } from "@/lib/reward-store";
 
 import type {
@@ -148,6 +149,17 @@ export async function POST(request: Request) {
       session.email,
       input,
     );
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Reward redemption of ${amount} requested by ${session.name}`,
+      path: "/api/rewards/redeem",
+      method: "POST",
+      request,
+      session,
+      metadata: { amount, paymentMethod },
+    });
 
     return NextResponse.json(
       {

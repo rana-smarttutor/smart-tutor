@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { deleteLeaveType, updateLeaveType } from "@/lib/data-store";
 
 export const runtime = "nodejs";
@@ -47,6 +48,17 @@ export async function PUT(
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "leave",
+      details: `Leave type ${id} updated`,
+      path: "/api/leave/types/[id]",
+      method: "PUT",
+      request,
+      session,
+      metadata: { leaveTypeId: id, updates: update },
+    });
+
     return NextResponse.json({ leaveType: updated });
   } catch (error) {
     console.error("Update leave type error:", error);
@@ -75,6 +87,17 @@ export async function DELETE(
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "leave",
+      details: `Leave type ${id} deleted`,
+      path: "/api/leave/types/[id]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { leaveTypeId: id },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

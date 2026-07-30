@@ -1,6 +1,7 @@
 import { copy, del, list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   DIGITAL_LIBRARY_BOOK_PREFIX,
@@ -178,6 +179,7 @@ function currentTargetPath(assetKey: string) {
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
+    const session = await getSessionUser();
     if (!(await authorizeManager())) {
       return NextResponse.json(
         {
@@ -320,6 +322,17 @@ export async function PATCH(request: Request, context: RouteContext) {
         await del(currentThumbnail.pathname, { token });
       }
 
+      await logAction({
+        action: "update",
+        category: "library",
+        details: `Digital library material updated: ${title}`,
+        path: `/api/digital-library/${bookId}`,
+        method: "PATCH",
+        request,
+        session,
+        metadata: { bookId, title, assetKey, categoryId: nextRecord.categoryId, price: storedPrice },
+      });
+
       return NextResponse.json({
         success: true,
         book: {
@@ -358,6 +371,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       ) {
         await del(currentThumbnail.pathname, { token });
       }
+
+      await logAction({
+        action: "update",
+        category: "library",
+        details: `Digital library material updated: ${title}`,
+        path: `/api/digital-library/${bookId}`,
+        method: "PATCH",
+        request,
+        session,
+        metadata: { bookId, title, assetKey, categoryId: nextRecord.categoryId, price: storedPrice },
+      });
 
       return NextResponse.json({
         success: true,
@@ -399,6 +423,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       token,
     });
 
+    await logAction({
+      action: "update",
+      category: "library",
+      details: `Digital library material updated: ${title}`,
+      path: `/api/digital-library/${bookId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { bookId, title, assetKey, categoryId: nextRecord.categoryId, price: storedPrice },
+    });
+
     return NextResponse.json({
       success: true,
       book: {
@@ -429,6 +464,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
 export async function DELETE(_request: Request, context: RouteContext) {
   try {
+    const session = await getSessionUser();
     if (!(await authorizeAdmin())) {
       return NextResponse.json(
         {
@@ -483,6 +519,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (thumbnail?.pathname) {
       await del(thumbnail.pathname, { token });
     }
+
+    await logAction({
+      action: "delete",
+      category: "library",
+      details: `Digital library material deleted: ${bookId}`,
+      path: `/api/digital-library/${bookId}`,
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { bookId, pathname },
+    });
 
     return NextResponse.json({
       success: true,

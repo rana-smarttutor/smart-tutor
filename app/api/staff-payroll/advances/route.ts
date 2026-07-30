@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -147,6 +148,17 @@ export async function POST(request: Request) {
       amount: body.amount,
       reason: body.reason,
       createdBy: session.id,
+    });
+
+    await logAction({
+      action: "create",
+      category: "payroll",
+      details: `Salary advance of ${body.amount} created for ${body.userName}`,
+      path: "/api/staff-payroll/advances",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId: body.userId, amount: body.amount, reason: body.reason },
     });
 
     return NextResponse.json({ advance }, { status: 201 });

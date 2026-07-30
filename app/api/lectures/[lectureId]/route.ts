@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   getLecturesForRole,
@@ -120,6 +121,17 @@ if (!existingLecture) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "update",
+      category: "courses",
+      details: `Lecture updated: ${lecture.title}`,
+      path: `/api/lectures/${lectureId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { lectureId, title: lecture.title },
+    });
 
     return NextResponse.json({ lecture });
   } catch (error) {

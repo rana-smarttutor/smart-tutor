@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
+
 import {
   getSessionUser,
   hasAnyRole,
@@ -246,6 +248,17 @@ export async function PUT(
     );
   }
 
+  await logAction({
+    action: "update",
+    category: "exams",
+    details: `Test updated: ${updated.title}`,
+    path: `/api/tests/${testId}`,
+    method: "PUT",
+    request,
+    session,
+    metadata: { testId, title: updated.title },
+  });
+
   return NextResponse.json({
     test: updated,
   });
@@ -304,6 +317,17 @@ export async function DELETE(
       },
     );
   }
+
+  await logAction({
+    action: "delete",
+    category: "exams",
+    details: `Test deleted: ${testId}`,
+    path: `/api/tests/${testId}`,
+    method: "DELETE",
+    request: _request,
+    session,
+    metadata: { testId },
+  });
 
   return NextResponse.json({
     deleted: true,

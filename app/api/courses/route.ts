@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createCourse,
@@ -95,6 +96,17 @@ export async function POST(request: Request) {
       createdBy: session.name,
     });
 
+    await logAction({
+      action: "create",
+      category: "courses",
+      details: `Course created: ${standardKey}`,
+      path: "/api/courses",
+      method: "POST",
+      request,
+      session,
+      metadata: { courseId: draft.id, standardKey },
+    });
+
     return NextResponse.json({ course: draft }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Course could not be created.";
@@ -165,6 +177,17 @@ export async function PATCH(request: Request) {
         .slice(0, 6),
     });
 
+    await logAction({
+      action: "update",
+      category: "courses",
+      details: `Course updated: ${standardKey}`,
+      path: "/api/courses",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { courseId: id, standardKey },
+    });
+
     return NextResponse.json({ course });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Course could not be updated.";
@@ -189,6 +212,18 @@ export async function DELETE(request: Request) {
 
   try {
     await deleteCourse(id);
+
+    await logAction({
+      action: "delete",
+      category: "courses",
+      details: `Course deleted: ${id}`,
+      path: "/api/courses",
+      method: "DELETE",
+      request,
+      session,
+      metadata: { courseId: id },
+    });
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Course could not be deleted.";

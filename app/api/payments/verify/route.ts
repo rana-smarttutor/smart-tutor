@@ -3,6 +3,7 @@ import { createHmac } from "node:crypto";
 
 import { RAZORPAY_KEY_SECRET } from "@/lib/razorpay-config";
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { getFeeInvoiceById, updateFeeInvoice } from "@/lib/data-store";
 
 export async function POST(request: Request) {
@@ -61,6 +62,17 @@ export async function POST(request: Request) {
       },
     });
   }
+
+  await logAction({
+    action: "create",
+    category: "fees",
+    details: `Payment verified for invoice ${invoiceId || "N/A"} (₹${Number(amount) || 0})`,
+    path: "/api/payments/verify",
+    method: "POST",
+    request,
+    session,
+    metadata: { razorpayOrderId: razorpay_order_id, razorpayPaymentId: razorpay_payment_id, invoiceId, amount },
+  });
 
   return NextResponse.json({
     success: true,

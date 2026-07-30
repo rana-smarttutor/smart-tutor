@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import { blockChat, unblockChat, getAllBlockedChats, isChatBlocked } from "@/lib/data-store";
 
@@ -48,9 +50,33 @@ export async function POST(request: Request) {
       blockedBy: session.id,
       reason: body.reason,
     });
+
+    await logAction({
+      action: "create",
+      category: "communication",
+      details: `Blocked chat between participants: ${body.participantIds.join(", ")}`,
+      path: "/api/chat/block",
+      method: "POST",
+      request,
+      session,
+      metadata: { participantIds: body.participantIds, reason: body.reason },
+    });
+
     return NextResponse.json({ block: result });
   } else {
     await unblockChat(body.participantIds);
+
+    await logAction({
+      action: "delete",
+      category: "communication",
+      details: `Unblocked chat between participants: ${body.participantIds.join(", ")}`,
+      path: "/api/chat/block",
+      method: "POST",
+      request,
+      session,
+      metadata: { participantIds: body.participantIds },
+    });
+
     return NextResponse.json({ unblocked: true });
   }
 }

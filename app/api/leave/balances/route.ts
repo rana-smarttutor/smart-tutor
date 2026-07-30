@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { createLeaveBalance, getLeaveBalancesForRole } from "@/lib/data-store";
 
 export const runtime = "nodejs";
@@ -51,6 +52,17 @@ export async function POST(request: Request) {
       leaveTypeName: String(body.leaveTypeName || ""),
       daysAllowed,
       note: note || undefined,
+    });
+
+    await logAction({
+      action: "create",
+      category: "leave",
+      details: `Leave balance created for user ${userId} (${body.leaveTypeName}, ${daysAllowed} days)`,
+      path: "/api/leave/balances",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId, leaveTypeId, daysAllowed },
     });
 
     return NextResponse.json({ balance }, { status: 201 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createAttendanceSheet,
   createNotifications,
@@ -118,6 +119,17 @@ export async function POST(request: Request) {
     return true;
   }),
 );
+
+    await logAction({
+      action: "create",
+      category: "attendance",
+      details: `Attendance sheet "${title}" created for ${date}`,
+      path: "/api/attendance",
+      method: "POST",
+      request,
+      session,
+      metadata: { attendanceSheetId: attendanceSheet.id, title, date, recordCount: attendanceSheet.records.length },
+    });
 
 return NextResponse.json(
   {

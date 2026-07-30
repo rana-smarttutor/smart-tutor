@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createPlacementJob,
@@ -193,6 +194,17 @@ export async function POST(request: Request) {
       applicationQuestions,
       status,
       createdBy: session.id,
+    });
+
+    await logAction({
+      action: "create",
+      category: "placement",
+      details: `Created placement job: ${job.role} at ${job.company}`,
+      path: "/api/placement-jobs",
+      method: "POST",
+      request,
+      session,
+      metadata: { jobId: job.id, company: job.company, role: job.role },
     });
 
     return NextResponse.json({ job }, { status: 201 });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { rejectEducatorRequest } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,17 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "reject",
+      category: "users",
+      details: `Educator rejected: ${user.email}`,
+      path: "/api/admin/educator-requests/reject",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId: user.id, email: user.email },
+    });
 
     return NextResponse.json({
       ok: true,

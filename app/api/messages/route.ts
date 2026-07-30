@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { createMessage, getMessagesForRole, getStudentDirectory, findFullUserById } from "@/lib/data-store";
 import { sanitizeIdList, sanitizeTextInput, sanitizeTextareaInput } from "@/lib/validation";
@@ -190,6 +191,17 @@ export async function POST(request: Request) {
     audience,
     userIds: resolvedUserIds,
     expiresAt: expiresAt ? expiresAt.toISOString() : null,
+  });
+
+  await logAction({
+    action: "create",
+    category: "messages",
+    details: `Created message: ${message.title} in channel ${message.channel}`,
+    path: "/api/messages",
+    method: "POST",
+    request,
+    session,
+    metadata: { messageId: message.id, title: message.title, channel: message.channel, audience: message.audience },
   });
 
   return NextResponse.json({ message }, { status: 201 });

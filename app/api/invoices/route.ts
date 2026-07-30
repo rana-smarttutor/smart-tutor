@@ -228,7 +228,7 @@ export async function POST(request: Request) {
       paymentDate: feeInvoice.dueDate,
     }).catch(() => {});
 
-    logAction({
+    await logAction({
       action: "create",
       category: "fees",
       details: `Created invoice ${feeInvoice.receiptNo} for ${feeInvoice.studentName} (₹${feeInvoice.amount})`,

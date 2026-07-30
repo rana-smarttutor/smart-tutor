@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 
 import {
@@ -371,6 +372,17 @@ export async function POST(
         );
       }
     }
+
+    await logAction({
+      action: "create",
+      category: "feedback",
+      details: `Teacher feedback created for ${feedback.studentName}`,
+      path: "/api/student-feedback",
+      method: "POST",
+      request,
+      session,
+      metadata: { feedbackId: feedback.id, studentId: feedback.studentId, studentName: feedback.studentName },
+    });
 
     return NextResponse.json(
       {

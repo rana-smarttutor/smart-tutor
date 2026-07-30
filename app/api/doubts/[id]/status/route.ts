@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   acceptDoubtAnswer,
   createNotifications,
@@ -258,6 +259,17 @@ export async function PATCH(
         }
       }
 
+      await logAction({
+        action: "update",
+        category: "other",
+        details: `Doubt ${doubtId}: answer accepted by ${session.name}`,
+        path: "/api/doubts/[id]/status",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { doubtId, action: "accept-answer", answerId },
+      });
+
       return NextResponse.json({
         doubt: updatedDoubt,
         message:
@@ -297,6 +309,17 @@ export async function PATCH(
             status: "resolved",
           },
         );
+
+      await logAction({
+        action: "update",
+        category: "other",
+        details: `Doubt ${doubtId} marked as resolved by ${session.name}`,
+        path: "/api/doubts/[id]/status",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { doubtId, action: "resolve" },
+      });
 
       return NextResponse.json({
         doubt: updatedDoubt,
@@ -344,6 +367,17 @@ export async function PATCH(
           },
         );
 
+      await logAction({
+        action: "update",
+        category: "other",
+        details: `Doubt ${doubtId} reopened by ${session.name}`,
+        path: "/api/doubts/[id]/status",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { doubtId, action: "reopen" },
+      });
+
       return NextResponse.json({
         doubt: updatedDoubt,
         message:
@@ -377,6 +411,17 @@ export async function PATCH(
           },
         );
 
+      await logAction({
+        action: "update",
+        category: "other",
+        details: `Doubt ${doubtId} closed by ${session.name}`,
+        path: "/api/doubts/[id]/status",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { doubtId, action: "close" },
+      });
+
       return NextResponse.json({
         doubt: updatedDoubt,
         message:
@@ -393,6 +438,17 @@ export async function PATCH(
           },
         );
 
+      await logAction({
+        action: "update",
+        category: "other",
+        details: `Doubt ${doubtId} locked by ${session.name}`,
+        path: "/api/doubts/[id]/status",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { doubtId, action: "lock" },
+      });
+
       return NextResponse.json({
         doubt: updatedDoubt,
         message:
@@ -407,6 +463,17 @@ export async function PATCH(
           isLocked: false,
         },
       );
+
+    await logAction({
+      action: "update",
+      category: "other",
+      details: `Doubt ${doubtId} unlocked by ${session.name}`,
+      path: "/api/doubts/[id]/status",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { doubtId, action: "unlock" },
+    });
 
     return NextResponse.json({
       doubt: updatedDoubt,

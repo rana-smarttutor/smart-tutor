@@ -1,6 +1,3 @@
-import * as fs from "node:fs";
-import * as os from "node:os";
-import * as path from "node:path";
 import { UAParser } from "ua-parser-js";
 
 import type { SessionUser } from "./types";
@@ -11,15 +8,7 @@ import type {
   ActionLogEntry,
 } from "./audit-log-types";
 
-// ── Module-level temp-file buffer (per-Vercel-instance) ──────────
-
-const TEMP_LOG_FILE = path.join(os.tmpdir(), "audit-log.ndjson");
-const FLUSH_INTERVAL_MS = 5 * 60 * 1000;
-const BUFFER_THRESHOLD = 50;
-
-let lastFlushTime = Date.now();
-
-// ── Geo-lookup cache ────────────────────────────
+// ── Geo-lookup cache ─────────────────────────────────────────────
 
 const geoCache = new Map<string, ActionLogEntry["geo"]>();
 
@@ -138,70 +127,6 @@ function buildEntry(params: {
   return entry;
 }
 
-// ── Temp file operations ────────────────────────────────────────
-
-function appendToTempFile(entry: ActionLogEntry): void {
-  try {
-    const line = JSON.stringify(entry) + "\n";
-    fs.appendFileSync(TEMP_LOG_FILE, line, "utf-8");
-  } catch {
-    /* temp file unavailable — entry is silently dropped */
-  }
-}
-
-function readAndTruncateTempFile(): ActionLogEntry[] {
-  try {
-    if (!fs.existsSync(TEMP_LOG_FILE)) return [];
-    const raw = fs.readFileSync(TEMP_LOG_FILE, "utf-8").trim();
-    if (!raw) return [];
-    fs.writeFileSync(TEMP_LOG_FILE, "", "utf-8");
-    return raw
-      .split("\n")
-      .map((line) => {
-        try {
-          return JSON.parse(line) as ActionLogEntry;
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean) as ActionLogEntry[];
-  } catch {
-    return [];
-  }
-}
-
-function countTempFileEntries(): number {
-  try {
-    if (!fs.existsSync(TEMP_LOG_FILE)) return 0;
-    const stat = fs.statSync(TEMP_LOG_FILE);
-    if (stat.size === 0) return 0;
-    const raw = fs.readFileSync(TEMP_LOG_FILE, "utf-8").trim();
-    if (!raw) return 0;
-    return raw.split("\n").length;
-  } catch {
-    return 0;
-  }
-}
-
-// ── MongoDB flush ────────────────────────────────────────────────
-
-async function flushToMongo(entries: ActionLogEntry[]): Promise<void> {
-  if (entries.length === 0) return;
-  const collection = await getCollection(COLLECTIONS.actionLogs);
-  try {
-    await collection.insertMany(entries as any[], { ordered: false });
-  } catch {
-    /* partial inserts are acceptable for audit logs */
-  }
-}
-
-async function flushLogs(): Promise<void> {
-  const entries = readAndTruncateTempFile();
-  if (entries.length === 0) return;
-  await flushToMongo(entries);
-  lastFlushTime = Date.now();
-}
-
 // ── Public API ───────────────────────────────────────────────────
 
 export async function logAction(params: {
@@ -217,21 +142,15 @@ export async function logAction(params: {
   statusCode?: number;
 }): Promise<void> {
   const entry = buildEntry(params);
-  appendToTempFile(entry);
 
-  const entryCount = countTempFileEntries();
-  const elapsed = Date.now() - lastFlushTime;
-
-  if (entryCount >= BUFFER_THRESHOLD || elapsed >= FLUSH_INTERVAL_MS) {
-    await flushLogs();
-  }
-
-  // Fire-and-forget geo lookup (non-blocking, updates entry in DB later if flushed)
+  // Fire-and-forget geo cache warm-up
   lookupGeo(entry.ip).catch(() => {});
+
+  // Write directly to MongoDB — no temp file (serverless-safe)
+  try {
+    const collection = await getCollection(COLLECTIONS.actionLogs);
+    await collection.insertOne(entry as any);
+  } catch (err) {
+    console.error("[audit-log] Failed to persist entry:", err);
+  }
 }
-
-export async function ensureFlushed(): Promise<void> {
-  await flushLogs();
-}
-
-

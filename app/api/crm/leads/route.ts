@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createCrmLead,
@@ -204,6 +205,17 @@ export async function POST(request: Request) {
       createdByName: session.name,
       updatedBy: session.id,
       updatedByName: session.name,
+    });
+
+    await logAction({
+      action: "create",
+      category: "crm",
+      details: `Created CRM lead: ${lead.studentName}`,
+      path: "/api/crm/leads",
+      method: "POST",
+      request,
+      session,
+      metadata: { leadId: lead.id, studentName: lead.studentName, studentPhone: lead.studentPhone },
     });
 
     return NextResponse.json({ lead }, { status: 201 });

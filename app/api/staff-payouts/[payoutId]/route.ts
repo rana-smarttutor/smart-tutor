@@ -103,7 +103,7 @@ export async function PATCH(
       paymentDate: body.paidDate || undefined,
     }).catch(() => {});
 
-    logAction({
+    await logAction({
       action: "update",
       category: "payout",
       details: `Updated payout ${payoutId} - payment recorded`,
@@ -199,7 +199,7 @@ export async function DELETE(
       payoutTitle: lastTitle,
     }).catch(() => {});
 
-    logAction({
+    await logAction({
       action: "delete",
       category: "payout",
       details: `Deleted payout ${payoutId}`,

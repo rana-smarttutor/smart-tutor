@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
   createNotifications,
@@ -143,6 +144,17 @@ export async function POST(request: Request) {
       message,
       type: body.type,
       link: link || undefined,
+    });
+
+    await logAction({
+      action: "create",
+      category: "communication",
+      details: `Created notification: ${title} (type: ${body.type})`,
+      path: "/api/notifications",
+      method: "POST",
+      request,
+      session,
+      metadata: { title, type: body.type, targetMode, recipientCount: notifications.length },
     });
 
     return NextResponse.json(

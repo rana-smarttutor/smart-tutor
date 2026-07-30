@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import { getStudentDirectory } from "@/lib/data-store";
 import { getMongoDatabase } from "@/lib/mongodb";
@@ -87,6 +88,17 @@ const report = {
 };
 
     const result = await db.collection("performanceReports").insertOne(report);
+
+    await logAction({
+      action: "create",
+      category: "performance",
+      details: `Performance report created for period: ${periodLabel}`,
+      path: "/api/student-performance/reports",
+      method: "POST",
+      request,
+      session,
+      metadata: { reportId: result.insertedId.toString(), period: periodLabel, studentId: linkedStudentId },
+    });
 
     return NextResponse.json({
       success: true,
@@ -191,6 +203,17 @@ export async function DELETE(request: Request) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "performance",
+      details: `Performance report deleted: ${reportId}`,
+      path: "/api/student-performance/reports",
+      method: "DELETE",
+      request,
+      session,
+      metadata: { reportId },
+    });
 
     return NextResponse.json({
       success: true,

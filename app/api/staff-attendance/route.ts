@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   bulkMarkStaffAttendance,
   createRegularisationRequest,
@@ -60,6 +61,16 @@ export async function POST(request: Request) {
 
     if (action === "checkin") {
       await selfCheckIn(session.id, session.name, session.email, session.role, date);
+      await logAction({
+        action: "create",
+        category: "attendance",
+        details: `Staff check-in recorded for ${session.name}`,
+        path: "/api/staff-attendance",
+        method: "POST",
+        request,
+        session,
+        metadata: { date, action: "checkin" },
+      });
       return NextResponse.json({ success: true, message: "Check-in recorded." });
     }
 
@@ -71,6 +82,16 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      await logAction({
+        action: "create",
+        category: "attendance",
+        details: `Staff check-out recorded for ${session.name}`,
+        path: "/api/staff-attendance",
+        method: "POST",
+        request,
+        session,
+        metadata: { date, action: "checkout" },
+      });
       return NextResponse.json({ success: true, message: "Check-out recorded." });
     }
 
@@ -78,6 +99,16 @@ export async function POST(request: Request) {
       const records = (body.records || []) as any[];
       const markedBy = session.id;
       const results = await bulkMarkStaffAttendance(records, date, markedBy);
+      await logAction({
+        action: "create",
+        category: "attendance",
+        details: `Bulk staff attendance marked for ${records.length} records on ${date}`,
+        path: "/api/staff-attendance",
+        method: "POST",
+        request,
+        session,
+        metadata: { date, recordCount: records.length, action: "bulk-mark" },
+      });
       return NextResponse.json({ success: true, records: results });
     }
 
@@ -91,7 +122,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Reason is required." }, { status: 400 });
       }
 
-      const request = await createRegularisationRequest({
+      const regularisationRequest = await createRegularisationRequest({
         userId: session.id,
         userName: session.name,
         userEmail: session.email,
@@ -101,7 +132,17 @@ export async function POST(request: Request) {
         requestedCheckOut,
         requestedStatus,
       });
-      return NextResponse.json({ success: true, request });
+      await logAction({
+        action: "create",
+        category: "attendance",
+        details: `Staff attendance regularisation requested by ${session.name} for ${date}`,
+        path: "/api/staff-attendance",
+        method: "POST",
+        request,
+        session,
+        metadata: { date, reason, requestedStatus, action: "regularise" },
+      });
+      return NextResponse.json({ success: true, request: regularisationRequest });
     }
 
     if (action === "review" && session.role === "admin") {
@@ -113,10 +154,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Request ID and status are required." }, { status: 400 });
       }
 
-      const result = await reviewRegularisationRequest(requestId, session.id, reviewStatus, reviewComment);
-      if (!result) {
+      const reviewResult = await reviewRegularisationRequest(requestId, session.id, reviewStatus, reviewComment);
+      if (!reviewResult) {
         return NextResponse.json({ error: "Request not found." }, { status: 404 });
       }
+      await logAction({
+        action: "update",
+        category: "attendance",
+        details: `Staff attendance regularisation request ${requestId} ${reviewStatus} by ${session.name}`,
+        path: "/api/staff-attendance",
+        method: "POST",
+        request,
+        session,
+        metadata: { requestId, reviewStatus, reviewComment, action: "review" },
+      });
       return NextResponse.json({ success: true });
     }
 

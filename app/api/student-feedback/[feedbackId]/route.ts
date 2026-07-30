@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 
 import {
@@ -324,6 +325,17 @@ export async function PATCH(
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "feedback",
+      details: `Teacher feedback updated: ${feedbackId}`,
+      path: `/api/student-feedback/${feedbackId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { feedbackId, studentId: existingFeedback.studentId, studentName: existingFeedback.studentName },
+    });
+
     return NextResponse.json({
       feedback,
     });
@@ -442,6 +454,17 @@ export async function DELETE(
         },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "feedback",
+      details: `Teacher feedback deleted: ${feedbackId}`,
+      path: `/api/student-feedback/${feedbackId}`,
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { feedbackId, studentId: existingFeedback.studentId, studentName: existingFeedback.studentName },
+    });
 
     return NextResponse.json({
       success: true,

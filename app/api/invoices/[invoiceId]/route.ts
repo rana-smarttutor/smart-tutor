@@ -115,7 +115,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       paymentDate: invoice.dueDate,
   }).catch(() => {});
 
-  logAction({
+  await logAction({
     action: "delete",
     category: "fees",
     details: `Deleted invoice ${invoice.receiptNo || invoiceId} for ${invoice.studentName || "(unknown)"} (₹${invoice.amount})`,

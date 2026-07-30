@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 import {
   deleteStudentDailyRoutine,
@@ -449,6 +450,17 @@ export async function PATCH(
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "other",
+      details: `Daily routine ${routineId} updated by ${session.name}`,
+      path: "/api/daily-routines/[routineId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { routineId },
+    });
+
     return NextResponse.json({
       routine,
     });
@@ -547,6 +559,17 @@ export async function DELETE(
         },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "other",
+      details: `Daily routine ${routineId} deleted by ${session.name}`,
+      path: "/api/daily-routines/[routineId]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { routineId },
+    });
 
     return NextResponse.json({
       success: true,

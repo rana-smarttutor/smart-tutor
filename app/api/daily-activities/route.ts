@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createDailyActivity,
   getDailyActivitiesForRole,
@@ -130,6 +131,17 @@ export async function POST(request: Request) {
       teacherNote: getOptionalText(body.teacherNote),
 
       visibleToParent: getBoolean(body.visibleToParent, true),
+    });
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Daily activity created for ${studentName} on ${date}`,
+      path: "/api/daily-activities",
+      method: "POST",
+      request,
+      session,
+      metadata: { studentId, date, subject: body.subject },
     });
 
     return NextResponse.json({ activity }, { status: 201 });

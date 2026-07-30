@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
   deleteMessage,
@@ -106,11 +107,22 @@ export async function PATCH(
     );
   }
 
+  await logAction({
+    action: "update",
+    category: "messages",
+    details: `Updated message: ${id}`,
+    path: `/api/messages/${id}`,
+    method: "PATCH",
+    request,
+    session,
+    metadata: { messageId: id },
+  });
+
   return NextResponse.json({ message: updated });
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const session = await getSessionUser();
@@ -138,6 +150,17 @@ export async function DELETE(
       { status: 404 },
     );
   }
+
+  await logAction({
+    action: "delete",
+    category: "messages",
+    details: `Deleted message: ${id}`,
+    path: `/api/messages/${id}`,
+    method: "DELETE",
+    request,
+    session,
+    metadata: { messageId: id },
+  });
 
   return NextResponse.json({ success: true });
 }

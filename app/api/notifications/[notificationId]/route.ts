@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   deleteNotificationForUser,
@@ -67,6 +68,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "communication",
+      details: `Updated notification read status: ${notificationId} (read: ${body.read})`,
+      path: `/api/notifications/${notificationId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { notificationId, read: body.read },
+    });
+
     return NextResponse.json({ notification });
   } catch (error) {
     return NextResponse.json(
@@ -81,7 +93,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   const session = await getSessionUser();
 
   if (!session) {
@@ -112,6 +124,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "communication",
+      details: `Deleted notification: ${notificationId}`,
+      path: `/api/notifications/${notificationId}`,
+      method: "DELETE",
+      request,
+      session,
+      metadata: { notificationId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

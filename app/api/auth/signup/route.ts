@@ -16,6 +16,7 @@ import {
   sanitizeTextInput,
   validateEmailFormat,
 } from "@/lib/validation";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -432,8 +433,28 @@ if (studentType === "campus") {
         finalResponse.headers.set("set-cookie", setCookieHeader);
       }
 
+      await logAction({
+        action: "create",
+        category: "auth",
+        details: `User signed up: ${user.email}`,
+        path: "/api/auth/signup",
+        method: "POST",
+        request,
+        metadata: { userId: user.id, email: user.email, role: user.role },
+      });
+
       return finalResponse;
     }
+
+    await logAction({
+      action: "create",
+      category: "auth",
+      details: `User signed up: ${user.email}`,
+      path: "/api/auth/signup",
+      method: "POST",
+      request,
+      metadata: { userId: user.id, email: user.email, role: user.role },
+    });
 
     return NextResponse.json({
       user: sessionUser,

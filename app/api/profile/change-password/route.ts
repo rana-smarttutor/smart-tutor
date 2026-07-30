@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { findUserByCredentials, updateUserRecord } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,6 +44,17 @@ const user = await findUserByCredentials(
     role: session.role,
     password: newPassword,
     program: (user as any).program ?? "",
+  });
+
+  await logAction({
+    action: "update",
+    category: "auth",
+    details: `Password changed by ${session.email}`,
+    path: "/api/profile/change-password",
+    method: "POST",
+    request,
+    session,
+    metadata: { userId: session.id, email: session.email },
   });
 
   return NextResponse.json({ success: true }, { status: 200 });

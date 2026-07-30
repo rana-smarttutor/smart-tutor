@@ -8,6 +8,7 @@ import {
   exportStudentsCsv,
   updateUserRecord,
 } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 async function requireAdmin() {
   const session = await getSessionUser();
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    await requireAdmin();
+    const session = await requireAdmin();
     const body = await request.json();
 
     if (body.action === "update-status") {
@@ -72,6 +73,18 @@ export async function PATCH(request: NextRequest) {
         program: body.program ?? "",
         status: body.status,
       });
+
+      await logAction({
+        action: "update",
+        category: "students",
+        details: `Student updated: ${body.name ?? "Unknown"}`,
+        path: "/api/admin/students",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { userId: body.userId, status: body.status },
+      });
+
       return NextResponse.json({ ok: true, user: updated });
     }
 
@@ -85,6 +98,18 @@ export async function PATCH(request: NextRequest) {
         program: body.program ?? "",
         status: "active",
       });
+
+      await logAction({
+        action: "update",
+        category: "students",
+        details: `Student reactivated: ${body.name ?? "Unknown"}`,
+        path: "/api/admin/students",
+        method: "PATCH",
+        request,
+        session,
+        metadata: { userId: body.userId, status: "active" },
+      });
+
       return NextResponse.json({ ok: true, user: updated });
     }
 

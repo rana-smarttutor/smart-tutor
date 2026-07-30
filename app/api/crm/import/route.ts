@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createCrmLead,
@@ -451,6 +452,17 @@ export async function POST(request: Request) {
         });
       }
     }
+
+    await logAction({
+      action: "import",
+      category: "crm",
+      details: `Imported ${createdCount} CRM leads from CSV (${skippedRows.length} skipped)`,
+      path: "/api/crm/import",
+      method: "POST",
+      request,
+      session,
+      metadata: { createdCount, skippedCount: skippedRows.length, fileName },
+    });
 
     return NextResponse.json({
       success: true,

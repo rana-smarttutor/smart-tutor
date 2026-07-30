@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   getMentorshipProfileByFacultyId,
   saveFacultyMentorshipProfile,
@@ -212,6 +213,17 @@ export async function PATCH(request: Request) {
           ? getStringArray(body.languages, "Languages")
           : [],
       });
+
+    await logAction({
+      action: "update",
+      category: "other",
+      details: `Mentorship profile updated by ${session.name}`,
+      path: "/api/mentorship/profile",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { subjects, availableDays, modes: body.modes },
+    });
 
     return NextResponse.json({ profile });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createNotifications,
@@ -193,6 +194,17 @@ if (weeklyTest.published) {
     notified = true;
   }
 }
+
+await logAction({
+  action: "create",
+  category: "exams",
+  details: `Weekly test created: ${weeklyTest.title}`,
+  path: "/api/weekly-tests",
+  method: "POST",
+  request,
+  session,
+  metadata: { weeklyTestId: weeklyTest.id, title: weeklyTest.title, subject: weeklyTest.subject },
+});
 
 return NextResponse.json(
   {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 
 import {
   createMessage,
@@ -466,6 +467,17 @@ export async function PUT(
       });
     }
 
+    await logAction({
+      action: "update",
+      category: "other",
+      details: `PTM ${ptmId} updated by ${session.name}`,
+      path: "/api/ptm/[ptmId]",
+      method: "PUT",
+      request,
+      session,
+      metadata: { ptmId, status: updatedPtm.status },
+    });
+
     return NextResponse.json({
       ptm:
         updatedPtm,
@@ -587,6 +599,17 @@ export async function DELETE(
         },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "other",
+      details: `PTM ${ptmId} deleted by ${session.name}`,
+      path: "/api/ptm/[ptmId]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { ptmId },
+    });
 
     return NextResponse.json({
       deleted:

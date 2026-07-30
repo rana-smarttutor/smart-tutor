@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { findUserDocumentByEmail, updateUserRecord } from "@/lib/data-store";
 import { sanitizeTextInput } from "@/lib/validation";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -91,6 +92,17 @@ export async function PATCH(request: Request) {
     program: existingUser.program,
     profilePhoto: updateData.profilePhoto,
     profile: updateData.profile as any,
+  });
+
+  await logAction({
+    action: "update",
+    category: "settings",
+    details: `Profile updated for ${updateData.name ?? existingUser.name}`,
+    path: "/api/profile",
+    method: "PATCH",
+    request,
+    session,
+    metadata: { userId: session.id, email: session.email },
   });
 
   return NextResponse.json({ user: updatedUser }, { status: 200 });

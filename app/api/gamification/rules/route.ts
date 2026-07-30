@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createGamificationAutoAwardRule,
   getAllGamificationAutoAwardRules,
@@ -50,6 +51,17 @@ export async function POST(request: Request) {
     trigger,
     points,
     badgeId: badgeId || undefined,
+  });
+
+  await logAction({
+    action: "create",
+    category: "other",
+    details: `Auto-award rule "${name}" created (trigger: ${trigger})`,
+    path: "/api/gamification/rules",
+    method: "POST",
+    request,
+    session,
+    metadata: { ruleId: rule.id, name, trigger, points, badgeId },
   });
 
   return NextResponse.json({ rule }, { status: 201 });

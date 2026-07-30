@@ -115,7 +115,7 @@ export async function POST(request: Request) {
    * Faculty credentials create an educator session.
    * Parent credentials create a parent session.
    */
-  logAction({
+  await logAction({
     action: "login",
     category: "auth",
     details: `User ${user.email} (${user.name || user.id}) logged in`,

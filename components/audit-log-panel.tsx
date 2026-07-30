@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import type { ActionLogAction, ActionLogCategory, ActionLogEntry } from "@/lib/audit-log-types";
 
@@ -18,6 +18,11 @@ const ACTION_LABELS: Record<string, string> = {
   view: "View",
   api_call: "API Call",
   bulk_operation: "Bulk Operation",
+  approve: "Approve",
+  reject: "Reject",
+  restore: "Restore",
+  import: "Import",
+  export: "Export",
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -30,6 +35,11 @@ const ACTION_COLORS: Record<string, string> = {
   view: "#6B7280",
   api_call: "#4F46E5",
   bulk_operation: "#7C3AED",
+  approve: "#059669",
+  reject: "#DC2626",
+  restore: "#7C3AED",
+  import: "#0284C7",
+  export: "#4F46E5",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -45,8 +55,22 @@ const CATEGORY_LABELS: Record<string, string> = {
   library: "Library",
   performance: "Performance",
   settings: "Settings",
+  exams: "Exams",
+  homework: "Homework",
+  certificates: "Certificates",
+  placement: "Placement",
+  crm: "CRM",
+  leave: "Leave",
+  communication: "Communication",
+  complaints: "Complaints",
+  feedback: "Feedback",
+  enquiries: "Enquiries",
+  payroll: "Payroll",
+  expenses: "Expenses",
   other: "Other",
 };
+
+type SortableColumn = "timestamp" | "action" | "category" | "userName" | "ip";
 
 function formatTime(ts: string) {
   const d = new Date(ts);
@@ -78,9 +102,12 @@ export function AuditLogPanel({ session }: Props) {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
+  const [sortBy, setSortBy] = useState<SortableColumn>("timestamp");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchLogs = useCallback(async (p: number) => {
+  const fetchLogs = useCallback(async (p: number, sBy?: SortableColumn, sOrd?: string) => {
     setLoading(true);
     setError("");
     try {
@@ -93,6 +120,8 @@ export function AuditLogPanel({ session }: Props) {
       if (dateTo) params.set("dateTo", dateTo);
       params.set("page", String(p));
       params.set("limit", String(limit));
+      params.set("sortBy", sBy ?? sortBy);
+      params.set("sortOrder", sOrd ?? sortOrder);
 
       const res = await fetch(`/api/admin/audit-logs?${params.toString()}`, {
         credentials: "same-origin",
@@ -107,7 +136,7 @@ export function AuditLogPanel({ session }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [actionFilter, categoryFilter, searchFilter, ipFilter, dateFrom, dateTo, limit]);
+  }, [actionFilter, categoryFilter, searchFilter, ipFilter, dateFrom, dateTo, limit, sortBy, sortOrder]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -128,6 +157,18 @@ export function AuditLogPanel({ session }: Props) {
     fetchStats();
   }, [fetchLogs, fetchStats]);
 
+  function handleSort(column: SortableColumn) {
+    if (sortBy === column) {
+      const newOrder = sortOrder === "desc" ? "asc" : "desc";
+      setSortOrder(newOrder);
+      fetchLogs(1, column, newOrder);
+    } else {
+      setSortBy(column);
+      setSortOrder("desc");
+      fetchLogs(1, column, "desc");
+    }
+  }
+
   function handleApply() {
     fetchLogs(1);
   }
@@ -139,16 +180,39 @@ export function AuditLogPanel({ session }: Props) {
     setIpFilter("");
     setDateFrom("");
     setDateTo("");
+    setSortBy("timestamp");
+    setSortOrder("desc");
     setPage(1);
   }
 
-  useEffect(() => {
-    if (!actionFilter && !categoryFilter && !searchFilter && !ipFilter && !dateFrom && !dateTo) {
-      fetchLogs(page);
-    }
-  }, []);
-
   const totalPages = Math.ceil(total / limit);
+
+  function SortIcon({ column }: { column: SortableColumn }) {
+    if (sortBy !== column) {
+      return (
+        <svg className="ml-1 inline-block h-3 w-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+        </svg>
+      );
+    }
+    return (
+      <svg className={`ml-1 inline-block h-3 w-3 ${sortOrder === "asc" ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+    );
+  }
+
+  function SortableTh({ column, label, className }: { column: SortableColumn; label: string; className?: string }) {
+    return (
+      <th
+        className={`cursor-pointer select-none px-4 py-3 font-bold text-[var(--color-muted)] hover:text-[var(--color-heading)] ${className || ""}`}
+        onClick={() => handleSort(column)}
+      >
+        {label}
+        <SortIcon column={column} />
+      </th>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -186,14 +250,27 @@ export function AuditLogPanel({ session }: Props) {
         </div>
       )}
 
-      {/* Filters */}
+      {/* Search + Filters */}
       <div className="surface rounded-[2rem] border border-[var(--color-border)] p-5">
         <div className="mb-4 flex items-center gap-2">
           <svg className="h-5 w-5 text-[var(--color-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
-          <span className="text-sm font-bold text-[var(--color-heading)]">Filters</span>
+          <span className="text-sm font-bold text-[var(--color-heading)]">Search &amp; Filters</span>
         </div>
+
+        {/* Search row — prominent */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search by details, user, email, IP, or path..."
+            value={searchFilter}
+            onChange={(e) => setSearchFilter(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none placeholder-[var(--color-muted)] focus:border-[var(--color-primary)]"
+          />
+        </div>
+
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <select
             value={actionFilter}
@@ -217,36 +294,34 @@ export function AuditLogPanel({ session }: Props) {
           </select>
           <input
             type="text"
-            placeholder="Search details, user, or path..."
-            value={searchFilter}
-            onChange={(e) => setSearchFilter(e.target.value)}
-            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-heading)] outline-none placeholder-[var(--color-muted)] focus:border-[var(--color-primary)]"
-          />
-          <input
-            type="text"
             placeholder="Filter by IP..."
             value={ipFilter}
             onChange={(e) => setIpFilter(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleApply(); }}
             className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-heading)] outline-none placeholder-[var(--color-muted)] focus:border-[var(--color-primary)]"
           />
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
-          />
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
-          />
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
+              title="From date"
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
+              title="To date"
+            />
+          </div>
         </div>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={handleApply}
-            className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white transition hover:opacity-90"
+            className="rounded-xl bg-[var(--color-primary)] px-5 py-2 text-xs font-bold text-white transition hover:opacity-90"
           >
             Apply Filters
           </button>
@@ -271,11 +346,11 @@ export function AuditLogPanel({ session }: Props) {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="bg-[var(--color-background-strong)]">
-                <th className="px-4 py-3 font-bold text-[var(--color-muted)]">Time</th>
-                <th className="px-4 py-3 font-bold text-[var(--color-muted)]">User</th>
-                <th className="px-4 py-3 font-bold text-[var(--color-muted)]">Action</th>
-                <th className="px-4 py-3 font-bold text-[var(--color-muted)]">Category</th>
-                <th className="px-4 py-3 font-bold text-[var(--color-muted)]">IP</th>
+                <SortableTh column="timestamp" label="Time" />
+                <SortableTh column="userName" label="User" />
+                <SortableTh column="action" label="Action" />
+                <SortableTh column="category" label="Category" />
+                <SortableTh column="ip" label="IP" />
                 <th className="px-4 py-3 font-bold text-[var(--color-muted)]">Details</th>
                 <th className="w-10 px-4 py-3" />
               </tr>

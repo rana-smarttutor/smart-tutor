@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import * as dataStore from "@/lib/data-store";
 import type { SessionUser } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 
@@ -135,6 +136,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "payout",
+      details: `Teacher payout updated for payout ${payoutId}`,
+      path: "/api/teacher-payouts/[payoutId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { payoutId, ...body },
+    });
+
     return NextResponse.json({ payout });
   } catch (error) {
     return NextResponse.json(
@@ -177,6 +189,17 @@ export async function DELETE(request: Request, context: RouteContext) {
     }
 
     await dataStore.deleteTeacherPayout(payoutId);
+
+    await logAction({
+      action: "delete",
+      category: "payout",
+      details: `Teacher payout deleted for payout ${payoutId}`,
+      path: "/api/teacher-payouts/[payoutId]",
+      method: "DELETE",
+      request,
+      session,
+      metadata: { payoutId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

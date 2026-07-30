@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createDoubt,
   getDoubts,
@@ -236,6 +237,17 @@ export async function POST(request: Request) {
         batchId || undefined,
       batchName:
         batchName || undefined,
+    });
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Doubt "${title}" posted by ${session.name}`,
+      path: "/api/doubts",
+      method: "POST",
+      request,
+      session,
+      metadata: { doubtId: doubt.id, subject, title },
     });
 
     return NextResponse.json(

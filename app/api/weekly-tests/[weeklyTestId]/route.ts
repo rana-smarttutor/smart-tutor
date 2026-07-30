@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   deleteWeeklyTest,
@@ -230,6 +231,17 @@ export async function PATCH(request: Request, context: RouteContext) {
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "exams",
+      details: `Weekly test updated: ${weeklyTest.title}`,
+      path: `/api/weekly-tests/${weeklyTestId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { weeklyTestId, title: weeklyTest.title },
+    });
+
     return NextResponse.json({ weeklyTest });
   } catch (error) {
     console.error("Update weekly test error:", error);
@@ -284,6 +296,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "exams",
+      details: `Weekly test deleted: ${weeklyTestId}`,
+      path: `/api/weekly-tests/${weeklyTestId}`,
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { weeklyTestId, title: existingTest.title },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

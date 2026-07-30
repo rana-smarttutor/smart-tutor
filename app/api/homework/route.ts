@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import type { HomeworkItem } from "@/lib/types";
 import {
@@ -195,6 +196,17 @@ const homework = await createHomework({
   createdByName:
     session.name,
 });
+
+  await logAction({
+    action: "create",
+    category: "homework",
+    details: `Homework created: ${title}`,
+    path: "/api/homework",
+    method: "POST",
+    request,
+    session,
+    metadata: { homeworkId: homework.id, title, subject },
+  });
 
   return NextResponse.json({ homework }, { status: 201 });
 }

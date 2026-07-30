@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { awardBadgeToStudent } from "@/lib/data-store";
 import { sanitizeTextInput, sanitizeTextareaInput } from "@/lib/validation";
 
@@ -37,6 +38,16 @@ export async function POST(request: Request) {
       badgeId,
       reason: reason || undefined,
       awardedBy: session.id,
+    });
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Badge ${badgeId} awarded to student ${studentId}`,
+      path: "/api/gamification/badges/award",
+      method: "POST",
+      request,
+      session,
+      metadata: { studentId, badgeId, reason },
     });
     return NextResponse.json({ studentBadge: sb }, { status: 201 });
   } catch (err: any) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { bulkUpdateStudentsFromCsv } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +38,18 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await bulkUpdateStudentsFromCsv(rows);
+
+    await logAction({
+      action: "bulk_operation",
+      category: "students",
+      details: `Bulk update completed: ${result?.updated ?? 0} updated, ${result?.skipped ?? 0} skipped`,
+      path: "/api/admin/students/bulk-update",
+      method: "POST",
+      request,
+      session,
+      metadata: { rowCount: rows.length, result },
+    });
+
     return NextResponse.json({ ok: true, result });
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err.message }, { status: 500 });

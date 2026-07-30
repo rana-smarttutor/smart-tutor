@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createGamificationBadge,
   getAllGamificationBadges,
@@ -54,6 +55,17 @@ export async function POST(request: Request) {
     criteriaType,
     criteriaValue,
     color,
+  });
+
+  await logAction({
+    action: "create",
+    category: "other",
+    details: `Gamification badge "${name}" created`,
+    path: "/api/gamification/badges",
+    method: "POST",
+    request,
+    session,
+    metadata: { badgeId: badge.id, name, criteriaType, criteriaValue },
   });
 
   return NextResponse.json({ badge }, { status: 201 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createPasswordResetRequest } from "@/lib/data-store";
+import { logAction } from "@/lib/audit-log";
 
 export async function POST(request: Request) {
   try {
@@ -32,6 +33,16 @@ export async function POST(request: Request) {
       email,
       phone,
       role,
+    });
+
+    await logAction({
+      action: "create",
+      category: "auth",
+      details: `Password reset requested for ${email}`,
+      path: "/api/forgot-password",
+      method: "POST",
+      request,
+      metadata: { email },
     });
 
     return NextResponse.json({

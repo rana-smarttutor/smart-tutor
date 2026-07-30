@@ -1,6 +1,7 @@
 import { list, put } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   DIGITAL_LIBRARY_BOOK_PREFIX,
@@ -238,6 +239,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const session = await getSessionUser();
     const token = process.env.BLOB_READ_WRITE_TOKEN;
 
     if (!token) {
@@ -315,6 +317,17 @@ export async function POST(request: Request) {
     };
 
     await saveMetadataRecord(token, pathname, record);
+
+    await logAction({
+      action: "create",
+      category: "library",
+      details: `Digital library material created: ${title}`,
+      path: "/api/digital-library",
+      method: "POST",
+      request,
+      session,
+      metadata: { title, assetKey, categoryId, price: storedPrice },
+    });
 
     return NextResponse.json({
       success: true,

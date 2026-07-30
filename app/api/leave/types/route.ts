@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { createLeaveType, getLeaveTypes } from "@/lib/data-store";
 
 export const runtime = "nodejs";
@@ -51,6 +52,17 @@ export async function POST(request: Request) {
       daysAllowed,
       isPaid,
       color,
+    });
+
+    await logAction({
+      action: "create",
+      category: "leave",
+      details: `Leave type "${name}" created (${category}, ${daysAllowed} days)`,
+      path: "/api/leave/types",
+      method: "POST",
+      request,
+      session,
+      metadata: { name, category, daysAllowed, isPaid },
     });
 
     return NextResponse.json({ leaveType }, { status: 201 });

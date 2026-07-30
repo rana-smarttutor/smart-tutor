@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import { getMongoDatabase } from "@/lib/mongodb";
 
@@ -186,6 +187,17 @@ export async function PATCH(
       id,
     });
 
+    await logAction({
+      action: "update",
+      category: "certificates",
+      details: `Updated certificate: ${updated?.title || existing.title} (${id})`,
+      path: `/api/certificates/${id}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { certificateId: id, updates: Object.keys(updates), status: updates.status },
+    });
+
     return NextResponse.json({
       certificate: updated,
     });
@@ -210,7 +222,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   context: RouteContext,
 ) {
   try {
@@ -272,6 +284,17 @@ export async function DELETE(
         },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "certificates",
+      details: `Deleted certificate: ${existing.title} for ${existing.recipientName} (${id})`,
+      path: `/api/certificates/${id}`,
+      method: "DELETE",
+      request,
+      session,
+      metadata: { certificateId: id, title: existing.title, recipientName: existing.recipientName },
+    });
 
     return NextResponse.json({
       success: true,

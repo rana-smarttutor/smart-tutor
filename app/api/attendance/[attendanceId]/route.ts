@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   deleteAttendanceSheet,
   getAttendanceSheetsForRole,
@@ -81,6 +82,17 @@ if (!existingAttendanceSheet) {
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "attendance",
+      details: `Attendance sheet ${attendanceId} updated`,
+      path: "/api/attendance/[attendanceId]",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { attendanceId },
+    });
+
     return NextResponse.json({ attendanceSheet });
   } catch (error) {
     console.error("Update attendance error:", error);
@@ -133,6 +145,17 @@ if (!existingAttendanceSheet) {
         { status: 404 },
       );
     }
+
+    await logAction({
+      action: "delete",
+      category: "attendance",
+      details: `Attendance sheet ${attendanceId} deleted`,
+      path: "/api/attendance/[attendanceId]",
+      method: "DELETE",
+      request: _request,
+      session,
+      metadata: { attendanceId },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

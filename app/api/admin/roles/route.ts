@@ -8,6 +8,7 @@ import {
   getRolesDashboardStats,
 } from "@/lib/data-store";
 import type { AvailableModule, ModuleAccessLevel } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,17 @@ export async function POST(request: Request) {
       color,
       modules,
       moduleAccess,
+    });
+
+    await logAction({
+      action: "create",
+      category: "roles",
+      details: `Role created: ${name}`,
+      path: "/api/admin/roles",
+      method: "POST",
+      request,
+      session,
+      metadata: { roleId: role.id, name },
     });
 
     return NextResponse.json({ role }, { status: 201 });

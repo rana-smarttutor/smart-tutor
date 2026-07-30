@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createLeaveRequest,
   getLeaveRequestsForRole,
@@ -66,6 +67,17 @@ export async function POST(request: Request) {
       days,
       reason,
       documentUrl: String(body.documentUrl || ""),
+    });
+
+    await logAction({
+      action: "create",
+      category: "leave",
+      details: `Leave request created by ${session.name} (${leaveTypeName}, ${fromDate} - ${toDate})`,
+      path: "/api/leave",
+      method: "POST",
+      request,
+      session,
+      metadata: { leaveTypeId, leaveTypeName, fromDate, toDate, days },
     });
 
     return NextResponse.json({ leaveRequest }, { status: 201 });

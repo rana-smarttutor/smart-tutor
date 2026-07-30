@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createDoubtAnswer,
   createNotifications,
@@ -231,6 +232,17 @@ export async function POST(
         );
       }
     }
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Answer posted by ${session.name} on doubt ${id}`,
+      path: "/api/doubts/[id]/answers",
+      method: "POST",
+      request,
+      session,
+      metadata: { doubtId: id, answerId: answer.id },
+    });
 
     return NextResponse.json(
       {

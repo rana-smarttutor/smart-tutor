@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createCrmStaff,
@@ -71,6 +72,17 @@ export async function POST(request: Request) {
       designation: designation as CrmStaffDesignation,
       email: getText(body.email, 120) || undefined,
       phone: getText(body.phone, 25) || undefined,
+    });
+
+    await logAction({
+      action: "create",
+      category: "crm",
+      details: `Created CRM staff member: ${staff.name} (${staff.designation})`,
+      path: "/api/crm/staff",
+      method: "POST",
+      request,
+      session,
+      metadata: { staffId: staff.id, name: staff.name, designation: staff.designation },
     });
 
     return NextResponse.json({ staff }, { status: 201 });
@@ -157,6 +169,17 @@ export async function PATCH(request: Request) {
       );
     }
 
+    await logAction({
+      action: "update",
+      category: "crm",
+      details: `Updated CRM staff member: ${staffId}`,
+      path: "/api/crm/staff",
+      method: "PATCH",
+      request,
+      session,
+      metadata: { staffId, updates: Object.keys(updates) },
+    });
+
     return NextResponse.json({ staff });
   } catch (error) {
     return NextResponse.json(
@@ -202,6 +225,17 @@ export async function DELETE(request: Request) {
       { status: 404 },
     );
   }
+
+  await logAction({
+    action: "delete",
+    category: "crm",
+    details: `Deleted CRM staff member: ${staffId}`,
+    path: "/api/crm/staff",
+    method: "DELETE",
+    request,
+    session,
+    metadata: { staffId },
+  });
 
   return NextResponse.json({ success: true });
 }

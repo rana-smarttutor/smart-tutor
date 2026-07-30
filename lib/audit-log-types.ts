@@ -9,7 +9,12 @@ export type ActionLogAction =
   | "delete"
   | "view"
   | "api_call"
-  | "bulk_operation";
+  | "bulk_operation"
+  | "approve"
+  | "reject"
+  | "restore"
+  | "import"
+  | "export";
 
 export type ActionLogCategory =
   | "auth"
@@ -24,6 +29,18 @@ export type ActionLogCategory =
   | "library"
   | "performance"
   | "settings"
+  | "exams"
+  | "homework"
+  | "certificates"
+  | "placement"
+  | "crm"
+  | "leave"
+  | "communication"
+  | "complaints"
+  | "feedback"
+  | "enquiries"
+  | "payroll"
+  | "expenses"
   | "other";
 
 export type ActionLogEntry = {

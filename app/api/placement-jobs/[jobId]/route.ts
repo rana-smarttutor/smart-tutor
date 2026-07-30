@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   deletePlacementJob,
@@ -279,6 +280,17 @@ export async function PATCH(
 
     revalidatePath("/placements");
 
+    await logAction({
+      action: "update",
+      category: "placement",
+      details: `Updated placement job: ${job.role} at ${job.company} (${jobId})`,
+      path: `/api/placement-jobs/${jobId}`,
+      method: "PATCH",
+      request,
+      session,
+      metadata: { jobId, updates: Object.keys(updates) },
+    });
+
     return NextResponse.json({ job });
   } catch (error) {
     return NextResponse.json(
@@ -294,7 +306,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: RouteContext,
 ) {
   try {
@@ -318,6 +330,17 @@ export async function DELETE(
     }
 
     revalidatePath("/placements");
+
+    await logAction({
+      action: "delete",
+      category: "placement",
+      details: `Deleted placement job: ${jobId}`,
+      path: `/api/placement-jobs/${jobId}`,
+      method: "DELETE",
+      request,
+      session,
+      metadata: { jobId },
+    });
 
     return NextResponse.json({ success: true });
   } catch {

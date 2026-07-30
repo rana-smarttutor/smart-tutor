@@ -12,6 +12,7 @@ import {
 } from "@/lib/data-store";
 import { sanitizeEmailInput, sanitizePasswordInput, sanitizeRoleInput, sanitizeTextInput, validateEmailFormat } from "@/lib/validation";
 import type { UserProfile } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export async function GET() {
   const session = await getSessionUser();
@@ -188,6 +189,17 @@ if (role === "counsellor") {
     }
   }
 
+  await logAction({
+    action: "create",
+    category: "users",
+    details: `User created: ${user.email} (${role})`,
+    path: "/api/users",
+    method: "POST",
+    request,
+    session,
+    metadata: { userId: user.id, email: user.email, role },
+  });
+
   return NextResponse.json({ user }, { status: 201 });
 }
 
@@ -281,6 +293,17 @@ if (role === "counsellor") {
   });
 }
 
+  await logAction({
+    action: "update",
+    category: "users",
+    details: `User updated: ${email} (${role})`,
+    path: "/api/users",
+    method: "PATCH",
+    request,
+    session,
+    metadata: { userId: body.id, email, role },
+  });
+
   return NextResponse.json(
     {
       user: updatedUser,
@@ -324,6 +347,17 @@ export async function DELETE(request: Request) {
         { status: 404 },
       );
     }
+    await logAction({
+      action: "delete",
+      category: "users",
+      details: `User deleted: ${body.id}`,
+      path: "/api/users",
+      method: "DELETE",
+      request,
+      session,
+      metadata: { userId: body.id },
+    });
+
     return NextResponse.json({ ok: true, message: "User deleted." });
   } catch (err) {
     console.error("DELETE /api/users: Database error", err);

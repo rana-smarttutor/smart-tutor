@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createChatFlag,
@@ -471,6 +472,17 @@ const message = await createChatMessage({
     | "educator"
     | "admin",
   body: content,
+});
+
+await logAction({
+  action: "create",
+  category: "communication",
+  details: `Sent chat message to ${body.receiverRole} (${body.receiverId})`,
+  path: "/api/chat",
+  method: "POST",
+  request,
+  session,
+  metadata: { messageId: message.id, receiverId: body.receiverId, receiverRole: body.receiverRole },
 });
 
 return NextResponse.json(

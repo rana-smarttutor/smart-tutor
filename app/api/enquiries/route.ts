@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+import { logAction } from "@/lib/audit-log";
 import { createEnquiry, getAllEnquiries } from "@/lib/data-store";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 
@@ -41,6 +43,16 @@ export async function POST(request: Request) {
       courseKey: String(courseKey ?? "").slice(0, 80),
       message: String(message ?? "").slice(0, 500),
       suggestedCourses: validatedSuggested,
+    });
+
+    await logAction({
+      action: "create",
+      category: "enquiries",
+      details: `Enquiry submitted by ${name}`,
+      path: "/api/enquiries",
+      method: "POST",
+      request,
+      metadata: { name, contact, role, courseTitle, courseKey, createdAt: enquiry.createdAt },
     });
 
     return NextResponse.json({ success: true, enquiry }, { status: 201 });

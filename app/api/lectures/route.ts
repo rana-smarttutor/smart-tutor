@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
 import {
   createLecture,
@@ -210,6 +211,17 @@ export async function POST(request: Request) {
         link: "/dashboard",
       });
     }
+
+    await logAction({
+      action: "create",
+      category: "courses",
+      details: `Lecture created: ${lecture.title}`,
+      path: "/api/lectures",
+      method: "POST",
+      request,
+      session,
+      metadata: { lectureId: lecture.id, title: lecture.title, subject: lecture.subject },
+    });
 
     return NextResponse.json(
       {

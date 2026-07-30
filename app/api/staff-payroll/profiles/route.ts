@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -157,6 +158,17 @@ export async function POST(request: Request) {
       pfEnabled: typeof body.pfEnabled === "boolean" ? body.pfEnabled : false,
       tdsEnabled: typeof body.tdsEnabled === "boolean" ? body.tdsEnabled : false,
       notes: typeof body.notes === "string" ? body.notes : undefined,
+    });
+
+    await logAction({
+      action: "create",
+      category: "payroll",
+      details: `Payroll profile created for ${body.userName}`,
+      path: "/api/staff-payroll/profiles",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId: body.userId, employmentType: body.employmentType, salaryType: body.salaryType },
     });
 
     return NextResponse.json({ profile }, { status: 201 });

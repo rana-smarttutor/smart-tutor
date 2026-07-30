@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { createHoliday, getHolidays } from "@/lib/data-store";
 
 export const runtime = "nodejs";
@@ -45,6 +46,17 @@ export async function POST(request: Request) {
     }
 
     const holiday = await createHoliday({ name, date, type, color });
+    await logAction({
+      action: "create",
+      category: "leave",
+      details: `Holiday "${name}" created on ${date}`,
+      path: "/api/leave/holidays",
+      method: "POST",
+      request,
+      session,
+      metadata: { name, date, type },
+    });
+
     return NextResponse.json({ holiday }, { status: 201 });
   } catch (error) {
     console.error("Create holiday error:", error);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createFeeInstallmentPlan,
   getFeeInstallmentPlansForRole,
@@ -181,6 +182,17 @@ export async function POST(request: Request) {
 
       createdBy: session.id,
       installments,
+    });
+
+    await logAction({
+      action: "create",
+      category: "fees",
+      details: `Fee installment plan created for ${student.name}`,
+      path: "/api/fee-installments",
+      method: "POST",
+      request,
+      session,
+      metadata: { studentId: student.id, planTitle: body.title, installmentCount: installments.length },
     });
 
     return NextResponse.json({ feeInstallmentPlan }, { status: 201 });

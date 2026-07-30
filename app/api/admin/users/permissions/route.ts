@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getCollection, COLLECTIONS } from "@/lib/data-store";
 import type { AvailableModule, ModuleAccessLevel } from "@/lib/types";
+import { logAction } from "@/lib/audit-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -59,6 +60,17 @@ export async function POST(request: Request) {
     }
 
     await collection.updateOne({ id: userId }, { $set: setFields });
+
+    await logAction({
+      action: "update",
+      category: "users",
+      details: `User permissions updated: ${userId}`,
+      path: "/api/admin/users/permissions",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId, modules },
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

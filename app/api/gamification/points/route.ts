@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import { awardGamificationPoints } from "@/lib/data-store";
 import { sanitizeTextInput } from "@/lib/validation";
 import type { GamificationActivity } from "@/lib/types";
@@ -40,6 +41,17 @@ export async function POST(request: Request) {
     description: description || undefined,
     awardedBy: session.id,
     awardedByName: session.name,
+  });
+
+  await logAction({
+    action: "create",
+    category: "other",
+    details: `${points} gamification points awarded to student ${studentId}`,
+    path: "/api/gamification/points",
+    method: "POST",
+    request,
+    session,
+    metadata: { studentId, points, activity, description },
   });
 
   return NextResponse.json({ entry }, { status: 201 });

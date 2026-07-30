@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { logAction } from "@/lib/audit-log";
 import {
   createMentorshipRequest,
   getMentorshipRequestsForRole,
@@ -146,6 +147,17 @@ export async function POST(request: Request) {
           body.preferredTime,
         ),
       });
+
+    await logAction({
+      action: "create",
+      category: "other",
+      details: `Mentorship request created by ${session.name}`,
+      path: "/api/mentorship/requests",
+      method: "POST",
+      request,
+      session,
+      metadata: { mentorshipRequestId: mentorshipRequest.id, subject: body.subject, facultyId: body.facultyId },
+    });
 
     return NextResponse.json(
       {

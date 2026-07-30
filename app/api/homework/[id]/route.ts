@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logAction } from "@/lib/audit-log";
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
   getHomeworkById,
@@ -51,6 +52,18 @@ export async function PATCH(
   if (body.allowLateSubmission !== undefined) updates.allowLateSubmission = body.allowLateSubmission === true;
 
   const updated = await updateHomework(id, updates);
+
+  await logAction({
+    action: "update",
+    category: "homework",
+    details: `Homework updated: ${existing.title}`,
+    path: `/api/homework/${id}`,
+    method: "PATCH",
+    request,
+    session,
+    metadata: { homeworkId: id, title: existing.title },
+  });
+
   return NextResponse.json({ homework: updated });
 }
 
@@ -81,5 +94,17 @@ export async function DELETE(
   }
 
   await deleteHomework(id);
+
+  await logAction({
+    action: "delete",
+    category: "homework",
+    details: `Homework deleted: ${existing.title}`,
+    path: `/api/homework/${id}`,
+    method: "DELETE",
+    request: _request,
+    session,
+    metadata: { homeworkId: id, title: existing.title },
+  });
+
   return NextResponse.json({ ok: true });
 }

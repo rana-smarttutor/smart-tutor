@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logAction } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -151,6 +152,17 @@ export async function POST(request: Request) {
       notes: typeof body.notes === "string" ? body.notes : undefined,
       transferredBy: session.id,
       transferredByName: session.name ?? session.id,
+    });
+
+    await logAction({
+      action: "create",
+      category: "payroll",
+      details: `Salary transfer of ${body.amount} created for ${body.userName}`,
+      path: "/api/staff-payroll/transfers",
+      method: "POST",
+      request,
+      session,
+      metadata: { userId: body.userId, amount: body.amount, paymentMode: body.paymentMode },
     });
 
     return NextResponse.json({ transfer }, { status: 201 });
