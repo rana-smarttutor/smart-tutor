@@ -1,6 +1,17 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
+
+import {
+  BarChart3,
+  BookOpen,
+  ChevronRight,
+  Globe,
+  GraduationCap,
+  Smartphone,
+  Users,
+} from "lucide-react";
 
 import { CountUpValue } from "@/components/count-up-value";
 import { LiveClock } from "@/components/live-clock";
@@ -31,6 +42,48 @@ const roleAccentMap = {
   admin: "from-emerald-50 to-white",
   parent: "from-orange-50 to-white",
 } as const;
+
+const metricStyleMap: Record<
+  string,
+  { icon: ReactNode; color: string; bg: string }
+> = {
+  "Success Rate": {
+    icon: <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6" />,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
+  "App Support": {
+    icon: <Smartphone className="h-5 w-5 sm:h-6 sm:w-6" />,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+  },
+  "Active Students": {
+    icon: <Users className="h-5 w-5 sm:h-6 sm:w-6" />,
+    color: "text-indigo-600",
+    bg: "bg-indigo-50",
+  },
+  "Expert Mentors": {
+    icon: <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6" />,
+    color: "text-purple-600",
+    bg: "bg-purple-50",
+  },
+  "Book Downloads": {
+    icon: <BookOpen className="h-5 w-5 sm:h-6 sm:w-6" />,
+    color: "text-amber-600",
+    bg: "bg-amber-50",
+  },
+  "People Visited": {
+    icon: <Globe className="h-5 w-5 sm:h-6 sm:w-6" />,
+    color: "text-rose-600",
+    bg: "bg-rose-50",
+  },
+};
+
+const fallbackMetricStyle = {
+  icon: <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6" />,
+  color: "text-blue-600",
+  bg: "bg-blue-50",
+};
 
 export default async function Home() {
   const data = await getPublicInstituteData();
@@ -76,27 +129,27 @@ export default async function Home() {
 
   return (
     <main className="relative overflow-hidden pb-16 pt-2">
-      <section className="section-shell grid gap-8 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-        <RevealOnScroll className="space-y-7 text-center lg:text-left w-full max-w-full">
-          <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
-            <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
-              <span className="h-2.5 w-2.5 rounded-full bg-info animate-pulse" />
+      <section className="section-shell grid gap-8 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
+        <RevealOnScroll className="h-full space-y-7 text-center lg:text-left w-full max-w-full">
+          <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+            <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-emerald-700 shadow-sm backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               Admissions | Exams | Placement
-            </div>
+            </span>
 
-            <span className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
-              <span className="h-2.5 w-2.5 rounded-full bg-info animate-pulse" />
+            <span className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-sm backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
               Offline Campus
             </span>
 
-            <div className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              Vashi's Results-Driven Campus
-            </div>
+            <span className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-indigo-700 shadow-sm backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+              Vashi&apos;s Results-Driven Campus
+            </span>
 
-            <span className="surface-soft border-info inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium text-info">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-              Panvel's Results-Driven Campus
+            <span className="inline-flex items-center gap-2 rounded-xl border border-purple-200 bg-purple-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-purple-700 shadow-sm backdrop-blur-sm">
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+              Panvel&apos;s Results-Driven Campus
             </span>
           </div>
 
@@ -141,17 +194,18 @@ export default async function Home() {
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:items-start lg:justify-start">
             <Link
               href="/login"
-              className="action-button inline-flex items-center justify-center px-8 sm:px-10 py-4 sm:py-5 text-base shadow-xl glow-primary min-h-15 sm:min-h-16 w-full sm:w-auto"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#1a365d] px-8 py-3.5 text-base font-bold text-white shadow-[0_8px_20px_-6px_rgba(26,54,93,0.5)] transition-all hover:-translate-y-1 hover:bg-[#214a7d] hover:shadow-[0_12px_25px_-6px_rgba(26,54,93,0.7)] active:translate-y-0 active:scale-95 sm:w-auto"
             >
               Start Your Journey
+              <ChevronRight size={18} strokeWidth={3} />
             </Link>
             <a
               href="https://s4hwk9dbjuligkqz.public.blob.vercel-storage.com/smart%20tutors.apk"
               download
-              className="surface inline-flex items-center justify-center gap-3 rounded-full px-8 sm:px-10 py-4 sm:py-5 text-base font-bold text-[var(--color-heading)] border-2 border-emerald-100 hover:border-emerald-400 hover:bg-emerald-50 transition-all min-h-15 sm:min-h-16 w-full sm:w-auto group"
+              className="group inline-flex w-full items-center justify-center gap-3 rounded-full border border-slate-200 bg-white px-8 py-3.5 text-base font-bold text-slate-700 shadow-sm transition-all hover:-translate-y-1 hover:border-emerald-500/50 hover:bg-emerald-50 hover:text-emerald-600 active:translate-y-0 active:scale-95 sm:w-auto"
             >
               <svg
-                className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform"
+                className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
@@ -162,23 +216,32 @@ export default async function Home() {
             </a>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-4">
-            {data.metrics.map((metric, index) => (
-              <article
-                key={metric.label}
-                className="surface rounded-[1.25rem] p-4 sm:p-5 text-center lg:text-left border-b-4 border-blue-600 hover:-translate-y-1 transition-all"
-              >
-                <div className="flex flex-col">
-                  <CountUpValue
-                    value={metric.value}
-                    className="text-2xl sm:text-xl lg:text-2xl font-bold tracking-tight text-blue-700"
-                  />
-                  <p className="mt-1 text-xs sm:text-sm font-bold text-[var(--color-heading)]">
-                    {metric.label}
-                  </p>
-                </div>
-              </article>
-            ))}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5 mt-8">
+            {data.metrics.map((metric) => {
+              const style = metricStyleMap[metric.label] ?? fallbackMetricStyle;
+
+              return (
+                <article
+                  key={metric.label}
+                  className="group flex flex-row items-center gap-3 bg-white/80 backdrop-blur-xl rounded-2xl p-4 md:flex-col md:items-start sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-100 hover:border-slate-200 transition-all hover:-translate-y-1"
+                >
+                  <div
+                    className={`${style.bg} ${style.color} w-10 h-10 sm:w-12 sm:h-12 md:mb-4 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110`}
+                  >
+                    {style.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <CountUpValue
+                      value={metric.value}
+                      className="text-lg md:text-2xl font-extrabold text-slate-900 tracking-tight"
+                    />
+                    <p className="text-xs sm:text-sm text-slate-500 font-semibold mt-1 truncate">
+                      {metric.label}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
 
           <div className="pt-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 opacity-80 grayscale hover:grayscale-0 transition-all justify-center lg:justify-start">
@@ -241,7 +304,7 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
 
-        <RevealOnScroll className="grid min-w-0 gap-4" delayMs={90}>
+        <RevealOnScroll className="flex h-full min-w-0 flex-col gap-4" delayMs={90}>
           <div className="surface graph-paper rounded-xl p-6 hover:shadow-xl transition-all">
             <div className="mb-8">
               <p className="section-label">Campus Highlights</p>
@@ -254,9 +317,9 @@ export default async function Home() {
             <CampusHighlightsCarousel />
           </div>
 
-          <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex items-center justify-center min-h-[300px]">
+          <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex flex-1 items-center justify-center min-h-[300px]">
             <Image
-              src="/Page.png"
+              src="/WhySmartTutor3.png"
               alt="Why Choose Smart Tutors"
               width={1280}
               height={1180}

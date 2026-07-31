@@ -383,13 +383,15 @@ Authentication: HTTP-only cookie (`smart_tutor_session`) set on login. All authe
 
 ### GET /api/admin/audit-logs — Audit log viewer (admin only)
 **Query:**
-- `?page=1&limit=50` — Pagination
-- `?action=login|logout|create|update|delete|payment` — Filter by action
-- `?category=auth|fee|invoice|payout|user|course|crm|test|system` — Filter by category
+- `?page=1&limit=50` — Pagination (limit max 200)
+- `?action=login|logout|create|update|delete|approve|reject|restore|import|bulk_operation` — Filter by action
+- `?category=auth|fees|payout|courses|users|roles|students|attendance|messages|library|performance|settings|exams|homework|certificates|placement|crm|leave|communication|complaints|feedback|enquiries|payroll|expenses|other` — Filter by category
 - `?search=<text>` — Search across details, user name, email, IP, path
 - `?userId=<id>` — Filter by specific user
 - `?ip=<address>` — Filter by IP address
 - `?dateFrom=YYYY-MM-DD&dateTo=YYYY-MM-DD` — Date range filter
+- `?sortBy=timestamp|action|category|userName|ip` — Sort column (default: `timestamp`)
+- `?sortOrder=desc|asc` — Sort direction (default: `desc`)
 - `?stats=true` — Returns aggregate stats instead of log entries
 
 **Response (paginated):**
@@ -398,8 +400,8 @@ Authentication: HTTP-only cookie (`smart_tutor_session`) set on login. All authe
   "logs": [
     {
       "id": "string",
-      "action": "login|logout|create|update|delete|payment",
-      "category": "auth|fee|invoice|payout|user|course|crm|test|system",
+      "action": "login|logout|create|update|delete|approve|reject|restore|import|bulk_operation",
+      "category": "auth|fees|payout|courses|users|roles|students|attendance|messages|library|performance|settings|exams|homework|certificates|placement|crm|leave|communication|complaints|feedback|enquiries|payroll|expenses|other",
       "userId": "string|null",
       "userEmail": "string|null",
       "userName": "string|null",

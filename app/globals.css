@@ -73,6 +73,15 @@
   --color-rose: #f43f5e;
   --color-rose-strong: #e11d48;
   --color-rose-soft: rgba(244, 63, 94, 0.1);
+
+  /* Login/Portal Accents */
+  --color-navy: #0f172a;
+  --color-navy-soft: rgba(15, 23, 42, 0.6);
+  --color-gold: #d4af37;
+  --color-gold-strong: #b8860b;
+  --color-gold-soft: rgba(212, 175, 55, 0.15);
+  --color-cream: #f8f7f4;
+  --color-cream-soft: #eaddca;
   
   /* System Accents */
   --color-accent: var(--color-primary);

@@ -1,39 +1,109 @@
 # Smart Tutors Team Guide
 
-## Data Logging & Privacy
+## Audit Log System
 
-### Audit Log System
+### Overview
 
-The platform includes a comprehensive server‑side audit logging system that records all significant actions for security monitoring and incident investigation.
+Every database-write API route is instrumented with `logAction()` from `lib/audit-log.ts`. Entries are written directly to the MongoDB `actionLogs` collection — no temp file buffering (avoids serverless instance isolation issues). Write failures are logged to `console.error` but never block the user request.
 
-**What is logged:**
-- Authentication events: login, logout, session expiry
-- CRUD operations: create, update, delete on fees, invoices, staff payouts, installment plans
-- API calls to audited endpoints
-- Bulk operations
+### What is logged (actions)
 
-**What data is collected per entry:**
-- Timestamp (ISO 8601)
-- User ID, name, email, and role
-- Action type and category
-- IP address (from `x-forwarded-for` / `x-real-ip` / `cf-connecting-ip` headers)
-- User-Agent string (browser name + version, OS name + version, device type)
-- Referer and Accept-Language headers
-- Cloudflare country code (`cf-ipcountry`) when available
-- Request path and HTTP method
-- Response status code and duration
-- Best-effort IP geolocation (city, region, country via `ipapi.co` — non‑blocking, silently degrades)
+| Action | Meaning |
+|--------|---------|
+| `login` / `logout` | Session creation and destruction |
+| `create` | Record created (invoice, user, course, homework, etc.) |
+| `update` | Record modified (profile, status, payment recorded, etc.) |
+| `delete` | Record permanently removed |
+| `approve` / `reject` | User request or educator request approved/rejected |
+| `restore` | Soft-deleted record restored (account bin) |
+| `import` / `export` | Bulk data import or export |
+| `bulk_operation` | Bulk student update, batch operation |
 
-**How it is stored:**
-1. Each action is appended to a server‑side temporary file (`/tmp/audit-log.ndjson`) for the active server instance.
-2. Every 5 minutes (or when the buffer reaches 50 entries), the accumulated entries are flushed to the MongoDB `actionLogs` collection in a single `insertMany` batch.
-3. The temp file is truncated after a successful flush to prevent unbounded growth.
+### What is logged (categories)
 
-**Data retention:** Logs are kept for 90 days by default (configurable via a TTL index on the `timestamp` field). Older logs are automatically purged by MongoDB.
+| Category | Routes instrumented |
+|----------|-------------------|
+| `auth` | login, logout, signup, forgot-password, change-password, delete-account, password-reset-requests |
+| `users` | users CRUD, user-requests approve/reject, account-bin, verify, permissions |
+| `roles` | roles CRUD, roles assign/unassign |
+| `students` | students update, bulk-update, import |
+| `courses` | courses CRUD, lectures CRUD |
+| `fees` | invoices create/delete, fee-installments create/payment/delete, payments verify |
+| `payout` | staff-payouts CRUD, teacher-payouts CRUD |
+| `expenses` | admin expenses CRUD |
+| `payroll` | staff-payroll advances, increments, profiles, runs, slips, transfers |
+| `attendance` | attendance CRUD, staff-attendance (checkin, checkout, bulk-mark, regularise, review) |
+| `leave` | leave apply/PATCH, balances, holidays, types CRUD |
+| `homework` | homework CRUD, submissions create/update |
+| `exams` | tests CRUD, weekly-tests CRUD, test-submissions |
+| `certificates` | certificates issue, update, delete |
+| `placement` | placement-jobs CRUD, placement-applications |
+| `crm` | leads CRUD, staff CRUD, import |
+| `messages` | messages CRUD |
+| `communication` | notifications CRUD, chat send/block/flag |
+| `complaints` | complaints create/update/delete |
+| `feedback` | student-feedback CRUD |
+| `enquiries` | public enquiries |
+| `library` | digital-library create/update/delete, sections |
+| `performance` | student-performance reports create/delete |
+| `settings` | profile update, bootstrap |
+| `other` | doubts, daily-activities, daily-routines, PTM, mentorship, gamification, rewards/redeem |
 
-**Who can access:** Only users with the `admin` role can view the audit log panel in the dashboard. The data is served through `GET /api/admin/audit-logs` which enforces role‑based access control.
+### Data collected per entry
 
-**Privacy note:** IP geolocation is performed by a third‑party service (`ipapi.co`). The lookup is fire‑and‑forget (non‑blocking) and only resolves city / region / country — we do not store precise coordinates or associate geodata with personal identities beyond the user's authenticated session. If the geolocation service is unreachable, the entry is logged without location data.
+```
+id:         string         — unique log entry ID (timestamp+random suffix)
+action:     string         — see action table above
+category:   string         — see category table above
+userId:     string | null  — authenticated user ID
+userEmail:  string | null  — authenticated user email
+userName:   string | null  — authenticated user display name
+userRole:   string | null  — role: student|educator|admin|parent|counsellor
+details:    string         — human-readable description with identifiers
+metadata:   object | null  — domain-specific IDs and fields (invoice ID, course title, etc.)
+ip:         string         — client IP: x-forwarded-for → x-real-ip → cf-connecting-ip → host
+userAgent:  string         — raw User-Agent header
+browser:    string | null  — parsed via ua-parser-js (e.g. "Chrome 125")
+os:         string | null  — parsed via ua-parser-js (e.g. "Windows 10")
+device:     string | null  — parsed via ua-parser-js (e.g. "mobile", "tablet")
+referer:    string | null  — Referer header
+acceptLanguage: string | null
+cfCountry:  string | null  — Cloudflare cf-ipcountry header
+geo:        { city?, region?, country? } | null — best-effort ipapi.co lookup (cached per IP)
+path:       string         — request path (e.g. "/api/invoices")
+method:     string         — HTTP method (POST / PATCH / DELETE / PUT)
+duration:   number | null  — handler execution time in ms
+statusCode: number | null  — response status code
+timestamp:  string         — ISO 8601
+```
+
+### Architecture
+
+- **`lib/audit-log.ts`** — Core module. Exports `logAction()` (builds entry → calls `collection.insertOne()` directly on MongoDB) and `extractRequestMeta()` (IP, UA parsing, geo cache).
+- **`lib/audit-log-types.ts`** — TypeScript types: `ActionLogEntry`, `ActionLogAction`, `ActionLogCategory`, `AuditLogFilter`, `AuditLogStats`.
+- **`lib/data-store.ts`** — Query layer: `getActionLogs()` (paginated, filtered, sortable), `getActionLogStats()` (aggregate counts), `appendActionLogEntries()`.
+- **`app/api/admin/audit-logs/route.ts`** — Admin-only GET API with query params: `?page=`, `?limit=`, `?action=`, `?category=`, `?search=`, `?ip=`, `?userId=`, `?dateFrom=`, `?dateTo=`, `?sortBy=`, `?sortOrder=`, `?stats=true`.
+- **`components/audit-log-panel.tsx`** — Admin dashboard panel with stats cards, search bar, filters, sortable columns, expandable row details, pagination.
+
+### Storage & Retention
+
+- **Collection:** `actionLogs` in the configured MongoDB database.
+- **Retention:** No automatic purge currently configured. Recommended: add a TTL index on `timestamp` field (`db.actionLogs.createIndex({ timestamp: 1 }, { expireAfterSeconds: 7776000 })` for 90 days).
+- **Lookups:** IP geolocation via `ipapi.co` (free tier, ~1k req/day, 3s timeout, silently degrades). Per-IP cache prevents redundant lookups.
+
+### Access Control
+
+- **Viewer:** `GET /api/admin/audit-logs` — admin role only (enforced in route handler via `getSessionUser()` + `role !== "admin"` check).
+- **UI:** `AuditLogPanel` component rendered only when `session?.role === "admin"` in `dashboard-shell.tsx`.
+- **Logged data includes:** the acting user's ID, email, name, and role — no PII beyond what the user already provided to the platform.
+
+### Files
+
+- `lib/audit-log.ts` — `logAction()`, `extractRequestMeta()`
+- `lib/audit-log-types.ts` — type definitions
+- `lib/data-store.ts` — `getActionLogs()`, `getActionLogStats()`, `appendActionLogEntries()`, `COLLECTIONS.actionLogs`
+- `app/api/admin/audit-logs/route.ts` — API endpoint
+- `components/audit-log-panel.tsx` — admin UI
 
 ## What exists now
 
