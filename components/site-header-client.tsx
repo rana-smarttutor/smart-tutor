@@ -370,7 +370,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
 
       <div
         aria-hidden="true"
-        className="h-[5.25rem] sm:h-[5.75rem] lg:h-[6.25rem]"
+        className="h-20"
       />
     </>
   );

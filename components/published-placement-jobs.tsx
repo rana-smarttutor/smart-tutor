@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Search,
+  Wallet,
+} from "lucide-react";
 
 import type {
   PlacementApplication,
@@ -81,6 +89,37 @@ function applicationStatusClass(status: PlacementApplicationStatus) {
   return classes[status];
 }
 
+type PlacementJobSort = "newest" | "deadline" | "role" | "company";
+
+const JOB_PAGE_SIZE = 5;
+
+function getPageList(current: number, total: number) {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => index + 1);
+  }
+
+  const pages: (number | "start" | "end")[] = [1];
+
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+
+  if (start > 2) {
+    pages.push("start");
+  }
+
+  for (let page = start; page <= end; page += 1) {
+    pages.push(page);
+  }
+
+  if (end < total - 1) {
+    pages.push("end");
+  }
+
+  pages.push(total);
+
+  return pages;
+}
+
 export function PublishedPlacementJobs() {
   const [jobs, setJobs] = useState<PlacementJob[]>([]);
   const [applications, setApplications] = useState<PlacementApplication[]>([]);
@@ -96,6 +135,13 @@ export function PublishedPlacementJobs() {
     text: string;
   } | null>(null);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<PlacementJobSort>("newest");
+  const [expandedJobIds, setExpandedJobIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+
   const applicationsByJobId = useMemo(
     () =>
       new Map(
@@ -103,6 +149,82 @@ export function PublishedPlacementJobs() {
       ),
     [applications],
   );
+
+  const visibleJobs = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+
+    const filtered = query
+      ? jobs.filter((job) => {
+          const haystack = [
+            job.role,
+            job.company,
+            job.location,
+            formatJobType(job.jobType),
+            job.description,
+            job.eligibility ?? "",
+            ...job.skills,
+          ]
+            .join(" ")
+            .toLowerCase();
+
+          return haystack.includes(query);
+        })
+      : [...jobs];
+
+    filtered.sort((a, b) => {
+      if (sortBy === "deadline") {
+        return a.deadline.localeCompare(b.deadline);
+      }
+
+      if (sortBy === "role") {
+        return a.role.localeCompare(b.role);
+      }
+
+      if (sortBy === "company") {
+        return a.company.localeCompare(b.company);
+      }
+
+      return (b.publishedAt ?? b.createdAt).localeCompare(
+        a.publishedAt ?? a.createdAt,
+      );
+    });
+
+    return filtered;
+  }, [jobs, searchTerm, sortBy]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(visibleJobs.length / JOB_PAGE_SIZE),
+  );
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageJobs = visibleJobs.slice(
+    (safeCurrentPage - 1) * JOB_PAGE_SIZE,
+    safeCurrentPage * JOB_PAGE_SIZE,
+  );
+
+  function handleSearchChange(value: string) {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  }
+
+  function handleSortChange(value: PlacementJobSort) {
+    setSortBy(value);
+    setCurrentPage(1);
+  }
+
+  function toggleJobExpanded(jobId: string) {
+    setExpandedJobIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(jobId)) {
+        next.delete(jobId);
+      } else {
+        next.add(jobId);
+      }
+
+      return next;
+    });
+  }
 
   useEffect(() => {
     void loadJobs();
@@ -308,7 +430,7 @@ export function PublishedPlacementJobs() {
   return (
     <section
       id="find-jobs"
-      className="scroll-mt-24 bg-slate-50 py-16 sm:py-20"
+      className="scroll-mt-24 bg-transparent py-16 sm:py-20"
     >
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
@@ -411,152 +533,306 @@ export function PublishedPlacementJobs() {
           ) : null}
 
           {!isLoading && jobs.length ? (
-            <div className="grid gap-5 lg:grid-cols-2">
-              {jobs.map((job) => {
-                const existingApplication = applicationsByJobId.get(job.id);
-                const deadlinePassed = isDeadlinePassed(job.deadline);
+            <div>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <label className="relative block w-full max-w-md">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={(event) => handleSearchChange(event.target.value)}
+                    placeholder="Search by role, company, location, skill..."
+                    className="w-full rounded-full border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-slate-800 shadow-sm outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/15"
+                  />
+                </label>
 
-                return (
-                  <article
-                    key={job.id}
-                    className="flex h-full flex-col rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-xl sm:p-6"
+                <div className="flex flex-wrap items-center gap-3">
+                  <label className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                    Sort by
+                    <select
+                      value={sortBy}
+                      onChange={(event) =>
+                        handleSortChange(event.target.value as PlacementJobSort)
+                      }
+                      className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 shadow-sm outline-none transition focus:border-blue-400"
+                    >
+                      <option value="newest">Newest first</option>
+                      <option value="deadline">Deadline soonest</option>
+                      <option value="role">Role A–Z</option>
+                      <option value="company">Company A–Z</option>
+                    </select>
+                  </label>
+
+                  <span className="rounded-full bg-blue-50 px-4 py-2.5 text-xs font-black uppercase tracking-wide text-blue-700">
+                    {visibleJobs.length}{" "}
+                    {visibleJobs.length === 1 ? "opportunity" : "opportunities"}
+                  </span>
+                </div>
+              </div>
+
+              {visibleJobs.length ? (
+                <div className="mt-8 space-y-4">
+                  {pageJobs.map((job) => {
+                    const existingApplication = applicationsByJobId.get(job.id);
+                    const deadlinePassed = isDeadlinePassed(job.deadline);
+                    const isExpanded = expandedJobIds.has(job.id);
+
+                    return (
+                      <article
+                        key={job.id}
+                        className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:shadow-lg"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleJobExpanded(job.id)}
+                          aria-expanded={isExpanded}
+                          className="flex w-full items-start justify-between gap-4 p-5 text-left"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-blue-700">
+                                {formatJobType(job.jobType)}
+                              </span>
+
+                              <span
+                                className={`rounded-full px-3 py-1 text-[11px] font-black ${
+                                  deadlinePassed
+                                    ? "bg-rose-50 text-rose-700"
+                                    : "bg-emerald-50 text-emerald-700"
+                                }`}
+                              >
+                                {deadlinePassed
+                                  ? "Closed"
+                                  : `Apply by ${formatDate(job.deadline)}`}
+                              </span>
+                            </div>
+
+                            <h3 className="mt-3 text-xl font-black tracking-tight text-slate-950">
+                              {job.role}
+                            </h3>
+
+                            <p className="mt-1 text-sm font-bold text-slate-600">
+                              {job.company}
+                            </p>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700">
+                                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                                {job.location}
+                              </span>
+
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700">
+                                <Wallet className="h-3.5 w-3.5 text-slate-400" />
+                                {job.salary || "As per company policy"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span
+                            className={`mt-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-transform duration-300 ${
+                              isExpanded
+                                ? "rotate-180 border-blue-200 bg-blue-50 text-blue-600"
+                                : "border-slate-200 bg-slate-50 text-slate-500"
+                            }`}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </span>
+                        </button>
+
+                        {!isExpanded ? (
+                          <p className="line-clamp-2 whitespace-pre-line px-5 pb-2 text-sm leading-6 text-slate-600">
+                            {job.description}
+                          </p>
+                        ) : (
+                          <div className="px-5 pb-4">
+                            <p className="whitespace-pre-line text-sm leading-7 text-slate-600">
+                              {job.description}
+                            </p>
+
+                            {job.eligibility ? (
+                              <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                                <p className="text-xs font-black uppercase tracking-wide text-blue-700">
+                                  Eligibility
+                                </p>
+                                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
+                                  {job.eligibility}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {job.skills.length ? (
+                              <div className="mt-4">
+                                <p className="text-xs font-black uppercase tracking-wide text-slate-500">
+                                  Required Skills
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-1.5">
+                                  {job.skills.map((skill) => (
+                                    <span
+                                      key={skill}
+                                      className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {job.applicationQuestions.length ? (
+                              <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
+                                This application includes{" "}
+                                {job.applicationQuestions.length} additional{" "}
+                                {job.applicationQuestions.length === 1
+                                  ? "question"
+                                  : "questions"}{" "}
+                                to answer.
+                              </p>
+                            ) : null}
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/60 p-5 sm:flex-row sm:items-center sm:justify-between">
+                          <button
+                            type="button"
+                            onClick={() => toggleJobExpanded(job.id)}
+                            className="inline-flex items-center gap-1.5 self-start text-sm font-black text-blue-600 transition hover:text-blue-700"
+                          >
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform duration-300 ${
+                                isExpanded ? "rotate-180" : ""
+                              }`}
+                            />
+                            {isExpanded ? "Hide details" : "View details"}
+                          </button>
+
+                          <div className="w-full sm:w-auto">
+                            {viewerRole === "student" && existingApplication ? (
+                              <div
+                                className={`flex items-center justify-between rounded-full px-4 py-2.5 ring-1 ${applicationStatusClass(
+                                  existingApplication.status,
+                                )}`}
+                              >
+                                <span className="text-sm font-black">
+                                  Application submitted
+                                </span>
+                                <span className="text-xs font-black">
+                                  {formatApplicationStatus(
+                                    existingApplication.status,
+                                  )}
+                                </span>
+                              </div>
+                            ) : null}
+
+                            {viewerRole === "student" &&
+                            !existingApplication &&
+                            !deadlinePassed ? (
+                              <button
+                                type="button"
+                                onClick={() => openApplication(job)}
+                                className="w-full rounded-full bg-emerald-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-[0.98] sm:w-auto"
+                              >
+                                Apply Now
+                              </button>
+                            ) : null}
+
+                            {viewerRole === "student" &&
+                            !existingApplication &&
+                            deadlinePassed ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="w-full cursor-not-allowed rounded-full bg-slate-200 px-6 py-3 text-sm font-black text-slate-500 sm:w-auto"
+                              >
+                                Application Closed
+                              </button>
+                            ) : null}
+
+                            {viewerRole && viewerRole !== "student" ? (
+                              <div className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-bold text-slate-600">
+                                Students can apply through their student account.
+                              </div>
+                            ) : null}
+
+                            {!viewerRole ? (
+                              <Link
+                                href="/login?next=%2Fplacements%23find-jobs"
+                                className="block w-full rounded-full bg-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 active:scale-[0.98] sm:w-auto"
+                              >
+                                Login as Student to Apply
+                              </Link>
+                            ) : null}
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-10 text-center shadow-sm">
+                  <h3 className="text-xl font-black text-slate-950">
+                    No matching opportunities.
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    Try a different search term or clear your filters.
+                  </p>
+                </div>
+              )}
+
+              {totalPages > 1 ? (
+                <nav
+                  className="mt-10 flex flex-wrap items-center justify-center gap-2"
+                  aria-label="Placement job pages"
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((value) => Math.max(1, value - 1))
+                    }
+                    disabled={safeCurrentPage === 1}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-600">
-                          {formatJobType(job.jobType)}
-                        </p>
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </button>
 
-                        <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
-                          {job.role}
-                        </h3>
-
-                        <p className="mt-2 text-base font-bold text-slate-700">
-                          {job.company}
-                        </p>
-                      </div>
-
+                  {getPageList(safeCurrentPage, totalPages).map((page) =>
+                    page === "start" || page === "end" ? (
                       <span
-                        className={`rounded-full px-3 py-1.5 text-xs font-black ${
-                          deadlinePassed
-                            ? "bg-rose-50 text-rose-700"
-                            : "bg-emerald-50 text-emerald-700"
+                        key={page}
+                        className="px-1 text-sm font-bold text-slate-400"
+                      >
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={page}
+                        type="button"
+                        onClick={() => setCurrentPage(page)}
+                        aria-current={safeCurrentPage === page ? "page" : undefined}
+                        className={`h-10 w-10 rounded-full text-sm font-black transition ${
+                          safeCurrentPage === page
+                            ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                            : "border border-slate-200 bg-white text-slate-700 hover:border-blue-300"
                         }`}
                       >
-                        {deadlinePassed
-                          ? "Closed"
-                          : `Apply by ${formatDate(job.deadline)}`}
-                      </span>
-                    </div>
+                        {page}
+                      </button>
+                    ),
+                  )}
 
-                    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-slate-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                          Location
-                        </p>
-                        <p className="mt-2 text-sm font-bold text-slate-800">
-                          {job.location}
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl bg-slate-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-400">
-                          Salary / Stipend
-                        </p>
-                        <p className="mt-2 text-sm font-bold text-slate-800">
-                          {job.salary || "As per company policy"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="mt-6 whitespace-pre-line text-sm leading-7 text-slate-600">
-                      {job.description}
-                    </p>
-
-                    {job.eligibility ? (
-                      <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-blue-700">
-                          Eligibility
-                        </p>
-                        <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700">
-                          {job.eligibility}
-                        </p>
-                      </div>
-                    ) : null}
-
-                    {job.skills.length ? (
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        {job.skills.map((skill) => (
-                          <span
-                            key={skill}
-                            className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <div className="mt-auto pt-7">
-                      {viewerRole === "student" && existingApplication ? (
-                        <div
-                          className={`flex items-center justify-between rounded-2xl px-4 py-3 ring-1 ${applicationStatusClass(
-                            existingApplication.status,
-                          )}`}
-                        >
-                          <span className="text-sm font-black">
-                            Application submitted
-                          </span>
-                          <span className="text-xs font-black">
-                            {formatApplicationStatus(
-                              existingApplication.status,
-                            )}
-                          </span>
-                        </div>
-                      ) : null}
-
-                      {viewerRole === "student" &&
-                      !existingApplication &&
-                      !deadlinePassed ? (
-                        <button
-                          type="button"
-                          onClick={() => openApplication(job)}
-                          className="w-full rounded-full bg-emerald-600 px-5 py-3.5 text-sm font-black text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
-                        >
-                          Apply Now
-                        </button>
-                      ) : null}
-
-                      {viewerRole === "student" &&
-                      !existingApplication &&
-                      deadlinePassed ? (
-                        <button
-                          type="button"
-                          disabled
-                          className="w-full cursor-not-allowed rounded-full bg-slate-200 px-5 py-3.5 text-sm font-black text-slate-500"
-                        >
-                          Application Closed
-                        </button>
-                      ) : null}
-
-                      {viewerRole && viewerRole !== "student" ? (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-sm font-bold text-slate-600">
-                          Students can apply through their student account.
-                        </div>
-                      ) : null}
-
-                      {!viewerRole ? (
-                        <Link
-                          href="/login?next=%2Fplacements%23find-jobs"
-                          className="block w-full rounded-full bg-blue-600 px-5 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
-                        >
-                          Login as Student to Apply
-                        </Link>
-                      ) : null}
-                    </div>
-                  </article>
-                );
-              })}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCurrentPage((value) => Math.min(totalPages, value + 1))
+                    }
+                    disabled={safeCurrentPage === totalPages}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:border-blue-300 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </nav>
+              ) : null}
             </div>
           ) : null}
         </div>

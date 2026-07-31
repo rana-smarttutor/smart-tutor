@@ -143,7 +143,7 @@ export function PlacementPortalHero() {
           {/* STUDENT SIDE */}
           <div className="relative flex h-full flex-col bg-[#f7fff9] p-6 sm:p-8">
             <div className="grid min-h-[300px] items-center gap-5 sm:grid-cols-[1.15fr_0.85fr]">
-              <div className="sm:-translate-y-7">
+              <div>
                 <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.17em] text-emerald-700">
                   <GraduationCap className="h-3.5 w-3.5" />
                   For Students

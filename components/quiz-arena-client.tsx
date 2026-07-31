@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -599,6 +599,7 @@ function QuizGame({
   playfulMode: boolean;
   onComplete: (result: QuizResult) => void;
 }) {
+  const quizCardRef = useRef<HTMLElement | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -612,6 +613,10 @@ function QuizGame({
   const progress = ((questionIndex + 1) / questions.length) * 100;
   const answered = selectedAnswer !== null;
   const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+
+  useEffect(() => {
+    quizCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [questionIndex]);
 
   function chooseAnswer(answer: string) {
     if (answered) {
@@ -660,7 +665,10 @@ function QuizGame({
   }
 
   return (
-    <section className="mx-auto max-w-4xl">
+    <section
+      ref={quizCardRef}
+      className="mx-auto max-w-4xl scroll-mt-28"
+    >
       <div className="mb-6 rounded-3xl border border-white/10 bg-white/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>

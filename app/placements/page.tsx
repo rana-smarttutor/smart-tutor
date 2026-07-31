@@ -39,7 +39,7 @@ export default function PlacementsPage() {
     ],
   };
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-gradient-to-r from-[#f8f9fc] via-[#eef2ff] to-[#e0e7ff]">
       {" "}
       <script
         type="application/ld+json"
