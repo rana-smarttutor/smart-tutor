@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms & Conditions | Smart Tutors",
-  description: "Smart Tutors terms and conditions governing the use of our educational platform.",
+  description: "Smart Tutors terms and conditions governing the use of our educational platform, including logging, monitoring, and analytics.",
   alternates: {
     canonical: "https://smarttutors.co.in/terms",
   },
@@ -26,7 +26,7 @@ export default function TermsPage() {
       />
       <main className="mx-auto max-w-3xl px-4 py-16">
         <h1 className="text-3xl font-bold tracking-tight">Terms &amp; Conditions</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Last updated: July 2026</p>
+        <p className="mt-2 text-sm text-muted-foreground">Last updated: 31 July 2026</p>
 
         <div className="mt-8 space-y-6 text-sm leading-7">
           <section>
@@ -98,7 +98,49 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">6. Limitation of Liability</h2>
+            <h2 className="text-xl font-semibold">6. Monitoring, Logging &amp; Analytics</h2>
+            <div className="mt-2 space-y-2">
+              <p>
+                As described in our Privacy Policy, the platform automatically records device and network
+                information (including IP address, browser type and version, operating system, device type,
+                referring URL, language preference, and approximate location), session activity, and audit
+                logs of actions performed by you on the platform. These records are used for security,
+                troubleshooting, and accountability purposes and may be reviewed by authorised administrators.
+              </p>
+              <p>
+                We use analytics services (Vercel Analytics and Vercel Speed Insights) that process aggregate
+                usage statistics and page performance data. Passwords, identity documents, and the contents
+                of fee or payroll records are never written to audit logs.
+              </p>
+              <p>
+                By using the platform, you consent to the collection, logging, and processing described in the
+                Privacy Policy. If you do not consent, you should discontinue use of the platform.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold">7. Cookies &amp; Browser Storage</h2>
+            <div className="mt-2 space-y-2">
+              <p>
+                We set a single session cookie (<code>smart_tutor_session</code>) when you sign in. It is
+                <code> HttpOnly</code> and <code>SameSite=Lax</code>, contains only a signed user identifier,
+                and expires automatically after 8 hours or when you sign out.
+              </p>
+              <p>
+                We may also store non-essential preferences in your browser&apos;s localStorage, including
+                theme selection, promotional popup acknowledgement, chat read timestamps, and PWA install
+                prompt dismissal.
+              </p>
+              <p>
+                You may clear cookies and browser storage through your browser settings. Disabling essential
+                cookies may prevent you from signing in or using authenticated features.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold">8. Limitation of Liability</h2>
             <p className="mt-2">
               Smart Tutors, its operators, and affiliates shall not be held liable for any direct, indirect,
               incidental, special, or consequential damages resulting from:
@@ -122,7 +164,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">7. Third-Party Links</h2>
+            <h2 className="text-xl font-semibold">9. Third-Party Links</h2>
             <p className="mt-2">
               The platform may contain links to third-party websites. Smart Tutors is not responsible for the
               content, privacy practices, or security of those websites.
@@ -130,7 +172,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">8. Modifications</h2>
+            <h2 className="text-xl font-semibold">10. Modifications</h2>
             <p className="mt-2">
               We reserve the right to modify these terms at any time. Users will be notified of material changes
               via the platform. Continued use after changes constitutes acceptance of the new terms.
@@ -138,7 +180,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold">9. Governing Law</h2>
+            <h2 className="text-xl font-semibold">11. Governing Law</h2>
             <p className="mt-2">
               These terms are governed by the laws of India. Any disputes shall be subject to the jurisdiction
               of the courts in Navi Mumbai, Maharashtra.

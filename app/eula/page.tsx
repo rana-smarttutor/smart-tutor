@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "End User License Agreement | Smart Tutors",
   description:
-    "Smart Tutors end user license agreement — terms governing the use of our software platform.",
+    "Smart Tutors end user license agreement — terms governing the use of our software platform, including data collection and logging.",
   alternates: {
     canonical: "https://smarttutors.co.in/eula",
   },
@@ -109,7 +109,32 @@ const sections = [
     ),
   },
   {
-    title: "5. Disclaimer of Warranties",
+    title: "5. Data Collection, Logging & Analytics",
+    content: (
+      <div className="space-y-2">
+        <p>
+          The platform automatically collects device and network information and
+          records audit logs of actions performed on the platform, including
+          login and logout, account management, and administrative operations,
+          as further described in our Privacy Policy. A single session cookie (
+          <code>smart_tutor_session</code>) is set when you sign in; it contains
+          only a signed user identifier, is <code>HttpOnly</code> and{" "}
+          <code>SameSite=Lax</code>, and expires after 8 hours. Analytics
+          services (Vercel Analytics and Vercel Speed Insights) process
+          aggregate usage statistics and page performance data.
+        </p>
+        <p>
+          By using the platform you consent to the collection, logging, and
+          processing of this data for security, accountability,
+          troubleshooting, and service improvement purposes. Passwords and the
+          contents of identity documents are never written to audit logs. For
+          full details, please refer to our Privacy Policy.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "6. Disclaimer of Warranties",
     content: (
       <div className="space-y-2">
         <p>
@@ -134,7 +159,7 @@ const sections = [
     ),
   },
   {
-    title: "6. Limitation of Liability",
+    title: "7. Limitation of Liability",
     content: (
       <div className="space-y-2">
         <p>
@@ -185,7 +210,7 @@ const sections = [
     ),
   },
   {
-    title: "7. Termination",
+    title: "8. Termination",
     content: (
       <div className="space-y-2">
         <p>
@@ -208,7 +233,7 @@ const sections = [
     ),
   },
   {
-    title: "8. Mobile Application",
+    title: "9. Mobile Application",
     content: (
       <p>
         If the platform is accessed via a mobile application, the app is
@@ -221,7 +246,7 @@ const sections = [
     ),
   },
   {
-    title: "9. Governing Law & Dispute Resolution",
+    title: "10. Governing Law & Dispute Resolution",
     content: (
       <div className="space-y-2">
         <p>
@@ -241,7 +266,7 @@ const sections = [
     ),
   },
   {
-    title: "10. Contact",
+    title: "11. Contact",
     content: (
       <div>
         <p>For questions about this agreement:</p>
@@ -292,7 +317,7 @@ export default function EulaPage() {
             End User License Agreement
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Last updated: July 2026
+            Last updated: 31 July 2026
           </p>
         </div>
 

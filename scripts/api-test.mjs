@@ -1,3 +1,44 @@
+import fs from "node:fs";
+import path from "node:path";
+
+function loadEnvFile(filename) {
+  const filePath = path.join(process.cwd(), filename);
+
+  if (!fs.existsSync(filePath)) {
+    return;
+  }
+
+  const raw = fs.readFileSync(filePath, "utf8");
+
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const equalsIndex = trimmed.indexOf("=");
+    if (equalsIndex === -1) continue;
+
+    const key = trimmed.slice(0, equalsIndex).trim();
+    let value = trimmed.slice(equalsIndex + 1).trim();
+
+    if (!key) continue;
+    if (Object.prototype.hasOwnProperty.call(process.env, key)) continue;
+
+    // Strip wrapping quotes.
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    process.env[key] = value;
+  }
+}
+
+// `next dev` loads `.env.local`, but `node scripts/*.mjs` does not.
+loadEnvFile(".env.local");
+loadEnvFile(".env");
+
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 async function request(method, path, body = null) {
@@ -37,6 +78,7 @@ function assert(label, condition, detail = "") {
 
 async function run() {
   console.log("\n🧪 API Health Check Tests\n");
+  console.log(BASE_URL);
 
   // Public pages
   console.log("── Public Endpoints ──");

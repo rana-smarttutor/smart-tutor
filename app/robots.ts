@@ -22,11 +22,21 @@ export default function robots(): MetadataRoute.Robots {
     '/dashboard/',
     '/admin/',
     '/student-performance/',
+    '/my-profile/',
     '/login',
     '/application-submitted',
     '/waiting-approval',
     '/*.json$',
     '/_next/',
+  ];
+
+  const aiDisallow = [
+    '/dashboard/',
+    '/api/',
+    '/admin/',
+    '/student-performance/',
+    '/my-profile/',
+    '/login',
   ];
 
   return {
@@ -54,43 +64,43 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: 'GPTBot',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 5,
       },
       {
         userAgent: 'ChatGPT-User',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 5,
       },
       {
         userAgent: 'Claude-Web',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 5,
       },
       {
         userAgent: 'Google-Extended',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 1,
       },
       {
         userAgent: 'PerplexityBot',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 5,
       },
       {
         userAgent: 'Applebot',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 2,
       },
       {
         userAgent: 'anthropic-ai',
         allow: allowAll,
-        disallow: ['/dashboard/', '/api/', '/admin/', '/student-performance/', '/login'],
+        disallow: aiDisallow,
         crawlDelay: 5,
       },
       {

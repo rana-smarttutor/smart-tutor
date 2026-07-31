@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Privacy Policy | Smart Tutors",
   description:
-    "Smart Tutors privacy policy — how we collect, use, and protect your personal data.",
+    "Smart Tutors privacy policy — how we collect, use, store, log, and protect your personal data.",
   alternates: {
     canonical: "https://smarttutors.co.in/privacy",
   },
@@ -19,10 +19,41 @@ const sections = [
           when you register on our platform, including your name, email address,
           phone number, academic records, attendance data, test scores, fee
           payment history, and learning activity logs. We also collect resume and
-          qualification data submitted for placement and career services. Device
-          information such as browser type, operating system, IP address, and
-          usage patterns may be collected automatically for analytics and security
-          purposes.
+          qualification data submitted for placement and career services.
+        </p>
+        <p>
+          <strong>Content you create:</strong> messages, homework and doubt
+          submissions, test and quiz answers, mock test attempts, complaints,
+          feedback, daily routine records, and placement applications submitted
+          through the platform.
+        </p>
+        <p>
+          <strong>Device and network information:</strong> when you use the
+          platform we automatically collect your IP address, browser type and
+          version, operating system, device type, referring URL, language
+          preference, and an approximate location (city, region, country)
+          derived from your IP address.
+        </p>
+        <p>
+          <strong>Activity and audit logs:</strong> we maintain audit records of
+          actions performed on the platform (such as login and logout, creating
+          or updating records, approvals, imports and exports) together with the
+          technical metadata described above. See "Audit &amp; Activity
+          Logging" below.
+        </p>
+        <p>
+          <strong>Payment and financial data:</strong> fee invoices, installment
+          plans, and fee transaction records for students, and payroll, payout,
+          advance, increment, and transfer records for faculty and staff. Staff
+          biometric punch logs may be collected through the institute&apos;s
+          attendance system.
+        </p>
+        <p>
+          <strong>Browser storage:</strong> we use a small amount of browser
+          storage (localStorage) to remember preferences such as theme
+          selection, promotional popup acknowledgements, chat read timestamps,
+          and PWA install prompt dismissals. This data stays on your device and
+          never leaves it unless transmitted for an intended purpose.
         </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
           <p className="font-bold">Identity Verification Documents (Faculty Only):</p>
@@ -48,16 +79,33 @@ const sections = [
   {
     title: "2. How We Use Your Data",
     content: (
-      <p>
-        We use your data solely for educational administration: managing
-        courses, tracking attendance and academic performance, issuing test
-        results, processing fee records, facilitating communication between
-        students and faculty, providing placement assistance, improving our
-        teaching platform, and enforcing platform security. We do{" "}
-        <strong>not</strong> use your data for automated profiling,
-        behavioural advertising, or any purpose not explicitly described in this
-        policy.
-      </p>
+      <div className="space-y-2">
+        <p>
+          We use your data solely for educational administration: managing
+          courses, tracking attendance and academic performance, issuing test
+          results, processing fee records, facilitating communication between
+          students and faculty, providing placement assistance, and improving
+          our teaching platform.
+        </p>
+        <p>
+          We also use technical data and audit logs for platform security,
+          fraud prevention, troubleshooting, and accountability — for example,
+          to detect unauthorised access, investigate incidents, and verify that
+          privileged actions (such as fee changes, approvals, or data exports)
+          were performed by authorised staff. Aggregated, anonymised analytics
+          help us understand how the platform is used so we can improve it.
+        </p>
+        <p>
+          Messages you send to our AI assistant may be processed by third-party
+          AI services (Google Gemini, OpenAI) to generate responses. Please do
+          not share sensitive personal information with the AI assistant.
+        </p>
+        <p>
+          We do <strong>not</strong> use your data for automated profiling,
+          behavioural advertising, or any purpose not explicitly described in
+          this policy.
+        </p>
+      </div>
     ),
   },
   {
@@ -71,13 +119,24 @@ const sections = [
           — faculty, counsellors, and administrators — as required for their
           educational roles.
         </p>
+        <p>
+          We share limited data with the following categories of service
+          providers strictly to operate the platform: cloud hosting and
+          serverless infrastructure (Vercel), database hosting (MongoDB Atlas),
+          file and document storage (Vercel Blob, Mega.nz), payment processing
+          (Razorpay), AI services (Google Gemini, OpenAI), geographic lookup
+          (ipapi.co), maps (Google Maps), and analytics (Vercel Analytics,
+          Vercel Speed Insights). Where applicable, such providers receive only
+          the data necessary to perform their function and may process it under
+          their own terms.
+        </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
           <p className="font-bold">Limitation of Responsibility:</p>
           <p className="mt-1">
             Smart Tutors uses third-party service providers for cloud hosting
             (Vercel, MongoDB Atlas), file storage (Vercel Blob, Mega.nz),
-            payment processing (Razorpay), and AI services (Google Gemini).
-            While we select reputable providers, we are{" "}
+            payment processing (Razorpay), and AI services (Google Gemini,
+            OpenAI). While we select reputable providers, we are{" "}
             <strong>not liable</strong> for data breaches, service outages, or
             data handling practices of these third parties. Users acknowledge
             that data transmitted over the internet passes through third-party
@@ -90,13 +149,25 @@ const sections = [
   {
     title: "4. Data Retention",
     content: (
-      <p>
-        We retain your personal data for as long as your account is active or
-        as needed to provide educational services. After account closure, data
-        may be retained for legal, audit, and compliance purposes for the
-        period required by applicable Indian law. Anonymised or aggregated data
-        may be retained indefinitely for analytical purposes.
-      </p>
+      <div className="space-y-2">
+        <p>
+          We retain your personal data for as long as your account is active or
+          as needed to provide educational services. After account closure, data
+          may be retained for legal, audit, and compliance purposes for the
+          period required by applicable Indian law.
+        </p>
+        <p>
+          Audit and activity logs are retained for security and accountability
+          purposes, typically for at least 12 months, and may be retained longer
+          where required by law or an ongoing investigation. Payment, fee,
+          payroll, and tax-related records are retained for the period required
+          by applicable Indian law.
+        </p>
+        <p>
+          Anonymised or aggregated data may be retained indefinitely for
+          analytical purposes.
+        </p>
+      </div>
     ),
   },
   {
@@ -138,7 +209,7 @@ const sections = [
     ),
   },
   {
-    title: "5. Data Security",
+    title: "6. Data Security",
     content: (
       <div className="space-y-2">
         <p>
@@ -164,7 +235,71 @@ const sections = [
     ),
   },
   {
-    title: "6. Your Rights & Choices",
+    title: "7. Cookies, Sessions & Analytics",
+    content: (
+      <div className="space-y-2">
+        <p>
+          <strong>Session cookie.</strong> When you sign in, we set a single
+          session cookie named <code>smart_tutor_session</code>. It contains
+          only an HMAC-signed user identifier — no password or other personal
+          information is stored in it. The cookie is{" "}
+          <code>HttpOnly</code> and <code>SameSite=Lax</code>, is marked{" "}
+          <code>Secure</code> in production, and expires automatically after 8
+          hours or when you sign out.
+        </p>
+        <p>
+          <strong>Browser storage.</strong> We may store non-essential
+          preferences in your browser&apos;s localStorage, including theme
+          selection, promotional popup acknowledgement, chat read timestamps,
+          and PWA install prompt dismissal. This data never leaves your device
+          unless transmitted for an intended purpose.
+        </p>
+        <p>
+          <strong>Analytics.</strong> We use Vercel Analytics and Vercel Speed
+          Insights to understand aggregate traffic patterns and page performance
+          (Core Web Vitals). These services process anonymised or aggregated
+          usage statistics. We do <strong>not</strong> use advertising cookies,
+          cross-site tracking, or third-party behavioural advertising.
+        </p>
+        <p>
+          You can clear cookies and browser storage at any time through your
+          browser settings. Clearing the session cookie will sign you out of
+          your account.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "8. Audit & Activity Logging",
+    content: (
+      <div className="space-y-2">
+        <p>
+          To keep the platform secure and accountable, we automatically record
+          auditable actions including login and logout attempts, account and
+          record creation, updates and deletions, approvals and rejections,
+          imports and exports, and administrative operations across modules such
+          as users, courses, tests, fees, payroll, attendance, placements, and
+          messaging.
+        </p>
+        <p>
+          Each audit entry may include: the user&apos;s name, email and role
+          (when signed in), the action and module, a description, the request
+          path and method, response status and duration, timestamp, IP address,
+          browser, operating system, device type, referring URL, language
+          preference, country, and approximate city/region derived from the IP
+          address via a third-party geo-IP service (ipapi.co).
+        </p>
+        <p>
+          Passwords, identity documents, and the contents of fee or payroll
+          records are <strong>never</strong> written into audit logs. Audit
+          logs are used only for security, troubleshooting, and accountability
+          purposes and are accessible to authorised administrators.
+        </p>
+      </div>
+    ),
+  },
+  {
+    title: "9. Your Rights & Choices",
     content: (
       <p>
         You have the right to access, correct, or request deletion of your
@@ -177,7 +312,7 @@ const sections = [
     ),
   },
   {
-    title: "7. Password Reset Policy",
+    title: "10. Password Reset Policy",
     content: (
       <div className="space-y-2">
         <p>
@@ -202,7 +337,7 @@ const sections = [
     ),
   },
   {
-    title: "8. Limitation of Liability",
+    title: "11. Limitation of Liability",
     content: (
       <div className="space-y-2">
         <p>
@@ -249,7 +384,7 @@ const sections = [
     ),
   },
   {
-    title: "9. Mobile Application",
+    title: "12. Mobile Application",
     content: (
       <p>
         If you access Smart Tutors via a mobile application, additional device
@@ -263,7 +398,7 @@ const sections = [
     ),
   },
   {
-    title: "10. Contact Us",
+    title: "13. Contact Us",
     content: (
       <div>
         <p>For privacy-related inquiries, contact:</p>
@@ -318,7 +453,7 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Last updated: July 2026
+            Last updated: 31 July 2026
           </p>
         </div>
 
