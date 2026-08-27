@@ -17,7 +17,7 @@ export default function GlobalError({
         </span>
         <p className="section-label justify-center">Something Went Wrong</p>
         <h1 className="mt-2 text-3xl sm:text-4xl font-semibold tracking-[-0.05em] text-[var(--color-heading)]">
-          Smart Tutors hit an unexpected error
+          Smart IQ Institute hit an unexpected error
         </h1>
         <p className="mt-4 max-w-xl mx-auto text-sm leading-7 text-[var(--color-muted)]">
           Our servers ran into a problem. Please try again — if the issue persists, 

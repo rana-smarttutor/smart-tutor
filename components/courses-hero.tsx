@@ -47,7 +47,7 @@ export function CoursesHero() {
 
           <div className="space-y-1.5 max-w-2xl">
             <p className="text-sm font-bold text-slate-700 leading-snug">
-              Smart Tutors pathways from primary school to professional and government exam preparation.
+              Smart IQ Institute pathways from primary school to professional and government exam preparation.
             </p>
             <p className="text-xs text-slate-500 leading-relaxed font-medium">
               A structured roadmap designed to build strength, discipline, and success at every major academic stage. Join as a <strong className="text-blue-700">student</strong> or partner with us as a <strong className="text-blue-700">faculty member</strong>.

@@ -4,8 +4,8 @@ import { LazyCampusMap } from "@/components/lazy-campus-map";
 import { getPublicInstituteData } from "@/lib/data-store";
 
 export const metadata: Metadata = {
-  title: "Contact Us | Smart Tutors",
-  description: "Get in touch with Smart Tutors for admissions, career guidance, or any other inquiries. Visit our Vashi campus or connect via WhatsApp and Email.",
+  title: "Contact Us | Smart IQ Institute",
+  description: "Get in touch with Smart IQ Institute for admissions, career guidance, or any other inquiries. Visit our Vashi campus or connect via WhatsApp and Email.",
   alternates: {
     canonical: "https://smarttutors.co.in/contact",
   },

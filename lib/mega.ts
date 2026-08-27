@@ -52,7 +52,7 @@ export async function getMegaStorage(): Promise<Storage> {
         const storage = new Storage({
           email,
           password,
-          userAgent: "SmartTutors/1.0",
+          userAgent: "SmartIQInstitute/1.0",
         });
 
         return await storage.ready;

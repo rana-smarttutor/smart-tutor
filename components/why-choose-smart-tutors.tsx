@@ -84,7 +84,7 @@ export default function WhyChooseSmartTutors() {
       <div className="text-center space-y-3">
         <center>
           <span className="bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider px-3.5 py-1 rounded inline-block shadow-xs">
-            WHY CHOOSE SMART TUTORS
+            WHY CHOOSE SMART IQ INSTITUTE
           </span>
         </center>
         <h2 className="font-display font-bold text-2xl sm:text-3xl text-slate-900 tracking-tight leading-none mt-2">

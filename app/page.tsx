@@ -119,7 +119,6 @@ export default async function Home() {
         "Stay connected with the institute — access notices, fee details, and communicate with educators.",
       features: ["Institute Notices", "Fee Details", "Weekly/Monthly Reports"],
     },
-  
   ];
 
   const programCarouselItems = data.programs.map((program) => ({
@@ -129,7 +128,7 @@ export default async function Home() {
 
   return (
     <main className="relative overflow-hidden pb-16 pt-2">
-      <section className="section-shell grid gap-8 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-stretch">
+      <section className="section-shell grid gap-10 pt-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)] lg:items-start xl:gap-14">
         <RevealOnScroll className="h-full space-y-7 text-center lg:text-left w-full max-w-full">
           <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
             <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-emerald-700 shadow-sm backdrop-blur-sm">
@@ -158,30 +157,33 @@ export default async function Home() {
               India&apos;s No.1 Trusted Smart Learning Platform
             </p>
 
-            <h1 className="mx-auto max-w-[680px] font-serif text-[2.35rem] font-black leading-[1.05] tracking-[-0.035em] text-[var(--color-heading)] sm:text-[3.6rem] lg:text-[4.15rem] xl:mx-0 xl:max-w-[720px]">
+            <h1 className="mx-auto max-w-[660px] font-serif text-[2.25rem] font-black leading-[1.02] tracking-[-0.04em] text-[var(--color-heading)] sm:text-[3.15rem] lg:mx-0 lg:text-[3.45rem] xl:text-[3.9rem]">
               Get Smart Results
               <br />
-              <span className="relative inline-block whitespace-nowrap text-blue-600 ">
-                With Smart Tutors.
-                <svg
-                  className="absolute -bottom-2 left-[72%] h-3.5 w-[34%] -translate-x-1/2 sm:-bottom-3 sm:h-4"
-                  viewBox="0 0 280 32"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M8 21C70 8 171 7 272 18"
-                    stroke="#F5B400"
-                    strokeWidth="7"
-                    strokeLinecap="round"
-                  />
-                </svg>
+              <span className="inline-block text-[2rem] leading-[1.05] text-blue-600 sm:text-[2.75rem] lg:whitespace-nowrap lg:text-[3rem] xl:text-[3.35rem]">
+                With Smart IQ{" "}
+                <span className="relative inline-block">
+                  Institute
+                  <svg
+                    className="absolute -bottom-2 left-1/2 h-3 w-[105%] -translate-x-1/2 sm:-bottom-3 sm:h-4"
+                    viewBox="0 0 280 32"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M8 21C70 8 171 7 272 18"
+                      stroke="#F5B400"
+                      strokeWidth="7"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
               </span>
             </h1>
 
             <p className="mx-auto max-w-2xl text-sm font-medium leading-relaxed text-[var(--color-muted)] sm:text-lg xl:mx-0">
-              Smart Tutors offers thoughtfully designed{" "}
+              Smart IQ Institute offers thoughtfully designed{" "}
               <strong>courses for every stage of a learner's journey</strong>.
               From school academics and board preparation to competitive exams,
               government exams, and future-ready digital skills, our courses
@@ -277,8 +279,9 @@ export default async function Home() {
                     <span className="text-blue-600">Journey?</span>
                   </h3>
                   <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
-                    Join 500+ students already excelling with Smart Tutors. Get
-                    access to expert mentoring and disciplined preparation.
+                    Join 500+ students already excelling with Smart IQ
+                    Institute. Get access to expert mentoring and disciplined
+                    preparation.
                   </p>
                 </div>
 
@@ -304,9 +307,12 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
 
-        <RevealOnScroll className="flex h-full min-w-0 flex-col gap-4" delayMs={90}>
-          <div className="surface graph-paper rounded-xl p-6 hover:shadow-xl transition-all">
-            <div className="mb-8">
+        <RevealOnScroll
+          className="flex h-full min-w-0 flex-col gap-6 lg:sticky lg:top-24"
+          delayMs={90}
+        >
+          <div className="surface graph-paper rounded-[1.75rem] p-5 sm:p-6 hover:shadow-xl transition-all">
+            <div className="mb-5">
               <p className="section-label">Campus Highlights</p>
 
               <h2 className="section-title mt-2 text-left text-3xl sm:text-3xl">
@@ -320,7 +326,7 @@ export default async function Home() {
           <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex flex-1 items-center justify-center min-h-[300px]">
             <Image
               src="/WhySmartTutor3.png"
-              alt="Why Choose Smart Tutors"
+              alt="Why Choose Smart IQ Institute"
               width={1280}
               height={1180}
               className="h-auto w-full rounded-[2rem]"
@@ -340,9 +346,9 @@ export default async function Home() {
               Recent Results
             </h2>
             <p className="text-[var(--color-muted)] text-sm sm:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-              Smart Tutors honors the dedication and remarkable achievements of
-              our students. Our proven track record defines our commitment to
-              academic brilliance.
+              Smart IQ Institute honors the dedication and remarkable
+              achievements of our students. Our proven track record defines our
+              commitment to academic brilliance.
             </p>
           </div>
 
@@ -422,17 +428,17 @@ export default async function Home() {
       <RevealOnScroll className="section-shell py-14" delayMs={80}>
         <div className="grid items-stretch gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <article className="surface flex h-full flex-col rounded-xl p-8 transition-all hover:shadow-xl">
-            <div className="mb-8">
+            <div className="mb-5">
               <p className="section-label">Upcoming Exam Updates</p>
               <h2 className="section-title">
-                Stay updated with the Smart Tutors
+                Stay updated with the Smart IQ Institute
               </h2>
             </div>
 
             <div className="space-y-6">
               <div className="surface-soft rounded-xl p-6 border-l-4 border-blue-600 hover:bg-blue-50 transition-colors">
                 <span className="pill mb-3 bg-blue-100 text-blue-700 border-none font-bold">
-                  All boards/Competative Exam  Update
+                  All boards/Competative Exam Update
                 </span>
                 <h3 className="text-xl font-bold text-[var(--color-heading)] mb-2">
                   CBSE Board Exam Phase 2 Schedule
@@ -466,7 +472,9 @@ export default async function Home() {
                   comming soon
                 </h3>
                 <p className="text-sm text-[var(--color-muted)] leading-relaxed font-medium">
-                  Prime Digital School empowers students with future-ready digital skills, practical learning, and technology-focused education.
+                  Prime Digital School empowers students with future-ready
+                  digital skills, practical learning, and technology-focused
+                  education.
                 </p>
               </div>
             </div>
@@ -479,7 +487,7 @@ export default async function Home() {
                 Promotional Offer
               </p>
               <h2 className="text-4xl font-black leading-tight mb-4 drop-shadow-md relative z-10">
-                Advance Your Career with Smart Tutors
+                Advance Your Career with Smart IQ Institute
               </h2>
               <p className="text-blue-50 text-lg leading-relaxed mb-8 font-medium relative z-10">
                 Join our specialized coaching programs and get access to

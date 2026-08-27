@@ -443,7 +443,7 @@ export function StudentFeeReceiptsView({
 <div class="receipt-logo-wrap">
   <img
     src="${escapeHtml(logoUrl)}"
-    alt="Smart Tutors Pvt. Ltd."
+    alt="Smart IQ Institute Pvt. Ltd."
     class="receipt-logo"
   />
 </div>
@@ -543,7 +543,7 @@ export function StudentFeeReceiptsView({
         <div style="max-width:50%;font-size:11px;font-weight:600;color:#64748b;">
           <p style="margin:3px 0;">This is a computer-generated receipt and does not require a physical signature.</p>
           <p style="margin:3px 0;font-weight:800;color:#1e293b;font-size:12px;">FEES ONCE PAID ARE NON-REFUNDABLE UNDER ANY CIRCUMSTANCES.</p>
-          <p style="margin:8px 3px 3px;">Thank you for choosing Smart Tutors Pvt. Ltd.</p>
+          <p style="margin:8px 3px 3px;">Thank you for choosing Smart IQ Institute Pvt. Ltd.</p>
           <p style="margin:3px 0;">We appreciate your trust.</p>
         </div>
         <div style="text-align:center;width:220px;">
@@ -551,14 +551,14 @@ export function StudentFeeReceiptsView({
           <div style="border-top:1.5px solid #334155;margin-top:4px;padding-top:6px;">
             <div style="font-size:13px;font-weight:800;color:#1e293b;">Mr. Ravi Rana</div>
             <div style="font-size:11px;color:#64748b;margin-top:1px;">Director &amp; Founder</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px;">Smart Tutors Pvt. Ltd.</div>
+            <div style="font-size:11px;color:#64748b;margin-top:1px;">Smart IQ Institute Pvt. Ltd.</div>
           </div>
         </div>
       </div>
 
       <!-- Bottom Terms -->
       <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;padding:10px 24px 14px;">
-        <span>Smart Tutors Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
+        <span>Smart IQ Institute Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
         <span>www.smarttutors.co.in</span>
       </div>
 

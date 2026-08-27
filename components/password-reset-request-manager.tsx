@@ -147,7 +147,7 @@ export function PasswordResetRequestManager({
     req: PasswordResetRequest,
     password: string,
   ): string {
-    return `Subject: Your Smart Tutors Account - Password Reset
+    return `Subject: Your Smart IQ Institute Account - Password Reset
 
 Dear ${req.name},
 
@@ -169,7 +169,7 @@ For security reasons, we recommend you change your password after your first log
 If you did not request this password reset, please contact our support team immediately.
 
  Regards,
-  Smart Tutors Team
+  Smart IQ Institute Team
   Vashi, Navi Mumbai`;
   }
 

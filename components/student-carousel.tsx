@@ -57,7 +57,7 @@ export function StudentCarousel() {
           >
             <div className="h-44 w-44 overflow-hidden rounded-[2.5rem] border-4 border-white shadow-2xl relative">
               <Image
-                src={student.image || "/image4.jpeg"}
+                src={student.image || "/Smart-institue-logo.jpeg"}
                 alt={student.name}
                 width={176}
                 height={176}

@@ -7,10 +7,10 @@ import { generatedPlacedStudents } from "@/lib/placed-students-data";
 
 const HIGHLIGHTS = [
   {
-    name: "Smart Tutors",
+    name: "Smart IQ Institute",
     result: "",
     exam: "",
-    image: "/image4.jpeg",
+    image: "/Smart-institue-logo.jpeg",
     type: "branding",
   },
   ...generatedPlacedStudents.map((student) => ({
@@ -67,9 +67,9 @@ export function CampusHighlightsCarousel() {
 
   return (
     <div className="flex w-full flex-col">
-      <div className="relative mx-auto flex w-full max-w-2xl flex-col items-center rounded-[3.5rem] border border-slate-100 bg-white p-6 shadow-xl md:p-8">
+      <div className="relative mx-auto flex w-full max-w-[430px] flex-col items-center rounded-[2.5rem] border border-slate-100 bg-white p-5 shadow-xl sm:p-6">
         {/* Student / Branding Image */}
-        <div className="relative mb-4 h-[260px] w-[260px] shrink-0 overflow-hidden rounded-[2.5rem] border-[6px] border-white bg-gradient-to-b from-[#eef0ff] to-white shadow-2xl sm:h-[300px] sm:w-[300px]">
+        <div className="relative mb-5 h-[220px] w-[220px] shrink-0 overflow-hidden rounded-[2rem] border-[5px] border-white bg-gradient-to-b from-[#eef0ff] to-white shadow-xl sm:h-[250px] sm:w-[250px]">
           {HIGHLIGHTS.map((highlight, slideIndex) => (
             <div
               key={`${highlight.name}-${slideIndex}`}
@@ -80,10 +80,10 @@ export function CampusHighlightsCarousel() {
               }`}
             >
               <Image
-                src={highlight.image || "/image4.jpeg"}
+                src={highlight.image || "/Smart-institue-logo.jpeg"}
                 alt={highlight.name}
                 fill
-                sizes="300px"
+                sizes="250px"
                 priority={slideIndex === 0}
                 className="object-contain object-bottom"
               />
@@ -104,7 +104,7 @@ export function CampusHighlightsCarousel() {
             >
               {highlight.exam && (
                 <div className="mb-3 flex flex-wrap justify-center gap-3">
-                  <div className="flex flex-col gap-1">
+                  <div className="flex min-h-[64px] flex-col items-center justify-center gap-1">
                     <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
                       Examination
                     </span>
@@ -115,7 +115,7 @@ export function CampusHighlightsCarousel() {
                   </div>
 
                   {highlight.result && (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex min-h-[64px] flex-col items-center justify-center gap-1">
                       <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">
                         {highlight.type === "rank"
                           ? "Official Rank"
@@ -130,12 +130,12 @@ export function CampusHighlightsCarousel() {
                 </div>
               )}
 
-              <div className="flex flex-col gap-1">
+              <div className="flex min-h-[64px] flex-col items-center justify-center gap-1">
                 <h3
                   className={`${
-                    highlight.name === "Smart Tutors"
-                      ? "text-5xl md:text-6xl"
-                      : "text-3xl md:text-5xl"
+                    highlight.name === "Smart IQ Institute"
+                      ? "text-3xl sm:text-4xl"
+                      : "text-2xl sm:text-4xl"
                   } font-black leading-tight tracking-tight text-slate-900`}
                 >
                   {highlight.name}
@@ -147,7 +147,7 @@ export function CampusHighlightsCarousel() {
           ))}
 
           {/* Progress Indicators */}
-          <div className="mt-8 flex justify-center gap-2.5">
+          <div className="mt-5 flex justify-center gap-2">
             {HIGHLIGHTS.map((highlight, slideIndex) => (
               <button
                 key={`indicator-${highlight.name}-${slideIndex}`}

@@ -10,7 +10,7 @@ export async function SiteFooter() {
       ? data.profile.branches
       : [
           {
-            name: "Smart Tutors Campus",
+            name: "Smart IQ Institute Campus",
             address: data.profile.address,
             mapQuery: data.profile.address,
           },
@@ -25,7 +25,7 @@ export async function SiteFooter() {
               href="/"
               className="text-xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]"
             >
-              Smart Tutors
+              Smart IQ Institute
             </Link>
 
             <p className="mt-4 max-w-md text-sm leading-7 text-[var(--color-muted)]">
@@ -111,7 +111,7 @@ export async function SiteFooter() {
               </div>
 
               <p className="text-sm font-semibold text-[var(--color-heading)]">
-                Smart Tutors Campus
+                Smart IQ Institute Campus
               </p>
 
               <p className="mt-2 max-w-xs text-xs font-medium leading-6 text-[var(--color-muted)]">
@@ -153,7 +153,7 @@ export async function SiteFooter() {
             </nav>
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} Smart Tutors Academy. In operations
+              © {new Date().getFullYear()} Smart IQ Institute Academy. In operations
               since 2018. All rights reserved. Results may differ between users.
               Promotional claims may be stylized.
             </p>

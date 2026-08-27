@@ -13,7 +13,7 @@ const APK_DOWNLOAD_URL =
 export const metadata: Metadata = {
   title: "Sign In",
   description:
-    "Sign in to your Smart Tutors account to access your dashboard, courses, tests, performance reports, and more.",
+    "Sign in to your Smart IQ Institute account to access your dashboard, courses, tests, performance reports, and more.",
   alternates: {
     canonical: "https://smarttutors.co.in/login",
   },
@@ -86,7 +86,7 @@ export default async function LoginPage() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-gold)] to-[var(--color-gold-strong)]">
                     <GraduationCap className="h-4 w-4 text-white" />
                   </span>
-                  Smart Tutors
+                  Smart IQ Institute
                 </Link>
 
                 <Link
@@ -99,7 +99,7 @@ export default async function LoginPage() {
 
               <div className="mb-8 flex flex-grow flex-col justify-center">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--color-gold)]">
-                  Smart Tutors Access
+                  Smart IQ Institute Access
                 </p>
 
                 <h1 className="mb-5 text-3xl font-semibold leading-tight tracking-[-0.02em] text-slate-100 [font-family:var(--font-fancy)] sm:text-4xl">
@@ -126,7 +126,7 @@ export default async function LoginPage() {
                       <div className="relative z-20 rounded-xl border border-slate-100 bg-white p-2 shadow-lg transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover/qr-parent:scale-150 group-hover/qr-parent:shadow-2xl">
                         <img
                           src={apkQrDataUrl}
-                          alt="Download Smart Tutors Android app QR code"
+                          alt="Download Smart IQ Institute Android app QR code"
                           className="h-20 w-20 rounded-md sm:h-24 sm:w-24"
                         />
                       </div>
@@ -144,7 +144,7 @@ export default async function LoginPage() {
                     </p>
 
                     <h3 className="text-sm font-semibold leading-tight text-white">
-                      Smart Tutors Android App
+                      Smart IQ Institute Android App
                     </h3>
 
                     <div className="mt-2 flex flex-wrap items-center justify-center gap-3 sm:justify-start">

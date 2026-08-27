@@ -353,7 +353,7 @@ export function AdminCertificateManager({
                     >
                       <div className="w-full aspect-[4/3] rounded-lg overflow-hidden mb-2 border border-slate-100">
                         <CertificateTemplateRenderer
-                          certificate={{ ...templatePreviewData, templateId: tmpl.id, issuedByName: "Smart Tutors" }}
+                          certificate={{ ...templatePreviewData, templateId: tmpl.id, issuedByName: "Smart IQ Institute" }}
                           compact={true}
                         />
                       </div>
@@ -528,7 +528,7 @@ export function AdminCertificateManager({
                 </label>
                 <div className="border border-slate-200 rounded-xl overflow-auto max-h-[480px] bg-slate-100 p-4">
                   <CertificateTemplateRenderer
-                    certificate={{ ...templatePreviewData, templateId: form.templateId, issuedByName: "Smart Tutors" }}
+                    certificate={{ ...templatePreviewData, templateId: form.templateId, issuedByName: "Smart IQ Institute" }}
                     compact={false}
                   />
                 </div>

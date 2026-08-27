@@ -681,7 +681,7 @@ export default function ReportCreatorForm() {
                 }}
               >
                 <option value="registered">
-                  Select a Smart Tutors Student
+                  Select a Smart IQ Institute Student
                 </option>
                 <option value="manual">Create Report Manually</option>
               </select>
@@ -714,7 +714,7 @@ export default function ReportCreatorForm() {
             ) : (
               <p className="spr-muted-line">
                 This report will be created as a standalone report. It will not
-                appear inside any Smart Tutors student dashboard.
+                appear inside any Smart IQ Institute student dashboard.
               </p>
             )}
           </div>

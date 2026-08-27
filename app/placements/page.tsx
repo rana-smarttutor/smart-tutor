@@ -9,7 +9,7 @@ import { PublishedPlacementJobs } from "@/components/published-placement-jobs";
 export const metadata: Metadata = {
   title: "Placements & Success Stories",
   description:
-    "Explore the success stories of Smart Tutors students who excelled in board exams, competitive exams, and secured top ranks. 500+ success stories and counting.",
+    "Explore the success stories of Smart IQ Institute students who excelled in board exams, competitive exams, and secured top ranks. 500+ success stories and counting.",
   alternates: {
     canonical: "https://smarttutors.co.in/placements",
   },
@@ -144,7 +144,7 @@ export default function PlacementsPage() {
                     </p>{" "}
                     <p className="text-xs italic text-slate-500">
                       {" "}
-                      &quot;Smart Tutors&apos; mentoring was the key to my
+                      &quot;Smart IQ Institute&apos; mentoring was the key to my
                       success in {topper.examName}.&quot;{" "}
                     </p>{" "}
                   </div>{" "}

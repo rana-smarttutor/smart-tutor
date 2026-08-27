@@ -186,7 +186,7 @@ async function analyzeImagesInOneGeminiCall(imageFiles) {
 
   parts.push({
     text: `
-You are Smart Tutors AI Assistant analyzing uploaded study-material images.
+You are Smart IQ Institute AI Assistant analyzing uploaded study-material images.
 
 The user uploaded ${validImageFiles.length} image(s).
 

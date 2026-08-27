@@ -197,16 +197,16 @@ export function generatePlacedStudents(): PlacedStudent[] {
     }
 
     // Default image if none provided
-    const finalImage = photoName ? `/student-photos/${photoName}` : "/image4.jpeg";
+    const finalImage = photoName ? `/student-photos/${photoName}` : "/Smart-institue-logo.jpeg";
 
     // Diverse and impactful quotes
     const quotes = [
-      "Smart Tutors' mentoring was the key to my success.",
-      "The disciplined approach at Smart Tutors changed my perspective.",
+      "Smart IQ Institute' mentoring was the key to my success.",
+      "The disciplined approach at Smart IQ Institute changed my perspective.",
       "Expert guidance and consistent mock tests made the difference.",
       "I found the perfect learning environment here to excel.",
       "The personalized attention helped me overcome my weaknesses.",
-      "Smart Tutors provided the momentum I needed for my career.",
+      "Smart IQ Institute provided the momentum I needed for my career.",
       "Grateful for the sharp mentoring and high-quality resources.",
       "The journey from student to professional was seamless here.",
       "Focused preparation and real academic momentum were game-changers.",
