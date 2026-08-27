@@ -53,7 +53,7 @@ export function PWAInstallButton() {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-slate-900 ">
-            Install Smart Tutors
+            Install Smart IQ Institute
           </p>
           <p className="text-xs text-slate-500 ">
             Add to home screen for the best experience.

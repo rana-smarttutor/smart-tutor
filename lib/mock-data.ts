@@ -36,13 +36,13 @@ export const demoCredentials = [
   {
     role: "student" as const,
     label: "Student Workspace",
-    email: "riya@smarttutors.co.in",
+    email: "riya@example.com",
     password: "Student@123",
   },
   {
     role: "educator" as const,
     label: "Educator Desk",
-    email: "amit@smarttutors.co.in",
+    email: "amit@example.com",
     password: "Educator@123",
   },
   {
@@ -57,7 +57,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-1",
     name: "Riya Sharma",
-    email: "riya@smarttutors.co.in",
+    email: "riya@example.com",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -66,7 +66,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-2",
     name: "Aarav Patil",
-    email: "aarav@smarttutors.co.in",
+    email: "aarav@example.com",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -75,7 +75,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "student-3",
     name: "Sneha Kulkarni",
-    email: "sneha@smarttutors.co.in",
+    email: "sneha@example.com",
     password: "Student@123",
     role: "student",
     label: "Student Workspace",
@@ -84,7 +84,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "educator-1",
     name: "Amit Deshmukh",
-    email: "amit@smarttutors.co.in",
+    email: "amit@example.com",
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
@@ -93,7 +93,7 @@ const demoUsers: DemoUserRecord[] = [
   {
     id: "educator-2",
     name: "Neha Joshi",
-    email: "neha@smarttutors.co.in",
+    email: "neha@example.com",
     password: "Educator@123",
     role: "educator",
     label: "Educator Desk",
@@ -363,7 +363,7 @@ const contactMethods: ContactMethod[] = [
     label: "Instagram",
     value: "@smart_tutor_no1",
     href: INSTAGRAM_LINK,
-    description: "Official Smart Tutors announcements and updates.",
+    description: "Official Smart IQ Institute announcements and updates.",
     color: "#E4405F",
     icon: "Instagram",
   },
@@ -380,7 +380,7 @@ const contactMethods: ContactMethod[] = [
     value: "Prof. Ravi Rana",
     href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
     description:
-      "Leadership contact for SmartIQ Academy, Smart Tutors, and Prime Digital School.",
+      "Leadership contact for SmartIQ Academy, Smart IQ Institute, and Prime Digital School.",
     color: "#1e293b",
     icon: "User",
   },
@@ -549,7 +549,7 @@ const mockQuizQuestions: QuizQuestion[] = [
 export function getPublicInstituteData() {
   return {
     profile: {
-      name: "Smart Tutors",
+      name: "Smart IQ Institute",
       city: "Navi Mumbai",
       address:
         "Vashi Branch: Sector 17, Vashi, Navi Mumbai | Panvel Branch:  Sector 5, New Panvel East, Panvel",
@@ -573,7 +573,7 @@ export function getPublicInstituteData() {
       directorTitle: "Director & Founder",
       affiliatedInstitutes: [
         "SmartIQ Academy",
-        "Smart Tutors",
+        "Smart IQ Institute",
         "Prime Digital School",
       ],
     },
@@ -586,7 +586,7 @@ export function getPublicInstituteData() {
       "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",
       "Board performance, junior college support, entrance readiness, government exams, and spoken English live under one reliable academy roof.",
       "While we primarily serve the Vashi, Navi Mumbai, and Thane regions, we are actively preparing to bring our specialized mentoring to more cities across India soon.",
-      "Vashi families choose Smart Tutors for consistency, attention, and visible academic growth.",
+      "Vashi families choose Smart IQ Institute for consistency, attention, and visible academic growth.",
     ],
     metrics: [
       { label: "Success Rate", value: "94%" },
@@ -1105,7 +1105,7 @@ export function createUserDraft(input: {
 
   return {
     id: `user-draft-${Date.now()}`,
-    name: input.name?.trim() || "New Smart Tutors User",
+    name: input.name?.trim() || "New Smart IQ Institute User",
     email: input.email?.trim().toLowerCase() || "new-user@smarttutors.co.in",
     role,
     label:

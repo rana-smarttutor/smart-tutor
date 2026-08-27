@@ -718,12 +718,12 @@ export default function CourseModal({
     }
 
     const message = isRegularAcademic
-      ? `Hi Smart Tutors, I am interested in enrolling for **${course.title}**. Board: **${selectedBoard}**.${
+      ? `Hi Smart IQ Institute, I am interested in enrolling for **${course.title}**. Board: **${selectedBoard}**.${
           isSeniorSecondary ? ` Stream: **${selectedStream}**.` : ""
         } Regular subjects: **${selectedSubjectText}**. Optional additional courses: **${
           selectedAdditionalCourseText || "None selected"
         }**. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Enrolling as a ${role}. Let's set up a counselling demo.`
-      : `Hi Smart Tutors, I am interested in enrolling for: **${readableCourseDetail}** as a ${role}. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Let's set up a counselling demo.`;
+      : `Hi Smart IQ Institute, I am interested in enrolling for: **${readableCourseDetail}** as a ${role}. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Let's set up a counselling demo.`;
     setIsSubmitting(true);
 
     try {
@@ -1393,7 +1393,7 @@ export default function CourseModal({
                       </span>
                       <p className="text-xs font-medium leading-relaxed italic text-slate-500">
                         {isRegularAcademic
-                          ? `"Hi Smart Tutors, I am interested in ${course.title}. Board: ${
+                          ? `"Hi Smart IQ Institute, I am interested in ${course.title}. Board: ${
                               selectedBoard || "..."
                             }.${
                               isSeniorSecondary
@@ -1406,7 +1406,7 @@ export default function CourseModal({
                             }. Preferred tuition mode: ${
                               selectedLearningMode || "..."
                             }. Preferred session slot: ${selectedSlot || "..."}."`
-                          : `"Hi Smart Tutors, I am interested in ${readableCourseDetail}. Preferred tuition mode: ${
+                          : `"Hi Smart IQ Institute, I am interested in ${readableCourseDetail}. Preferred tuition mode: ${
                               selectedLearningMode || "..."
                             }. Preferred session slot: ${selectedSlot || "..."}."`}
                       </p>

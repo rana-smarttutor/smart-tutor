@@ -128,7 +128,7 @@ export function StudentJobPortalHero() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">
-                        Smart Tutors Jobs
+                        Smart IQ Institute Jobs
                       </p>
                       <h3 className="mt-1 text-xl font-black text-slate-950">
                         Opportunities for you

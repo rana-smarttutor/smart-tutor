@@ -5,7 +5,7 @@ import CoursesRedesignClient from "@/components/courses-redesign-client";
 import { getAllDetailedCourses } from "@/lib/data-store";
 
 export const metadata: Metadata = {
-  title: "Our Courses | Smart Tutors",
+  title: "Our Courses | Smart IQ Institute",
   description: "Explore our wide range of courses from primary school foundation to professional and government exam preparation. Structured roadmaps designed for success.",
   alternates: {
     canonical: "https://smarttutors.co.in/courses",

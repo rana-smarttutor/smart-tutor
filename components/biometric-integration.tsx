@@ -509,7 +509,7 @@ export function BiometricIntegration({ role }: Props) {
                 <strong>Setup Steps:</strong><br />
                 1. Add this device → copy the webhook URL shown<br />
                 2. Log in to BioCloud dashboard → Device → Callback URL → paste the webhook URL<br />
-                3. Map your students BioCloud UserIDs to Smart Tutors students<br />
+                3. Map your students BioCloud UserIDs to Smart IQ Institute students<br />
                 4. Students can now tap in and attendance is auto-marked!
               </div>
               <div className="grid grid-cols-3 gap-3 text-xs">

@@ -587,7 +587,7 @@ export default function AdminStudentManager({ initialStudents }: Props) {
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            const csv = "name,email,phone,batch_code,date_of_birth,father_name,guardian_phone,address\nTanish,ankit@smarttutors.co.in,9876543210,JEE-XI-A,2007-04-15,Rajiv Sharma,9876500001,42 Main Street";
+                            const csv = "name,email,phone,batch_code,date_of_birth,father_name,guardian_phone,address\nTanish,ankit@example.com,9876543210,JEE-XI-A,2007-04-15,Rajiv Sharma,9876500001,42 Main Street";
                             const blob = new Blob([csv], { type: "text/csv" });
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement("a");

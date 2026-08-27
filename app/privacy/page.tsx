@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Smart Tutors",
+  title: "Privacy Policy | Smart IQ Institute",
   description:
-    "Smart Tutors privacy policy — how we collect, use, store, log, and protect your personal data.",
+    "Smart IQ Institute privacy policy — how we collect, use, store, log, and protect your personal data.",
   alternates: {
     canonical: "https://smarttutors.co.in/privacy",
   },
@@ -15,7 +15,7 @@ const sections = [
     content: (
       <div className="space-y-2">
         <p>
-          Smart Tutors collects personal information that you voluntarily provide
+          Smart IQ Institute collects personal information that you voluntarily provide
           when you register on our platform, including your name, email address,
           phone number, academic records, attendance data, test scores, fee
           payment history, and learning activity logs. We also collect resume and
@@ -113,7 +113,7 @@ const sections = [
     content: (
       <div className="space-y-2">
         <p>
-          Smart Tutors does <strong>not</strong> sell, rent, or share your
+          Smart IQ Institute does <strong>not</strong> sell, rent, or share your
           personal data with third parties for marketing or advertising
           purposes. Your data is accessible only to authorised institute staff
           — faculty, counsellors, and administrators — as required for their
@@ -133,14 +133,14 @@ const sections = [
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
           <p className="font-bold">Limitation of Responsibility:</p>
           <p className="mt-1">
-            Smart Tutors uses third-party service providers for cloud hosting
+            Smart IQ Institute uses third-party service providers for cloud hosting
             (Vercel, MongoDB Atlas), file storage (Vercel Blob, Mega.nz),
             payment processing (Razorpay), and AI services (Google Gemini,
             OpenAI). While we select reputable providers, we are{" "}
             <strong>not liable</strong> for data breaches, service outages, or
             data handling practices of these third parties. Users acknowledge
             that data transmitted over the internet passes through third-party
-            networks over which Smart Tutors has no control.
+            networks over which Smart IQ Institute has no control.
           </p>
         </div>
       </div>
@@ -178,15 +178,15 @@ const sections = [
           Faculty members who submit identity verification documents (resume/CV
           and photo ID front/back images) during registration explicitly
           consent to the collection, storage, and processing of these documents
-          by Smart Tutors for the sole purpose of identity verification and
+          by Smart IQ Institute for the sole purpose of identity verification and
           faculty onboarding.
         </p>
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-900">
           <p className="font-bold">No Liability for Document Security:</p>
           <p className="mt-1">
-            While we implement reasonable security measures, Smart Tutors{" "}
+            While we implement reasonable security measures, Smart IQ Institute{" "}
             <strong>does not and cannot guarantee</strong> the absolute security
-            of uploaded identity documents. Smart Tutors, its operators,
+            of uploaded identity documents. Smart IQ Institute, its operators,
             employees, affiliates, and service providers shall{" "}
             <strong>not be held liable</strong> for any loss, theft, misuse,
             unauthorised access, disclosure, or corruption of identity documents
@@ -222,7 +222,7 @@ const sections = [
           <p className="font-bold">No Guarantee of Absolute Security:</p>
           <p className="mt-1">
             No method of transmission over the Internet or electronic storage
-            is 100% secure. Smart Tutors{" "}
+            is 100% secure. Smart IQ Institute{" "}
             <strong>does not and cannot guarantee</strong> absolute security
             against all threats, including but not limited to zero-day
             vulnerabilities, advanced persistent threats, insider attacks, or
@@ -303,7 +303,7 @@ const sections = [
     content: (
       <p>
         You have the right to access, correct, or request deletion of your
-        personal data held by Smart Tutors. To exercise these rights, contact
+        personal data held by Smart IQ Institute. To exercise these rights, contact
         your institute administrator or write to us at info@smarttutors.co.in.
         We will respond to your request within the timeframe required by
         applicable law. Note that certain data may be retained where required
@@ -326,7 +326,7 @@ const sections = [
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
           <p className="font-bold">Important:</p>
           <p className="mt-1">
-            Smart Tutors reserves the right to charge for password reset
+            Smart IQ Institute reserves the right to charge for password reset
             services for excessive requests (more than 3 within a 6-month
             period) or for resets requested outside normal business hours.
             The institute will communicate any applicable fees before
@@ -341,7 +341,7 @@ const sections = [
     content: (
       <div className="space-y-2">
         <p>
-          To the maximum extent permitted by applicable law, Smart Tutors, its
+          To the maximum extent permitted by applicable law, Smart IQ Institute, its
           operators, employees, affiliates, and service providers shall{" "}
           <strong>not be liable</strong> for any direct, indirect, incidental,
           special, consequential, or punitive damages arising from or related
@@ -387,11 +387,11 @@ const sections = [
     title: "12. Mobile Application",
     content: (
       <p>
-        If you access Smart Tutors via a mobile application, additional device
+        If you access Smart IQ Institute via a mobile application, additional device
         permissions may be requested (such as storage access for downloading
         materials or camera access for profile photos). These permissions are
         used only for the stated purpose and are never accessed without your
-        explicit action. Smart Tutors is not responsible for any data leakage
+        explicit action. Smart IQ Institute is not responsible for any data leakage
         or unauthorised access resulting from jailbroken, rooted, or otherwise
         compromised devices.
       </p>
@@ -410,7 +410,7 @@ const sections = [
             <strong>Phone:</strong> +91 88504 47887
           </p>
           <p>
-            <strong>Address:</strong> Smart Tutors, Vashi, Navi Mumbai,
+            <strong>Address:</strong> Smart IQ Institute, Vashi, Navi Mumbai,
             Maharashtra, India
           </p>
         </div>

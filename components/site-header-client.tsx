@@ -8,7 +8,6 @@ import { ChevronRight, Menu, X } from "lucide-react";
 
 import { LogoutButton } from "@/components/logout-button";
 import { UserMenu } from "@/components/user-menu";
-import { useTheme } from "@/components/theme-provider";
 import type { SessionUser } from "@/lib/types";
 
 type SiteHeaderClientProps = {
@@ -27,7 +26,6 @@ const staffOnlyLinks = [{ href: "/student-performance", label: "Performance" }];
 
 export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const pathname = usePathname();
-  const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -125,7 +123,6 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
     setIsMobileMenuOpen(false);
   }
 
-  const isDark = mounted && theme === "dark";
 
   const userRole = String((session as any)?.role || "").toLowerCase();
 
@@ -208,8 +205,8 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
                 className="flex flex-shrink-0 items-center"
               >
                 <Image
-                  src={isDark ? "/image2.png" : "/image1.png"}
-                  alt="Smart Tutors Logo"
+                  src="/Smart-institue-logo.jpeg"
+                  alt="Smart IQ Institute Logo"
                   width={300}
                   height={80}
                   className="h-10 w-auto object-contain sm:h-11 lg:h-16"
@@ -269,10 +266,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
 
                 {session ? (
                   <div className="mt-4">
-                    <UserMenu
-                      session={session}
-                      profilePhoto={profilePhoto}
-                    />
+                    <UserMenu session={session} profilePhoto={profilePhoto} />
                   </div>
                 ) : null}
               </div>
@@ -357,10 +351,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
 
               {session ? (
                 <div className="mt-3 flex justify-center">
-                  <UserMenu
-                    session={session}
-                    profilePhoto={profilePhoto}
-                  />
+                  <UserMenu session={session} profilePhoto={profilePhoto} />
                 </div>
               ) : null}
             </div>
@@ -368,10 +359,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
         </div>
       </header>
 
-      <div
-        aria-hidden="true"
-        className="h-20"
-      />
+      <div aria-hidden="true" className="h-20" />
     </>
   );
 }

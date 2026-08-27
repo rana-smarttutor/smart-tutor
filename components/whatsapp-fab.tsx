@@ -17,7 +17,7 @@ export default function WhatsAppFAB({ currentCourseTitle }: WhatsAppFABProps) {
   const handleSendToWhatsApp = () => {
     const finalMsg = typedMsg.trim()
       ? typedMsg
-      : `Hi Smart Tutors, I interested in receiving more information regarding the course: "${activeCourseLabel}". Please connect me with an expert counselor!`;
+      : `Hi Smart IQ Institute, I interested in receiving more information regarding the course: "${activeCourseLabel}". Please connect me with an expert counselor!`;
 
     const formattedMsg = encodeURIComponent(finalMsg);
     // Standard WhatsApp API link for professional customer support redirects
@@ -44,7 +44,7 @@ export default function WhatsAppFAB({ currentCourseTitle }: WhatsAppFABProps) {
                   <MessageCircle className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h4 className="font-display font-bold text-sm">Smart Tutors Help</h4>
+                  <h4 className="font-display font-bold text-sm">Smart IQ Institute Help</h4>
                   <span className="text-[10px] text-emerald-100 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-400 block animate-ping" />
                     Online Counselors available

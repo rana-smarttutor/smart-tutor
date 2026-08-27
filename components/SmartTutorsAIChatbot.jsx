@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 const initialMessage = {
   role: "assistant",
   content:
-    "Hi! I’m SmartTutors AI Assistant 👋\nI'm here to help you find the perfect learning pathway. Which **Class** or **Level** are you in?",
+    "Hi! I’m Smart IQ Institute AI Assistant 👋\nI'm here to help you find the perfect learning pathway. Which **Class** or **Level** are you in?",
 };
 
 const STEPS = {
@@ -170,7 +170,7 @@ export default function SmartTutorsAIChatbot() {
 • Interest: ${memory.courseName}
 • Current Schedule: ${userInput}
 
-A Smart Tutors mentor will now reach out to provide your custom learning roadmap. Is there anything else you'd like to ask about our faculty or campus?`;
+A Smart IQ Institute mentor will now reach out to provide your custom learning roadmap. Is there anything else you'd like to ask about our faculty or campus?`;
     }
 
     return "I've shared your details with our counseling team. They will contact you shortly. Do you have any other questions?";
@@ -349,11 +349,11 @@ A Smart Tutors mentor will now reach out to provide your custom learning roadmap
               type="button"
               onClick={() => setOpen(true)}
               style={styles.toggleBtn}
-              aria-label="Open Smart Tutors AI"
+              aria-label="Open Smart IQ Institute AI"
             >
               <Image
                 src="/image5.png"
-                alt="Smart Tutors AI"
+                alt="Smart IQ Institute AI"
                 width={70}
                 height={70}
                 sizes="70px"
@@ -366,7 +366,7 @@ A Smart Tutors mentor will now reach out to provide your custom learning roadmap
           <section style={styles.chatBox}>
             <header style={styles.header}>
               <div>
-                <div style={styles.title}>Smart Tutors AI</div>
+                <div style={styles.title}>Smart IQ Institute AI</div>
                 <div style={styles.subtitle}>Personalized Learning Guide</div>
               </div>
 

@@ -925,7 +925,7 @@ async function confirmDeleteBook() {
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-600   ">
               <span className="h-3 w-3 rounded-full bg-sky-400" />
-              Smart Tutors Library
+              Smart IQ Institute Library
             </span>
 
             <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-blue-600  sm:text-sm">

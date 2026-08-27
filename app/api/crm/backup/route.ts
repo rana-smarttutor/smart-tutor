@@ -24,7 +24,7 @@ export async function GET() {
       id: session.id,
       name: session.name,
     },
-    product: "Smart Tutors Sales CRM",
+    product: "Smart IQ Institute Sales CRM",
     version: 1,
     ...workspace,
   };

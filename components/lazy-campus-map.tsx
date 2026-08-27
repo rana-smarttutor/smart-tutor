@@ -41,7 +41,7 @@ export function LazyCampusMap({
         </div>
 
         <p className="mb-2 text-lg font-black text-[var(--color-heading)]">
-          Smart Tutors Campus
+          Smart IQ Institute Campus
         </p>
 
         <p className="mb-6 max-w-xs text-sm font-medium leading-relaxed text-[var(--color-muted)]">

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { MyProfileClient } from "@/components/my-profile-client";
 
 export const metadata = {
-  title: "My Profile | Smart Tutors",
+  title: "My Profile | Smart IQ Institute",
   description: "Manage your personal and professional information",
 };
 
