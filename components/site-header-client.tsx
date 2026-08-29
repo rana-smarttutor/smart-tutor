@@ -19,7 +19,7 @@ const links = [
   { href: "/courses", label: "Courses" },
   { href: "/mock-test", label: "Mock Test" },
   { href: "/digital-library", label: "Library" },
-  { href: "/placements", label: "Placements" },
+  { href: "/exam-updates", label: "Exam Updates" },
 ];
 
 const staffOnlyLinks = [{ href: "/student-performance", label: "Performance" }];
