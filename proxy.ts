@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const SESSION_COOKIE = "smart_tutor_session";
-const CRAWLER_PATTERN = /bot|crawler|spider|scraper|googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebot|twitterbot|applebot|anthropic|bytespider|perplexity/i;
+const CRAWLER_PATTERN =
+  /bot|crawler|spider|scraper|googlebot|bingbot|slurp|duckduckbot|baiduspider|yandexbot|facebot|twitterbot|applebot|anthropic|bytespider|perplexity/i;
 
 const PUBLIC_ROUTES = [
   "/",
@@ -11,6 +12,7 @@ const PUBLIC_ROUTES = [
   "/courses",
   "/library",
   "/placements",
+  "/exam-updates",
   "/contact",
   "/mock-test",
   "/quiz-arena",
@@ -30,7 +32,9 @@ function isPublicPath(pathname: string): boolean {
 }
 
 function isStaticAsset(pathname: string): boolean {
-  return /\.(png|svg|ico|webp|jpg|jpeg|gif|apk|css|js|json|xml|txt)$/.test(pathname);
+  return /\.(png|svg|ico|webp|jpg|jpeg|gif|apk|css|js|json|xml|txt)$/.test(
+    pathname,
+  );
 }
 
 function isCrawler(userAgent: string): boolean {
@@ -71,5 +75,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
 };

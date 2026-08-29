@@ -1147,8 +1147,18 @@ const navIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   "audit-log": (
-    <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+    <svg
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+      />
     </svg>
   ),
 };
@@ -1227,7 +1237,13 @@ export function DashboardShell({
     const storageKey = `smart-tutor-dashboard-section:${session?.id ?? role}`;
 
     window.sessionStorage.setItem(storageKey, activeSection);
-  }, [activeSection, hasRestoredActiveSection, role, session?.id, validSectionIds]);
+  }, [
+    activeSection,
+    hasRestoredActiveSection,
+    role,
+    session?.id,
+    validSectionIds,
+  ]);
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -1803,10 +1819,10 @@ export function DashboardShell({
               Library
             </Link>
             <Link
-              href="/placements"
+              href="/exam-updates"
               className="px-2.5 py-1.5 rounded-lg text-slate-500 hover:text-[#0B40A1] hover:bg-slate-50 font-medium transition-colors shrink-0"
             >
-              Placements
+              Exam Updates
             </Link>
             {(role === "admin" || role === "educator") && (
               <Link
