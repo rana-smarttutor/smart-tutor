@@ -1352,9 +1352,19 @@ export function DashboardShell({
           },
         ]
       : []),
-    ...(role === "educator"
-      ? [{ label: "Assigned Students", value: `${studentDirectory.length}` }]
-      : []),
+...(role === "educator"
+  ? [
+      {
+        label: "Faculty ID",
+        value:
+          session?.facultyCode ?? "—",
+      },
+      {
+        label: "Assigned Students",
+        value: `${studentDirectory.length}`,
+      },
+    ]
+  : []),
     { label: "Messages", value: `${messages.length}` },
     { label: "Tests", value: `${dashboard.tests.length}` },
   ];

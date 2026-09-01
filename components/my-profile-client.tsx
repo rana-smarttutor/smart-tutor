@@ -77,7 +77,6 @@ export function MyProfileClient({ session }: Props) {
   const [qualification, setQualification] = useState("");
   const [specialization, setSpecialization] = useState("");
   const [experience, setExperience] = useState("");
-  const [employeeId, setEmployeeId] = useState("");
 
   const [parentName, setParentName] = useState("");
   const [parentEmail, setParentEmail] = useState("");
@@ -517,6 +516,11 @@ export function MyProfileClient({ session }: Props) {
                 {session.name}
               </h2>
               <p className="mt-1 text-sm text-slate-500">{email}</p>
+              {session.role === "educator" && session.facultyCode && (
+                <p className="mt-1 font-mono text-xs font-semibold text-slate-500">
+                  Faculty ID: {session.facultyCode}
+                </p>
+              )}
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
                 <i className={`bi ${roleIcon}`} />
                 {session.label || session.role}
@@ -540,6 +544,12 @@ export function MyProfileClient({ session }: Props) {
                 Profile Details
               </h3>
               <div className="space-y-0">
+                {session.role === "educator" && session.facultyCode && (
+                  <ProfileField
+                    label="Faculty ID"
+                    value={session.facultyCode}
+                  />
+                )}
                 {phone && <ProfileField label="Phone" value={phone} />}
                 {gender && <ProfileField label="Gender" value={gender} />}
                 {dob && <ProfileField label="DOB" value={dob} />}
@@ -908,16 +918,14 @@ export function MyProfileClient({ session }: Props) {
                       </div>
                       <div>
                         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Employee ID
+                          Faculty ID
                         </label>
+
                         <input
                           type="text"
-                          value={employeeId}
-                          onChange={(e) =>
-                            setEmployeeId(e.target.value.slice(0, 20))
-                          }
-                          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                          placeholder="EMP-001"
+                          value={session.facultyCode ?? "Not assigned"}
+                          disabled
+                          className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm font-semibold text-slate-600 shadow-sm"
                         />
                       </div>
                     </>

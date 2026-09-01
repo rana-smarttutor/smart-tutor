@@ -31,7 +31,9 @@ export function DashboardAccountDirectory({
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, ManagedUser>>({});
   const [status, setStatus] = useState("");
-  const [activeTab, setActiveTab] = useState<"register" | "directory" | "verification" | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "register" | "directory" | "verification" | null
+  >(null);
   const [pendingRequests, setPendingRequests] = useState<ManagedUser[]>([]);
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +54,9 @@ export function DashboardAccountDirectory({
     assignedFacultyIds: [],
   });
 
-  const [mainTab, setMainTab] = useState<"students" | "faculty" | "parents" | "other">("students");
+  const [mainTab, setMainTab] = useState<
+    "students" | "faculty" | "parents" | "other"
+  >("students");
 
   const accountCounts = useMemo(
     () => ({
@@ -67,12 +71,18 @@ export function DashboardAccountDirectory({
   );
 
   const studentOptions = useMemo(
-    () => users.filter((item) => item.role === "student").sort((a, b) => a.name.localeCompare(b.name)),
+    () =>
+      users
+        .filter((item) => item.role === "student")
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [users],
   );
 
   const educatorOptions = useMemo(
-    () => users.filter((item) => item.role === "educator").sort((a, b) => a.name.localeCompare(b.name)),
+    () =>
+      users
+        .filter((item) => item.role === "educator")
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [users],
   );
 
@@ -148,7 +158,10 @@ export function DashboardAccountDirectory({
   }, [users, searchQuery]);
 
   const tabOther = useMemo(() => {
-    let list = users.filter((u) => u.role !== "student" && u.role !== "educator" && u.role !== "parent");
+    let list = users.filter(
+      (u) =>
+        u.role !== "student" && u.role !== "educator" && u.role !== "parent",
+    );
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter(
@@ -166,7 +179,8 @@ export function DashboardAccountDirectory({
     fetch("/api/admin/user-requests", { credentials: "same-origin" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.ok && Array.isArray(data.requests)) setPendingRequests(data.requests);
+        if (data.ok && Array.isArray(data.requests))
+          setPendingRequests(data.requests);
       })
       .catch(() => {});
   }, [activeTab]);
@@ -178,7 +192,10 @@ export function DashboardAccountDirectory({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(createForm),
     });
-    const payload = (await response.json()) as { user?: ManagedUser; error?: string };
+    const payload = (await response.json()) as {
+      user?: ManagedUser;
+      error?: string;
+    };
     if (!response.ok || !payload.user) {
       setStatus(payload.error ?? "New account could not be created.");
       return;
@@ -232,13 +249,18 @@ export function DashboardAccountDirectory({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payloadData),
     });
-    const payload = (await response.json()) as { user?: ManagedUser; error?: string };
+    const payload = (await response.json()) as {
+      user?: ManagedUser;
+      error?: string;
+    };
     if (!response.ok || !payload.user) {
       setStatus(payload.error ?? "Account update could not be prepared.");
       return;
     }
     const updatedUsers = (prev: ManagedUser[]) =>
-      prev.map((item) => (item.id === userId ? { ...item, ...payload.user } : item));
+      prev.map((item) =>
+        item.id === userId ? { ...item, ...payload.user } : item,
+      );
     setUsers(updatedUsers);
     onUsersChange?.(updatedUsers(users));
     setEditingUserId(null);
@@ -246,7 +268,10 @@ export function DashboardAccountDirectory({
   }
 
   async function handleDelete(userId: string) {
-    if (!confirm("Delete this account permanently? This action cannot be undone.")) return;
+    if (
+      !confirm("Delete this account permanently? This action cannot be undone.")
+    )
+      return;
     setDeletingId(userId);
     try {
       const res = await fetch("/api/users", {
@@ -269,33 +294,52 @@ export function DashboardAccountDirectory({
     }
   }
 
-  const statusStyles: Record<string, { bg: string; color: string; border: string }> = {
+  const statusStyles: Record<
+    string,
+    { bg: string; color: string; border: string }
+  > = {
     active: { bg: "#DCFCE7", color: "#059669", border: "#A7F3D0" },
     pending: { bg: "#FEF3C7", color: "#D97706", border: "#FDE68A" },
     rejected: { bg: "#FEE2E2", color: "#DC2626", border: "#FECACA" },
   };
 
   function getStatusStyle(status: string) {
-    return statusStyles[status] ?? { bg: "#F1F5F9", color: "#64748B", border: "#E2E8F0" };
+    return (
+      statusStyles[status] ?? {
+        bg: "#F1F5F9",
+        color: "#64748B",
+        border: "#E2E8F0",
+      }
+    );
   }
 
   function getRoleIcon(role: Role) {
     switch (role) {
-      case "admin": return "bi-shield-fill-check";
-      case "educator": return "bi-person-workspace";
-      case "student": return "bi-mortarboard-fill";
-      case "parent": return "bi-people-fill";
-      case "counsellor": return "bi-chat-dots-fill";
+      case "admin":
+        return "bi-shield-fill-check";
+      case "educator":
+        return "bi-person-workspace";
+      case "student":
+        return "bi-mortarboard-fill";
+      case "parent":
+        return "bi-people-fill";
+      case "counsellor":
+        return "bi-chat-dots-fill";
     }
   }
 
   function getRoleColor(role: Role) {
     switch (role) {
-      case "admin": return { bg: "#EEF2FF", color: "#4F46E5" };
-      case "educator": return { bg: "#F0F9FF", color: "#0284C7" };
-      case "student": return { bg: "#F0FDF4", color: "#16A34A" };
-      case "parent": return { bg: "#FFF7ED", color: "#D97706" };
-      case "counsellor": return { bg: "#F5F3FF", color: "#7C3AED" };
+      case "admin":
+        return { bg: "#EEF2FF", color: "#4F46E5" };
+      case "educator":
+        return { bg: "#F0F9FF", color: "#0284C7" };
+      case "student":
+        return { bg: "#F0FDF4", color: "#16A34A" };
+      case "parent":
+        return { bg: "#FFF7ED", color: "#D97706" };
+      case "counsellor":
+        return { bg: "#F5F3FF", color: "#7C3AED" };
     }
   }
 
@@ -321,22 +365,48 @@ export function DashboardAccountDirectory({
               <div className="p-5 pb-3">
                 <div className="flex items-start gap-4">
                   {user.profilePhoto ? (
-                    <img src={user.profilePhoto} alt={user.name} className="h-16 w-16 rounded-xl object-cover ring-2 ring-white shadow-sm" />
+                    <img
+                      src={user.profilePhoto}
+                      alt={user.name}
+                      className="h-16 w-16 rounded-xl object-cover ring-2 ring-white shadow-sm"
+                    />
                   ) : (
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-xl font-bold text-white shadow-sm" style={{ background: rc.color }}>
+                    <div
+                      className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl text-xl font-bold text-white shadow-sm"
+                      style={{ background: rc.color }}
+                    >
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-base font-bold text-[var(--color-heading)] truncate">{user.name}</p>
-                    <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">ID: {user.id.slice(0, 8).toUpperCase()}</p>
+                    <p className="text-base font-bold text-[var(--color-heading)] truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">
+                      {user.role === "educator"
+                        ? `Faculty ID: ${user.facultyCode ?? "Not assigned"}`
+                        : `ID: ${user.id.slice(0, 8).toUpperCase()}`}
+                    </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: rc.bg, color: rc.color }}>
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        style={{ background: rc.bg, color: rc.color }}
+                      >
                         <i className={`bi ${getRoleIcon(user.role)}`} />
                         {user.role}
                       </span>
-                      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ background: ss.color }} />
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
+                        style={{
+                          background: ss.bg,
+                          color: ss.color,
+                          border: `1px solid ${ss.border}`,
+                        }}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ background: ss.color }}
+                        />
                         {user.status}
                       </span>
                       {user.verified ? (
@@ -358,12 +428,16 @@ export function DashboardAccountDirectory({
                 <div className="grid gap-1.5 text-xs">
                   <div className="flex items-center gap-2 text-[var(--color-muted)]">
                     <i className="bi bi-envelope w-3.5" />
-                    <span className="truncate text-[var(--color-body)]">{user.email}</span>
+                    <span className="truncate text-[var(--color-body)]">
+                      {user.email}
+                    </span>
                   </div>
                   {user.mobile && (
                     <div className="flex items-center gap-2 text-[var(--color-muted)]">
                       <i className="bi bi-telephone w-3.5" />
-                      <span className="text-[var(--color-body)]">{user.mobile}</span>
+                      <span className="text-[var(--color-body)]">
+                        {user.mobile}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -372,28 +446,42 @@ export function DashboardAccountDirectory({
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                   {user.program ? (
                     <div className="col-span-2">
-                      <span className="font-semibold text-[var(--color-muted)]">Program</span>
-                      <p className="text-[var(--color-heading)] font-medium">{user.program}</p>
+                      <span className="font-semibold text-[var(--color-muted)]">
+                        Program
+                      </span>
+                      <p className="text-[var(--color-heading)] font-medium">
+                        {user.program}
+                      </p>
                     </div>
                   ) : null}
                   {p?.dob && (
                     <div>
-                      <span className="font-semibold text-[var(--color-muted)]">DOB</span>
+                      <span className="font-semibold text-[var(--color-muted)]">
+                        DOB
+                      </span>
                       <p className="text-[var(--color-heading)]">{p.dob}</p>
                     </div>
                   )}
                   {p?.gender && (
                     <div>
-                      <span className="font-semibold text-[var(--color-muted)]">Gender</span>
+                      <span className="font-semibold text-[var(--color-muted)]">
+                        Gender
+                      </span>
                       <p className="text-[var(--color-heading)]">{p.gender}</p>
                     </div>
                   )}
                   {(p?.addressLine1 || p?.city || p?.state) && (
                     <div className="col-span-2">
-                      <span className="font-semibold text-[var(--color-muted)]">Address</span>
+                      <span className="font-semibold text-[var(--color-muted)]">
+                        Address
+                      </span>
                       <p className="text-[var(--color-heading)]">
-                        {[p.addressLine1, p.addressLine2].filter(Boolean).join(", ")}
-                        {p.city ? `, ${p.city}` : ""}{p.state ? `, ${p.state}` : ""}{p.pincode ? ` - ${p.pincode}` : ""}
+                        {[p.addressLine1, p.addressLine2]
+                          .filter(Boolean)
+                          .join(", ")}
+                        {p.city ? `, ${p.city}` : ""}
+                        {p.state ? `, ${p.state}` : ""}
+                        {p.pincode ? ` - ${p.pincode}` : ""}
                       </p>
                     </div>
                   )}
@@ -401,46 +489,87 @@ export function DashboardAccountDirectory({
                     <>
                       {p?.parentName && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Parent</span>
-                          <p className="text-[var(--color-heading)]">{p.parentName}</p>
-                          {p.parentMobile && <p className="text-[var(--color-body)]">{p.parentMobile}</p>}
-                          {p.parentEmail && <p className="text-[var(--color-body)] truncate">{p.parentEmail}</p>}
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Parent
+                          </span>
+                          <p className="text-[var(--color-heading)]">
+                            {p.parentName}
+                          </p>
+                          {p.parentMobile && (
+                            <p className="text-[var(--color-body)]">
+                              {p.parentMobile}
+                            </p>
+                          )}
+                          {p.parentEmail && (
+                            <p className="text-[var(--color-body)] truncate">
+                              {p.parentEmail}
+                            </p>
+                          )}
                         </div>
                       )}
                       {p?.courseWantedTitle && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Course</span>
-                          <p className="text-[var(--color-heading)]">{p.courseWantedTitle}</p>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Course
+                          </span>
+                          <p className="text-[var(--color-heading)]">
+                            {p.courseWantedTitle}
+                          </p>
                         </div>
                       )}
                       {p?.studentType && (
                         <div>
-                          <span className="font-semibold text-[var(--color-muted)]">Type</span>
-                          <p className="text-[var(--color-heading)]">{p.studentType}</p>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Type
+                          </span>
+                          <p className="text-[var(--color-heading)]">
+                            {p.studentType}
+                          </p>
                         </div>
                       )}
                       {p?.latestQualification && (
                         <div>
-                          <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
-                          <p className="text-[var(--color-heading)]">{p.latestQualification}{p.latestAcademicScore ? ` - ${p.latestAcademicScore}` : ""}</p>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Qualification
+                          </span>
+                          <p className="text-[var(--color-heading)]">
+                            {p.latestQualification}
+                            {p.latestAcademicScore
+                              ? ` - ${p.latestAcademicScore}`
+                              : ""}
+                          </p>
                         </div>
                       )}
                       {(p?.weakSubjects?.length ?? 0) > 0 && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Weak Subjects</span>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Weak Subjects
+                          </span>
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {p!.weakSubjects!.map((s, i) => (
-                              <span key={i} className="rounded-md bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600">{s}</span>
+                              <span
+                                key={i}
+                                className="rounded-md bg-red-50 px-1.5 py-0.5 text-[11px] font-medium text-red-600"
+                              >
+                                {s}
+                              </span>
                             ))}
                           </div>
                         </div>
                       )}
                       {(p?.strongSubjects?.length ?? 0) > 0 && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Strong Subjects</span>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Strong Subjects
+                          </span>
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {p!.strongSubjects!.map((s, i) => (
-                              <span key={i} className="rounded-md bg-green-50 px-1.5 py-0.5 text-[11px] font-medium text-green-600">{s}</span>
+                              <span
+                                key={i}
+                                className="rounded-md bg-green-50 px-1.5 py-0.5 text-[11px] font-medium text-green-600"
+                              >
+                                {s}
+                              </span>
                             ))}
                           </div>
                         </div>
@@ -451,29 +580,46 @@ export function DashboardAccountDirectory({
                     <>
                       {p?.qualification && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Qualification</span>
-                          <p className="text-[var(--color-heading)]">{p.qualification}</p>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Qualification
+                          </span>
+                          <p className="text-[var(--color-heading)]">
+                            {p.qualification}
+                          </p>
                         </div>
                       )}
                       {p?.experience && (
                         <div>
-                          <span className="font-semibold text-[var(--color-muted)]">Experience</span>
-                          <p className="text-[var(--color-heading)]">{p.experience}</p>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Experience
+                          </span>
+                          <p className="text-[var(--color-heading)]">
+                            {p.experience}
+                          </p>
                         </div>
                       )}
                       {(p?.subjects?.length ?? 0) > 0 && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Subjects</span>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Subjects
+                          </span>
                           <div className="flex flex-wrap gap-1 mt-0.5">
                             {p!.subjects!.map((s, i) => (
-                              <span key={i} className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-600">{s}</span>
+                              <span
+                                key={i}
+                                className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-medium text-blue-600"
+                              >
+                                {s}
+                              </span>
                             ))}
                           </div>
                         </div>
                       )}
                       {p?.cvUrl && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Resume / CV</span>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Resume / CV
+                          </span>
                           <div className="mt-1">
                             <a
                               href={p.cvUrl}
@@ -489,13 +635,28 @@ export function DashboardAccountDirectory({
                       )}
                       {(p?.examQualifications?.length ?? 0) > 0 && (
                         <div className="col-span-2">
-                          <span className="font-semibold text-[var(--color-muted)]">Exam Qualifications</span>
+                          <span className="font-semibold text-[var(--color-muted)]">
+                            Exam Qualifications
+                          </span>
                           <div className="mt-0.5 space-y-1">
                             {p!.examQualifications!.map((eq, i) => (
-                              <div key={i} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-1.5 text-[11px]">
-                                <span className="font-semibold text-[var(--color-heading)]">{eq.examName}</span>
-                                {eq.score && <span className="ml-2 text-[var(--color-body)]">Score: {eq.score}</span>}
-                                {eq.year && <span className="ml-2 text-[var(--color-muted)]">({eq.year})</span>}
+                              <div
+                                key={i}
+                                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-2 py-1.5 text-[11px]"
+                              >
+                                <span className="font-semibold text-[var(--color-heading)]">
+                                  {eq.examName}
+                                </span>
+                                {eq.score && (
+                                  <span className="ml-2 text-[var(--color-body)]">
+                                    Score: {eq.score}
+                                  </span>
+                                )}
+                                {eq.year && (
+                                  <span className="ml-2 text-[var(--color-muted)]">
+                                    ({eq.year})
+                                  </span>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -508,7 +669,9 @@ export function DashboardAccountDirectory({
               <div className="border-t border-[var(--color-border)] px-5 py-3">
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setEditingUserId(isEditing(user.id) ? null : user.id)}
+                    onClick={() =>
+                      setEditingUserId(isEditing(user.id) ? null : user.id)
+                    }
                     className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-bold text-[var(--color-heading)] hover:bg-[var(--color-panel)] transition-colors"
                   >
                     <i className="bi bi-pencil" />
@@ -536,7 +699,8 @@ export function DashboardAccountDirectory({
         <div
           className="flex-shrink-0 rounded-t-[1.5rem] px-6 py-4 text-white"
           style={{
-            background: "linear-gradient(135deg,#1E1B4B,var(--color-primary),#6D28D9)",
+            background:
+              "linear-gradient(135deg,#1E1B4B,var(--color-primary),#6D28D9)",
           }}
         >
           <h3 className="text-lg font-black">
@@ -550,196 +714,247 @@ export function DashboardAccountDirectory({
           )}
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          {users.filter((u) => u.id === editingUserId).map((user) => {
-            const d = drafts[user.id] ?? user;
-            async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              setUploadingPhoto(true);
-              try {
-                const formData = new FormData();
-                formData.append("file", file);
-                formData.append("field", "photo");
-                const res = await fetch("/api/upload/signup", { method: "POST", body: formData });
-                const data = await res.json();
-                if (data.success) {
-                  setDrafts((c) => ({ ...c, [user.id]: { ...d, profilePhoto: data.url } }));
+          {users
+            .filter((u) => u.id === editingUserId)
+            .map((user) => {
+              const d = drafts[user.id] ?? user;
+              async function handlePhotoUpload(
+                e: React.ChangeEvent<HTMLInputElement>,
+              ) {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setUploadingPhoto(true);
+                try {
+                  const formData = new FormData();
+                  formData.append("file", file);
+                  formData.append("field", "photo");
+                  const res = await fetch("/api/upload/signup", {
+                    method: "POST",
+                    body: formData,
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setDrafts((c) => ({
+                      ...c,
+                      [user.id]: { ...d, profilePhoto: data.url },
+                    }));
+                  }
+                } catch {
+                  // ignore
+                } finally {
+                  setUploadingPhoto(false);
                 }
-              } catch {
-                // ignore
-              } finally {
-                setUploadingPhoto(false);
               }
-            }
-            return (
-              <div key={user.id} className="grid gap-3">
-                <div className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
-                  {(d.profilePhoto || user.profilePhoto) ? (
-                    <img
-                      src={d.profilePhoto || user.profilePhoto}
-                      alt={user.name}
-                      className="h-16 w-16 rounded-xl object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl font-bold text-white"
-                      style={{ background: getRoleColor(user.role).color }}
-                    >
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-[var(--color-heading)]">{user.name}</p>
-                    <p className="text-xs text-[var(--color-muted)]">{user.email}</p>
-                    {user.mobile && (
-                      <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                        <i className="bi bi-telephone me-1" />
-                        {user.mobile}
-                      </p>
+              return (
+                <div key={user.id} className="grid gap-3">
+                  <div className="flex items-center gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
+                    {d.profilePhoto || user.profilePhoto ? (
+                      <img
+                        src={d.profilePhoto || user.profilePhoto}
+                        alt={user.name}
+                        className="h-16 w-16 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="flex h-16 w-16 items-center justify-center rounded-xl text-2xl font-bold text-white"
+                        style={{ background: getRoleColor(user.role).color }}
+                      >
+                        {user.name.charAt(0).toUpperCase()}
+                      </div>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => photoInputRef.current?.click()}
-                      disabled={uploadingPhoto}
-                      className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                    >
-                      <i className="bi bi-camera" />
-                      {uploadingPhoto ? "Uploading..." : "Change Photo"}
-                    </button>
-                    <input
-                      ref={photoInputRef}
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      className="hidden"
-                      onChange={handlePhotoUpload}
-                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-[var(--color-heading)]">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-[var(--color-muted)]">
+                        {user.email}
+                      </p>
+                      {user.mobile && (
+                        <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                          <i className="bi bi-telephone me-1" />
+                          {user.mobile}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        disabled={uploadingPhoto}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] px-3 py-1.5 text-xs font-semibold text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                      >
+                        <i className="bi bi-camera" />
+                        {uploadingPhoto ? "Uploading..." : "Change Photo"}
+                      </button>
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoUpload}
+                      />
+                    </div>
                   </div>
-                </div>
-                <input
-                  value={d.name}
-                  onChange={(e) =>
-                    setDrafts((c) => ({ ...c, [user.id]: { ...d, name: e.target.value.slice(0, 48) } }))
-                  }
-                   placeholder="e.g. Supriya"
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                />
-
-                <input
-                  value={d.email}
-                  onChange={(e) =>
-                    setDrafts((c) => ({ ...c, [user.id]: { ...d, email: e.target.value.slice(0, 60) } }))
-                  }
-                  placeholder="Email"
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                />
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <select
-                    value={d.role}
-                    onChange={(e) =>
-                      setDrafts((c) => ({ ...c, [user.id]: { ...d, role: e.target.value as Role } }))
-                    }
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  >
-                    <option value="student">Student</option>
-                    <option value="educator">Faculty</option>
-                    <option value="counsellor">Counsellor</option>
-                    <option value="parent">Parent</option>
-                    <option value="admin">Admin</option>
-                  </select>
                   <input
-                    value={d.program}
-                    onChange={(e) =>
-                      setDrafts((c) => ({ ...c, [user.id]: { ...d, program: e.target.value.slice(0, 60) } }))
-                    }
-                    placeholder="Program"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  />
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <select
-                    value={d.status}
-                    onChange={(e) =>
-                      setDrafts((c) => ({ ...c, [user.id]: { ...d, status: e.target.value as any } }))
-                    }
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  >
-                    <option value="active">Active</option>
-                    <option value="pending">Pending</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                  <input
-                    value={d.passwordHint ?? ""}
-                    onChange={(e) =>
-                      setDrafts((c) => ({ ...c, [user.id]: { ...d, passwordHint: e.target.value.slice(0, 24) } }))
-                    }
-                    placeholder="New Password (blank = keep current)"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                  />
-                </div>
-                <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
-                  <input
-                    type="checkbox"
-                    checked={d.verified ?? false}
-                    onChange={(e) =>
-                      setDrafts((c) => ({ ...c, [user.id]: { ...d, verified: e.target.checked } }))
-                    }
-                    className="h-5 w-5 text-[var(--color-primary)]"
-                  />
-                  Verified Badge
-                </label>
-                <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
-                  <input
-                    type="checkbox"
-                    checked={d.profile?.chatDisabled ?? false}
+                    value={d.name}
                     onChange={(e) =>
                       setDrafts((c) => ({
                         ...c,
-                        [user.id]: {
-                          ...d,
-                          profile: { ...(d.profile || {}), chatDisabled: e.target.checked },
-                        },
+                        [user.id]: { ...d, name: e.target.value.slice(0, 48) },
                       }))
                     }
-                    className="h-5 w-5 text-[var(--color-primary)]"
+                    placeholder="e.g. Supriya"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
-                  Disable Chat
-                </label>
-                {d.role === "student" && educatorOptions.length > 0 ? (
-                  <div className="rounded-xl border border-[var(--color-border)] p-4">
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
-                      Assign Faculty Members
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {educatorOptions.map((edu) => (
-                        <label
-                          key={edu.id}
-                          className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={(d.assignedFacultyIds ?? []).includes(edu.id)}
-                            onChange={(e) =>
-                              setDrafts((c) => ({
-                                ...c,
-                                [user.id]: {
-                                  ...d,
-                                  assignedFacultyIds: e.target.checked
-                                    ? [...(d.assignedFacultyIds ?? []), edu.id]
-                                    : (d.assignedFacultyIds ?? []).filter((id) => id !== edu.id),
-                                },
-                              }))
-                            }
-                            className="h-4 w-4 text-[var(--color-primary)]"
-                          />
-                          {edu.name}
-                        </label>
-                      ))}
-                    </div>
+
+                  <input
+                    value={d.email}
+                    onChange={(e) =>
+                      setDrafts((c) => ({
+                        ...c,
+                        [user.id]: { ...d, email: e.target.value.slice(0, 60) },
+                      }))
+                    }
+                    placeholder="Email"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select
+                      value={d.role}
+                      onChange={(e) =>
+                        setDrafts((c) => ({
+                          ...c,
+                          [user.id]: { ...d, role: e.target.value as Role },
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
+                      <option value="student">Student</option>
+                      <option value="educator">Faculty</option>
+                      <option value="counsellor">Counsellor</option>
+                      <option value="parent">Parent</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                    <input
+                      value={d.program}
+                      onChange={(e) =>
+                        setDrafts((c) => ({
+                          ...c,
+                          [user.id]: {
+                            ...d,
+                            program: e.target.value.slice(0, 60),
+                          },
+                        }))
+                      }
+                      placeholder="Program"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    />
                   </div>
-                ) : null}
-              </div>
-            );
-          })}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <select
+                      value={d.status}
+                      onChange={(e) =>
+                        setDrafts((c) => ({
+                          ...c,
+                          [user.id]: { ...d, status: e.target.value as any },
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
+                      <option value="active">Active</option>
+                      <option value="pending">Pending</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                    <input
+                      value={d.passwordHint ?? ""}
+                      onChange={(e) =>
+                        setDrafts((c) => ({
+                          ...c,
+                          [user.id]: {
+                            ...d,
+                            passwordHint: e.target.value.slice(0, 24),
+                          },
+                        }))
+                      }
+                      placeholder="New Password (blank = keep current)"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    />
+                  </div>
+                  <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
+                    <input
+                      type="checkbox"
+                      checked={d.verified ?? false}
+                      onChange={(e) =>
+                        setDrafts((c) => ({
+                          ...c,
+                          [user.id]: { ...d, verified: e.target.checked },
+                        }))
+                      }
+                      className="h-5 w-5 text-[var(--color-primary)]"
+                    />
+                    Verified Badge
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3 text-sm text-[var(--color-heading)]">
+                    <input
+                      type="checkbox"
+                      checked={d.profile?.chatDisabled ?? false}
+                      onChange={(e) =>
+                        setDrafts((c) => ({
+                          ...c,
+                          [user.id]: {
+                            ...d,
+                            profile: {
+                              ...(d.profile || {}),
+                              chatDisabled: e.target.checked,
+                            },
+                          },
+                        }))
+                      }
+                      className="h-5 w-5 text-[var(--color-primary)]"
+                    />
+                    Disable Chat
+                  </label>
+                  {d.role === "student" && educatorOptions.length > 0 ? (
+                    <div className="rounded-xl border border-[var(--color-border)] p-4">
+                      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                        Assign Faculty Members
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {educatorOptions.map((edu) => (
+                          <label
+                            key={edu.id}
+                            className="flex cursor-pointer items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={(d.assignedFacultyIds ?? []).includes(
+                                edu.id,
+                              )}
+                              onChange={(e) =>
+                                setDrafts((c) => ({
+                                  ...c,
+                                  [user.id]: {
+                                    ...d,
+                                    assignedFacultyIds: e.target.checked
+                                      ? [
+                                          ...(d.assignedFacultyIds ?? []),
+                                          edu.id,
+                                        ]
+                                      : (d.assignedFacultyIds ?? []).filter(
+                                          (id) => id !== edu.id,
+                                        ),
+                                  },
+                                }))
+                              }
+                              className="h-4 w-4 text-[var(--color-primary)]"
+                            />
+                            {edu.name}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
         </div>
         <div className="flex-shrink-0 border-t border-[var(--color-border)] px-6 py-4">
           <div className="flex justify-end gap-3">
@@ -776,7 +991,15 @@ export function DashboardAccountDirectory({
         }}
       >
         <div>
-          <h1 style={{ fontSize: "24px", fontWeight: 900, color: "#1A2035", letterSpacing: "-0.02em", margin: 0 }}>
+          <h1
+            style={{
+              fontSize: "24px",
+              fontWeight: 900,
+              color: "#1A2035",
+              letterSpacing: "-0.02em",
+              margin: 0,
+            }}
+          >
             Accounts
           </h1>
           <p style={{ fontSize: "14px", color: "#64748B", marginTop: "4px" }}>
@@ -811,10 +1034,31 @@ export function DashboardAccountDirectory({
       {/* ── Main Tab Bar (CoachSutra-style) ── */}
       <div className="flex flex-wrap gap-2 px-6 pt-5">
         {[
-          { id: "students" as const, label: "Students", count: accountCounts.students },
-          { id: "faculty" as const, label: "Faculty", count: accountCounts.educators },
-          { id: "parents" as const, label: "Parents", count: accountCounts.parents },
-          { id: "other" as const, label: "Other Accounts", count: users.filter((u) => u.role !== "student" && u.role !== "educator" && u.role !== "parent").length },
+          {
+            id: "students" as const,
+            label: "Students",
+            count: accountCounts.students,
+          },
+          {
+            id: "faculty" as const,
+            label: "Faculty",
+            count: accountCounts.educators,
+          },
+          {
+            id: "parents" as const,
+            label: "Parents",
+            count: accountCounts.parents,
+          },
+          {
+            id: "other" as const,
+            label: "Other Accounts",
+            count: users.filter(
+              (u) =>
+                u.role !== "student" &&
+                u.role !== "educator" &&
+                u.role !== "parent",
+            ).length,
+          },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -844,9 +1088,21 @@ export function DashboardAccountDirectory({
       {/* ── Secondary Tab Pills (Register / Directory / Verification) ── */}
       <div className="flex flex-wrap gap-1.5 px-6 pt-3">
         {[
-          { id: "register" as const, label: "Register Account", icon: "bi-person-plus-fill" },
-          { id: "directory" as const, label: "Directory", icon: "bi-people-fill" },
-          { id: "verification" as const, label: "Verification Requests", icon: "bi-shield-check" },
+          {
+            id: "register" as const,
+            label: "Register Account",
+            icon: "bi-person-plus-fill",
+          },
+          {
+            id: "directory" as const,
+            label: "Directory",
+            icon: "bi-people-fill",
+          },
+          {
+            id: "verification" as const,
+            label: "Verification Requests",
+            icon: "bi-shield-check",
+          },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -885,13 +1141,23 @@ export function DashboardAccountDirectory({
                 <div className="grid gap-3">
                   <input
                     value={createForm.name}
-                    onChange={(e) => setCreateForm((c) => ({ ...c, name: e.target.value.slice(0, 48) }))}
+                    onChange={(e) =>
+                      setCreateForm((c) => ({
+                        ...c,
+                        name: e.target.value.slice(0, 48),
+                      }))
+                    }
                     placeholder="e.g. Tanish"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
                   <input
                     value={createForm.email}
-                    onChange={(e) => setCreateForm((c) => ({ ...c, email: e.target.value.slice(0, 60) }))}
+                    onChange={(e) =>
+                      setCreateForm((c) => ({
+                        ...c,
+                        email: e.target.value.slice(0, 60),
+                      }))
+                    }
                     placeholder="Email address"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
@@ -903,10 +1169,13 @@ export function DashboardAccountDirectory({
                           ...c,
                           role: e.target.value as Role,
                           password:
-                            e.target.value === "admin" ? "Admin@123"
-                            : e.target.value === "educator" ? "Educator@123"
-                            : e.target.value === "parent" ? "Parent@123"
-                            : "Student@123",
+                            e.target.value === "admin"
+                              ? "Admin@123"
+                              : e.target.value === "educator"
+                                ? "Educator@123"
+                                : e.target.value === "parent"
+                                  ? "Parent@123"
+                                  : "Student@123",
                         }))
                       }
                       className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -920,7 +1189,12 @@ export function DashboardAccountDirectory({
                     {createForm.role !== "parent" ? (
                       <input
                         value={createForm.program}
-                        onChange={(e) => setCreateForm((c) => ({ ...c, program: e.target.value.slice(0, 60) }))}
+                        onChange={(e) =>
+                          setCreateForm((c) => ({
+                            ...c,
+                            program: e.target.value.slice(0, 60),
+                          }))
+                        }
                         placeholder="Program / responsibility"
                         className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
@@ -930,12 +1204,19 @@ export function DashboardAccountDirectory({
                   {createForm.role === "parent" ? (
                     <select
                       value={createForm.linkedStudentId}
-                      onChange={(e) => setCreateForm((c) => ({ ...c, linkedStudentId: e.target.value }))}
+                      onChange={(e) =>
+                        setCreateForm((c) => ({
+                          ...c,
+                          linkedStudentId: e.target.value,
+                        }))
+                      }
                       className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                     >
                       <option value="">Select student to link...</option>
                       {studentOptions.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name} — {s.email}</option>
+                        <option key={s.id} value={s.id}>
+                          {s.name} — {s.email}
+                        </option>
                       ))}
                     </select>
                   ) : null}
@@ -945,19 +1226,34 @@ export function DashboardAccountDirectory({
                       <div className="grid gap-3 sm:grid-cols-3">
                         <input
                           value={createForm.parentName}
-                          onChange={(e) => setCreateForm((c) => ({ ...c, parentName: e.target.value.slice(0, 60) }))}
-                           placeholder="e.g. Supriya"
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              parentName: e.target.value.slice(0, 60),
+                            }))
+                          }
+                          placeholder="e.g. Supriya"
                           className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                         <input
                           value={createForm.parentEmail}
-                          onChange={(e) => setCreateForm((c) => ({ ...c, parentEmail: e.target.value.slice(0, 60) }))}
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              parentEmail: e.target.value.slice(0, 60),
+                            }))
+                          }
                           placeholder="Parent email"
                           className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                         <input
                           value={createForm.parentMobile}
-                          onChange={(e) => setCreateForm((c) => ({ ...c, parentMobile: e.target.value.slice(0, 15) }))}
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              parentMobile: e.target.value.slice(0, 15),
+                            }))
+                          }
                           placeholder="Parent mobile"
                           className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
@@ -975,13 +1271,17 @@ export function DashboardAccountDirectory({
                               >
                                 <input
                                   type="checkbox"
-                                  checked={createForm.assignedFacultyIds.includes(edu.id)}
+                                  checked={createForm.assignedFacultyIds.includes(
+                                    edu.id,
+                                  )}
                                   onChange={(e) =>
                                     setCreateForm((c) => ({
                                       ...c,
                                       assignedFacultyIds: e.target.checked
                                         ? [...c.assignedFacultyIds, edu.id]
-                                        : c.assignedFacultyIds.filter((id) => id !== edu.id),
+                                        : c.assignedFacultyIds.filter(
+                                            (id) => id !== edu.id,
+                                          ),
                                     }))
                                   }
                                   className="h-4 w-4 text-[var(--color-primary)]"
@@ -997,7 +1297,12 @@ export function DashboardAccountDirectory({
 
                   <input
                     value={createForm.password}
-                    onChange={(e) => setCreateForm((c) => ({ ...c, password: e.target.value.slice(0, 24) }))}
+                    onChange={(e) =>
+                      setCreateForm((c) => ({
+                        ...c,
+                        password: e.target.value.slice(0, 24),
+                      }))
+                    }
                     placeholder="Temporary password"
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   />
@@ -1005,7 +1310,12 @@ export function DashboardAccountDirectory({
                     <input
                       type="checkbox"
                       checked={createForm.confirm}
-                      onChange={(e) => setCreateForm((c) => ({ ...c, confirm: e.target.checked }))}
+                      onChange={(e) =>
+                        setCreateForm((c) => ({
+                          ...c,
+                          confirm: e.target.checked,
+                        }))
+                      }
                       className="h-4 w-4 text-[var(--color-primary)]"
                     />
                     Confirm and finalize this new entry
@@ -1028,18 +1338,48 @@ export function DashboardAccountDirectory({
                   </p>
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {[
-                      { label: "Students", value: accountCounts.students, icon: "bi-mortarboard-fill", color: "#16A34A" },
-                      { label: "Faculty", value: accountCounts.educators, icon: "bi-person-workspace", color: "#0284C7" },
-                      { label: "Parents", value: accountCounts.parents, icon: "bi-people-fill", color: "#D97706" },
-                      { label: "Admins", value: accountCounts.admins, icon: "bi-shield-fill-check", color: "#4F46E5" },
-                      { label: "Counsellors", value: accountCounts.counsellors, icon: "bi-chat-dots-fill", color: "#7C3AED" },
+                      {
+                        label: "Students",
+                        value: accountCounts.students,
+                        icon: "bi-mortarboard-fill",
+                        color: "#16A34A",
+                      },
+                      {
+                        label: "Faculty",
+                        value: accountCounts.educators,
+                        icon: "bi-person-workspace",
+                        color: "#0284C7",
+                      },
+                      {
+                        label: "Parents",
+                        value: accountCounts.parents,
+                        icon: "bi-people-fill",
+                        color: "#D97706",
+                      },
+                      {
+                        label: "Admins",
+                        value: accountCounts.admins,
+                        icon: "bi-shield-fill-check",
+                        color: "#4F46E5",
+                      },
+                      {
+                        label: "Counsellors",
+                        value: accountCounts.counsellors,
+                        icon: "bi-chat-dots-fill",
+                        color: "#7C3AED",
+                      },
                     ].map((item) => (
                       <div
                         key={item.label}
                         className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 text-center"
                       >
-                        <i className={`bi ${item.icon} text-xl`} style={{ color: item.color }} />
-                        <p className="mt-1 text-2xl font-black text-[var(--color-heading)]">{item.value}</p>
+                        <i
+                          className={`bi ${item.icon} text-xl`}
+                          style={{ color: item.color }}
+                        />
+                        <p className="mt-1 text-2xl font-black text-[var(--color-heading)]">
+                          {item.value}
+                        </p>
                         <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">
                           {item.label}
                         </p>
@@ -1058,7 +1398,10 @@ export function DashboardAccountDirectory({
                       "Mandatory confirmation before API commit.",
                       "Draft payload includes temporary credentials.",
                     ].map((item) => (
-                      <div key={item} className="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]">
+                      <div
+                        key={item}
+                        className="flex items-center gap-2 text-xs font-medium text-[var(--color-muted)]"
+                      >
                         <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
                         {item}
                       </div>
@@ -1072,11 +1415,36 @@ export function DashboardAccountDirectory({
             <>
               <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
-                  { label: "Total", value: accountCounts.total, icon: "bi-people-fill", color: "var(--color-primary)" },
-                  { label: "Active", value: users.filter((u) => u.status === "active").length, icon: "bi-person-check-fill", color: "#10B981" },
-                  { label: "Faculty", value: accountCounts.educators, icon: "bi-person-workspace", color: "#0EA5E9" },
-                  { label: "Students", value: accountCounts.students, icon: "bi-mortarboard-fill", color: "#8B5CF6" },
-                  { label: "Pending", value: users.filter((u) => u.status === "pending").length, icon: "bi-hourglass-split", color: "#F59E0B" },
+                  {
+                    label: "Total",
+                    value: accountCounts.total,
+                    icon: "bi-people-fill",
+                    color: "var(--color-primary)",
+                  },
+                  {
+                    label: "Active",
+                    value: users.filter((u) => u.status === "active").length,
+                    icon: "bi-person-check-fill",
+                    color: "#10B981",
+                  },
+                  {
+                    label: "Faculty",
+                    value: accountCounts.educators,
+                    icon: "bi-person-workspace",
+                    color: "#0EA5E9",
+                  },
+                  {
+                    label: "Students",
+                    value: accountCounts.students,
+                    icon: "bi-mortarboard-fill",
+                    color: "#8B5CF6",
+                  },
+                  {
+                    label: "Pending",
+                    value: users.filter((u) => u.status === "pending").length,
+                    icon: "bi-hourglass-split",
+                    color: "#F59E0B",
+                  },
                 ].map((stat) => (
                   <div
                     key={stat.label}
@@ -1087,11 +1455,18 @@ export function DashboardAccountDirectory({
                         className="flex h-9 w-9 items-center justify-center rounded-lg"
                         style={{ background: `${stat.color}15` }}
                       >
-                        <i className={`bi ${stat.icon}`} style={{ color: stat.color, fontSize: 16 }} />
+                        <i
+                          className={`bi ${stat.icon}`}
+                          style={{ color: stat.color, fontSize: 16 }}
+                        />
                       </div>
                       <div>
-                        <div className="text-xl font-black text-[var(--color-heading)]">{stat.value}</div>
-                        <div className="text-xs font-semibold text-[var(--color-muted)]">{stat.label}</div>
+                        <div className="text-xl font-black text-[var(--color-heading)]">
+                          {stat.value}
+                        </div>
+                        <div className="text-xs font-semibold text-[var(--color-muted)]">
+                          {stat.label}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1111,20 +1486,33 @@ export function DashboardAccountDirectory({
                 </div>
                 <select
                   value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value as "all" | Role)}
+                  onChange={(e) =>
+                    setRoleFilter(e.target.value as "all" | Role)
+                  }
                   className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                   style={{ minWidth: 140 }}
                 >
                   <option value="all">All Roles ({accountCounts.total})</option>
-                  <option value="student">Students ({accountCounts.students})</option>
-                  <option value="educator">Faculty ({accountCounts.educators})</option>
+                  <option value="student">
+                    Students ({accountCounts.students})
+                  </option>
+                  <option value="educator">
+                    Faculty ({accountCounts.educators})
+                  </option>
                   <option value="admin">Admins ({accountCounts.admins})</option>
-                  <option value="parent">Parents ({accountCounts.parents})</option>
-                  <option value="counsellor">Counsellors ({accountCounts.counsellors})</option>
+                  <option value="parent">
+                    Parents ({accountCounts.parents})
+                  </option>
+                  <option value="counsellor">
+                    Counsellors ({accountCounts.counsellors})
+                  </option>
                 </select>
-                {(roleFilter !== "all" || searchQuery) ? (
+                {roleFilter !== "all" || searchQuery ? (
                   <button
-                    onClick={() => { setRoleFilter("all"); setSearchQuery(""); }}
+                    onClick={() => {
+                      setRoleFilter("all");
+                      setSearchQuery("");
+                    }}
                     className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-muted)] hover:bg-[var(--color-panel)]"
                   >
                     Clear
@@ -1142,7 +1530,9 @@ export function DashboardAccountDirectory({
                 Pending Approval Requests
               </p>
               {pendingRequests.length === 0 ? (
-                <p className="text-sm text-[var(--color-muted)]">No pending requests.</p>
+                <p className="text-sm text-[var(--color-muted)]">
+                  No pending requests.
+                </p>
               ) : (
                 <div className="space-y-4">
                   {pendingRequests.map((req) => (
@@ -1152,11 +1542,16 @@ export function DashboardAccountDirectory({
                     >
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
-                          <p className="font-bold text-[var(--color-heading)]">{req.name}</p>
-                          <p className="mt-0.5 text-xs text-[var(--color-muted)]">{req.email}</p>
+                          <p className="font-bold text-[var(--color-heading)]">
+                            {req.name}
+                          </p>
+                          <p className="mt-0.5 text-xs text-[var(--color-muted)]">
+                            {req.email}
+                          </p>
                           {req.mobile && (
                             <p className="mt-0.5 text-xs text-[var(--color-muted)]">
-                              <i className="bi bi-telephone me-1" />{req.mobile}
+                              <i className="bi bi-telephone me-1" />
+                              {req.mobile}
                             </p>
                           )}
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -1173,15 +1568,22 @@ export function DashboardAccountDirectory({
                         <div className="flex gap-2">
                           <button
                             onClick={async () => {
-                              const res = await fetch("/api/admin/user-requests/approve", {
-                                method: "POST",
-                                credentials: "same-origin",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ userId: req.id }),
-                              });
+                              const res = await fetch(
+                                "/api/admin/user-requests/approve",
+                                {
+                                  method: "POST",
+                                  credentials: "same-origin",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ userId: req.id }),
+                                },
+                              );
                               const data = await res.json();
                               if (data.ok) {
-                                setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                                setPendingRequests((prev) =>
+                                  prev.filter((r) => r.id !== req.id),
+                                );
                                 setStatus(`Approved: ${req.name}`);
                               } else {
                                 setStatus(data.error ?? "Failed to approve.");
@@ -1194,15 +1596,22 @@ export function DashboardAccountDirectory({
                           </button>
                           <button
                             onClick={async () => {
-                              const res = await fetch("/api/admin/user-requests/reject", {
-                                method: "POST",
-                                credentials: "same-origin",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ userId: req.id }),
-                              });
+                              const res = await fetch(
+                                "/api/admin/user-requests/reject",
+                                {
+                                  method: "POST",
+                                  credentials: "same-origin",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ userId: req.id }),
+                                },
+                              );
                               const data = await res.json();
                               if (data.ok) {
-                                setPendingRequests((prev) => prev.filter((r) => r.id !== req.id));
+                                setPendingRequests((prev) =>
+                                  prev.filter((r) => r.id !== req.id),
+                                );
                                 setStatus(`Rejected: ${req.name}`);
                               } else {
                                 setStatus(data.error ?? "Failed to reject.");
@@ -1225,21 +1634,32 @@ export function DashboardAccountDirectory({
 
                           {req.profile.qualification && (
                             <p className="mb-1 text-xs text-[var(--color-heading)]">
-                              <span className="font-semibold text-[var(--color-muted)]">Qualification:</span>{" "}
+                              <span className="font-semibold text-[var(--color-muted)]">
+                                Qualification:
+                              </span>{" "}
                               {req.profile.qualification}
                             </p>
                           )}
                           {req.profile.experience && (
                             <p className="mb-1 text-xs text-[var(--color-heading)]">
-                              <span className="font-semibold text-[var(--color-muted)]">Experience:</span>{" "}
+                              <span className="font-semibold text-[var(--color-muted)]">
+                                Experience:
+                              </span>{" "}
                               {req.profile.experience}
                             </p>
                           )}
                           {(req.profile.subjects?.length ?? 0) > 0 && (
                             <div className="mb-2">
-                              <span className="text-xs font-semibold text-[var(--color-muted)]">Subjects: </span>
+                              <span className="text-xs font-semibold text-[var(--color-muted)]">
+                                Subjects:{" "}
+                              </span>
                               {req.profile.subjects!.map((s, i) => (
-                                <span key={i} className="mr-1 inline-block rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-900/20">{s}</span>
+                                <span
+                                  key={i}
+                                  className="mr-1 inline-block rounded-md bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:bg-blue-900/20"
+                                >
+                                  {s}
+                                </span>
                               ))}
                             </div>
                           )}
@@ -1280,11 +1700,14 @@ export function DashboardAccountDirectory({
                             )}
                           </div>
 
-                          {(req.profile.photoIdFrontUrl || req.profile.photoIdBackUrl) && (
+                          {(req.profile.photoIdFrontUrl ||
+                            req.profile.photoIdBackUrl) && (
                             <div className="mt-3 flex flex-wrap gap-3">
                               {req.profile.photoIdFrontUrl && (
                                 <div className="rounded-lg border border-[var(--color-border)] bg-white p-1.5 dark:bg-[var(--color-card)]">
-                                  <p className="mb-1 text-[10px] font-bold text-[var(--color-muted)]">ID Front</p>
+                                  <p className="mb-1 text-[10px] font-bold text-[var(--color-muted)]">
+                                    ID Front
+                                  </p>
                                   <img
                                     src={req.profile.photoIdFrontUrl}
                                     alt="Photo ID Front"
@@ -1294,7 +1717,9 @@ export function DashboardAccountDirectory({
                               )}
                               {req.profile.photoIdBackUrl && (
                                 <div className="rounded-lg border border-[var(--color-border)] bg-white p-1.5 dark:bg-[var(--color-card)]">
-                                  <p className="mb-1 text-[10px] font-bold text-[var(--color-muted)]">ID Back</p>
+                                  <p className="mb-1 text-[10px] font-bold text-[var(--color-muted)]">
+                                    ID Back
+                                  </p>
                                   <img
                                     src={req.profile.photoIdBackUrl}
                                     alt="Photo ID Back"

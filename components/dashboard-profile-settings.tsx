@@ -514,9 +514,16 @@ export function DashboardProfileSettings({
             <h2 className="text-xl font-black text-[var(--color-heading)]">
               {session?.name || "User"}
             </h2>
+
             <p className="text-sm text-[var(--color-muted)]">
               {session?.email}
             </p>
+
+            {isEducator && session?.facultyCode && (
+              <p className="mt-1 font-mono text-xs font-semibold text-[var(--color-muted)]">
+                Faculty ID: {session.facultyCode}
+              </p>
+            )}
             <span
               className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset ${roleBadgeStyle(
                 role,
@@ -583,6 +590,11 @@ export function DashboardProfileSettings({
                   Professional Details
                 </h3>
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-5">
+                  <InfoRow
+                    label="Faculty ID"
+                    value={session?.facultyCode ?? "Not assigned"}
+                  />
+
                   <InfoRow label="Qualification" value={qualification} />
                   <InfoRow
                     label="Experience"
