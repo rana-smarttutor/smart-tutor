@@ -4,6 +4,18 @@ export type UserStatus = "active" | "pending" | "rejected";
 
 export type SessionUser = {
   id: string;
+
+  /**
+   * Permanent human-readable faculty identifier.
+   *
+   * Example:
+   * SIQ-FAC-2026-0001
+   *
+   * IMPORTANT:
+   * `id` remains the internal Mongo/application UUID.
+   */
+  facultyCode?: string;
+
   name: string;
   email: string;
   role: Role;

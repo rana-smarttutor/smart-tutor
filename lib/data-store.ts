@@ -136,6 +136,9 @@ type DashboardTemplate = {
 type UserDocument = SessionUser & {
   password: string;
   program: string;
+
+  facultyCode?: string;
+  approvedAt?: string;
   mobile?: string;
   mobileKey?: string;
   parentMobile?: string;
@@ -165,6 +168,7 @@ export const COLLECTIONS = {
   content: "content",
   users: "users",
   courses: "courses",
+  counters: "counters",
   tests: "tests",
   messages: "messages",
   submissions: "test_submissions",
@@ -422,6 +426,7 @@ export { DEFAULT_HEURISTICS };
 
 let userIndexesPromise: Promise<void> | null = null;
 let standardCoursesBackfillPromise: Promise<void> | null = null;
+let facultyCodeBackfillPromise: Promise<void> | null = null;
 
 function toPlainData<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -449,7 +454,261 @@ export async function getCollection<T extends Document>(
   const db = await getMongoDatabase();
   return db.collection<T>(name);
 }
+function getFacultyCodeYear(value?: string | Date | null) {
+  if (!value) {
+    return new Date().getFullYear();
+  }
 
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return new Date().getFullYear();
+  }
+
+  return date.getFullYear();
+}
+
+function parseFacultyCode(value?: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const match = value.match(
+    /^SIQ-FAC-(\d{4})-(\d+)$/,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    year: Number(match[1]),
+    sequence: Number(match[2]),
+  };
+}
+
+async function ensureFacultyCounterAtLeast(
+  year: number,
+  sequence: number,
+) {
+  const collection = await getCollection<Document>(
+    COLLECTIONS.counters,
+  );
+
+  await collection.updateOne(
+    {
+      _id: `faculty-code-${year}`,
+    } as any,
+    {
+      $max: {
+        seq: sequence,
+      },
+    } as any,
+    {
+      upsert: true,
+    },
+  );
+}
+
+async function generateFacultyCode(
+  year = new Date().getFullYear(),
+) {
+  const collection = await getCollection<Document>(
+    COLLECTIONS.counters,
+  );
+
+  const counter = await collection.findOneAndUpdate(
+    {
+      _id: `faculty-code-${year}`,
+    } as any,
+    {
+      $inc: {
+        seq: 1,
+      },
+
+      $setOnInsert: {
+        createdAt: new Date().toISOString(),
+      },
+    } as any,
+    {
+      upsert: true,
+      returnDocument: "after",
+    },
+  );
+
+  const sequence = Number(counter?.seq ?? 1);
+
+  return `SIQ-FAC-${year}-${String(sequence).padStart(
+    4,
+    "0",
+  )}`;
+}
+
+async function ensureFacultyCodesBackfilled() {
+  if (!facultyCodeBackfillPromise) {
+    facultyCodeBackfillPromise = (async () => {
+      const users =
+        await getCollection<UserDocument>(
+          COLLECTIONS.users,
+        );
+
+      /*
+       * First inspect any faculty codes that might
+       * already exist and synchronize our counters.
+       */
+      const existingCodes = await users
+        .find({
+          role: "educator",
+
+          facultyCode: {
+            $type: "string",
+          },
+        } as any)
+        .project({
+          facultyCode: 1,
+        })
+        .toArray();
+
+      const maximumByYear = new Map<
+        number,
+        number
+      >();
+
+      for (const document of existingCodes) {
+        const parsed = parseFacultyCode(
+          document.facultyCode as string,
+        );
+
+        if (!parsed) {
+          continue;
+        }
+
+        const existingMaximum =
+          maximumByYear.get(parsed.year) ?? 0;
+
+        if (parsed.sequence > existingMaximum) {
+          maximumByYear.set(
+            parsed.year,
+            parsed.sequence,
+          );
+        }
+      }
+
+      for (const [
+        year,
+        maximum,
+      ] of maximumByYear.entries()) {
+        await ensureFacultyCounterAtLeast(
+          year,
+          maximum,
+        );
+      }
+
+      /*
+       * Existing ACTIVE faculty without a Faculty ID
+       * receive one automatically.
+       *
+       * Pending applications do NOT receive one.
+       */
+      const missingFaculty = await users
+        .find({
+          role: "educator",
+
+          deletedAt: {
+            $exists: false,
+          },
+
+          $and: [
+            {
+              $or: [
+                {
+                  facultyCode: {
+                    $exists: false,
+                  },
+                },
+                {
+                  facultyCode: null,
+                },
+                {
+                  facultyCode: "",
+                },
+              ],
+            },
+
+            {
+              $or: [
+                {
+                  status: "active",
+                },
+                {
+                  status: {
+                    $exists: false,
+                  },
+                },
+                {
+                  status: null,
+                },
+              ],
+            },
+          ],
+        } as any)
+        .sort({
+          createdAt: 1,
+          name: 1,
+        })
+        .toArray();
+
+      for (const faculty of missingFaculty) {
+        /*
+         * Existing faculty use their account creation
+         * year where possible.
+         *
+         * Newly-approved faculty use their approval year.
+         */
+        const year = getFacultyCodeYear(
+          faculty.approvedAt ??
+            faculty.createdAt,
+        );
+
+        const facultyCode =
+          await generateFacultyCode(year);
+
+        await users.updateOne(
+          {
+            id: faculty.id,
+
+            $or: [
+              {
+                facultyCode: {
+                  $exists: false,
+                },
+              },
+              {
+                facultyCode: null,
+              },
+              {
+                facultyCode: "",
+              },
+            ],
+          } as any,
+
+          {
+            $set: {
+              facultyCode,
+              updatedAt:
+                new Date().toISOString(),
+            },
+          },
+        );
+      }
+    })().catch((error) => {
+      facultyCodeBackfillPromise = null;
+      throw error;
+    });
+  }
+
+  return facultyCodeBackfillPromise;
+}
 async function ensureUserIndexes() {
   if (!userIndexesPromise) {
     userIndexesPromise = (async () => {
@@ -477,6 +736,34 @@ async function ensureUserIndexes() {
           { unique: true, name: "users_unique_emailKey" },
         ),
       ]);
+            /*
+       * Assign Faculty IDs to educators already
+       * present in the system.
+       */
+      await ensureFacultyCodesBackfilled();
+
+      /*
+       * Faculty ID must be unique when present.
+       *
+       * Pending applicants have no facultyCode,
+       * so they are not part of this index.
+       */
+      await collection.createIndex(
+        {
+          facultyCode: 1,
+        },
+        {
+          unique: true,
+
+          partialFilterExpression: {
+            facultyCode: {
+              $type: "string",
+            },
+          },
+
+          name: "users_unique_facultyCode",
+        },
+      );
     })().catch((error) => {
       userIndexesPromise = null;
       throw error;
@@ -507,6 +794,7 @@ async function getContentDocument<T extends Document>(id: string) {
 function toSessionUser(user: UserDocument): SessionUser {
   return {
     id: user.id,
+    facultyCode: user.facultyCode,
     name: user.name,
     email: user.email,
     role: user.role,
@@ -1963,34 +2251,22 @@ export async function getPendingEducatorRequests() {
   return users.map(toManagedUser);
 }
 
-export async function approveEducatorRequest(userId: string) {
+export async function approveEducatorRequest(
+  userId: string,
+) {
   const collection = await getUsersCollection();
 
-  const result = await collection.updateOne(
-    {
-      id: userId,
-      role: "educator",
-      deletedAt: { $exists: false },
-    } as any,
-    {
-      $set: {
-        status: "active",
-        verified: true,
-        updatedAt: new Date().toISOString(),
-      },
-    },
-  );
-
-  if (result.matchedCount === 0) {
-    return null;
-  }
-
-  const updatedUser = await collection.findOne({
+  const educator = await collection.findOne({
     id: userId,
+    role: "educator",
     deletedAt: { $exists: false },
   } as any);
 
-  return updatedUser ? toManagedUser(updatedUser) : null;
+  if (!educator) {
+    return null;
+  }
+
+  return approveUserRequest(userId);
 }
 
 export async function rejectEducatorRequest(userId: string) {
@@ -2034,14 +2310,40 @@ export async function getPendingUserRequests() {
 export async function approveUserRequest(userId: string) {
   const collection = await getUsersCollection();
 
+  const existingUser = await collection.findOne({
+    id: userId,
+    deletedAt: { $exists: false },
+  } as any);
+
+  if (!existingUser) {
+    return null;
+  }
+
+  const now = new Date().toISOString();
+
+  const setFields: Record<string, unknown> = {
+    status: "active",
+    verified: true,
+    approvedAt: now,
+    updatedAt: now,
+  };
+
+  if (
+    existingUser.role === "educator" &&
+    !existingUser.facultyCode
+  ) {
+    setFields.facultyCode = await generateFacultyCode(
+      new Date().getFullYear(),
+    );
+  }
+
   const result = await collection.updateOne(
-    { id: userId, deletedAt: { $exists: false } } as any,
     {
-      $set: {
-        status: "active",
-        verified: true,
-        updatedAt: new Date().toISOString(),
-      },
+      id: userId,
+      deletedAt: { $exists: false },
+    } as any,
+    {
+      $set: setFields,
     },
   );
 
@@ -2054,7 +2356,9 @@ export async function approveUserRequest(userId: string) {
     deletedAt: { $exists: false },
   } as any);
 
-  return updatedUser ? toManagedUser(updatedUser) : null;
+  return updatedUser
+    ? toManagedUser(updatedUser)
+    : null;
 }
 
 export async function rejectUserRequest(userId: string) {
@@ -2148,30 +2452,66 @@ export async function createUserRecord(input: {
   profile?: UserProfile;
   assignedFacultyIds?: string[];
 }) {
-  const normalizedEmail = input.email.trim().toLowerCase();
+  const normalizedEmail =
+    input.email.trim().toLowerCase();
+
+  const collection = await getUsersCollection();
+
+  const now = new Date().toISOString();
+
+  const status = input.status ?? "active";
+
+  const facultyCode =
+    input.role === "educator" &&
+    status === "active"
+      ? await generateFacultyCode(
+          new Date().getFullYear(),
+        )
+      : undefined;
 
   const document: UserDocument = {
     id: randomUUID(),
+
+    ...(facultyCode
+      ? {
+          facultyCode,
+          approvedAt: now,
+        }
+      : {}),
+
     name: input.name.trim(),
+
     email: normalizedEmail,
     emailKey: normalizedEmail,
+
     mobile: input.mobile,
-    mobileKey: input.mobile?.replace(/[^\d]/g, "").slice(-10),
+    mobileKey: input.mobile
+      ?.replace(/[^\d]/g, "")
+      .slice(-10),
+
     parentMobile: input.parentMobile,
+
     linkedStudentId: input.linkedStudentId,
-    linkedStudentMobile: input.linkedStudentMobile,
+    linkedStudentMobile:
+      input.linkedStudentMobile,
+
     role: input.role,
     label: getRoleLabel(input.role),
+
     password: input.password,
     program: input.program,
-    status: input.status ?? "active",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+
+    status,
+
+    createdAt: now,
+    updatedAt: now,
+
     profile: input.profile,
-    assignedFacultyIds: input.assignedFacultyIds,
+
+    assignedFacultyIds:
+      input.assignedFacultyIds,
   };
 
-  const collection = await getUsersCollection();
   await collection.insertOne(document);
 
   return toManagedUser(document);
@@ -2191,19 +2531,79 @@ export async function updateUserRecord(input: {
   profile?: Partial<UserProfile> | null;
 }) {
   const collection = await getUsersCollection();
-  const normalizedEmail = input.email.trim().toLowerCase();
+
+  const normalizedEmail = input.email
+    .trim()
+    .toLowerCase();
+
+  /*
+   * Load the existing user first.
+   *
+   * This allows us to preserve the existing account
+   * status and Faculty ID correctly.
+   */
+  const existingUser = await collection.findOne({
+    id: input.id,
+    deletedAt: {
+      $exists: false,
+    },
+  } as any);
+
+  if (!existingUser) {
+    throw new Error(
+      "User could not be found in MongoDB.",
+    );
+  }
+
+  const nextStatus =
+    input.status ??
+    existingUser.status ??
+    "active";
+
+  const now = new Date().toISOString();
 
   const setFields: Record<string, unknown> = {
     name: input.name.trim(),
+
     email: normalizedEmail,
     emailKey: normalizedEmail,
+
     role: input.role,
     label: getRoleLabel(input.role),
+
     program: input.program,
-    status: input.status ?? "active",
-    updatedAt: new Date().toISOString(),
+
+    status: nextStatus,
+
+    updatedAt: now,
   };
 
+  /*
+   * If an account becomes an ACTIVE educator and
+   * does not already have a permanent Faculty ID,
+   * generate one now.
+   *
+   * This covers cases where admin changes an
+   * existing account's role to Faculty.
+   */
+  if (
+    input.role === "educator" &&
+    nextStatus === "active" &&
+    !existingUser.facultyCode
+  ) {
+    setFields.facultyCode =
+      await generateFacultyCode(
+        new Date().getFullYear(),
+      );
+
+    setFields.approvedAt =
+      existingUser.approvedAt ?? now;
+  }
+
+  /*
+   * Only update the password when admin has
+   * actually entered a new one.
+   */
   if (
     typeof input.password === "string" &&
     input.password.trim().length > 0 &&
@@ -2217,37 +2617,68 @@ export async function updateUserRecord(input: {
   }
 
   if (input.assignedFacultyIds !== undefined) {
-    setFields.assignedFacultyIds = input.assignedFacultyIds ?? null;
+    setFields.assignedFacultyIds =
+      input.assignedFacultyIds ?? null;
   }
 
-  if (input.profilePhoto !== undefined) {
-    setFields["profile.profilePhoto"] = input.profilePhoto || null;
-  }
+  /*
+   * Merge profile updates once.
+   *
+   * This avoids updating both "profile" and
+   * "profile.profilePhoto" in the same MongoDB
+   * operation, which can cause a path conflict.
+   */
+  if (
+    input.profile !== undefined ||
+    input.profilePhoto !== undefined
+  ) {
+    const mergedProfile: UserProfile = {
+      ...(existingUser.profile || {}),
+      ...(input.profile || {}),
+    };
 
-  if (input.profile !== undefined) {
-    const existing = await collection.findOne({ id: input.id });
-    if (existing) {
-      const mergedProfile = {
-        ...(existing.profile || {}),
-        ...(input.profile || {}),
-      };
-      setFields.profile =
-        Object.keys(mergedProfile).length > 0 ? mergedProfile : undefined;
-    } else {
-      setFields.profile = input.profile;
+    if (input.profilePhoto !== undefined) {
+      if (input.profilePhoto) {
+        mergedProfile.profilePhoto =
+          input.profilePhoto;
+      } else {
+        delete mergedProfile.profilePhoto;
+      }
     }
+
+    setFields.profile =
+      Object.keys(mergedProfile).length > 0
+        ? mergedProfile
+        : {};
   }
 
-  await collection.updateOne({ id: input.id }, { $set: setFields });
-  const updated = await collection.findOne({ id: input.id });
+  await collection.updateOne(
+    {
+      id: input.id,
+      deletedAt: {
+        $exists: false,
+      },
+    } as any,
+    {
+      $set: setFields,
+    },
+  );
+
+  const updated = await collection.findOne({
+    id: input.id,
+    deletedAt: {
+      $exists: false,
+    },
+  } as any);
 
   if (!updated) {
-    throw new Error("Updated user could not be found in MongoDB.");
+    throw new Error(
+      "Updated user could not be found in MongoDB.",
+    );
   }
 
   return toManagedUser(updated);
 }
-
 export async function assignStudentsToFaculty(
   facultyId: string,
   studentIds: string[],
@@ -4970,7 +5401,7 @@ function getAnalyticsPercent(value: number, total: number) {
 }
 
 function formatAnalyticsCurrency(value: number) {
-  return `₹${Math.round(value).toLocaleString("en-IN")}`;
+  return `â‚¹${Math.round(value).toLocaleString("en-IN")}`;
 }
 
 function buildDashboardAnalytics(input: {
@@ -5250,11 +5681,11 @@ function buildDashboardAnalytics(input: {
     0,
   );
 
-  const attendanceValue = attendanceRate === null ? "—" : `${attendanceRate}%`;
+  const attendanceValue = attendanceRate === null ? "â€”" : `${attendanceRate}%`;
 
-  const assessmentValue = averageScore === null ? "—" : `${averageScore}%`;
+  const assessmentValue = averageScore === null ? "â€”" : `${averageScore}%`;
 
-  const learningValue = completionRate === null ? "—" : `${completionRate}%`;
+  const learningValue = completionRate === null ? "â€”" : `${completionRate}%`;
 
   let metrics: DashboardMetric[];
 
@@ -9659,7 +10090,7 @@ export async function getStaffPayoutAuditLogsByPayout(
   );
 }
 
-// ═══ Fee Transaction Log ═══
+// â•â•â• Fee Transaction Log â•â•â•
 
 export async function appendFeeTransactionLog(
   entry: Omit<FeeTransactionLog, "id" | "createdAt">,
@@ -10511,7 +10942,7 @@ export async function deleteBusinessExpense(
   return result.deletedCount > 0;
 }
 
-// ═══ Action Audit Log ═══
+// â•â•â• Action Audit Log â•â•â•
 
 export async function appendActionLogEntries(
   entries: Record<string, unknown>[],
