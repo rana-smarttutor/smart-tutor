@@ -521,7 +521,7 @@ export function DashboardProfileSettings({
 
             {isEducator && session?.facultyCode && (
               <p className="mt-1 font-mono text-xs font-semibold text-[var(--color-muted)]">
-                Faculty ID: {session.facultyCode}
+                Employee ID: {session.facultyCode}
               </p>
             )}
             <span
@@ -590,10 +590,10 @@ export function DashboardProfileSettings({
                   Professional Details
                 </h3>
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-5">
-                  <InfoRow
-                    label="Faculty ID"
-                    value={session?.facultyCode ?? "Not assigned"}
-                  />
+<InfoRow
+  label="Employee ID"
+  value={session?.facultyCode ?? "Not assigned"}
+/>
 
                   <InfoRow label="Qualification" value={qualification} />
                   <InfoRow

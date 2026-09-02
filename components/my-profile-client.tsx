@@ -518,7 +518,7 @@ export function MyProfileClient({ session }: Props) {
               <p className="mt-1 text-sm text-slate-500">{email}</p>
               {session.role === "educator" && session.facultyCode && (
                 <p className="mt-1 font-mono text-xs font-semibold text-slate-500">
-                  Faculty ID: {session.facultyCode}
+                  Employee ID: {session.facultyCode}
                 </p>
               )}
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
@@ -546,7 +546,7 @@ export function MyProfileClient({ session }: Props) {
               <div className="space-y-0">
                 {session.role === "educator" && session.facultyCode && (
                   <ProfileField
-                    label="Faculty ID"
+                    label="Employee ID"
                     value={session.facultyCode}
                   />
                 )}
@@ -918,7 +918,7 @@ export function MyProfileClient({ session }: Props) {
                       </div>
                       <div>
                         <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-500">
-                          Faculty ID
+                          Employee ID
                         </label>
 
                         <input
