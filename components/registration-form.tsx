@@ -1615,8 +1615,7 @@ export function RegistrationForm() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                      Latest Completed Class / Qualification{" "}
-                      <span className="text-red-500">*</span>
+                      Latest Completed Class / Qualification
                     </label>
 
                     <select
@@ -1693,7 +1692,6 @@ export function RegistrationForm() {
                     onChange={(value) =>
                       updateField("latestAcademicScore", value)
                     }
-                    required
                     placeholder="e.g. 85%, 8.5 CGPA, First Class"
                   />
                 </div>
@@ -1994,7 +1992,8 @@ export function RegistrationForm() {
             <span className="text-xs leading-5 text-[var(--color-muted)]">
               I acknowledge and consent to the collection, storage, and
               processing of my personal data and uploaded documents (including
-              resume/CV and photo ID images) by Smart IQ Institute as described in the{" "}
+              resume/CV and photo ID images) by Smart IQ Institute as described
+              in the{" "}
               <a
                 href="/terms"
                 target="_blank"
@@ -2021,8 +2020,8 @@ export function RegistrationForm() {
               >
                 EULA
               </a>
-              . I understand that Smart IQ Institute is not liable for any loss or
-              misuse of the documents I submit.{" "}
+              . I understand that Smart IQ Institute is not liable for any loss
+              or misuse of the documents I submit.{" "}
               <span className="text-red-500 font-bold">*</span>
             </span>
           </label>
