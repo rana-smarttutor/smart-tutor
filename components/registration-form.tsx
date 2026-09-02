@@ -626,7 +626,6 @@ export function RegistrationForm() {
 
   const [referralEducatorName, setReferralEducatorName] = useState("");
 
-  const [courseSearch, setCourseSearch] = useState("");
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -683,19 +682,9 @@ export function RegistrationForm() {
     };
   }, []);
 
-  const filteredCourses = useMemo(() => {
-    if (!courseSearch.trim()) {
-      return COURSE_SECTIONS;
-    }
-
-    const query = courseSearch.toLowerCase();
-
-    return COURSE_SECTIONS.filter(
-      (course) =>
-        course.key.toLowerCase().includes(query) ||
-        course.label.toLowerCase().includes(query),
-    );
-  }, [courseSearch]);
+const filteredCourses = useMemo(() => {
+  return COURSE_SECTIONS;
+}, []);
 
   const groupedCourses = useMemo(() => {
     return filteredCourses.reduce<Record<CourseGroup, CourseOption[]>>(
@@ -771,16 +760,15 @@ export function RegistrationForm() {
       return false;
     }
   }
-  function selectCourse(course: CourseOption) {
-    setForm((previous) => ({
-      ...previous,
-      courseWanted: course.key,
-      courseWantedTitle: course.label,
-    }));
+function selectCourse(course: CourseOption) {
+  setForm((previous) => ({
+    ...previous,
+    courseWanted: course.key,
+    courseWantedTitle: course.label,
+  }));
 
-    setCourseSearch(course.label);
-    setShowCourseDropdown(false);
-  }
+  setShowCourseDropdown(false);
+}
 
   async function handlePhotoUpload(file: File) {
     setUploadingPhoto(true);
@@ -1454,23 +1442,28 @@ export function RegistrationForm() {
                     <span className="text-red-500">*</span>
                   </label>
 
-                  <input
-                    type="text"
-                    value={courseSearch}
-                    onChange={(event) => {
-                      setCourseSearch(event.target.value);
-                      setShowCourseDropdown(true);
+<button
+  type="button"
+  onClick={() => setShowCourseDropdown((previous) => !previous)}
+  className="flex w-full items-center justify-between rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-left text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+>
+  <span
+    className={
+      form.courseWantedTitle ? "text-slate-900" : "text-slate-300"
+    }
+  >
+    {form.courseWantedTitle ||
+      "Select class, board, government exam, competitive exam, or skill"}
+  </span>
 
-                      setForm((previous) => ({
-                        ...previous,
-                        courseWanted: "",
-                        courseWantedTitle: "",
-                      }));
-                    }}
-                    onFocus={() => setShowCourseDropdown(true)}
-                    className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                    placeholder="Search class, board, government exam, competitive exam, or skill..."
-                  />
+  <span
+    className={`ml-3 text-slate-400 transition-transform ${
+      showCourseDropdown ? "rotate-180" : ""
+    }`}
+  >
+    ▼
+  </span>
+</button>
 
                   {showCourseDropdown && filteredCourses.length > 0 && (
                     <div className="absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
@@ -1618,14 +1611,13 @@ export function RegistrationForm() {
                       Latest Completed Class / Qualification
                     </label>
 
-                    <select
-                      required
-                      value={form.latestQualification}
-                      onChange={(event) =>
-                        updateField("latestQualification", event.target.value)
-                      }
-                      className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
-                    >
+<select
+  value={form.latestQualification}
+  onChange={(event) =>
+    updateField("latestQualification", event.target.value)
+  }
+  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+>
                       <option value="">Select qualification</option>
 
                       {form.courseWanted.startsWith("Class 6 |") && (
