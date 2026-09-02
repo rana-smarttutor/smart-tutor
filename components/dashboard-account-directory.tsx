@@ -133,12 +133,13 @@ export function DashboardAccountDirectory({
     let list = users.filter((u) => u.role === "educator");
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      list = list.filter(
-        (u) =>
-          u.name.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q) ||
-          u.program.toLowerCase().includes(q),
-      );
+list = list.filter(
+  (u) =>
+    u.name.toLowerCase().includes(q) ||
+    u.email.toLowerCase().includes(q) ||
+    u.program.toLowerCase().includes(q) ||
+    u.facultyCode?.toLowerCase().includes(q),
+);
     }
     return list;
   }, [users, searchQuery]);
@@ -382,11 +383,11 @@ export function DashboardAccountDirectory({
                     <p className="text-base font-bold text-[var(--color-heading)] truncate">
                       {user.name}
                     </p>
-                    <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">
-                      {user.role === "educator"
-                        ? `Faculty ID: ${user.facultyCode ?? "Not assigned"}`
-                        : `ID: ${user.id.slice(0, 8).toUpperCase()}`}
-                    </p>
+  <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">
+  {user.role === "educator"
+    ? `Employee ID: ${user.facultyCode ?? "Not assigned"}`
+    : `ID: ${user.id.slice(0, 8).toUpperCase()}`}
+</p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <span
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
@@ -1780,7 +1781,7 @@ export function DashboardAccountDirectory({
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search faculty by name, email, program…"
+                  placeholder="Search faculty by name, email, Employee ID…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"

@@ -2803,10 +2803,12 @@ function EducatorOverview({
             <p className="text-xs font-bold uppercase tracking-[0.08em] opacity-60">
               Teacher Portal
             </p>
+
             <h1 className="mt-1 text-2xl font-bold sm:text-3xl">
               Welcome, {educatorFirstName}
               {educatorTitle ? ` ${educatorTitle}` : ""}!
             </h1>
+
             <p className="mt-0.5 text-sm font-semibold text-white/75">
               {educatorSubjects.length > 0
                 ? `Teaches: ${educatorSubjects.join(" • ")}`
@@ -2822,6 +2824,14 @@ function EducatorOverview({
             </div>
           </div>
         </div>
+
+        {session?.facultyCode && (
+          <div className="absolute bottom-5 right-6 z-20">
+            <span className="inline-flex rounded-full border border-white/25 bg-white/15 px-3 py-1.5 font-mono text-[11px] font-bold text-white/90 backdrop-blur-sm">
+              Employee ID: {session.facultyCode}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── KPI Row ── */}
