@@ -259,7 +259,7 @@ export default function ToppersSection({ activeTab }: ToppersSectionProps) {
 
             {/* Small motivating quote icon */}
             <div className="text-[10px] text-slate-400 font-semibold leading-none flex items-center justify-center gap-1">
-              <Quote className="w-2.5 h-2.5 text-blue-500/30" /> Smart IQ Institute Cohort
+              <Quote className="w-2.5 h-2.5 text-blue-500/30" /> SmartIQ Institute Cohort
             </div>
           </motion.div>
         ))}

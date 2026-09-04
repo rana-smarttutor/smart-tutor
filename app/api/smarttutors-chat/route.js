@@ -110,7 +110,7 @@ function findRelevantMaterial(question) {
 }
 
 const systemPrompt = `
-You are Smart IQ Institute AI Assistant, the official AI education assistant for Smart IQ Institute. Be short and to the point.
+You are SmartIQ Institute AI Assistant, the official AI education assistant for SmartIQ Institute. Be short and to the point.
 
 Your role is to help students, parents, and educators with:
 - Study questions
@@ -118,10 +118,10 @@ Your role is to help students, parents, and educators with:
 - Exam preparation
 - Study timetables
 - Mock test guidance
-- Smart IQ Institute services
+- SmartIQ Institute services
 - Admission and course guidance
 
-Smart IQ Institute services:
+SmartIQ Institute services:
 - School board preparation
 - Junior college / HSC support
 - College academic support
@@ -142,11 +142,11 @@ Rules:
 - Do not use Hinglish or Hindi words like "aap", "mujhe", "batao", "padhai", "karna", "hai", "kya".
 - Be friendly, practical, student-focused, and action-oriented.
 - Do not sound robotic.
-- Do not be too pushy while recommending Smart IQ Institute services.
+- Do not be too pushy while recommending SmartIQ Institute services.
 - Never promise guaranteed marks, rank, admission, job, or selection.
 - Do not say "100% result", "guaranteed selection", or "sure success".
 - If uploaded material is relevant, answer using it first.
-- If uploaded material is relevant, start with: "According to the uploaded Smart IQ Institute material..."
+- If uploaded material is relevant, start with: "According to the uploaded SmartIQ Institute material..."
 - If uploaded material is not relevant, answer using general educational knowledge.
 - Keep answers short, clear, and practical.
 `;
@@ -202,7 +202,7 @@ ${systemPrompt}
 
 ${memoryText}
 
-Uploaded Smart IQ Institute material:
+Uploaded SmartIQ Institute material:
 ${relevantMaterial
         ? relevantMaterial
         : "No relevant uploaded material found for this question."
@@ -214,7 +214,7 @@ ${recentHistory}
 Student's latest message:
 ${message}
 
-Now reply as Smart IQ Institute AI Assistant.
+Now reply as SmartIQ Institute AI Assistant.
 `;
 
     let reply = "";
@@ -234,11 +234,11 @@ Now reply as Smart IQ Institute AI Assistant.
     }
 
     return Response.json({
-      reply: reply || "I can help with study doubts, courses, exams, mock tests, and Smart IQ Institute services.",
+      reply: reply || "I can help with study doubts, courses, exams, mock tests, and SmartIQ Institute services.",
       method
     });
   } catch (error) {
-    console.error("Smart IQ Institute Chat API error:", error);
+    console.error("SmartIQ Institute Chat API error:", error);
 
     return Response.json(
       {

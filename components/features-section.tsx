@@ -105,7 +105,7 @@ export function FeaturesSection() {
             className="text-[11px] sm:text-[13px] font-bold uppercase tracking-[0.1em] py-2 px-6 rounded-full mb-7 inline-block shadow-sm"
             style={{ backgroundColor: "#1A56DB", color: "#FFFFFF" }}
           >
-            Why Choose Smart IQ Institute
+            Why Choose SmartIQ Institute
           </div>
           <h2
             className="text-[36px] sm:text-[44px] md:text-[52px] font-extrabold tracking-tight mb-6 leading-tight"

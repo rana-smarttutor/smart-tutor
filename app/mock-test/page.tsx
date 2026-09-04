@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Mock Test Arena | Smart IQ Institute",
+  title: "Mock Test Arena | SmartIQ Institute",
   description: "Test your knowledge with our interactive mock tests and quiz arena. Prepare for school, college, and competitive exams with real-time performance analytics.",
   alternates: {
     canonical: "https://smarttutors.co.in/mock-test",

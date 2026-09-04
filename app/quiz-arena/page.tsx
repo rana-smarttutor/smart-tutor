@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import QuizArenaClient from '@/components/quiz-arena-client';
 
 export const metadata: Metadata = {
-  title: "Quiz Arena | Smart IQ Institute",
+  title: "Quiz Arena | SmartIQ Institute",
   description: "Challenge yourself in our Quiz Arena. Competitive tests and practice sessions to sharpen your skills.",
   alternates: {
     canonical: "https://smarttutors.co.in/quiz-arena",

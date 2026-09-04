@@ -251,7 +251,7 @@ function GenericOverview({
     month: "long",
     year: "numeric",
   });
-  const instituteName = dashboard.heroTitle || "Smart IQ Institute";
+  const instituteName = dashboard.heroTitle || "SmartIQ Institute";
   const totalStudents =
     dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
   const rawRevenue = dashboard.analytics?.finance?.collected ?? 0;

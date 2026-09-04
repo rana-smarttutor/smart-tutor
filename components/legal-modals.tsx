@@ -58,13 +58,13 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">1. Agreement to Terms</h3>
                     <p>
-                      By accessing and using the Smart IQ Institute workspace, you agree to be bound by these Terms and Conditions. If you do not agree, you must immediately cease all usage of the platform.
+                      By accessing and using the SmartIQ Institute workspace, you agree to be bound by these Terms and Conditions. If you do not agree, you must immediately cease all usage of the platform.
                     </p>
                   </section>
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">2. Nature of Service</h3>
                     <p>
-                      Smart IQ Institute is an educational assistance platform providing coaching, resources, and administrative tools. While we strive for accuracy, features and educational results may differ between users based on effort and prior knowledge.
+                      SmartIQ Institute is an educational assistance platform providing coaching, resources, and administrative tools. While we strive for accuracy, features and educational results may differ between users based on effort and prior knowledge.
                     </p>
                   </section>
                   <section>
@@ -82,13 +82,13 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Identity Documents</h3>
                     <p>
-                      Faculty accounts are required to submit identity verification documents (resume/CV and government-issued photo ID front and back images). By submitting these documents, you represent they are genuine and belong to you. Smart IQ Institute is not liable for any loss, theft, misuse, or unauthorised access to uploaded identity documents or resumes.
+                      Faculty accounts are required to submit identity verification documents (resume/CV and government-issued photo ID front and back images). By submitting these documents, you represent they are genuine and belong to you. SmartIQ Institute is not liable for any loss, theft, misuse, or unauthorised access to uploaded identity documents or resumes.
                     </p>
                   </section>
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">6. Limitation of Liability</h3>
                     <p>
-                      Smart IQ Institute and its directors shall not be liable for any academic failures, data loss, indirect damages, or loss of identity documents resulting from the use or inability to use the platform. All materials are provided "as-is" without express warranties.
+                      SmartIQ Institute and its directors shall not be liable for any academic failures, data loss, indirect damages, or loss of identity documents resulting from the use or inability to use the platform. All materials are provided "as-is" without express warranties.
                     </p>
                   </section>
                 </div>
@@ -109,13 +109,13 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">3. Third-Party Integrations</h3>
                     <p>
-                      We utilize secure third-party services like MongoDB Atlas for data storage and Vercel Blob for file hosting. Usage of these features implies acceptance of their respective privacy standards. Smart IQ Institute is not liable for any data breaches or security incidents at these third-party providers.
+                      We utilize secure third-party services like MongoDB Atlas for data storage and Vercel Blob for file hosting. Usage of these features implies acceptance of their respective privacy standards. SmartIQ Institute is not liable for any data breaches or security incidents at these third-party providers.
                     </p>
                   </section>
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">4. Identity Document Security</h3>
                     <p>
-                      While we implement reasonable security measures, Smart IQ Institute does not guarantee absolute security of uploaded identity documents. You acknowledge that uploading identity documents is done at your own risk and Smart IQ Institute is not liable for any loss, theft, misuse, or unauthorised disclosure of these documents.
+                      While we implement reasonable security measures, SmartIQ Institute does not guarantee absolute security of uploaded identity documents. You acknowledge that uploading identity documents is done at your own risk and SmartIQ Institute is not liable for any loss, theft, misuse, or unauthorised disclosure of these documents.
                     </p>
                   </section>
                   <section>
@@ -136,7 +136,7 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">1. License Grant</h3>
                     <p>
-                      Smart IQ Institute grants you a limited, non-exclusive, non-transferable, revocable license to use the platform for personal, non-commercial educational purposes within the scope of your enrolment or role at the institute.
+                      SmartIQ Institute grants you a limited, non-exclusive, non-transferable, revocable license to use the platform for personal, non-commercial educational purposes within the scope of your enrolment or role at the institute.
                     </p>
                   </section>
                   <section>
@@ -148,19 +148,19 @@ export function LegalModals() {
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">3. Uploaded Documents</h3>
                     <p>
-                      By uploading identity documents (photo ID, resume/CV), you grant Smart IQ Institute a license to store and process such documents for verification purposes. You are solely responsible for the authenticity of uploaded documents. Smart IQ Institute is not liable for any loss, theft, or misuse of your uploaded identity documents or resumes.
+                      By uploading identity documents (photo ID, resume/CV), you grant SmartIQ Institute a license to store and process such documents for verification purposes. You are solely responsible for the authenticity of uploaded documents. SmartIQ Institute is not liable for any loss, theft, or misuse of your uploaded identity documents or resumes.
                     </p>
                   </section>
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">4. Disclaimer of Warranties</h3>
                     <p>
-                      The platform is provided "as is" without warranties of any kind. Smart IQ Institute does not warrant uninterrupted, secure, or error-free access. You assume all risk for any damage to your device or data.
+                      The platform is provided "as is" without warranties of any kind. SmartIQ Institute does not warrant uninterrupted, secure, or error-free access. You assume all risk for any damage to your device or data.
                     </p>
                   </section>
                   <section>
                     <h3 className="text-base font-black text-[var(--color-heading)] mb-2">5. Limitation of Liability</h3>
                     <p>
-                      Smart IQ Institute shall not be liable for any indirect, incidental, consequential, or punitive damages, including loss of data, identity documents, profits, or business opportunity, or damages arising from third-party service failures, force majeure events, or user-side security compromises.
+                      SmartIQ Institute shall not be liable for any indirect, incidental, consequential, or punitive damages, including loss of data, identity documents, profits, or business opportunity, or damages arising from third-party service failures, force majeure events, or user-side security compromises.
                     </p>
                   </section>
                 </div>

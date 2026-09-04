@@ -8,7 +8,7 @@ import { getSessionUser } from "@/lib/auth";
 export const metadata: Metadata = {
   title: "Create Account",
   description:
-    "Sign up for Smart IQ Institute to access personalised learning, expert educators, mock tests, performance tracking, and more. Create your student or faculty account today.",
+    "Sign up for SmartIQ Institute to access personalised learning, expert educators, mock tests, performance tracking, and more. Create your student or faculty account today.",
   alternates: {
     canonical: "https://smarttutors.co.in/signup",
   },
@@ -52,7 +52,7 @@ export default async function SignupPage() {
                 href="/"
                 className="text-3xl font-semibold tracking-[-0.06em] text-[var(--color-heading)]"
               >
-                Smart IQ Institute
+                SmartIQ Institute
               </Link>
 
               <Link
@@ -65,7 +65,7 @@ export default async function SignupPage() {
 
             <div className="mt-10 space-y-4">
               <p className="text-sm font-semibold tracking-[0.04em] text-[var(--color-accent)]">
-                Join Smart IQ Institute
+                Join SmartIQ Institute
               </p>
 
               <h1 className="text-4xl font-semibold leading-[1.08] tracking-[-0.025em] text-[var(--color-heading)] sm:text-5xl">
@@ -98,7 +98,7 @@ export default async function SignupPage() {
 
                 <div className="rounded-3xl border border-teal-100/50 bg-teal-50/40 p-5 backdrop-blur-sm">
                   <h3 className="text-base font-black leading-tight text-teal-800">
-                    Why join Smart IQ Institute?
+                    Why join SmartIQ Institute?
                   </h3>
 
                   <ul className="mt-2 space-y-1.5 text-sm text-slate-600">

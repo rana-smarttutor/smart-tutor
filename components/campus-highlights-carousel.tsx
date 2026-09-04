@@ -7,7 +7,7 @@ import { generatedPlacedStudents } from "@/lib/placed-students-data";
 
 const HIGHLIGHTS = [
   {
-    name: "Smart IQ Institute",
+    name: "SmartIQ Institute",
     result: "",
     exam: "",
     image: "/Smart-institue-logo.jpeg",
@@ -133,7 +133,7 @@ export function CampusHighlightsCarousel() {
               <div className="flex min-h-[64px] flex-col items-center justify-center gap-1">
                 <h3
                   className={`${
-                    highlight.name === "Smart IQ Institute"
+                    highlight.name === "SmartIQ Institute"
                       ? "text-3xl sm:text-4xl"
                       : "text-2xl sm:text-4xl"
                   } font-black leading-tight tracking-tight text-slate-900`}

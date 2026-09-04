@@ -363,7 +363,7 @@ const contactMethods: ContactMethod[] = [
     label: "Instagram",
     value: "@smart_tutor_no1",
     href: INSTAGRAM_LINK,
-    description: "Official Smart IQ Institute announcements and updates.",
+    description: "Official SmartIQ Institute announcements and updates.",
     color: "#E4405F",
     icon: "Instagram",
   },
@@ -380,7 +380,7 @@ const contactMethods: ContactMethod[] = [
     value: "Prof. Ravi Rana",
     href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
     description:
-      "Leadership contact for SmartIQ Academy, Smart IQ Institute, and Prime Digital School.",
+      "Leadership contact for SmartIQ Academy, SmartIQ Institute, and Prime Digital School.",
     color: "#1e293b",
     icon: "User",
   },
@@ -549,7 +549,7 @@ const mockQuizQuestions: QuizQuestion[] = [
 export function getPublicInstituteData() {
   return {
     profile: {
-      name: "Smart IQ Institute",
+      name: "SmartIQ Institute",
       city: "Navi Mumbai",
       address:
         "Vashi Branch: Sector 17, Vashi, Navi Mumbai | Panvel Branch:  Sector 5, New Panvel East, Panvel",
@@ -573,7 +573,7 @@ export function getPublicInstituteData() {
       directorTitle: "Director & Founder",
       affiliatedInstitutes: [
         "SmartIQ Academy",
-        "Smart IQ Institute",
+        "SmartIQ Institute",
         "Prime Digital School",
       ],
     },
@@ -586,7 +586,7 @@ export function getPublicInstituteData() {
       "Small-batch mentoring, disciplined testing, and parent communication stay central to the learning journey.",
       "Board performance, junior college support, entrance readiness, government exams, and spoken English live under one reliable academy roof.",
       "While we primarily serve the Vashi, Navi Mumbai, and Thane regions, we are actively preparing to bring our specialized mentoring to more cities across India soon.",
-      "Vashi families choose Smart IQ Institute for consistency, attention, and visible academic growth.",
+      "Vashi families choose SmartIQ Institute for consistency, attention, and visible academic growth.",
     ],
     metrics: [
       { label: "Success Rate", value: "94%" },
@@ -1105,7 +1105,7 @@ export function createUserDraft(input: {
 
   return {
     id: `user-draft-${Date.now()}`,
-    name: input.name?.trim() || "New Smart IQ Institute User",
+    name: input.name?.trim() || "New SmartIQ Institute User",
     email: input.email?.trim().toLowerCase() || "new-user@smarttutors.co.in",
     role,
     label:

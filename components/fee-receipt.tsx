@@ -36,14 +36,14 @@ export default function FeeReceipt() {
               <div className="flex-1 flex items-center justify-center px-6 py-4 border-r border-slate-300">
                 <img
                   src="/stpl.jpeg"
-                  alt="Smart IQ Institute"
+                  alt="SmartIQ Institute"
                   className="w-full h-auto"
                 />
               </div>
               {/* Address Section */}
               <div className="flex flex-col justify-center pl-4 text-right min-w-[220px]">
                 <div className="text-[13px] font-bold text-[#00072d]">
-                  Smart IQ Institute
+                  SmartIQ Institute
                 </div>
                 <div className="text-[11px] leading-relaxed text-gray-600 mt-1">
                   Plot No. 2, Second Floor, Vashi Plaza,
@@ -296,7 +296,7 @@ export default function FeeReceipt() {
               <p className="font-bold text-gray-800">FEES ARE NOT REFUNDABLE UNDER ANY CIRCUMSTANCES.</p>
             </div>
             <div className="flex flex-col items-end gap-0.5">
-              <p>Thank you for choosing Smart IQ Institute Pvt. Ltd.</p>
+              <p>Thank you for choosing SmartIQ Institute Pvt. Ltd.</p>
               <p>We appreciate your trust.</p>
             </div>
           </div>

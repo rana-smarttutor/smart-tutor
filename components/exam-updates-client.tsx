@@ -371,7 +371,7 @@ export function ExamUpdatesClient({
                 </h3>
 
                 <p className="mt-1 max-w-3xl text-sm font-medium leading-6 text-slate-600">
-                  Smart IQ Institute organises exam information for
+                  SmartIQ Institute organises exam information for
                   convenience. Applications, notifications, admit
                   cards, answer keys and results open directly on
                   the respective official authority website.

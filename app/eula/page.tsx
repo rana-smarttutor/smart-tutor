@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "End User License Agreement | Smart IQ Institute",
+  title: "End User License Agreement | SmartIQ Institute",
   description:
-    "Smart IQ Institute end user license agreement — terms governing the use of our software platform, including data collection and logging.",
+    "SmartIQ Institute end user license agreement — terms governing the use of our software platform, including data collection and logging.",
   alternates: {
     canonical: "https://smarttutors.co.in/eula",
   },
@@ -14,10 +14,10 @@ const sections = [
     title: "1. License Grant",
     content: (
       <p>
-        Smart IQ Institute grants you a limited, non-exclusive, non-transferable,
+        SmartIQ Institute grants you a limited, non-exclusive, non-transferable,
         revocable license to use our educational platform for personal,
         non-commercial purposes strictly within the scope of your enrolment at
-        Smart IQ Institute institute or as an authorised faculty, staff, or parent
+        SmartIQ Institute institute or as an authorised faculty, staff, or parent
         associated with the institute. This license does not grant you any
         ownership rights to the platform or its content.
       </p>
@@ -60,7 +60,7 @@ const sections = [
       <p>
         All content, features, and functionality of the platform — including
         software, design, text, graphics, logos, course materials, test banks,
-        and video content — are owned by Smart IQ Institute or its licensors and are
+        and video content — are owned by SmartIQ Institute or its licensors and are
         protected by applicable Indian and international intellectual property
         laws. Unauthorised use of any proprietary material may result in legal
         action.
@@ -73,7 +73,7 @@ const sections = [
       <div className="space-y-2">
         <p>
           By submitting content (including test answers, feedback, messages,
-          profile information, and uploaded files), you grant Smart IQ Institute a
+          profile information, and uploaded files), you grant SmartIQ Institute a
           non-exclusive, royalty-free, worldwide license to use, store,
           reproduce, modify, and display such content for educational and
           operational purposes within the platform.
@@ -81,11 +81,11 @@ const sections = [
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
           <p className="font-bold">User Responsibility:</p>
           <p className="mt-1">
-            You are solely responsible for the content you submit. Smart IQ Institute
+            You are solely responsible for the content you submit. SmartIQ Institute
             does not pre-screen user-generated content and is{" "}
             <strong>not liable</strong> for any content that violates
             applicable law, infringes third-party rights, or contains
-            defamatory, obscene, or harmful material. Smart IQ Institute reserves
+            defamatory, obscene, or harmful material. SmartIQ Institute reserves
             the right to remove any content at its sole discretion without
             prior notice.
           </p>
@@ -99,10 +99,10 @@ const sections = [
           </p>
           <ul className="mt-2 ml-6 list-disc space-y-1">
             <li>You are solely responsible for the authenticity and legality of all uploaded documents</li>
-            <li>Smart IQ Institute is <strong>not liable</strong> for any loss, theft, misuse, unauthorised access, or disclosure of your uploaded identity documents or resumes</li>
-            <li>Smart IQ Institute makes no representation or warranty regarding the security of uploaded documents and does not guarantee protection against all possible threats</li>
+            <li>SmartIQ Institute is <strong>not liable</strong> for any loss, theft, misuse, unauthorised access, or disclosure of your uploaded identity documents or resumes</li>
+            <li>SmartIQ Institute makes no representation or warranty regarding the security of uploaded documents and does not guarantee protection against all possible threats</li>
             <li>You upload documents entirely at your own risk and accept full responsibility for any consequences arising from their submission</li>
-            <li>Smart IQ Institute shall not be liable for any identity theft, fraud, or reputational damage resulting from a data breach involving uploaded documents</li>
+            <li>SmartIQ Institute shall not be liable for any identity theft, fraud, or reputational damage resulting from a data breach involving uploaded documents</li>
           </ul>
         </div>
       </div>
@@ -146,7 +146,7 @@ const sections = [
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-900">
           <p className="font-bold">No Guarantee of Availability:</p>
           <p className="mt-1">
-            Smart IQ Institute does not warrant that: (a) the platform will meet your
+            SmartIQ Institute does not warrant that: (a) the platform will meet your
             specific requirements; (b) access will be uninterrupted, timely,
             secure, or error-free; (c) defects will be corrected; (d) data
             will not be lost or corrupted; or (e) the platform is free of
@@ -163,7 +163,7 @@ const sections = [
     content: (
       <div className="space-y-2">
         <p>
-          To the maximum extent permitted by applicable law, Smart IQ Institute, its
+          To the maximum extent permitted by applicable law, SmartIQ Institute, its
           operators, directors, employees, affiliates, agents, and licensors
           shall <strong>not be liable</strong> for any:
         </p>
@@ -215,14 +215,14 @@ const sections = [
       <div className="space-y-2">
         <p>
           This license terminates automatically without notice if you violate
-          any of its terms. Smart IQ Institute reserves the right to suspend or
+          any of its terms. SmartIQ Institute reserves the right to suspend or
           terminate your access to the platform at any time, with or without
           cause, and without prior notice.
         </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900">
           <p className="font-bold">Upon Termination:</p>
           <p className="mt-1">
-            Your license to use the platform ceases immediately. Smart IQ Institute
+            Your license to use the platform ceases immediately. SmartIQ Institute
             may, at its sole discretion, delete or retain your data as outlined
             in the Privacy Policy. Sections relating to intellectual property,
             limitation of liability, disclaimer of warranties, and governing
@@ -240,7 +240,7 @@ const sections = [
         licensed, not sold, to you. The terms of this EULA apply equally to
         the mobile app. App store providers (such as Google Play or Apple App
         Store) have no responsibility for the app, its content, or its
-        maintenance. You acknowledge that Smart IQ Institute may remotely disable
+        maintenance. You acknowledge that SmartIQ Institute may remotely disable
         or update the app at any time without notice.
       </p>
     ),
@@ -259,7 +259,7 @@ const sections = [
           the dispute through informal negotiation for a period of 30 days.
           If the dispute cannot be resolved, it shall be referred to
           arbitration in accordance with the Arbitration and Conciliation Act,
-          1996, by a sole arbitrator appointed by Smart IQ Institute. The arbitration
+          1996, by a sole arbitrator appointed by SmartIQ Institute. The arbitration
           shall be conducted in English in Navi Mumbai.
         </p>
       </div>

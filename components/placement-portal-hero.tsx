@@ -75,7 +75,7 @@ export function PlacementPortalHero() {
 
                 <h1 className="mt-4 text-3xl font-black leading-[1.08] tracking-tight text-slate-950 sm:text-[38px]">
                   Hire Talent from{" "}
-                  <span className="text-blue-600">Smart IQ Institute</span>
+                  <span className="text-blue-600">SmartIQ Institute</span>
                 </h1>
 
                 <p className="mt-4 max-w-md text-sm font-medium leading-6 text-slate-600">
@@ -105,7 +105,7 @@ export function PlacementPortalHero() {
               <div className="flex items-center justify-center">
                 <Image
                   src="/hero-company.png"
-                  alt="Smart IQ Institute hiring portal"
+                  alt="SmartIQ Institute hiring portal"
                   width={310}
                   height={310}
                   priority
@@ -172,7 +172,7 @@ export function PlacementPortalHero() {
               <div className="flex items-center justify-center">
                 <Image
                   src="/hero-student.png"
-                  alt="Smart IQ Institute student job portal"
+                  alt="SmartIQ Institute student job portal"
                   width={310}
                   height={310}
                   priority

@@ -206,7 +206,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
               >
                 <Image
                   src="/Smart-institue-logo.jpeg"
-                  alt="Smart IQ Institute Logo"
+                  alt="SmartIQ Institute Logo"
                   width={300}
                   height={80}
                   className="h-10 w-auto object-contain sm:h-11 lg:h-16"
