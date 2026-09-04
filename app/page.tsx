@@ -310,7 +310,7 @@ export default async function Home() {
           className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24"
           delayMs={90}
         >
-          <div className="surface graph-paper rounded-[1.75rem] p-5 transition-all hover:shadow-xl sm:p-6">
+          <div className="surface graph-paper rounded-[1.75rem] p-5 sm:p-6 hover:shadow-xl transition-all">
             <div className="mb-5">
               <p className="section-label">Campus Highlights</p>
 
@@ -319,7 +319,16 @@ export default async function Home() {
               </h2>
             </div>
 
-            <CampusHighlightsCarousel />
+            <div className="flex items-center justify-center py-8">
+              <Image
+                src="/Smart-institue-logo.jpeg"
+                alt="SmartIQ Institute"
+                width={420}
+                height={420}
+                className="h-auto w-full max-w-[320px] object-contain"
+                priority
+              />
+            </div>
           </div>
 
           <div className="relative h-[520px] w-full overflow-hidden rounded-[2rem]">
