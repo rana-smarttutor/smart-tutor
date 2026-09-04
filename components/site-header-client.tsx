@@ -204,7 +204,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
                 className="flex flex-shrink-0 items-center"
               >
                 <Image
-                  src="/SIQN black.jpeg"
+                  src="/smartiqlogo.png"
                   alt="SmartIQ Institute Logo"
                   width={400}
                   height={100}
