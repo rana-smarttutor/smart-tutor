@@ -123,7 +123,6 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
     setIsMobileMenuOpen(false);
   }
 
-
   const userRole = String((session as any)?.role || "").toLowerCase();
 
   const canSeeStudentPerformance =
@@ -198,18 +197,18 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
           </div>
 
           <nav className="section-shell relative z-10">
-            <div className="flex h-20 items-center justify-between gap-3 ">
+            <div className="flex h-24 items-center justify-between gap-3">
               <Link
                 href="/"
                 onClick={closeMenu}
                 className="flex flex-shrink-0 items-center"
               >
                 <Image
-                  src="/Smart-institue-logo.jpeg"
+                  src="/SIQN black.jpeg"
                   alt="SmartIQ Institute Logo"
-                  width={300}
-                  height={80}
-                  className="h-10 w-auto object-contain sm:h-11 lg:h-16"
+                  width={400}
+                  height={100}
+                  className="h-auto w-[230px] object-contain sm:w-[280px] lg:w-[370px]"
                   priority
                 />
               </Link>
@@ -359,7 +358,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
         </div>
       </header>
 
-      <div aria-hidden="true" className="h-20" />
+      <div aria-hidden="true" className="h-24" />
     </>
   );
 }

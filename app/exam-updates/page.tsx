@@ -21,7 +21,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Exam Updates | SmartIQ Institute",
   description:
-    "Latest official SSC, UPSC, NTA, banking, admit card, answer key, application and result updates.",
+    "Latest official Board Exam, Government Exam and Competitive Exam notifications, applications, timetables, admit cards, answer keys and results.",
   alternates: {
     canonical: "https://smartiqinstitute.in/exam-updates",
   },
@@ -74,9 +74,9 @@ export default async function ExamUpdatesPage() {
               </h1>
 
               <p className="mt-6 max-w-2xl text-base font-medium leading-7 text-blue-100/75 sm:text-lg">
-                Notifications, applications, admit cards, results and
-                answer keys from official examination authorities —
-                organised for students in one simple dashboard.
+                Stay updated with Board Exams, Government Exams and
+                Other Competitive Exams — including official notifications,
+                applications, timetables, admit cards, answer keys and results.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -115,7 +115,7 @@ export default async function ExamUpdatesPage() {
                 </div>
 
                 <div className="mt-5 space-y-3">
-                  {OFFICIAL_EXAM_SOURCES.map((source) => (
+                  {OFFICIAL_EXAM_SOURCES.slice(0, 5).map((source) => (
                     <div
                       key={source.key}
                       className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/10 px-4 py-3"

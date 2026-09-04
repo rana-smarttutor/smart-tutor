@@ -11,12 +11,16 @@ export type ExamUpdateType =
   | "Recruitment"
   | "Notification";
 
+export type ExamCategory =
+  | "Board Exams"
+  | "Government Exams"
+  | "Competitive Exams";
 export type ExamUpdate = {
   id: string;
   title: string;
   source: string;
   sourceKey: string;
-  category: string;
+  category: ExamCategory;
   type: ExamUpdateType;
   officialUrl: string;
   publishedLabel?: string;
@@ -25,44 +29,134 @@ export type ExamUpdate = {
 type ExamSource = {
   key: string;
   name: string;
-  category: string;
+  category: ExamCategory;
   url: string;
   allowedHosts: string[];
   maxItems: number;
 };
 
 const SOURCES: ExamSource[] = [
+  // ========================================================
+  // BOARD EXAMS
+  // ========================================================
+
+  {
+    key: "cbse",
+    name: "CBSE",
+    category: "Board Exams",
+    url: "https://www.cbse.gov.in/cbsenew/examination_Circular.html",
+    allowedHosts: [
+      "cbse.gov.in",
+      "www.cbse.gov.in",
+    ],
+    maxItems: 30,
+  },
+
+  {
+    key: "cisce",
+    name: "CISCE",
+    category: "Board Exams",
+    url: "https://cisce.org/",
+    allowedHosts: [
+      "cisce.org",
+      "www.cisce.org",
+    ],
+    maxItems: 25,
+  },
+
+  {
+    key: "maharashtra-board",
+    name: "Maharashtra Board",
+    category: "Board Exams",
+    url: "https://mahahsscboard.in/en",
+    allowedHosts: [
+      "mahahsscboard.in",
+      "www.mahahsscboard.in",
+    ],
+    maxItems: 30,
+  },
+
+  // ========================================================
+  // GOVERNMENT EXAMS
+  // ========================================================
+
   {
     key: "ssc",
     name: "SSC",
     category: "Government Exams",
     url: "https://ssc.gov.in/",
-    allowedHosts: ["ssc.gov.in"],
-    maxItems: 25,
+    allowedHosts: [
+      "ssc.gov.in",
+      "www.ssc.gov.in",
+    ],
+    maxItems: 30,
   },
+
   {
     key: "upsc",
     name: "UPSC",
     category: "Government Exams",
     url: "https://www.upsc.gov.in/whats-new",
-    allowedHosts: ["upsc.gov.in", "upsconline.nic.in"],
-    maxItems: 25,
-  },
-  {
-    key: "nta",
-    name: "NTA",
-    category: "Entrance Exams",
-    url: "https://www.nta.ac.in/",
-    allowedHosts: ["nta.ac.in"],
+    allowedHosts: [
+      "upsc.gov.in",
+      "www.upsc.gov.in",
+      "upsconline.nic.in",
+    ],
     maxItems: 30,
   },
+
   {
     key: "ibps",
     name: "IBPS",
-    category: "Banking",
+    category: "Government Exams",
     url: "https://www.ibps.in/index.php/recruitment/",
-    allowedHosts: ["ibps.in", "ibpsreg.ibps.in"],
+    allowedHosts: [
+      "ibps.in",
+      "www.ibps.in",
+      "ibpsreg.ibps.in",
+    ],
     maxItems: 30,
+  },
+
+  {
+    key: "mpsc",
+    name: "MPSC",
+    category: "Government Exams",
+    url: "https://mpsc.gov.in/",
+    allowedHosts: [
+      "mpsc.gov.in",
+      "www.mpsc.gov.in",
+    ],
+    maxItems: 25,
+  },
+
+  // ========================================================
+  // OTHER COMPETITIVE EXAMS
+  // ========================================================
+
+  {
+    key: "nta",
+    name: "NTA",
+    category: "Competitive Exams",
+    url: "https://www.nta.ac.in/",
+    allowedHosts: [
+      "nta.ac.in",
+      "www.nta.ac.in",
+    ],
+    maxItems: 35,
+  },
+
+  {
+    key: "mht-cet",
+    name: "MHT-CET",
+    category: "Competitive Exams",
+    url: "https://cetcell.mahacet.org/",
+    allowedHosts: [
+      "cetcell.mahacet.org",
+      "mahacet.org",
+      "www.mahacet.org",
+    ],
+    maxItems: 35,
   },
 ];
 
@@ -70,6 +164,7 @@ export const OFFICIAL_EXAM_SOURCES = SOURCES.map((source) => ({
   key: source.key,
   name: source.name,
   url: source.url,
+  category: source.category,
 }));
 
 const RELEVANT_KEYWORDS = [
@@ -89,6 +184,11 @@ const RELEVANT_KEYWORDS = [
   "notification",
   "notice",
   "time table",
+  "datesheet",
+  "date sheet",
+  "circular",
+  "supplementary examination",
+  "board examination",
   "timetable",
   "schedule",
   "score",

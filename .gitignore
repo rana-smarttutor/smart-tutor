@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 lib/data-store.backup-20260901-203359.ts
+_backup_exam_updates_20260904-170908/exam-updates-client.tsx.bak
+_backup_exam_updates_20260904-170908/exam-updates.ts.bak
+_backup_exam_updates_20260904-170908/page.tsx.bak

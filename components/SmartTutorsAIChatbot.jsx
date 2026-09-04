@@ -20,33 +20,143 @@ const STEPS = {
   COMPLETE: "complete",
 };
 
-const OPTIONS = {
-  [STEPS.CLASS]: [
-    "Class 1-5",
-    "Class 6-8",
-    "Class 9-10",
-    "Class 11-12",
-    "Graduation",
-    "Post Grad",
-    "Skills Only",
+const CLASS_OPTIONS = [
+  "Class 6-8",
+  "Class 9-10",
+  "Class 11-12",
+  "Graduation",
+  "Government Exams",
+  "Skill Development",
+];
+
+const COURSE_OPTIONS_BY_LEVEL = {
+  "Class 6-8": [
+    "Regular Academic",
+    "Spoken English",
+    "Abacus",
+    "Robotics",
+    "Olympiad Preparation",
+    "UPSC Foundation",
+    "Public Speaking",
+    "Personality Development",
   ],
 
-  [STEPS.COURSE]: [
-    "Board Prep",
-    "JEE/NEET",
-    "Full Stack Dev",
-    "Govt Exams",
-    "Soft Skills",
-    "Data Science",
+  "Class 9-10": [
+    "Regular Academic / Board Prep",
+    "JEE Foundation",
+    "NEET Foundation",
+    "UPSC Foundation",
+    "Police / Army Bharti",
+    "Robotics",
+    "Artificial Intelligence Basics",
+    "Video Editing",
+    "Spoken English",
+    "Career Counselling",
   ],
 
-  [STEPS.TIMING]: [
-    "Morning School",
-    "Afternoon School",
-    "Full-time College",
-    "Working Professional",
+  "Class 11-12": [
+    "Science - PCM / PCB",
+    "Commerce",
+    "Arts / Humanities",
+    "JEE",
+    "NEET",
+    "MHT-CET",
+    "CUET",
+    "NDA",
+    "CLAT",
+    "CA Foundation",
+    "CS Foundation",
+    "CMA Foundation",
+    "IPMAT / NPAT",
+    "UPSC Foundation",
+    "SSC CHSL",
+    "Railway Exams",
+    "Interview & Personality Development",
+  ],
+
+  Graduation: [
+    "Government Exam Preparation",
+    "Banking Exams",
+    "SSC Exams",
+    "Railway Exams",
+    "Skill Development",
+  ],
+
+
+  "Government Exams": [
+    "UPSC Civil Services",
+    "MPSC / State PSC",
+    "SSC Exams",
+    "Banking Exams",
+    "Railway Exams",
+    "NDA / CDS",
+    "Police / Army Bharti",
+  ],
+
+  "Skill Development": [
+    "Communication & Personality",
+    "Global / Foreign Languages",
+    "Career Readiness",
+    "Creative & Digital Skills",
+    "Technology & Future Skills",
+    "Performing Arts & Hobby Skills",
   ],
 };
+
+const TIMING_OPTIONS_BY_LEVEL = {
+  "Class 6-8": ["Morning School", "Afternoon School"],
+
+  "Class 9-10": ["Morning School", "Afternoon School"],
+
+  "Class 11-12": [
+    "Morning School",
+    "Afternoon School",
+    "College / Junior College",
+  ],
+
+  Graduation: [
+    "Full-time College",
+    "Distance / Online College",
+    "Working Professional",
+  ],
+
+  "Post Graduation": [
+    "Full-time College",
+    "Distance / Online College",
+    "Working Professional",
+  ],
+
+  "Diploma / Polytechnic": ["Full-time College", "Working Professional"],
+
+  "Government Exams": [
+    "Full-time Preparation",
+    "College Student",
+    "Working Professional",
+  ],
+
+  "Skill Development": [
+    "School Student",
+    "College Student",
+    "Working Professional",
+    "Flexible Schedule",
+  ],
+};
+
+function getOptionsForStep(step, classLevel) {
+  if (step === STEPS.CLASS) {
+    return CLASS_OPTIONS;
+  }
+
+  if (step === STEPS.COURSE) {
+    return COURSE_OPTIONS_BY_LEVEL[classLevel] ?? [];
+  }
+
+  if (step === STEPS.TIMING) {
+    return TIMING_OPTIONS_BY_LEVEL[classLevel] ?? [];
+  }
+
+  return [];
+}
 
 export default function SmartTutorsAIChatbot() {
   const [mounted, setMounted] = useState(false);
@@ -89,6 +199,7 @@ export default function SmartTutorsAIChatbot() {
   const introTimersRef = useRef([]);
 
   const styles = getStyles(theme);
+  const currentOptions = getOptionsForStep(step, memory.classLevel);
 
   /*
    * Client mount
@@ -175,73 +286,71 @@ export default function SmartTutorsAIChatbot() {
    * ↓
    * Class options
    */
-useEffect(() => {
-  if (!open || introComplete || messages.length > 0) {
-    return;
-  }
+  useEffect(() => {
+    if (!open || introComplete || messages.length > 0) {
+      return;
+    }
 
-  setIntroRunning(true);
-  setTyping(true);
-
-  const timer1 = window.setTimeout(() => {
-    setMessages([
-      {
-        role: "assistant",
-        content: INTRO_MESSAGES[0],
-      },
-    ]);
-
-    setTyping(false);
-  }, 450);
-
-  const typing2 = window.setTimeout(() => {
+    setIntroRunning(true);
     setTyping(true);
-  }, 700);
 
-  const timer2 = window.setTimeout(() => {
-    setMessages((current) => [
-      ...current,
-      {
-        role: "assistant",
-        content: INTRO_MESSAGES[1],
-      },
-    ]);
+    const timer1 = window.setTimeout(() => {
+      setMessages([
+        {
+          role: "assistant",
+          content: INTRO_MESSAGES[0],
+        },
+      ]);
 
-    setTyping(false);
-  }, 1050);
+      setTyping(false);
+    }, 450);
 
-  const typing3 = window.setTimeout(() => {
-    setTyping(true);
-  }, 1300);
+    const typing2 = window.setTimeout(() => {
+      setTyping(true);
+    }, 700);
 
-  const timer3 = window.setTimeout(() => {
-    setMessages((current) => [
-      ...current,
-      {
-        role: "assistant",
-        content: INTRO_MESSAGES[2],
-      },
-    ]);
+    const timer2 = window.setTimeout(() => {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: INTRO_MESSAGES[1],
+        },
+      ]);
 
-    setTyping(false);
-  }, 1650);
+      setTyping(false);
+    }, 1050);
 
-  const finishTimer = window.setTimeout(() => {
-    setIntroComplete(true);
-    setIntroRunning(false);
-  }, 1950);
+    const typing3 = window.setTimeout(() => {
+      setTyping(true);
+    }, 1300);
 
-  return () => {
-    window.clearTimeout(timer1);
-    window.clearTimeout(typing2);
-    window.clearTimeout(timer2);
-    window.clearTimeout(typing3);
-    window.clearTimeout(timer3);
-    window.clearTimeout(finishTimer);
-  };
-}, [open]);
+    const timer3 = window.setTimeout(() => {
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: INTRO_MESSAGES[2],
+        },
+      ]);
 
+      setTyping(false);
+    }, 1650);
 
+    const finishTimer = window.setTimeout(() => {
+      setIntroComplete(true);
+      setIntroRunning(false);
+    }, 1950);
+
+    return () => {
+      window.clearTimeout(timer1);
+      window.clearTimeout(typing2);
+      window.clearTimeout(timer2);
+      window.clearTimeout(typing3);
+      window.clearTimeout(timer3);
+      window.clearTimeout(finishTimer);
+    };
+  }, [open]);
 
   /*
    * Automatically scroll to newest message.
@@ -652,7 +761,7 @@ A SmartIQ Institute mentor will now reach out to provide your custom learning ro
                */}
               {introComplete && !typing && step !== STEPS.COMPLETE ? (
                 <div style={styles.optionsContainer}>
-                  {OPTIONS[step]?.map((option) => (
+                  {currentOptions.map((option) => (
                     <button
                       key={option}
                       type="button"
@@ -675,20 +784,30 @@ A SmartIQ Institute mentor will now reach out to provide your custom learning ro
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") {
+                    if (event.key === "Enter" && step === STEPS.COMPLETE) {
                       sendMessage();
                     }
                   }}
-                  disabled={typing || introRunning || !introComplete}
+                  disabled={
+                    typing ||
+                    introRunning ||
+                    !introComplete ||
+                    step !== STEPS.COMPLETE
+                  }
                   placeholder={
-                    introComplete
-                      ? "Type your reply..."
-                      : "Smart IQ AI is typing..."
+                    !introComplete
+                      ? "SmartIQ AI is typing..."
+                      : step !== STEPS.COMPLETE
+                        ? "Please select an option above..."
+                        : "Type your reply..."
                   }
                   style={{
                     ...styles.input,
 
-                    ...(!introComplete || typing || introRunning
+                    ...(!introComplete ||
+                    typing ||
+                    introRunning ||
+                    step !== STEPS.COMPLETE
                       ? styles.disabledInput
                       : {}),
                   }}
@@ -697,11 +816,19 @@ A SmartIQ Institute mentor will now reach out to provide your custom learning ro
                 <button
                   type="button"
                   onClick={() => sendMessage()}
-                  disabled={typing || introRunning || !introComplete}
+                  disabled={
+                    typing ||
+                    introRunning ||
+                    !introComplete ||
+                    step !== STEPS.COMPLETE
+                  }
                   style={{
                     ...styles.sendBtn,
 
-                    ...(!introComplete || typing || introRunning
+                    ...(!introComplete ||
+                    typing ||
+                    introRunning ||
+                    step !== STEPS.COMPLETE
                       ? styles.disabledSendBtn
                       : {}),
                   }}
