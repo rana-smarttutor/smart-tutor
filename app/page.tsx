@@ -161,7 +161,7 @@ export default async function Home() {
               Get Smart Results
               <br />
               <span className="inline-block text-[2rem] leading-[1.05] text-blue-600 sm:text-[2.75rem] lg:whitespace-nowrap lg:text-[3rem] xl:text-[3.35rem]">
-                With Smart IQ{" "}
+                With SmartIQ{" "}
                 <span className="relative inline-block">
                   Institute
                   <svg
@@ -183,7 +183,7 @@ export default async function Home() {
             </h1>
 
             <p className="mx-auto max-w-2xl text-sm font-medium leading-relaxed text-[var(--color-muted)] sm:text-lg xl:mx-0">
-              Smart IQ Institute offers thoughtfully designed{" "}
+              SmartIQ Institute offers thoughtfully designed{" "}
               <strong>courses for every stage of a learner's journey</strong>.
               From school academics and board preparation to competitive exams,
               government exams, and future-ready digital skills, our courses
@@ -279,9 +279,8 @@ export default async function Home() {
                     <span className="text-blue-600">Journey?</span>
                   </h3>
                   <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
-                    Join 500+ students already excelling with Smart IQ
-                    Institute. Get access to expert mentoring and disciplined
-                    preparation.
+                    Join 500+ students already excelling with SmartIQ Institute.
+                    Get access to expert mentoring and disciplined preparation.
                   </p>
                 </div>
 
@@ -308,10 +307,10 @@ export default async function Home() {
         </RevealOnScroll>
 
         <RevealOnScroll
-          className="flex h-full min-w-0 flex-col gap-6 lg:sticky lg:top-24"
+          className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24"
           delayMs={90}
         >
-          <div className="surface graph-paper rounded-[1.75rem] p-5 sm:p-6 hover:shadow-xl transition-all">
+          <div className="surface graph-paper rounded-[1.75rem] p-5 transition-all hover:shadow-xl sm:p-6">
             <div className="mb-5">
               <p className="section-label">Campus Highlights</p>
 
@@ -323,13 +322,12 @@ export default async function Home() {
             <CampusHighlightsCarousel />
           </div>
 
-          <div className="surface rounded-xl p-6 hover:shadow-xl transition-all flex flex-1 items-center justify-center min-h-[300px]">
+          <div className="relative h-[520px] w-full overflow-hidden rounded-[2rem]">
             <Image
-              src="/WhySmartTutor3.png"
-              alt="Why Choose Smart IQ Institute"
-              width={1280}
-              height={1180}
-              className="h-auto w-full rounded-[2rem]"
+              src="/WCSIOI.jpeg"
+              alt="Why Choose SmartIQ Institute"
+              fill
+              className="object-cover object-top"
               priority
             />
           </div>
@@ -346,7 +344,7 @@ export default async function Home() {
               Recent Results
             </h2>
             <p className="text-[var(--color-muted)] text-sm sm:text-lg font-medium max-w-2xl mx-auto leading-relaxed">
-              Smart IQ Institute honors the dedication and remarkable
+              SmartIQ Institute honors the dedication and remarkable
               achievements of our students. Our proven track record defines our
               commitment to academic brilliance.
             </p>
@@ -431,7 +429,7 @@ export default async function Home() {
             <div className="mb-5">
               <p className="section-label">Upcoming Exam Updates</p>
               <h2 className="section-title">
-                Stay updated with the Smart IQ Institute
+                Stay updated with the SmartIQ Institute
               </h2>
             </div>
 
@@ -487,7 +485,7 @@ export default async function Home() {
                 Promotional Offer
               </p>
               <h2 className="text-4xl font-black leading-tight mb-4 drop-shadow-md relative z-10">
-                Advance Your Career with Smart IQ Institute
+                Advance Your Career with SmartIQ Institute
               </h2>
               <p className="text-blue-50 text-lg leading-relaxed mb-8 font-medium relative z-10">
                 Join our specialized coaching programs and get access to

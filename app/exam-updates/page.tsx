@@ -19,7 +19,7 @@ export const runtime = "nodejs";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Exam Updates | Smart IQ Institute",
+  title: "Exam Updates | SmartIQ Institute",
   description:
     "Latest official SSC, UPSC, NTA, banking, admit card, answer key, application and result updates.",
   alternates: {

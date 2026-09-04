@@ -19,7 +19,7 @@ export function HomeGlobe() {
             <p className="section-label">Results Showcase</p>
             <h2 className="section-title mt-0">Toppers and achievers across every stage</h2>
             <p className="max-w-3xl text-sm leading-7 text-[var(--color-muted)]">
-              Smart IQ Institute works with school students, higher secondary learners, and serious aspirants. This section brings that range together with visible outcomes that parents and students can trust.
+              SmartIQ Institute works with school students, higher secondary learners, and serious aspirants. This section brings that range together with visible outcomes that parents and students can trust.
             </p>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -42,7 +42,7 @@ export function HomeGlobe() {
               <div className="media-frame relative mt-4 aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-slate-50 ">
                 <Image
                   src="/result-1.jpeg"
-                  alt="Smart IQ Institute topper showcase"
+                  alt="SmartIQ Institute topper showcase"
                   fill
                   loading="lazy"
                   className="object-contain object-center group-hover:scale-105 transition-transform duration-700"

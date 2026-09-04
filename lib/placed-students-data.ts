@@ -201,12 +201,12 @@ export function generatePlacedStudents(): PlacedStudent[] {
 
     // Diverse and impactful quotes
     const quotes = [
-      "Smart IQ Institute' mentoring was the key to my success.",
-      "The disciplined approach at Smart IQ Institute changed my perspective.",
+      "SmartIQ Institute' mentoring was the key to my success.",
+      "The disciplined approach at SmartIQ Institute changed my perspective.",
       "Expert guidance and consistent mock tests made the difference.",
       "I found the perfect learning environment here to excel.",
       "The personalized attention helped me overcome my weaknesses.",
-      "Smart IQ Institute provided the momentum I needed for my career.",
+      "SmartIQ Institute provided the momentum I needed for my career.",
       "Grateful for the sharp mentoring and high-quality resources.",
       "The journey from student to professional was seamless here.",
       "Focused preparation and real academic momentum were game-changers.",

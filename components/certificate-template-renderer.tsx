@@ -183,7 +183,7 @@ function ClassicGold({
                   lineHeight: 1.2,
                 }}
               >
-                Smart IQ Institute
+                SmartIQ Institute
               </div>
               <div
                 style={{
@@ -400,7 +400,7 @@ function ClassicGold({
             <div
               style={{ fontSize: fs("7px", "3.5px"), color: "#a0874a" }}
             >
-              Director, Smart IQ Institute
+              Director, SmartIQ Institute
             </div>
           </div>
 
@@ -632,7 +632,7 @@ function ModernBlue({
                   lineHeight: 1.2,
                 }}
               >
-                Smart IQ Institute
+                SmartIQ Institute
               </div>
               <div
                 style={{
@@ -857,7 +857,7 @@ function ModernBlue({
             <div
               style={{ fontSize: fs("7px", "3.5px"), color: "#9ca3af" }}
             >
-              Director, Smart IQ Institute
+              Director, SmartIQ Institute
             </div>
           </div>
 
@@ -1106,7 +1106,7 @@ function ProfessionalDark({
                   lineHeight: 1.2,
                 }}
               >
-                Smart IQ Institute
+                SmartIQ Institute
               </div>
               <div
                 style={{
@@ -1364,7 +1364,7 @@ function ProfessionalDark({
             <div
               style={{ fontSize: fs("7px", "3.5px"), color: "#64748b" }}
             >
-              Director, Smart IQ Institute
+              Director, SmartIQ Institute
             </div>
           </div>
 

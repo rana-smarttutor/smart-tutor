@@ -1011,7 +1011,7 @@ export function InvoiceManager({
     <div class="top-strip"></div>
 
     <div class="brand">
-      <img src="${escapeHtml(logoUrl)}" alt="Smart IQ Institute Pvt. Ltd." />
+      <img src="${escapeHtml(logoUrl)}" alt="SmartIQ Institute Pvt. Ltd." />
     </div>
 
     <div class="brand-divider"></div>
@@ -1135,7 +1135,7 @@ export function InvoiceManager({
         <ul>
           <li>This is a computer-generated receipt and does not require a physical signature.</li>
           <li>Fees once paid are non-refundable under any circumstances.</li>
-          <li>Thank you for choosing Smart IQ Institute Pvt. Ltd. We appreciate your trust.</li>
+          <li>Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.</li>
         </ul>
       </div>
 
@@ -1150,7 +1150,7 @@ export function InvoiceManager({
   <strong>Authorized Signatory</strong>
   <span>Mr. Ravi Rana</span>
   <span>Director &amp; Founder</span>
-  <span>Smart IQ Institute Pvt. Ltd.</span>
+  <span>SmartIQ Institute Pvt. Ltd.</span>
 </div>
 
     </footer>

@@ -1984,7 +1984,7 @@ function selectCourse(course: CourseOption) {
             <span className="text-xs leading-5 text-[var(--color-muted)]">
               I acknowledge and consent to the collection, storage, and
               processing of my personal data and uploaded documents (including
-              resume/CV and photo ID images) by Smart IQ Institute as described
+              resume/CV and photo ID images) by SmartIQ Institute as described
               in the{" "}
               <a
                 href="/terms"
@@ -2012,7 +2012,7 @@ function selectCourse(course: CourseOption) {
               >
                 EULA
               </a>
-              . I understand that Smart IQ Institute is not liable for any loss
+              . I understand that SmartIQ Institute is not liable for any loss
               or misuse of the documents I submit.{" "}
               <span className="text-red-500 font-bold">*</span>
             </span>

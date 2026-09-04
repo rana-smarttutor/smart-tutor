@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  * is opened for the first time.
  */
 const INTRO_MESSAGES = [
-  "Hi! I’m Smart IQ Institute AI Assistant 👋",
+  "Hi! I’m SmartIQ Institute AI Assistant 👋",
   "I'm here to help you find the perfect learning pathway.",
   "Which **Class** or **Level** are you in?",
 ];
@@ -301,7 +301,7 @@ useEffect(() => {
 • Interest: ${memory.courseName}
 • Current Schedule: ${userInput}
 
-A Smart IQ Institute mentor will now reach out to provide your custom learning roadmap. Is there anything else you'd like to ask about our faculty or campus?`;
+A SmartIQ Institute mentor will now reach out to provide your custom learning roadmap. Is there anything else you'd like to ask about our faculty or campus?`;
     }
 
     return "I've shared your details with our counseling team. They will contact you shortly. Do you have any other questions?";
@@ -559,11 +559,11 @@ A Smart IQ Institute mentor will now reach out to provide your custom learning r
               type="button"
               onClick={() => setOpen(true)}
               style={styles.toggleBtn}
-              aria-label="Open Smart IQ Institute AI"
+              aria-label="Open SmartIQ Institute AI"
             >
               <Image
                 src="/image5.png"
-                alt="Smart IQ Institute AI"
+                alt="SmartIQ Institute AI"
                 width={70}
                 height={70}
                 sizes="70px"
@@ -580,7 +580,7 @@ A Smart IQ Institute mentor will now reach out to provide your custom learning r
                 <div style={styles.headerAvatar}>
                   <Image
                     src="/image5.png"
-                    alt="Smart IQ Institute AI"
+                    alt="SmartIQ Institute AI"
                     width={42}
                     height={42}
                     style={{
@@ -593,7 +593,7 @@ A Smart IQ Institute mentor will now reach out to provide your custom learning r
                 </div>
 
                 <div>
-                  <div style={styles.title}>Smart IQ Institute AI</div>
+                  <div style={styles.title}>SmartIQ Institute AI</div>
 
                   <div style={styles.subtitleRow}>
                     <span style={styles.onlineDot} />

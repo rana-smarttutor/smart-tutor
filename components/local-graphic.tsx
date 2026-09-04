@@ -246,7 +246,7 @@ export default function LocalGraphic({ title, className = "w-full h-full" }: Loc
         <div className="p-3 bg-white/5 rounded-xl border border-white/10 backdrop-blur-xs">
           <Award className="w-8 h-8 text-indigo-300" />
         </div>
-        <span className="text-[10px] text-indigo-200 font-mono tracking-widest uppercase">Smart IQ Institute Track</span>
+        <span className="text-[10px] text-indigo-200 font-mono tracking-widest uppercase">SmartIQ Institute Track</span>
       </div>
     </div>
   );

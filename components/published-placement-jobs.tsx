@@ -444,7 +444,7 @@ export function PublishedPlacementJobs() {
 
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
             Explore verified placement opportunities, check eligibility, and
-            apply directly through Smart IQ Institute.
+            apply directly through SmartIQ Institute.
           </p>
         </div>
 

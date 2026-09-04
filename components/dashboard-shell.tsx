@@ -1586,7 +1586,7 @@ export function DashboardShell({
             {sidebarCollapsed ? (
               <Image
                 src="/Smart-institue-logo.jpeg"
-                alt="Smart IQ Institute"
+                alt="SmartIQ Institute"
                 width={32}
                 height={32}
                 className="h-8 w-auto object-contain"
@@ -1595,7 +1595,7 @@ export function DashboardShell({
             ) : (
               <Image
                 src="/Smart-institue-logo.jpeg"
-                alt="Smart IQ Institute"
+                alt="SmartIQ Institute"
                 width={140}
                 height={36}
                 className="h-9 w-auto object-contain"
@@ -1754,7 +1754,7 @@ export function DashboardShell({
               )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold text-white">
-                  {session?.name ?? "Smart IQ Institute"}
+                  {session?.name ?? "SmartIQ Institute"}
                   {session?.verified ? (
                     <span className="ml-1 text-[10px] text-emerald-400">✓</span>
                   ) : null}

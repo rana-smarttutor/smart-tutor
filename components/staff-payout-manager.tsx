@@ -400,10 +400,10 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
     <div class="receipt-inner">
       <div class="header-row">
         <div class="brand">
-          <img src="${escapeHtml(logoUrl)}" alt="Smart IQ Institute" />
+          <img src="${escapeHtml(logoUrl)}" alt="SmartIQ Institute" />
         </div>
         <div class="addresses">
-          <div class="name">Smart IQ Institute</div>
+          <div class="name">SmartIQ Institute</div>
           <div class="addr">
             Plot No. 2, Second Floor, Vashi Plaza,<br/>
             Sector 17, Vashi, Navi Mumbai – 400703<br/>
@@ -460,16 +460,16 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
         <div class="footer-note">
           <p>This is a computer generated receipt and does not require signature.</p>
           <p style="font-weight:800;color:#1e293b;">Actual payment processed externally.</p>
-          <p>Thank you for choosing Smart IQ Institute Pvt. Ltd.</p>
+          <p>Thank you for choosing SmartIQ Institute Pvt. Ltd.</p>
         </div>
         <div class="signature">
           <img src="${escapeHtml(signatureUrl)}" alt="Founder Signature" style="display:block;width:180px;height:72px;margin:0 auto 4px;object-fit:contain;" />
           <div class="line">Prof. Ravi Rana</div>
-          <div class="sub">Founder – Smart IQ Institute</div>
+          <div class="sub">Founder – SmartIQ Institute</div>
         </div>
       </div>
       <div class="terms">
-        <span>Smart IQ Institute Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
+        <span>SmartIQ Institute Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
         <span>www.smarttutors.co.in</span>
       </div>
     </div>

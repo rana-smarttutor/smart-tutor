@@ -370,7 +370,7 @@ async function fetchSource(
       /*
        * Critical:
        * Only links belonging to the actual official authority
-       * are allowed onto Smart IQ Institute.
+       * are allowed onto SmartIQ Institute.
        */
       if (!isAllowedOfficialUrl(officialUrl, source)) {
         return;
