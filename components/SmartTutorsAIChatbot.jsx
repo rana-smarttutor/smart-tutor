@@ -82,7 +82,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "Skill Development",
   ],
 
-
   "Government Exams": [
     "UPSC Civil Services",
     "MPSC / State PSC",
@@ -197,6 +196,7 @@ export default function SmartTutorsAIChatbot() {
 
   const bottomRef = useRef(null);
   const introTimersRef = useRef([]);
+  const chatBoxRef = useRef(null);
 
   const styles = getStyles(theme);
   const currentOptions = getOptionsForStep(step, memory.classLevel);
@@ -234,6 +234,28 @@ export default function SmartTutorsAIChatbot() {
 
     return () => observer.disconnect();
   }, []);
+
+  /*
+   * Close chatbot when clicking outside it.
+   * The X button continues to work separately.
+   */
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    function handleOutsideClick(event) {
+      if (chatBoxRef.current && !chatBoxRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [open]);
 
   /*
    * Small "Hii" bubble beside assistant icon.
@@ -682,7 +704,7 @@ A SmartIQ Institute mentor will now reach out to provide your custom learning ro
             </button>
           </div>
         ) : (
-          <section style={styles.chatBox}>
+          <section ref={chatBoxRef} style={styles.chatBox}>
             {/* HEADER */}
             <header style={styles.header}>
               <div style={styles.headerLeft}>
