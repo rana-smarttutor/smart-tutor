@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Contact Us | SmartIQ Institute",
   description: "Get in touch with SmartIQ Institute for admissions, career guidance, or any other inquiries. Visit our Vashi campus or connect via WhatsApp and Email.",
   alternates: {
-    canonical: "https://smarttutors.co.in/contact",
+    canonical: "https://smartiqinstitute.in/contact",
   },
 };
 
@@ -22,8 +22,8 @@ export default async function ContactPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
-      { "@type": "ListItem", "position": 2, "name": "Contact Us", "item": "https://smarttutors.co.in/contact" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
+      { "@type": "ListItem", "position": 2, "name": "Contact Us", "item": "https://smartiqinstitute.in/contact" },
     ],
   };
 

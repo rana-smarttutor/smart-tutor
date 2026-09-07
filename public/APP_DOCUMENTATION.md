@@ -83,7 +83,7 @@ Smart Tutors Academy is a comprehensive educational platform designed to provide
 
 ## Android App Development Notes
 For the separate Android project:
-- **Base URL**: `https://smarttutors.co.in` (or your deployment URL).
+- **Base URL**: `https://smartiqinstitute.in` (or your deployment URL).
 - **Primary Tooling**: Recommended to use Trusted Web Activity (TWA) or a high-performance WebView wrapper.
 - **Deep Linking**: Configured to handle app routes directly from the web.
 - **Permissions**: May require internet, camera (for uploading material), and storage access.

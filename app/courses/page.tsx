@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Our Courses | SmartIQ Institute",
   description: "Explore our wide range of courses from primary school foundation to professional and government exam preparation. Structured roadmaps designed for success.",
   alternates: {
-    canonical: "https://smarttutors.co.in/courses",
+    canonical: "https://smartiqinstitute.in/courses",
   },
 };
 
@@ -25,13 +25,13 @@ export default async function CoursesPage() {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://smarttutors.co.in"
+        "item": "https://smartiqinstitute.in"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Courses",
-        "item": "https://smarttutors.co.in/courses"
+        "item": "https://smartiqinstitute.in/courses"
       }
     ]
   };

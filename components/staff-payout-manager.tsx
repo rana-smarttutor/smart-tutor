@@ -470,7 +470,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
       </div>
       <div class="terms">
         <span>SmartIQ Institute Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
-        <span>www.smarttutors.co.in</span>
+        <span>www.smartiqinstitute.in</span>
       </div>
     </div>
   </div>

@@ -559,7 +559,7 @@ export function StudentFeeReceiptsView({
       <!-- Bottom Terms -->
       <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;padding:10px 24px 14px;">
         <span>SmartIQ Institute Pvt. Ltd. | CIN: U80100MH2019PTC321658</span>
-        <span>www.smarttutors.co.in</span>
+        <span>www.smartiqinstitute.in</span>
       </div>
 
     </div>

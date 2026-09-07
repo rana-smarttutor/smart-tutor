@@ -30,7 +30,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://smarttutors.co.in"),
+  metadataBase: new URL("https://smartiqinstitute.in"),
   title: {
     default: "SmartIQ Institute – India’s No.1 Trusted Smart Learning Platform",
     template: "%s | SmartIQ Institute",
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://smarttutors.co.in",
+    url: "https://smartiqinstitute.in",
     siteName: "SmartIQ Institute",
     title: "SmartIQ Institute – India’s No.1 Trusted Smart Learning Platform",
     description:
@@ -135,8 +135,8 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "School",
     "name": "SmartIQ Institute Academy",
-    "url": "https://smarttutors.co.in",
-    "logo": "https://smarttutors.co.in/Smart-institue-logo.jpeg",
+    "url": "https://smartiqinstitute.in",
+    "logo": "https://smartiqinstitute.in/Smart-institue-logo.jpeg",
     "description": "SmartIQ Institute \u2013 India\u2019s No.1 Trusted Smart Learning Platform. Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams.",
     "address": [
       {
@@ -177,14 +177,14 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "SmartIQ Institute",
-    "url": "https://smarttutors.co.in",
+    "url": "https://smartiqinstitute.in",
     "description": "India\u2019s No.1 Trusted Smart Learning Platform for school, college, competitive exams, and skill development.",
     "inLanguage": "en-IN",
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": "https://smarttutors.co.in/courses?q={search_term_string}"
+        "urlTemplate": "https://smartiqinstitute.in/courses?q={search_term_string}"
       },
       "query-input": "required name=search_term_string"
     }
@@ -194,13 +194,13 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
-      { "@type": "ListItem", "position": 2, "name": "Courses", "item": "https://smarttutors.co.in/courses" },
-      { "@type": "ListItem", "position": 3, "name": "Placements", "item": "https://smarttutors.co.in/placements" },
-      { "@type": "ListItem", "position": 4, "name": "Mock Tests", "item": "https://smarttutors.co.in/mock-test" },
-      { "@type": "ListItem", "position": 5, "name": "Contact", "item": "https://smarttutors.co.in/contact" },
-      { "@type": "ListItem", "position": 6, "name": "Digital Library", "item": "https://smarttutors.co.in/library" },
-      { "@type": "ListItem", "position": 7, "name": "Quiz Arena", "item": "https://smarttutors.co.in/quiz-arena" }
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
+      { "@type": "ListItem", "position": 2, "name": "Courses", "item": "https://smartiqinstitute.in/courses" },
+      { "@type": "ListItem", "position": 3, "name": "Placements", "item": "https://smartiqinstitute.in/placements" },
+      { "@type": "ListItem", "position": 4, "name": "Mock Tests", "item": "https://smartiqinstitute.in/mock-test" },
+      { "@type": "ListItem", "position": 5, "name": "Contact", "item": "https://smartiqinstitute.in/contact" },
+      { "@type": "ListItem", "position": 6, "name": "Digital Library", "item": "https://smartiqinstitute.in/library" },
+      { "@type": "ListItem", "position": 7, "name": "Quiz Arena", "item": "https://smartiqinstitute.in/quiz-arena" }
     ]
   };
 
@@ -209,7 +209,7 @@ export default function RootLayout({
     "@type": "ItemList",
     "name": "Courses Offered at SmartIQ Institute",
     "description": "Complete range of academic and competitive exam programs available at SmartIQ Institute Academy.",
-    "url": "https://smarttutors.co.in/courses",
+    "url": "https://smartiqinstitute.in/courses",
     "numberOfItems": 10,
     "itemListElement": [
       {
@@ -398,7 +398,7 @@ export default function RootLayout({
         "name": "How can I enroll at SmartIQ Institute?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "You can enroll by visiting our website at smarttutors.co.in/signup, filling out the registration form, and submitting the required details. Our team will review your application and activate your account upon approval."
+          "text": "You can enroll by visiting our website at smartiqinstitute.in/signup, filling out the registration form, and submitting the required details. Our team will review your application and activate your account upon approval."
         }
       },
       {

@@ -255,7 +255,7 @@ export function BiometricIntegration({ role }: Props) {
       {/* Device Cards */}
       <div className="space-y-4">
         {devices.map((device) => {
-          const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://smarttutors.co.in";
+          const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://smartiqinstitute.in";
           const webhookUrl = `${baseUrl}/api/biometric/webhook/${device.webhookToken}`;
           return (
             <div key={device.id} className="surface rounded-[2rem] p-5 sm:p-6">

@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   description:
     "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance.",
   alternates: {
-    canonical: "https://smarttutors.co.in",
+    canonical: "https://smartiqinstitute.in",
   },
 };
 

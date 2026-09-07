@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "SmartIQ Institute end user license agreement — terms governing the use of our software platform, including data collection and logging.",
   alternates: {
-    canonical: "https://smarttutors.co.in/eula",
+    canonical: "https://smartiqinstitute.in/eula",
   },
 };
 
@@ -292,13 +292,13 @@ export default function EulaPage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://smarttutors.co.in",
+        item: "https://smartiqinstitute.in",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "EULA",
-        item: "https://smarttutors.co.in/eula",
+        item: "https://smartiqinstitute.in/eula",
       },
     ],
   };

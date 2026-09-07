@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Quiz Arena | SmartIQ Institute",
   description: "Challenge yourself in our Quiz Arena. Competitive tests and practice sessions to sharpen your skills.",
   alternates: {
-    canonical: "https://smarttutors.co.in/quiz-arena",
+    canonical: "https://smartiqinstitute.in/quiz-arena",
   },
 };
 
@@ -14,8 +14,8 @@ export default function QuizArenaPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
-      { "@type": "ListItem", "position": 2, "name": "Quiz Arena", "item": "https://smarttutors.co.in/quiz-arena" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
+      { "@type": "ListItem", "position": 2, "name": "Quiz Arena", "item": "https://smartiqinstitute.in/quiz-arena" },
     ],
   };
 
