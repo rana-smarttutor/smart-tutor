@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description:
     "Sign up for SmartIQ Institute to access personalised learning, expert educators, mock tests, performance tracking, and more. Create your student or faculty account today.",
   alternates: {
-    canonical: "https://smarttutors.co.in/signup",
+    canonical: "https://smartiqinstitute.in/signup",
   },
 };
 
@@ -22,8 +22,8 @@ export default async function SignupPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
-      { "@type": "ListItem", "position": 2, "name": "Create Account", "item": "https://smarttutors.co.in/signup" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
+      { "@type": "ListItem", "position": 2, "name": "Create Account", "item": "https://smartiqinstitute.in/signup" },
     ],
   };
 

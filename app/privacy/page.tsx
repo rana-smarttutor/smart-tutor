@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   description:
     "SmartIQ Institute privacy policy — how we collect, use, store, log, and protect your personal data.",
   alternates: {
-    canonical: "https://smarttutors.co.in/privacy",
+    canonical: "https://smartiqinstitute.in/privacy",
   },
 };
 
@@ -428,13 +428,13 @@ export default function PrivacyPage() {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://smarttutors.co.in",
+        item: "https://smartiqinstitute.in",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Privacy Policy",
-        item: "https://smarttutors.co.in/privacy",
+        item: "https://smartiqinstitute.in/privacy",
       },
     ],
   };

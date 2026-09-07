@@ -152,4 +152,4 @@ npm run build             # Zero-error production build
 ## Contact
 
 **Smart Tutors Academy** — Sector 17, Vashi, Navi Mumbai
-- Website: [smarttutors.co.in](https://smarttutors.co.in)
+- Website: [smartiqinstitute.in](https://smartiqinstitute.in)

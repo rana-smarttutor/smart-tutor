@@ -1156,7 +1156,7 @@ export function InvoiceManager({
     </footer>
 
 <div class="bottom-note">
-  www.smarttutors.co.in
+  www.smartiqinstitute.in
 </div>
   </main>
 </body>

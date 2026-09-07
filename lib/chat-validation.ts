@@ -272,7 +272,7 @@ export function validateChatContent(
 
   const externalUrl = urlMatches.find(
     (match) =>
-      !match.toLowerCase().includes("smarttutors.co.in"),
+      !match.toLowerCase().includes("smartiqinstitute.in"),
   );
 
   if (externalUrl) {

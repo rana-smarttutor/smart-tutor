@@ -225,7 +225,7 @@ export function PerformanceDashboard({ reports, heuristics, studentName }: Props
                 className="h-4 w-64 object-contain mb-2"
               />
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">
-                Vashi, Navi Mumbai • +91 99304 16335 • smarttutors.co.in
+                Vashi, Navi Mumbai • +91 99304 16335 • smartiqinstitute.in
               </div>
             </div>
             <p className="text-sm font-bold uppercase tracking-widest text-blue-600 mb-1">Performance Report</p>

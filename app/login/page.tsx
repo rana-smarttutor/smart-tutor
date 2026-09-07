@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     "Sign in to your SmartIQ Institute account to access your dashboard, courses, tests, performance reports, and more.",
   alternates: {
-    canonical: "https://smarttutors.co.in/login",
+    canonical: "https://smartiqinstitute.in/login",
   },
 };
 
@@ -27,8 +27,8 @@ export default async function LoginPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
-      { "@type": "ListItem", "position": 2, "name": "Sign In", "item": "https://smarttutors.co.in/login" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
+      { "@type": "ListItem", "position": 2, "name": "Sign In", "item": "https://smartiqinstitute.in/login" },
     ],
   };
 

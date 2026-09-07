@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Digital Library & Study Materials | SmartIQ Institute",
   description: "Access a vast collection of study materials, textbooks, and resources in our Digital Library. Curated content for all board standards and competitive exams.",
   alternates: {
-    canonical: "https://smarttutors.co.in/library",
+    canonical: "https://smartiqinstitute.in/library",
   },
 };
 
@@ -28,8 +28,8 @@ export default async function LibraryPage() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smarttutors.co.in" },
-      { "@type": "ListItem", "position": 2, "name": "Digital Library", "item": "https://smarttutors.co.in/library" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
+      { "@type": "ListItem", "position": 2, "name": "Digital Library", "item": "https://smartiqinstitute.in/library" },
     ],
   };
 

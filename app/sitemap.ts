@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { courseLibrary } from '@/lib/course-library';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://smarttutors.co.in';
+  const baseUrl = 'https://smartiqinstitute.in';
   const lastMod = new Date();
   const legalLastMod = new Date('2026-07-31');
 
