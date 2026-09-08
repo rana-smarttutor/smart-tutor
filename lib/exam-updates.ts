@@ -15,6 +15,7 @@ export type ExamCategory =
   | "Board Exams"
   | "Government Exams"
   | "Competitive Exams";
+
 export type ExamUpdate = {
   id: string;
   title: string;
@@ -36,62 +37,45 @@ type ExamSource = {
 };
 
 const SOURCES: ExamSource[] = [
-  // ========================================================
+  // =====================================================
   // BOARD EXAMS
-  // ========================================================
-
+  // =====================================================
   {
     key: "cbse",
     name: "CBSE",
     category: "Board Exams",
     url: "https://www.cbse.gov.in/cbsenew/examination_Circular.html",
-    allowedHosts: [
-      "cbse.gov.in",
-      "www.cbse.gov.in",
-    ],
+    allowedHosts: ["cbse.gov.in"],
     maxItems: 30,
   },
-
   {
     key: "cisce",
     name: "CISCE",
     category: "Board Exams",
     url: "https://cisce.org/",
-    allowedHosts: [
-      "cisce.org",
-      "www.cisce.org",
-    ],
+    allowedHosts: ["cisce.org"],
     maxItems: 25,
   },
-
   {
     key: "maharashtra-board",
     name: "Maharashtra Board",
     category: "Board Exams",
     url: "https://mahahsscboard.in/en",
-    allowedHosts: [
-      "mahahsscboard.in",
-      "www.mahahsscboard.in",
-    ],
-    maxItems: 30,
+    allowedHosts: ["mahahsscboard.in"],
+    maxItems: 25,
   },
 
-  // ========================================================
+  // =====================================================
   // GOVERNMENT EXAMS
-  // ========================================================
-
+  // =====================================================
   {
     key: "ssc",
     name: "SSC",
     category: "Government Exams",
     url: "https://ssc.gov.in/",
-    allowedHosts: [
-      "ssc.gov.in",
-      "www.ssc.gov.in",
-    ],
+    allowedHosts: ["ssc.gov.in"],
     maxItems: 30,
   },
-
   {
     key: "upsc",
     name: "UPSC",
@@ -99,12 +83,10 @@ const SOURCES: ExamSource[] = [
     url: "https://www.upsc.gov.in/whats-new",
     allowedHosts: [
       "upsc.gov.in",
-      "www.upsc.gov.in",
       "upsconline.nic.in",
     ],
     maxItems: 30,
   },
-
   {
     key: "ibps",
     name: "IBPS",
@@ -112,40 +94,30 @@ const SOURCES: ExamSource[] = [
     url: "https://www.ibps.in/index.php/recruitment/",
     allowedHosts: [
       "ibps.in",
-      "www.ibps.in",
       "ibpsreg.ibps.in",
     ],
     maxItems: 30,
   },
-
   {
     key: "mpsc",
     name: "MPSC",
     category: "Government Exams",
     url: "https://mpsc.gov.in/",
-    allowedHosts: [
-      "mpsc.gov.in",
-      "www.mpsc.gov.in",
-    ],
-    maxItems: 25,
+    allowedHosts: ["mpsc.gov.in"],
+    maxItems: 30,
   },
 
-  // ========================================================
-  // OTHER COMPETITIVE EXAMS
-  // ========================================================
-
+  // =====================================================
+  // COMPETITIVE EXAMS
+  // =====================================================
   {
     key: "nta",
     name: "NTA",
     category: "Competitive Exams",
     url: "https://www.nta.ac.in/",
-    allowedHosts: [
-      "nta.ac.in",
-      "www.nta.ac.in",
-    ],
+    allowedHosts: ["nta.ac.in"],
     maxItems: 35,
   },
-
   {
     key: "mht-cet",
     name: "MHT-CET",
@@ -154,22 +126,24 @@ const SOURCES: ExamSource[] = [
     allowedHosts: [
       "cetcell.mahacet.org",
       "mahacet.org",
-      "www.mahacet.org",
     ],
-    maxItems: 35,
+    maxItems: 30,
   },
 ];
 
-export const OFFICIAL_EXAM_SOURCES = SOURCES.map((source) => ({
-  key: source.key,
-  name: source.name,
-  url: source.url,
-  category: source.category,
-}));
+export const OFFICIAL_EXAM_SOURCES = SOURCES.map(
+  (source) => ({
+    key: source.key,
+    name: source.name,
+    category: source.category,
+    url: source.url,
+  }),
+);
 
 const RELEVANT_KEYWORDS = [
   "exam",
   "examination",
+  "board examination",
   "admit card",
   "e-admit",
   "hall ticket",
@@ -183,12 +157,10 @@ const RELEVANT_KEYWORDS = [
   "vacancy",
   "notification",
   "notice",
-  "time table",
-  "datesheet",
-  "date sheet",
   "circular",
-  "supplementary examination",
-  "board examination",
+  "date sheet",
+  "datesheet",
+  "time table",
   "timetable",
   "schedule",
   "score",
@@ -205,6 +177,7 @@ const RELEVANT_KEYWORDS = [
   "final result",
   "provisional",
   "challenge",
+  "supplementary",
 ];
 
 const BLOCKED_KEYWORDS = [
@@ -235,7 +208,10 @@ function cleanTitle(value: string) {
   return cleanText(value)
     .replace(/\bRead More\b/gi, "")
     .replace(/\bDownload\b/gi, "")
-    .replace(/\(\s*\d+(?:\.\d+)?\s*(?:KB|MB)\s*\)/gi, "")
+    .replace(
+      /\(\s*\d+(?:\.\d+)?\s*(?:KB|MB)\s*\)/gi,
+      "",
+    )
     .replace(/\s+-\s+reg\.?$/i, "")
     .replace(/\s{2,}/g, " ")
     .trim();
@@ -244,14 +220,22 @@ function cleanTitle(value: string) {
 function isRelevantTitle(title: string) {
   const lower = title.toLowerCase();
 
-  if (BLOCKED_KEYWORDS.some((word) => lower.includes(word))) {
+  if (
+    BLOCKED_KEYWORDS.some((word) =>
+      lower.includes(word),
+    )
+  ) {
     return false;
   }
 
-  return RELEVANT_KEYWORDS.some((word) => lower.includes(word));
+  return RELEVANT_KEYWORDS.some((word) =>
+    lower.includes(word),
+  );
 }
 
-function classifyUpdate(title: string): ExamUpdateType {
+function classifyUpdate(
+  title: string,
+): ExamUpdateType {
   const lower = title.toLowerCase();
 
   if (
@@ -292,6 +276,8 @@ function classifyUpdate(title: string): ExamUpdateType {
   if (
     lower.includes("time table") ||
     lower.includes("timetable") ||
+    lower.includes("date sheet") ||
+    lower.includes("datesheet") ||
     lower.includes("exam date") ||
     lower.includes("examination date") ||
     lower.includes("schedule")
@@ -314,7 +300,11 @@ function classifyUpdate(title: string): ExamUpdateType {
 function stableId(input: string) {
   let hash = 2166136261;
 
-  for (let index = 0; index < input.length; index += 1) {
+  for (
+    let index = 0;
+    index < input.length;
+    index += 1
+  ) {
     hash ^= input.charCodeAt(index);
     hash = Math.imul(hash, 16777619);
   }
@@ -349,7 +339,10 @@ function extractDateLabel(text: string) {
   return undefined;
 }
 
-function isAllowedOfficialUrl(url: URL, source: ExamSource) {
+function isAllowedOfficialUrl(
+  url: URL,
+  source: ExamSource,
+) {
   return source.allowedHosts.some(
     (host) =>
       url.hostname === host ||
@@ -358,7 +351,8 @@ function isAllowedOfficialUrl(url: URL, source: ExamSource) {
 }
 
 function shouldIgnoreHref(href: string) {
-  const normalized = href.trim().toLowerCase();
+  const normalized =
+    href.trim().toLowerCase();
 
   return (
     normalized.startsWith("#") ||
@@ -372,36 +366,42 @@ function buildRequestHeaders() {
   return {
     Accept:
       "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
+    "Accept-Language":
+      "en-IN,en-US;q=0.9,en;q=0.8",
     "Cache-Control": "no-cache",
     Pragma: "no-cache",
     "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
   };
 }
 
 async function fetchSource(
   source: ExamSource,
 ): Promise<ExamUpdate[]> {
-  const controller = new AbortController();
+  const controller =
+    new AbortController();
 
   const timeout = setTimeout(() => {
     controller.abort();
   }, 12000);
 
   try {
-    const response = await fetch(source.url, {
-      next: {
-        revalidate: 3600,
+    const response = await fetch(
+      source.url,
+      {
+        next: {
+          revalidate: 3600,
+        },
+        redirect: "follow",
+        signal: controller.signal,
+        headers: buildRequestHeaders(),
       },
-      redirect: "follow",
-      signal: controller.signal,
-      headers: buildRequestHeaders(),
-    });
+    );
 
     /*
-     * Some official government websites block automated/server-side
-     * requests. A blocked source should NEVER break the whole page.
+     * Government and education websites may block
+     * automated requests. A blocked source must not
+     * break the whole Exam Updates page.
      */
     if (!response.ok) {
       console.warn(
@@ -412,11 +412,15 @@ async function fetchSource(
     }
 
     const contentType =
-      response.headers.get("content-type") ?? "";
+      response.headers.get(
+        "content-type",
+      ) ?? "";
 
     if (
       !contentType.includes("text/html") &&
-      !contentType.includes("application/xhtml+xml")
+      !contentType.includes(
+        "application/xhtml+xml",
+      )
     ) {
       console.warn(
         `[Exam Updates] ${source.name} returned unsupported content type: ${contentType}`,
@@ -425,7 +429,8 @@ async function fetchSource(
       return [];
     }
 
-    const html = await response.text();
+    const html =
+      await response.text();
 
     if (!html.trim()) {
       return [];
@@ -434,126 +439,225 @@ async function fetchSource(
     const $ = cheerio.load(html);
 
     const updates: ExamUpdate[] = [];
-    const seenUrls = new Set<string>();
+    const seenUrls =
+      new Set<string>();
 
-    $("a[href]").each((_, element) => {
-      if (updates.length >= source.maxItems) {
-        return false;
-      }
+    $("a[href]").each(
+      (_, element) => {
+        if (
+          updates.length >=
+          source.maxItems
+        ) {
+          return false;
+        }
 
-      const anchor = $(element);
-      const rawHref = anchor.attr("href");
+        const anchor =
+          $(element);
 
-      if (!rawHref) {
-        return;
-      }
+        const rawHref =
+          anchor.attr("href");
 
-      if (shouldIgnoreHref(rawHref)) {
-        return;
-      }
+        if (!rawHref) {
+          return;
+        }
 
-      let officialUrl: URL;
+        if (
+          shouldIgnoreHref(
+            rawHref,
+          )
+        ) {
+          return;
+        }
 
-      try {
-        officialUrl = new URL(rawHref, source.url);
-      } catch {
-        return;
-      }
+        let officialUrl: URL;
 
-      if (
-        officialUrl.protocol !== "https:" &&
-        officialUrl.protocol !== "http:"
-      ) {
-        return;
-      }
+        try {
+          officialUrl =
+            new URL(
+              rawHref,
+              source.url,
+            );
+        } catch {
+          return;
+        }
 
-      /*
-       * Critical:
-       * Only links belonging to the actual official authority
-       * are allowed onto SmartIQ Institute.
-       */
-      if (!isAllowedOfficialUrl(officialUrl, source)) {
-        return;
-      }
+        if (
+          officialUrl.protocol !==
+            "https:" &&
+          officialUrl.protocol !==
+            "http:"
+        ) {
+          return;
+        }
 
-      officialUrl.hash = "";
+        /*
+         * Critical security/trust check:
+         * only approved official authority hosts are
+         * allowed to appear as outbound links.
+         */
+        if (
+          !isAllowedOfficialUrl(
+            officialUrl,
+            source,
+          )
+        ) {
+          return;
+        }
 
-      const finalUrl = officialUrl.toString();
+        officialUrl.hash = "";
 
-      if (seenUrls.has(finalUrl)) {
-        return;
-      }
+        const finalUrl =
+          officialUrl.toString();
 
-      const anchorText = cleanText(anchor.text());
+        if (
+          seenUrls.has(finalUrl)
+        ) {
+          return;
+        }
 
-      const possibleContexts = [
-        anchor.closest("tr").first().text(),
-        anchor.closest("li").first().text(),
-        anchor.closest("article").first().text(),
-        anchor.closest("[class*='notice']").first().text(),
-        anchor.closest("[class*='news']").first().text(),
-        anchor.closest("[class*='update']").first().text(),
-        anchor.closest("[class*='card']").first().text(),
-        anchor.parent().text(),
-        anchor.parent().parent().text(),
-      ]
-        .map(cleanText)
-        .filter(Boolean);
+        const anchorText =
+          cleanText(
+            anchor.text(),
+          );
 
-      const contextText =
-        possibleContexts.find(
-          (text) =>
-            text.length >= 12 &&
-            text.length <= 500,
-        ) ?? "";
+        const possibleContexts = [
+          anchor
+            .closest("tr")
+            .first()
+            .text(),
 
-      let title = anchorText;
+          anchor
+            .closest("li")
+            .first()
+            .text(),
 
-      if (
-        !title ||
-        title.length < 10 ||
-        GENERIC_LINK_TEXT.test(title)
-      ) {
-        title = contextText;
-      }
+          anchor
+            .closest("article")
+            .first()
+            .text(),
 
-      title = cleanTitle(title);
+          anchor
+            .closest(
+              "[class*='notice']",
+            )
+            .first()
+            .text(),
 
-      if (title.length > 220) {
-        title = `${title.slice(0, 217)}...`;
-      }
+          anchor
+            .closest(
+              "[class*='news']",
+            )
+            .first()
+            .text(),
 
-      if (title.length < 12) {
-        return;
-      }
+          anchor
+            .closest(
+              "[class*='update']",
+            )
+            .first()
+            .text(),
 
-      if (!isRelevantTitle(title)) {
-        return;
-      }
+          anchor
+            .closest(
+              "[class*='card']",
+            )
+            .first()
+            .text(),
 
-      seenUrls.add(finalUrl);
+          anchor
+            .parent()
+            .text(),
 
-      updates.push({
-        id: `${source.key}-${stableId(finalUrl)}`,
-        title,
-        source: source.name,
-        sourceKey: source.key,
-        category: source.category,
-        type: classifyUpdate(title),
-        officialUrl: finalUrl,
-        publishedLabel: extractDateLabel(contextText),
-      });
-    });
+          anchor
+            .parent()
+            .parent()
+            .text(),
+        ]
+          .map(cleanText)
+          .filter(Boolean);
+
+        const contextText =
+          possibleContexts.find(
+            (text) =>
+              text.length >= 12 &&
+              text.length <= 500,
+          ) ?? "";
+
+        let title = anchorText;
+
+        if (
+          !title ||
+          title.length < 10 ||
+          GENERIC_LINK_TEXT.test(
+            title,
+          )
+        ) {
+          title =
+            contextText;
+        }
+
+        title =
+          cleanTitle(title);
+
+        if (
+          title.length > 220
+        ) {
+          title =
+            `${title.slice(
+              0,
+              217,
+            )}...`;
+        }
+
+        if (
+          title.length < 12
+        ) {
+          return;
+        }
+
+        if (
+          !isRelevantTitle(
+            title,
+          )
+        ) {
+          return;
+        }
+
+        seenUrls.add(
+          finalUrl,
+        );
+
+        updates.push({
+          id: `${source.key}-${stableId(
+            finalUrl,
+          )}`,
+          title,
+          source:
+            source.name,
+          sourceKey:
+            source.key,
+          category:
+            source.category,
+          type:
+            classifyUpdate(
+              title,
+            ),
+          officialUrl:
+            finalUrl,
+          publishedLabel:
+            extractDateLabel(
+              contextText,
+            ),
+        });
+      },
+    );
 
     return updates;
   } catch (error) {
-    /*
-     * Never use console.error here.
-     * Next.js dev mode can display it as a red error overlay.
-     */
     if (
       error instanceof Error &&
-      error.name === "AbortError"
+      error.name ===
+        "AbortError"
     ) {
       console.warn(
         `[Exam Updates] ${source.name} request timed out.`,
@@ -564,7 +668,9 @@ async function fetchSource(
 
     console.warn(
       `[Exam Updates] ${source.name} temporarily unavailable.`,
-      error instanceof Error ? error.message : String(error),
+      error instanceof Error
+        ? error.message
+        : String(error),
     );
 
     return [];
@@ -575,36 +681,56 @@ async function fetchSource(
 
 function interleaveUpdates(
   groups: ExamUpdate[][],
-  limit = 80,
+  limit = 100,
 ) {
   const output: ExamUpdate[] = [];
-  const seen = new Set<string>();
+  const seen =
+    new Set<string>();
 
   let position = 0;
 
-  while (output.length < limit) {
-    let addedSomething = false;
+  while (
+    output.length < limit
+  ) {
+    let addedSomething =
+      false;
 
-    for (const group of groups) {
-      const item = group[position];
+    for (
+      const group of groups
+    ) {
+      const item =
+        group[position];
 
       if (!item) {
         continue;
       }
 
-      addedSomething = true;
+      addedSomething =
+        true;
 
-      if (!seen.has(item.officialUrl)) {
-        seen.add(item.officialUrl);
+      if (
+        !seen.has(
+          item.officialUrl,
+        )
+      ) {
+        seen.add(
+          item.officialUrl,
+        );
+
         output.push(item);
       }
 
-      if (output.length >= limit) {
+      if (
+        output.length >=
+        limit
+      ) {
         break;
       }
     }
 
-    if (!addedSomething) {
+    if (
+      !addedSomething
+    ) {
       break;
     }
 
@@ -616,18 +742,19 @@ function interleaveUpdates(
 
 export async function getExamUpdates() {
   /*
-   * Promise.all is safe because fetchSource handles its own
-   * failures and always returns an array.
-   *
-   * Therefore:
-   * UPSC blocked → []
-   * IBPS unavailable → []
-   * SSC works → SSC data displayed
-   * NTA works → NTA data displayed
+   * Each source handles its own failures.
+   * One blocked authority therefore never breaks
+   * the complete SmartIQ Exam Updates page.
    */
-  const groups = await Promise.all(
-    SOURCES.map((source) => fetchSource(source)),
-  );
+  const groups =
+    await Promise.all(
+      SOURCES.map(
+        (source) =>
+          fetchSource(source),
+      ),
+    );
 
-  return interleaveUpdates(groups);
+  return interleaveUpdates(
+    groups,
+  );
 }
