@@ -1,24 +1,27 @@
 "use client";
 
-import {
-  useMemo,
-  useState,
-  type ElementType,
-} from "react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import type { ElementType } from "react";
 
 import {
+  ArrowRight,
   BellRing,
-  BookOpenCheck,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
+  ChevronRight,
   ExternalLink,
   FileCheck2,
   FileText,
   GraduationCap,
   Landmark,
+  ListFilter,
+  RefreshCw,
   Search,
   ShieldCheck,
   Sparkles,
+  Target,
   Trophy,
 } from "lucide-react";
 
@@ -32,7 +35,7 @@ type Source = {
   key: string;
   name: string;
   url: string;
-  category: ExamCategory;
+  category?: ExamCategory;
 };
 
 type Props = {
@@ -40,6 +43,8 @@ type Props = {
   sources: Source[];
   checkedAt: string;
 };
+
+type CategoryFilter = "All" | ExamCategory;
 
 const UPDATE_TYPES: Array<"All" | ExamUpdateType> = [
   "All",
@@ -52,84 +57,88 @@ const UPDATE_TYPES: Array<"All" | ExamUpdateType> = [
   "Recruitment",
 ];
 
-const CATEGORY_TABS: Array<"All" | ExamCategory> = [
-  "All",
-  "Board Exams",
-  "Government Exams",
-  "Competitive Exams",
+const CATEGORY_CARDS: Array<{
+  name: ExamCategory;
+  title: string;
+  examples: string;
+  description: string;
+  icon: ElementType;
+}> = [
+  {
+    name: "Board Exams",
+    title: "Board Exams",
+    examples: "CBSE, CISCE, Maharashtra Board",
+    description:
+      "Timetables, circulars, admit cards, results and official board notices.",
+    icon: GraduationCap,
+  },
+  {
+    name: "Government Exams",
+    title: "Government Exams",
+    examples: "UPSC, SSC, IBPS, MPSC",
+    description:
+      "Civil services, banking, state exams and government recruitment updates.",
+    icon: Landmark,
+  },
+  {
+    name: "Competitive Exams",
+    title: "Competitive Exams",
+    examples: "JEE, NEET, CUET, MHT-CET",
+    description:
+      "Entrance exam registrations, schedules, answer keys and results.",
+    icon: Target,
+  },
 ];
 
-const CATEGORY_CONFIG: Record<
-  ExamCategory,
+const QUICK_ACCESS: Array<{
+  label: string;
+  type: ExamUpdateType;
+  icon: ElementType;
+}> = [
   {
-    title: string;
-    shortTitle: string;
-    description: string;
-    icon: ElementType;
-    badgeClasses: string;
-    iconClasses: string;
-  }
-> = {
-  "Board Exams": {
-    title: "Board Exams",
-    shortTitle: "Board",
-    description:
-      "Official CBSE, CISCE and State Board notices including examination dates, timetables, admit cards and results.",
-    icon: BookOpenCheck,
-    badgeClasses:
-      "border-indigo-100 bg-indigo-50 text-indigo-700",
-    iconClasses:
-      "bg-indigo-50 text-indigo-600",
+    label: "Latest Notifications",
+    type: "Notification",
+    icon: BellRing,
   },
-
-  "Government Exams": {
-    title: "Government Exams",
-    shortTitle: "Government",
-    description:
-      "Latest UPSC, SSC, banking, State PSC and government recruitment examination updates.",
-    icon: Landmark,
-    badgeClasses:
-      "border-emerald-100 bg-emerald-50 text-emerald-700",
-    iconClasses:
-      "bg-emerald-50 text-emerald-600",
+  {
+    label: "Admit Cards",
+    type: "Admit Card",
+    icon: GraduationCap,
   },
-
-  "Competitive Exams": {
-    title: "Other Competitive Exams",
-    shortTitle: "Competitive",
-    description:
-      "JEE, NEET, MHT-CET and other entrance examination notifications, applications, answer keys and results.",
+  {
+    label: "Results",
+    type: "Result",
     icon: Trophy,
-    badgeClasses:
-      "border-amber-100 bg-amber-50 text-amber-700",
-    iconClasses:
-      "bg-amber-50 text-amber-600",
   },
-};
+  {
+    label: "Exam Dates",
+    type: "Exam Date",
+    icon: CalendarDays,
+  },
+  {
+    label: "Answer Keys",
+    type: "Answer Key",
+    icon: FileCheck2,
+  },
+  {
+    label: "Applications",
+    type: "Application",
+    icon: FileText,
+  },
+  {
+    label: "Recruitment",
+    type: "Recruitment",
+    icon: Landmark,
+  },
+];
 
-function getButtonLabel(type: ExamUpdateType) {
-  switch (type) {
-    case "Result":
-      return "Check Official Result";
-
-    case "Admit Card":
-      return "View Admit Card";
-
-    case "Answer Key":
-      return "View Answer Key";
-
-    case "Application":
-      return "Apply Officially";
-
-    case "Exam Date":
-      return "View Schedule";
-
-    case "Recruitment":
-      return "View Recruitment";
-
-    default:
-      return "View Official Notice";
-  }
+function scrollToSection(id: string) {
+  window.setTimeout(() => {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, 50);
 }
 
 function getTypeIcon(type: ExamUpdateType) {
@@ -143,12 +152,40 @@ function getTypeIcon(type: ExamUpdateType) {
     case "Answer Key":
       return FileCheck2;
 
+    case "Exam Date":
+      return CalendarDays;
+
     case "Application":
     case "Recruitment":
       return FileText;
 
     default:
       return BellRing;
+  }
+}
+
+function getButtonLabel(type: ExamUpdateType) {
+  switch (type) {
+    case "Result":
+      return "View Result";
+
+    case "Admit Card":
+      return "View Admit Card";
+
+    case "Answer Key":
+      return "View Answer Key";
+
+    case "Application":
+      return "Apply Now";
+
+    case "Exam Date":
+      return "View Schedule";
+
+    case "Recruitment":
+      return "View Recruitment";
+
+    default:
+      return "View Notice";
   }
 }
 
@@ -166,34 +203,53 @@ function getTypeClasses(type: ExamUpdateType) {
     case "Application":
       return "bg-cyan-50 text-cyan-700 border-cyan-100";
 
-    case "Recruitment":
-      return "bg-orange-50 text-orange-700 border-orange-100";
-
     case "Exam Date":
       return "bg-pink-50 text-pink-700 border-pink-100";
+
+    case "Recruitment":
+      return "bg-orange-50 text-orange-700 border-orange-100";
 
     default:
       return "bg-blue-50 text-blue-700 border-blue-100";
   }
 }
 
-export function ExamUpdatesClient({
-  updates,
-  sources,
-  checkedAt,
-}: Props) {
+export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
   const [query, setQuery] = useState("");
-  const [activeCategory, setActiveCategory] =
-    useState<"All" | ExamCategory>("All");
-  const [activeSource, setActiveSource] = useState("All");
-  const [activeType, setActiveType] =
-    useState<"All" | ExamUpdateType>("All");
 
-  const categoryCounts = useMemo(
+  const [activeCategory, setActiveCategory] = useState<CategoryFilter>("All");
+
+  const [activeSource, setActiveSource] = useState("All");
+
+  const [activeType, setActiveType] = useState<"All" | ExamUpdateType>("All");
+
+  const filteredUpdates = useMemo(() => {
+    const search = query.trim().toLowerCase();
+
+    return updates.filter((update) => {
+      const matchesSearch =
+        !search ||
+        update.title.toLowerCase().includes(search) ||
+        update.source.toLowerCase().includes(search) ||
+        update.category.toLowerCase().includes(search) ||
+        update.type.toLowerCase().includes(search);
+
+      const matchesCategory =
+        activeCategory === "All" || update.category === activeCategory;
+
+      const matchesSource =
+        activeSource === "All" || update.source === activeSource;
+
+      const matchesType = activeType === "All" || update.type === activeType;
+
+      return matchesSearch && matchesCategory && matchesSource && matchesType;
+    });
+  }, [updates, query, activeCategory, activeSource, activeType]);
+
+  const counts = useMemo(
     () => ({
-      "Board Exams": updates.filter(
-        (item) => item.category === "Board Exams",
-      ).length,
+      "Board Exams": updates.filter((item) => item.category === "Board Exams")
+        .length,
 
       "Government Exams": updates.filter(
         (item) => item.category === "Government Exams",
@@ -206,617 +262,720 @@ export function ExamUpdatesClient({
     [updates],
   );
 
-  const availableSources = useMemo(() => {
-    if (activeCategory === "All") {
-      return sources;
-    }
+  const tickerUpdates = updates.slice(0, 4);
 
-    return sources.filter(
-      (source) => source.category === activeCategory,
-    );
-  }, [sources, activeCategory]);
+  const featuredUpdate = filteredUpdates[0] ?? updates[0];
 
-  const filteredUpdates = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const importantUpdates = updates
+    .filter((item) => item.publishedLabel)
+    .slice(0, 5);
 
-    return updates.filter((update) => {
-      const matchesSearch =
-        !normalizedQuery ||
-        update.title.toLowerCase().includes(normalizedQuery) ||
-        update.source.toLowerCase().includes(normalizedQuery) ||
-        update.category.toLowerCase().includes(normalizedQuery) ||
-        update.type.toLowerCase().includes(normalizedQuery);
-
-      const matchesCategory =
-        activeCategory === "All" ||
-        update.category === activeCategory;
-
-      const matchesSource =
-        activeSource === "All" ||
-        update.source === activeSource;
-
-      const matchesType =
-        activeType === "All" ||
-        update.type === activeType;
-
-      return (
-        matchesSearch &&
-        matchesCategory &&
-        matchesSource &&
-        matchesType
-      );
-    });
-  }, [
-    updates,
-    query,
-    activeCategory,
-    activeSource,
-    activeType,
-  ]);
-
-  const importantUpdates = filteredUpdates.slice(0, 4);
-
-  const visibleCategories: ExamCategory[] =
-    activeCategory === "All"
-      ? [
-          "Board Exams",
-          "Government Exams",
-          "Competitive Exams",
-        ]
-      : [activeCategory];
-
-  function selectCategory(
-    category: "All" | ExamCategory,
-  ) {
+  function selectCategory(category: ExamCategory) {
     setActiveCategory(category);
     setActiveSource("All");
+    setActiveType("All");
+    setQuery("");
+
+    scrollToSection("latest-exam-updates");
+  }
+
+  function selectQuickAccess(type: ExamUpdateType) {
+    setActiveType(type);
+    setActiveCategory("All");
+    setActiveSource("All");
+    setQuery("");
+
+    scrollToSection("latest-exam-updates");
+  }
+
+  function clearFilters() {
+    setQuery("");
+    setActiveCategory("All");
+    setActiveSource("All");
+    setActiveType("All");
   }
 
   return (
-    <section className="relative z-10 pb-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f6f8fc]">
+      <style>{`
+      @keyframes exam-news-scroll {
+        from {
+          transform: translateX(0);
+        }
 
-        {/* SUMMARY */}
-        <div className="-mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Total Updates"
-            value={updates.length}
-            icon={BellRing}
-          />
+        to {
+          transform: translateX(-50%);
+        }
+      }
 
-          <StatCard
-            label="Board Exams"
-            value={categoryCounts["Board Exams"]}
-            icon={BookOpenCheck}
-          />
+      .exam-news-ticker {
+        animation: exam-news-scroll 40s linear infinite;
+        will-change: transform;
+      }
 
-          <StatCard
-            label="Government Exams"
-            value={categoryCounts["Government Exams"]}
-            icon={Landmark}
-          />
+      .exam-news-ticker:hover {
+        animation-play-state: paused;
+      }
 
-          <StatCard
-            label="Competitive Exams"
-            value={categoryCounts["Competitive Exams"]}
-            icon={Trophy}
-          />
-        </div>
+      @media (prefers-reduced-motion: reduce) {
+        .exam-news-ticker {
+          animation-duration: 80s;
+        }
+      }
+    `}</style>
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-5 sm:px-6 lg:px-8">
+        {/* ==================================================
+            TOP DASHBOARD
+        ================================================== */}
 
-        {/* CATEGORY NAVIGATION */}
-        <div className="mt-8">
-          <div className="mb-4">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">
-              Browse by exam category
-            </p>
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_270px]">
+          <div className="min-w-0">
+            {/* HERO */}
+            <section className="relative min-h-[260px] overflow-hidden rounded-[22px] border border-blue-100 bg-gradient-to-br from-[#edf4ff] via-[#f8fbff] to-[#e6f0ff] p-6 shadow-sm sm:p-7">
+              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-300/20 blur-3xl" />
 
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">
-              Find the updates relevant to you
-            </h2>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {(
-              [
-                "Board Exams",
-                "Government Exams",
-                "Competitive Exams",
-              ] as ExamCategory[]
-            ).map((category) => {
-              const config = CATEGORY_CONFIG[category];
-              const Icon = config.icon;
-
-              return (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => selectCategory(category)}
-                  className={`group rounded-[24px] border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
-                    activeCategory === category
-                      ? "border-blue-300 bg-blue-50 shadow-lg shadow-blue-100/60"
-                      : "border-slate-200 bg-white hover:border-blue-200"
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl ${config.iconClasses}`}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </div>
-
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
-                      {categoryCounts[category]}
-                    </span>
+              <div className="relative grid h-full items-center gap-6 lg:grid-cols-[1.05fr_.75fr]">
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    SmartIQ Exam Centre
                   </div>
 
-                  <h3 className="mt-4 text-lg font-black text-slate-950">
-                    {config.title}
-                  </h3>
+                  <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-[#102447] sm:text-4xl">
+                    Exam Updates
+                  </h1>
 
-                  <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                    {config.description}
+                  <p className="mt-1.5 text-sm font-black text-blue-600">
+                    Stay Ahead. Stay Updated.
                   </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* FILTER PANEL */}
-        <div className="mt-8 rounded-[28px] border border-slate-200/80 bg-white p-4 shadow-[0_20px_60px_rgba(15,35,80,0.08)] sm:p-5">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <p className="mt-3 max-w-[520px] text-xs font-medium leading-5 text-slate-600 sm:text-sm">
+                    Get the latest official exam dates, applications, admit
+                    cards, results, answer keys and notifications — all
+                    organised in one place.
+                  </p>
 
-              <input
-                type="search"
-                value={query}
-                onChange={(event) =>
-                  setQuery(event.target.value)
-                }
-                placeholder="Search CBSE, SSC, UPSC, NEET, MHT-CET, result, admit card..."
-                className="h-12 w-full rounded-xl border border-slate-200 bg-[#f8faff] pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100/70"
-              />
-            </div>
+                  <div className="mt-5 flex flex-wrap gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("latest-exam-updates")}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700"
+                    >
+                      Explore Updates
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </button>
 
-            <div className="flex shrink-0 items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2.5 text-[11px] font-bold text-emerald-700">
-              <ShieldCheck className="h-4 w-4" />
-              Checked {checkedAt}
-            </div>
-          </div>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection("exam-categories")}
+                      className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-blue-700 transition hover:bg-blue-50"
+                    >
+                      Browse Exams
+                      <ListFilter className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
 
-          <div className="mt-5">
-            <FilterGroup label="Exam Category">
-              {CATEGORY_TABS.map((category) => (
-                <FilterButton
-                  key={category}
-                  active={activeCategory === category}
-                  onClick={() => selectCategory(category)}
-                >
-                  {category === "Competitive Exams"
-                    ? "Other Competitive Exams"
-                    : category}
-                </FilterButton>
-              ))}
-            </FilterGroup>
-          </div>
+                  <div className="mt-5 flex flex-wrap gap-4 text-[10px] font-bold text-slate-500">
+                    <span className="inline-flex items-center gap-1">
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                      Official sources only
+                    </span>
 
-          <div className="mt-5 grid gap-5 lg:grid-cols-2">
-            <FilterGroup label="Exam Authority">
-              {[
-                "All",
-                ...availableSources.map(
-                  (source) => source.name,
-                ),
-              ].map((source) => (
-                <FilterButton
-                  key={source}
-                  active={activeSource === source}
-                  onClick={() => setActiveSource(source)}
-                >
-                  {source}
-                </FilterButton>
-              ))}
-            </FilterGroup>
-
-            <FilterGroup label="Update Type">
-              {UPDATE_TYPES.map((type) => (
-                <FilterButton
-                  key={type}
-                  active={activeType === type}
-                  onClick={() => setActiveType(type)}
-                  dark
-                >
-                  {type}
-                </FilterButton>
-              ))}
-            </FilterGroup>
-          </div>
-        </div>
-
-        {/* IMPORTANT / LATEST */}
-        {importantUpdates.length > 0 && (
-          <div className="mt-12">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-rose-600">
-                  <Sparkles className="h-4 w-4" />
-                  Latest & Important
+                    <span className="inline-flex items-center gap-1">
+                      <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                      Checked {checkedAt}
+                    </span>
+                  </div>
                 </div>
 
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-                  Important Exam Updates
-                </h2>
+                {/* COMPACT CALENDAR VISUAL */}
+                <div className="hidden items-center justify-center lg:flex">
+                  <div className="relative h-[190px] w-[240px]">
+                    <div className="absolute bottom-5 left-1/2 h-24 w-52 -translate-x-1/2 rounded-full bg-blue-400/20 blur-2xl" />
 
-                <p className="mt-2 text-sm font-medium text-slate-500">
-                  Quick access to recently discovered official notices.
-                </p>
+                    <div className="absolute left-6 top-4 rotate-[-5deg] rounded-[20px] border-[5px] border-blue-700 bg-white p-4 shadow-xl">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div className="h-3 w-20 rounded-full bg-blue-600" />
+                        <CalendarDays className="h-5 w-5 text-blue-500" />
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-2">
+                        {Array.from({
+                          length: 12,
+                        }).map((_, index) => (
+                          <span
+                            key={index}
+                            className={`h-6 w-7 rounded-md ${
+                              index === 5 || index === 10
+                                ? "bg-blue-500"
+                                : "bg-blue-100"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-3 left-0 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg">
+                      <BellRing className="h-6 w-6" />
+                    </div>
+
+                    <div className="absolute bottom-6 right-0 flex h-14 w-20 items-center justify-center rounded-xl bg-[#173a78] text-white shadow-lg">
+                      <BookOpen className="h-7 w-7" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* LIVE UPDATES TICKER */}
+            <section className="mt-3 flex min-h-[44px] items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              {/* FIXED LABEL */}
+              <div className="relative z-10 flex shrink-0 items-center gap-2 border-r border-slate-100 bg-white px-4 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-red-600">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                Live Updates
               </div>
 
-              <div className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm">
-                {filteredUpdates.length}
-                <span className="ml-1.5 font-semibold text-slate-400">
-                  matching updates
-                </span>
-              </div>
-            </div>
+              {/* RUNNING NEWS */}
+              <div className="relative min-w-0 flex-1 overflow-hidden">
+                {tickerUpdates.length > 0 ? (
+                  <div className="exam-news-ticker flex w-max items-center">
+                    {[...tickerUpdates, ...tickerUpdates].map(
+                      (update, index) => (
+                        <a
+                          key={`${update.id}-${index}`}
+                          href={update.officialUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex shrink-0 items-center gap-4 whitespace-nowrap px-5 py-3 text-[10px] font-bold text-slate-600 transition hover:text-blue-700"
+                        >
+                          <span>{update.title}</span>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
-              {importantUpdates.map((update, index) => (
-                <ImportantUpdateCard
-                  key={update.id}
-                  update={update}
-                  isNew={index < 3}
-                />
-              ))}
+                          <span className="text-blue-300">•</span>
+                        </a>
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <p className="px-4 py-3 text-[10px] font-semibold text-slate-500">
+                    Official updates will appear here.
+                  </p>
+                )}
+              </div>
+            </section>
+
+            {/* CATEGORIES */}
+            <section id="exam-categories" className="mt-5 scroll-mt-28">
+              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-blue-600">
+                Explore Exam Categories
+              </p>
+
+              <h2 className="mt-1 text-lg font-black text-slate-950">
+                Find updates by exam category
+              </h2>
+
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                {CATEGORY_CARDS.map((category) => {
+                  const Icon = category.icon;
+                  const active = activeCategory === category.name;
+
+                  return (
+                    <button
+                      key={category.name}
+                      type="button"
+                      onClick={() => selectCategory(category.name)}
+                      className={`rounded-[18px] border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                        active
+                          ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
+                          : "border-slate-200 bg-white hover:border-blue-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                            active
+                              ? "bg-blue-600 text-white"
+                              : "bg-blue-50 text-blue-600"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+
+                        <span className="rounded-full bg-slate-50 px-2 py-1 text-[9px] font-black text-slate-600">
+                          {counts[category.name]}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-3 text-sm font-black text-slate-950">
+                        {category.title}
+                      </h3>
+
+                      <p className="mt-1 text-[10px] font-bold text-blue-600">
+                        {category.examples}
+                      </p>
+
+                      <p className="mt-2 min-h-[38px] text-[10px] font-medium leading-4 text-slate-500">
+                        {category.description}
+                      </p>
+
+                      <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-black text-blue-600">
+                        View Updates
+                        <ChevronRight className="h-3 w-3" />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            {/* FEATURED + IMPORTANT */}
+            <div className="mt-4 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
+              <FeaturedUpdate update={featuredUpdate} />
+
+              <ImportantDates updates={importantUpdates} />
             </div>
           </div>
-        )}
 
-        {/* THREE PROPER SECTIONS */}
-        <div className="mt-14 space-y-16">
-          {visibleCategories.map((category) => (
-            <ExamSection
-              key={category}
-              category={category}
-              updates={filteredUpdates.filter(
-                (update) =>
-                  update.category === category,
-              )}
-            />
-          ))}
-        </div>
+          {/* ==================================================
+              RIGHT SIDEBAR
+          ================================================== */}
 
-        {/* NO RESULTS */}
-        {filteredUpdates.length === 0 && (
-          <div className="mt-10 rounded-[28px] border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-              <Search className="h-6 w-6 text-blue-600" />
-            </div>
+          <aside className="space-y-4">
+            {/* QUICK ACCESS */}
+            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
+              <h2 className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-900">
+                Quick Access
+              </h2>
 
-            <h3 className="mt-5 text-xl font-black text-slate-900">
-              No matching updates found
-            </h3>
+              <div className="mt-2 divide-y divide-slate-100">
+                {QUICK_ACCESS.map((item) => {
+                  const Icon = item.icon;
 
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              Try changing the exam category, authority,
-              update type or search term.
-            </p>
-          </div>
-        )}
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => selectQuickAccess(item.type)}
+                      className="group flex w-full items-center justify-between gap-2 py-2.5 text-left"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
+                          <Icon className="h-3.5 w-3.5" />
+                        </span>
 
-        {/* TRUST */}
-        <div className="mt-16 overflow-hidden rounded-[28px] border border-blue-100 bg-gradient-to-r from-[#eef5ff] to-[#f7fbff] p-6 sm:p-8">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
-                <ShieldCheck className="h-6 w-6 text-blue-600" />
+                        <span className="text-[10px] font-bold text-slate-700 group-hover:text-blue-700">
+                          {item.label}
+                        </span>
+                      </span>
+
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+                    </button>
+                  );
+                })}
               </div>
+            </section>
 
-              <div>
-                <h3 className="text-lg font-black text-slate-950">
-                  Official examination sources only
+            {/* COURSE CTA */}
+            <section className="relative overflow-hidden rounded-[20px] border border-blue-100 bg-gradient-to-br from-[#eef5ff] to-[#dfeaff] p-5">
+              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-300/30 blur-2xl" />
+
+              <div className="relative">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+                  <Trophy className="h-5 w-5" />
+                </div>
+
+                <h3 className="mt-4 text-lg font-black leading-tight text-[#102447]">
+                  Prepare Smarter.
+                  <span className="block text-blue-600">Stay Ahead.</span>
                 </h3>
 
-                <p className="mt-1 max-w-3xl text-sm font-medium leading-6 text-slate-600">
-                  SmartIQ Institute organises examination information
-                  for convenience. Applications, notifications,
-                  timetables, admit cards, answer keys and results
-                  open directly on the respective official authority
-                  website.
+                <p className="mt-2 text-[10px] font-medium leading-4 text-slate-600">
+                  Explore SmartIQ Institute courses and structured learning
+                  programs.
                 </p>
+
+                <Link
+                  href="/courses"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black text-white"
+                >
+                  Explore Courses
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+            </section>
+
+            {/* SOURCES */}
+            <section className="rounded-[20px] bg-[#09285e] p-4 text-white shadow-sm">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-emerald-300" />
+
+                <h3 className="text-[11px] font-black uppercase tracking-[0.08em]">
+                  Official Sources
+                </h3>
+              </div>
+
+              <p className="mt-2 text-[10px] font-medium leading-4 text-blue-100/70">
+                Exam links open directly on approved official authority
+                websites.
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {sources.map((source) => (
+                  <a
+                    key={source.key}
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[9px] font-black text-white transition hover:bg-white/20"
+                  >
+                    {source.name}
+                  </a>
+                ))}
+              </div>
+            </section>
+          </aside>
+        </div>
+
+        {/* ==================================================
+            LATEST UPDATES TABLE
+        ================================================== */}
+
+        <section
+          id="latest-exam-updates"
+          className="mt-5 scroll-mt-28 overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm"
+        >
+          <div className="border-b border-slate-100 p-4 sm:p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Latest Exam Updates
+                </div>
+
+                <h2 className="mt-1 text-xl font-black text-slate-950">
+                  Official notices
+                </h2>
+
+                <p className="mt-1 text-[10px] font-medium text-slate-500">
+                  Search and filter official examination updates.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative sm:w-[260px]">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search exams..."
+                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-[10px] font-semibold outline-none focus:border-blue-400 focus:bg-white"
+                  />
+                </div>
+
+                <select
+                  value={activeSource}
+                  onChange={(event) => setActiveSource(event.target.value)}
+                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-700 outline-none"
+                >
+                  <option value="All">All Authorities</option>
+
+                  {sources.map((source) => (
+                    <option key={source.key} value={source.name}>
+                      {source.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
-            <div className="shrink-0 rounded-full bg-white px-4 py-2 text-xs font-black text-emerald-700 shadow-sm">
-              ✓ Verified Sources
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {UPDATE_TYPES.map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setActiveType(type)}
+                  className={`rounded-full px-3 py-1.5 text-[9px] font-black transition ${
+                    activeType === type
+                      ? "bg-blue-600 text-white"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+
+              {(query ||
+                activeSource !== "All" ||
+                activeType !== "All" ||
+                activeCategory !== "All") && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[9px] font-black text-slate-500"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
           </div>
-        </div>
+
+          {filteredUpdates.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[830px]">
+                <thead>
+                  <tr className="bg-[#f8faff] text-left">
+                    <th className="px-5 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Exam / Update
+                    </th>
+
+                    <th className="px-3 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Type
+                    </th>
+
+                    <th className="px-3 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Date
+                    </th>
+
+                    <th className="px-3 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Authority
+                    </th>
+
+                    <th className="px-5 py-3 text-right text-[9px] font-black uppercase tracking-wider text-slate-400">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {filteredUpdates.map((update, index) => {
+                    const Icon = getTypeIcon(update.type);
+
+                    return (
+                      <tr key={update.id} className="group hover:bg-blue-50/40">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-start gap-2.5">
+                            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                              <Icon className="h-3.5 w-3.5" />
+                            </span>
+
+                            <div>
+                              <p className="max-w-[430px] text-[10px] font-black leading-4 text-slate-800 group-hover:text-blue-700">
+                                {update.title}
+                              </p>
+
+                              <div className="mt-1 flex items-center gap-1.5">
+                                <ShieldCheck className="h-3 w-3 text-emerald-600" />
+
+                                <span className="text-[9px] font-semibold text-slate-400">
+                                  {update.category}
+                                </span>
+
+                                {index < 3 && (
+                                  <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[8px] font-black text-red-600">
+                                    NEW
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-3 py-3.5">
+                          <span
+                            className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-black ${getTypeClasses(
+                              update.type,
+                            )}`}
+                          >
+                            {update.type}
+                          </span>
+                        </td>
+
+                        <td className="px-3 py-3.5 text-[10px] font-semibold text-slate-500">
+                          {update.publishedLabel ?? "—"}
+                        </td>
+
+                        <td className="px-3 py-3.5 text-[10px] font-black text-slate-700">
+                          {update.source}
+                        </td>
+
+                        <td className="px-5 py-3.5 text-right">
+                          <a
+                            href={update.officialUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[9px] font-black text-blue-600 hover:text-blue-800"
+                          >
+                            {getButtonLabel(update.type)}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="px-5 py-12 text-center">
+              <Search className="mx-auto h-6 w-6 text-blue-600" />
+
+              <h3 className="mt-3 text-base font-black text-slate-900">
+                No matching updates found
+              </h3>
+
+              <p className="mt-1 text-xs font-medium text-slate-500">
+                Try another category, authority or update type.
+              </p>
+
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-[10px] font-black text-white"
+              >
+                Show All Updates
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* TRUST */}
+        <section className="mt-5 rounded-[20px] border border-blue-100 bg-[#eef5ff] p-5">
+          <div className="flex gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h3 className="text-sm font-black text-slate-950">
+                Verified official exam links
+              </h3>
+
+              <p className="mt-1 text-[10px] font-medium leading-4 text-slate-600">
+                SmartIQ Institute organises examination information for
+                convenience. Applications, notices, admit cards, answer keys and
+                results open directly on the relevant official authority
+                website.
+              </p>
+            </div>
+          </div>
+        </section>
       </div>
+    </main>
+  );
+}
+
+function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
+  if (!update) {
+    return (
+      <section className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+          Featured Update
+        </p>
+
+        <h3 className="mt-3 text-base font-black text-slate-900">
+          Waiting for official updates
+        </h3>
+      </section>
+    );
+  }
+
+  const Icon = getTypeIcon(update.type);
+
+  return (
+    <section className="relative min-h-[220px] overflow-hidden rounded-[20px] border border-blue-100 bg-gradient-to-br from-white to-[#edf4ff] p-5 shadow-sm">
+      <span className="absolute right-0 top-0 rounded-bl-xl bg-blue-600 px-3 py-1.5 text-[8px] font-black uppercase tracking-wider text-white">
+        Featured Update
+      </span>
+
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+        <Icon className="h-4 w-4" />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[8px] font-black text-white">
+          {update.source}
+        </span>
+
+        <span
+          className={`rounded-full border px-2.5 py-1 text-[8px] font-black ${getTypeClasses(
+            update.type,
+          )}`}
+        >
+          {update.type}
+        </span>
+      </div>
+
+      <h3 className="mt-3 max-w-[640px] text-base font-black leading-5 text-[#102447] sm:text-lg">
+        {update.title}
+      </h3>
+
+      <div className="mt-3 flex flex-wrap gap-3 text-[9px] font-bold text-slate-500">
+        <span>{update.category}</span>
+
+        {update.publishedLabel && (
+          <span className="inline-flex items-center gap-1">
+            <CalendarDays className="h-3 w-3 text-blue-600" />
+            {update.publishedLabel}
+          </span>
+        )}
+      </div>
+
+      <a
+        href={update.officialUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[9px] font-black text-white hover:bg-blue-700"
+      >
+        {getButtonLabel(update.type)}
+        <ExternalLink className="h-3 w-3" />
+      </a>
     </section>
   );
 }
 
-function ExamSection({
-  category,
-  updates,
-}: {
-  category: ExamCategory;
-  updates: ExamUpdate[];
-}) {
-  const config = CATEGORY_CONFIG[category];
-  const Icon = config.icon;
-
+function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
   return (
-    <section>
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex items-start gap-4">
-          <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${config.iconClasses}`}
-          >
-            <Icon className="h-6 w-6" />
-          </div>
+    <section className="min-h-[220px] rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-2">
+        <CalendarDays className="h-4 w-4 text-blue-600" />
 
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
-              Exam Updates
-            </p>
-
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-              {config.title}
-            </h2>
-
-            <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-slate-500">
-              {config.description}
-            </p>
-          </div>
-        </div>
-
-        <div className="w-fit rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700">
-          {updates.length}
-          <span className="ml-1.5 font-semibold text-slate-400">
-            updates
-          </span>
-        </div>
+        <h3 className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-900">
+          Important Dates
+        </h3>
       </div>
 
       {updates.length > 0 ? (
-        <div className="mt-7 grid gap-5 lg:grid-cols-2">
-          {updates.map((update, index) => (
-            <UpdateCard
+        <div className="mt-4 space-y-3">
+          {updates.map((update) => (
+            <a
               key={update.id}
-              update={update}
-              isNew={index < 2}
-            />
+              href={update.officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-start gap-2.5"
+            >
+              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+
+              <div className="min-w-0">
+                <p className="line-clamp-1 text-[9px] font-black text-slate-700 group-hover:text-blue-700">
+                  {update.title}
+                </p>
+
+                <p className="mt-0.5 text-[8px] font-semibold text-slate-400">
+                  {update.source}
+                  {" • "}
+                  {update.publishedLabel}
+                </p>
+              </div>
+            </a>
           ))}
         </div>
       ) : (
-        <div className="mt-7 rounded-[24px] border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-          <Icon className="mx-auto h-7 w-7 text-slate-300" />
-
-          <p className="mt-3 text-sm font-black text-slate-700">
-            No current {config.title.toLowerCase()} updates found
-          </p>
-
-          <p className="mt-1 text-xs font-medium text-slate-400">
-            Official sources are checked automatically.
-          </p>
-        </div>
+        <p className="mt-4 text-[10px] font-medium text-slate-500">
+          Official dates will appear here when available.
+        </p>
       )}
     </section>
-  );
-}
-
-function UpdateCard({
-  update,
-  isNew,
-}: {
-  update: ExamUpdate;
-  isNew: boolean;
-}) {
-  const TypeIcon = getTypeIcon(update.type);
-  const categoryConfig =
-    CATEGORY_CONFIG[update.category];
-
-  return (
-    <article className="group relative overflow-hidden rounded-[24px] border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,35,80,0.05)] transition-all duration-300 hover:-translate-y-1.5 hover:border-blue-200 hover:shadow-[0_20px_50px_rgba(30,91,255,0.12)]">
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-600 via-cyan-400 to-indigo-500 opacity-0 transition-opacity group-hover:opacity-100" />
-
-      <div className="p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#eaf2ff] px-3 py-1 text-[11px] font-black text-[#1456c9]">
-              {update.source}
-            </span>
-
-            <span
-              className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wide ${categoryConfig.badgeClasses}`}
-            >
-              {categoryConfig.shortTitle}
-            </span>
-
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-black ${getTypeClasses(
-                update.type,
-              )}`}
-            >
-              <TypeIcon className="h-3.5 w-3.5" />
-              {update.type}
-            </span>
-          </div>
-
-          {isNew && (
-            <span className="shrink-0 rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-red-600">
-              New
-            </span>
-          )}
-        </div>
-
-        <h3 className="mt-5 line-clamp-3 text-[18px] font-black leading-[1.35] tracking-[-0.01em] text-slate-950 transition-colors group-hover:text-blue-700 sm:text-[20px]">
-          {update.title}
-        </h3>
-
-        <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-4">
-          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            {update.source} official website
-          </div>
-
-          {update.publishedLabel && (
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-              <CalendarDays className="h-3.5 w-3.5 text-blue-500" />
-              {update.publishedLabel}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-5">
-          <a
-            href={update.officialUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1557e8] px-4 py-3 text-sm font-black text-white shadow-lg shadow-blue-600/15 transition-all hover:bg-[#0e49cb] hover:shadow-blue-600/25"
-          >
-            {getButtonLabel(update.type)}
-
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function ImportantUpdateCard({
-  update,
-  isNew,
-}: {
-  update: ExamUpdate;
-  isNew: boolean;
-}) {
-  const config = CATEGORY_CONFIG[update.category];
-
-  return (
-    <a
-      href={update.officialUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group flex items-start gap-4 rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg"
-    >
-      <div
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${config.iconClasses}`}
-      >
-        <config.icon className="h-5 w-5" />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
-            {update.source}
-          </span>
-
-          <span className="text-[10px] font-bold text-slate-400">
-            • {update.type}
-          </span>
-
-          {isNew && (
-            <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[9px] font-black uppercase text-rose-600">
-              New
-            </span>
-          )}
-        </div>
-
-        <p className="mt-2 line-clamp-2 text-sm font-black leading-5 text-slate-900 group-hover:text-blue-700">
-          {update.title}
-        </p>
-
-        {update.publishedLabel && (
-          <p className="mt-2 text-[11px] font-semibold text-slate-400">
-            {update.publishedLabel}
-          </p>
-        )}
-      </div>
-
-      <ExternalLink className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-blue-600" />
-    </a>
-  );
-}
-
-function FilterGroup({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <p className="mb-2 text-[10px] font-black uppercase tracking-[0.17em] text-slate-400">
-        {label}
-      </p>
-
-      <div className="flex flex-wrap gap-2">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function FilterButton({
-  active,
-  onClick,
-  children,
-  dark = false,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  dark?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-full px-3.5 py-2 text-xs font-black transition-all ${
-        active
-          ? dark
-            ? "bg-slate-950 text-white shadow-md"
-            : "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-          : "border border-slate-200 bg-white text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-}: {
-  label: string;
-  value: number;
-  icon: ElementType;
-}) {
-  return (
-    <div className="group rounded-[22px] border border-slate-200/80 bg-white p-4 shadow-[0_10px_35px_rgba(15,35,80,0.08)] transition hover:-translate-y-1 hover:shadow-xl">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 transition group-hover:bg-blue-600">
-          <Icon className="h-5 w-5 text-blue-600 transition group-hover:text-white" />
-        </div>
-
-        <div>
-          <p className="text-2xl font-black tracking-tight text-slate-950">
-            {value}
-          </p>
-
-          <p className="text-xs font-bold text-slate-500">
-            {label}
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }
