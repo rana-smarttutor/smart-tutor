@@ -51,7 +51,7 @@ export default function FeeReceipt() {
                   Sector 17, Vashi, Navi Mumbai – 400703
                   <br />
                   <span className="text-gray-500">
-                    info@smarttutors.co.in | +91 88504 47887
+                    info@smartiqinstitute.in | +91 88504 47887
                   </span>
                 </div>
               </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -21,6 +21,11 @@ type CreateAccountForm = {
   parentEmail: string;
   parentMobile: string;
   assignedFacultyIds: string[];
+  designation: string;
+  department: string;
+  branch: string;
+  employmentType: string;
+  joiningDate: string;
 };
 
 export function DashboardAccountDirectory({
@@ -52,16 +57,26 @@ export function DashboardAccountDirectory({
     parentEmail: "",
     parentMobile: "",
     assignedFacultyIds: [],
+    designation: "",
+    department: "",
+    branch: "",
+    employmentType: "full_time",
+    joiningDate: "",
   });
 
   const [mainTab, setMainTab] = useState<
-    "students" | "faculty" | "parents" | "other"
+    "students" | "staff" | "parents" | "other"
   >("students");
+
+  const [employeeSubTab, setEmployeeSubTab] = useState<
+    "faculty" | "staff"
+  >("faculty");
 
   const accountCounts = useMemo(
     () => ({
       students: users.filter((item) => item.role === "student").length,
       educators: users.filter((item) => item.role === "educator").length,
+      staff: users.filter((item) => item.role === "staff").length,
       admins: users.filter((item) => item.role === "admin").length,
       parents: users.filter((item) => item.role === "parent").length,
       counsellors: users.filter((item) => item.role === "counsellor").length,
@@ -91,8 +106,9 @@ export function DashboardAccountDirectory({
       admin: 0,
       counsellor: 1,
       educator: 2,
-      student: 3,
-      parent: 4,
+      staff: 3,
+      student: 4,
+      parent: 5,
     };
     return [...users].sort((left, right) => {
       const rd = roleOrder[left.role] - roleOrder[right.role];
@@ -138,12 +154,41 @@ list = list.filter(
     u.name.toLowerCase().includes(q) ||
     u.email.toLowerCase().includes(q) ||
     u.program.toLowerCase().includes(q) ||
-    u.facultyCode?.toLowerCase().includes(q),
+    (u.employeeCode ?? u.facultyCode)?.toLowerCase().includes(q),
 );
     }
     return list;
   }, [users, searchQuery]);
 
+
+  const tabStaff = useMemo(() => {
+    let list = users.filter((u) => u.role === "staff");
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.program.toLowerCase().includes(q) ||
+          (u.employeeCode ?? u.facultyCode)
+            ?.toLowerCase()
+            .includes(q) ||
+          u.profile?.designation
+            ?.toLowerCase()
+            .includes(q) ||
+          u.profile?.department
+            ?.toLowerCase()
+            .includes(q) ||
+          u.profile?.branch
+            ?.toLowerCase()
+            .includes(q),
+      );
+    }
+
+    return list;
+  }, [users, searchQuery]);
   const tabParents = useMemo(() => {
     let list = users.filter((u) => u.role === "parent");
     if (searchQuery.trim()) {
@@ -161,7 +206,10 @@ list = list.filter(
   const tabOther = useMemo(() => {
     let list = users.filter(
       (u) =>
-        u.role !== "student" && u.role !== "educator" && u.role !== "parent",
+        u.role !== "student" &&
+        u.role !== "educator" &&
+        u.role !== "staff" &&
+        u.role !== "parent",
     );
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
@@ -216,6 +264,11 @@ list = list.filter(
       parentEmail: "",
       parentMobile: "",
       assignedFacultyIds: [],
+    designation: "",
+    department: "",
+    branch: "",
+    employmentType: "full_time",
+    joiningDate: "",
     });
     setActiveTab(null);
     setMainTab("students");
@@ -320,31 +373,37 @@ list = list.filter(
         return "bi-shield-fill-check";
       case "educator":
         return "bi-person-workspace";
+      case "staff":
+        return "bi-person-badge-fill";
       case "student":
         return "bi-mortarboard-fill";
       case "parent":
         return "bi-people-fill";
       case "counsellor":
         return "bi-chat-dots-fill";
+      default:
+        return "bi-person-fill";
     }
   }
-
-  function getRoleColor(role: Role) {
+function getRoleColor(role: Role): { bg: string; color: string } {
     switch (role) {
       case "admin":
         return { bg: "#EEF2FF", color: "#4F46E5" };
       case "educator":
         return { bg: "#F0F9FF", color: "#0284C7" };
+      case "staff":
+        return { bg: "#F8FAFC", color: "#475569" };
       case "student":
         return { bg: "#F0FDF4", color: "#16A34A" };
       case "parent":
         return { bg: "#FFF7ED", color: "#D97706" };
       case "counsellor":
         return { bg: "#F5F3FF", color: "#7C3AED" };
+      default:
+        return { bg: "#F1F5F9", color: "#64748B" };
     }
   }
-
-  const isEditing = (userId: string) => editingUserId === userId;
+const isEditing = (userId: string) => editingUserId === userId;
 
   const renderUserGrid = (userList: ManagedUser[]) =>
     userList.length === 0 ? (
@@ -384,9 +443,13 @@ list = list.filter(
                       {user.name}
                     </p>
   <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">
-  {user.role === "educator"
-    ? `Employee ID: ${user.facultyCode ?? "Not assigned"}`
-    : `ID: ${user.id.slice(0, 8).toUpperCase()}`}
+  {user.role === "educator" || user.role === "staff"
+                        ? `Employee ID: ${
+                            user.employeeCode ??
+                            user.facultyCode ??
+                            "Not assigned"
+                          }`
+                        : `ID: ${user.id.slice(0, 8).toUpperCase()}`}
 </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <span
@@ -394,7 +457,17 @@ list = list.filter(
                         style={{ background: rc.bg, color: rc.color }}
                       >
                         <i className={`bi ${getRoleIcon(user.role)}`} />
-                        {user.role}
+                        {user.role === "educator"
+                          ? "Faculty"
+                          : user.role === "staff"
+                            ? "Staff"
+                            : user.role === "counsellor"
+                              ? "Counsellor"
+                              : user.role === "admin"
+                                ? "Admin"
+                                : user.role === "parent"
+                                  ? "Parent"
+                                  : "Student"}
                       </span>
                       <span
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
@@ -454,6 +527,82 @@ list = list.filter(
                         {user.program}
                       </p>
                     </div>
+                  ) : null}
+                  {user.role === "staff" ? (
+                    <>
+                      {(p?.designation ||
+                        p?.department ||
+                        p?.branch ||
+                        p?.employmentType ||
+                        p?.joiningDate) && (
+                        <div className="col-span-2 rounded-lg bg-[var(--color-panel)] p-3">
+                          <p className="mb-2 text-[10px] font-black uppercase tracking-wider text-[var(--color-muted)]">
+                            Staff Details
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            {p?.designation ? (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">
+                                  Designation
+                                </span>
+                                <p className="text-[var(--color-heading)]">
+                                  {p.designation}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {p?.department ? (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">
+                                  Department
+                                </span>
+                                <p className="text-[var(--color-heading)]">
+                                  {p.department}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {p?.branch ? (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">
+                                  Branch
+                                </span>
+                                <p className="text-[var(--color-heading)]">
+                                  {p.branch}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {p?.employmentType ? (
+                              <div>
+                                <span className="font-semibold text-[var(--color-muted)]">
+                                  Employment
+                                </span>
+                                <p className="text-[var(--color-heading)]">
+                                  {p.employmentType
+                                    .replaceAll("_", " ")
+                                    .replace(/\b\w/g, (c) =>
+                                      c.toUpperCase(),
+                                    )}
+                                </p>
+                              </div>
+                            ) : null}
+
+                            {p?.joiningDate ? (
+                              <div className="col-span-2">
+                                <span className="font-semibold text-[var(--color-muted)]">
+                                  Joining Date
+                                </span>
+                                <p className="text-[var(--color-heading)]">
+                                  {p.joiningDate}
+                                </p>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : null}
                   {p?.dob && (
                     <div>
@@ -830,6 +979,7 @@ list = list.filter(
                     >
                       <option value="student">Student</option>
                       <option value="educator">Faculty</option>
+                      <option value="staff">Staff</option>
                       <option value="counsellor">Counsellor</option>
                       <option value="parent">Parent</option>
                       <option value="admin">Admin</option>
@@ -980,7 +1130,7 @@ list = list.filter(
 
   return (
     <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
-      {/* ── Clean CoachSutra-style Header ── */}
+      {/* â”€â”€ Clean CoachSutra-style Header â”€â”€ */}
       <div
         style={{
           padding: "24px 28px 0",
@@ -1032,7 +1182,7 @@ list = list.filter(
         </div>
       ) : null}
 
-      {/* ── Main Tab Bar (CoachSutra-style) ── */}
+      {/* â”€â”€ Main Tab Bar (CoachSutra-style) â”€â”€ */}
       <div className="flex flex-wrap gap-2 px-6 pt-5">
         {[
           {
@@ -1041,9 +1191,9 @@ list = list.filter(
             count: accountCounts.students,
           },
           {
-            id: "faculty" as const,
-            label: "Faculty",
-            count: accountCounts.educators,
+            id: "staff" as const,
+            label: "Staff",
+            count: accountCounts.educators + accountCounts.staff,
           },
           {
             id: "parents" as const,
@@ -1086,7 +1236,7 @@ list = list.filter(
         ))}
       </div>
 
-      {/* ── Secondary Tab Pills (Register / Directory / Verification) ── */}
+      {/* â”€â”€ Secondary Tab Pills (Register / Directory / Verification) â”€â”€ */}
       <div className="flex flex-wrap gap-1.5 px-6 pt-3">
         {[
           {
@@ -1132,7 +1282,7 @@ list = list.filter(
       <div className="p-6">
         {activeTab !== null ? (
           activeTab === "register" ? (
-            /* ── REGISTER TAB (preserved) ── */
+            /* â”€â”€ REGISTER TAB (preserved) â”€â”€ */
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
                 <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
@@ -1140,6 +1290,95 @@ list = list.filter(
                   Add a new registered person
                 </p>
                 <div className="grid gap-3">
+
+                  {mainTab === "staff" ? (
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+                      <p className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--color-muted)]">
+                        Employee Type
+                      </p>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmployeeSubTab("faculty");
+
+                            setCreateForm((c) => ({
+                              ...c,
+                              role: "educator",
+                              program: "Faculty",
+                              password: "Educator@123",
+                              confirm: false,
+                            }));
+                          }}
+                          className={`rounded-xl border px-4 py-3 text-left transition ${
+                            createForm.role === "educator"
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                              : "border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-heading)]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <i className="bi bi-person-workspace" />
+                            <span className="font-bold">
+                              Faculty
+                            </span>
+                          </div>
+
+                          <p
+                            className={`mt-1 text-xs ${
+                              createForm.role === "educator"
+                                ? "text-white/75"
+                                : "text-[var(--color-muted)]"
+                            }`}
+                          >
+                            Teaching employee
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmployeeSubTab("staff");
+
+                            setCreateForm((c) => ({
+                              ...c,
+                              role: "staff",
+                              program: "Staff",
+                              password: "Staff@123",
+                              designation: "",
+                              department: "",
+                              branch: "",
+                              employmentType: "full_time",
+                              joiningDate: "",
+                              confirm: false,
+                            }));
+                          }}
+                          className={`rounded-xl border px-4 py-3 text-left transition ${
+                            createForm.role === "staff"
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                              : "border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-heading)]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <i className="bi bi-person-badge-fill" />
+                            <span className="font-bold">
+                              Staff
+                            </span>
+                          </div>
+
+                          <p
+                            className={`mt-1 text-xs ${
+                              createForm.role === "staff"
+                                ? "text-white/75"
+                                : "text-[var(--color-muted)]"
+                            }`}
+                          >
+                            Non-teaching employee
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                   <input
                     value={createForm.name}
                     onChange={(e) =>
@@ -1174,7 +1413,9 @@ list = list.filter(
                               ? "Admin@123"
                               : e.target.value === "educator"
                                 ? "Educator@123"
-                                : e.target.value === "parent"
+                                : e.target.value === "staff"
+                                  ? "Staff@123"
+                                  : e.target.value === "parent"
                                   ? "Parent@123"
                                   : "Student@123",
                         }))
@@ -1183,6 +1424,7 @@ list = list.filter(
                     >
                       <option value="student">Student</option>
                       <option value="educator">Faculty</option>
+                      <option value="staff">Staff</option>
                       <option value="counsellor">Counsellor</option>
                       <option value="parent">Parent</option>
                       <option value="admin">Admin</option>
@@ -1202,6 +1444,99 @@ list = list.filter(
                     ) : null}
                   </div>
 
+                  {createForm.role === "staff" ? (
+                    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
+                      <p className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--color-muted)]">
+                        Staff Employment Details
+                      </p>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <select
+                          value={createForm.designation}
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              designation: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        >
+                          <option value="">Select designation</option>
+                          <option value="Receptionist">Receptionist</option>
+                          <option value="Office Admin">Office Admin</option>
+                          <option value="Branch Manager">Branch Manager</option>
+                          <option value="Accountant">Accountant</option>
+                          <option value="HR">HR</option>
+                          <option value="Counsellor">Counsellor</option>
+                          <option value="Operations">Operations</option>
+                          <option value="Support">Support</option>
+                          <option value="Marketing">Marketing</option>
+                          <option value="Sales">Sales</option>
+                          <option value="IT Support">IT Support</option>
+                          <option value="Other">Other</option>
+                        </select>
+
+                        <input
+                          value={createForm.department}
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              department: e.target.value.slice(0, 80),
+                            }))
+                          }
+                          placeholder="Department"
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        />
+
+                        <input
+                          value={createForm.branch}
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              branch: e.target.value.slice(0, 80),
+                            }))
+                          }
+                          placeholder="Branch"
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        />
+
+                        <select
+                          value={createForm.employmentType}
+                          onChange={(e) =>
+                            setCreateForm((c) => ({
+                              ...c,
+                              employmentType: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        >
+                          <option value="full_time">Full Time</option>
+                          <option value="part_time">Part Time</option>
+                          <option value="contractual">Contractual</option>
+                          <option value="hourly">Hourly</option>
+                        </select>
+
+                        <div className="sm:col-span-2">
+                          <label className="mb-1 block text-xs font-bold text-[var(--color-muted)]">
+                            Joining Date
+                          </label>
+
+                          <input
+                            type="date"
+                            value={createForm.joiningDate}
+                            onChange={(e) =>
+                              setCreateForm((c) => ({
+                                ...c,
+                                joiningDate: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
                   {createForm.role === "parent" ? (
                     <select
                       value={createForm.linkedStudentId}
@@ -1216,7 +1551,7 @@ list = list.filter(
                       <option value="">Select student to link...</option>
                       {studentOptions.map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} — {s.email}
+                          {s.name} â€” {s.email}
                         </option>
                       ))}
                     </select>
@@ -1412,7 +1747,7 @@ list = list.filter(
               </div>
             </div>
           ) : activeTab === "directory" ? (
-            /* ── DIRECTORY TAB (preserved) ── */
+            /* â”€â”€ DIRECTORY TAB (preserved) â”€â”€ */
             <>
               <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
@@ -1479,7 +1814,7 @@ list = list.filter(
                   <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                   <input
                     type="text"
-                    placeholder="Search name, email, program…"
+                    placeholder="Search name, email, programâ€¦"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1524,7 +1859,7 @@ list = list.filter(
               {renderUserGrid(filteredUsers)}
             </>
           ) : (
-            /* ── VERIFICATION TAB (preserved) ── */
+            /* â”€â”€ VERIFICATION TAB (preserved) â”€â”€ */
             <div>
               <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
                 <i className="bi bi-shield-check me-2 text-[var(--color-primary)]" />
@@ -1685,7 +2020,7 @@ list = list.filter(
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID — Front
+                                Photo ID â€” Front
                               </a>
                             )}
                             {req.profile.photoIdBackUrl && (
@@ -1696,7 +2031,7 @@ list = list.filter(
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID — Back
+                                Photo ID â€” Back
                               </a>
                             )}
                           </div>
@@ -1739,14 +2074,14 @@ list = list.filter(
             </div>
           )
         ) : mainTab === "students" ? (
-          /* ── STUDENTS TAB ── */
+          /* â”€â”€ STUDENTS TAB â”€â”€ */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search students by name, email, program…"
+                  placeholder="Search students by name, email, programâ€¦"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1773,30 +2108,94 @@ list = list.filter(
             </div>
             {renderUserGrid(tabStudents)}
           </>
-        ) : mainTab === "faculty" ? (
-          /* ── FACULTY TAB ── */
+        ) : mainTab === "staff" ? (
+          /* ── STAFF TAB: FACULTY + NON-TEACHING STAFF ── */
           <>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmployeeSubTab("faculty");
+                  setSearchQuery("");
+                }}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                  employeeSubTab === "faculty"
+                    ? "bg-[var(--color-primary)] text-white shadow-sm"
+                    : "border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                }`}
+              >
+                <i className="bi bi-person-workspace me-2" />
+                Faculty ({accountCounts.educators})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEmployeeSubTab("staff");
+                  setSearchQuery("");
+                }}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${
+                  employeeSubTab === "staff"
+                    ? "bg-[var(--color-primary)] text-white shadow-sm"
+                    : "border border-[var(--color-border)] bg-[var(--color-card)] text-[var(--color-heading)] hover:bg-[var(--color-panel)]"
+                }`}
+              >
+                <i className="bi bi-person-badge-fill me-2" />
+                Staff ({accountCounts.staff})
+              </button>
+            </div>
+
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <div className="relative flex-1" style={{ minWidth: 200 }}>
+              <div
+                className="relative flex-1"
+                style={{ minWidth: 200 }}
+              >
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
+
                 <input
                   type="text"
-                  placeholder="Search faculty by name, email, Employee ID…"
+                  placeholder={
+                    employeeSubTab === "faculty"
+                      ? "Search faculty by name, email, Employee ID…"
+                      : "Search staff by name, email, Employee ID, designation…"
+                  }
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) =>
+                    setSearchQuery(e.target.value)
+                  }
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
+
               <button
                 onClick={() => {
-                  setCreateForm((c) => ({ ...c, role: "educator" }));
+                  const role =
+                    employeeSubTab === "faculty"
+                      ? "educator"
+                      : "staff";
+
+                  setCreateForm((c) => ({
+                    ...c,
+                    role,
+                    program:
+                      role === "educator"
+                        ? "Faculty"
+                        : "Staff",
+                    password:
+                      role === "educator"
+                        ? "Educator@123"
+                        : "Staff@123",
+                    confirm: false,
+                  }));
+
                   setActiveTab("register");
                 }}
                 className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
               >
                 <i className="bi bi-person-plus-fill" />
-                Add Teacher
+                Add Employee
               </button>
+
               {searchQuery ? (
                 <button
                   onClick={() => setSearchQuery("")}
@@ -1806,17 +2205,22 @@ list = list.filter(
                 </button>
               ) : null}
             </div>
-            {renderUserGrid(tabEducators)}
+
+            {renderUserGrid(
+              employeeSubTab === "faculty"
+                ? tabEducators
+                : tabStaff,
+            )}
           </>
         ) : mainTab === "parents" ? (
-          /* ── PARENTS TAB ── */
+          /* â”€â”€ PARENTS TAB â”€â”€ */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search parents by name, email…"
+                  placeholder="Search parents by name, emailâ€¦"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1844,14 +2248,14 @@ list = list.filter(
             {renderUserGrid(tabParents)}
           </>
         ) : (
-          /* ── OTHER ACCOUNTS TAB (admin, counsellor, etc.) ── */
+          /* â”€â”€ OTHER ACCOUNTS TAB (admin, counsellor, etc.) â”€â”€ */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search by name, email, role…"
+                  placeholder="Search by name, email, roleâ€¦"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1885,3 +2289,9 @@ list = list.filter(
     </section>
   );
 }
+
+
+
+
+
+

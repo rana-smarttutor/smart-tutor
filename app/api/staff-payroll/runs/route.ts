@@ -31,6 +31,7 @@ function readSession(payload: unknown): SessionUser | null {
     !user.id ||
     (user.role !== "admin" &&
       user.role !== "educator" &&
+      user.role !== "staff" &&
       user.role !== "student" &&
       user.role !== "parent")
   ) {
@@ -81,7 +82,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ runs });
     }
 
-    if (session.role === "educator") {
+    if (session.role === "educator" || session.role === "staff") {
       const runs = await (dataStore as any).getPayrollRunsForFaculty(session.id);
       return NextResponse.json({ runs });
     }

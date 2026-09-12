@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ContactAction,
   ContactMethod,
   CourseItem,
@@ -22,7 +22,7 @@ import { generatedPlacedStudents } from "./placed-students-data";
 const CONTACT_PHONE =
   process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
 const CONTACT_EMAIL =
-  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smarttutors.co.in";
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smartiqinstitute.in";
 const CONTACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
 const WHATSAPP_LINK =
@@ -131,6 +131,21 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
       description: "Track attendance, fees, and follow-ups.",
     },
   ],
+  staff: [
+    {
+      title: "Employee dashboard",
+      description: "Access your employee profile and assigned workplace tools.",
+    },
+    {
+      title: "Attendance and leave",
+      description: "View attendance, check-in records, and manage leave requests.",
+    },
+    {
+      title: "Payroll and salary",
+      description: "View payroll, salary details, payouts, and employee records.",
+    },
+  ],
+
   counsellor: [
     {
       title: "Counsellor CRM",
@@ -161,7 +176,7 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
     {
       title: "View-only access",
       description:
-        "View performance reports, attendance, test results, fees, and lecture schedules — no editing rights.",
+        "View performance reports, attendance, test results, fees, and lecture schedules â€” no editing rights.",
     },
     {
       title: "Notifications & forms",
@@ -322,7 +337,24 @@ const testSubmissions: TestSubmission[] = [
 const dashboardStats: Record<Role, DashboardMetric[]> = {
   student: [],
   educator: [],
-  counsellor: [],
+  staff: [
+    {
+      label: "Employee Status",
+      value: "Active",
+      detail: "SmartIQ staff account",
+    },
+    {
+      label: "Attendance",
+      value: "—",
+      detail: "Employee attendance and check-in records",
+    },
+    {
+      label: "Leave",
+      value: "—",
+      detail: "Leave requests and balance",
+    },
+  ],
+ counsellor: [],
   admin: [],
   parent: [],
 };
@@ -566,7 +598,7 @@ export function getPublicInstituteData() {
         },
       ],
       phone: "+91 8850447887",
-      email: "info@smarttutors.co.in",
+      email: "info@smartiqinstitute.in",
       hours: "Monday to Saturday",
       specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
       directorName: "Prof. Ravi Rana",
@@ -858,18 +890,23 @@ export function getDashboardBundle(role: Role, userId?: string) {
     student: {
       title: `Welcome back${user ? `, ${user.name.split(" ")[0]}` : ""}`,
       description:
-        "Track tests, attendance, lectures, and results — everything you need to stay on top of your learning.",
+        "Track tests, attendance, lectures, and results â€” everything you need to stay on top of your learning.",
     },
     parent: {
       title: "Parent Dashboard",
       description:
-        "View institute updates, notices, fee details, and connect with educators — all in one place.",
+        "View institute updates, notices, fee details, and connect with educators â€” all in one place.",
     },
     educator: {
       title: `Educator Console${user ? ` | ${user.name}` : ""}`,
       description: "Manage tests, courses, and notices from one view.",
     },
-    counsellor: {
+  staff: {
+    title: "Staff Dashboard",
+    description:
+      "Manage your employee profile, attendance, leave, payroll, communication, and assigned work.",
+  },
+  counsellor: {
       title: "Your Sales CRM is ready",
       description:
         "Manage assigned leads, complete follow-ups, schedule demos, and track admissions.",
@@ -1191,7 +1228,7 @@ export function getTemplateSeedData() {
             roleLabel: "Parent Dashboard",
             heroTitle: "Parent Dashboard",
             heroDescription:
-              "View institute updates, notices, fee details, and connect with educators — all in one place.",
+              "View institute updates, notices, fee details, and connect with educators â€” all in one place.",
             stats: dashboardStats.parent,
             primaryPanel: getDashboardBundle("parent").primaryPanel,
             permissions: rolePermissions.parent,
@@ -1273,3 +1310,5 @@ export function getTemplateSeedData() {
     ],
   };
 }
+
+

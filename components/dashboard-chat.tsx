@@ -328,6 +328,19 @@ if (role === "student") {
     ).values(),
   ];
 }
+    if (role === "staff") {
+      return (managedUsers ?? []).filter(
+        (u) =>
+          u.id !== session?.id &&
+          u.status === "active" &&
+          u.verified !== false &&
+          (
+            u.role === "admin" ||
+            u.role === "educator" ||
+            u.role === "staff"
+          ),
+      );
+    }
     if (role === "parent") {
       const admins = (managedUsers ?? []).filter((u) => u.role === "admin");
       const educators = (managedUsers ?? []).filter(

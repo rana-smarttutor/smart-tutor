@@ -136,6 +136,7 @@ type DashboardTemplate = {
 type UserDocument = SessionUser & {
   password: string;
   program: string;
+  employeeCode?: string;
 
   facultyCode?: string;
   approvedAt?: string;
@@ -328,7 +329,7 @@ export async function createPasswordResetRequest(input: {
 
   const request = {
     id: `pwdreset-${randomUUID()}`,
-    name: input.name.trim(),
+name: input.name.trim(),
     email: input.email.trim().toLowerCase(),
     phone: input.phone.trim(),
     role: input.role,
@@ -426,7 +427,7 @@ export { DEFAULT_HEURISTICS };
 
 let userIndexesPromise: Promise<void> | null = null;
 let standardCoursesBackfillPromise: Promise<void> | null = null;
-let facultyCodeBackfillPromise: Promise<void> | null = null;
+let employeeCodeBackfillPromise: Promise<void> | null = null;
 
 function toPlainData<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -454,12 +455,15 @@ export async function getCollection<T extends Document>(
   const db = await getMongoDatabase();
   return db.collection<T>(name);
 }
-function getFacultyCodeYear(value?: string | Date | null) {
+function getEmployeeCodeYear(value?: string | Date | null) {
   if (!value) {
     return new Date().getFullYear();
   }
 
-  const date = value instanceof Date ? value : new Date(value);
+  const date =
+    value instanceof Date
+      ? value
+      : new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return new Date().getFullYear();
@@ -468,13 +472,13 @@ function getFacultyCodeYear(value?: string | Date | null) {
   return date.getFullYear();
 }
 
-function parseFacultyCode(value?: string | null) {
+function parseEmployeeCode(value?: string | null) {
   if (!value) {
     return null;
   }
 
   const match = value.match(
-    /^SIQ-FAC-(\d{4})-(\d+)$/,
+    /^SIQ-(?:EMP|FAC)-(\d{4})-(\d+)$/,
   );
 
   if (!match) {
@@ -487,7 +491,7 @@ function parseFacultyCode(value?: string | null) {
   };
 }
 
-async function ensureFacultyCounterAtLeast(
+async function ensureEmployeeCounterAtLeast(
   year: number,
   sequence: number,
 ) {
@@ -497,7 +501,7 @@ async function ensureFacultyCounterAtLeast(
 
   await collection.updateOne(
     {
-      _id: `faculty-code-${year}`,
+      _id: `employee-code-${year}`,
     } as any,
     {
       $max: {
@@ -510,7 +514,7 @@ async function ensureFacultyCounterAtLeast(
   );
 }
 
-async function generateFacultyCode(
+async function generateEmployeeCode(
   year = new Date().getFullYear(),
 ) {
   const collection = await getCollection<Document>(
@@ -519,7 +523,7 @@ async function generateFacultyCode(
 
   const counter = await collection.findOneAndUpdate(
     {
-      _id: `faculty-code-${year}`,
+      _id: `employee-code-${year}`,
     } as any,
     {
       $inc: {
@@ -538,55 +542,60 @@ async function generateFacultyCode(
 
   const sequence = Number(counter?.seq ?? 1);
 
-  return `SIQ-FAC-${year}-${String(sequence).padStart(
+  return `SIQ-EMP-${year}-${String(sequence).padStart(
     4,
     "0",
   )}`;
 }
 
-async function ensureFacultyCodesBackfilled() {
-  if (!facultyCodeBackfillPromise) {
-    facultyCodeBackfillPromise = (async () => {
+async function ensureEmployeeCodesBackfilled() {
+  if (!employeeCodeBackfillPromise) {
+    employeeCodeBackfillPromise = (async () => {
       const users =
         await getCollection<UserDocument>(
           COLLECTIONS.users,
         );
 
       /*
-       * First inspect any faculty codes that might
-       * already exist and synchronize our counters.
+       * Synchronize the Employee ID counter using
+       * existing Employee IDs and legacy Faculty IDs.
        */
-      const existingCodes = await users
+      const existingEmployees = await users
         .find({
-          role: "educator",
-
-          facultyCode: {
-            $type: "string",
+          role: {
+            $in: ["educator", "staff"],
           },
         } as any)
         .project({
+          employeeCode: 1,
           facultyCode: 1,
         })
         .toArray();
 
-      const maximumByYear = new Map<
-        number,
-        number
-      >();
+      const maximumByYear =
+        new Map<number, number>();
 
-      for (const document of existingCodes) {
-        const parsed = parseFacultyCode(
-          document.facultyCode as string,
-        );
+      for (const employee of existingEmployees) {
+        const parsed =
+          parseEmployeeCode(
+            employee.employeeCode as
+              | string
+              | undefined,
+          ) ??
+          parseEmployeeCode(
+            employee.facultyCode as
+              | string
+              | undefined,
+          );
 
         if (!parsed) {
           continue;
         }
 
-        const existingMaximum =
+        const currentMaximum =
           maximumByYear.get(parsed.year) ?? 0;
 
-        if (parsed.sequence > existingMaximum) {
+        if (parsed.sequence > currentMaximum) {
           maximumByYear.set(
             parsed.year,
             parsed.sequence,
@@ -598,21 +607,24 @@ async function ensureFacultyCodesBackfilled() {
         year,
         maximum,
       ] of maximumByYear.entries()) {
-        await ensureFacultyCounterAtLeast(
+        await ensureEmployeeCounterAtLeast(
           year,
           maximum,
         );
       }
 
       /*
-       * Existing ACTIVE faculty without a Faculty ID
-       * receive one automatically.
+       * Give Employee IDs to every ACTIVE
+       * Faculty and Staff member.
        *
-       * Pending applications do NOT receive one.
+       * Pending employees do not receive an ID
+       * until approval.
        */
-      const missingFaculty = await users
+      const employeesMissingCode = await users
         .find({
-          role: "educator",
+          role: {
+            $in: ["educator", "staff"],
+          },
 
           deletedAt: {
             $exists: false,
@@ -622,15 +634,15 @@ async function ensureFacultyCodesBackfilled() {
             {
               $or: [
                 {
-                  facultyCode: {
+                  employeeCode: {
                     $exists: false,
                   },
                 },
                 {
-                  facultyCode: null,
+                  employeeCode: null,
                 },
                 {
-                  facultyCode: "",
+                  employeeCode: "",
                 },
               ],
             },
@@ -658,43 +670,86 @@ async function ensureFacultyCodesBackfilled() {
         })
         .toArray();
 
-      for (const faculty of missingFaculty) {
-        /*
-         * Existing faculty use their account creation
-         * year where possible.
-         *
-         * Newly-approved faculty use their approval year.
-         */
-        const year = getFacultyCodeYear(
-          faculty.approvedAt ??
-            faculty.createdAt,
-        );
+      for (const employee of employeesMissingCode) {
+        let employeeCode: string | undefined;
 
-        const facultyCode =
-          await generateFacultyCode(year);
+        /*
+         * Existing Faculty keep their old sequence
+         * where possible:
+         *
+         * SIQ-FAC-2026-0002
+         * becomes
+         * SIQ-EMP-2026-0002
+         */
+        const legacyCode =
+          employee.role === "educator"
+            ? parseEmployeeCode(
+                employee.facultyCode,
+              )
+            : null;
+
+        if (legacyCode) {
+          const legacyEmployeeCode =
+            `SIQ-EMP-${legacyCode.year}-${String(
+              legacyCode.sequence,
+            ).padStart(4, "0")}`;
+
+          const collision = await users.findOne({
+            employeeCode:
+              legacyEmployeeCode,
+
+            id: {
+              $ne: employee.id,
+            },
+          } as any);
+
+          if (!collision) {
+            employeeCode =
+              legacyEmployeeCode;
+
+            await ensureEmployeeCounterAtLeast(
+              legacyCode.year,
+              legacyCode.sequence,
+            );
+          }
+        }
+
+        if (!employeeCode) {
+          const year =
+            getEmployeeCodeYear(
+              employee.approvedAt ??
+                employee.createdAt,
+            );
+
+          employeeCode =
+            await generateEmployeeCode(
+              year,
+            );
+        }
 
         await users.updateOne(
           {
-            id: faculty.id,
+            id: employee.id,
 
             $or: [
               {
-                facultyCode: {
+                employeeCode: {
                   $exists: false,
                 },
               },
               {
-                facultyCode: null,
+                employeeCode: null,
               },
               {
-                facultyCode: "",
+                employeeCode: "",
               },
             ],
           } as any,
 
           {
             $set: {
-              facultyCode,
+              employeeCode,
+
               updatedAt:
                 new Date().toISOString(),
             },
@@ -702,12 +757,12 @@ async function ensureFacultyCodesBackfilled() {
         );
       }
     })().catch((error) => {
-      facultyCodeBackfillPromise = null;
+      employeeCodeBackfillPromise = null;
       throw error;
     });
   }
 
-  return facultyCodeBackfillPromise;
+  return employeeCodeBackfillPromise;
 }
 async function ensureUserIndexes() {
   if (!userIndexesPromise) {
@@ -740,7 +795,19 @@ async function ensureUserIndexes() {
        * Assign Faculty IDs to educators already
        * present in the system.
        */
-      await ensureFacultyCodesBackfilled();
+      await ensureEmployeeCodesBackfilled();
+      await collection.createIndex(
+        { employeeCode: 1 },
+        {
+          unique: true,
+          partialFilterExpression: {
+            employeeCode: {
+              $type: "string",
+            },
+          },
+          name: "users_unique_employeeCode",
+        },
+      );
 
       /*
        * Faculty ID must be unique when present.
@@ -748,22 +815,6 @@ async function ensureUserIndexes() {
        * Pending applicants have no facultyCode,
        * so they are not part of this index.
        */
-      await collection.createIndex(
-        {
-          facultyCode: 1,
-        },
-        {
-          unique: true,
-
-          partialFilterExpression: {
-            facultyCode: {
-              $type: "string",
-            },
-          },
-
-          name: "users_unique_facultyCode",
-        },
-      );
     })().catch((error) => {
       userIndexesPromise = null;
       throw error;
@@ -821,12 +872,12 @@ function toManagedUser(user: UserDocument): ManagedUser {
 function getRoleLabel(role: Role) {
   if (role === "admin") return "Admin Console";
   if (role === "counsellor") return "Counsellor CRM";
-  if (role === "educator") return "Educator Desk";
+  if (role === "educator") return "Faculty Dashboard";
+  if (role === "staff") return "Staff Dashboard";
   if (role === "student") return "Student Dashboard";
   if (role === "parent") return "Parent Dashboard";
   return "Dashboard";
 }
-
 function buildHeroTitle(
   role: Role,
   template: DashboardTemplate,
@@ -1584,7 +1635,7 @@ export async function createMessage(input: {
     author: input.author,
     audience: input.audience?.length
       ? input.audience
-      : ["student", "educator", "admin", "parent"],
+        : ["student", "educator", "staff", "admin", "parent"],
     userIds: input.userIds?.length ? input.userIds : undefined,
     createdAt: new Date().toISOString(),
     expiresAt: input.expiresAt ?? null,
@@ -2328,15 +2379,6 @@ export async function approveUserRequest(userId: string) {
     updatedAt: now,
   };
 
-  if (
-    existingUser.role === "educator" &&
-    !existingUser.facultyCode
-  ) {
-    setFields.facultyCode = await generateFacultyCode(
-      new Date().getFullYear(),
-    );
-  }
-
   const result = await collection.updateOne(
     {
       id: userId,
@@ -2461,25 +2503,24 @@ export async function createUserRecord(input: {
 
   const status = input.status ?? "active";
 
-  const facultyCode =
-    input.role === "educator" &&
+
+  const employeeCode =
+    (input.role === "educator" ||
+      input.role === "staff") &&
     status === "active"
-      ? await generateFacultyCode(
+      ? await generateEmployeeCode(
           new Date().getFullYear(),
         )
       : undefined;
-
   const document: UserDocument = {
-    id: randomUUID(),
-
-    ...(facultyCode
+    
+    ...(employeeCode
       ? {
-          facultyCode,
-          approvedAt: now,
+          employeeCode,
         }
       : {}),
-
-    name: input.name.trim(),
+id: randomUUID(),
+name: input.name.trim(),
 
     email: normalizedEmail,
     emailKey: normalizedEmail,
@@ -2563,7 +2604,7 @@ export async function updateUserRecord(input: {
   const now = new Date().toISOString();
 
   const setFields: Record<string, unknown> = {
-    name: input.name.trim(),
+name: input.name.trim(),
 
     email: normalizedEmail,
     emailKey: normalizedEmail,
@@ -2586,20 +2627,26 @@ export async function updateUserRecord(input: {
    * This covers cases where admin changes an
    * existing account's role to Faculty.
    */
+
+
+  /*
+   * Every ACTIVE employee must have a permanent
+   * human-readable Employee ID.
+   */
   if (
-    input.role === "educator" &&
+    (input.role === "educator" ||
+      input.role === "staff") &&
     nextStatus === "active" &&
-    !existingUser.facultyCode
+    !existingUser.employeeCode
   ) {
-    setFields.facultyCode =
-      await generateFacultyCode(
+    setFields.employeeCode =
+      await generateEmployeeCode(
         new Date().getFullYear(),
       );
 
     setFields.approvedAt =
       existingUser.approvedAt ?? now;
   }
-
   /*
    * Only update the password when admin has
    * actually entered a new one.
@@ -2607,7 +2654,7 @@ export async function updateUserRecord(input: {
   if (
     typeof input.password === "string" &&
     input.password.trim().length > 0 &&
-    input.password !== "••••••••"
+    input.password !== "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
   ) {
     setFields.password = input.password;
   }
@@ -5401,7 +5448,7 @@ function getAnalyticsPercent(value: number, total: number) {
 }
 
 function formatAnalyticsCurrency(value: number) {
-  return `â‚¹${Math.round(value).toLocaleString("en-IN")}`;
+  return `Ã¢â€šÂ¹${Math.round(value).toLocaleString("en-IN")}`;
 }
 
 function buildDashboardAnalytics(input: {
@@ -5681,11 +5728,11 @@ function buildDashboardAnalytics(input: {
     0,
   );
 
-  const attendanceValue = attendanceRate === null ? "â€”" : `${attendanceRate}%`;
+  const attendanceValue = attendanceRate === null ? "Ã¢â‚¬â€" : `${attendanceRate}%`;
 
-  const assessmentValue = averageScore === null ? "â€”" : `${averageScore}%`;
+  const assessmentValue = averageScore === null ? "Ã¢â‚¬â€" : `${averageScore}%`;
 
-  const learningValue = completionRate === null ? "â€”" : `${completionRate}%`;
+  const learningValue = completionRate === null ? "Ã¢â‚¬â€" : `${completionRate}%`;
 
   let metrics: DashboardMetric[];
 
@@ -7360,7 +7407,11 @@ export async function getTeacherPayoutsForRole(role: Role, userId?: string) {
     );
   }
 
-  if (role === "educator" && userId) {
+  if (
+    (role === "educator" ||
+      role === "staff") &&
+    userId
+  ) {
     return stripMongoIds(
       await collection
         .find({ teacherId: userId })
@@ -9871,7 +9922,11 @@ export async function getStaffPayoutsForRole(role: Role, userId?: string) {
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
   }
-  if (role === "educator" && userId) {
+  if (
+    (role === "educator" ||
+      role === "staff") &&
+    userId
+  ) {
     return stripMongoIds(
       await collection
         .find({ staffId: userId })
@@ -10090,7 +10145,7 @@ export async function getStaffPayoutAuditLogsByPayout(
   );
 }
 
-// â•â•â• Fee Transaction Log â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Fee Transaction Log Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 export async function appendFeeTransactionLog(
   entry: Omit<FeeTransactionLog, "id" | "createdAt">,
@@ -10942,7 +10997,7 @@ export async function deleteBusinessExpense(
   return result.deletedCount > 0;
 }
 
-// â•â•â• Action Audit Log â•â•â•
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Action Audit Log Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
 export async function appendActionLogEntries(
   entries: Record<string, unknown>[],
@@ -11049,3 +11104,8 @@ export async function getActionLogStats() {
     uniqueIps: ips.size,
   };
 }
+
+
+
+
+

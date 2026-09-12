@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -413,6 +413,17 @@ const sidebarByRole = {
     { id: "certificates", label: "Certificates" },
   ],
 
+  staff: [
+    { id: "overview", label: "Overview" },
+    { id: "profile", label: "Employee Profile" },
+    { id: "staff-attendance", label: "My Attendance" },
+    { id: "leave", label: "Leave" },
+    { id: "staff-payroll", label: "Payroll & Salary" },
+    { id: "staff-payouts", label: "My Payouts" },
+    { id: "messages", label: "Notice Board" },
+    { id: "chat", label: "Chat" },
+  ],
+
   counsellor: [
     { id: "overview", label: "Overview" },
     { id: "staff-attendance", label: "My Attendance" },
@@ -600,6 +611,7 @@ const menuSections = [
       "fee-installments",
       "profit-loss",
       "fee-deletion-audit",
+      "staff-payroll",
       "staff-payouts",
       "receipts",
       "teacher-payouts",
@@ -1339,7 +1351,7 @@ export function DashboardShell({
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
     ...(role === "student" || role === "parent"
-      ? [{ label: "Student ID", value: session?.id ?? "—" }]
+      ? [{ label: "Student ID", value: session?.id ?? "â€”" }]
       : []),
     ...(role === "student" || role === "parent"
       ? [
@@ -1357,7 +1369,7 @@ export function DashboardShell({
       {
         label: "Faculty ID",
         value:
-          session?.facultyCode ?? "—",
+          session?.employeeCode ?? session?.facultyCode ?? "—",
       },
       {
         label: "Assigned Students",
@@ -1756,7 +1768,7 @@ export function DashboardShell({
                 <p className="truncate text-sm font-bold text-white">
                   {session?.name ?? "SmartIQ Institute"}
                   {session?.verified ? (
-                    <span className="ml-1 text-[10px] text-emerald-400">✓</span>
+                    <span className="ml-1 text-[10px] text-emerald-400">âœ“</span>
                   ) : null}
                 </p>
                 <p className="truncate text-[11px] text-slate-400">
@@ -1860,7 +1872,7 @@ export function DashboardShell({
                   <Gift className="h-3.5 w-3.5" />
                 </span>
 
-                <span className="relative whitespace-nowrap">Earn ₹2,000</span>
+                <span className="relative whitespace-nowrap">Earn â‚¹2,000</span>
               </button>
             ) : null}
 
@@ -2089,7 +2101,7 @@ export function DashboardShell({
                 <div>
                   <p className="section-label">Course / Program Master</p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Top-level hierarchy: Course → Subject → Topic
+                    Top-level hierarchy: Course â†’ Subject â†’ Topic
                   </h2>
                 </div>
                 <span className="pill">{dashboard.courses.length} courses</span>
@@ -2244,7 +2256,7 @@ export function DashboardShell({
 
           {showBiometric ? <BiometricIntegration role={role} /> : null}
 
-          {showStaffAttendance && role === "counsellor" ? (
+          {showStaffAttendance && (role === "counsellor" || role === "staff") ? (
             <StaffAttendanceManager
               role={role}
               managedUsers={localManagedUsers}
@@ -2281,7 +2293,7 @@ export function DashboardShell({
           ) : null}
 
           {showRewards && role === "educator" ? <RewardsManager /> : null}
-          {showStaffPayroll && (role === "admin" || role === "educator") ? (
+          {showStaffPayroll && (role === "admin" || role === "educator" || role === "staff") ? (
             <StaffPayrollManager
               role={role}
               session={session}
@@ -2289,7 +2301,7 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showStaffPayouts && (role === "admin" || role === "educator") ? (
+          {showStaffPayouts && (role === "admin" || role === "educator" || role === "staff") ? (
             <StaffPayoutManager
               role={role}
               session={session}
@@ -2690,3 +2702,5 @@ export function DashboardShell({
     </div>
   );
 }
+
+

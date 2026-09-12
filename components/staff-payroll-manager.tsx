@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import type {
@@ -83,6 +83,8 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrollManagerProps) {
   const isAdmin = role === "admin";
   const isEducator = role === "educator";
+  const isStaff = role === "staff";
+  const isEmployee = isEducator || isStaff;
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
@@ -128,21 +130,75 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
   const loadAll = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+
     try {
-      const [profilesRes, runsRes] = await Promise.all([
-        api<{ profiles: StaffPayrollProfile[] }>("/api/staff-payroll/profiles"),
-        api<{ runs: PayrollRun[] }>(`/api/staff-payroll/runs?month=${selectedMonth}&year=${selectedYear}`),
-      ]);
-      setProfiles(profilesRes.profiles || []);
-      const allRuns = runsRes.runs || [];
-      setRuns(allRuns);
-      setCurrentRun(allRuns[0] || null);
+      if (isAdmin) {
+        const [profilesRes, runsRes] =
+          await Promise.all([
+            api<{
+              profiles: StaffPayrollProfile[];
+            }>(
+              "/api/staff-payroll/profiles",
+            ),
+
+            api<{
+              runs: PayrollRun[];
+            }>(
+              `/api/staff-payroll/runs?month=${selectedMonth}&year=${selectedYear}`,
+            ),
+          ]);
+
+        setProfiles(
+          profilesRes.profiles || [],
+        );
+
+        const allRuns =
+          runsRes.runs || [];
+
+        setRuns(allRuns);
+
+        setCurrentRun(
+          allRuns[0] || null,
+        );
+      } else {
+        /*
+         * Faculty and Staff must never request
+         * the full payroll-profile endpoint.
+         *
+         * /runs returns only this employee's
+         * payroll slips for employee roles.
+         */
+        const runsRes =
+          await api<{
+            runs: PayrollRun[];
+          }>(
+            "/api/staff-payroll/runs",
+          );
+
+        const myRuns =
+          runsRes.runs || [];
+
+        setProfiles([]);
+        setRuns(myRuns);
+
+        setCurrentRun(
+          myRuns[0] || null,
+        );
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load payroll data.");
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Failed to load payroll data.",
+      );
     } finally {
       setIsLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [
+    isAdmin,
+    selectedMonth,
+    selectedYear,
+  ]);
 
   const loadAdvances = useCallback(async () => {
     try {
@@ -384,9 +440,9 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
     });
   }
 
-  // Faculty view: only their own slips
-  const facultySlips = useMemo(() => {
-    if (!isEducator || !session) return [];
+  // Employee view: Faculty and Staff only see their own slips
+  const employeeSlips = useMemo(() => {
+    if (!isEmployee || !session) return [];
     const mySlips: { run: PayrollRun; slip: PayrollSlip }[] = [];
     for (const run of runs) {
       for (const slip of run.slips) {
@@ -394,7 +450,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
       }
     }
     return mySlips;
-  }, [isEducator, session, runs]);
+  }, [isEmployee, session, runs]);
 
   const years = useMemo(() => {
     const current = now.getFullYear();
@@ -515,7 +571,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
               <div>
                 <h3 className="text-lg font-bold text-[var(--color-heading)]">{currentRun.label} Payroll</h3>
                 <p className="mt-1 text-sm text-[var(--color-muted)]">
-                  {currentRun.totalStaff} staff · Gross {formatCurrency(currentRun.totalGross)} · Net {formatCurrency(currentRun.totalNet)}
+                  {currentRun.totalStaff} staff Â· Gross {formatCurrency(currentRun.totalGross)} Â· Net {formatCurrency(currentRun.totalNet)}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -572,7 +628,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
         {currentRun ? (
           <article className="surface overflow-hidden rounded-[2rem]">
             <div className="border-b border-[var(--color-border)] p-5 sm:p-6">
-              <p className="section-label">Staff — {currentRun.label}</p>
+              <p className="section-label">Staff â€” {currentRun.label}</p>
               <h3 className="mt-2 text-xl font-bold text-[var(--color-heading)]">Payroll Details</h3>
             </div>
             <div className="overflow-x-auto">
@@ -597,7 +653,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                       <tr key={slip.id} className="border-b border-[var(--color-border)] last:border-b-0 transition hover:bg-[var(--color-surface)]">
                         <td className="px-5 py-4">
                           <p className="font-bold text-[var(--color-heading)]">{slip.userName}</p>
-                          <p className="text-xs text-[var(--color-muted)]">{slip.employeeId || "—"}</p>
+                          <p className="text-xs text-[var(--color-muted)]">{slip.employeeId || "â€”"}</p>
                         </td>
                         <td className="px-5 py-4">
                           <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${eb.bg}`}>{eb.text}</span>
@@ -727,7 +783,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                       <td className="px-5 py-3 font-bold text-[var(--color-heading)]">{t.userName}</td>
                       <td className="px-5 py-3 font-bold text-emerald-600">{formatCurrency(t.amount)}</td>
                       <td className="px-5 py-3">{t.paymentMode}</td>
-                      <td className="px-5 py-3 text-xs text-[var(--color-muted)]">{t.transactionRef || "—"}</td>
+                      <td className="px-5 py-3 text-xs text-[var(--color-muted)]">{t.transactionRef || "â€”"}</td>
                       <td className="px-5 py-3 text-xs">{t.transferredByName}</td>
                       <td className="px-5 py-3 text-xs text-[var(--color-muted)]">{new Date(t.transferredAt).toLocaleDateString("en-IN")}</td>
                     </tr>
@@ -763,7 +819,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                       <td className="px-5 py-3">{formatCurrency(inc.previousSalary)}</td>
                       <td className="px-5 py-3 font-bold text-emerald-600">{formatCurrency(inc.newSalary)}</td>
                       <td className="px-5 py-3 text-xs">{inc.effectiveDate}</td>
-                      <td className="px-5 py-3 text-xs text-[var(--color-muted)]">{inc.reason || "—"}</td>
+                      <td className="px-5 py-3 text-xs text-[var(--color-muted)]">{inc.reason || "â€”"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -789,7 +845,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm font-medium outline-none transition focus:border-[var(--color-primary)]" />
                 </label>
                 <div className="mt-3 rounded-xl bg-emerald-50 p-3 text-xs text-emerald-800">
-                  Payroll auto-calculates: attendance × salary rate, PF/TDS deductions. Review results before approving.
+                  Payroll auto-calculates: attendance Ã— salary rate, PF/TDS deductions. Review results before approving.
                 </div>
                 <div className="mt-5 flex justify-end gap-3">
                   <button type="button" onClick={() => setShowRunModal(false)} className="rounded-full border border-[var(--color-border)] px-4 py-2.5 text-sm font-bold">Cancel</button>
@@ -822,7 +878,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                   </select>
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  New Monthly Salary (₹)
+                  New Monthly Salary (â‚¹)
                   <input type="number" min="1000" value={incrementForm.newSalary} onChange={(e) => setIncrementForm({ ...incrementForm, newSalary: e.target.value })} required placeholder="e.g. 25000"
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm font-medium outline-none focus:border-[var(--color-primary)]" />
                 </label>
@@ -865,7 +921,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                   </select>
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Amount (₹)
+                  Amount (â‚¹)
                   <input type="number" min="1" value={transferForm.amount} onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })} required
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm font-medium outline-none focus:border-[var(--color-primary)]" />
                 </label>
@@ -902,7 +958,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4" onClick={() => { setShowProfileModal(false); setEditingProfile(null); }}>
             <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl dark:bg-[var(--color-panel)]" onClick={(e) => e.stopPropagation()}>
               <div className="rounded-t-[1.5rem] bg-gradient-to-r from-violet-500 to-purple-600 p-5 text-white">
-                <h3 className="text-lg font-bold">Edit Payroll Profile — {editingProfile.userName}</h3>
+                <h3 className="text-lg font-bold">Edit Payroll Profile â€” {editingProfile.userName}</h3>
               </div>
               <form onSubmit={handleProfileSave} className="p-5 grid gap-4 sm:grid-cols-2">
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
@@ -918,17 +974,17 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                   </select>
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Monthly Salary (₹)
+                  Monthly Salary (â‚¹)
                   <input type="number" min="0" value={profileForm.monthlySalary} onChange={(e) => setProfileForm({ ...profileForm, monthlySalary: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Hourly Rate (₹)
+                  Hourly Rate (â‚¹)
                   <input type="number" min="0" value={profileForm.hourlyRate} onChange={(e) => setProfileForm({ ...profileForm, hourlyRate: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Per Class Rate (₹)
+                  Per Class Rate (â‚¹)
                   <input type="number" min="0" value={profileForm.perClassRate} onChange={(e) => setProfileForm({ ...profileForm, perClassRate: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
@@ -981,7 +1037,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
           <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4" onClick={() => setEditingSlip(null)}>
             <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[1.5rem] bg-white shadow-2xl dark:bg-[var(--color-panel)]" onClick={(e) => e.stopPropagation()}>
               <div className="rounded-t-[1.5rem] bg-gradient-to-r from-blue-500 to-blue-600 p-5 text-white">
-                <h3 className="text-lg font-bold">Edit Payslip — {editingSlip.slip.userName}</h3>
+                <h3 className="text-lg font-bold">Edit Payslip â€” {editingSlip.slip.userName}</h3>
                 <p className="mt-1 text-sm text-white/80">{editingSlip.run.label}</p>
               </div>
               <form onSubmit={handleSlipUpdate} className="p-5 grid gap-4 sm:grid-cols-2">
@@ -991,27 +1047,27 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Gross Pay (₹)
+                  Gross Pay (â‚¹)
                   <input type="number" min="0" value={slipForm.grossPay} onChange={(e) => setSlipForm({ ...slipForm, grossPay: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  PF Deduction (₹)
+                  PF Deduction (â‚¹)
                   <input type="number" min="0" value={slipForm.pfDeduction} onChange={(e) => setSlipForm({ ...slipForm, pfDeduction: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  TDS Deduction (₹)
+                  TDS Deduction (â‚¹)
                   <input type="number" min="0" value={slipForm.tdsDeduction} onChange={(e) => setSlipForm({ ...slipForm, tdsDeduction: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Advance Recovery (₹)
+                  Advance Recovery (â‚¹)
                   <input type="number" min="0" value={slipForm.advanceRecovery} onChange={(e) => setSlipForm({ ...slipForm, advanceRecovery: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
                 <label className="grid gap-2 text-sm font-bold text-[var(--color-heading)]">
-                  Paid Amount (₹)
+                  Paid Amount (â‚¹)
                   <input type="number" min="0" value={slipForm.paidAmount} onChange={(e) => setSlipForm({ ...slipForm, paidAmount: e.target.value })}
                     className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm outline-none focus:border-[var(--color-primary)]" />
                 </label>
@@ -1079,8 +1135,8 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
     );
   }
 
-  // ========== EDUCATOR / FACULTY VIEW ==========
-  if (isEducator) {
+  // ========== EMPLOYEE / FACULTY + STAFF VIEW ==========
+  if (isEmployee) {
     return (
       <section className="grid min-w-0 gap-6">
         <header className="surface rounded-[2rem] p-5 sm:p-6">
@@ -1097,24 +1153,24 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
         {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">{error}</div>}
 
         {/* Summary Cards */}
-        {facultySlips.length > 0 && (
+        {employeeSlips.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-3">
             <article className="surface-soft rounded-[1.75rem] p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Total Earned</p>
               <p className="mt-3 text-2xl font-bold text-[var(--color-heading)]">
-                {formatCurrency(facultySlips.reduce((s, fs) => s + fs.slip.grossPay, 0))}
+                {formatCurrency(employeeSlips.reduce((s, fs) => s + fs.slip.grossPay, 0))}
               </p>
             </article>
             <article className="surface-soft rounded-[1.75rem] p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Total Received</p>
               <p className="mt-3 text-2xl font-bold text-emerald-600">
-                {formatCurrency(facultySlips.reduce((s, fs) => s + fs.slip.paidAmount, 0))}
+                {formatCurrency(employeeSlips.reduce((s, fs) => s + fs.slip.paidAmount, 0))}
               </p>
             </article>
             <article className="surface-soft rounded-[1.75rem] p-5">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">Pending</p>
               <p className="mt-3 text-2xl font-bold text-rose-600">
-                {formatCurrency(facultySlips.reduce((s, fs) => s + Math.max(0, fs.slip.netPay - fs.slip.paidAmount), 0))}
+                {formatCurrency(employeeSlips.reduce((s, fs) => s + Math.max(0, fs.slip.netPay - fs.slip.paidAmount), 0))}
               </p>
             </article>
           </div>
@@ -1126,9 +1182,9 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
             <p className="section-label">Payout History</p>
             <h3 className="mt-2 text-xl font-bold text-[var(--color-heading)]">My Payslips</h3>
           </div>
-          {facultySlips.length > 0 ? (
+          {employeeSlips.length > 0 ? (
             <div className="grid gap-4 p-5">
-              {facultySlips.map(({ run, slip }) => (
+              {employeeSlips.map(({ run, slip }) => (
                 <article key={slip.id} className="surface-soft rounded-[1.75rem] p-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -1137,7 +1193,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                         <span className={`rounded-full px-3 py-0.5 text-xs font-bold uppercase ${slipStatusBadge(slip.status)}`}>{slip.status}</span>
                       </div>
                       <p className="mt-1 text-sm text-[var(--color-muted)]">
-                        {slip.presentDays}/{run.workingDays} days · {slip.attendancePercent}% attendance
+                        {slip.presentDays}/{run.workingDays} days Â· {slip.attendancePercent}% attendance
                       </p>
                     </div>
                   </div>
@@ -1149,7 +1205,7 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
                     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Deductions</p>
                       <p className="mt-1 font-bold text-rose-600">-{formatCurrency(slip.totalDeductions)}</p>
-                      <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">PF: {formatCurrency(slip.pfDeduction)} · TDS: {formatCurrency(slip.tdsDeduction)}</p>
+                      <p className="mt-0.5 text-[10px] text-[var(--color-muted)]">PF: {formatCurrency(slip.pfDeduction)} Â· TDS: {formatCurrency(slip.tdsDeduction)}</p>
                     </div>
                     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">Net Pay</p>
@@ -1174,3 +1230,4 @@ export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrol
 
   return null;
 }
+

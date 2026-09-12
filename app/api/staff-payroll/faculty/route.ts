@@ -30,6 +30,7 @@ function readSession(payload: unknown): SessionUser | null {
     !user.id ||
     (user.role !== "admin" &&
       user.role !== "educator" &&
+      user.role !== "staff" &&
       user.role !== "student" &&
       user.role !== "parent")
   ) {
@@ -78,9 +79,12 @@ export async function GET(request: Request) {
       );
     }
 
-    if (session.role !== "educator") {
+    if (
+      session.role !== "educator" &&
+      session.role !== "staff"
+    ) {
       return NextResponse.json(
-        { error: "Only educators can access faculty payroll views." },
+        { error: "Only employees can access personal payroll views." },
         { status: 403 },
       );
     }

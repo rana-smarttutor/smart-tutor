@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -91,6 +91,16 @@ export function DashboardOverview({
         dashboard={dashboard}
         messages={messages}
         supportContact={supportContact}
+        onSetActiveSection={onSetActiveSection}
+        managedUsers={managedUsers}
+      />
+    );
+  }
+  if (role === "staff") {
+    return (
+      <StaffOverview
+        session={session}
+        messages={messages}
         onSetActiveSection={onSetActiveSection}
         managedUsers={managedUsers}
       />
@@ -220,8 +230,328 @@ function Sparkline({
   );
 }
 
-// ─────────── ADMIN DASHBOARD ───────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ADMIN DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function StaffOverview({
+  session,
+  messages,
+  onSetActiveSection,
+  managedUsers,
+}: {
+  session: SessionUser | null;
+  messages: MessageItem[];
+  onSetActiveSection: (section: string) => void;
+  managedUsers?: ManagedUser[];
+}) {
+  const currentUser =
+    managedUsers?.find((user) => user.id === session?.id) ?? null;
 
+  const profile = currentUser?.profile;
+  const isVerified =
+  currentUser?.verified ??
+  session?.verified ??
+  false;
+
+  const employeeId =
+    currentUser?.employeeCode ??
+    session?.employeeCode ??
+    currentUser?.facultyCode ??
+    session?.facultyCode ??
+    (isVerified ? "Not assigned" : "Pending verification");
+
+  const designation = profile?.designation?.trim() || "Staff Member";
+
+  const department = profile?.department?.trim() || "Not assigned";
+
+  const branch = profile?.branch?.trim() || "Not assigned";
+
+  const employmentType = profile?.employmentType
+    ? profile.employmentType
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : "Not assigned";
+
+  const joiningDate = profile?.joiningDate || "Not assigned";
+
+  const dateLabel = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const latestMessages = messages.slice(0, 4);
+
+  const quickActions = [
+    {
+      label: "My Attendance",
+      section: "staff-attendance",
+      icon: UserCheck,
+    },
+    {
+      label: "Leave",
+      section: "leave",
+      icon: CalendarDays,
+    },
+    {
+      label: "Payroll & Salary",
+      section: "staff-payroll",
+      icon: DollarSign,
+    },
+    {
+      label: "My Payouts",
+      section: "staff-payouts",
+      icon: Briefcase,
+    },
+    {
+      label: "Notice Board",
+      section: "messages",
+      icon: Bell,
+    },
+    {
+      label: "Chat",
+      section: "chat",
+      icon: MessageSquare,
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* HEADER */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0b1f4d] via-[#174ea6] to-[#2563eb] px-7 py-7 text-white">
+        <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-blue-100">
+              Welcome back, {session?.name ?? "Staff Member"}
+            </p>
+
+            <h1 className="mt-1 text-3xl font-black">Staff Dashboard</h1>
+
+            <p className="mt-2 text-sm text-blue-100">{dateLabel}</p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100">
+                Employee ID
+              </p>
+
+              <p className="mt-1 text-sm font-bold">{employeeId}</p>
+            </div>
+
+            <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100">
+                Status
+              </p>
+
+              <div className="mt-1 flex items-center gap-2 text-sm font-bold">
+                <ShieldCheck size={16} />
+                {isVerified ? "Active" : "Pending verification"}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* EMPLOYEE SUMMARY */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+            <Briefcase size={20} />
+          </div>
+
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            Designation
+          </p>
+
+          <p className="mt-1 text-lg font-black text-slate-900">
+            {designation}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+            <Users size={20} />
+          </div>
+
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            Department
+          </p>
+
+          <p className="mt-1 text-lg font-black text-slate-900">{department}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <MapPin size={20} />
+          </div>
+
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            Branch
+          </p>
+
+          <p className="mt-1 text-lg font-black text-slate-900">{branch}</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+            <Clock size={20} />
+          </div>
+
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
+            Employment
+          </p>
+
+          <p className="mt-1 text-lg font-black text-slate-900">
+            {employmentType}
+          </p>
+        </div>
+      </div>
+
+      {/* WORKSPACE */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-black text-slate-900">
+              Employee Workspace
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Access your staff tools and services
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onSetActiveSection("profile")}
+            className="rounded-xl bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+          >
+            Employee Profile
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+
+            return (
+              <button
+                key={action.section}
+                type="button"
+                onClick={() => onSetActiveSection(action.section)}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:shadow-sm"
+              >
+                <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-700 shadow-sm">
+                  <Icon size={19} />
+                </div>
+
+                <p className="text-sm font-bold text-slate-800">
+                  {action.label}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        {/* EMPLOYMENT DETAILS */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+          <h2 className="text-lg font-black text-slate-900">
+            Employment Details
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Your SmartIQ Institute employee information
+          </p>
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-400">Name</p>
+
+              <p className="mt-1 font-bold text-slate-900">
+                {session?.name ?? "Not assigned"}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-400">Email</p>
+
+              <p className="mt-1 break-all font-bold text-slate-900">
+                {session?.email ?? "Not assigned"}
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-400">
+                Joining Date
+              </p>
+
+              <p className="mt-1 font-bold text-slate-900">{joiningDate}</p>
+            </div>
+
+            <div className="rounded-xl bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-400">
+                Employee ID
+              </p>
+
+              <p className="mt-1 font-bold text-slate-900">{employeeId}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* NOTICE BOARD */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-black text-slate-900">
+                Notice Board
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Latest staff announcements
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onSetActiveSection("messages")}
+              className="text-sm font-bold text-blue-700 hover:underline"
+            >
+              View All
+            </button>
+          </div>
+
+          {latestMessages.length > 0 ? (
+            <div className="mt-5 space-y-3">
+              {latestMessages.map((message) => (
+                <div
+                  key={message.id}
+                  className="rounded-xl border border-slate-100 bg-slate-50 p-4"
+                >
+                  <p className="font-bold text-slate-900">{message.title}</p>
+
+                  <p className="mt-1 line-clamp-2 text-sm text-slate-500">
+                    {message.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-5 flex min-h-[180px] flex-col items-center justify-center rounded-xl bg-slate-50 text-center">
+              <Bell size={28} className="text-blue-600" />
+
+              <p className="mt-3 font-bold text-slate-800">No notices yet</p>
+
+              <p className="mt-1 text-sm text-slate-400">
+                Staff announcements will appear here.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
 function GenericOverview({
   session,
   role,
@@ -253,9 +583,10 @@ function GenericOverview({
   });
   const instituteName = dashboard.heroTitle || "SmartIQ Institute";
   const totalStudents =
-    dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
+    dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "â€”";
   const rawRevenue = dashboard.analytics?.finance?.collected ?? 0;
-  const revenue = rawRevenue > 0 ? `₹${(rawRevenue / 1000).toFixed(1)}K` : "—";
+  const revenue =
+    rawRevenue > 0 ? `â‚¹${(rawRevenue / 1000).toFixed(1)}K` : "â€”";
   const totalBilled = dashboard.analytics?.finance?.billed ?? 0;
   const feeCollectionPct =
     totalBilled > 0 ? Math.round((rawRevenue / totalBilled) * 100) : 0;
@@ -276,7 +607,7 @@ function GenericOverview({
     },
     {
       label: "Monthly Revenue",
-      value: `₹${rawRevenue.toLocaleString("en-IN")}`,
+      value: `â‚¹${rawRevenue.toLocaleString("en-IN")}`,
       color: "#059669",
       bg: "bg-emerald-50",
       text: "text-emerald-600",
@@ -389,7 +720,7 @@ function GenericOverview({
 
   return (
     <div className="space-y-5">
-      {/* ── Hero Section ── */}
+      {/* â”€â”€ Hero Section â”€â”€ */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
         style={{
@@ -427,7 +758,7 @@ function GenericOverview({
         </div>
       </div>
 
-      {/* ── KPI Cards ── */}
+      {/* â”€â”€ KPI Cards â”€â”€ */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
@@ -460,7 +791,7 @@ function GenericOverview({
         })}
       </div>
 
-      {/* ── Quick Actions ── */}
+      {/* â”€â”€ Quick Actions â”€â”€ */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {quickActions.map((action, idx) => {
           const Icon = action.icon;
@@ -483,7 +814,7 @@ function GenericOverview({
         })}
       </div>
 
-      {/* ── Main Content Grid ── */}
+      {/* â”€â”€ Main Content Grid â”€â”€ */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
         {/* Left */}
         <div className="space-y-5">
@@ -645,7 +976,7 @@ function GenericOverview({
                     </div>
                     <div className="text-right shrink-0 ml-3">
                       <p className="text-sm font-bold text-slate-900">
-                        ₹{inv.amount.toLocaleString("en-IN")}
+                        â‚¹{inv.amount.toLocaleString("en-IN")}
                       </p>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusColors[inv.status] || "bg-slate-100 text-slate-600"}`}
@@ -737,7 +1068,7 @@ function GenericOverview({
                     <p className="text-2xl font-black text-slate-900">
                       {dashboard.analytics?.attendance?.rate != null
                         ? `${Math.round(dashboard.analytics.attendance.rate)}%`
-                        : "—"}
+                        : "â€”"}
                     </p>
                     <p className="text-xs font-medium text-slate-500">
                       Attendance
@@ -829,7 +1160,7 @@ function GenericOverview({
         </div>
       </div>
 
-      {/* ── Bottom Grid ── */}
+      {/* â”€â”€ Bottom Grid â”€â”€ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Upcoming Exams */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
@@ -861,7 +1192,7 @@ function GenericOverview({
                       </p>
                       <p className="text-[11px] text-slate-500">
                         {test.subject}
-                        {test.total ? ` • ${test.total} marks` : ""}
+                        {test.total ? ` â€¢ ${test.total} marks` : ""}
                       </p>
                     </div>
                   </div>
@@ -957,7 +1288,7 @@ function GenericOverview({
   );
 }
 
-// ─────────── STUDENT DASHBOARD ───────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ STUDENT DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function StudentOverview({
   session,
@@ -989,27 +1320,27 @@ function StudentOverview({
     dashboard.profile?.courseWantedTitle?.split("|")[0]?.trim() ||
     dashboard.heroTitle ||
     "";
-  const admissionNo = session?.id?.slice(0, 8).toUpperCase() ?? "—";
+  const admissionNo = session?.id?.slice(0, 8).toUpperCase() ?? "â€”";
   const attRate =
     dashboard.analytics?.attendance?.rate != null
       ? Math.round(dashboard.analytics.attendance.rate)
       : null;
 
-  const testsTaken = dashboard.stats[1]?.value || "—";
+  const testsTaken = dashboard.stats[1]?.value || "â€”";
   const avgScore =
     dashboard.analytics?.assessments?.averageScore != null
       ? `${Math.round(dashboard.analytics.assessments.averageScore)}%`
-      : "—";
+      : "â€”";
   const pendingHw =
     dashboard.analytics?.learning?.homeworkRate != null
       ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
-      : "—";
-  const feeDueAmount = dashboard.stats[3]?.value || "₹0";
+      : "â€”";
+  const feeDueAmount = dashboard.stats[3]?.value || "â‚¹0";
 
   const kpiCards = [
     {
       label: "Attendance",
-      value: attRate != null ? `${attRate}%` : "—",
+      value: attRate != null ? `${attRate}%` : "â€”",
       color: "#059669",
       bg: "bg-emerald-50",
       text: "text-emerald-600",
@@ -1097,7 +1428,7 @@ function StudentOverview({
             weeklyTask.duration ? `${weeklyTask.duration} mins` : null,
           ]
             .filter(Boolean)
-            .join(" • ") || "Complete your pending weekly learning task.",
+            .join(" â€¢ ") || "Complete your pending weekly learning task.",
         helperText: "This task is waiting for you to complete.",
         buttonLabel: "Start Task",
         section: "weekly-tests",
@@ -1118,7 +1449,7 @@ function StudentOverview({
         description:
           [exam.subject, exam.total ? `${exam.total} marks` : null]
             .filter(Boolean)
-            .join(" • ") || "Review the details of your upcoming exam.",
+            .join(" â€¢ ") || "Review the details of your upcoming exam.",
         helperText:
           exam.status === "published"
             ? "The exam is available and ready to start."
@@ -1138,7 +1469,7 @@ function StudentOverview({
 
     if (lecture) {
       return {
-        title: lecture.title || "Today’s Class",
+        title: lecture.title || "Todayâ€™s Class",
         description:
           [
             lecture.subject,
@@ -1146,7 +1477,7 @@ function StudentOverview({
             lecture.duration ? `${lecture.duration} mins` : null,
           ]
             .filter(Boolean)
-            .join(" • ") || "Your next class is scheduled for today.",
+            .join(" â€¢ ") || "Your next class is scheduled for today.",
         helperText: "Open the lecture section to view the class details.",
         buttonLabel: "View Class",
         section: "lectures",
@@ -1160,7 +1491,7 @@ function StudentOverview({
     }
 
     return {
-      title: "You’re all caught up",
+      title: "Youâ€™re all caught up",
       description: "No pending tests or classes need your attention right now.",
       helperText: "Use this time to revise a topic or explore study materials.",
       buttonLabel: "Explore Materials",
@@ -1252,7 +1583,7 @@ function StudentOverview({
 
   return (
     <div className="space-y-5">
-      {/* ── Hero Section ── */}
+      {/* â”€â”€ Hero Section â”€â”€ */}
       <div
         className="relative overflow-hidden rounded-2xl p-5 sm:p-6 lg:p-8 text-white"
         style={{
@@ -1300,7 +1631,7 @@ function StudentOverview({
                   Student Portal
                 </p>
                 <h1 className="mt-0.5 text-xl font-bold sm:text-2xl lg:text-3xl truncate">
-                  Hey, {studentName.split(" ")[0]}! 📚
+                  Hey, {studentName.split(" ")[0]}! ðŸ“š
                 </h1>
                 {batchInfo ? (
                   <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-teal-200 truncate">
@@ -1355,7 +1686,7 @@ function StudentOverview({
           </div>
         </div>
       </div>
-      {/* ── KPI Cards ── */}
+      {/* â”€â”€ KPI Cards â”€â”€ */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
@@ -1406,7 +1737,7 @@ function StudentOverview({
         })}
       </div>
 
-      {/* ── Main Two-Column ── */}
+      {/* â”€â”€ Main Two-Column â”€â”€ */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
         {/* Left */}
         <div className="space-y-5">
@@ -1442,7 +1773,7 @@ function StudentOverview({
                       </p>
                       <p className="text-[11px] text-slate-500">
                         {lec.subject ?? ""}
-                        {lec.duration ? ` • ${lec.duration} mins` : ""}
+                        {lec.duration ? ` â€¢ ${lec.duration} mins` : ""}
                       </p>
                     </div>
                     <span
@@ -1501,7 +1832,7 @@ function StudentOverview({
                         </p>
                         <p className="text-[11px] text-slate-500">
                           {test.subject}
-                          {test.total ? ` • ${test.total} marks` : ""}
+                          {test.total ? ` â€¢ ${test.total} marks` : ""}
                         </p>
                       </div>
                     </div>
@@ -1531,7 +1862,7 @@ function StudentOverview({
                         </p>
                         <p className="text-[11px] text-slate-500">
                           {task.subject ?? ""}
-                          {task.duration ? ` • ${task.duration} mins` : ""}
+                          {task.duration ? ` â€¢ ${task.duration} mins` : ""}
                         </p>
                       </div>
                     </div>
@@ -1843,7 +2174,7 @@ function StudentOverview({
         </div>
       </div>
 
-      {/* ── Quick Access Grid ── */}
+      {/* â”€â”€ Quick Access Grid â”€â”€ */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] p-4 sm:p-5 lg:p-6">
         <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-3 sm:mb-4">
           Quick Access
@@ -1875,7 +2206,7 @@ function StudentOverview({
         </div>
       </div>
 
-      {/* ── Recent Results ── */}
+      {/* â”€â”€ Recent Results â”€â”€ */}
       {testScores.length > 0 && (
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4 gap-2">
@@ -1922,7 +2253,7 @@ function StudentOverview({
   );
 }
 
-// ─────────── PARENT DASHBOARD (View-only mirror of Student) ───────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PARENT DASHBOARD (View-only mirror of Student) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ParentOverview({
   session,
@@ -1965,17 +2296,17 @@ function ParentOverview({
   const avgScore =
     dashboard.analytics?.assessments?.averageScore != null
       ? `${Math.round(dashboard.analytics.assessments.averageScore)}%`
-      : "—";
-  const feeDueAmount = dashboard.stats[3]?.value || "₹0";
+      : "â€”";
+  const feeDueAmount = dashboard.stats[3]?.value || "â‚¹0";
   const pendingHw =
     dashboard.analytics?.learning?.homeworkRate != null
       ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
-      : "—";
+      : "â€”";
 
   const kpiCards = [
     {
       label: "Attendance",
-      value: attRate != null ? `${attRate}%` : "—",
+      value: attRate != null ? `${attRate}%` : "â€”",
       color: "#059669",
       bg: "bg-emerald-50",
       text: "text-emerald-600",
@@ -2088,7 +2419,7 @@ function ParentOverview({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-violet-200 uppercase tracking-wider">
-                Parent Portal{batchInfo ? ` · ${batchInfo}` : ""}
+                Parent Portal{batchInfo ? ` Â· ${batchInfo}` : ""}
               </p>
               <h1 className="text-2xl sm:text-3xl font-bold mt-1">
                 Welcome, {parentName.split(" ")[0]}!
@@ -2114,7 +2445,7 @@ function ParentOverview({
             <div className="flex flex-wrap gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
                 <UserCheck size={13} />
-                Attendance: {attRate != null ? `${attRate}%` : "—"}
+                Attendance: {attRate != null ? `${attRate}%` : "â€”"}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 text-xs font-semibold">
                 <TrendingUp size={13} />
@@ -2238,7 +2569,7 @@ function ParentOverview({
                         {test.title}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {test.subject ?? ""} · {test.total ?? 0} marks
+                        {test.subject ?? ""} Â· {test.total ?? 0} marks
                       </p>
                     </div>
                   </div>
@@ -2308,7 +2639,7 @@ function ParentOverview({
   );
 }
 
-// ─────────── EDUCATOR DASHBOARD ───────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ EDUCATOR DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function EducatorOverview({
   session,
@@ -2631,8 +2962,8 @@ function EducatorOverview({
       metric.label === "Total Earnings" || metric.label === "Lifetime Earnings",
   );
 
-  const monthlyEarnings = monthlyEarningsMetric?.value ?? "₹0";
-  const totalEarnings = totalEarningsMetric?.value ?? "₹0";
+  const monthlyEarnings = monthlyEarningsMetric?.value ?? "â‚¹0";
+  const totalEarnings = totalEarningsMetric?.value ?? "â‚¹0";
 
   const todayDateKey = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -2763,7 +3094,7 @@ function EducatorOverview({
   ];
   return (
     <div className="space-y-5">
-      {/* ── Hero ── */}
+      {/* â”€â”€ Hero â”€â”€ */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
         style={{
@@ -2811,7 +3142,7 @@ function EducatorOverview({
 
             <p className="mt-0.5 text-sm font-semibold text-white/75">
               {educatorSubjects.length > 0
-                ? `Teaches: ${educatorSubjects.join(" • ")}`
+                ? `Teaches: ${educatorSubjects.join(" â€¢ ")}`
                 : "Subjects not added"}
             </p>
 
@@ -2825,16 +3156,16 @@ function EducatorOverview({
           </div>
         </div>
 
-        {session?.facultyCode && (
+        {(session?.employeeCode ?? session?.facultyCode) && (
           <div className="absolute bottom-5 right-6 z-20">
             <span className="inline-flex rounded-full border border-white/25 bg-white/15 px-3 py-1.5 font-mono text-[11px] font-bold text-white/90 backdrop-blur-sm">
-              Employee ID: {session.facultyCode}
+              Employee ID: {session.employeeCode ?? session.facultyCode}
             </span>
           </div>
         )}
       </div>
 
-      {/* ── KPI Row ── */}
+      {/* â”€â”€ KPI Row â”€â”€ */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
@@ -2891,7 +3222,7 @@ function EducatorOverview({
         })}
       </div>
 
-      {/* ── Charts Row ── */}
+      {/* â”€â”€ Charts Row â”€â”€ */}
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         {/* Educator Attendance Report */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
@@ -3001,7 +3332,7 @@ function EducatorOverview({
             <div className="mt-5 grid grid-cols-2 gap-3 border-t border-dashed border-slate-200 pt-4">
               <div className="rounded-xl bg-emerald-50 px-3 py-3">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-600">
-                  Today’s Check-In
+                  Todayâ€™s Check-In
                 </p>
 
                 <p className="mt-1 text-sm font-black text-slate-900">
@@ -3022,7 +3353,7 @@ function EducatorOverview({
 
               <div className="rounded-xl bg-blue-50 px-3 py-3">
                 <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600">
-                  Today’s Check-Out
+                  Todayâ€™s Check-Out
                 </p>
 
                 <p className="mt-1 text-sm font-black text-slate-900">
@@ -3063,7 +3394,7 @@ function EducatorOverview({
             >
               View all
               <span aria-hidden="true" className="text-base leading-none">
-                →
+                â†’
               </span>
             </button>
           </div>
@@ -3120,7 +3451,7 @@ function EducatorOverview({
 
                         <p className="mt-0.5 truncate text-xs font-medium text-slate-500">
                           {doubt.subject || "General"}
-                          {" — "}
+                          {" â€” "}
                           {doubt.title}
                         </p>
                       </div>
@@ -3172,7 +3503,7 @@ function EducatorOverview({
           </div>
         </div>
       </div>
-      {/* ── Earnings and Home Tutoring Row ── */}
+      {/* â”€â”€ Earnings and Home Tutoring Row â”€â”€ */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* My Earnings */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
@@ -3296,7 +3627,7 @@ function EducatorOverview({
 
                             <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black text-[#0B40A1] shadow-sm">
                               {visit.startTime}
-                              {visit.endTime ? ` – ${visit.endTime}` : ""}
+                              {visit.endTime ? ` â€“ ${visit.endTime}` : ""}
                             </span>
                           </div>
 
@@ -3370,7 +3701,7 @@ function EducatorOverview({
         </div>
       </div>
 
-      {/* ── Pending Homework Reviews ── */}
+      {/* â”€â”€ Pending Homework Reviews â”€â”€ */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[#F1F5F9] gap-2">
           <h2 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 min-w-0">
@@ -3387,7 +3718,7 @@ function EducatorOverview({
             onClick={() => onSetActiveSection("homework")}
             className="text-[10px] sm:text-xs font-bold text-indigo-600 hover:underline shrink-0"
           >
-            View all →
+            View all â†’
           </button>
         </div>
         <div className="px-5 py-4">
@@ -3439,7 +3770,7 @@ function EducatorOverview({
         </div>
       </div>
 
-      {/* ── Quick Actions ── */}
+      {/* â”€â”€ Quick Actions â”€â”€ */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {quickActions.map((action, idx) => {
           const Icon = action.icon;
@@ -3466,7 +3797,7 @@ function EducatorOverview({
   );
 }
 
-// ─────────── PROFILE CARD HELPERS ───────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PROFILE CARD HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PField({
   label,
@@ -3550,9 +3881,9 @@ function EducatorProfileCard({
             {p.examQualifications.map((eq, i) => (
               <div key={i} className="text-sm font-semibold text-slate-800">
                 {eq.examName}
-                {eq.score ? ` – ${eq.score}` : ""}
+                {eq.score ? ` â€“ ${eq.score}` : ""}
                 {eq.year ? ` (${eq.year})` : ""}
-                {eq.rank ? ` • Rank: ${eq.rank}` : ""}
+                {eq.rank ? ` â€¢ Rank: ${eq.rank}` : ""}
               </div>
             ))}
           </div>
@@ -3617,7 +3948,7 @@ function EducatorProfileCard({
             onClick={() => setShowAll((s) => !s)}
             className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors"
           >
-            {showAll ? "View Less ↑" : "View More ↓"}
+            {showAll ? "View Less â†‘" : "View More â†“"}
           </button>
         )}
       </div>
@@ -3647,7 +3978,7 @@ function GenericProfileCard({
             value={
               dashboard.linkedStudentId
                 ? `Linked (${dashboard.linkedStudentId.slice(0, 8).toUpperCase()})`
-                : "—"
+                : "â€”"
             }
           />
         </>
@@ -3690,7 +4021,7 @@ function GenericProfileCard({
           {session?.name ?? role}
         </h2>
         <p className="text-xs text-slate-500 mt-0.5 capitalize">
-          {role} • {session?.email ?? ""}
+          {role} â€¢ {session?.email ?? ""}
         </p>
         <div className="mt-4 space-y-3">
           {basicFields}
@@ -3702,7 +4033,7 @@ function GenericProfileCard({
             onClick={() => setShowAll((s) => !s)}
             className="mt-4 w-full rounded-xl bg-slate-50 py-2.5 text-xs font-bold text-[#0B40A1] border border-slate-100 hover:bg-slate-100 transition-colors"
           >
-            {showAll ? "View Less ↑" : "View More ↓"}
+            {showAll ? "View Less â†‘" : "View More â†“"}
           </button>
         )}
       </div>

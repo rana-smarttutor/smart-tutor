@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 import { getSessionUser, hasAnyRole } from "@/lib/auth";
 import {
@@ -54,6 +54,11 @@ export async function POST(request: Request) {
     parentMobile?: string;
     assignedFacultyIds?: string[];
     gender?: string;
+    designation?: string;
+    department?: string;
+    branch?: string;
+    employmentType?: string;
+    joiningDate?: string;
 profile?: Record<string, unknown>;
   };
 
@@ -72,6 +77,11 @@ profile?: Record<string, unknown>;
       parentMobile?: string;
       assignedFacultyIds?: string[];
       gender?: string;
+    designation?: string;
+    department?: string;
+    branch?: string;
+    employmentType?: string;
+    joiningDate?: string;
 profile?: Record<string, unknown>;
     };
   } catch {
@@ -94,6 +104,24 @@ const gender = sanitizeTextInput(submittedGender, 20)
 
 const program =
   requestedProgram || (role === "counsellor" ? "CRM Counsellor" : "");
+
+  console.log("[STAFF CREATE DEBUG]", {
+    rawRole: body.role,
+    sanitizedRole: role,
+    name,
+    email,
+    confirm: body.confirm,
+    requestedProgram,
+    program,
+    designation: body.designation,
+    department: body.department,
+    branch: body.branch,
+    employmentType: body.employmentType,
+    joiningDate: body.joiningDate,
+    passwordPresent: Boolean(body.password),
+    passwordAccepted: Boolean(password),
+    emailValid: validateEmailFormat(email),
+  });
 
   if (!body.confirm) {
     return NextResponse.json(
@@ -129,6 +157,78 @@ const program =
   }
 
   const profile: UserProfile = {};
+
+  // Staff employment profile
+  if (role === "staff") {
+    const designation = sanitizeTextInput(
+      body.designation,
+      80,
+    );
+
+    const department = sanitizeTextInput(
+      body.department,
+      80,
+    );
+
+    const branch = sanitizeTextInput(
+      body.branch,
+      80,
+    );
+
+    const joiningDate = sanitizeTextInput(
+      body.joiningDate,
+      10,
+    );
+
+    const submittedEmploymentType =
+      sanitizeTextInput(
+        body.employmentType,
+        30,
+      );
+
+    const allowedEmploymentTypes = [
+      "full_time",
+      "part_time",
+      "contractual",
+      "hourly",
+    ] as const;
+
+    if (!designation || !department || !branch) {
+      console.warn("[STAFF VALIDATION FAILED]", {
+        designation,
+        department,
+        branch,
+        employmentType: submittedEmploymentType,
+        joiningDate,
+      });
+
+      return NextResponse.json(
+        {
+          error:
+            "Designation, department and branch are required for Staff accounts.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const employmentType =
+      allowedEmploymentTypes.includes(
+        submittedEmploymentType as
+          (typeof allowedEmploymentTypes)[number],
+      )
+        ? (submittedEmploymentType as
+            (typeof allowedEmploymentTypes)[number])
+        : "full_time";
+
+    profile.designation = designation;
+    profile.department = department;
+    profile.branch = branch;
+    profile.employmentType = employmentType;
+
+    if (joiningDate) {
+      profile.joiningDate = joiningDate;
+    }
+  }
   if (role === "educator") {
   if (gender !== "male" && gender !== "female") {
     return NextResponse.json(
@@ -367,3 +467,5 @@ export async function DELETE(request: Request) {
     );
   }
 }
+
+

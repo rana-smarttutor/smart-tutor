@@ -304,7 +304,7 @@ const sections = [
       <p>
         You have the right to access, correct, or request deletion of your
         personal data held by SmartIQ Institute. To exercise these rights, contact
-        your institute administrator or write to us at info@smarttutors.co.in.
+        your institute administrator or write to us at info@smartiqinstitute.in.
         We will respond to your request within the timeframe required by
         applicable law. Note that certain data may be retained where required
         by law or for legitimate operational purposes.
@@ -404,7 +404,7 @@ const sections = [
         <p>For privacy-related inquiries, contact:</p>
         <div className="mt-2 space-y-1">
           <p>
-            <strong>Email:</strong> info@smarttutors.co.in
+            <strong>Email:</strong> info@smartiqinstitute.in
           </p>
           <p>
             <strong>Phone:</strong> +91 88504 47887
