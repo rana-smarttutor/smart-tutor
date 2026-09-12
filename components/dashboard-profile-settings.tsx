@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DashboardBundle, SessionUser } from "@/lib/types";
@@ -432,7 +432,7 @@ export function DashboardProfileSettings({
 
   return (
     <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div
         className="px-6 py-5"
         style={{
@@ -449,7 +449,7 @@ export function DashboardProfileSettings({
         </p>
       </div>
 
-      {/* ── Alerts ── */}
+      {/* â”€â”€ Alerts â”€â”€ */}
       {alert && (
         <div
           className={`mx-6 mt-4 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold border ${
@@ -470,7 +470,7 @@ export function DashboardProfileSettings({
       )}
 
       <div className="p-6 max-w-3xl">
-        {/* ── Profile Header Card ── */}
+        {/* â”€â”€ Profile Header Card â”€â”€ */}
         <div className="flex flex-col sm:flex-row items-center gap-5 mb-8">
           {/* Avatar / Photo */}
           <div className="relative h-28 w-28 shrink-0">
@@ -519,9 +519,9 @@ export function DashboardProfileSettings({
               {session?.email}
             </p>
 
-            {isEducator && session?.facultyCode && (
+            {(isEducator || session?.role === "staff") && (session?.employeeCode ?? session?.facultyCode) && (
               <p className="mt-1 font-mono text-xs font-semibold text-[var(--color-muted)]">
-                Employee ID: {session.facultyCode}
+                Employee ID: {(session.employeeCode ?? session.facultyCode)}
               </p>
             )}
             <span
@@ -554,7 +554,7 @@ export function DashboardProfileSettings({
           </button>
         </div>
 
-        {/* ── READ-ONLY INFO GRID ── */}
+        {/* â”€â”€ READ-ONLY INFO GRID â”€â”€ */}
         {!editing && (
           <div className="space-y-6">
             <div>
@@ -592,7 +592,7 @@ export function DashboardProfileSettings({
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-5">
 <InfoRow
   label="Employee ID"
-  value={session?.facultyCode ?? "Not assigned"}
+  value={session?.employeeCode ?? session?.facultyCode ?? "Not assigned"}
 />
 
                   <InfoRow label="Qualification" value={qualification} />
@@ -693,7 +693,7 @@ export function DashboardProfileSettings({
           </div>
         )}
 
-        {/* ── EDIT MODE ── */}
+        {/* â”€â”€ EDIT MODE â”€â”€ */}
         {editing && (
           <div className="space-y-6">
             {/* Common Fields */}
@@ -958,7 +958,7 @@ export function DashboardProfileSettings({
           </div>
         )}
 
-        {/* ── Password Change ── */}
+        {/* â”€â”€ Password Change â”€â”€ */}
         <div className="mt-10 border-t border-[var(--color-border)] pt-6">
           <button
             type="button"
@@ -1035,3 +1035,4 @@ export function DashboardProfileSettings({
     </section>
   );
 }
+

@@ -64,7 +64,12 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
   const facultyOptions = useMemo(
     () =>
       managedUsers
-        .filter((u) => u.role === "educator" && u.status === "active")
+        .filter(
+          (u) =>
+            (u.role === "educator" ||
+              u.role === "staff") &&
+            u.status === "active",
+        )
         .sort((a, b) => a.name.localeCompare(b.name)),
     [managedUsers],
   );
@@ -204,7 +209,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
         staffId: "", staffName: "", month: getCurrentMonth(), title: "Monthly Salary",
         particulars: "", amount: "", isPaymentDone: false, paymentMode: "UPI", transactionId: "", paidDate: new Date().toISOString().slice(0, 10),
       });
-      setStatus(form.isPaymentDone ? "Payout created with payment recorded. Faculty notified." : "Payout record created.");
+      setStatus(form.isPaymentDone ? "Payout created with payment recorded. Employee notified." : "Payout record created.");
     } catch {
       setStatus("Failed to create payout.");
     }
@@ -270,7 +275,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
       }
       setPayouts((prev) => prev.map((p) => (p.id === recordingPaymentId ? data.payout : p)));
       setRecordingPaymentId(null);
-      setStatus("Payment recorded. Faculty notified. Transaction ID: " + (payForm.transactionId || "N/A"));
+      setStatus("Payment recorded. Employee notified. Transaction ID: " + (payForm.transactionId || "N/A"));
       setPayForm({ paymentMode: "UPI", transactionId: "", paidDate: new Date().toISOString().slice(0, 10) });
     } catch {
       setStatus("Failed to record payment.");
@@ -407,7 +412,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
           <div class="addr">
             Plot No. 2, Second Floor, Vashi Plaza,<br/>
             Sector 17, Vashi, Navi Mumbai – 400703<br/>
-            info@smarttutors.co.in | +91 88504 47887
+            info@smartiqinstitute.in | +91 88504 47887
           </div>
         </div>
       </div>
@@ -618,7 +623,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
                   }}
                   className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 >
-                  <option value="">Select faculty member...</option>
+                  <option value="">Select employee...</option>
                   {facultyOptions.map((f) => (
                     <option key={f.id} value={f.id}>{f.name} ({f.email})</option>
                   ))}
@@ -1088,7 +1093,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
               <input value={payForm.transactionId} onChange={(e) => setPayForm((f) => ({ ...f, transactionId: e.target.value }))} placeholder="Transaction ID / UPI Ref / Cheque No" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               <input type="date" value={payForm.paidDate} onChange={(e) => setPayForm((f) => ({ ...f, paidDate: e.target.value }))} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               <p className="text-[10px] text-[var(--color-muted)]">
-                The actual payment happens outside this system. You are only recording the transaction reference here. The faculty member will receive a notification.
+                The actual payment happens outside this system. You are only recording the transaction reference here. The employee will receive a notification.
               </p>
             </div>
             <div className="border-t border-[var(--color-border)] px-6 py-4 flex justify-end gap-3">

@@ -272,7 +272,7 @@ const sections = [
         <p>For questions about this agreement:</p>
         <div className="mt-2 space-y-1">
           <p>
-            <strong>Email:</strong> info@smarttutors.co.in
+            <strong>Email:</strong> info@smartiqinstitute.in
           </p>
           <p>
             <strong>Phone:</strong> +91 88504 47887

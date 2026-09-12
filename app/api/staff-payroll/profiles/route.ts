@@ -184,3 +184,200 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+export async function PATCH(request: Request) {
+  try {
+    const session =
+      await getRequestSession(request);
+
+    if (!session) {
+      return NextResponse.json(
+        {
+          error:
+            "Authentication required.",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    /*
+     * Payroll profile editing stays
+     * strictly Admin-only.
+     */
+    if (session.role !== "admin") {
+      return NextResponse.json(
+        {
+          error:
+            "Only administrators can update payroll profiles.",
+        },
+        {
+          status: 403,
+        },
+      );
+    }
+
+    const body =
+      (await request.json()) as
+        Record<string, unknown>;
+
+    const profileId =
+      typeof body.profileId === "string"
+        ? body.profileId.trim()
+        : "";
+
+    if (!profileId) {
+      return NextResponse.json(
+        {
+          error:
+            "profileId is required.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const dataStore =
+      await import(
+        "@/lib/data-store"
+      );
+
+    const profile =
+      await (dataStore as any)
+        .updateStaffPayrollProfile(
+          profileId,
+          {
+            employeeId:
+              typeof body.employeeId ===
+              "string"
+                ? body.employeeId
+                : undefined,
+
+            employmentType:
+              typeof body.employmentType ===
+              "string"
+                ? body.employmentType
+                : undefined,
+
+            salaryType:
+              typeof body.salaryType ===
+              "string"
+                ? body.salaryType
+                : undefined,
+
+            monthlySalary:
+              typeof body.monthlySalary ===
+              "number"
+                ? body.monthlySalary
+                : undefined,
+
+            hourlyRate:
+              typeof body.hourlyRate ===
+              "number"
+                ? body.hourlyRate
+                : undefined,
+
+            perClassRate:
+              typeof body.perClassRate ===
+              "number"
+                ? body.perClassRate
+                : undefined,
+
+            bankName:
+              typeof body.bankName ===
+              "string"
+                ? body.bankName
+                : undefined,
+
+            accountNumber:
+              typeof body.accountNumber ===
+              "string"
+                ? body.accountNumber
+                : undefined,
+
+            ifscCode:
+              typeof body.ifscCode ===
+              "string"
+                ? body.ifscCode
+                : undefined,
+
+            panNumber:
+              typeof body.panNumber ===
+              "string"
+                ? body.panNumber
+                : undefined,
+
+            pfEnabled:
+              typeof body.pfEnabled ===
+              "boolean"
+                ? body.pfEnabled
+                : undefined,
+
+            tdsEnabled:
+              typeof body.tdsEnabled ===
+              "boolean"
+                ? body.tdsEnabled
+                : undefined,
+
+            notes:
+              typeof body.notes ===
+              "string"
+                ? body.notes
+                : undefined,
+
+            isActive:
+              typeof body.isActive ===
+              "boolean"
+                ? body.isActive
+                : undefined,
+          },
+        );
+
+    if (!profile) {
+      return NextResponse.json(
+        {
+          error:
+            "Payroll profile not found.",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+
+    await logAction({
+      action: "update",
+      category: "payroll",
+      details:
+        `Payroll profile updated for ${profile.userName}`,
+      path:
+        "/api/staff-payroll/profiles",
+      method: "PATCH",
+      request,
+      session,
+      metadata: {
+        profileId,
+        userId: profile.userId,
+      },
+    });
+
+    return NextResponse.json({
+      profile,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to update payroll profile.",
+      },
+      {
+        status: 400,
+      },
+    );
+  }
+}

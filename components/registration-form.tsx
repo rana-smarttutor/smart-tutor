@@ -56,6 +56,12 @@ type SignupFormData = {
   experience: string;
   subjects: string;
 
+  designation: string;
+  department: string;
+  branch: string;
+  employmentType: string;
+  joiningDate: string;
+
   profilePhotoUrl: string;
   cvUrl: string;
   photoIdFrontUrl: string;
@@ -607,6 +613,12 @@ function getInitialFormData(): SignupFormData {
     experience: "",
     subjects: "",
 
+    designation: "",
+    department: "",
+    branch: "",
+    employmentType: "full_time",
+    joiningDate: "",
+
     profilePhotoUrl: "",
     cvUrl: "",
     photoIdFrontUrl: "",
@@ -616,6 +628,7 @@ function getInitialFormData(): SignupFormData {
 
 export function RegistrationForm() {
   const [activeTab, setActiveTab] = useState<"student" | "educator">("student");
+  const [employeeType, setEmployeeType] = useState<"educator" | "staff">("educator");
   const [form, setForm] = useState<SignupFormData>(getInitialFormData());
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -990,20 +1003,40 @@ function selectCourse(course: CourseOption) {
         }
 
         if (!form.cvUrl) {
-          setError("Resume / CV is required for faculty accounts.");
+          setError("Resume / CV is required for employee accounts.");
           return;
         }
 
         if (!form.photoIdFrontUrl) {
-          setError(
-            "Photo ID front image is required for faculty verification.",
-          );
+          setError("Photo ID front image is required for employee verification.");
           return;
         }
 
         if (!form.photoIdBackUrl) {
-          setError("Photo ID back image is required for faculty verification.");
+          setError("Photo ID back image is required for employee verification.");
           return;
+        }
+
+        if (employeeType === "educator" && !form.qualification.trim()) {
+          setError("Qualification is required for faculty accounts.");
+          return;
+        }
+
+        if (employeeType === "staff") {
+          if (!form.designation.trim()) {
+            setError("Please select a designation.");
+            return;
+          }
+
+          if (!form.department.trim()) {
+            setError("Department is required for staff accounts.");
+            return;
+          }
+
+          if (!form.branch.trim()) {
+            setError("Branch is required for staff accounts.");
+            return;
+          }
         }
       }
 
@@ -1015,7 +1048,10 @@ function selectCourse(course: CourseOption) {
       }
 
       const body: Record<string, unknown> = {
-        role: activeTab,
+        role:
+          activeTab === "student"
+            ? "student"
+            : employeeType,
         name: form.name,
         email: form.email,
         password: form.password,
@@ -1066,11 +1102,17 @@ function selectCourse(course: CourseOption) {
 
       if (activeTab === "educator") {
         body.confirmPassword = form.confirmPassword;
-        body.qualification = form.qualification;
-        body.experience = form.experience;
         body.cvUrl = form.cvUrl;
         body.photoIdFrontUrl = form.photoIdFrontUrl;
         body.photoIdBackUrl = form.photoIdBackUrl;
+      }
+
+      if (
+        activeTab === "educator" &&
+        employeeType === "educator"
+      ) {
+        body.qualification = form.qualification;
+        body.experience = form.experience;
 
         body.subjects = form.subjects
           ? form.subjects
@@ -1086,6 +1128,17 @@ function selectCourse(course: CourseOption) {
             score: eq.score.trim(),
             year: eq.year.trim(),
           }));
+      }
+
+      if (
+        activeTab === "educator" &&
+        employeeType === "staff"
+      ) {
+        body.designation = form.designation;
+        body.department = form.department;
+        body.branch = form.branch;
+        body.employmentType = form.employmentType;
+        body.joiningDate = form.joiningDate;
       }
 
       const response = await fetch("/api/auth/signup", {
@@ -1692,7 +1745,52 @@ function selectCourse(course: CourseOption) {
           </>
         )}
 
+        
         {activeTab === "educator" && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/30 p-5 sm:p-6">
+            <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-blue-700">
+              Employee Type
+            </h3>
+
+            <p className="mb-4 text-xs text-slate-500">
+              Select whether you are applying as teaching faculty or non-teaching staff.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmployeeType("educator");
+                  setError("");
+                }}
+                className={`rounded-xl border px-4 py-3 text-sm font-bold transition ${
+                  employeeType === "educator"
+                    ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                    : "border-blue-100 bg-white text-slate-600 hover:bg-blue-50"
+                }`}
+              >
+                Faculty
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEmployeeType("staff");
+                  setError("");
+                }}
+                className={`rounded-xl border px-4 py-3 text-sm font-bold transition ${
+                  employeeType === "staff"
+                    ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+                    : "border-blue-100 bg-white text-slate-600 hover:bg-blue-50"
+                }`}
+              >
+                Staff
+              </button>
+            </div>
+          </div>
+        )}
+
+{activeTab === "educator" && employeeType === "educator" && (
           <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
             <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
               Professional Information
@@ -1923,6 +2021,204 @@ function selectCourse(course: CourseOption) {
                   Driver's License. Images must be clear and readable. (PNG,
                   JPG, WEBP — max 5MB each)
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "educator" && employeeType === "staff" && (
+          <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
+            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
+              Employment Information
+            </h3>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Designation <span className="text-red-500">*</span>
+                </label>
+
+                <select
+                  required
+                  value={form.designation}
+                  onChange={(event) =>
+                    updateField("designation", event.target.value)
+                  }
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+                >
+                  <option value="">Select designation</option>
+                  <option value="Receptionist">Receptionist</option>
+                  <option value="Office Admin">Office Admin</option>
+                  <option value="Branch Manager">Branch Manager</option>
+                  <option value="Accountant">Accountant</option>
+                  <option value="HR">HR</option>
+                  <option value="Counsellor">Counsellor</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Support">Support</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Sales">Sales</option>
+                  <option value="IT Support">IT Support</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <InputField
+                label="Department"
+                value={form.department}
+                onChange={(value) => updateField("department", value)}
+                required
+                placeholder="e.g. Operations"
+              />
+
+              <InputField
+                label="Branch"
+                value={form.branch}
+                onChange={(value) => updateField("branch", value)}
+                required
+                placeholder="e.g. Panvel"
+              />
+
+              <div>
+                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Employment Type
+                </label>
+
+                <select
+                  value={form.employmentType}
+                  onChange={(event) =>
+                    updateField("employmentType", event.target.value)
+                  }
+                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+                >
+                  <option value="full_time">Full Time</option>
+                  <option value="part_time">Part Time</option>
+                  <option value="contract">Contract</option>
+                  <option value="intern">Intern</option>
+                </select>
+              </div>
+
+              <InputField
+                label="Joining Date"
+                type="date"
+                value={form.joiningDate}
+                onChange={(value) => updateField("joiningDate", value)}
+              />
+            </div>
+
+            <div className="mt-6 border-t border-slate-100 pt-5">
+              <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-blue-700">
+                Verification Documents
+              </h4>
+
+              <div>
+                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  Upload CV / Resume <span className="text-red-500">*</span>
+                </label>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => cvInputRef.current?.click()}
+                    disabled={uploadingCv}
+                    className="rounded-xl border border-dashed border-blue-200 bg-blue-50/50 px-4 py-2.5 text-xs font-bold text-blue-600 transition-all hover:bg-blue-100 disabled:opacity-50"
+                  >
+                    {uploadingCv ? "Uploading..." : "Choose CV"}
+                  </button>
+
+                  <input
+                    ref={cvInputRef}
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    className="hidden"
+                    onChange={handleCvChange}
+                  />
+
+                  {form.cvUrl && (
+                    <span className="text-xs text-emerald-600">CV uploaded</span>
+                  )}
+
+                  <span className="text-[10px] text-slate-400">
+                    PDF, DOC, DOCX (max 5MB)
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-amber-700">
+                  Photo ID for Verification <span className="text-red-500">*</span>
+                </label>
+
+                <p className="mb-3 text-[11px] text-amber-600/80">
+                  Upload front and back images of a valid photo ID for admin verification.
+                </p>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
+                      Photo ID — Front <span className="text-red-500">*</span>
+                    </label>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => photoIdFrontInputRef.current?.click()}
+                        disabled={uploadingPhotoIdFront}
+                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        {uploadingPhotoIdFront
+                          ? "Uploading..."
+                          : "Choose Front Image"}
+                      </button>
+
+                      <input
+                        ref={photoIdFrontInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoIdFrontChange}
+                      />
+
+                      {form.photoIdFrontUrl && (
+                        <span className="text-[11px] text-emerald-600">
+                          Uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
+                      Photo ID — Back <span className="text-red-500">*</span>
+                    </label>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => photoIdBackInputRef.current?.click()}
+                        disabled={uploadingPhotoIdBack}
+                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
+                      >
+                        {uploadingPhotoIdBack
+                          ? "Uploading..."
+                          : "Choose Back Image"}
+                      </button>
+
+                      <input
+                        ref={photoIdBackInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={handlePhotoIdBackChange}
+                      />
+
+                      {form.photoIdBackUrl && (
+                        <span className="text-[11px] text-emerald-600">
+                          Uploaded
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

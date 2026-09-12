@@ -27,7 +27,9 @@ function readSession(payload: unknown): SessionUser | null {
   const user = candidate as Partial<SessionUser>;
   if (
     typeof user.id !== "string" || !user.id ||
-    (user.role !== "admin" && user.role !== "educator" && user.role !== "student" && user.role !== "parent")
+    (user.role !== "admin" && user.role !== "educator" &&
+      user.role !== "staff" &&
+      user.role !== "student" && user.role !== "parent")
   ) return null;
   return user as SessionUser;
 }
@@ -48,7 +50,11 @@ export async function GET(request: Request) {
     if (!session) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
-    if (session.role !== "admin" && session.role !== "educator") {
+    if (
+      session.role !== "admin" &&
+      session.role !== "educator" &&
+      session.role !== "staff"
+    ) {
       return NextResponse.json({ ok: false, error: "Forbidden" }, { status: 403 });
     }
 

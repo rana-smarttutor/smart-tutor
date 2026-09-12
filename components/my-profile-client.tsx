@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -395,7 +395,7 @@ export function MyProfileClient({ session }: Props) {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50/30">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-          <p className="text-sm font-medium text-slate-500">Loading profile…</p>
+          <p className="text-sm font-medium text-slate-500">Loading profileâ€¦</p>
         </div>
       </div>
     );
@@ -516,9 +516,9 @@ export function MyProfileClient({ session }: Props) {
                 {session.name}
               </h2>
               <p className="mt-1 text-sm text-slate-500">{email}</p>
-              {session.role === "educator" && session.facultyCode && (
+              {(session.role === "educator" || session.role === "staff") && (session.employeeCode ?? session.facultyCode) && (
                 <p className="mt-1 font-mono text-xs font-semibold text-slate-500">
-                  Employee ID: {session.facultyCode}
+                  Employee ID: {(session.employeeCode ?? session.facultyCode)}
                 </p>
               )}
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
@@ -544,10 +544,10 @@ export function MyProfileClient({ session }: Props) {
                 Profile Details
               </h3>
               <div className="space-y-0">
-                {session.role === "educator" && session.facultyCode && (
+                {(session.role === "educator" || session.role === "staff") && (session.employeeCode ?? session.facultyCode) && (
                   <ProfileField
                     label="Employee ID"
-                    value={session.facultyCode}
+                    value={(session.employeeCode ?? session.facultyCode)}
                   />
                 )}
                 {phone && <ProfileField label="Phone" value={phone} />}
@@ -872,7 +872,7 @@ export function MyProfileClient({ session }: Props) {
                     />
                   </div>
 
-                  {/* ── Educator fields ── */}
+                  {/* â”€â”€ Educator fields â”€â”€ */}
                   {session.role === "educator" && (
                     <>
                       <div>
@@ -923,7 +923,7 @@ export function MyProfileClient({ session }: Props) {
 
                         <input
                           type="text"
-                          value={session.facultyCode ?? "Not assigned"}
+                          value={session.employeeCode ?? session.facultyCode ?? "Not assigned"}
                           disabled
                           className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-sm font-semibold text-slate-600 shadow-sm"
                         />
@@ -931,7 +931,7 @@ export function MyProfileClient({ session }: Props) {
                     </>
                   )}
 
-                  {/* ── Student fields ── */}
+                  {/* â”€â”€ Student fields â”€â”€ */}
                   {session.role === "student" && (
                     <>
                       <div>
@@ -1048,7 +1048,7 @@ export function MyProfileClient({ session }: Props) {
                     </>
                   )}
 
-                  {/* ── Subjects (educator & student) ── */}
+                  {/* â”€â”€ Subjects (educator & student) â”€â”€ */}
                   {(session.role === "educator" ||
                     session.role === "student") && (
                     <div className="sm:col-span-2">
@@ -1081,7 +1081,7 @@ export function MyProfileClient({ session }: Props) {
                           onChange={(e) => setSubjectInput(e.target.value)}
                           onKeyDown={handleSubjectKeyDown}
                           className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                          placeholder="Type subject and press Enter…"
+                          placeholder="Type subject and press Enterâ€¦"
                         />
                         <button
                           type="button"
@@ -1094,7 +1094,7 @@ export function MyProfileClient({ session }: Props) {
                     </div>
                   )}
 
-                  {/* ── Weak / Strong Subjects (student) ── */}
+                  {/* â”€â”€ Weak / Strong Subjects (student) â”€â”€ */}
                   {session.role === "student" && (
                     <>
                       <div className="sm:col-span-2">
@@ -1130,7 +1130,7 @@ export function MyProfileClient({ session }: Props) {
                               }
                             }}
                             className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                            placeholder="Type subject and press Enter…"
+                            placeholder="Type subject and press Enterâ€¦"
                           />
                           <button
                             type="button"
@@ -1174,7 +1174,7 @@ export function MyProfileClient({ session }: Props) {
                               }
                             }}
                             className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                            placeholder="Type subject and press Enter…"
+                            placeholder="Type subject and press Enterâ€¦"
                           />
                           <button
                             type="button"
@@ -1198,7 +1198,7 @@ export function MyProfileClient({ session }: Props) {
                       onChange={(e) => setBio(e.target.value.slice(0, 500))}
                       rows={3}
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition-all"
-                      placeholder="Brief description…"
+                      placeholder="Brief descriptionâ€¦"
                     />
                   </div>
                 </div>
@@ -1211,7 +1211,7 @@ export function MyProfileClient({ session }: Props) {
                     className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                   >
                     <i className="bi bi-check-lg text-base" />
-                    {saving ? "Saving…" : "Save Changes"}
+                    {saving ? "Savingâ€¦" : "Save Changes"}
                   </button>
                 </div>
               </div>
@@ -1292,7 +1292,7 @@ export function MyProfileClient({ session }: Props) {
                       className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-sm font-bold text-white shadow-md hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       <i className="bi bi-shield-check" />
-                      {savingPassword ? "Changing…" : "Change Password"}
+                      {savingPassword ? "Changingâ€¦" : "Change Password"}
                     </button>
                   </div>
                 </div>
@@ -1419,3 +1419,5 @@ export function MyProfileClient({ session }: Props) {
     </div>
   );
 }
+
+

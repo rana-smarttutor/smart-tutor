@@ -152,7 +152,7 @@ export default function RootLayout({
       "@type": "ContactPoint",
       "telephone": "+91-8850447887",
       "contactType": "admissions",
-      "email": "info@smarttutors.co.in",
+      "email": "info@smartiqinstitute.in",
       "availableLanguage": ["English", "Hindi", "Marathi"]
     },
     "sameAs": [
@@ -406,7 +406,7 @@ export default function RootLayout({
         "name": "What is the fee structure at SmartIQ Institute?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Our fee structure varies by program, duration, and learning mode (online or on-campus). Please contact us at info@smarttutors.co.in or call +91-8850447887 for detailed fee information specific to your course of interest."
+          "text": "Our fee structure varies by program, duration, and learning mode (online or on-campus). Please contact us at info@smartiqinstitute.in or call +91-8850447887 for detailed fee information specific to your course of interest."
         }
       },
       {

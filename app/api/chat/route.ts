@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
@@ -75,7 +75,7 @@ export async function GET() {
 let contacts: Array<{
   id: string;
   name: string;
-  role: "admin" | "educator" | "student";
+  role: "admin" | "educator" | "staff" | "student";
   status?: string;
   verified?: boolean;
 }> = [];
@@ -163,6 +163,36 @@ if (session.role === "student") {
     );
   }
 
+
+  if (session.role === "staff") {
+    const users = await getUsersForAdmin();
+
+    contacts = users
+      .filter(
+        (user) =>
+          user.id !== session.id &&
+          (
+            user.role === "admin" ||
+            user.role === "educator" ||
+            user.role === "staff"
+          ) &&
+          user.status === "active" &&
+          user.verified !== false,
+      )
+      .map((user) => ({
+        id: user.id,
+        name: user.name,
+        role: user.role as
+          | "admin"
+          | "educator"
+          | "staff",
+        status: user.status,
+        verified: user.verified,
+      }))
+      .sort((left, right) =>
+        left.name.localeCompare(right.name),
+      );
+  }
   return NextResponse.json({
     messages: chatMessages,
     contacts,

@@ -1,4 +1,4 @@
-import type { Role } from "@/lib/types";
+﻿import type { Role } from "@/lib/types";
 
 const controlChars = /[\u0000-\u001F\u007F]/g;
 const angleBrackets = /[<>]/g;
@@ -61,19 +61,20 @@ export function sanitizeOptions(values: string[] | undefined) {
 }
 
 export function sanitizeRoleInput(value: string | undefined): Role | null {
-if (
-  value === "student" ||
-  value === "educator" ||
-  value === "admin" ||
-  value === "parent" ||
-  value === "counsellor"
-) {
-  return value;
-}
+  if (
+    value === "student" ||
+    value === "educator" ||
+    value === "staff" ||
+    value === "admin" ||
+    value === "parent" ||
+    value === "counsellor"
+  ) {
+    return value;
+  }
 
   return null;
 }
-
 export function validateEmailFormat(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
+

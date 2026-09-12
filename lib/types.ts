@@ -1,4 +1,10 @@
-export type Role = "student" | "educator" | "admin" | "parent" | "counsellor";
+﻿export type Role =
+  | "student"
+  | "educator"
+  | "staff"
+  | "admin"
+  | "parent"
+  | "counsellor";
 
 export type UserStatus = "active" | "pending" | "rejected";
 
@@ -6,13 +12,19 @@ export type SessionUser = {
   id: string;
 
   /**
-   * Permanent human-readable faculty identifier.
+   * Permanent human-readable employee identifier.
    *
    * Example:
-   * SIQ-FAC-2026-0001
+   * SIQ-EMP-2026-0001
    *
    * IMPORTANT:
    * `id` remains the internal Mongo/application UUID.
+   */
+  employeeCode?: string;
+
+  /**
+   * Legacy Faculty ID retained temporarily
+   * for backward compatibility and migration.
    */
   facultyCode?: string;
 
@@ -585,6 +597,17 @@ export type UserProfile = {
   latestQualification?: string;
   latestAcademicScore?: string;
 
+
+  // Employee / Staff specific
+  designation?: string;
+  department?: string;
+  branch?: string;
+  employmentType?:
+    | "full_time"
+    | "part_time"
+    | "contractual"
+    | "hourly";
+  joiningDate?: string;
   // Educator specific
   qualification?: string;
   cvUrl?: string;
@@ -2100,3 +2123,7 @@ export type Certificate = {
   createdAt: string;
   updatedAt?: string;
 };
+
+
+
+

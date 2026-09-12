@@ -37,6 +37,7 @@ function readSession(payload: unknown): SessionUser | null {
     !user.id ||
     (user.role !== "admin" &&
       user.role !== "educator" &&
+      user.role !== "staff" &&
       user.role !== "student" &&
       user.role !== "parent")
   ) {
@@ -93,7 +94,10 @@ export async function GET(request: Request, context: RouteContext) {
       );
     }
 
-    if (session.role === "educator") {
+    if (
+      session.role === "educator" ||
+      session.role === "staff"
+    ) {
       const filteredRun = {
         ...run,
         slips: run.slips.filter((s: any) => s.userId === session.id),
