@@ -57,6 +57,11 @@ const TUITION_MODES = [
     title: "Online Tutor",
     description: "Live interactive online classes",
   },
+    {
+    value: "Offline Campus",
+    title: "Offline Campus",
+    description: "In-person classes at our campus",
+  },
 ] as const;
 
 const BOARD_OPTIONS = [

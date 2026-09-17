@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -323,12 +323,12 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
         }
       }
     `}</style>
-      <div className="mx-auto w-full max-w-[1280px] px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8">
         {/* ==================================================
             TOP DASHBOARD
         ================================================== */}
 
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_270px]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="min-w-0">
             {/* HERO */}
             <section className="relative min-h-[260px] overflow-hidden rounded-[22px] border border-blue-100 bg-gradient-to-br from-[#edf4ff] via-[#f8fbff] to-[#e6f0ff] p-6 shadow-sm sm:p-7">
@@ -351,7 +351,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
 
                   <p className="mt-3 max-w-[520px] text-xs font-medium leading-5 text-slate-600 sm:text-sm">
                     Get the latest official exam dates, applications, admit
-                    cards, results, answer keys and notifications — all
+                    cards, results, answer keys and notifications â€” all
                     organised in one place.
                   </p>
 
@@ -450,7 +450,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         >
                           <span>{update.title}</span>
 
-                          <span className="text-blue-300">•</span>
+                          <span className="text-blue-300">â€¢</span>
                         </a>
                       ),
                     )}
@@ -464,71 +464,71 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
             </section>
 
             {/* CATEGORIES */}
-            <section id="exam-categories" className="mt-5 scroll-mt-28">
-              <p className="text-[9px] font-black uppercase tracking-[0.16em] text-blue-600">
-                Explore Exam Categories
-              </p>
+<section id="exam-categories" className="mt-7 scroll-mt-28">
+  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
+    Explore Exam Categories
+  </p>
 
-              <h2 className="mt-1 text-lg font-black text-slate-950">
-                Find updates by exam category
-              </h2>
+  <h2 className="mt-1.5 text-2xl font-black text-slate-950">
+    Find updates by exam category
+  </h2>
 
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
-                {CATEGORY_CARDS.map((category) => {
-                  const Icon = category.icon;
-                  const active = activeCategory === category.name;
+  <div className="mt-4 grid gap-4 md:grid-cols-3">
+    {CATEGORY_CARDS.map((category) => {
+      const Icon = category.icon;
+      const active = activeCategory === category.name;
 
-                  return (
-                    <button
-                      key={category.name}
-                      type="button"
-                      onClick={() => selectCategory(category.name)}
-                      className={`rounded-[18px] border p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-                        active
-                          ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
-                          : "border-slate-200 bg-white hover:border-blue-200"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div
-                          className={`flex h-9 w-9 items-center justify-center rounded-lg ${
-                            active
-                              ? "bg-blue-600 text-white"
-                              : "bg-blue-50 text-blue-600"
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
+      return (
+        <button
+          key={category.name}
+          type="button"
+          onClick={() => selectCategory(category.name)}
+          className={`rounded-[22px] border p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+            active
+              ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
+              : "border-slate-200 bg-white hover:border-blue-200"
+          }`}
+        >
+          <div className="flex items-start justify-between">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                active
+                  ? "bg-blue-600 text-white"
+                  : "bg-blue-50 text-blue-600"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+            </div>
 
-                        <span className="rounded-full bg-slate-50 px-2 py-1 text-[9px] font-black text-slate-600">
-                          {counts[category.name]}
-                        </span>
-                      </div>
+            <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-black text-slate-600">
+              {counts[category.name]}
+            </span>
+          </div>
 
-                      <h3 className="mt-3 text-sm font-black text-slate-950">
-                        {category.title}
-                      </h3>
+          <h3 className="mt-5 text-lg font-black text-slate-950">
+            {category.title}
+          </h3>
 
-                      <p className="mt-1 text-[10px] font-bold text-blue-600">
-                        {category.examples}
-                      </p>
+          <p className="mt-1.5 text-xs font-bold text-blue-600">
+            {category.examples}
+          </p>
 
-                      <p className="mt-2 min-h-[38px] text-[10px] font-medium leading-4 text-slate-500">
-                        {category.description}
-                      </p>
+          <p className="mt-3 min-h-[48px] text-xs font-medium leading-5 text-slate-500">
+            {category.description}
+          </p>
 
-                      <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-black text-blue-600">
-                        View Updates
-                        <ChevronRight className="h-3 w-3" />
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+          <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-blue-600">
+            View Updates
+            <ChevronRight className="h-4 w-4" />
+          </span>
+        </button>
+      );
+    })}
+  </div>
+</section>
 
             {/* FEATURED + IMPORTANT */}
-            <div className="mt-4 grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
+            <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
               <FeaturedUpdate update={featuredUpdate} />
 
               <ImportantDates updates={importantUpdates} />
@@ -541,12 +541,12 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
 
           <aside className="space-y-4">
             {/* QUICK ACCESS */}
-            <section className="rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-900">
+            <section className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-[13px] font-black uppercase tracking-[0.12em] text-slate-900">
                 Quick Access
               </h2>
 
-              <div className="mt-2 divide-y divide-slate-100">
+              <div className="mt-3 divide-y divide-slate-100">
                 {QUICK_ACCESS.map((item) => {
                   const Icon = item.icon;
 
@@ -555,19 +555,19 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                       key={item.label}
                       type="button"
                       onClick={() => selectQuickAccess(item.type)}
-                      className="group flex w-full items-center justify-between gap-2 py-2.5 text-left"
+                      className="group flex w-full items-center justify-between gap-3 py-3.5 text-left"
                     >
-                      <span className="flex items-center gap-2.5">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
-                          <Icon className="h-3.5 w-3.5" />
+                      <span className="flex items-center gap-3.5">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
+                          <Icon className="h-[18px] w-[18px]" />
                         </span>
 
-                        <span className="text-[10px] font-bold text-slate-700 group-hover:text-blue-700">
+                        <span className="text-[12px] font-bold text-slate-700 transition group-hover:text-blue-700">
                           {item.label}
                         </span>
                       </span>
 
-                      <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
+                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-blue-500" />
                     </button>
                   );
                 })}
@@ -646,22 +646,22 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
           <div className="border-b border-slate-100 p-4 sm:p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+                <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.15em] text-blue-600">
                   <Sparkles className="h-3.5 w-3.5" />
                   Latest Exam Updates
                 </div>
 
-                <h2 className="mt-1 text-xl font-black text-slate-950">
+                <h2 className="mt-1.5 text-2xl font-black text-slate-950">
                   Official notices
                 </h2>
 
-                <p className="mt-1 text-[10px] font-medium text-slate-500">
+                <p className="mt-1 text-xs font-medium text-slate-500">
                   Search and filter official examination updates.
                 </p>
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <div className="relative sm:w-[260px]">
+                <div className="relative sm:w-[320px]">
                   <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
 
                   <input
@@ -669,14 +669,14 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
                     placeholder="Search exams..."
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-[10px] font-semibold outline-none focus:border-blue-400 focus:bg-white"
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-xs font-semibold outline-none focus:border-blue-400 focus:bg-white"
                   />
                 </div>
 
                 <select
                   value={activeSource}
                   onChange={(event) => setActiveSource(event.target.value)}
-                  className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-[10px] font-bold text-slate-700 outline-none"
+                  className="h-11 rounded-xl border border-slate-200 bg-white px-4 text-xs font-bold text-slate-700 outline-none"
                 >
                   <option value="All">All Authorities</option>
 
@@ -695,7 +695,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                   key={type}
                   type="button"
                   onClick={() => setActiveType(type)}
-                  className={`rounded-full px-3 py-1.5 text-[9px] font-black transition ${
+                  className={`rounded-full px-4 py-2 text-[11px] font-black transition ${
                     activeType === type
                       ? "bg-blue-600 text-white"
                       : "border border-slate-200 bg-white text-slate-600 hover:bg-blue-50 hover:text-blue-700"
@@ -712,7 +712,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[9px] font-black text-slate-500"
+                  className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-black text-slate-500"
                 >
                   Clear Filters
                 </button>
@@ -722,26 +722,26 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
 
           {filteredUpdates.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[830px]">
+              <table className="w-full min-w-[1050px]">
                 <thead>
                   <tr className="bg-[#f8faff] text-left">
-                    <th className="px-5 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    <th className="px-6 py-4 text-[11px] font-black uppercase tracking-wider text-slate-400">
                       Exam / Update
                     </th>
 
-                    <th className="px-3 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-wider text-slate-400">
                       Type
                     </th>
 
-                    <th className="px-3 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-wider text-slate-400">
                       Date
                     </th>
 
-                    <th className="px-3 py-3 text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    <th className="px-4 py-4 text-[11px] font-black uppercase tracking-wider text-slate-400">
                       Authority
                     </th>
 
-                    <th className="px-5 py-3 text-right text-[9px] font-black uppercase tracking-wider text-slate-400">
+                    <th className="px-6 py-4 text-right text-[11px] font-black uppercase tracking-wider text-slate-400">
                       Action
                     </th>
                   </tr>
@@ -753,26 +753,26 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
 
                     return (
                       <tr key={update.id} className="group hover:bg-blue-50/40">
-                        <td className="px-5 py-3.5">
+                        <td className="px-6 py-5">
                           <div className="flex items-start gap-2.5">
-                            <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                              <Icon className="h-3.5 w-3.5" />
+                            <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                              <Icon className="h-[18px] w-[18px]" />
                             </span>
 
                             <div>
-                              <p className="max-w-[430px] text-[10px] font-black leading-4 text-slate-800 group-hover:text-blue-700">
+                              <p className="max-w-[560px] text-xs font-black leading-5 text-slate-800 group-hover:text-blue-700">
                                 {update.title}
                               </p>
 
                               <div className="mt-1 flex items-center gap-1.5">
                                 <ShieldCheck className="h-3 w-3 text-emerald-600" />
 
-                                <span className="text-[9px] font-semibold text-slate-400">
+                                <span className="text-[11px] font-semibold text-slate-400">
                                   {update.category}
                                 </span>
 
                                 {index < 3 && (
-                                  <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[8px] font-black text-red-600">
+                                  <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-black text-red-600">
                                     NEW
                                   </span>
                                 )}
@@ -781,9 +781,9 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                           </div>
                         </td>
 
-                        <td className="px-3 py-3.5">
+                        <td className="px-4 py-5">
                           <span
-                            className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-black ${getTypeClasses(
+                            className={`inline-flex rounded-full border px-3 py-1.5 text-[11px] font-black ${getTypeClasses(
                               update.type,
                             )}`}
                           >
@@ -791,23 +791,23 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                           </span>
                         </td>
 
-                        <td className="px-3 py-3.5 text-[10px] font-semibold text-slate-500">
-                          {update.publishedLabel ?? "—"}
+                        <td className="px-4 py-5 text-xs font-semibold text-slate-500">
+                          {update.publishedLabel ?? "â€”"}
                         </td>
 
-                        <td className="px-3 py-3.5 text-[10px] font-black text-slate-700">
+                        <td className="px-4 py-5 text-xs font-black text-slate-700">
                           {update.source}
                         </td>
 
-                        <td className="px-5 py-3.5 text-right">
+                        <td className="px-6 py-5 text-right">
                           <a
                             href={update.officialUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[9px] font-black text-blue-600 hover:text-blue-800"
+                            className="inline-flex items-center gap-1.5 text-[11px] font-black text-blue-600 hover:text-blue-800"
                           >
                             {getButtonLabel(update.type)}
-                            <ExternalLink className="h-3 w-3" />
+                            <ExternalLink className="h-3.5 w-3.5" />
                           </a>
                         </td>
                       </tr>
@@ -868,12 +868,12 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
 function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
   if (!update) {
     return (
-      <section className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
-        <p className="text-[9px] font-black uppercase tracking-[0.15em] text-blue-600">
+      <section className="rounded-[22px] border border-slate-200 bg-white p-6 shadow-sm">
+        <p className="text-[11px] font-black uppercase tracking-[0.15em] text-blue-600">
           Featured Update
         </p>
 
-        <h3 className="mt-3 text-base font-black text-slate-900">
+        <h3 className="mt-4 text-lg font-black text-slate-900">
           Waiting for official updates
         </h3>
       </section>
@@ -883,22 +883,22 @@ function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
   const Icon = getTypeIcon(update.type);
 
   return (
-    <section className="relative min-h-[220px] overflow-hidden rounded-[20px] border border-blue-100 bg-gradient-to-br from-white to-[#edf4ff] p-5 shadow-sm">
-      <span className="absolute right-0 top-0 rounded-bl-xl bg-blue-600 px-3 py-1.5 text-[8px] font-black uppercase tracking-wider text-white">
+    <section className="relative min-h-[270px] overflow-hidden rounded-[22px] border border-blue-100 bg-gradient-to-br from-white to-[#edf4ff] p-6 shadow-sm">
+      <span className="absolute right-0 top-0 rounded-bl-xl bg-blue-600 px-4 py-2 text-[10px] font-black uppercase tracking-wider text-white">
         Featured Update
       </span>
 
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-        <Icon className="h-4 w-4" />
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+        <Icon className="h-5 w-5" />
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        <span className="rounded-full bg-blue-600 px-2.5 py-1 text-[8px] font-black text-white">
+      <div className="mt-5 flex flex-wrap gap-2">
+        <span className="rounded-full bg-blue-600 px-3 py-1.5 text-[10px] font-black text-white">
           {update.source}
         </span>
 
         <span
-          className={`rounded-full border px-2.5 py-1 text-[8px] font-black ${getTypeClasses(
+          className={`rounded-full border px-3 py-1.5 text-[10px] font-black ${getTypeClasses(
             update.type,
           )}`}
         >
@@ -906,16 +906,16 @@ function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
         </span>
       </div>
 
-      <h3 className="mt-3 max-w-[640px] text-base font-black leading-5 text-[#102447] sm:text-lg">
+      <h3 className="mt-4 max-w-[720px] text-xl font-black leading-7 text-[#102447] sm:text-2xl">
         {update.title}
       </h3>
 
-      <div className="mt-3 flex flex-wrap gap-3 text-[9px] font-bold text-slate-500">
+      <div className="mt-4 flex flex-wrap gap-4 text-[11px] font-bold text-slate-500">
         <span>{update.category}</span>
 
         {update.publishedLabel && (
-          <span className="inline-flex items-center gap-1">
-            <CalendarDays className="h-3 w-3 text-blue-600" />
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4 text-blue-600" />
             {update.publishedLabel}
           </span>
         )}
@@ -925,10 +925,10 @@ function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
         href={update.officialUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[9px] font-black text-white hover:bg-blue-700"
+        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-black text-white transition hover:bg-blue-700"
       >
         {getButtonLabel(update.type)}
-        <ExternalLink className="h-3 w-3" />
+        <ExternalLink className="h-4 w-4" />
       </a>
     </section>
   );
@@ -936,35 +936,35 @@ function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
 
 function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
   return (
-    <section className="min-h-[220px] rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4 text-blue-600" />
+    <section className="min-h-[270px] rounded-[22px] border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <CalendarDays className="h-5 w-5 text-blue-600" />
 
-        <h3 className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-900">
+        <h3 className="text-xs font-black uppercase tracking-[0.12em] text-slate-900">
           Important Dates
         </h3>
       </div>
 
       {updates.length > 0 ? (
-        <div className="mt-4 space-y-3">
+        <div className="mt-5 space-y-4">
           {updates.map((update) => (
             <a
               key={update.id}
               href={update.officialUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-start gap-2.5"
+              className="group flex items-start gap-3"
             >
-              <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+              <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" />
 
               <div className="min-w-0">
-                <p className="line-clamp-1 text-[9px] font-black text-slate-700 group-hover:text-blue-700">
+                <p className="line-clamp-1 text-[11px] font-black leading-5 text-slate-700 group-hover:text-blue-700">
                   {update.title}
                 </p>
 
-                <p className="mt-0.5 text-[8px] font-semibold text-slate-400">
+                <p className="mt-1 text-[10px] font-semibold text-slate-400">
                   {update.source}
-                  {" • "}
+                  {" â€¢ "}
                   {update.publishedLabel}
                 </p>
               </div>
@@ -972,10 +972,11 @@ function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
           ))}
         </div>
       ) : (
-        <p className="mt-4 text-[10px] font-medium text-slate-500">
+        <p className="mt-5 text-xs font-medium text-slate-500">
           Official dates will appear here when available.
         </p>
       )}
     </section>
   );
 }
+

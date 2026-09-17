@@ -151,7 +151,12 @@ export default function QuizArenaClient() {
   }
 
   async function startChallenge() {
-    if (!selectedLevel || !selectedExam || !selectedSubject || !selectedDifficulty) {
+    if (
+      !selectedLevel ||
+      !selectedExam ||
+      !selectedSubject ||
+      !selectedDifficulty
+    ) {
       setMessage("Please complete your quiz selection first.");
       return;
     }
@@ -308,9 +313,8 @@ export default function QuizArenaClient() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-xl text-lg text-slate-300">
-                Fresh AI-powered quizzes for school, junior college,
-                competitive exams, government exams and MBA entrance
-                preparation.
+                Fresh quizzes for school, junior college, competitive
+                exams, government exams and MBA entrance preparation.
               </p>
 
               <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-slate-300">
@@ -468,7 +472,7 @@ export default function QuizArenaClient() {
           <section>
             <Header
               title="Choose your challenge"
-              subtitle={`${selectedSubject ?? ""} • AI will create a fresh quiz for this attempt.`}
+              subtitle={`${selectedSubject ?? ""} • Select the difficulty level for your quiz.`}
             />
 
             <div className="grid gap-6 md:grid-cols-3">
@@ -517,16 +521,8 @@ export default function QuizArenaClient() {
                   disabled={isGenerating}
                   className="rounded-2xl bg-cyan-400 px-12 py-4 text-lg font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isGenerating
-                    ? "Creating Your Quiz..."
-                    : "Start Challenge"}
+                  {isGenerating ? "Creating Your Quiz..." : "Start Challenge"}
                 </button>
-
-                {isGenerating && (
-                  <p className="mt-4 text-sm text-slate-300">
-                    AI is preparing fresh questions for your selected course.
-                  </p>
-                )}
               </div>
             )}
           </section>
@@ -562,13 +558,7 @@ export default function QuizArenaClient() {
   );
 }
 
-function Header({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle: string;
-}) {
+function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <header className="mb-10 text-center">
       <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-300">
@@ -608,20 +598,69 @@ function QuizGame({
   const [bestStreak, setBestStreak] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [incorrectAnswers, setIncorrectAnswers] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(7);
+  const answerLockedRef = useRef(false);
+
+  const hasQuestionTimer = difficulty === "medium" || difficulty === "hard";
 
   const currentQuestion = questions[questionIndex];
   const progress = ((questionIndex + 1) / questions.length) * 100;
   const answered = selectedAnswer !== null;
   const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
+  useEffect(() => {
+    if (!hasQuestionTimer) {
+      return;
+    }
 
+    setTimeLeft(7);
+    answerLockedRef.current = false;
+  }, [questionIndex, difficulty, hasQuestionTimer]);
+
+  useEffect(() => {
+    if (!hasQuestionTimer || answered) {
+      return;
+    }
+
+    if (timeLeft <= 0) {
+      if (answerLockedRef.current) {
+        return;
+      }
+
+      answerLockedRef.current = true;
+
+      // Special value so the question counts as answered
+      // without selecting any actual option.
+      setSelectedAnswer("__TIMEOUT__");
+
+      setStreak(0);
+
+      setIncorrectAnswers((previous) => previous + 1);
+
+      if (!playfulMode) {
+        setHearts((previous) => Math.max(previous - 1, 0));
+      }
+
+      return;
+    }
+
+    const timerId = window.setTimeout(() => {
+      setTimeLeft((previous) => Math.max(previous - 1, 0));
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [timeLeft, hasQuestionTimer, answered, playfulMode]);
   useEffect(() => {
     quizCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [questionIndex]);
 
   function chooseAnswer(answer: string) {
-    if (answered) {
+    if (answered || answerLockedRef.current) {
       return;
     }
+
+    answerLockedRef.current = true;
 
     setSelectedAnswer(answer);
 
@@ -660,15 +699,14 @@ function QuizGame({
       return;
     }
 
+    answerLockedRef.current = false;
     setSelectedAnswer(null);
+    setTimeLeft(7);
     setQuestionIndex((previous) => previous + 1);
   }
 
   return (
-    <section
-      ref={quizCardRef}
-      className="mx-auto max-w-4xl scroll-mt-28"
-    >
+    <section ref={quizCardRef} className="mx-auto max-w-4xl scroll-mt-28">
       <div className="mb-6 rounded-3xl border border-white/10 bg-white/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -684,6 +722,21 @@ function QuizGame({
           </div>
 
           <div className="flex flex-wrap gap-3 text-sm font-semibold">
+            {hasQuestionTimer && (
+              <span
+                className={`inline-flex min-w-[92px] items-center justify-center gap-2 rounded-full px-4 py-2 font-black transition ${
+                  timeLeft <= 3 && !answered
+                    ? "animate-pulse bg-red-500/25 text-red-200"
+                    : answered
+                      ? "bg-white/10 text-slate-300"
+                      : "bg-amber-400/20 text-amber-200"
+                }`}
+              >
+                <span>⏱️</span>
+
+                <span>{answered ? "Stopped" : `${timeLeft}s`}</span>
+              </span>
+            )}
             <span className="rounded-full bg-cyan-400/20 px-4 py-2 text-cyan-200">
               {playfulMode ? "⭐ Stars" : "Score"}: {score}
             </span>
@@ -755,13 +808,15 @@ function QuizGame({
             }`}
           >
             <h3 className="text-lg font-bold">
-              {isCorrect
-                ? playfulMode
-                  ? "Amazing! You earned a star ⭐"
-                  : "Correct! Great job."
-                : playfulMode
-                  ? "Great try! Let's learn this together."
-                  : "Incorrect answer."}
+              {selectedAnswer === "__TIMEOUT__"
+                ? "Time's up!"
+                : isCorrect
+                  ? playfulMode
+                    ? "Amazing! You earned a star ⭐"
+                    : "Correct! Great job."
+                  : playfulMode
+                    ? "Great try! Let's learn this together."
+                    : "Incorrect answer."}
             </h3>
 
             {!isCorrect && (
