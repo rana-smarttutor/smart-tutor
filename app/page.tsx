@@ -19,6 +19,7 @@ import { RevealOnScroll } from "@/components/reveal-on-scroll";
 import { getPublicInstituteData } from "@/lib/data-store";
 import { PlacedStudentsWall } from "@/components/placed-students-wall";
 import { StudentCarousel } from "@/components/student-carousel";
+import { MentorHighlightsCarousel } from "@/components/mentor-highlights-carousel";
 import { GrandSuccessCarousel } from "@/components/grand-success-carousel";
 import HomeToppers from "@/components/home-toppers";
 import { courseLibrary } from "@/lib/course-library";
@@ -319,15 +320,8 @@ export default async function Home() {
               </h2>
             </div>
 
-            <div className="flex items-center justify-center py-8">
-              <Image
-                src="/Smart-institue-logo.jpeg"
-                alt="SmartIQ Institute"
-                width={420}
-                height={420}
-                className="h-auto w-full max-w-[320px] object-contain"
-                priority
-              />
+            <div className="flex items-center justify-center">
+              <MentorHighlightsCarousel />
             </div>
           </div>
 

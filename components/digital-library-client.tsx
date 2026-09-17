@@ -172,7 +172,8 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "spoken-english",
     label: "Spoken English Library",
-    description: "English speaking, vocabulary, grammar and fluency improvement.",
+    description:
+      "English speaking, vocabulary, grammar and fluency improvement.",
     keywords: [
       "spoken english",
       "english speaking",
@@ -186,7 +187,8 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "technology-ai",
     label: "Technology & AI Library",
-    description: "Computer science, Python, AI, data analytics and digital skills.",
+    description:
+      "Computer science, Python, AI, data analytics and digital skills.",
     keywords: [
       "computer",
       "python",
@@ -204,7 +206,8 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "career-placement",
     label: "Career & Placement Library",
-    description: "Interview preparation, resumes, career skills and job readiness.",
+    description:
+      "Interview preparation, resumes, career skills and job readiness.",
     keywords: [
       "career",
       "placement",
@@ -287,13 +290,15 @@ function getBookCategoryIds(book: Book) {
   }).map((category) => category.id);
 }
 
-async function readJsonResponse<T = {
-  success?: boolean;
-  message?: string;
-  books?: Book[];
-  canManage?: boolean;
-  isLoggedIn?: boolean;
-}>(response: Response) {
+async function readJsonResponse<
+  T = {
+    success?: boolean;
+    message?: string;
+    books?: Book[];
+    canManage?: boolean;
+    isLoggedIn?: boolean;
+  },
+>(response: Response) {
   const text = await response.text();
 
   try {
@@ -403,7 +408,8 @@ export function DigitalLibraryClient({
         activeLibraryCategory === "all" ||
         bookCategoryIds.includes(activeLibraryCategory);
 
-      const matchesSearch = !searchValue || bookSearchText.includes(searchValue);
+      const matchesSearch =
+        !searchValue || bookSearchText.includes(searchValue);
 
       return matchesCategory && matchesSearch;
     });
@@ -796,7 +802,9 @@ export function DigitalLibraryClient({
     } catch (error) {
       console.error("Material save error:", error);
 
-      alert(error instanceof Error ? error.message : "Unable to save material.");
+      alert(
+        error instanceof Error ? error.message : "Unable to save material.",
+      );
     } finally {
       setIsSaving(false);
       setUploadStatus("");
@@ -808,14 +816,14 @@ export function DigitalLibraryClient({
     }
   }
 
-function requestDeleteBook(book: Book) {
-  if (!canDeleteBooks) {
-    return;
-  }
+  function requestDeleteBook(book: Book) {
+    if (!canDeleteBooks) {
+      return;
+    }
 
-  setDeleteError("");
-  setBookToDelete(book);
-}
+    setDeleteError("");
+    setBookToDelete(book);
+  }
 
   function cancelDeleteBook() {
     if (isDeleting) {
@@ -825,10 +833,10 @@ function requestDeleteBook(book: Book) {
     setDeleteError("");
     setBookToDelete(null);
   }
-async function confirmDeleteBook() {
-  if (!canDeleteBooks || !bookToDelete) {
-    return;
-  }
+  async function confirmDeleteBook() {
+    if (!canDeleteBooks || !bookToDelete) {
+      return;
+    }
 
     if (!bookToDelete.pathname) {
       setDeleteError("Unable to identify this material.");
@@ -889,7 +897,9 @@ async function confirmDeleteBook() {
       }>(response);
 
       if (!response.ok || !result.success || !result.redirectUrl) {
-        throw new Error(result.message || "Download is not available for this material.");
+        throw new Error(
+          result.message || "Download is not available for this material.",
+        );
       }
 
       window.location.href = result.redirectUrl;
@@ -921,72 +931,69 @@ async function confirmDeleteBook() {
   return (
     <main className="min-h-screen bg-transparent px-4 py-8 text-slate-950  sm:px-6">
       <section className="mx-auto max-w-7xl">
-        <section className="grid items-center gap-8 py-6 xl:grid-cols-[1.05fr_0.95fr]">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-5 py-3 text-sm font-black text-blue-600   ">
-              <span className="h-3 w-3 rounded-full bg-sky-400" />
-              SmartIQ Institute Library
-            </span>
+        {/* DIGITAL LIBRARY HERO */}
+        <section className="relative overflow-hidden rounded-[30px] border border-blue-100 bg-gradient-to-br from-[#f7fbff] via-white to-[#e7f2ff] px-6 py-8 shadow-lg shadow-blue-900/5 sm:px-8 lg:px-10 lg:py-10">
+          {/* Decorative background */}
+          <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl" />
+          <div className="absolute bottom-0 left-[42%] h-48 w-48 rounded-full bg-cyan-200/20 blur-3xl" />
 
-            <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-blue-600  sm:text-sm">
-              India&apos;s Trusted Smart Learning Platform
-            </p>
+          <div className="relative grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            {/* LEFT CONTENT */}
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white/80 px-4 py-2 text-xs font-black text-blue-700 shadow-sm backdrop-blur">
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-400" />
+                SmartIQ Institute Library
+              </span>
 
-            <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight sm:text-6xl">
-              Digital Library.
-              <br />
-              Smarter Study Access.
-            </h1>
+              <p className="mt-6 text-[11px] font-black uppercase tracking-[0.28em] text-blue-600 sm:text-xs">
+                India&apos;s Trusted Smart Learning Platform
+              </p>
 
-            <p className="mt-6 max-w-3xl text-base font-semibold leading-8 text-slate-600  sm:text-lg">
-              Explore PDF notes and learning materials with clear prices,
-              attractive previews and secure download access.
-            </p>
+              <h1 className="mt-4 text-4xl font-black leading-[1.02] tracking-[-0.045em] text-[#06102d] sm:text-5xl lg:text-[58px]">
+                Digital Library.
+                <span className="block text-blue-600">
+                  Smarter Study Access.
+                </span>
+              </h1>
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              <a
-                href="#library-files"
-                className="rounded-full bg-blue-600 px-8 py-4 font-black text-white shadow-xl shadow-blue-500/20 transition hover:-translate-y-1 hover:bg-blue-500"
-              >
-                View Library
-              </a>
+              <p className="mt-5 max-w-[650px] text-sm font-semibold leading-6 text-slate-600 sm:text-base">
+                Explore PDF notes and learning materials with clear prices,
+                attractive previews and secure download access.
+              </p>
 
-              {allowedToManage && (
-                <>
+              <div className="mt-7 flex flex-wrap gap-3">
+                <a
+                  href="#library-files"
+                  className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-7 py-3.5 text-sm font-black text-white shadow-lg shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
+                >
+                  View Library
+                  <span>→</span>
+                </a>
+
+                {allowedToManage && (
                   <button
                     type="button"
                     onClick={openUpload}
-                    className="rounded-full bg-blue-600 px-8 py-4 font-black text-white shadow-xl shadow-blue-500/20 transition hover:-translate-y-1 hover:bg-blue-500"
+                    className="rounded-full border border-blue-200 bg-white px-7 py-3.5 text-sm font-black text-blue-700 transition hover:-translate-y-0.5 hover:bg-blue-50"
                   >
                     Upload Material
                   </button>
-                </>
-              )}
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl   sm:p-8">
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-blue-600 ">
-              Library Highlights
-            </p>
-
-            <h2 className="mt-4 text-3xl font-black leading-tight sm:text-4xl">
-              PDF materials,
-              <br />
-              clear pricing
-            </h2>
-
-            <div className="mt-8 rounded-3xl border border-slate-100 bg-slate-50 p-5  ">
-              <p className="text-sm font-black text-slate-600 ">
-                Total PDFs
-              </p>
-              <strong className="mt-2 block text-4xl font-black text-blue-600">
-                {books.length}
-              </strong>
+            {/* RIGHT VISUAL */}
+            <div className="hidden items-center justify-center lg:flex">
+              <div className="relative flex w-full items-center justify-center">
+                <img
+                  src="/library-hero-books.png"
+                  alt="SmartIQ Digital Library"
+                 className="max-h-[430px] w-auto max-w-[125%] object-contain drop-shadow-2xl"
+                />
+              </div>
             </div>
           </div>
         </section>
-
         {transferState.visible && (
           <div className="mt-4">
             <div className="rounded-[1.75rem] border border-blue-200 bg-blue-50 p-4 shadow-sm  ">
@@ -1127,31 +1134,31 @@ async function confirmDeleteBook() {
                       </button>
                     </div>
 
-{allowedToManage && (
-  <div
-    className={`mt-4 grid gap-3 ${
-      canDeleteBooks ? "grid-cols-2" : "grid-cols-1"
-    }`}
-  >
-    <button
-      type="button"
-      onClick={() => openEdit(book)}
-      className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50 sm:text-sm"
-    >
-      Edit
-    </button>
+                    {allowedToManage && (
+                      <div
+                        className={`mt-4 grid gap-3 ${
+                          canDeleteBooks ? "grid-cols-2" : "grid-cols-1"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openEdit(book)}
+                          className="rounded-[14px] border border-blue-400 px-2 py-2.5 text-xs font-extrabold text-blue-500 transition hover:bg-blue-50 sm:text-sm"
+                        >
+                          Edit
+                        </button>
 
-    {canDeleteBooks ? (
-      <button
-        type="button"
-        onClick={() => requestDeleteBook(book)}
-        className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 sm:text-sm"
-      >
-        Delete
-      </button>
-    ) : null}
-  </div>
-)}
+                        {canDeleteBooks ? (
+                          <button
+                            type="button"
+                            onClick={() => requestDeleteBook(book)}
+                            className="rounded-[14px] border border-red-300 px-2 py-2.5 text-xs font-extrabold text-red-500 transition hover:bg-red-50 sm:text-sm"
+                          >
+                            Delete
+                          </button>
+                        ) : null}
+                      </div>
+                    )}
                   </article>
                 );
               })}
@@ -1456,7 +1463,11 @@ async function confirmDeleteBook() {
               {isSaving && transferState.visible && (
                 <div className="rounded-2xl bg-blue-50 p-4 ">
                   <div className="flex items-center justify-between gap-4 text-sm font-bold text-blue-600 ">
-                    <span>{transferState.label || uploadStatus || "Saving material..."}</span>
+                    <span>
+                      {transferState.label ||
+                        uploadStatus ||
+                        "Saving material..."}
+                    </span>
                     <span>{transferState.progress}%</span>
                   </div>
 
