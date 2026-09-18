@@ -5,9 +5,12 @@ import {
   competitiveExams,
   getExamDetails,
   getLevelTitle,
+  QUIZ_QUESTIONS_PER_ROUND,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
+  type QuizJourneyLevel,
+  type QuizRound,
   type Stream,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
@@ -21,6 +24,8 @@ type GenerateQuizRequest = {
   exam?: CompetitiveExam | null;
   subject?: string;
   difficulty?: Difficulty;
+  progressionLevel?: QuizJourneyLevel;
+  round?: QuizRound;
 };
 
 type GeneratedQuestion = {
@@ -49,11 +54,7 @@ const validLevels: EducationLevel[] = [
 
 const validDifficulties: Difficulty[] = ["easy", "medium", "hard"];
 
-const questionCountByDifficulty: Record<Difficulty, number> = {
-  easy: 5,
-  medium: 10,
-  hard: 15,
-};
+
 
 function isEducationLevel(value: unknown): value is EducationLevel {
   return validLevels.includes(value as EducationLevel);
@@ -61,6 +62,28 @@ function isEducationLevel(value: unknown): value is EducationLevel {
 
 function isDifficulty(value: unknown): value is Difficulty {
   return validDifficulties.includes(value as Difficulty);
+}
+
+function isQuizJourneyLevel(
+  value: unknown,
+): value is QuizJourneyLevel {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= 10
+  );
+}
+
+function isQuizRound(
+  value: unknown,
+): value is QuizRound {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 1 &&
+    value <= 5
+  );
 }
 
 function isCompetitiveExam(value: unknown): value is CompetitiveExam {
@@ -88,6 +111,24 @@ function getStudentCategory(
   return getLevelTitle(level);
 }
 
+function getJourneyDifficultyGuidance(
+  progressionLevel: QuizJourneyLevel,
+): string {
+  const guidance: Record<QuizJourneyLevel, string> = {
+    1: "Fundamental recall and simple concept recognition.",
+    2: "Core concepts with straightforward understanding checks.",
+    3: "Applied basics using simple reasoning and practical application.",
+    4: "Intermediate questions requiring multiple concepts or steps.",
+    5: "Strong conceptual questions with closer distractors.",
+    6: "Application-focused questions requiring deeper reasoning.",
+    7: "Realistic exam-practice questions matching the selected exam.",
+    8: "Advanced exam-style questions with challenging distractors.",
+    9: "Expert-level reasoning and high-precision subject knowledge.",
+    10: "Master-level challenge using the toughest appropriate exam-style questions.",
+  };
+
+  return guidance[progressionLevel];
+}
 function extractGeminiText(data: GeminiResponse): string | null {
   const parts = data.candidates?.[0]?.content?.parts ?? [];
 
@@ -114,7 +155,15 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as GenerateQuizRequest;
-    const { level, exam, subject, difficulty } = body;
+
+    const {
+      level,
+      exam,
+      subject,
+      difficulty,
+      progressionLevel,
+      round,
+    } = body;
 
     if (!isEducationLevel(level)) {
       return NextResponse.json(
@@ -126,6 +175,20 @@ export async function POST(request: Request) {
     if (!isDifficulty(difficulty)) {
       return NextResponse.json(
         { error: "Invalid difficulty selected." },
+        { status: 400 },
+      );
+    }
+
+    if (!isQuizJourneyLevel(progressionLevel)) {
+      return NextResponse.json(
+        { error: "Please select a valid Quiz Arena level." },
+        { status: 400 },
+      );
+    }
+
+    if (!isQuizRound(round)) {
+      return NextResponse.json(
+        { error: "Please select a valid Quiz Arena round." },
         { status: 400 },
       );
     }
@@ -162,7 +225,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const questionCount = questionCountByDifficulty[difficulty];
+    const questionCount = QUIZ_QUESTIONS_PER_ROUND;
     const studentCategory = getStudentCategory(level, exam);
     const attemptId = randomUUID();
 
@@ -176,6 +239,11 @@ Selected course/exam: ${selectedExamDetails.title}
 Student category: ${studentCategory}
 Subject: ${subject}
 Difficulty: ${difficulty}
+
+Quiz Arena progression level: ${progressionLevel} of 10
+Round: ${round} of 5
+Progression guidance: ${getJourneyDifficultyGuidance(progressionLevel)}
+
 Number of questions: ${questionCount}
 Attempt reference: ${attemptId}
 
@@ -366,6 +434,8 @@ Strict rules:
         exam,
         subject,
         difficulty,
+        progressionLevel,
+        round,
         question: question.question,
         options: question.options,
         correctAnswer: question.correctAnswer,
