@@ -5,13 +5,15 @@ import {
   competitiveExams,
   getExamDetails,
   getLevelTitle,
-  QUIZ_QUESTIONS_PER_ROUND,
+    getQuizSchoolClasses,
+  quizBoardOptions,
+  requiresQuizBoard,QUIZ_QUESTIONS_PER_ROUND,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
-  type QuizJourneyLevel,
+    type QuizBoard,type QuizJourneyLevel,
   type QuizRound,
-  type Stream,
+    type QuizSchoolClass,type Stream,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 
@@ -22,7 +24,8 @@ type GenerateQuizRequest = {
   level?: EducationLevel;
   stream?: Stream | null;
   exam?: CompetitiveExam | null;
-  subject?: string;
+    schoolClass?: QuizSchoolClass | null;
+  board?: QuizBoard | null;subject?: string;
   difficulty?: Difficulty;
   progressionLevel?: QuizJourneyLevel;
   round?: QuizRound;
@@ -88,6 +91,14 @@ function isQuizRound(
 
 function isCompetitiveExam(value: unknown): value is CompetitiveExam {
   return competitiveExams.some((exam) => exam.id === value);
+}
+
+function isQuizBoard(
+  value: unknown,
+): value is QuizBoard {
+  return quizBoardOptions.some(
+    (board) => board.id === value,
+  );
 }
 
 function getAllowedSubjects(exam: CompetitiveExam | null): string[] {
@@ -159,6 +170,8 @@ export async function POST(request: Request) {
     const {
       level,
       exam,
+      schoolClass,
+      board,
       subject,
       difficulty,
       progressionLevel,
@@ -208,6 +221,52 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    const allowedClasses =
+      getQuizSchoolClasses(exam);
+
+    let normalizedSchoolClass:
+      QuizSchoolClass | null = null;
+
+    let normalizedBoard:
+      QuizBoard | null = null;
+
+    if (allowedClasses.length > 0) {
+      if (
+        !schoolClass ||
+        !allowedClasses.includes(
+          schoolClass,
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Please select a valid class for this course.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      normalizedSchoolClass =
+        schoolClass;
+    }
+
+    if (requiresQuizBoard(exam)) {
+      if (!isQuizBoard(board)) {
+        return NextResponse.json(
+          {
+            error:
+              "Please select HSC or CBSE.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      normalizedBoard = board;
+    }
 
     if (!subject || typeof subject !== "string") {
       return NextResponse.json(
@@ -236,6 +295,13 @@ Create a fresh multiple-choice quiz for this learner.
 
 Course category: ${getLevelTitle(level)}
 Selected course/exam: ${selectedExamDetails.title}
+Selected class: ${
+  normalizedSchoolClass
+    ? `Class ${normalizedSchoolClass}`
+    : "Not applicable"
+}
+Selected board: ${normalizedBoard ?? "Not applicable"}
+Selected stream: ${selectedExamDetails.stream}
 Student category: ${studentCategory}
 Subject: ${subject}
 Difficulty: ${difficulty}
@@ -257,7 +323,16 @@ Strict rules:
 - Do not repeat a question.
 - Do not mention AI or generated content.
 - Do not use ambiguous wording.
-- For school and junior college, match board-style academic level.
+- If a school class is selected, every question must stay inside that exact class syllabus level.
+- Never mix Class 6, Class 7, Class 8, Class 9 or Class 10 syllabus levels.
+- Never mix Class 11 and Class 12 syllabus levels.
+- If HSC is selected, use Maharashtra State Board syllabus scope only.
+- If HSC is selected, do not use CBSE-specific syllabus content.
+- If CBSE is selected, use CBSE / NCERT-aligned syllabus scope only.
+- If CBSE is selected, do not use Maharashtra HSC-specific syllabus content.
+- For Class 11 or Class 12, stay inside the selected stream and selected subject.
+- Do not introduce JEE, NEET, CET or other entrance-exam-only content when a school-board course is selected.
+- For Classes 6 to 10, stay strictly at the selected class academic level.
 - For competitive exams, create exam-style questions appropriate for the selected exam.
 - For government exams, use syllabus-style aptitude, reasoning, GK or subject questions according to the selected exam.
 - For MBA entrance exams, use exam-style VARC, DILR, Quant, Reasoning or relevant section questions.

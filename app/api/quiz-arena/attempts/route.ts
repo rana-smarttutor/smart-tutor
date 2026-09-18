@@ -14,12 +14,17 @@ import {
 
 import {
   competitiveExams,
+  getQuizSchoolClasses,
   levelOptions,
+  quizBoardOptions,
+  requiresQuizBoard,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
+  type QuizBoard,
   type QuizJourneyLevel,
   type QuizRound,
+  type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 
 
@@ -80,6 +85,79 @@ function isQuizRound(
     value >= 1 &&
     value <= 5
   );
+}
+
+
+function isQuizBoard(
+  value: unknown,
+): value is QuizBoard {
+  return quizBoardOptions.some(
+    (board) => board.id === value,
+  );
+}
+
+
+type SchoolContext =
+  | {
+      ok: true;
+      schoolClass: QuizSchoolClass | null;
+      board: QuizBoard | null;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+
+function parseSchoolContext(
+  exam: CompetitiveExam,
+  schoolClassValue: unknown,
+  boardValue: unknown,
+): SchoolContext {
+  const allowedClasses =
+    getQuizSchoolClasses(exam);
+
+  let schoolClass:
+    QuizSchoolClass | null = null;
+
+  let board:
+    QuizBoard | null = null;
+
+  if (allowedClasses.length > 0) {
+    if (
+      typeof schoolClassValue !== "string" ||
+      !allowedClasses.includes(
+        schoolClassValue as QuizSchoolClass,
+      )
+    ) {
+      return {
+        ok: false,
+        error:
+          "Please select a valid class.",
+      };
+    }
+
+    schoolClass =
+      schoolClassValue as QuizSchoolClass;
+  }
+
+  if (requiresQuizBoard(exam)) {
+    if (!isQuizBoard(boardValue)) {
+      return {
+        ok: false,
+        error:
+          "Please select HSC or CBSE.",
+      };
+    }
+
+    board = boardValue;
+  }
+
+  return {
+    ok: true,
+    schoolClass,
+    board,
+  };
 }
 
 
@@ -181,16 +259,22 @@ export async function POST(
       );
     }
 
-
     const body =
       (await request.json()) as {
         level?: EducationLevel;
 
         exam?: CompetitiveExam;
 
+        schoolClass?:
+          QuizSchoolClass | null;
+
+        board?:
+          QuizBoard | null;
+
         subject?: string;
 
-        progressionLevel?: QuizJourneyLevel;
+        progressionLevel?:
+          QuizJourneyLevel;
 
         round?: QuizRound;
 
@@ -209,7 +293,6 @@ export async function POST(
         questions?: unknown[];
       };
 
-
     if (
       !isEducationLevel(
         body.level,
@@ -225,7 +308,6 @@ export async function POST(
         },
       );
     }
-
 
     if (
       !isCompetitiveExam(
@@ -243,6 +325,24 @@ export async function POST(
       );
     }
 
+    const schoolContext =
+      parseSchoolContext(
+        body.exam,
+        body.schoolClass,
+        body.board,
+      );
+
+    if (!schoolContext.ok) {
+      return NextResponse.json(
+        {
+          error:
+            schoolContext.error,
+        },
+        {
+          status: 400,
+        },
+      );
+    }
 
     const subject =
       body.subject?.trim();
@@ -258,7 +358,6 @@ export async function POST(
         },
       );
     }
-
 
     if (
       !isQuizJourneyLevel(
@@ -276,7 +375,6 @@ export async function POST(
       );
     }
 
-
     if (
       !isQuizRound(
         body.round,
@@ -292,7 +390,6 @@ export async function POST(
         },
       );
     }
-
 
     if (
       !isDifficulty(
@@ -310,7 +407,6 @@ export async function POST(
       );
     }
 
-
     const questions =
       (body.questions ?? [])
         .map(
@@ -322,7 +418,6 @@ export async function POST(
           ): question is QuizArenaAttemptQuestion =>
             question !== null,
         );
-
 
     if (
       questions.length === 0
@@ -338,7 +433,6 @@ export async function POST(
       );
     }
 
-
     const attempt =
       await createQuizArenaRoundAttempt({
         userId:
@@ -349,6 +443,12 @@ export async function POST(
 
         exam:
           body.exam,
+
+        schoolClass:
+          schoolContext.schoolClass,
+
+        board:
+          schoolContext.board,
 
         subject,
 
@@ -403,7 +503,6 @@ export async function POST(
 
         questions,
       });
-
 
     return NextResponse.json({
       attempt,

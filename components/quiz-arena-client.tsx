@@ -9,14 +9,19 @@ import {
   getExamTitle,
   getExamsByCategory,
   getLevelTitle,
+  getQuizSchoolClasses,
   levelOptions,
+  quizBoardOptions,
   quizJourneyLevels,
+  requiresQuizBoard,
   QUIZ_ROUNDS_PER_LEVEL,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
+  type QuizBoard,
   type QuizJourneyLevel,
   type QuizRound,
+  type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 
@@ -24,8 +29,11 @@ type Step =
   | "welcome"
   | "level"
   | "exam"
+  | "class"
+  | "board"
   | "subject"
   | "journey"
+  | "round"
   | "quiz"
   | "result";
 
@@ -69,6 +77,12 @@ export default function QuizArenaClient() {
   const [selectedExam, setSelectedExam] = useState<CompetitiveExam | null>(
     null,
   );
+
+  const [selectedSchoolClass, setSelectedSchoolClass] =
+    useState<QuizSchoolClass | null>(null);
+
+  const [selectedBoard, setSelectedBoard] = useState<QuizBoard | null>(null);
+
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [selectedJourneyLevel, setSelectedJourneyLevel] =
     useState<QuizJourneyLevel | null>(null);
@@ -99,6 +113,10 @@ export default function QuizArenaClient() {
     return getExamsByCategory(selectedLevel);
   }, [selectedLevel]);
 
+  const currentClassOptions = useMemo(() => {
+    return getQuizSchoolClasses(selectedExam);
+  }, [selectedExam]);
+
   const subjects = useMemo(() => {
     if (!selectedExamDetails) {
       return [];
@@ -112,30 +130,40 @@ export default function QuizArenaClient() {
 
   function selectLevel(level: EducationLevel) {
     setSelectedLevel(level);
+
     setSelectedExam(null);
+    setSelectedSchoolClass(null);
+    setSelectedBoard(null);
     setSelectedSubject(null);
+
     setSelectedJourneyLevel(null);
     setSelectedRound(null);
+
     setActiveQuestions([]);
     setResult(null);
     setMessage("");
     setShowExitModal(false);
+
     setStep("exam");
   }
-
   function changeLevel() {
     setSelectedLevel(null);
+
     setSelectedExam(null);
+    setSelectedSchoolClass(null);
+    setSelectedBoard(null);
     setSelectedSubject(null);
+
     setSelectedJourneyLevel(null);
     setSelectedRound(null);
+
     setActiveQuestions([]);
     setResult(null);
     setMessage("");
     setShowExitModal(false);
+
     setStep("level");
   }
-
   function goBack() {
     setMessage("");
     setShowExitModal(false);
@@ -148,13 +176,44 @@ export default function QuizArenaClient() {
     if (step === "exam") {
       setSelectedLevel(null);
       setSelectedExam(null);
+      setSelectedSchoolClass(null);
+      setSelectedBoard(null);
       setSelectedSubject(null);
+
       setStep("level");
+      return;
+    }
+
+    if (step === "class") {
+      setSelectedSchoolClass(null);
+      setSelectedBoard(null);
+      setSelectedSubject(null);
+
+      setStep("exam");
+      return;
+    }
+
+    if (step === "board") {
+      setSelectedBoard(null);
+      setSelectedSubject(null);
+
+      setStep("class");
       return;
     }
 
     if (step === "subject") {
       setSelectedSubject(null);
+
+      if (requiresQuizBoard(selectedExam)) {
+        setStep("board");
+        return;
+      }
+
+      if (currentClassOptions.length > 0) {
+        setStep("class");
+        return;
+      }
+
       setStep("exam");
       return;
     }
@@ -162,17 +221,25 @@ export default function QuizArenaClient() {
     if (step === "journey") {
       setSelectedJourneyLevel(null);
       setSelectedRound(null);
+
       setStep("subject");
+      return;
+    }
+
+    if (step === "round") {
+      setSelectedRound(null);
+
+      setStep("journey");
       return;
     }
 
     if (step === "result") {
       setResult(null);
       setActiveQuestions([]);
-      setStep("journey");
+
+      setStep("round");
     }
   }
-
   function requestExitQuiz() {
     setShowExitModal(true);
   }
@@ -186,9 +253,9 @@ export default function QuizArenaClient() {
     setActiveQuestions([]);
     setResult(null);
     setMessage("");
-    setStep("journey");
-  }
 
+    setStep("round");
+  }
   async function generateChallenge(
     progressionLevel: QuizJourneyLevel,
     round: QuizRound,
@@ -217,6 +284,9 @@ export default function QuizArenaClient() {
           level: selectedLevel,
 
           exam: selectedExam,
+          schoolClass: selectedSchoolClass,
+
+          board: selectedBoard,
 
           subject: selectedSubject,
 
@@ -284,6 +354,13 @@ export default function QuizArenaClient() {
         // User-facing difficulty is now determined by Level 1-10.
         difficulty: "easy",
       });
+      if (selectedSchoolClass) {
+        params.set("schoolClass", selectedSchoolClass);
+      }
+
+      if (selectedBoard) {
+        params.set("board", selectedBoard);
+      }
 
       const response = await fetch(
         `/api/quiz-arena/progress?${params.toString()}`,
@@ -361,6 +438,9 @@ export default function QuizArenaClient() {
         body: JSON.stringify({
           level: selectedLevel,
           exam: selectedExam,
+          schoolClass: selectedSchoolClass,
+
+          board: selectedBoard,
           subject: selectedSubject,
 
           // Legacy progress bucket only.
@@ -426,6 +506,9 @@ export default function QuizArenaClient() {
           level: selectedLevel,
 
           exam: selectedExam,
+          schoolClass: selectedSchoolClass,
+
+          board: selectedBoard,
 
           subject: selectedSubject,
 
@@ -718,8 +801,23 @@ export default function QuizArenaClient() {
                     key={exam.id}
                     onClick={() => {
                       setSelectedExam(exam.id);
+
+                      setSelectedSchoolClass(null);
+                      setSelectedBoard(null);
                       setSelectedSubject(null);
-                      setStep("subject");
+
+                      setSelectedJourneyLevel(null);
+                      setSelectedRound(null);
+
+                      setMessage("");
+
+                      const classes = getQuizSchoolClasses(exam.id);
+
+                      if (classes.length > 0) {
+                        setStep("class");
+                      } else {
+                        setStep("subject");
+                      }
                     }}
                     className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                   >
@@ -745,6 +843,99 @@ export default function QuizArenaClient() {
           </section>
         )}
 
+        {step === "class" && (
+          <section>
+            <Header
+              title="Choose your class"
+              subtitle={`${
+                selectedExamDetails?.title ?? "Selected course"
+              } - Select your exact class.`}
+            />
+
+            <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {currentClassOptions.map((schoolClass) => (
+                <button
+                  type="button"
+                  key={schoolClass}
+                  onClick={() => {
+                    setSelectedSchoolClass(schoolClass);
+
+                    setSelectedBoard(null);
+                    setSelectedSubject(null);
+
+                    setSelectedJourneyLevel(null);
+
+                    setSelectedRound(null);
+                    setMessage("");
+
+                    if (requiresQuizBoard(selectedExam)) {
+                      setStep("board");
+                    } else {
+                      setStep("subject");
+                    }
+                  }}
+                  className="rounded-3xl border border-white/10 bg-white/10 p-8 text-center transition hover:-translate-y-1 hover:border-cyan-300 hover:bg-white/15"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">
+                    School Class
+                  </p>
+
+                  <h2 className="mt-4 text-3xl font-black">
+                    Class {schoolClass}
+                  </h2>
+
+                  <p className="mt-3 text-sm text-slate-300">
+                    Questions will be generated for Class {schoolClass}.
+                  </p>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {step === "board" && (
+          <section>
+            <Header
+              title="Choose your board"
+              subtitle={`Class ${
+                selectedSchoolClass ?? ""
+              } - Select Maharashtra State Board or CBSE.`}
+            />
+
+            <div className="mx-auto grid max-w-3xl gap-5 sm:grid-cols-2">
+              {quizBoardOptions.map((board) => (
+                <button
+                  type="button"
+                  key={board.id}
+                  onClick={() => {
+                    setSelectedBoard(board.id);
+
+                    setSelectedSubject(null);
+
+                    setSelectedJourneyLevel(null);
+
+                    setSelectedRound(null);
+
+                    setMessage("");
+
+                    setStep("subject");
+                  }}
+                  className="rounded-3xl border border-white/10 bg-white/10 p-8 text-left transition hover:-translate-y-1 hover:border-cyan-300 hover:bg-white/15"
+                >
+                  <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">
+                    Board
+                  </p>
+
+                  <h2 className="mt-4 text-3xl font-black">{board.title}</h2>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    {board.description}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         {step === "subject" && (
           <section>
             <Header
@@ -784,15 +975,14 @@ export default function QuizArenaClient() {
             </div>
           </section>
         )}
-
         {step === "journey" && (
           <section>
             <Header
-              title="Your Quiz Journey"
-              subtitle={`${selectedSubject ?? ""} • Complete 10 levels and up to 500 questions.`}
+              title="Choose your Quiz Journey Level"
+              subtitle={`${selectedSubject ?? ""} - Select a level to continue.`}
             />
 
-            <div className="mx-auto mb-8 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-5">
               {quizJourneyLevels.map((journeyLevel) => {
                 const locked = journeyLevel.id > unlockedJourneyLevel;
 
@@ -800,8 +990,6 @@ export default function QuizArenaClient() {
                   completedRounds[journeyLevel.id]?.length ?? 0;
 
                 const completed = roundsCompleted >= QUIZ_ROUNDS_PER_LEVEL;
-
-                const active = selectedJourneyLevel === journeyLevel.id;
 
                 return (
                   <button
@@ -814,25 +1002,26 @@ export default function QuizArenaClient() {
                       }
 
                       setSelectedJourneyLevel(journeyLevel.id);
+
                       setSelectedRound(null);
                       setMessage("");
+
+                      setStep("round");
                     }}
-                    className={`relative rounded-3xl border p-5 text-left transition ${
+                    className={`rounded-3xl border p-5 text-left transition ${
                       locked
-                        ? "cursor-not-allowed border-white/5 bg-white/5 opacity-45"
-                        : active
-                          ? "border-cyan-300 bg-cyan-300/20 shadow-lg shadow-cyan-400/10"
-                          : completed
-                            ? "border-emerald-400/40 bg-emerald-400/10"
-                            : "border-white/10 bg-white/10 hover:-translate-y-1 hover:border-cyan-300"
+                        ? "cursor-not-allowed border-white/5 bg-white/5 opacity-40"
+                        : completed
+                          ? "border-emerald-400/40 bg-emerald-400/10 hover:-translate-y-1"
+                          : "border-white/10 bg-white/10 hover:-translate-y-1 hover:border-cyan-300"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="text-3xl">
-                        {locked ? "🔒" : completed ? "✅" : journeyLevel.icon}
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-black uppercase tracking-[0.18em] text-cyan-300">
+                        Level {journeyLevel.id}
                       </span>
 
-                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-300">
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-bold text-slate-300">
                         {roundsCompleted}/{QUIZ_ROUNDS_PER_LEVEL}
                       </span>
                     </div>
@@ -841,113 +1030,125 @@ export default function QuizArenaClient() {
                       {journeyLevel.title}
                     </h2>
 
-                    <p className="mt-1 text-sm font-bold text-cyan-200">
+                    <p className="mt-2 text-sm font-semibold text-cyan-100">
                       {journeyLevel.subtitle}
                     </p>
 
-                    <p className="mt-3 text-xs leading-5 text-slate-300">
-                      {journeyLevel.questionCapacity} questions
+                    <p className="mt-4 text-xs leading-5 text-slate-400">
+                      {locked
+                        ? "Complete the previous level to unlock."
+                        : completed
+                          ? "Level completed."
+                          : `${journeyLevel.questionCapacity} questions available.`}
                     </p>
                   </button>
                 );
               })}
             </div>
 
-            {selectedJourneyLevel && (
-              <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8">
-                <div className="text-center">
-                  <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
-                    Level {selectedJourneyLevel}
-                  </p>
-
-                  <h2 className="mt-3 text-2xl font-black sm:text-3xl">
-                    Choose your round
-                  </h2>
-
-                  <p className="mt-3 text-sm text-slate-300">
-                    Each round contains 10 questions. Complete all 5 rounds to
-                    unlock the next level.
-                  </p>
-                </div>
-
-                <div className="mt-8 grid gap-3 sm:grid-cols-5">
-                  {Array.from(
-                    { length: QUIZ_ROUNDS_PER_LEVEL },
-                    (_, index) => (index + 1) as QuizRound,
-                  ).map((round) => {
-                    const levelRounds =
-                      completedRounds[selectedJourneyLevel] ?? [];
-
-                    const completed = levelRounds.includes(round);
-
-                    const previousRound =
-                      round > 1 ? ((round - 1) as QuizRound) : null;
-
-                    const locked =
-                      previousRound !== null &&
-                      !levelRounds.includes(previousRound);
-
-                    const active = selectedRound === round;
-
-                    return (
-                      <button
-                        type="button"
-                        key={round}
-                        disabled={locked}
-                        onClick={() => {
-                          if (!locked) {
-                            setSelectedRound(round);
-                            setMessage("");
-                          }
-                        }}
-                        className={`rounded-2xl border p-4 text-center transition ${
-                          locked
-                            ? "cursor-not-allowed border-white/5 bg-white/5 opacity-40"
-                            : active
-                              ? "border-cyan-300 bg-cyan-300/20"
-                              : completed
-                                ? "border-emerald-400/40 bg-emerald-400/10"
-                                : "border-white/10 bg-white/5 hover:border-cyan-300"
-                        }`}
-                      >
-                        <div className="text-xl">
-                          {locked ? "🔒" : completed ? "✅" : "🎯"}
-                        </div>
-
-                        <p className="mt-2 text-sm font-black">Round {round}</p>
-
-                        <p className="mt-1 text-[10px] text-slate-400">
-                          10 Questions
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {message && (
-                  <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
-                    {message}
-                  </div>
-                )}
-
-                {selectedRound && (
-                  <div className="mt-8 text-center">
-                    <button
-                      type="button"
-                      onClick={() => void startChallenge()}
-                      disabled={isGenerating}
-                      className="rounded-2xl bg-cyan-400 px-10 py-4 text-base font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isGenerating
-                        ? "Creating Your Quiz..."
-                        : `Start Level ${selectedJourneyLevel} • Round ${selectedRound}`}
-                    </button>
-                  </div>
-                )}
+            {message && (
+              <div className="mx-auto mt-6 max-w-3xl rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
+                {message}
               </div>
             )}
           </section>
         )}
+
+        {step === "round" && selectedJourneyLevel && (
+          <section>
+            <Header
+              title={`Level ${selectedJourneyLevel} - Choose your round`}
+              subtitle="Each round contains 10 questions."
+            />
+
+            <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8">
+              <div className="grid gap-4 sm:grid-cols-5">
+                {Array.from(
+                  {
+                    length: QUIZ_ROUNDS_PER_LEVEL,
+                  },
+                  (_, index) => (index + 1) as QuizRound,
+                ).map((round) => {
+                  const completedForLevel =
+                    completedRounds[selectedJourneyLevel] ?? [];
+
+                  const completed = completedForLevel.includes(round);
+
+                  const previousRound =
+                    round > 1 ? ((round - 1) as QuizRound) : null;
+
+                  const locked =
+                    previousRound !== null &&
+                    !completedForLevel.includes(previousRound);
+
+                  const selected = selectedRound === round;
+
+                  return (
+                    <button
+                      type="button"
+                      key={round}
+                      disabled={locked}
+                      onClick={() => {
+                        if (locked) {
+                          return;
+                        }
+
+                        setSelectedRound(round);
+
+                        setMessage("");
+                      }}
+                      className={`rounded-2xl border p-5 text-center transition ${
+                        locked
+                          ? "cursor-not-allowed border-white/5 bg-white/5 opacity-40"
+                          : selected
+                            ? "border-cyan-300 bg-cyan-300/20"
+                            : completed
+                              ? "border-emerald-400/40 bg-emerald-400/10"
+                              : "border-white/10 bg-white/5 hover:-translate-y-1 hover:border-cyan-300"
+                      }`}
+                    >
+                      <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+                        Round
+                      </p>
+
+                      <p className="mt-2 text-3xl font-black">{round}</p>
+
+                      <p className="mt-2 text-xs text-slate-400">
+                        {locked
+                          ? "Locked"
+                          : completed
+                            ? "Completed"
+                            : "10 Questions"}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {message && (
+                <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
+                  {message}
+                </div>
+              )}
+
+              {selectedRound && (
+                <div className="mt-8 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => void startChallenge()}
+                    disabled={isGenerating}
+                    className="rounded-2xl bg-cyan-400 px-8 py-4 font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isGenerating
+                      ? "Creating Quiz..."
+                      : `Start Round ${selectedRound}`}
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {step === "quiz" && activeQuestions.length > 0 && (
           <QuizGame
             questions={activeQuestions}
@@ -1030,7 +1231,7 @@ function QuizGame({
   examTitle,
   subject,
   difficulty,
-  playfulMode,
+  playfulMode: _playfulMode,
   onComplete,
 }: {
   questions: QuizQuestion[];
@@ -1045,13 +1246,15 @@ function QuizGame({
 
   const [questionIndex, setQuestionIndex] = useState(0);
 
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [answersByIndex, setAnswersByIndex] = useState<Record<number, string>>(
+    {},
+  );
 
-  const [score, setScore] = useState(0);
+  const [timeByIndex, setTimeByIndex] = useState<Record<number, number>>({});
 
-  const [streak, setStreak] = useState(0);
-
-  const [bestStreak, setBestStreak] = useState(0);
+  const [markedForReview, setMarkedForReview] = useState<Set<number>>(
+    () => new Set<number>(),
+  );
 
   const [questionElapsedMs, setQuestionElapsedMs] = useState(0);
 
@@ -1061,144 +1264,172 @@ function QuizGame({
 
   const roundStartedAtRef = useRef(Date.now());
 
-  const roundFinishedAtRef = useRef<number | null>(null);
-
-  const attemptsRef = useRef<QuestionAttempt[]>([]);
-
   const currentQuestion = questions[questionIndex];
 
-  const progress = ((questionIndex + 1) / questions.length) * 100;
+  const selectedAnswer = answersByIndex[questionIndex] ?? null;
 
   const answered = selectedAnswer !== null;
 
-  useEffect(() => {
-    questionStartedAtRef.current = Date.now();
+  const isMarkedForReview = markedForReview.has(questionIndex);
 
-    setQuestionElapsedMs(0);
+  useEffect(() => {
+    const existingTime = timeByIndex[questionIndex];
+
+    if (existingTime !== undefined) {
+      setQuestionElapsedMs(existingTime);
+    } else {
+      questionStartedAtRef.current = Date.now();
+
+      setQuestionElapsedMs(0);
+    }
 
     quizCardRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-  }, [questionIndex]);
+  }, [questionIndex, timeByIndex]);
 
   useEffect(() => {
     const timerId = window.setInterval(() => {
-      const now = roundFinishedAtRef.current ?? Date.now();
+      const now = Date.now();
 
       setRoundElapsedMs(now - roundStartedAtRef.current);
 
       if (!answered) {
-        setQuestionElapsedMs(Date.now() - questionStartedAtRef.current);
+        setQuestionElapsedMs(now - questionStartedAtRef.current);
       }
     }, 250);
 
     return () => {
       window.clearInterval(timerId);
     };
-  }, [answered]);
+  }, [answered, questionIndex]);
 
   function chooseAnswer(answer: string) {
-    if (answered) {
+    if (!answered) {
+      const answeredAt = Date.now();
+
+      const timeTakenMs = answeredAt - questionStartedAtRef.current;
+
+      setQuestionElapsedMs(timeTakenMs);
+
+      setTimeByIndex((previous) => ({
+        ...previous,
+        [questionIndex]: timeTakenMs,
+      }));
+    }
+
+    setAnswersByIndex((previous) => ({
+      ...previous,
+      [questionIndex]: answer,
+    }));
+  }
+
+  function toggleMarkForReview() {
+    setMarkedForReview((previous) => {
+      const next = new Set(previous);
+
+      if (next.has(questionIndex)) {
+        next.delete(questionIndex);
+      } else {
+        next.add(questionIndex);
+      }
+
+      return next;
+    });
+  }
+
+  function previousQuestion() {
+    if (questionIndex === 0) {
       return;
     }
 
-    const answeredAt = Date.now();
-
-    const timeTakenMs = answeredAt - questionStartedAtRef.current;
-
-    const isCorrect = answer === currentQuestion.correctAnswer;
-
-    setQuestionElapsedMs(timeTakenMs);
-
-    setSelectedAnswer(answer);
-
-    const attempt: QuestionAttempt = {
-      questionId: currentQuestion.id,
-
-      question: currentQuestion.question,
-
-      options: currentQuestion.options,
-
-      selectedAnswer: answer,
-
-      correctAnswer: currentQuestion.correctAnswer,
-
-      isCorrect,
-
-      explanation: currentQuestion.explanation,
-
-      timeTakenMs,
-    };
-
-    attemptsRef.current = [...attemptsRef.current, attempt];
-
-    if (questionIndex === questions.length - 1) {
-      roundFinishedAtRef.current = answeredAt;
-
-      setRoundElapsedMs(answeredAt - roundStartedAtRef.current);
-    }
-
-    if (isCorrect) {
-      const nextStreak = streak + 1;
-
-      const bonus = nextStreak > 0 && nextStreak % 3 === 0 ? 5 : 0;
-
-      setScore((previousScore) => previousScore + 10 + bonus);
-
-      setStreak(nextStreak);
-
-      setBestStreak((previousBest) => Math.max(previousBest, nextStreak));
-
-      return;
-    }
-
-    setStreak(0);
+    setQuestionIndex((previous) => previous - 1);
   }
 
   function nextQuestion() {
+    if (!answered && !isMarkedForReview) {
+      return;
+    }
+
     const finished = questionIndex === questions.length - 1;
 
-    if (finished) {
-      const attempts = attemptsRef.current;
-
-      const correctAnswers = attempts.filter(
-        (attempt) => attempt.isCorrect,
-      ).length;
-
-      const incorrectAnswers = attempts.length - correctAnswers;
-
-      const finishedAt = roundFinishedAtRef.current ?? Date.now();
-
-      const totalTimeMs = finishedAt - roundStartedAtRef.current;
-
-      const averageQuestionTimeMs =
-        attempts.length > 0
-          ? Math.round(
-              attempts.reduce(
-                (total, attempt) => total + attempt.timeTakenMs,
-                0,
-              ) / attempts.length,
-            )
-          : 0;
-
-      onComplete({
-        score,
-        correctAnswers,
-        incorrectAnswers,
-        bestStreak,
-        attemptedQuestions: attempts.length,
-        totalTimeMs,
-        averageQuestionTimeMs,
-        attempts,
-      });
+    if (!finished) {
+      setQuestionIndex((previous) => previous + 1);
 
       return;
     }
 
-    setSelectedAnswer(null);
+    const attempts: QuestionAttempt[] = questions.map((question, index) => {
+      const answer = answersByIndex[index] ?? "";
 
-    setQuestionIndex((previous) => previous + 1);
+      return {
+        questionId: question.id,
+
+        question: question.question,
+
+        options: question.options,
+
+        selectedAnswer: answer,
+
+        correctAnswer: question.correctAnswer,
+
+        isCorrect: answer === question.correctAnswer,
+
+        explanation: question.explanation,
+
+        timeTakenMs: timeByIndex[index] ?? 0,
+      };
+    });
+
+    const correctAnswers = attempts.filter(
+      (attempt) => attempt.isCorrect,
+    ).length;
+
+    const incorrectAnswers = attempts.length - correctAnswers;
+
+    let score = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
+
+    for (const attempt of attempts) {
+      if (attempt.isCorrect) {
+        currentStreak += 1;
+
+        const bonus = currentStreak % 3 === 0 ? 5 : 0;
+
+        score += 10 + bonus;
+
+        bestStreak = Math.max(bestStreak, currentStreak);
+      } else {
+        currentStreak = 0;
+      }
+    }
+
+    const finishedAt = Date.now();
+
+    const totalTimeMs = finishedAt - roundStartedAtRef.current;
+
+    const averageQuestionTimeMs =
+      attempts.length > 0
+        ? Math.round(
+            attempts.reduce(
+              (total, attempt) => total + attempt.timeTakenMs,
+              0,
+            ) / attempts.length,
+          )
+        : 0;
+
+    onComplete({
+      score,
+      correctAnswers,
+      incorrectAnswers,
+      bestStreak,
+      attemptedQuestions: attempts.length,
+      totalTimeMs,
+      averageQuestionTimeMs,
+      attempts,
+    });
   }
 
   return (
@@ -1225,9 +1456,11 @@ function QuizGame({
           </div>
 
           <div className="flex flex-wrap gap-3 text-sm font-semibold">
-            <span className="rounded-full bg-cyan-400/20 px-4 py-2 text-cyan-200">
-              {playfulMode ? "⭐ Stars" : "Score"}: {score}
-            </span>
+            {markedForReview.size > 0 && (
+              <span className="rounded-full bg-amber-400/20 px-4 py-2 text-amber-100">
+                Marked: {markedForReview.size}
+              </span>
+            )}
 
             <span className="rounded-full bg-violet-400/20 px-4 py-2 text-violet-100">
               Question Time: {formatLiveQuizDuration(questionElapsedMs)}
@@ -1236,27 +1469,39 @@ function QuizGame({
             <span className="rounded-full bg-amber-400/20 px-4 py-2 text-amber-100">
               Round Time: {formatLiveQuizDuration(roundElapsedMs)}
             </span>
-
-            {!playfulMode && (
-              <span className="rounded-full bg-orange-400/20 px-4 py-2 text-orange-200">
-                🔥 {streak}
-              </span>
-            )}
           </div>
         </div>
 
-        <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-cyan-400 transition-all duration-500"
-            style={{
-              width: `${progress}%`,
-            }}
-          />
+        <div className="mt-5 grid grid-cols-10 gap-2">
+          {questions.map((question, index) => {
+            const isCurrent = index === questionIndex;
+
+            const isAnswered = Boolean(answersByIndex[index]);
+
+            const isMarked = markedForReview.has(index);
+
+            return (
+              <div
+                key={question.id ?? index}
+                className={`flex h-10 items-center justify-center rounded-xl border text-sm font-black transition ${
+                  isMarked
+                    ? "border-orange-400 bg-orange-500 text-white"
+                    : isAnswered
+                      ? "border-emerald-400 bg-emerald-500 text-white"
+                      : isCurrent
+                        ? "border-cyan-300 bg-cyan-300/20 text-cyan-100"
+                        : "border-white/10 bg-white/5 text-slate-400"
+                }`}
+              >
+                {index + 1}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
+      <div className="rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8">
+        <p className="text-sm font-black uppercase tracking-[0.2em] text-cyan-300">
           Choose your answer
         </p>
 
@@ -1273,13 +1518,11 @@ function QuizGame({
                 type="button"
                 key={option}
                 onClick={() => chooseAnswer(option)}
-                disabled={answered}
+                aria-pressed={selected}
                 className={`rounded-2xl border p-5 text-left text-lg font-semibold transition ${
                   selected
-                    ? "border-cyan-300 bg-cyan-300/15 text-white"
-                    : answered
-                      ? "border-white/10 bg-white/5 text-slate-300"
-                      : "border-white/10 bg-white/5 hover:border-cyan-300 hover:bg-white/10"
+                    ? "border-cyan-300 bg-cyan-300/20 text-white"
+                    : "border-white/10 bg-white/5 text-slate-200 hover:border-cyan-300 hover:bg-white/10"
                 }`}
               >
                 {option}
@@ -1288,32 +1531,41 @@ function QuizGame({
           })}
         </div>
 
-        {answered && (
-          <div className="mt-8 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
-            <h3 className="text-lg font-bold text-cyan-100">
-              Answer recorded.
-            </h3>
-
-            <p className="mt-2 text-sm text-slate-300">
-              Your answer and the correct solution will be shown after you
-              complete the round.
-            </p>
-
-            <p className="mt-3 text-xs font-semibold text-slate-400">
-              Time taken: {formatQuizDuration(questionElapsedMs)}
-            </p>
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={previousQuestion}
+              disabled={questionIndex === 0}
+              className="rounded-xl border border-white/15 bg-white/5 px-5 py-3 font-bold text-white transition hover:border-cyan-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+            >
+              Previous Question
+            </button>
 
             <button
               type="button"
-              onClick={nextQuestion}
-              className="mt-5 rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-cyan-300"
+              onClick={toggleMarkForReview}
+              className={`rounded-xl border px-5 py-3 font-bold transition ${
+                isMarkedForReview
+                  ? "border-amber-300 bg-amber-300/20 text-amber-100"
+                  : "border-amber-300/40 bg-amber-300/10 text-amber-100 hover:bg-amber-300/20"
+              }`}
             >
-              {questionIndex === questions.length - 1
-                ? "Finish Round"
-                : "Next Question"}
+              {isMarkedForReview ? "Marked for Review" : "Mark for Review"}
             </button>
           </div>
-        )}
+
+          <button
+            type="button"
+            onClick={nextQuestion}
+            disabled={!answered && !isMarkedForReview}
+            className="rounded-xl bg-cyan-400 px-7 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-cyan-400"
+          >
+            {questionIndex === questions.length - 1
+              ? "Finish Round"
+              : "Next Question"}
+          </button>
+        </div>
       </div>
     </section>
   );
