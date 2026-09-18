@@ -63,24 +63,59 @@ export type CompetitiveExam =
 
 export type Difficulty = "easy" | "medium" | "hard";
 
-export type QuizJourneyLevel =
-  | 1
-  | 2
-  | 3
-  | 4
-  | 5
-  | 6
-  | 7
-  | 8
-  | 9
-  | 10;
+export type QuizSchoolClass = "6" | "7" | "8" | "9" | "10" | "11" | "12";
 
-export type QuizRound =
-  | 1
-  | 2
-  | 3
-  | 4
-  | 5;
+export type QuizBoard = "Maharashtra State Board" | "CBSE";
+
+export const quizBoardOptions: Array<{
+  id: QuizBoard;
+  title: string;
+  description: string;
+}> = [
+  {
+    id: "Maharashtra State Board",
+    title: "Maharashtra State Board",
+    description: "Maharashtra State Board syllabus",
+  },
+  {
+    id: "CBSE",
+    title: "CBSE",
+    description: "CBSE / NCERT-aligned syllabus",
+  },
+];
+
+export const quizSchoolClassOptions: Partial<
+  Record<CompetitiveExam, QuizSchoolClass[]>
+> = {
+  "class-6-8": ["6", "7", "8"],
+  "class-9-10": ["9", "10"],
+  "class-11-12-science": ["11", "12"],
+  "class-11-12-commerce": ["11", "12"],
+  "class-11-12-arts": ["11", "12"],
+};
+
+export function getQuizSchoolClasses(
+  exam: CompetitiveExam | null,
+): QuizSchoolClass[] {
+  if (!exam) {
+    return [];
+  }
+
+  return quizSchoolClassOptions[exam] ?? [];
+}
+
+export function requiresQuizBoard(exam: CompetitiveExam | null): boolean {
+  return (
+    exam === "class-9-10" ||
+    exam === "class-11-12-science" ||
+    exam === "class-11-12-commerce" ||
+    exam === "class-11-12-arts"
+  );
+}
+
+export type QuizJourneyLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+export type QuizRound = 1 | 2 | 3 | 4 | 5;
 
 export type LevelOption = {
   id: EducationLevel;
@@ -127,9 +162,7 @@ export const QUIZ_QUESTIONS_PER_ROUND = 10;
 export const QUIZ_QUESTIONS_PER_LEVEL =
   QUIZ_ROUNDS_PER_LEVEL * QUIZ_QUESTIONS_PER_ROUND;
 
-export const QUIZ_MAX_QUESTIONS =
-  QUIZ_TOTAL_LEVELS * QUIZ_QUESTIONS_PER_LEVEL;
-
+export const QUIZ_MAX_QUESTIONS = QUIZ_TOTAL_LEVELS * QUIZ_QUESTIONS_PER_LEVEL;
 
 export const quizJourneyLevels: QuizJourneyLevelOption[] = [
   {
@@ -208,8 +241,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     id: 7,
     title: "Level 7",
     subtitle: "Exam Practice",
-    description:
-      "Practise questions closer to real examination standards.",
+    description: "Practise questions closer to real examination standards.",
     icon: "📝",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
@@ -220,8 +252,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     id: 8,
     title: "Level 8",
     subtitle: "Advanced Practice",
-    description:
-      "Handle advanced concepts, combinations and exam-style traps.",
+    description: "Handle advanced concepts, combinations and exam-style traps.",
     icon: "🔥",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
@@ -253,7 +284,6 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
   },
 ];
 
-
 export function getDifficultyForJourneyLevel(
   level: QuizJourneyLevel,
 ): Difficulty {
@@ -275,11 +305,8 @@ export function getQuizJourneyLevel(
     return undefined;
   }
 
-  return quizJourneyLevels.find(
-    (option) => option.id === level,
-  );
+  return quizJourneyLevels.find((option) => option.id === level);
 }
-
 
 export function getQuizJourneyLevelTitle(
   level: QuizJourneyLevel | null,
@@ -299,7 +326,7 @@ export const levelOptions: LevelOption[] = [
     title: "School & Junior College Courses",
     subtitle: "6th to 12th \u2022 Boards & Streams",
     description:
-      "State Board, CBSE, ICSE, IGCSE, IB, Science, Commerce and Arts.",
+      "State Board, CBSE, Science, Commerce and Arts.",
     icon: "\u{1F4D8}",
   },
   {
@@ -335,7 +362,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "school",
     eligibility:
-      "Students studying in Classes 6, 7 or 8 from State Board, CBSE, ICSE, IGCSE or IB.",
+      "Students studying in Classes 6, 7 or 8 from State Board, CBSE.",
     trendNote: "Best for foundation building and Olympiad-style basics.",
     subjects: [
       "Mathematics",
@@ -352,7 +379,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "school",
     eligibility:
-      "Students studying in Classes 9 or 10 from State Board, CBSE, ICSE, IGCSE or IB.",
+      "Students studying in Classes 9 or 10 from State Board, CBSE.",
     trendNote: "Best for board preparation and concept strengthening.",
     subjects: [
       "Mathematics",
@@ -369,8 +396,9 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "science",
     eligibility:
-      "Class 11â€“12 Science students preparing for boards, CET, JEE, NEET or foundation tests.",
-    trendNote: "Best for PCM/PCB students targeting boards plus entrance exams.",
+      "Class 11–12 Science students studying under Maharashtra State Board or CBSE boards.",
+    trendNote:
+      "Best for PCM/PCB students preparing for Class 11–12 board exams.",
     subjects: [
       "Physics",
       "Chemistry",
@@ -386,9 +414,9 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "commerce",
     eligibility:
-      "Class 11â€“12 Commerce students preparing for boards, CA foundation, CS foundation or business courses.",
+      "Class 11–12 Commerce students studying under Maharashtra State Board or CBSE boards.",
     trendNote:
-      "Best for accounts, business, economics and finance-oriented students.",
+      "Best for Accounts, Economics, Business Studies and Commerce board preparation.",
     subjects: [
       "Accountancy",
       "Business Studies",
@@ -403,9 +431,8 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "arts",
     eligibility:
-      "Class 11â€“12 Arts/Humanities students preparing for boards, law, UPSC foundation or social science paths.",
-    trendNote:
-      "Best for humanities, law, civil services and communication-oriented students.",
+      "Class 11–12 Arts/Humanities students studying under Maharashtra State Board or CBSE boards.",
+    trendNote: "Best for Humanities and Arts subjects under Maharashtra State Board or CBSE.",
     subjects: [
       "History",
       "Political Science",
@@ -451,7 +478,8 @@ export const competitiveExams: ExamOption[] = [
     title: "Olympiads",
     category: "competitive-exam",
     stream: "school",
-    eligibility: "School students from different classes depending on Olympiad type.",
+    eligibility:
+      "School students from different classes depending on Olympiad type.",
     trendNote: "Best for concept depth, speed and academic confidence.",
     subjects: [
       "Mathematics",
@@ -476,16 +504,25 @@ export const competitiveExams: ExamOption[] = [
     title: "IELTS",
     category: "competitive-exam",
     stream: "school",
-    eligibility: "Students or professionals planning study, work or migration abroad.",
+    eligibility:
+      "Students or professionals planning study, work or migration abroad.",
     trendNote: "Useful for English proficiency requirements.",
-    subjects: ["Listening", "Reading", "Writing", "Speaking", "Vocabulary", "Grammar"],
+    subjects: [
+      "Listening",
+      "Reading",
+      "Writing",
+      "Speaking",
+      "Vocabulary",
+      "Grammar",
+    ],
   },
   {
     id: "toefl",
     title: "TOEFL",
     category: "competitive-exam",
     stream: "school",
-    eligibility: "Students planning international education where TOEFL is accepted.",
+    eligibility:
+      "Students planning international education where TOEFL is accepted.",
     trendNote: "Useful for English academic communication.",
     subjects: ["Reading", "Listening", "Speaking", "Writing"],
   },
@@ -494,16 +531,24 @@ export const competitiveExams: ExamOption[] = [
     title: "IMU-CET",
     category: "competitive-exam",
     stream: "science",
-    eligibility: "Students aiming for maritime and marine-related undergraduate courses.",
+    eligibility:
+      "Students aiming for maritime and marine-related undergraduate courses.",
     trendNote: "Best for merchant navy and maritime career aspirants.",
-    subjects: ["Physics", "Chemistry", "Mathematics", "English", "General Aptitude"],
+    subjects: [
+      "Physics",
+      "Chemistry",
+      "Mathematics",
+      "English",
+      "General Aptitude",
+    ],
   },
   {
     id: "nchmct-jee",
     title: "NCHMCT-JEE",
     category: "competitive-exam",
     stream: "management",
-    eligibility: "Students aiming for hotel management and hospitality courses.",
+    eligibility:
+      "Students aiming for hotel management and hospitality courses.",
     trendNote: "Best for hospitality and hotel management aspirants.",
     subjects: [
       "Numerical Ability",
@@ -536,7 +581,12 @@ export const competitiveExams: ExamOption[] = [
     stream: "law",
     eligibility: "Students targeting National Law University Delhi.",
     trendNote: "Important for top law aspirants.",
-    subjects: ["English", "Current Affairs", "Legal Reasoning", "Logical Reasoning"],
+    subjects: [
+      "English",
+      "Current Affairs",
+      "Legal Reasoning",
+      "Logical Reasoning",
+    ],
   },
   {
     id: "law",
@@ -578,7 +628,12 @@ export const competitiveExams: ExamOption[] = [
     eligibility:
       "Commerce students or graduates preparing for CA Foundation/Intermediate path.",
     trendNote: "Best for accounting, audit and finance careers.",
-    subjects: ["Accounting", "Business Laws", "Economics", "Quantitative Aptitude"],
+    subjects: [
+      "Accounting",
+      "Business Laws",
+      "Economics",
+      "Quantitative Aptitude",
+    ],
   },
   {
     id: "cs",
@@ -603,7 +658,12 @@ export const competitiveExams: ExamOption[] = [
     eligibility:
       "Students interested in cost accounting, finance and management accounting.",
     trendNote: "Best for cost accounting and financial management careers.",
-    subjects: ["Accounting", "Economics", "Business Mathematics", "Commercial Laws"],
+    subjects: [
+      "Accounting",
+      "Economics",
+      "Business Mathematics",
+      "Commercial Laws",
+    ],
   },
 
   {
@@ -611,7 +671,8 @@ export const competitiveExams: ExamOption[] = [
     title: "UPSC",
     category: "government-exam",
     stream: "government",
-    eligibility: "Graduates from any stream can generally prepare for civil services.",
+    eligibility:
+      "Graduates from any stream can generally prepare for civil services.",
     trendNote: "Best for national civil services aspirants.",
     subjects: [
       "History",
@@ -649,14 +710,20 @@ export const competitiveExams: ExamOption[] = [
     eligibility:
       "Eligibility varies by post; many exams are open to 10th, 12th or graduates.",
     trendNote: "Popular for central government jobs.",
-    subjects: ["Quantitative Aptitude", "Reasoning", "English", "General Awareness"],
+    subjects: [
+      "Quantitative Aptitude",
+      "Reasoning",
+      "English",
+      "General Awareness",
+    ],
   },
   {
     id: "banking",
     title: "Banking",
     category: "government-exam",
     stream: "government",
-    eligibility: "Usually graduates from any stream, depending on the banking exam.",
+    eligibility:
+      "Usually graduates from any stream, depending on the banking exam.",
     trendNote: "Popular for bank PO, clerk and officer roles.",
     subjects: [
       "Quantitative Aptitude",
@@ -673,8 +740,14 @@ export const competitiveExams: ExamOption[] = [
     stream: "government",
     eligibility:
       "Eligibility varies by post; many railway exams accept 10th, 12th, ITI, diploma or graduates.",
-    trendNote: "Popular for technical and non-technical government railway posts.",
-    subjects: ["Mathematics", "Reasoning", "General Awareness", "General Science"],
+    trendNote:
+      "Popular for technical and non-technical government railway posts.",
+    subjects: [
+      "Mathematics",
+      "Reasoning",
+      "General Awareness",
+      "General Science",
+    ],
   },
   {
     id: "nda",
@@ -684,14 +757,20 @@ export const competitiveExams: ExamOption[] = [
     eligibility:
       "Class 12 students; Air Force and Navy generally require Physics and Mathematics.",
     trendNote: "Best for defence aspirants after Class 12.",
-    subjects: ["Mathematics", "General Ability Test", "English", "General Knowledge"],
+    subjects: [
+      "Mathematics",
+      "General Ability Test",
+      "English",
+      "General Knowledge",
+    ],
   },
   {
     id: "cds",
     title: "CDS",
     category: "government-exam",
     stream: "defence",
-    eligibility: "Graduates; technical branches may need specific qualifications.",
+    eligibility:
+      "Graduates; technical branches may need specific qualifications.",
     trendNote: "Best for graduate defence aspirants.",
     subjects: ["English", "General Knowledge", "Elementary Mathematics"],
   },
@@ -719,7 +798,12 @@ export const competitiveExams: ExamOption[] = [
     eligibility:
       "Graduates from any stream can generally prepare for CAPF Assistant Commandant.",
     trendNote: "Best for paramilitary officer aspirants.",
-    subjects: ["General Ability", "General Studies", "Essay", "Current Affairs"],
+    subjects: [
+      "General Ability",
+      "General Studies",
+      "Essay",
+      "Current Affairs",
+    ],
   },
   {
     id: "ctet-tet",
@@ -745,7 +829,13 @@ export const competitiveExams: ExamOption[] = [
     eligibility:
       "Eligibility depends on Maharashtra police recruitment post and official notification.",
     trendNote: "Popular Maharashtra state recruitment exam.",
-    subjects: ["Marathi", "General Knowledge", "Mathematics", "Reasoning", "Current Affairs"],
+    subjects: [
+      "Marathi",
+      "General Knowledge",
+      "Mathematics",
+      "Reasoning",
+      "Current Affairs",
+    ],
   },
   {
     id: "maharashtra-state-government",
@@ -888,8 +978,14 @@ export const competitiveExams: ExamOption[] = [
     stream: "management",
     eligibility:
       "Graduates targeting selected postgraduate management or social-sector programmes.",
-    trendNote: "Good additional option for management and social-sector aspirants.",
-    subjects: ["English", "Quantitative Aptitude", "Logical Reasoning", "General Awareness"],
+    trendNote:
+      "Good additional option for management and social-sector aspirants.",
+    subjects: [
+      "English",
+      "Quantitative Aptitude",
+      "Logical Reasoning",
+      "General Awareness",
+    ],
   },
 ];
 

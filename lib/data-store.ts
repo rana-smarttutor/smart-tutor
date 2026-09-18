@@ -10,8 +10,10 @@ import {
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
+  type QuizBoard,
   type QuizJourneyLevel,
   type QuizRound,
+  type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 
 import { getPublicInstituteData as getTemplatePublicInstituteData } from "@/lib/mock-data";
@@ -1220,6 +1222,10 @@ export type QuizArenaProgress = {
 
   exam: CompetitiveExam;
 
+  schoolClass: QuizSchoolClass | null;
+
+  board: QuizBoard | null;
+
   subject: string;
 
   difficulty: Difficulty;
@@ -1293,9 +1299,17 @@ function normalizeQuizArenaCompletedRounds(
 
 export async function getQuizArenaProgress(input: {
   userId: string;
+
   learningCategory: EducationLevel;
+
   exam: CompetitiveExam;
+
+  schoolClass: QuizSchoolClass | null;
+
+  board: QuizBoard | null;
+
   subject: string;
+
   difficulty: Difficulty;
 }): Promise<QuizArenaProgress | null> {
   const collection =
@@ -1304,16 +1318,26 @@ export async function getQuizArenaProgress(input: {
     );
 
   const document = await collection.findOne({
-    userId: input.userId,
+    userId:
+      input.userId,
 
     learningCategory:
       input.learningCategory,
 
-    exam: input.exam,
+    exam:
+      input.exam,
 
-    subject: input.subject,
+    schoolClass:
+      input.schoolClass,
 
-    difficulty: input.difficulty,
+    board:
+      input.board,
+
+    subject:
+      input.subject,
+
+    difficulty:
+      input.difficulty,
   });
 
   if (!document) {
@@ -1325,6 +1349,12 @@ export async function getQuizArenaProgress(input: {
 
   return {
     ...progress,
+
+    schoolClass:
+      progress.schoolClass ?? null,
+
+    board:
+      progress.board ?? null,
 
     unlockedLevel:
       Math.max(
@@ -1362,6 +1392,10 @@ export async function saveQuizArenaRoundProgress(input: {
 
   exam: CompetitiveExam;
 
+  schoolClass: QuizSchoolClass | null;
+
+  board: QuizBoard | null;
+
   subject: string;
 
   difficulty: Difficulty;
@@ -1381,20 +1415,32 @@ export async function saveQuizArenaRoundProgress(input: {
       COLLECTIONS.quizArenaProgress,
     );
 
-  const existing = await getQuizArenaProgress({
-    userId: input.userId,
+  const existing =
+    await getQuizArenaProgress({
+      userId:
+        input.userId,
 
-    learningCategory:
-      input.learningCategory,
+      learningCategory:
+        input.learningCategory,
 
-    exam: input.exam,
+      exam:
+        input.exam,
 
-    subject: input.subject,
+      schoolClass:
+        input.schoolClass,
 
-    difficulty: input.difficulty,
-  });
+      board:
+        input.board,
 
-  const now = new Date().toISOString();
+      subject:
+        input.subject,
+
+      difficulty:
+        input.difficulty,
+    });
+
+  const now =
+    new Date().toISOString();
 
   const completedRounds =
     normalizeQuizArenaCompletedRounds(
@@ -1402,13 +1448,19 @@ export async function saveQuizArenaRoundProgress(input: {
     );
 
   const existingLevelRounds =
-    completedRounds[input.progressionLevel] ?? [];
+    completedRounds[
+      input.progressionLevel
+    ] ?? [];
 
   const roundAlreadyCompleted =
-    existingLevelRounds.includes(input.round);
+    existingLevelRounds.includes(
+      input.round,
+    );
 
   if (!roundAlreadyCompleted) {
-    completedRounds[input.progressionLevel] = [
+    completedRounds[
+      input.progressionLevel
+    ] = [
       ...existingLevelRounds,
       input.round,
     ].sort(
@@ -1440,13 +1492,6 @@ export async function saveQuizArenaRoundProgress(input: {
       ) as QuizJourneyLevel;
   }
 
-  /*
-   * Count only the first successful completion
-   * of a round toward the 500-question journey.
-   *
-   * Replaying an already completed round does
-   * not inflate progress.
-   */
   const questionsToAdd =
     roundAlreadyCompleted
       ? 0
@@ -1493,16 +1538,26 @@ export async function saveQuizArenaRoundProgress(input: {
       existing?.id ??
       `quiz-progress-${randomUUID()}`,
 
-    userId: input.userId,
+    userId:
+      input.userId,
 
     learningCategory:
       input.learningCategory,
 
-    exam: input.exam,
+    exam:
+      input.exam,
 
-    subject: input.subject,
+    schoolClass:
+      input.schoolClass,
 
-    difficulty: input.difficulty,
+    board:
+      input.board,
+
+    subject:
+      input.subject,
+
+    difficulty:
+      input.difficulty,
 
     unlockedLevel,
 
@@ -1530,29 +1585,42 @@ export async function saveQuizArenaRoundProgress(input: {
     createdAt:
       existing?.createdAt ?? now,
 
-    updatedAt: now,
+    updatedAt:
+      now,
   };
 
   await collection.updateOne(
     {
-      userId: input.userId,
+      userId:
+        input.userId,
 
       learningCategory:
         input.learningCategory,
 
-      exam: input.exam,
+      exam:
+        input.exam,
 
-      subject: input.subject,
+      schoolClass:
+        input.schoolClass,
 
-      difficulty: input.difficulty,
+      board:
+        input.board,
+
+      subject:
+        input.subject,
+
+      difficulty:
+        input.difficulty,
     },
 
     {
-      $set: progress,
+      $set:
+        progress,
     },
 
     {
-      upsert: true,
+      upsert:
+        true,
     },
   );
 
@@ -1591,6 +1659,10 @@ export type QuizArenaRoundAttempt = {
   learningCategory: EducationLevel;
 
   exam: CompetitiveExam;
+
+  schoolClass: QuizSchoolClass | null;
+
+  board: QuizBoard | null;
 
   subject: string;
 

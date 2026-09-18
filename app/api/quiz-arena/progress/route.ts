@@ -1,6 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import {
+  NextRequest,
+  NextResponse,
+} from "next/server";
 
-import { getSessionUser } from "@/lib/auth";
+import {
+  getSessionUser,
+} from "@/lib/auth";
 
 import {
   getQuizArenaProgress,
@@ -9,12 +14,17 @@ import {
 
 import {
   competitiveExams,
+  getQuizSchoolClasses,
   levelOptions,
+  quizBoardOptions,
+  requiresQuizBoard,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
+  type QuizBoard,
   type QuizJourneyLevel,
   type QuizRound,
+  type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 
 
@@ -76,11 +86,83 @@ function isQuizRound(
 }
 
 
+function isQuizBoard(
+  value: unknown,
+): value is QuizBoard {
+  return quizBoardOptions.some(
+    (board) => board.id === value,
+  );
+}
+
+
+type SchoolContext =
+  | {
+      ok: true;
+      schoolClass: QuizSchoolClass | null;
+      board: QuizBoard | null;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+
+function parseSchoolContext(
+  exam: CompetitiveExam,
+  schoolClassValue: unknown,
+  boardValue: unknown,
+): SchoolContext {
+  const allowedClasses =
+    getQuizSchoolClasses(exam);
+
+  let schoolClass:
+    QuizSchoolClass | null = null;
+
+  let board:
+    QuizBoard | null = null;
+
+  if (allowedClasses.length > 0) {
+    if (
+      typeof schoolClassValue !== "string" ||
+      !allowedClasses.includes(
+        schoolClassValue as QuizSchoolClass,
+      )
+    ) {
+      return {
+        ok: false,
+        error: "Please select a valid class.",
+      };
+    }
+
+    schoolClass =
+      schoolClassValue as QuizSchoolClass;
+  }
+
+  if (requiresQuizBoard(exam)) {
+    if (!isQuizBoard(boardValue)) {
+      return {
+        ok: false,
+        error: "Please select HSC or CBSE.",
+      };
+    }
+
+    board = boardValue;
+  }
+
+  return {
+    ok: true,
+    schoolClass,
+    board,
+  };
+}
+
+
 export async function GET(
   request: NextRequest,
 ) {
   try {
-    const session = await getSessionUser();
+    const session =
+      await getSessionUser();
 
     if (
       !session ||
@@ -106,13 +188,25 @@ export async function GET(
     const exam =
       searchParams.get("exam");
 
+    const schoolClass =
+      searchParams.get("schoolClass");
+
+    const board =
+      searchParams.get("board");
+
     const subject =
-      searchParams.get("subject")?.trim();
+      searchParams
+        .get("subject")
+        ?.trim();
 
     const difficulty =
       searchParams.get("difficulty");
 
-    if (!isEducationLevel(learningCategory)) {
+    if (
+      !isEducationLevel(
+        learningCategory,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -124,11 +218,34 @@ export async function GET(
       );
     }
 
-    if (!isCompetitiveExam(exam)) {
+    if (
+      !isCompetitiveExam(
+        exam,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
             "Invalid Quiz Arena exam.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const schoolContext =
+      parseSchoolContext(
+        exam,
+        schoolClass,
+        board,
+      );
+
+    if (!schoolContext.ok) {
+      return NextResponse.json(
+        {
+          error:
+            schoolContext.error,
         },
         {
           status: 400,
@@ -148,7 +265,11 @@ export async function GET(
       );
     }
 
-    if (!isDifficulty(difficulty)) {
+    if (
+      !isDifficulty(
+        difficulty,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -162,11 +283,18 @@ export async function GET(
 
     const progress =
       await getQuizArenaProgress({
-        userId: session.id,
+        userId:
+          session.id,
 
         learningCategory,
 
         exam,
+
+        schoolClass:
+          schoolContext.schoolClass,
+
+        board:
+          schoolContext.board,
 
         subject,
 
@@ -176,7 +304,8 @@ export async function GET(
     return NextResponse.json({
       progress,
     });
-  } catch (error) {
+  }
+  catch (error) {
     console.error(
       "Quiz Arena progress GET error:",
       error,
@@ -199,7 +328,8 @@ export async function POST(
   request: NextRequest,
 ) {
   try {
-    const session = await getSessionUser();
+    const session =
+      await getSessionUser();
 
     if (
       !session ||
@@ -216,27 +346,39 @@ export async function POST(
       );
     }
 
-    const body = (await request.json()) as {
-      level?: EducationLevel;
+    const body =
+      (await request.json()) as {
+        level?: EducationLevel;
 
-      exam?: CompetitiveExam;
+        exam?: CompetitiveExam;
 
-      subject?: string;
+        schoolClass?:
+          QuizSchoolClass | null;
 
-      difficulty?: Difficulty;
+        board?:
+          QuizBoard | null;
 
-      progressionLevel?: QuizJourneyLevel;
+        subject?: string;
 
-      round?: QuizRound;
+        difficulty?: Difficulty;
 
-      correctAnswers?: number;
+        progressionLevel?:
+          QuizJourneyLevel;
 
-      incorrectAnswers?: number;
+        round?: QuizRound;
 
-      score?: number;
-    };
+        correctAnswers?: number;
 
-    if (!isEducationLevel(body.level)) {
+        incorrectAnswers?: number;
+
+        score?: number;
+      };
+
+    if (
+      !isEducationLevel(
+        body.level,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -248,11 +390,34 @@ export async function POST(
       );
     }
 
-    if (!isCompetitiveExam(body.exam)) {
+    if (
+      !isCompetitiveExam(
+        body.exam,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
             "Invalid Quiz Arena exam.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const schoolContext =
+      parseSchoolContext(
+        body.exam,
+        body.schoolClass,
+        body.board,
+      );
+
+    if (!schoolContext.ok) {
+      return NextResponse.json(
+        {
+          error:
+            schoolContext.error,
         },
         {
           status: 400,
@@ -275,7 +440,11 @@ export async function POST(
       );
     }
 
-    if (!isDifficulty(body.difficulty)) {
+    if (
+      !isDifficulty(
+        body.difficulty,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -303,7 +472,11 @@ export async function POST(
       );
     }
 
-    if (!isQuizRound(body.round)) {
+    if (
+      !isQuizRound(
+        body.round,
+      )
+    ) {
       return NextResponse.json(
         {
           error:
@@ -317,13 +490,20 @@ export async function POST(
 
     const progress =
       await saveQuizArenaRoundProgress({
-        userId: session.id,
+        userId:
+          session.id,
 
         learningCategory:
           body.level,
 
         exam:
           body.exam,
+
+        schoolClass:
+          schoolContext.schoolClass,
+
+        board:
+          schoolContext.board,
 
         subject,
 
@@ -337,19 +517,35 @@ export async function POST(
           body.round,
 
         correctAnswers:
-          Number(body.correctAnswers) || 0,
+          Math.max(
+            0,
+            Number(
+              body.correctAnswers,
+            ) || 0,
+          ),
 
         incorrectAnswers:
-          Number(body.incorrectAnswers) || 0,
+          Math.max(
+            0,
+            Number(
+              body.incorrectAnswers,
+            ) || 0,
+          ),
 
         score:
-          Number(body.score) || 0,
+          Math.max(
+            0,
+            Number(
+              body.score,
+            ) || 0,
+          ),
       });
 
     return NextResponse.json({
       progress,
     });
-  } catch (error) {
+  }
+  catch (error) {
     console.error(
       "Quiz Arena progress POST error:",
       error,
