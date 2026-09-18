@@ -63,6 +63,25 @@ export type CompetitiveExam =
 
 export type Difficulty = "easy" | "medium" | "hard";
 
+export type QuizJourneyLevel =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10;
+
+export type QuizRound =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5;
+
 export type LevelOption = {
   id: EducationLevel;
   title: string;
@@ -89,14 +108,199 @@ export type DifficultyOption = {
   icon: string;
 };
 
+export type QuizJourneyLevelOption = {
+  id: QuizJourneyLevel;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  rounds: number;
+  questionsPerRound: number;
+  questionCapacity: number;
+};
+export const QUIZ_TOTAL_LEVELS = 10;
+
+export const QUIZ_ROUNDS_PER_LEVEL = 5;
+
+export const QUIZ_QUESTIONS_PER_ROUND = 10;
+
+export const QUIZ_QUESTIONS_PER_LEVEL =
+  QUIZ_ROUNDS_PER_LEVEL * QUIZ_QUESTIONS_PER_ROUND;
+
+export const QUIZ_MAX_QUESTIONS =
+  QUIZ_TOTAL_LEVELS * QUIZ_QUESTIONS_PER_LEVEL;
+
+
+export const quizJourneyLevels: QuizJourneyLevelOption[] = [
+  {
+    id: 1,
+    title: "Level 1",
+    subtitle: "Fundamentals",
+    description:
+      "Build confidence with essential concepts and straightforward questions.",
+    icon: "🌱",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 2,
+    title: "Level 2",
+    subtitle: "Core Concepts",
+    description:
+      "Strengthen the important concepts required for deeper learning.",
+    icon: "📘",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 3,
+    title: "Level 3",
+    subtitle: "Applied Basics",
+    description:
+      "Apply foundational knowledge to practical and mixed-concept questions.",
+    icon: "🧠",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 4,
+    title: "Level 4",
+    subtitle: "Intermediate",
+    description:
+      "Move beyond the basics with stronger reasoning and application.",
+    icon: "⚡",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 5,
+    title: "Level 5",
+    subtitle: "Strong Concepts",
+    description:
+      "Test stronger conceptual understanding across important topics.",
+    icon: "🎯",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 6,
+    title: "Level 6",
+    subtitle: "Application",
+    description:
+      "Solve more demanding application-oriented questions and scenarios.",
+    icon: "🚀",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 7,
+    title: "Level 7",
+    subtitle: "Exam Practice",
+    description:
+      "Practise questions closer to real examination standards.",
+    icon: "📝",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 8,
+    title: "Level 8",
+    subtitle: "Advanced Practice",
+    description:
+      "Handle advanced concepts, combinations and exam-style traps.",
+    icon: "🔥",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 9,
+    title: "Level 9",
+    subtitle: "Expert Challenge",
+    description:
+      "Take on high-level questions requiring deeper reasoning and precision.",
+    icon: "🏆",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+
+  {
+    id: 10,
+    title: "Level 10",
+    subtitle: "Master Challenge",
+    description:
+      "Complete the toughest stage of the SmartIQ Quiz Arena journey.",
+    icon: "👑",
+    rounds: QUIZ_ROUNDS_PER_LEVEL,
+    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
+    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
+  },
+];
+
+
+export function getDifficultyForJourneyLevel(
+  level: QuizJourneyLevel,
+): Difficulty {
+  if (level <= 3) {
+    return "easy";
+  }
+
+  if (level <= 6) {
+    return "medium";
+  }
+
+  return "hard";
+}
+
+export function getQuizJourneyLevel(
+  level: QuizJourneyLevel | null,
+): QuizJourneyLevelOption | undefined {
+  if (!level) {
+    return undefined;
+  }
+
+  return quizJourneyLevels.find(
+    (option) => option.id === level,
+  );
+}
+
+
+export function getQuizJourneyLevelTitle(
+  level: QuizJourneyLevel | null,
+): string {
+  const option = getQuizJourneyLevel(level);
+
+  if (!option) {
+    return "";
+  }
+
+  return `${option.title} • ${option.subtitle}`;
+}
+
 export const levelOptions: LevelOption[] = [
   {
     id: "school-junior-college",
     title: "School & Junior College Courses",
-    subtitle: "6th to 12th • Boards & Streams",
+    subtitle: "6th to 12th \u2022 Boards & Streams",
     description:
       "State Board, CBSE, ICSE, IGCSE, IB, Science, Commerce and Arts.",
-    icon: "📘",
+    icon: "\u{1F4D8}",
   },
   {
     id: "competitive-exam",
@@ -104,7 +308,7 @@ export const levelOptions: LevelOption[] = [
     subtitle: "Engineering, Medical, Law, Hotel, CA/CS/CMA",
     description:
       "JEE, NEET, CET, Olympiads, SAT, IELTS, TOEFL, IMU-CET, NCHMCT-JEE, CLAT, AILET, LAW, CA, CS, CMA and MHT CET LLB.",
-    icon: "🎯",
+    icon: "\u{1F3AF}",
   },
   {
     id: "government-exam",
@@ -112,7 +316,7 @@ export const levelOptions: LevelOption[] = [
     subtitle: "UPSC, MPSC, SSC, Banking, Defence",
     description:
       "UPSC, MPSC, SSC, Banking, Railway, NDA, CDS, AFCAT, CAPF, Teaching Exams and Maharashtra State Government Exams.",
-    icon: "🏛️",
+    icon: "\u{1F3DB}\u{FE0F}",
   },
   {
     id: "mba-entrance",
@@ -120,7 +324,7 @@ export const levelOptions: LevelOption[] = [
     subtitle: "CAT, CET, XAT, SNAP, NMAT and more",
     description:
       "CAT, MAH MBA CET, XAT, SNAP, NMAT, CMAT, MAT, ATMA, GMAT and other popular MBA entrance exams.",
-    icon: "📊",
+    icon: "\u{1F4CA}",
   },
 ];
 
@@ -165,7 +369,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "science",
     eligibility:
-      "Class 11–12 Science students preparing for boards, CET, JEE, NEET or foundation tests.",
+      "Class 11â€“12 Science students preparing for boards, CET, JEE, NEET or foundation tests.",
     trendNote: "Best for PCM/PCB students targeting boards plus entrance exams.",
     subjects: [
       "Physics",
@@ -182,7 +386,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "commerce",
     eligibility:
-      "Class 11–12 Commerce students preparing for boards, CA foundation, CS foundation or business courses.",
+      "Class 11â€“12 Commerce students preparing for boards, CA foundation, CS foundation or business courses.",
     trendNote:
       "Best for accounts, business, economics and finance-oriented students.",
     subjects: [
@@ -199,7 +403,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "arts",
     eligibility:
-      "Class 11–12 Arts/Humanities students preparing for boards, law, UPSC foundation or social science paths.",
+      "Class 11â€“12 Arts/Humanities students preparing for boards, law, UPSC foundation or social science paths.",
     trendNote:
       "Best for humanities, law, civil services and communication-oriented students.",
     subjects: [
@@ -218,7 +422,7 @@ export const competitiveExams: ExamOption[] = [
     category: "competitive-exam",
     stream: "engineering",
     eligibility:
-      "Class 11–12 Science students with Physics, Chemistry and Mathematics.",
+      "Class 11â€“12 Science students with Physics, Chemistry and Mathematics.",
     trendNote: "Best for engineering aspirants.",
     subjects: ["Physics", "Chemistry", "Mathematics"],
   },
@@ -228,7 +432,7 @@ export const competitiveExams: ExamOption[] = [
     category: "competitive-exam",
     stream: "medical",
     eligibility:
-      "Class 11–12 Science students with Physics, Chemistry and Biology.",
+      "Class 11â€“12 Science students with Physics, Chemistry and Biology.",
     trendNote: "Best for medical aspirants.",
     subjects: ["Physics", "Chemistry", "Biology"],
   },
@@ -238,7 +442,7 @@ export const competitiveExams: ExamOption[] = [
     category: "competitive-exam",
     stream: "science",
     eligibility:
-      "Class 11–12 Science students, usually PCM or PCB depending on course.",
+      "Class 11â€“12 Science students, usually PCM or PCB depending on course.",
     trendNote: "Important for Maharashtra professional courses.",
     subjects: ["Physics", "Chemistry", "Mathematics", "Biology"],
   },
@@ -693,23 +897,23 @@ export const difficultyOptions: DifficultyOption[] = [
   {
     id: "easy",
     title: "Easy",
-    questions: 5,
+    questions: 10,
     description: "Warm up and build confidence",
-    icon: "🌱",
+    icon: "ðŸŒ±",
   },
   {
     id: "medium",
     title: "Medium",
     questions: 10,
     description: "Test your preparation level",
-    icon: "⚡",
+    icon: "âš¡",
   },
   {
     id: "hard",
     title: "Hard",
-    questions: 15,
+    questions: 10,
     description: "Take the serious exam challenge",
-    icon: "🔥",
+    icon: "ðŸ”¥",
   },
 ];
 

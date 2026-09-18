@@ -4,15 +4,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
-  difficultyOptions,
+  getDifficultyForJourneyLevel,
   getExamDetails,
   getExamTitle,
   getExamsByCategory,
   getLevelTitle,
   levelOptions,
+  quizJourneyLevels,
+  QUIZ_ROUNDS_PER_LEVEL,
   type CompetitiveExam,
   type Difficulty,
   type EducationLevel,
+  type QuizJourneyLevel,
+  type QuizRound,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 
@@ -21,19 +25,41 @@ type Step =
   | "level"
   | "exam"
   | "subject"
-  | "difficulty"
+  | "journey"
   | "quiz"
   | "result";
 
-type QuizResult = {
-  score: number;
-  correctAnswers: number;
-  incorrectAnswers: number;
-  bestStreak: number;
-  attemptedQuestions: number;
-  gameOver: boolean;
+type QuestionAttempt = {
+  questionId: string;
+  question: string;
+  options: string[];
+
+  selectedAnswer: string;
+  correctAnswer: string;
+
+  isCorrect: boolean;
+
+  explanation: string;
+
+  timeTakenMs: number;
 };
 
+type QuizResult = {
+  score: number;
+
+  correctAnswers: number;
+  incorrectAnswers: number;
+
+  bestStreak: number;
+
+  attemptedQuestions: number;
+
+  totalTimeMs: number;
+
+  averageQuestionTimeMs: number;
+
+  attempts: QuestionAttempt[];
+};
 export default function QuizArenaClient() {
   const [step, setStep] = useState<Step>("welcome");
 
@@ -44,13 +70,25 @@ export default function QuizArenaClient() {
     null,
   );
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [selectedDifficulty, setSelectedDifficulty] =
-    useState<Difficulty | null>(null);
+  const [selectedJourneyLevel, setSelectedJourneyLevel] =
+    useState<QuizJourneyLevel | null>(null);
+
+  const [selectedRound, setSelectedRound] = useState<QuizRound | null>(null);
+
+  const [unlockedJourneyLevel, setUnlockedJourneyLevel] =
+    useState<QuizJourneyLevel>(1);
+
+  const [completedRounds, setCompletedRounds] = useState<
+    Record<number, QuizRound[]>
+  >({});
 
   const [activeQuestions, setActiveQuestions] = useState<QuizQuestion[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [message, setMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const [isProgressLoading, setIsProgressLoading] = useState(false);
+
   const [showExitModal, setShowExitModal] = useState(false);
 
   const selectedExamDetails = useMemo(() => {
@@ -76,7 +114,8 @@ export default function QuizArenaClient() {
     setSelectedLevel(level);
     setSelectedExam(null);
     setSelectedSubject(null);
-    setSelectedDifficulty(null);
+    setSelectedJourneyLevel(null);
+    setSelectedRound(null);
     setActiveQuestions([]);
     setResult(null);
     setMessage("");
@@ -88,7 +127,8 @@ export default function QuizArenaClient() {
     setSelectedLevel(null);
     setSelectedExam(null);
     setSelectedSubject(null);
-    setSelectedDifficulty(null);
+    setSelectedJourneyLevel(null);
+    setSelectedRound(null);
     setActiveQuestions([]);
     setResult(null);
     setMessage("");
@@ -109,20 +149,19 @@ export default function QuizArenaClient() {
       setSelectedLevel(null);
       setSelectedExam(null);
       setSelectedSubject(null);
-      setSelectedDifficulty(null);
       setStep("level");
       return;
     }
 
     if (step === "subject") {
       setSelectedSubject(null);
-      setSelectedDifficulty(null);
       setStep("exam");
       return;
     }
 
-    if (step === "difficulty") {
-      setSelectedDifficulty(null);
+    if (step === "journey") {
+      setSelectedJourneyLevel(null);
+      setSelectedRound(null);
       setStep("subject");
       return;
     }
@@ -130,7 +169,7 @@ export default function QuizArenaClient() {
     if (step === "result") {
       setResult(null);
       setActiveQuestions([]);
-      setStep("difficulty");
+      setStep("journey");
     }
   }
 
@@ -147,19 +186,19 @@ export default function QuizArenaClient() {
     setActiveQuestions([]);
     setResult(null);
     setMessage("");
-    setStep("difficulty");
+    setStep("journey");
   }
 
-  async function startChallenge() {
-    if (
-      !selectedLevel ||
-      !selectedExam ||
-      !selectedSubject ||
-      !selectedDifficulty
-    ) {
+  async function generateChallenge(
+    progressionLevel: QuizJourneyLevel,
+    round: QuizRound,
+  ) {
+    if (!selectedLevel || !selectedExam || !selectedSubject) {
       setMessage("Please complete your quiz selection first.");
       return;
     }
+
+    const effectiveDifficulty = getDifficultyForJourneyLevel(progressionLevel);
 
     try {
       setIsGenerating(true);
@@ -169,14 +208,23 @@ export default function QuizArenaClient() {
 
       const response = await fetch("/api/quiz-arena/generate", {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify({
           level: selectedLevel,
+
           exam: selectedExam,
+
           subject: selectedSubject,
-          difficulty: selectedDifficulty,
+
+          difficulty: effectiveDifficulty,
+
+          progressionLevel,
+
+          round,
         }),
       });
 
@@ -192,6 +240,7 @@ export default function QuizArenaClient() {
       }
 
       setActiveQuestions(data.questions);
+
       setStep("quiz");
     } catch (error) {
       console.warn("Quiz generation error:", error);
@@ -206,16 +255,286 @@ export default function QuizArenaClient() {
     }
   }
 
+  async function startChallenge() {
+    if (!selectedJourneyLevel || !selectedRound) {
+      setMessage("Please select a level and round first.");
+      return;
+    }
+
+    await generateChallenge(selectedJourneyLevel, selectedRound);
+  }
+  async function openJourney(subjectOverride?: string) {
+    const journeySubject = subjectOverride?.trim() || selectedSubject?.trim();
+
+    if (!selectedLevel || !selectedExam || !journeySubject) {
+      setMessage("Please complete your quiz selection first.");
+      return;
+    }
+
+    try {
+      setIsProgressLoading(true);
+      setMessage("");
+
+      const params = new URLSearchParams({
+        level: selectedLevel,
+        exam: selectedExam,
+        subject: journeySubject,
+
+        // Legacy progress bucket only.
+        // User-facing difficulty is now determined by Level 1-10.
+        difficulty: "easy",
+      });
+
+      const response = await fetch(
+        `/api/quiz-arena/progress?${params.toString()}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+      );
+
+      if (response.ok) {
+        const data = (await response.json()) as {
+          progress?: {
+            unlockedLevel?: QuizJourneyLevel;
+            completedRounds?: Record<number, QuizRound[]>;
+            totalQuestionsCompleted?: number;
+          } | null;
+        };
+
+        if (data.progress) {
+          const restoredLevel = data.progress.unlockedLevel ?? 1;
+
+          setUnlockedJourneyLevel(restoredLevel);
+
+          setCompletedRounds(data.progress.completedRounds ?? {});
+
+          setSelectedJourneyLevel(restoredLevel);
+        } else {
+          setUnlockedJourneyLevel(1);
+          setCompletedRounds({});
+          setSelectedJourneyLevel(1);
+        }
+      } else {
+        setUnlockedJourneyLevel(1);
+        setCompletedRounds({});
+        setSelectedJourneyLevel(1);
+      }
+
+      setSelectedRound(null);
+      setStep("journey");
+    } catch (error) {
+      console.warn("Unable to load Quiz Arena progress:", error);
+
+      setUnlockedJourneyLevel(1);
+      setCompletedRounds({});
+      setSelectedJourneyLevel(1);
+      setSelectedRound(null);
+      setStep("journey");
+    } finally {
+      setIsProgressLoading(false);
+    }
+  }
+  async function persistRoundProgress(finalResult: QuizResult) {
+    if (
+      !selectedLevel ||
+      !selectedExam ||
+      !selectedSubject ||
+      !selectedJourneyLevel ||
+      !selectedRound
+    ) {
+      return;
+    }
+
+    if (finalResult.attemptedQuestions !== activeQuestions.length) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/quiz-arena/progress", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          level: selectedLevel,
+          exam: selectedExam,
+          subject: selectedSubject,
+
+          // Legacy progress bucket only.
+          difficulty: "easy",
+
+          progressionLevel: selectedJourneyLevel,
+
+          round: selectedRound,
+
+          correctAnswers: finalResult.correctAnswers,
+
+          incorrectAnswers: finalResult.incorrectAnswers,
+
+          score: finalResult.score,
+        }),
+      });
+
+      if (!response.ok) {
+        return;
+      }
+
+      const data = (await response.json()) as {
+        progress?: {
+          unlockedLevel?: QuizJourneyLevel;
+
+          completedRounds?: Record<number, QuizRound[]>;
+        };
+      };
+
+      if (data.progress?.unlockedLevel) {
+        setUnlockedJourneyLevel(data.progress.unlockedLevel);
+      }
+
+      if (data.progress?.completedRounds) {
+        setCompletedRounds(data.progress.completedRounds);
+      }
+    } catch (error) {
+      console.warn("Unable to save Quiz Arena progress:", error);
+    }
+  }
+  async function persistRoundAttempt(finalResult: QuizResult) {
+    if (
+      !selectedLevel ||
+      !selectedExam ||
+      !selectedSubject ||
+      !selectedJourneyLevel ||
+      !selectedRound
+    ) {
+      return;
+    }
+
+    const difficulty = getDifficultyForJourneyLevel(selectedJourneyLevel);
+
+    try {
+      const response = await fetch("/api/quiz-arena/attempts", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          level: selectedLevel,
+
+          exam: selectedExam,
+
+          subject: selectedSubject,
+
+          progressionLevel: selectedJourneyLevel,
+
+          round: selectedRound,
+
+          difficulty,
+
+          score: finalResult.score,
+
+          correctAnswers: finalResult.correctAnswers,
+
+          incorrectAnswers: finalResult.incorrectAnswers,
+
+          totalTimeMs: finalResult.totalTimeMs,
+
+          averageQuestionTimeMs: finalResult.averageQuestionTimeMs,
+
+          questions: finalResult.attempts,
+        }),
+      });
+
+      if (!response.ok) {
+        console.warn("Quiz Arena attempt was not saved.");
+      }
+    } catch (error) {
+      console.warn("Unable to save Quiz Arena attempt:", error);
+    }
+  }
+
+  async function continueQuizJourney() {
+    if (!selectedJourneyLevel || !selectedRound) {
+      setStep("journey");
+      return;
+    }
+
+    // Round 1-4 -> immediately start next round
+    if (selectedRound < QUIZ_ROUNDS_PER_LEVEL) {
+      const nextRound = (selectedRound + 1) as QuizRound;
+
+      setSelectedRound(nextRound);
+
+      await generateChallenge(selectedJourneyLevel, nextRound);
+
+      return;
+    }
+
+    // Round 5 -> immediately start next level
+    if (selectedJourneyLevel < 10) {
+      const nextLevel = (selectedJourneyLevel + 1) as QuizJourneyLevel;
+
+      const nextRound = 1 as QuizRound;
+
+      setUnlockedJourneyLevel(
+        (previous) => Math.max(previous, nextLevel) as QuizJourneyLevel,
+      );
+
+      setSelectedJourneyLevel(nextLevel);
+
+      setSelectedRound(nextRound);
+
+      await generateChallenge(nextLevel, nextRound);
+
+      return;
+    }
+
+    // Level 10 Round 5 -> journey complete
+    setSelectedRound(null);
+    setStep("journey");
+  }
+
   function finishQuiz(finalResult: QuizResult) {
+    if (
+      selectedJourneyLevel &&
+      selectedRound &&
+      finalResult.attemptedQuestions === activeQuestions.length
+    ) {
+      const existingRounds = completedRounds[selectedJourneyLevel] ?? [];
+
+      const nextRounds = existingRounds.includes(selectedRound)
+        ? existingRounds
+        : [...existingRounds, selectedRound].sort(
+            (left, right) => left - right,
+          );
+
+      setCompletedRounds((previous) => ({
+        ...previous,
+        [selectedJourneyLevel]: nextRounds,
+      }));
+
+      if (
+        nextRounds.length >= QUIZ_ROUNDS_PER_LEVEL &&
+        selectedJourneyLevel < 10
+      ) {
+        const nextLevel = (selectedJourneyLevel + 1) as QuizJourneyLevel;
+
+        setUnlockedJourneyLevel(
+          (previous) => Math.max(previous, nextLevel) as QuizJourneyLevel,
+        );
+      }
+    }
+
+    void persistRoundProgress(finalResult);
+    void persistRoundAttempt(finalResult);
+
     setResult(finalResult);
     setShowExitModal(false);
     setStep("result");
-  }
-
-  function playAgain() {
-    setResult(null);
-    setMessage("");
-    void startChallenge();
   }
 
   return (
@@ -305,7 +624,7 @@ export default function QuizArenaClient() {
           <section className="flex min-h-[88vh] items-center justify-center">
             <div className="max-w-3xl text-center">
               <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-cyan-300">
-                Smart Tutor
+                SmartIQ Institute
               </p>
 
               <h1 className="text-5xl font-black tracking-tight sm:text-7xl">
@@ -313,8 +632,8 @@ export default function QuizArenaClient() {
               </h1>
 
               <p className="mx-auto mt-6 max-w-xl text-lg text-slate-300">
-                Fresh quizzes for school, junior college, competitive
-                exams, government exams and MBA entrance preparation.
+                Fresh quizzes for school, junior college, competitive exams,
+                government exams and MBA entrance preparation.
               </p>
 
               <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-slate-300">
@@ -400,7 +719,6 @@ export default function QuizArenaClient() {
                     onClick={() => {
                       setSelectedExam(exam.id);
                       setSelectedSubject(null);
-                      setSelectedDifficulty(null);
                       setStep("subject");
                     }}
                     className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
@@ -454,9 +772,8 @@ export default function QuizArenaClient() {
                   key={subject}
                   onClick={() => {
                     setSelectedSubject(subject);
-                    setSelectedDifficulty(null);
                     setMessage("");
-                    setStep("difficulty");
+                    void openJourney(subject);
                   }}
                   className="rounded-2xl border border-white/10 bg-white/10 p-6 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                 >
@@ -468,73 +785,176 @@ export default function QuizArenaClient() {
           </section>
         )}
 
-        {step === "difficulty" && (
+        {step === "journey" && (
           <section>
             <Header
-              title="Choose your challenge"
-              subtitle={`${selectedSubject ?? ""} • Select the difficulty level for your quiz.`}
+              title="Your Quiz Journey"
+              subtitle={`${selectedSubject ?? ""} • Complete 10 levels and up to 500 questions.`}
             />
 
-            <div className="grid gap-6 md:grid-cols-3">
-              {difficultyOptions.map((difficulty) => (
-                <button
-                  type="button"
-                  key={difficulty.id}
-                  onClick={() => {
-                    setSelectedDifficulty(difficulty.id);
-                    setMessage("");
-                  }}
-                  className={`rounded-3xl border p-8 text-left transition ${
-                    selectedDifficulty === difficulty.id
-                      ? "border-cyan-300 bg-cyan-300/20 shadow-lg shadow-cyan-400/10"
-                      : "border-white/10 bg-white/10 hover:-translate-y-1 hover:border-cyan-300"
-                  }`}
-                >
-                  <span className="text-4xl">{difficulty.icon}</span>
+            <div className="mx-auto mb-8 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {quizJourneyLevels.map((journeyLevel) => {
+                const locked = journeyLevel.id > unlockedJourneyLevel;
 
-                  <h2 className="mt-5 text-3xl font-bold">
-                    {difficulty.title}
-                  </h2>
+                const roundsCompleted =
+                  completedRounds[journeyLevel.id]?.length ?? 0;
 
-                  <p className="mt-4 font-semibold text-cyan-300">
-                    {difficulty.questions} fresh questions
-                  </p>
+                const completed = roundsCompleted >= QUIZ_ROUNDS_PER_LEVEL;
 
-                  <p className="mt-2 text-sm text-slate-300">
-                    {difficulty.description}
-                  </p>
-                </button>
-              ))}
+                const active = selectedJourneyLevel === journeyLevel.id;
+
+                return (
+                  <button
+                    type="button"
+                    key={journeyLevel.id}
+                    disabled={locked}
+                    onClick={() => {
+                      if (locked) {
+                        return;
+                      }
+
+                      setSelectedJourneyLevel(journeyLevel.id);
+                      setSelectedRound(null);
+                      setMessage("");
+                    }}
+                    className={`relative rounded-3xl border p-5 text-left transition ${
+                      locked
+                        ? "cursor-not-allowed border-white/5 bg-white/5 opacity-45"
+                        : active
+                          ? "border-cyan-300 bg-cyan-300/20 shadow-lg shadow-cyan-400/10"
+                          : completed
+                            ? "border-emerald-400/40 bg-emerald-400/10"
+                            : "border-white/10 bg-white/10 hover:-translate-y-1 hover:border-cyan-300"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-3xl">
+                        {locked ? "🔒" : completed ? "✅" : journeyLevel.icon}
+                      </span>
+
+                      <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-slate-300">
+                        {roundsCompleted}/{QUIZ_ROUNDS_PER_LEVEL}
+                      </span>
+                    </div>
+
+                    <h2 className="mt-4 text-lg font-black">
+                      {journeyLevel.title}
+                    </h2>
+
+                    <p className="mt-1 text-sm font-bold text-cyan-200">
+                      {journeyLevel.subtitle}
+                    </p>
+
+                    <p className="mt-3 text-xs leading-5 text-slate-300">
+                      {journeyLevel.questionCapacity} questions
+                    </p>
+                  </button>
+                );
+              })}
             </div>
 
-            {message && (
-              <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
-                {message}
-              </div>
-            )}
+            {selectedJourneyLevel && (
+              <div className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8">
+                <div className="text-center">
+                  <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">
+                    Level {selectedJourneyLevel}
+                  </p>
 
-            {selectedDifficulty && (
-              <div className="mt-10 text-center">
-                <button
-                  type="button"
-                  onClick={() => void startChallenge()}
-                  disabled={isGenerating}
-                  className="rounded-2xl bg-cyan-400 px-12 py-4 text-lg font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isGenerating ? "Creating Your Quiz..." : "Start Challenge"}
-                </button>
+                  <h2 className="mt-3 text-2xl font-black sm:text-3xl">
+                    Choose your round
+                  </h2>
+
+                  <p className="mt-3 text-sm text-slate-300">
+                    Each round contains 10 questions. Complete all 5 rounds to
+                    unlock the next level.
+                  </p>
+                </div>
+
+                <div className="mt-8 grid gap-3 sm:grid-cols-5">
+                  {Array.from(
+                    { length: QUIZ_ROUNDS_PER_LEVEL },
+                    (_, index) => (index + 1) as QuizRound,
+                  ).map((round) => {
+                    const levelRounds =
+                      completedRounds[selectedJourneyLevel] ?? [];
+
+                    const completed = levelRounds.includes(round);
+
+                    const previousRound =
+                      round > 1 ? ((round - 1) as QuizRound) : null;
+
+                    const locked =
+                      previousRound !== null &&
+                      !levelRounds.includes(previousRound);
+
+                    const active = selectedRound === round;
+
+                    return (
+                      <button
+                        type="button"
+                        key={round}
+                        disabled={locked}
+                        onClick={() => {
+                          if (!locked) {
+                            setSelectedRound(round);
+                            setMessage("");
+                          }
+                        }}
+                        className={`rounded-2xl border p-4 text-center transition ${
+                          locked
+                            ? "cursor-not-allowed border-white/5 bg-white/5 opacity-40"
+                            : active
+                              ? "border-cyan-300 bg-cyan-300/20"
+                              : completed
+                                ? "border-emerald-400/40 bg-emerald-400/10"
+                                : "border-white/10 bg-white/5 hover:border-cyan-300"
+                        }`}
+                      >
+                        <div className="text-xl">
+                          {locked ? "🔒" : completed ? "✅" : "🎯"}
+                        </div>
+
+                        <p className="mt-2 text-sm font-black">Round {round}</p>
+
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          10 Questions
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {message && (
+                  <div className="mt-6 rounded-2xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
+                    {message}
+                  </div>
+                )}
+
+                {selectedRound && (
+                  <div className="mt-8 text-center">
+                    <button
+                      type="button"
+                      onClick={() => void startChallenge()}
+                      disabled={isGenerating}
+                      className="rounded-2xl bg-cyan-400 px-10 py-4 text-base font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isGenerating
+                        ? "Creating Your Quiz..."
+                        : `Start Level ${selectedJourneyLevel} • Round ${selectedRound}`}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </section>
         )}
-
         {step === "quiz" && activeQuestions.length > 0 && (
           <QuizGame
             questions={activeQuestions}
             levelTitle={getLevelTitle(selectedLevel)}
             examTitle={getExamTitle(selectedExam)}
             subject={selectedSubject ?? ""}
-            difficulty={selectedDifficulty ?? "easy"}
+            difficulty={getDifficultyForJourneyLevel(selectedJourneyLevel ?? 1)}
             playfulMode={playfulMode}
             onComplete={finishQuiz}
           />
@@ -546,10 +966,13 @@ export default function QuizArenaClient() {
             levelTitle={getLevelTitle(selectedLevel)}
             examTitle={getExamTitle(selectedExam)}
             subject={selectedSubject ?? ""}
+            difficulty={getDifficultyForJourneyLevel(selectedJourneyLevel ?? 1)}
+            journeyLevel={selectedJourneyLevel ?? 1}
+            round={selectedRound ?? 1}
             totalQuestions={activeQuestions.length}
             playfulMode={playfulMode}
             isGenerating={isGenerating}
-            onPlayAgain={playAgain}
+            onContinue={() => void continueQuizJourney()}
             onChangeLevel={changeLevel}
           />
         )}
@@ -562,7 +985,7 @@ function Header({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <header className="mb-10 text-center">
       <p className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-300">
-        Smart Tutor Quiz Arena
+        SmartIQ Institute Quiz Arena
       </p>
 
       <h1 className="text-3xl font-bold sm:text-5xl">{title}</h1>
@@ -570,6 +993,35 @@ function Header({ title, subtitle }: { title: string; subtitle: string }) {
       <p className="mx-auto mt-4 max-w-2xl text-slate-300">{subtitle}</p>
     </header>
   );
+}
+
+function formatQuizDuration(milliseconds: number) {
+  const safeMilliseconds = Math.max(0, milliseconds);
+
+  const totalSeconds = safeMilliseconds / 1000;
+
+  if (totalSeconds < 60) {
+    return `${totalSeconds.toFixed(1)}s`;
+  }
+
+  const minutes = Math.floor(totalSeconds / 60);
+
+  const seconds = Math.floor(totalSeconds % 60);
+
+  return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+}
+
+function formatLiveQuizDuration(milliseconds: number) {
+  const totalSeconds = Math.floor(Math.max(0, milliseconds) / 1000);
+
+  const minutes = Math.floor(totalSeconds / 60);
+
+  const seconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+    2,
+    "0",
+  )}`;
 }
 
 function QuizGame({
@@ -590,118 +1042,162 @@ function QuizGame({
   onComplete: (result: QuizResult) => void;
 }) {
   const quizCardRef = useRef<HTMLElement | null>(null);
-  const [questionIndex, setQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [score, setScore] = useState(0);
-  const [hearts, setHearts] = useState(3);
-  const [streak, setStreak] = useState(0);
-  const [bestStreak, setBestStreak] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [incorrectAnswers, setIncorrectAnswers] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(7);
-  const answerLockedRef = useRef(false);
 
-  const hasQuestionTimer = difficulty === "medium" || difficulty === "hard";
+  const [questionIndex, setQuestionIndex] = useState(0);
+
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+
+  const [score, setScore] = useState(0);
+
+  const [streak, setStreak] = useState(0);
+
+  const [bestStreak, setBestStreak] = useState(0);
+
+  const [questionElapsedMs, setQuestionElapsedMs] = useState(0);
+
+  const [roundElapsedMs, setRoundElapsedMs] = useState(0);
+
+  const questionStartedAtRef = useRef(Date.now());
+
+  const roundStartedAtRef = useRef(Date.now());
+
+  const roundFinishedAtRef = useRef<number | null>(null);
+
+  const attemptsRef = useRef<QuestionAttempt[]>([]);
 
   const currentQuestion = questions[questionIndex];
+
   const progress = ((questionIndex + 1) / questions.length) * 100;
+
   const answered = selectedAnswer !== null;
-  const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
-  useEffect(() => {
-    if (!hasQuestionTimer) {
-      return;
-    }
-
-    setTimeLeft(7);
-    answerLockedRef.current = false;
-  }, [questionIndex, difficulty, hasQuestionTimer]);
 
   useEffect(() => {
-    if (!hasQuestionTimer || answered) {
-      return;
-    }
+    questionStartedAtRef.current = Date.now();
 
-    if (timeLeft <= 0) {
-      if (answerLockedRef.current) {
-        return;
-      }
+    setQuestionElapsedMs(0);
 
-      answerLockedRef.current = true;
-
-      // Special value so the question counts as answered
-      // without selecting any actual option.
-      setSelectedAnswer("__TIMEOUT__");
-
-      setStreak(0);
-
-      setIncorrectAnswers((previous) => previous + 1);
-
-      if (!playfulMode) {
-        setHearts((previous) => Math.max(previous - 1, 0));
-      }
-
-      return;
-    }
-
-    const timerId = window.setTimeout(() => {
-      setTimeLeft((previous) => Math.max(previous - 1, 0));
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(timerId);
-    };
-  }, [timeLeft, hasQuestionTimer, answered, playfulMode]);
-  useEffect(() => {
-    quizCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    quizCardRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }, [questionIndex]);
 
+  useEffect(() => {
+    const timerId = window.setInterval(() => {
+      const now = roundFinishedAtRef.current ?? Date.now();
+
+      setRoundElapsedMs(now - roundStartedAtRef.current);
+
+      if (!answered) {
+        setQuestionElapsedMs(Date.now() - questionStartedAtRef.current);
+      }
+    }, 250);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [answered]);
+
   function chooseAnswer(answer: string) {
-    if (answered || answerLockedRef.current) {
+    if (answered) {
       return;
     }
 
-    answerLockedRef.current = true;
+    const answeredAt = Date.now();
+
+    const timeTakenMs = answeredAt - questionStartedAtRef.current;
+
+    const isCorrect = answer === currentQuestion.correctAnswer;
+
+    setQuestionElapsedMs(timeTakenMs);
 
     setSelectedAnswer(answer);
 
-    if (answer === currentQuestion.correctAnswer) {
+    const attempt: QuestionAttempt = {
+      questionId: currentQuestion.id,
+
+      question: currentQuestion.question,
+
+      options: currentQuestion.options,
+
+      selectedAnswer: answer,
+
+      correctAnswer: currentQuestion.correctAnswer,
+
+      isCorrect,
+
+      explanation: currentQuestion.explanation,
+
+      timeTakenMs,
+    };
+
+    attemptsRef.current = [...attemptsRef.current, attempt];
+
+    if (questionIndex === questions.length - 1) {
+      roundFinishedAtRef.current = answeredAt;
+
+      setRoundElapsedMs(answeredAt - roundStartedAtRef.current);
+    }
+
+    if (isCorrect) {
       const nextStreak = streak + 1;
+
       const bonus = nextStreak > 0 && nextStreak % 3 === 0 ? 5 : 0;
 
       setScore((previousScore) => previousScore + 10 + bonus);
+
       setStreak(nextStreak);
+
       setBestStreak((previousBest) => Math.max(previousBest, nextStreak));
-      setCorrectAnswers((previous) => previous + 1);
+
       return;
     }
 
-    if (!playfulMode) {
-      setHearts((previous) => Math.max(previous - 1, 0));
-    }
-
     setStreak(0);
-    setIncorrectAnswers((previous) => previous + 1);
   }
 
   function nextQuestion() {
     const finished = questionIndex === questions.length - 1;
-    const gameOver = !playfulMode && hearts <= 0;
 
-    if (finished || gameOver) {
+    if (finished) {
+      const attempts = attemptsRef.current;
+
+      const correctAnswers = attempts.filter(
+        (attempt) => attempt.isCorrect,
+      ).length;
+
+      const incorrectAnswers = attempts.length - correctAnswers;
+
+      const finishedAt = roundFinishedAtRef.current ?? Date.now();
+
+      const totalTimeMs = finishedAt - roundStartedAtRef.current;
+
+      const averageQuestionTimeMs =
+        attempts.length > 0
+          ? Math.round(
+              attempts.reduce(
+                (total, attempt) => total + attempt.timeTakenMs,
+                0,
+              ) / attempts.length,
+            )
+          : 0;
+
       onComplete({
         score,
         correctAnswers,
         incorrectAnswers,
         bestStreak,
-        attemptedQuestions: correctAnswers + incorrectAnswers,
-        gameOver,
+        attemptedQuestions: attempts.length,
+        totalTimeMs,
+        averageQuestionTimeMs,
+        attempts,
       });
+
       return;
     }
 
-    answerLockedRef.current = false;
     setSelectedAnswer(null);
-    setTimeLeft(7);
+
     setQuestionIndex((previous) => previous + 1);
   }
 
@@ -712,7 +1208,14 @@ function QuizGame({
           <div>
             <p className="text-sm text-slate-300">
               {levelTitle}
-              {examTitle ? ` • ${examTitle}` : ""} • {subject} •{" "}
+
+              {examTitle ? ` • ${examTitle}` : ""}
+
+              {" • "}
+              {subject}
+
+              {" • "}
+
               <span className="capitalize">{difficulty}</span>
             </p>
 
@@ -722,35 +1225,22 @@ function QuizGame({
           </div>
 
           <div className="flex flex-wrap gap-3 text-sm font-semibold">
-            {hasQuestionTimer && (
-              <span
-                className={`inline-flex min-w-[92px] items-center justify-center gap-2 rounded-full px-4 py-2 font-black transition ${
-                  timeLeft <= 3 && !answered
-                    ? "animate-pulse bg-red-500/25 text-red-200"
-                    : answered
-                      ? "bg-white/10 text-slate-300"
-                      : "bg-amber-400/20 text-amber-200"
-                }`}
-              >
-                <span>⏱️</span>
-
-                <span>{answered ? "Stopped" : `${timeLeft}s`}</span>
-              </span>
-            )}
             <span className="rounded-full bg-cyan-400/20 px-4 py-2 text-cyan-200">
               {playfulMode ? "⭐ Stars" : "Score"}: {score}
             </span>
 
-            {!playfulMode && (
-              <>
-                <span className="rounded-full bg-orange-400/20 px-4 py-2 text-orange-200">
-                  🔥 {streak}
-                </span>
+            <span className="rounded-full bg-violet-400/20 px-4 py-2 text-violet-100">
+              Question Time: {formatLiveQuizDuration(questionElapsedMs)}
+            </span>
 
-                <span className="rounded-full bg-red-400/20 px-4 py-2 text-red-100">
-                  {hearts > 0 ? "❤️".repeat(hearts) : "No Lives Left"}
-                </span>
-              </>
+            <span className="rounded-full bg-amber-400/20 px-4 py-2 text-amber-100">
+              Round Time: {formatLiveQuizDuration(roundElapsedMs)}
+            </span>
+
+            {!playfulMode && (
+              <span className="rounded-full bg-orange-400/20 px-4 py-2 text-orange-200">
+                🔥 {streak}
+              </span>
             )}
           </div>
         </div>
@@ -758,14 +1248,16 @@ function QuizGame({
         <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-cyan-400 transition-all duration-500"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: `${progress}%`,
+            }}
           />
         </div>
       </div>
 
       <div className="rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-10">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">
-          Choose the correct answer
+          Choose your answer
         </p>
 
         <h2 className="mt-5 text-2xl font-bold leading-relaxed sm:text-3xl">
@@ -775,9 +1267,6 @@ function QuizGame({
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           {currentQuestion.options.map((option) => {
             const selected = selectedAnswer === option;
-            const correctOption =
-              answered && option === currentQuestion.correctAnswer;
-            const wrongOption = answered && selected && !isCorrect;
 
             return (
               <button
@@ -786,10 +1275,10 @@ function QuizGame({
                 onClick={() => chooseAnswer(option)}
                 disabled={answered}
                 className={`rounded-2xl border p-5 text-left text-lg font-semibold transition ${
-                  correctOption
-                    ? "border-green-400 bg-green-400/20 text-green-100"
-                    : wrongOption
-                      ? "border-red-400 bg-red-400/20 text-red-100"
+                  selected
+                    ? "border-cyan-300 bg-cyan-300/15 text-white"
+                    : answered
+                      ? "border-white/10 bg-white/5 text-slate-300"
                       : "border-white/10 bg-white/5 hover:border-cyan-300 hover:bg-white/10"
                 }`}
               >
@@ -800,33 +1289,18 @@ function QuizGame({
         </div>
 
         {answered && (
-          <div
-            className={`mt-8 rounded-2xl border p-5 ${
-              isCorrect
-                ? "border-green-400/30 bg-green-400/10"
-                : "border-red-400/30 bg-red-400/10"
-            }`}
-          >
-            <h3 className="text-lg font-bold">
-              {selectedAnswer === "__TIMEOUT__"
-                ? "Time's up!"
-                : isCorrect
-                  ? playfulMode
-                    ? "Amazing! You earned a star ⭐"
-                    : "Correct! Great job."
-                  : playfulMode
-                    ? "Great try! Let's learn this together."
-                    : "Incorrect answer."}
+          <div className="mt-8 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-5">
+            <h3 className="text-lg font-bold text-cyan-100">
+              Answer recorded.
             </h3>
 
-            {!isCorrect && (
-              <p className="mt-2 text-sm font-semibold text-slate-100">
-                Correct answer: {currentQuestion.correctAnswer}
-              </p>
-            )}
+            <p className="mt-2 text-sm text-slate-300">
+              Your answer and the correct solution will be shown after you
+              complete the round.
+            </p>
 
-            <p className="mt-2 text-sm text-slate-200">
-              {currentQuestion.explanation}
+            <p className="mt-3 text-xs font-semibold text-slate-400">
+              Time taken: {formatQuizDuration(questionElapsedMs)}
             </p>
 
             <button
@@ -834,9 +1308,8 @@ function QuizGame({
               onClick={nextQuestion}
               className="mt-5 rounded-xl bg-cyan-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-cyan-300"
             >
-              {questionIndex === questions.length - 1 ||
-              (!playfulMode && hearts <= 0)
-                ? "View Result"
+              {questionIndex === questions.length - 1
+                ? "Finish Round"
                 : "Next Question"}
             </button>
           </div>
@@ -851,20 +1324,37 @@ function ResultScreen({
   levelTitle,
   examTitle,
   subject,
+  difficulty,
+  journeyLevel,
+  round,
   totalQuestions,
   playfulMode,
   isGenerating,
-  onPlayAgain,
+  onContinue,
   onChangeLevel,
 }: {
   result: QuizResult;
+
   levelTitle: string;
+
   examTitle: string;
+
   subject: string;
+
+  difficulty: Difficulty;
+
+  journeyLevel: QuizJourneyLevel;
+
+  round: QuizRound;
+
   totalQuestions: number;
+
   playfulMode: boolean;
+
   isGenerating: boolean;
-  onPlayAgain: () => void;
+
+  onContinue: () => void;
+
   onChangeLevel: () => void;
 }) {
   const accuracy =
@@ -872,59 +1362,45 @@ function ResultScreen({
       ? 0
       : Math.round((result.correctAnswers / result.attemptedQuestions) * 100);
 
-  function getPerformanceMessage() {
-    if (result.gameOver) {
-      return "Game Over. Try again and improve your score.";
-    }
-
-    if (accuracy >= 90) {
-      return playfulMode
-        ? "Superstar! You did an amazing job! 🌟"
-        : "Outstanding! You are a Quiz Champion.";
-    }
-
-    if (accuracy >= 70) {
-      return "Great job! Keep pushing.";
-    }
-
-    if (accuracy >= 50) {
-      return "Good attempt. Practice more to level up.";
-    }
-
-    return "Keep learning. You can do better next time.";
-  }
-
   return (
-    <section className="mx-auto max-w-4xl text-center">
-      <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
-        Results
-      </p>
+    <section className="mx-auto max-w-5xl">
+      <div className="text-center">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+          Round Completed
+        </p>
 
-      <h1 className="mt-4 text-4xl font-black sm:text-6xl">
-        {result.gameOver ? "Game Over" : "Challenge Completed!"}
-      </h1>
+        <h1 className="mt-4 text-4xl font-black sm:text-6xl">
+          Review Your Answers
+        </h1>
 
-      <p className="mx-auto mt-5 max-w-xl text-lg text-slate-300">
-        {getPerformanceMessage()}
-      </p>
+        <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-300">
+          Level {journeyLevel}
+          {" • "}
+          Round {round}
+          {" • "}
+          <span className="capitalize">{difficulty}</span>
+        </p>
+      </div>
 
-      <div className="mt-10 rounded-3xl border border-white/10 bg-white/10 p-8">
-        <div className="mb-8">
-          <p className="text-sm text-slate-300">
-            {levelTitle}
-            {examTitle ? ` • ${examTitle}` : ""} • {subject}
-          </p>
+      <div className="mt-10 rounded-3xl border border-white/10 bg-white/10 p-6 sm:p-8">
+        <p className="text-center text-sm text-slate-300">
+          {levelTitle}
 
-          <p className="mt-3 text-6xl font-black text-cyan-300">
-            {result.score}
-          </p>
+          {examTitle ? ` • ${examTitle}` : ""}
+
+          {" • "}
+          {subject}
+        </p>
+
+        <div className="mt-6 text-center">
+          <p className="text-6xl font-black text-cyan-300">{result.score}</p>
 
           <p className="mt-2 text-sm text-slate-300">
             {playfulMode ? "Stars Score" : "Final Score"}
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-5">
+        <div className="mt-8 grid gap-4 sm:grid-cols-5">
           <ResultCard
             title="Correct"
             value={String(result.correctAnswers)}
@@ -940,27 +1416,118 @@ function ResultScreen({
           <ResultCard title="Accuracy" value={`${accuracy}%`} icon="🎯" />
 
           <ResultCard
-            title="Best Streak"
-            value={String(result.bestStreak)}
-            icon="🔥"
+            title="Round Time"
+            value={formatQuizDuration(result.totalTimeMs)}
+            icon="⏱️"
           />
 
           <ResultCard
-            title="Attempted"
-            value={`${result.attemptedQuestions}/${totalQuestions}`}
-            icon="📝"
+            title="Avg / Question"
+            value={formatQuizDuration(result.averageQuestionTimeMs)}
+            icon="📊"
           />
         </div>
+      </div>
+
+      <div className="mt-10 space-y-5">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-300">
+            Question Review
+          </p>
+
+          <h2 className="mt-2 text-3xl font-black">
+            See what you got right and wrong
+          </h2>
+        </div>
+
+        {result.attempts.map((attempt, index) => (
+          <div
+            key={`${attempt.questionId}-${index}`}
+            className={`rounded-3xl border p-6 sm:p-7 ${
+              attempt.isCorrect
+                ? "border-emerald-400/30 bg-emerald-400/10"
+                : "border-red-400/30 bg-red-400/10"
+            }`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-black uppercase tracking-[0.18em] text-slate-300">
+                Question {index + 1}
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-black ${
+                    attempt.isCorrect
+                      ? "bg-emerald-400/20 text-emerald-200"
+                      : "bg-red-400/20 text-red-100"
+                  }`}
+                >
+                  {attempt.isCorrect ? "Correct" : "Incorrect"}
+                </span>
+
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-200">
+                  {formatQuizDuration(attempt.timeTakenMs)}
+                </span>
+              </div>
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold leading-relaxed text-white sm:text-2xl">
+              {attempt.question}
+            </h3>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
+                <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                  Your Answer
+                </p>
+
+                <p
+                  className={`mt-2 font-bold ${
+                    attempt.isCorrect ? "text-emerald-200" : "text-red-100"
+                  }`}
+                >
+                  {attempt.selectedAnswer}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
+                <p className="text-xs font-black uppercase tracking-wider text-slate-400">
+                  Correct Answer
+                </p>
+
+                <p className="mt-2 font-bold text-emerald-200">
+                  {attempt.correctAnswer}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl bg-white/5 p-5">
+              <p className="text-xs font-black uppercase tracking-wider text-cyan-300">
+                Explanation
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-slate-200">
+                {attempt.explanation}
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
         <button
           type="button"
-          onClick={onPlayAgain}
+          onClick={onContinue}
           disabled={isGenerating}
           className="rounded-2xl bg-cyan-400 px-8 py-4 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isGenerating ? "Creating New Quiz..." : "Play Again"}
+          {isGenerating
+            ? "Preparing Next Round..."
+            : round < QUIZ_ROUNDS_PER_LEVEL
+              ? `Start Round ${round + 1}`
+              : journeyLevel < 10
+                ? `Start Level ${journeyLevel + 1} • Round 1`
+                : "View Completed Journey"}
         </button>
 
         <button
@@ -973,14 +1540,14 @@ function ResultScreen({
 
         <Link
           href="/dashboard"
-          className="rounded-2xl border border-white/20 px-8 py-4 font-bold text-white transition hover:bg-white/10"
+          className="rounded-2xl border border-white/20 px-8 py-4 text-center font-bold text-white transition hover:bg-white/10"
         >
           Go to Dashboard
         </Link>
       </div>
 
-      <p className="mt-6 text-sm text-slate-400">
-        Play Again creates a new set of questions for the same selection.
+      <p className="mt-6 text-center text-sm text-slate-400">
+        Attempted {result.attemptedQuestions}/{totalQuestions} questions.
       </p>
     </section>
   );

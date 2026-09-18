@@ -4,6 +4,16 @@ import { randomUUID } from "crypto";
 import type { Document } from "mongodb";
 import { DEFAULT_HEURISTICS } from "@/lib/performance-constants";
 
+import {
+  QUIZ_ROUNDS_PER_LEVEL,
+  QUIZ_QUESTIONS_PER_ROUND,
+  type CompetitiveExam,
+  type Difficulty,
+  type EducationLevel,
+  type QuizJourneyLevel,
+  type QuizRound,
+} from "@/lib/quiz-arena-config";
+
 import { getPublicInstituteData as getTemplatePublicInstituteData } from "@/lib/mock-data";
 import { getMongoDatabase } from "@/lib/mongodb";
 import { verifyPassword, hashPassword } from "@/lib/password";
@@ -174,6 +184,8 @@ export const COLLECTIONS = {
   messages: "messages",
   submissions: "test_submissions",
   quizzes: "quiz_questions",
+  quizArenaProgress: "quiz_arena_progress",
+  quizArenaAttempts: "quiz_arena_attempts",
   library: "digital_library",
   performance: "performance_reports",
   heuristics: "performance_heuristics",
@@ -1192,6 +1204,465 @@ export const getPublicInstituteData = cache(
 export async function getMockQuizQuestions() {
   const collection = await getCollection<QuizQuestion>(COLLECTIONS.quizzes);
   return stripMongoIds(await collection.find({}).toArray());
+}
+
+
+// =========================
+// Quiz Arena Progress
+// =========================
+
+export type QuizArenaProgress = {
+  id: string;
+
+  userId: string;
+
+  learningCategory: EducationLevel;
+
+  exam: CompetitiveExam;
+
+  subject: string;
+
+  difficulty: Difficulty;
+
+  unlockedLevel: QuizJourneyLevel;
+
+  completedRounds: Record<number, QuizRound[]>;
+
+  totalQuestionsCompleted: number;
+
+  totalCorrectAnswers: number;
+
+  totalIncorrectAnswers: number;
+
+  totalScore: number;
+
+  createdAt: string;
+
+  updatedAt: string;
+};
+
+type QuizArenaProgressDocument =
+  Document &
+  QuizArenaProgress;
+
+
+function normalizeQuizArenaCompletedRounds(
+  value: unknown,
+): Record<number, QuizRound[]> {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
+    return {};
+  }
+
+  const result: Record<number, QuizRound[]> = {};
+
+  for (let level = 1; level <= 10; level += 1) {
+    const rawRounds =
+      (value as Record<string, unknown>)[String(level)];
+
+    if (!Array.isArray(rawRounds)) {
+      continue;
+    }
+
+    const rounds = [
+      ...new Set(
+        rawRounds
+          .map((round) => Number(round))
+          .filter(
+            (round): round is QuizRound =>
+              Number.isInteger(round) &&
+              round >= 1 &&
+              round <= QUIZ_ROUNDS_PER_LEVEL,
+          ),
+      ),
+    ].sort(
+      (left, right) => left - right,
+    ) as QuizRound[];
+
+    if (rounds.length) {
+      result[level] = rounds;
+    }
+  }
+
+  return result;
+}
+
+
+export async function getQuizArenaProgress(input: {
+  userId: string;
+  learningCategory: EducationLevel;
+  exam: CompetitiveExam;
+  subject: string;
+  difficulty: Difficulty;
+}): Promise<QuizArenaProgress | null> {
+  const collection =
+    await getCollection<QuizArenaProgressDocument>(
+      COLLECTIONS.quizArenaProgress,
+    );
+
+  const document = await collection.findOne({
+    userId: input.userId,
+
+    learningCategory:
+      input.learningCategory,
+
+    exam: input.exam,
+
+    subject: input.subject,
+
+    difficulty: input.difficulty,
+  });
+
+  if (!document) {
+    return null;
+  }
+
+  const progress =
+    stripMongoId(document) as QuizArenaProgress;
+
+  return {
+    ...progress,
+
+    unlockedLevel:
+      Math.max(
+        1,
+        Math.min(
+          10,
+          Number(progress.unlockedLevel) || 1,
+        ),
+      ) as QuizJourneyLevel,
+
+    completedRounds:
+      normalizeQuizArenaCompletedRounds(
+        progress.completedRounds,
+      ),
+
+    totalQuestionsCompleted:
+      Number(progress.totalQuestionsCompleted) || 0,
+
+    totalCorrectAnswers:
+      Number(progress.totalCorrectAnswers) || 0,
+
+    totalIncorrectAnswers:
+      Number(progress.totalIncorrectAnswers) || 0,
+
+    totalScore:
+      Number(progress.totalScore) || 0,
+  };
+}
+
+
+export async function saveQuizArenaRoundProgress(input: {
+  userId: string;
+
+  learningCategory: EducationLevel;
+
+  exam: CompetitiveExam;
+
+  subject: string;
+
+  difficulty: Difficulty;
+
+  progressionLevel: QuizJourneyLevel;
+
+  round: QuizRound;
+
+  correctAnswers: number;
+
+  incorrectAnswers: number;
+
+  score: number;
+}): Promise<QuizArenaProgress> {
+  const collection =
+    await getCollection<QuizArenaProgressDocument>(
+      COLLECTIONS.quizArenaProgress,
+    );
+
+  const existing = await getQuizArenaProgress({
+    userId: input.userId,
+
+    learningCategory:
+      input.learningCategory,
+
+    exam: input.exam,
+
+    subject: input.subject,
+
+    difficulty: input.difficulty,
+  });
+
+  const now = new Date().toISOString();
+
+  const completedRounds =
+    normalizeQuizArenaCompletedRounds(
+      existing?.completedRounds,
+    );
+
+  const existingLevelRounds =
+    completedRounds[input.progressionLevel] ?? [];
+
+  const roundAlreadyCompleted =
+    existingLevelRounds.includes(input.round);
+
+  if (!roundAlreadyCompleted) {
+    completedRounds[input.progressionLevel] = [
+      ...existingLevelRounds,
+      input.round,
+    ].sort(
+      (left, right) => left - right,
+    ) as QuizRound[];
+  }
+
+  const completedCurrentLevel =
+    (
+      completedRounds[
+        input.progressionLevel
+      ]?.length ?? 0
+    ) >= QUIZ_ROUNDS_PER_LEVEL;
+
+  let unlockedLevel =
+    Math.max(
+      existing?.unlockedLevel ?? 1,
+      input.progressionLevel,
+    ) as QuizJourneyLevel;
+
+  if (
+    completedCurrentLevel &&
+    input.progressionLevel < 10
+  ) {
+    unlockedLevel =
+      Math.max(
+        unlockedLevel,
+        input.progressionLevel + 1,
+      ) as QuizJourneyLevel;
+  }
+
+  /*
+   * Count only the first successful completion
+   * of a round toward the 500-question journey.
+   *
+   * Replaying an already completed round does
+   * not inflate progress.
+   */
+  const questionsToAdd =
+    roundAlreadyCompleted
+      ? 0
+      : QUIZ_QUESTIONS_PER_ROUND;
+
+  const correctToAdd =
+    roundAlreadyCompleted
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            QUIZ_QUESTIONS_PER_ROUND,
+            Math.floor(
+              Number(input.correctAnswers) || 0,
+            ),
+          ),
+        );
+
+  const incorrectToAdd =
+    roundAlreadyCompleted
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            QUIZ_QUESTIONS_PER_ROUND,
+            Math.floor(
+              Number(input.incorrectAnswers) || 0,
+            ),
+          ),
+        );
+
+  const scoreToAdd =
+    roundAlreadyCompleted
+      ? 0
+      : Math.max(
+          0,
+          Math.floor(
+            Number(input.score) || 0,
+          ),
+        );
+
+  const progress: QuizArenaProgress = {
+    id:
+      existing?.id ??
+      `quiz-progress-${randomUUID()}`,
+
+    userId: input.userId,
+
+    learningCategory:
+      input.learningCategory,
+
+    exam: input.exam,
+
+    subject: input.subject,
+
+    difficulty: input.difficulty,
+
+    unlockedLevel,
+
+    completedRounds,
+
+    totalQuestionsCompleted:
+      Math.min(
+        500,
+        (existing?.totalQuestionsCompleted ?? 0) +
+          questionsToAdd,
+      ),
+
+    totalCorrectAnswers:
+      (existing?.totalCorrectAnswers ?? 0) +
+      correctToAdd,
+
+    totalIncorrectAnswers:
+      (existing?.totalIncorrectAnswers ?? 0) +
+      incorrectToAdd,
+
+    totalScore:
+      (existing?.totalScore ?? 0) +
+      scoreToAdd,
+
+    createdAt:
+      existing?.createdAt ?? now,
+
+    updatedAt: now,
+  };
+
+  await collection.updateOne(
+    {
+      userId: input.userId,
+
+      learningCategory:
+        input.learningCategory,
+
+      exam: input.exam,
+
+      subject: input.subject,
+
+      difficulty: input.difficulty,
+    },
+
+    {
+      $set: progress,
+    },
+
+    {
+      upsert: true,
+    },
+  );
+
+  return progress;
+}
+
+
+// =========================
+// Quiz Arena Round Attempts
+// =========================
+
+export type QuizArenaAttemptQuestion = {
+  questionId: string;
+
+  question: string;
+
+  options: string[];
+
+  selectedAnswer: string;
+
+  correctAnswer: string;
+
+  isCorrect: boolean;
+
+  explanation: string;
+
+  timeTakenMs: number;
+};
+
+
+export type QuizArenaRoundAttempt = {
+  id: string;
+
+  userId: string;
+
+  learningCategory: EducationLevel;
+
+  exam: CompetitiveExam;
+
+  subject: string;
+
+  progressionLevel: QuizJourneyLevel;
+
+  round: QuizRound;
+
+  difficulty: Difficulty;
+
+  score: number;
+
+  correctAnswers: number;
+
+  incorrectAnswers: number;
+
+  totalTimeMs: number;
+
+  averageQuestionTimeMs: number;
+
+  questions: QuizArenaAttemptQuestion[];
+
+  completedAt: string;
+};
+
+
+export async function createQuizArenaRoundAttempt(
+  input: Omit<
+    QuizArenaRoundAttempt,
+    "id" | "completedAt"
+  >,
+): Promise<QuizArenaRoundAttempt> {
+  const collection =
+    await getCollection<QuizArenaRoundAttempt>(
+      COLLECTIONS.quizArenaAttempts,
+    );
+
+  const attempt: QuizArenaRoundAttempt = {
+    id:
+      `quiz-attempt-${randomUUID()}`,
+
+    ...input,
+
+    completedAt:
+      new Date().toISOString(),
+  };
+
+  await collection.insertOne(
+    attempt,
+  );
+
+  return attempt;
+}
+
+
+export async function getQuizArenaAttemptsForUser(
+  userId: string,
+) {
+  const collection =
+    await getCollection<QuizArenaRoundAttempt>(
+      COLLECTIONS.quizArenaAttempts,
+    );
+
+  return stripMongoIds(
+    await collection
+      .find({
+        userId,
+      })
+      .sort({
+        completedAt: -1,
+      })
+      .toArray(),
+  );
 }
 
 export async function getDemoCredentials(): Promise<DemoCredential[]> {
