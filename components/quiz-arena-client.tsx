@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import {
@@ -24,6 +24,7 @@ import {
   type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
+import type { QuizArenaDraft } from "@/lib/quiz-arena-drafts";
 
 type Step =
   | "welcome"
@@ -104,6 +105,32 @@ export default function QuizArenaClient() {
   const [isProgressLoading, setIsProgressLoading] = useState(false);
 
   const [showExitModal, setShowExitModal] = useState(false);
+  const [unfinishedDraft, setUnfinishedDraft] = useState<QuizArenaDraft | null>(
+    null,
+  );
+
+  const [activeDraft, setActiveDraft] = useState<QuizArenaDraft | null>(null);
+
+  const [showResumeChoice, setShowResumeChoice] = useState(false);
+
+  const [confirmedReplacementDraftId, setConfirmedReplacementDraftId] =
+    useState<string | null>(null);
+
+  const [isCheckingDraft, setIsCheckingDraft] = useState(true);
+  const flushQuizSaveRef = useRef<(() => Promise<boolean>) | null>(null);
+
+  const [isExitingQuiz, setIsExitingQuiz] = useState(false);
+
+  const [isCompletingQuiz, setIsCompletingQuiz] = useState(false);
+
+  const [exitSaveError, setExitSaveError] = useState("");
+
+  const registerQuizSave = useCallback(
+    (save: (() => Promise<boolean>) | null) => {
+      flushQuizSaveRef.current = save;
+    },
+    [],
+  );
 
   const selectedExamDetails = useMemo(() => {
     return getExamDetails(selectedExam);
@@ -127,6 +154,127 @@ export default function QuizArenaClient() {
 
   const playfulMode =
     selectedExam === "class-6-8" || selectedExam === "class-9-10";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkUnfinishedQuiz() {
+      try {
+        const response = await fetch("/api/quiz-arena/draft", {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as {
+          draft: QuizArenaDraft | null;
+        };
+
+        if (cancelled) {
+          return;
+        }
+
+        if (data.draft) {
+          setUnfinishedDraft(data.draft);
+
+          setShowResumeChoice(true);
+        }
+      } catch (error) {
+        console.warn("Unable to check unfinished quiz:", error);
+      } finally {
+        if (!cancelled) {
+          setIsCheckingDraft(false);
+        }
+      }
+    }
+
+    void checkUnfinishedQuiz();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function resumePreviousQuiz() {
+    if (!unfinishedDraft) {
+      return;
+    }
+
+    const draft = unfinishedDraft;
+
+    setSelectedLevel(draft.level);
+
+    setSelectedExam(draft.exam);
+
+    setSelectedSchoolClass(draft.schoolClass);
+
+    setSelectedBoard(draft.board);
+
+    setSelectedSubject(draft.subject);
+
+    setSelectedJourneyLevel(draft.progressionLevel);
+
+    setSelectedRound(draft.round);
+
+    setActiveQuestions(draft.questions);
+
+    setActiveDraft(draft);
+
+    setConfirmedReplacementDraftId(null);
+
+    setResult(null);
+
+    setMessage("");
+
+    setShowResumeChoice(false);
+
+    setStep("quiz");
+  }
+
+  function startFreshQuiz() {
+    if (!unfinishedDraft) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Start a new quiz? Your previous unfinished quiz will be replaced when you successfully start the new one.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setConfirmedReplacementDraftId(unfinishedDraft.id);
+
+    setActiveDraft(null);
+
+    setActiveQuestions([]);
+
+    setResult(null);
+
+    setSelectedLevel(null);
+
+    setSelectedExam(null);
+
+    setSelectedSchoolClass(null);
+
+    setSelectedBoard(null);
+
+    setSelectedSubject(null);
+
+    setSelectedJourneyLevel(null);
+
+    setSelectedRound(null);
+
+    setMessage("");
+
+    setShowResumeChoice(false);
+
+    setStep("welcome");
+  }
 
   function selectLevel(level: EducationLevel) {
     setSelectedLevel(level);
@@ -241,20 +389,98 @@ export default function QuizArenaClient() {
     }
   }
   function requestExitQuiz() {
+    setExitSaveError("");
     setShowExitModal(true);
   }
 
   function cancelExitQuiz() {
+    if (isExitingQuiz) {
+      return;
+    }
+
+    setExitSaveError("");
     setShowExitModal(false);
   }
 
-  function confirmExitQuiz() {
-    setShowExitModal(false);
-    setActiveQuestions([]);
-    setResult(null);
-    setMessage("");
+  async function confirmExitQuiz() {
+    if (isExitingQuiz) {
+      return;
+    }
 
-    setStep("round");
+    setIsExitingQuiz(true);
+    setExitSaveError("");
+
+    try {
+      if (!activeDraft || !flushQuizSaveRef.current) {
+        throw new Error(
+          "The current quiz is not ready to save. Please try again.",
+        );
+      }
+
+      /*
+       * Wait for all pending autosaves and
+       * save the latest quiz state.
+       */
+
+      const saved = await flushQuizSaveRef.current();
+
+      if (!saved) {
+        throw new Error(
+          "Unable to save your latest progress. Please check your connection and try again.",
+        );
+      }
+
+      /*
+       * Retrieve the latest saved version
+       * before leaving the question interface.
+       */
+
+      const response = await fetch("/api/quiz-arena/draft", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          "Your progress was saved, but we could not verify it. Please try again.",
+        );
+      }
+
+      const data = (await response.json()) as {
+        draft: QuizArenaDraft | null;
+      };
+
+      if (!data.draft || data.draft.id !== activeDraft.id) {
+        throw new Error("Unable to verify the saved quiz. Please try again.");
+      }
+
+      /*
+       * Keep the unfinished draft available
+       * for Continue Previous Quiz.
+       */
+
+      setUnfinishedDraft(data.draft);
+
+      setActiveDraft(null);
+
+      setShowExitModal(false);
+
+      setActiveQuestions([]);
+
+      setResult(null);
+
+      setMessage("");
+
+      setStep("round");
+    } catch (error) {
+      setExitSaveError(
+        error instanceof Error
+          ? error.message
+          : "Unable to save your quiz. Please try again.",
+      );
+    } finally {
+      setIsExitingQuiz(false);
+    }
   }
   async function generateChallenge(
     progressionLevel: QuizJourneyLevel,
@@ -267,11 +493,27 @@ export default function QuizArenaClient() {
 
     const effectiveDifficulty = getDifficultyForJourneyLevel(progressionLevel);
 
+    const source = window.location.pathname.startsWith("/mock-test")
+      ? "mock-test"
+      : "quiz-arena";
+
     try {
       setIsGenerating(true);
       setShowExitModal(false);
       setMessage("");
       setResult(null);
+
+      if (isCheckingDraft) {
+        throw new Error("Please wait while we check your previous quiz.");
+      }
+
+      if (
+        unfinishedDraft &&
+        confirmedReplacementDraftId !== unfinishedDraft.id
+      ) {
+        setShowResumeChoice(true);
+        return;
+      }
 
       const response = await fetch("/api/quiz-arena/generate", {
         method: "POST",
@@ -281,6 +523,7 @@ export default function QuizArenaClient() {
         },
 
         body: JSON.stringify({
+          source,
           level: selectedLevel,
 
           exam: selectedExam,
@@ -308,6 +551,74 @@ export default function QuizArenaClient() {
           data.error ?? "Unable to generate your quiz. Please try again.",
         );
       }
+
+      const draftResponse = await fetch("/api/quiz-arena/draft", {
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          source,
+
+          level: selectedLevel,
+
+          exam: selectedExam,
+
+          schoolClass: selectedSchoolClass,
+
+          board: selectedBoard,
+
+          subject: selectedSubject,
+
+          progressionLevel,
+
+          round,
+
+          difficulty: effectiveDifficulty,
+
+          questions: data.questions,
+
+          replaceDraftId: confirmedReplacementDraftId ?? undefined,
+        }),
+      });
+
+      const draftData = (await draftResponse.json()) as {
+        draft?: QuizArenaDraft;
+
+        error?: string;
+      };
+
+      if (!draftResponse.ok || !draftData.draft) {
+        if (draftResponse.status === 409) {
+          const latestResponse = await fetch("/api/quiz-arena/draft", {
+            cache: "no-store",
+          });
+
+          if (latestResponse.ok) {
+            const latestData = (await latestResponse.json()) as {
+              draft: QuizArenaDraft | null;
+            };
+
+            if (latestData.draft) {
+              setUnfinishedDraft(latestData.draft);
+
+              setConfirmedReplacementDraftId(null);
+
+              setShowResumeChoice(true);
+            }
+          }
+        }
+
+        throw new Error(draftData.error ?? "Unable to save your new quiz.");
+      }
+
+      setActiveDraft(draftData.draft);
+
+      setUnfinishedDraft(null);
+
+      setConfirmedReplacementDraftId(null);
 
       setActiveQuestions(data.questions);
 
@@ -353,6 +664,9 @@ export default function QuizArenaClient() {
         // Legacy progress bucket only.
         // User-facing difficulty is now determined by Level 1-10.
         difficulty: "easy",
+        source: window.location.pathname.startsWith("/mock-test")
+          ? "mock-test"
+          : "quiz-arena",
       });
       if (selectedSchoolClass) {
         params.set("schoolClass", selectedSchoolClass);
@@ -412,7 +726,9 @@ export default function QuizArenaClient() {
       setIsProgressLoading(false);
     }
   }
-  async function persistRoundProgress(finalResult: QuizResult) {
+  async function persistRoundProgress(
+    finalResult: QuizResult,
+  ): Promise<boolean> {
     if (
       !selectedLevel ||
       !selectedExam ||
@@ -420,11 +736,14 @@ export default function QuizArenaClient() {
       !selectedJourneyLevel ||
       !selectedRound
     ) {
-      return;
+      return false;
     }
 
-    if (finalResult.attemptedQuestions !== activeQuestions.length) {
-      return;
+    if (
+      finalResult.attemptedQuestions !==
+      activeQuestions.length
+    ) {
+      return false;
     }
 
     try {
@@ -437,14 +756,20 @@ export default function QuizArenaClient() {
 
         body: JSON.stringify({
           level: selectedLevel,
+
           exam: selectedExam,
+
           schoolClass: selectedSchoolClass,
 
           board: selectedBoard,
+
           subject: selectedSubject,
 
-          // Legacy progress bucket only.
           difficulty: "easy",
+
+          source: window.location.pathname.startsWith("/mock-test")
+            ? "mock-test"
+            : "quiz-arena",
 
           progressionLevel: selectedJourneyLevel,
 
@@ -459,7 +784,9 @@ export default function QuizArenaClient() {
       });
 
       if (!response.ok) {
-        return;
+        console.warn("Quiz Arena progression was not saved.");
+
+        return false;
       }
 
       const data = (await response.json()) as {
@@ -467,79 +794,125 @@ export default function QuizArenaClient() {
           unlockedLevel?: QuizJourneyLevel;
 
           completedRounds?: Record<number, QuizRound[]>;
-        };
+        } | null;
       };
 
       if (data.progress?.unlockedLevel) {
-        setUnlockedJourneyLevel(data.progress.unlockedLevel);
+        setUnlockedJourneyLevel(
+          data.progress.unlockedLevel,
+        );
       }
 
       if (data.progress?.completedRounds) {
-        setCompletedRounds(data.progress.completedRounds);
+        setCompletedRounds(
+          data.progress.completedRounds,
+        );
       }
+
+      return Boolean(data.progress);
     } catch (error) {
-      console.warn("Unable to save Quiz Arena progress:", error);
+      console.warn(
+        "Unable to save Quiz Arena progress:",
+        error,
+      );
+
+      return false;
     }
   }
-  async function persistRoundAttempt(finalResult: QuizResult) {
+  async function persistRoundAttempt(
+    finalResult: QuizResult,
+  ): Promise<boolean> {
     if (
+      !activeDraft ||
       !selectedLevel ||
       !selectedExam ||
       !selectedSubject ||
       !selectedJourneyLevel ||
       !selectedRound
     ) {
-      return;
+      return false;
     }
 
-    const difficulty = getDifficultyForJourneyLevel(selectedJourneyLevel);
+    const difficulty =
+      getDifficultyForJourneyLevel(
+        selectedJourneyLevel,
+      );
 
     try {
-      const response = await fetch("/api/quiz-arena/attempts", {
-        method: "POST",
+      const response = await fetch(
+        "/api/quiz-arena/attempts",
+        {
+          method: "POST",
 
-        headers: {
-          "Content-Type": "application/json",
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            draftId: activeDraft.id,
+
+            level: selectedLevel,
+
+            exam: selectedExam,
+
+            schoolClass: selectedSchoolClass,
+
+            board: selectedBoard,
+
+            subject: selectedSubject,
+
+            progressionLevel:
+              selectedJourneyLevel,
+
+            round: selectedRound,
+
+            difficulty,
+
+            score: finalResult.score,
+
+            correctAnswers:
+              finalResult.correctAnswers,
+
+            incorrectAnswers:
+              finalResult.incorrectAnswers,
+
+            totalTimeMs:
+              finalResult.totalTimeMs,
+
+            averageQuestionTimeMs:
+              finalResult.averageQuestionTimeMs,
+
+            questions:
+              finalResult.attempts,
+          }),
         },
-
-        body: JSON.stringify({
-          level: selectedLevel,
-
-          exam: selectedExam,
-          schoolClass: selectedSchoolClass,
-
-          board: selectedBoard,
-
-          subject: selectedSubject,
-
-          progressionLevel: selectedJourneyLevel,
-
-          round: selectedRound,
-
-          difficulty,
-
-          score: finalResult.score,
-
-          correctAnswers: finalResult.correctAnswers,
-
-          incorrectAnswers: finalResult.incorrectAnswers,
-
-          totalTimeMs: finalResult.totalTimeMs,
-
-          averageQuestionTimeMs: finalResult.averageQuestionTimeMs,
-
-          questions: finalResult.attempts,
-        }),
-      });
+      );
 
       if (!response.ok) {
-        console.warn("Quiz Arena attempt was not saved.");
+        const payload = (await response
+          .json()
+          .catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        console.warn(
+          "Quiz Arena attempt was not saved:",
+          payload?.error,
+        );
+
+        return false;
       }
+
+      return true;
     } catch (error) {
-      console.warn("Unable to save Quiz Arena attempt:", error);
+      console.warn(
+        "Unable to save Quiz Arena attempt:",
+        error,
+      );
+
+      return false;
     }
   }
-
   async function continueQuizJourney() {
     if (!selectedJourneyLevel || !selectedRound) {
       setStep("journey");
@@ -581,47 +954,207 @@ export default function QuizArenaClient() {
     setStep("journey");
   }
 
-  function finishQuiz(finalResult: QuizResult) {
+  async function finishQuiz(
+    finalResult: QuizResult,
+  ): Promise<boolean> {
     if (
-      selectedJourneyLevel &&
-      selectedRound &&
-      finalResult.attemptedQuestions === activeQuestions.length
+      isCompletingQuiz ||
+      !activeDraft ||
+      !flushQuizSaveRef.current
     ) {
-      const existingRounds = completedRounds[selectedJourneyLevel] ?? [];
-
-      const nextRounds = existingRounds.includes(selectedRound)
-        ? existingRounds
-        : [...existingRounds, selectedRound].sort(
-            (left, right) => left - right,
-          );
-
-      setCompletedRounds((previous) => ({
-        ...previous,
-        [selectedJourneyLevel]: nextRounds,
-      }));
-
-      if (
-        nextRounds.length >= QUIZ_ROUNDS_PER_LEVEL &&
-        selectedJourneyLevel < 10
-      ) {
-        const nextLevel = (selectedJourneyLevel + 1) as QuizJourneyLevel;
-
-        setUnlockedJourneyLevel(
-          (previous) => Math.max(previous, nextLevel) as QuizJourneyLevel,
-        );
-      }
+      return false;
     }
 
-    void persistRoundProgress(finalResult);
-    void persistRoundAttempt(finalResult);
+    setIsCompletingQuiz(true);
 
-    setResult(finalResult);
-    setShowExitModal(false);
-    setStep("result");
+    try {
+      /*
+       * Save the latest question state first.
+       */
+
+      const saved =
+        await flushQuizSaveRef.current();
+
+      if (!saved) {
+        throw new Error(
+          "Unable to save your final answers.",
+        );
+      }
+
+      /*
+       * Save the completed attempt.
+       */
+
+      const attemptSaved =
+        await persistRoundAttempt(
+          finalResult,
+        );
+
+      if (!attemptSaved) {
+        throw new Error(
+          "Unable to save the completed attempt.",
+        );
+      }
+
+      /*
+       * Save the student's level and round progress.
+       */
+
+      const progressSaved =
+        await persistRoundProgress(
+          finalResult,
+        );
+
+      if (!progressSaved) {
+        throw new Error(
+          "Unable to save Quiz Arena progression.",
+        );
+      }
+
+      /*
+       * Mark the unfinished draft as completed.
+       */
+
+      const completionResponse = await fetch(
+        "/api/quiz-arena/draft",
+        {
+          method: "DELETE",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            id: activeDraft.id,
+
+            status: "completed",
+          }),
+        },
+      );
+
+      if (!completionResponse.ok) {
+        const payload = (await completionResponse
+          .json()
+          .catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        throw new Error(
+          payload?.error ??
+            "Unable to finalise the completed quiz.",
+        );
+      }
+
+      /*
+       * Only show results after saving succeeds.
+       */
+
+      setActiveDraft(null);
+
+      setUnfinishedDraft(null);
+
+      setConfirmedReplacementDraftId(null);
+
+      setShowResumeChoice(false);
+
+      setResult(finalResult);
+
+      setShowExitModal(false);
+
+      setStep("result");
+
+      return true;
+    } catch (error) {
+      console.warn(
+        "Unable to complete Quiz Arena round:",
+        error,
+      );
+
+      return false;
+    } finally {
+      setIsCompletingQuiz(false);
+    }
   }
-
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white">
+      {showResumeChoice && unfinishedDraft && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm"
+          role="presentation"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resume-quiz-title"
+            className="w-full max-w-lg rounded-3xl border border-white/15 bg-slate-900 p-7 text-center text-white shadow-2xl sm:p-9"
+          >
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/15 text-3xl">
+              📚
+            </div>
+
+            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
+              SmartIQ Institute
+            </p>
+
+            <h2 id="resume-quiz-title" className="mt-3 text-3xl font-black">
+              Welcome Back!
+            </h2>
+
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              You have an unfinished quiz from your previous session.
+            </p>
+
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
+              <p className="text-lg font-bold text-white">
+                {unfinishedDraft.subject}
+              </p>
+
+              <p className="mt-2 text-sm text-slate-300">
+                {getExamTitle(unfinishedDraft.exam)}
+
+                {unfinishedDraft.schoolClass
+                  ? ` • Class ${unfinishedDraft.schoolClass}`
+                  : ""}
+
+                {unfinishedDraft.board ? ` • ${unfinishedDraft.board}` : ""}
+              </p>
+
+              <p className="mt-3 text-sm font-semibold text-cyan-200">
+                Level {unfinishedDraft.progressionLevel}
+                {" • "}
+                Round {unfinishedDraft.round}
+              </p>
+
+              <div className="mt-4 rounded-xl bg-cyan-400/10 px-4 py-3 text-sm font-bold text-cyan-200">
+                {Object.keys(unfinishedDraft.answersByIndex).length} of{" "}
+                {unfinishedDraft.questions.length} questions answered
+              </div>
+            </div>
+
+            <div className="mt-7 grid gap-3">
+              <button
+                type="button"
+                onClick={resumePreviousQuiz}
+                className="rounded-xl bg-cyan-400 px-6 py-4 font-bold text-slate-950 transition hover:bg-cyan-300"
+              >
+                Continue Previous Quiz
+              </button>
+
+              <button
+                type="button"
+                onClick={startFreshQuiz}
+                className="rounded-xl border border-white/20 bg-white/5 px-6 py-4 font-bold text-white transition hover:bg-white/10"
+              >
+                Start New Quiz
+              </button>
+            </div>
+
+            <p className="mt-5 text-xs leading-5 text-slate-400">
+              Your saved quiz is associated with your account.
+            </p>
+          </div>
+        </div>
+      )}
       {step !== "welcome" && step !== "quiz" && (
         <button
           type="button"
@@ -637,6 +1170,7 @@ export default function QuizArenaClient() {
         <button
           type="button"
           onClick={requestExitQuiz}
+          disabled={isCompletingQuiz}
           className="absolute left-5 top-6 z-20 flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-md transition hover:border-red-300 hover:bg-red-400/20 sm:left-8 sm:top-8"
         >
           <span className="text-lg">←</span>
@@ -673,25 +1207,36 @@ export default function QuizArenaClient() {
               id="exit-quiz-description"
               className="mt-3 text-sm leading-6 text-slate-300"
             >
-              Are you sure you want to leave this quiz? Your progress will be
-              lost.
+              Your saved progress will be kept. You can return later and
+              continue your unfinished quiz.
             </p>
+
+            {exitSaveError && (
+              <div
+                role="alert"
+                className="mt-5 rounded-xl border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm font-semibold text-red-100"
+              >
+                {exitSaveError}
+              </div>
+            )}
 
             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={cancelExitQuiz}
-                className="flex-1 rounded-xl border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10"
+                disabled={isExitingQuiz}
+                className="flex-1 rounded-xl border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Continue Quiz
               </button>
 
               <button
                 type="button"
-                onClick={confirmExitQuiz}
-                className="flex-1 rounded-xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:bg-red-400"
+                onClick={() => void confirmExitQuiz()}
+                disabled={isExitingQuiz}
+                className="flex-1 rounded-xl bg-red-500 px-5 py-3 font-semibold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Exit Quiz
+                {isExitingQuiz ? "Saving Quiz..." : "Save & Exit"}
               </button>
             </div>
           </div>
@@ -1149,8 +1694,10 @@ export default function QuizArenaClient() {
           </section>
         )}
 
-        {step === "quiz" && activeQuestions.length > 0 && (
+        {step === "quiz" && activeQuestions.length > 0 && activeDraft && (
           <QuizGame
+            key={activeDraft.id}
+            draft={activeDraft}
             questions={activeQuestions}
             levelTitle={getLevelTitle(selectedLevel)}
             examTitle={getExamTitle(selectedExam)}
@@ -1158,6 +1705,7 @@ export default function QuizArenaClient() {
             difficulty={getDifficultyForJourneyLevel(selectedJourneyLevel ?? 1)}
             playfulMode={playfulMode}
             onComplete={finishQuiz}
+            onRegisterSave={registerQuizSave}
           />
         )}
 
@@ -1226,6 +1774,7 @@ function formatLiveQuizDuration(milliseconds: number) {
 }
 
 function QuizGame({
+  draft,
   questions,
   levelTitle,
   examTitle,
@@ -1233,36 +1782,71 @@ function QuizGame({
   difficulty,
   playfulMode: _playfulMode,
   onComplete,
+  onRegisterSave,
 }: {
+  draft: QuizArenaDraft;
   questions: QuizQuestion[];
   levelTitle: string;
   examTitle: string;
   subject: string;
   difficulty: Difficulty;
   playfulMode: boolean;
-  onComplete: (result: QuizResult) => void;
+  onComplete: (result: QuizResult) => Promise<boolean>;
+
+  onRegisterSave: (save: (() => Promise<boolean>) | null) => void;
 }) {
   const quizCardRef = useRef<HTMLElement | null>(null);
 
-  const [questionIndex, setQuestionIndex] = useState(0);
+  /*
+   * Restore the previous quiz state when
+   * the student resumes an unfinished attempt.
+   */
+
+  const [questionIndex, setQuestionIndex] = useState(draft.questionIndex);
 
   const [answersByIndex, setAnswersByIndex] = useState<Record<number, string>>(
-    {},
+    () => ({
+      ...draft.answersByIndex,
+    }),
   );
 
-  const [timeByIndex, setTimeByIndex] = useState<Record<number, number>>({});
+  const [timeByIndex, setTimeByIndex] = useState<Record<number, number>>(
+    () => ({
+      ...draft.timeByIndex,
+    }),
+  );
 
   const [markedForReview, setMarkedForReview] = useState<Set<number>>(
-    () => new Set<number>(),
+    () => new Set(draft.markedForReview),
   );
 
-  const [questionElapsedMs, setQuestionElapsedMs] = useState(0);
+  const [questionElapsedMs, setQuestionElapsedMs] = useState(
+    draft.timeByIndex[draft.questionIndex] ?? 0,
+  );
 
-  const [roundElapsedMs, setRoundElapsedMs] = useState(0);
+  const [roundElapsedMs, setRoundElapsedMs] = useState(draft.elapsedMs);
 
-  const questionStartedAtRef = useRef(Date.now());
+  const questionStartedAtRef = useRef(
+    Date.now() - (draft.timeByIndex[draft.questionIndex] ?? 0),
+  );
 
-  const roundStartedAtRef = useRef(Date.now());
+  const roundStartedAtRef = useRef(Date.now() - draft.elapsedMs);
+
+  /*
+   * MongoDB autosave state.
+   */
+
+  const revisionRef = useRef(draft.revision);
+
+  const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
+
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [finishError, setFinishError] = useState<string | null>(null);
+
+  const [isFinishingQuiz, setIsFinishingQuiz] = useState(false);
+
+  const finishInFlightRef = useRef(false);
 
   const currentQuestion = questions[questionIndex];
 
@@ -1271,23 +1855,209 @@ function QuizGame({
   const answered = selectedAnswer !== null;
 
   const isMarkedForReview = markedForReview.has(questionIndex);
+  /*
+   * Maintain the latest quiz state for autosaving.
+   *
+   * React state remains responsible for the interface.
+   * MongoDB remains responsible for permanent recovery.
+   */
+
+  const latestSnapshotRef = useRef({
+    answersByIndex,
+    timeByIndex,
+    markedForReview: [...markedForReview],
+    questionIndex,
+  });
 
   useEffect(() => {
-    const existingTime = timeByIndex[questionIndex];
+    latestSnapshotRef.current = {
+      answersByIndex,
+      timeByIndex,
+      markedForReview: [...markedForReview],
+      questionIndex,
+    };
+  }, [answersByIndex, timeByIndex, markedForReview, questionIndex]);
 
-    if (existingTime !== undefined) {
-      setQuestionElapsedMs(existingTime);
-    } else {
-      questionStartedAtRef.current = Date.now();
+  /*
+   * Save requests are executed sequentially.
+   *
+   * This prevents an older request from
+   * overwriting a newer answer or question position.
+   */
 
-      setQuestionElapsedMs(0);
+  const queueDraftSave = useCallback((): Promise<boolean> => {
+    const operation = saveQueueRef.current
+      .catch(() => false)
+      .then(async () => {
+        const snapshot = latestSnapshotRef.current;
+
+        const now = Date.now();
+
+        const nextRevision = revisionRef.current + 1;
+
+        revisionRef.current = nextRevision;
+
+        const updatedTimeByIndex = {
+          ...snapshot.timeByIndex,
+        };
+
+        /*
+         * Preserve time spent on the current question,
+         * including when it has not been answered yet.
+         */
+
+        const currentIndex = snapshot.questionIndex;
+
+        if (snapshot.answersByIndex[currentIndex] === undefined) {
+          updatedTimeByIndex[currentIndex] = Math.max(
+            updatedTimeByIndex[currentIndex] ?? 0,
+            now - questionStartedAtRef.current,
+          );
+        }
+
+        const response = await fetch("/api/quiz-arena/draft", {
+          method: "PATCH",
+
+          keepalive: true,
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            id: draft.id,
+
+            answersByIndex: snapshot.answersByIndex,
+
+            timeByIndex: updatedTimeByIndex,
+
+            markedForReview: snapshot.markedForReview,
+
+            questionIndex: snapshot.questionIndex,
+
+            elapsedMs: Math.max(0, now - roundStartedAtRef.current),
+
+            revision: nextRevision,
+          }),
+        });
+
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+
+          throw new Error(
+            payload?.error ?? "Unable to save your quiz progress.",
+          );
+        }
+
+        setSaveError(null);
+
+        return true;
+      })
+      .catch((error) => {
+        console.warn("Quiz Arena autosave error:", error);
+
+        setSaveError(
+          "Your latest changes could not be saved. Please check your connection.",
+        );
+
+        return false;
+      });
+
+    saveQueueRef.current = operation;
+
+    return operation;
+  }, [draft.id]);
+  /*
+   * Allow the parent component to request
+   * a final save before exiting the quiz.
+   */
+
+  useEffect(() => {
+    onRegisterSave(queueDraftSave);
+
+    return () => {
+      onRegisterSave(null);
+    };
+  }, [onRegisterSave, queueDraftSave]);
+
+  /*
+   * Autosave shortly after an answer,
+   * review marking, or question change.
+   */
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void queueDraftSave();
+    }, 500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [
+    answersByIndex,
+    timeByIndex,
+    markedForReview,
+    questionIndex,
+    queueDraftSave,
+  ]);
+
+  /*
+   * Periodic autosave also preserves elapsed time
+   * when the student is reading a question.
+   */
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      void queueDraftSave();
+    }, 10000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [queueDraftSave]);
+  /*
+   * Request a save when the student leaves
+   * the browser tab or switches away.
+   */
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") {
+        void queueDraftSave();
+      }
     }
+
+    function handlePageHide() {
+      void queueDraftSave();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [queueDraftSave]);
+
+  useEffect(() => {
+    const existingTime = timeByIndex[questionIndex] ?? 0;
+
+    questionStartedAtRef.current = Date.now() - existingTime;
+
+    setQuestionElapsedMs(existingTime);
 
     quizCardRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-  }, [questionIndex, timeByIndex]);
+    // Time is reset only when navigating to another question.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionIndex]);
 
   useEffect(() => {
     const timerId = window.setInterval(() => {
@@ -1305,49 +2075,101 @@ function QuizGame({
     };
   }, [answered, questionIndex]);
 
-  function chooseAnswer(answer: string) {
-    if (!answered) {
-      const answeredAt = Date.now();
+function chooseAnswer(answer: string) {
+  if (!answered) {
+    const answeredAt = Date.now();
 
-      const timeTakenMs = answeredAt - questionStartedAtRef.current;
+    const timeTakenMs = answeredAt - questionStartedAtRef.current;
 
-      setQuestionElapsedMs(timeTakenMs);
+    setQuestionElapsedMs(timeTakenMs);
 
-      setTimeByIndex((previous) => ({
-        ...previous,
-        [questionIndex]: timeTakenMs,
-      }));
-    }
-
-    setAnswersByIndex((previous) => ({
+    setTimeByIndex((previous) => ({
       ...previous,
-      [questionIndex]: answer,
+      [questionIndex]: timeTakenMs,
     }));
   }
 
-  function toggleMarkForReview() {
-    setMarkedForReview((previous) => {
-      const next = new Set(previous);
+  // Save the selected answer.
+  setAnswersByIndex((previous) => ({
+    ...previous,
+    [questionIndex]: answer,
+  }));
 
-      if (next.has(questionIndex)) {
-        next.delete(questionIndex);
-      } else {
-        next.add(questionIndex);
-      }
+  // Automatically remove Mark for Review once answered.
+  setMarkedForReview((previous) => {
+    if (!previous.has(questionIndex)) {
+      return previous;
+    }
 
-      return next;
-    });
+    const next = new Set(previous);
+    next.delete(questionIndex);
+
+    return next;
+  });
+}
+
+function toggleMarkForReview() {
+  const alreadyMarked = markedForReview.has(questionIndex);
+
+  setMarkedForReview((previous) => {
+    const next = new Set(previous);
+
+    if (alreadyMarked) {
+      next.delete(questionIndex);
+    } else {
+      next.add(questionIndex);
+    }
+
+    return next;
+  });
+
+  /*
+   * When marking a question for review,
+   * preserve its time and automatically
+   * move to the next question.
+   */
+
+  if (
+    !alreadyMarked &&
+    questionIndex < questions.length - 1
+  ) {
+    if (!answered) {
+      const elapsed = Math.max(
+        0,
+        Date.now() - questionStartedAtRef.current,
+      );
+
+      setTimeByIndex((previous) => ({
+        ...previous,
+        [questionIndex]: elapsed,
+      }));
+    }
+
+    setQuestionIndex((previous) => previous + 1);
   }
+}
 
   function previousQuestion() {
     if (questionIndex === 0) {
       return;
     }
 
+    if (!answered) {
+      const elapsed = Math.max(0, Date.now() - questionStartedAtRef.current);
+
+      setTimeByIndex((previous) => ({
+        ...previous,
+        [questionIndex]: elapsed,
+      }));
+    }
+
     setQuestionIndex((previous) => previous - 1);
   }
 
-  function nextQuestion() {
+  async function nextQuestion() {
+    if (finishInFlightRef.current) {
+      return;
+    }
     if (!answered && !isMarkedForReview) {
       return;
     }
@@ -1355,6 +2177,15 @@ function QuizGame({
     const finished = questionIndex === questions.length - 1;
 
     if (!finished) {
+      if (!answered) {
+        const elapsed = Math.max(0, Date.now() - questionStartedAtRef.current);
+
+        setTimeByIndex((previous) => ({
+          ...previous,
+          [questionIndex]: elapsed,
+        }));
+      }
+
       setQuestionIndex((previous) => previous + 1);
 
       return;
@@ -1420,20 +2251,65 @@ function QuizGame({
           )
         : 0;
 
-    onComplete({
-      score,
-      correctAnswers,
-      incorrectAnswers,
-      bestStreak,
-      attemptedQuestions: attempts.length,
-      totalTimeMs,
-      averageQuestionTimeMs,
-      attempts,
-    });
+    finishInFlightRef.current = true;
+
+    setIsFinishingQuiz(true);
+
+    setFinishError(null);
+
+    try {
+      const completed = await onComplete({
+        score,
+        correctAnswers,
+        incorrectAnswers,
+        bestStreak,
+        attemptedQuestions: attempts.length,
+        totalTimeMs,
+        averageQuestionTimeMs,
+        attempts,
+      });
+
+      if (!completed) {
+        setFinishError(
+          "We could not finalise your round. Your quiz is still open. Please check your connection and try Finish Round again.",
+        );
+      }
+    } catch (error) {
+      console.warn(
+        "Quiz completion error:",
+        error,
+      );
+
+      setFinishError(
+        "Unable to complete your round. Please try again.",
+      );
+    } finally {
+      finishInFlightRef.current = false;
+
+      setIsFinishingQuiz(false);
+    }
   }
 
   return (
     <section ref={quizCardRef} className="mx-auto max-w-4xl scroll-mt-28">
+      {saveError && (
+        <div
+          role="alert"
+          className="mb-5 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-5 py-4 text-sm font-semibold text-amber-100"
+        >
+          ⚠️ {saveError}
+        </div>
+      )}
+
+      {finishError && (
+        <div
+          role="alert"
+          className="mb-5 rounded-2xl border border-red-400/40 bg-red-400/10 px-5 py-4 text-sm font-semibold text-red-100"
+        >
+          ⚠️ {finishError}
+        </div>
+      )}
+
       <div className="mb-6 rounded-3xl border border-white/10 bg-white/10 p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -1557,13 +2433,18 @@ function QuizGame({
 
           <button
             type="button"
-            onClick={nextQuestion}
-            disabled={!answered && !isMarkedForReview}
+            onClick={() => void nextQuestion()}
+            disabled={
+              isFinishingQuiz ||
+              (!answered && !isMarkedForReview)
+            }
             className="rounded-xl bg-cyan-400 px-7 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-cyan-400"
           >
-            {questionIndex === questions.length - 1
-              ? "Finish Round"
-              : "Next Question"}
+            {isFinishingQuiz
+              ? "Saving Round..."
+              : questionIndex === questions.length - 1
+                ? "Finish Round"
+                : "Next Question"}
           </button>
         </div>
       </div>

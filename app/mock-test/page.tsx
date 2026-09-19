@@ -1,7 +1,9 @@
 import QuizArenaClient from "@/components/quiz-arena-client";
+import { redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
 import type { Metadata } from "next";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Mock Test Arena | SmartIQ Institute",
@@ -11,7 +13,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MockTestPage() {
+export default async function MockTestPage() {
+  const session = await getSessionUser();
+  if (!session) redirect("/login?next=%2Fmock-test&reason=login_required");
+  if ((session.role !== "student" && session.role !== "admin") || (session.status && session.status !== "active")) {
+    redirect("/dashboard");
+  }
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

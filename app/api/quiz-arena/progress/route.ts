@@ -7,6 +7,8 @@ import {
   getSessionUser,
 } from "@/lib/auth";
 
+import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
+
 import {
   getQuizArenaProgress,
   saveQuizArenaRoundProgress,
@@ -166,7 +168,8 @@ export async function GET(
 
     if (
       !session ||
-      session.role !== "student"
+      (session.role !== "student" && session.role !== "admin") ||
+      (session.status && session.status !== "active")
     ) {
       return NextResponse.json(
         {
@@ -181,6 +184,13 @@ export async function GET(
 
     const searchParams =
       request.nextUrl.searchParams;
+
+    if (session.role === "admin" && searchParams.get("source") !== "mock-test") {
+      return NextResponse.json(
+        { error: "Admins may load Mock Test progress only." },
+        { status: 403 },
+      );
+    }
 
     const learningCategory =
       searchParams.get("level");
@@ -333,7 +343,8 @@ export async function POST(
 
     if (
       !session ||
-      session.role !== "student"
+      (session.role !== "student" && session.role !== "admin") ||
+      (session.status && session.status !== "active")
     ) {
       return NextResponse.json(
         {
@@ -348,6 +359,7 @@ export async function POST(
 
     const body =
       (await request.json()) as {
+        source?: "quiz-arena" | "mock-test";
         level?: EducationLevel;
 
         exam?: CompetitiveExam;
@@ -373,6 +385,26 @@ export async function POST(
 
         score?: number;
       };
+
+    if (session.role === "admin") {
+      const draft = await getActiveQuizArenaDraft(session.id);
+
+      if (
+        body.source !== "mock-test" ||
+        !draft ||
+        draft.source !== "mock-test" ||
+        draft.level !== body.level ||
+        draft.exam !== body.exam ||
+        draft.subject !== body.subject ||
+        draft.progressionLevel !== body.progressionLevel ||
+        draft.round !== body.round
+      ) {
+        return NextResponse.json(
+          { error: "Admin progress must match an active Mock Test." },
+          { status: 403 },
+        );
+      }
+    }
 
     if (
       !isEducationLevel(

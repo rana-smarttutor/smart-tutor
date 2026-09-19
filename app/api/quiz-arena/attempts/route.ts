@@ -28,6 +28,8 @@ import {
 } from "@/lib/quiz-arena-config";
 
 
+import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
+
 const validDifficulties: Difficulty[] = [
   "easy",
   "medium",
@@ -246,12 +248,13 @@ export async function POST(
 
     if (
       !session ||
-      session.role !== "student"
+      (session.role !== "student" && session.role !== "admin") ||
+      (session.status && session.status !== "active")
     ) {
       return NextResponse.json(
         {
           error:
-            "Student login is required.",
+            "An active student or admin account is required.",
         },
         {
           status: 401,
@@ -261,6 +264,8 @@ export async function POST(
 
     const body =
       (await request.json()) as {
+        draftId?: string;
+
         level?: EducationLevel;
 
         exam?: CompetitiveExam;
@@ -433,10 +438,97 @@ export async function POST(
       );
     }
 
-    const attempt =
+        /*
+     * Validate that the completed quiz belongs
+     * to the logged-in student's saved draft.
+     */
+
+    if (
+      typeof body.draftId !== "string" ||
+      !body.draftId
+    ) {
+      return NextResponse.json(
+        {
+          error: "Quiz draft ID is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const draft = await getActiveQuizArenaDraft(
+      session.id,
+    );
+
+    if (!draft || draft.id !== body.draftId) {
+      return NextResponse.json(
+        {
+          error: "The unfinished quiz could not be found.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (session.role === "admin" && draft.source !== "mock-test") {
+      return NextResponse.json(
+        { error: "Admins may save Mock Test attempts only." },
+        { status: 403 },
+      );
+    }
+
+    if (
+      draft.level !== body.level ||
+      draft.exam !== body.exam ||
+      draft.schoolClass !== schoolContext.schoolClass ||
+      draft.board !== schoolContext.board ||
+      draft.subject !== subject ||
+      draft.progressionLevel !== body.progressionLevel ||
+      draft.round !== body.round ||
+      draft.difficulty !== body.difficulty
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "The completed quiz does not match the saved draft.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const questionsMatchDraft =
+      questions.length === draft.questions.length &&
+      questions.every((question, index) => {
+        const original = draft.questions[index];
+
+        const savedAnswer =
+          draft.answersByIndex[index] ?? "";
+
+        return (
+          question.questionId === original.id &&
+          question.question === original.question &&
+          JSON.stringify(question.options) ===
+            JSON.stringify(original.options) &&
+          question.correctAnswer === original.correctAnswer &&
+          question.selectedAnswer === savedAnswer &&
+          question.isCorrect ===
+            (savedAnswer === original.correctAnswer)
+        );
+      });
+
+    if (!questionsMatchDraft) {
+      return NextResponse.json(
+        {
+          error:
+            "Please save your latest quiz answers before completing the round.",
+        },
+        { status: 409 },
+      );
+    }
+const attempt =
       await createQuizArenaRoundAttempt({
         userId:
           session.id,
+
+        draftId: draft.id,
 
         learningCategory:
           body.level,

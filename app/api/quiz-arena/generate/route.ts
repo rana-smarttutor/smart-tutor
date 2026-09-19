@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 
 import {
   competitiveExams,
@@ -21,6 +22,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type GenerateQuizRequest = {
+  source?: "quiz-arena" | "mock-test";
   level?: EducationLevel;
   stream?: Stream | null;
   exam?: CompetitiveExam | null;
@@ -153,6 +155,19 @@ function extractGeminiText(data: GeminiResponse): string | null {
 
 export async function POST(request: Request) {
   try {
+    const session = await getSessionUser();
+    if (!session) {
+      return NextResponse.json({ error: "Student login is required." }, { status: 401 });
+    }
+    if (
+      (session.role !== "student" && session.role !== "admin") ||
+      (session.status && session.status !== "active")
+    ) {
+      return NextResponse.json(
+        { error: "Only active students and admins can generate mock tests." },
+        { status: 403 },
+      );
+    }
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -166,6 +181,13 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as GenerateQuizRequest;
+
+    if (session.role === "admin" && body.source !== "mock-test") {
+      return NextResponse.json(
+        { error: "Admins may generate Mock Tests only." },
+        { status: 403 },
+      );
+    }
 
     const {
       level,
