@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { RegistrationForm } from "@/components/registration-form";
 import { getSessionUser } from "@/lib/auth";
+import { safeReturnPath, requiresStudentRole } from "@/lib/access-routes";
 
 export const metadata: Metadata = {
   title: "Create Account",
@@ -16,8 +17,15 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
   const session = await getSessionUser();
+  const query = await searchParams;
+  const next = safeReturnPath(Array.isArray(query.next) ? query.next[0] : query.next);
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -28,7 +36,10 @@ export default async function SignupPage() {
   };
 
   if (session) {
-    redirect("/dashboard");
+    const studentOnly = next
+      ? requiresStudentRole(new URL(next, "https://smartiqinstitute.in").pathname)
+      : false;
+    redirect(next && (!studentOnly || session.role === "student") ? next : "/dashboard");
   }
 
   return (
@@ -89,7 +100,7 @@ export default async function SignupPage() {
                   </p>
 
                   <Link
-                    href="/login"
+                    href={loginHref}
                     className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-blue-500/20 transition-all hover:bg-blue-700 active:scale-95"
                   >
                     Sign In →

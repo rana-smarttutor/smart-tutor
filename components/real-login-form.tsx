@@ -1,5 +1,7 @@
 "use client";
 
+import { safeReturnPath, requiresStudentRole } from "@/lib/access-routes";
+
 import { type ComponentType, type FormEvent, useState } from "react";
 import {
   ArrowRight,
@@ -30,6 +32,7 @@ type ForgotPasswordForm = {
 };
 
 type LoginResponse = {
+  user?: { role?: string };
   error?: string;
   message?: string;
   redirectTo?: string;
@@ -243,7 +246,15 @@ export function RealLoginForm({ onSuccess }: RealLoginFormProps) {
 
       onSuccess?.();
 
-      window.location.assign("/dashboard");
+      const params = new URLSearchParams(window.location.search);
+      const requested = safeReturnPath(params.get("next"));
+      const studentOnly = requested
+        ? requiresStudentRole(new URL(requested, window.location.origin).pathname)
+        : false;
+      const destination = requested && (!studentOnly || responsePayload.user?.role === "student")
+        ? requested
+        : "/dashboard";
+      window.location.assign(destination);
     } catch (loginError) {
       console.error("Login request failed:", loginError);
 

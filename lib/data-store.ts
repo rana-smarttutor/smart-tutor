@@ -188,6 +188,7 @@ export const COLLECTIONS = {
   quizzes: "quiz_questions",
   quizArenaProgress: "quiz_arena_progress",
   quizArenaAttempts: "quiz_arena_attempts",
+  quizArenaDrafts: "quiz_arena_drafts",
   library: "digital_library",
   performance: "performance_reports",
   heuristics: "performance_heuristics",
@@ -317,16 +318,13 @@ export async function updateEnquiryStatus(
   status: string,
 ): Promise<boolean> {
   const collection = await getCollection(COLLECTIONS.enquiries);
-  const result = await collection.updateOne(
-    { id },
-    { $set: { status } } as any,
-  );
+  const result = await collection.updateOne({ id }, {
+    $set: { status },
+  } as any);
   return result.modifiedCount > 0;
 }
 
-export async function deleteEnquiry(
-  id: string,
-): Promise<boolean> {
+export async function deleteEnquiry(id: string): Promise<boolean> {
   const collection = await getCollection(COLLECTIONS.enquiries);
   const result = await collection.deleteOne({ id });
   return result.deletedCount > 0;
@@ -343,7 +341,7 @@ export async function createPasswordResetRequest(input: {
 
   const request = {
     id: `pwdreset-${randomUUID()}`,
-name: input.name.trim(),
+    name: input.name.trim(),
     email: input.email.trim().toLowerCase(),
     phone: input.phone.trim(),
     role: input.role,
@@ -365,10 +363,7 @@ export async function getAllPasswordResetRequests() {
     docs.map(async (doc: any) => {
       if (!doc.id && doc._id) {
         const id = `pwdreset-${doc._id.toString()}`;
-        await collection.updateOne(
-          { _id: doc._id },
-          { $set: { id } },
-        );
+        await collection.updateOne({ _id: doc._id }, { $set: { id } });
         return { ...doc, id };
       }
       return doc;
@@ -389,19 +384,16 @@ export async function updatePasswordResetRequest(
     const mongoId = id.replace("pwdreset-", "");
     try {
       const { ObjectId } = await import("mongodb");
-      await collection.updateOne(
-        { _id: new ObjectId(mongoId) } as any,
-        { $set: update },
-      );
+      await collection.updateOne({ _id: new ObjectId(mongoId) } as any, {
+        $set: update,
+      });
     } catch {
       // ignore
     }
   }
 }
 
-export async function deletePasswordResetRequest(
-  id: string,
-): Promise<boolean> {
+export async function deletePasswordResetRequest(id: string): Promise<boolean> {
   const collection = await getCollection(COLLECTIONS.passwordResetRequests);
 
   const result = await collection.deleteOne({ id } as any);
@@ -426,12 +418,10 @@ export async function deletePasswordResetRequest(
 export async function getAdminUserIds(): Promise<string[]> {
   const collection = await getUsersCollection();
   const admins = await collection
-    .find(
-      {
-        role: "admin",
-        deletedAt: { $exists: false },
-      } as any,
-    )
+    .find({
+      role: "admin",
+      deletedAt: { $exists: false },
+    } as any)
     .project({ id: 1 })
     .toArray();
   return admins.map((a: any) => a.id).filter(Boolean);
@@ -474,10 +464,7 @@ function getEmployeeCodeYear(value?: string | Date | null) {
     return new Date().getFullYear();
   }
 
-  const date =
-    value instanceof Date
-      ? value
-      : new Date(value);
+  const date = value instanceof Date ? value : new Date(value);
 
   if (Number.isNaN(date.getTime())) {
     return new Date().getFullYear();
@@ -491,9 +478,7 @@ function parseEmployeeCode(value?: string | null) {
     return null;
   }
 
-  const match = value.match(
-    /^SIQ-(?:EMP|FAC)-(\d{4})-(\d+)$/,
-  );
+  const match = value.match(/^SIQ-(?:EMP|FAC)-(\d{4})-(\d+)$/);
 
   if (!match) {
     return null;
@@ -505,13 +490,8 @@ function parseEmployeeCode(value?: string | null) {
   };
 }
 
-async function ensureEmployeeCounterAtLeast(
-  year: number,
-  sequence: number,
-) {
-  const collection = await getCollection<Document>(
-    COLLECTIONS.counters,
-  );
+async function ensureEmployeeCounterAtLeast(year: number, sequence: number) {
+  const collection = await getCollection<Document>(COLLECTIONS.counters);
 
   await collection.updateOne(
     {
@@ -528,12 +508,8 @@ async function ensureEmployeeCounterAtLeast(
   );
 }
 
-async function generateEmployeeCode(
-  year = new Date().getFullYear(),
-) {
-  const collection = await getCollection<Document>(
-    COLLECTIONS.counters,
-  );
+async function generateEmployeeCode(year = new Date().getFullYear()) {
+  const collection = await getCollection<Document>(COLLECTIONS.counters);
 
   const counter = await collection.findOneAndUpdate(
     {
@@ -556,19 +532,13 @@ async function generateEmployeeCode(
 
   const sequence = Number(counter?.seq ?? 1);
 
-  return `SIQ-EMP-${year}-${String(sequence).padStart(
-    4,
-    "0",
-  )}`;
+  return `SIQ-EMP-${year}-${String(sequence).padStart(4, "0")}`;
 }
 
 async function ensureEmployeeCodesBackfilled() {
   if (!employeeCodeBackfillPromise) {
     employeeCodeBackfillPromise = (async () => {
-      const users =
-        await getCollection<UserDocument>(
-          COLLECTIONS.users,
-        );
+      const users = await getCollection<UserDocument>(COLLECTIONS.users);
 
       /*
        * Synchronize the Employee ID counter using
@@ -586,45 +556,26 @@ async function ensureEmployeeCodesBackfilled() {
         })
         .toArray();
 
-      const maximumByYear =
-        new Map<number, number>();
+      const maximumByYear = new Map<number, number>();
 
       for (const employee of existingEmployees) {
         const parsed =
-          parseEmployeeCode(
-            employee.employeeCode as
-              | string
-              | undefined,
-          ) ??
-          parseEmployeeCode(
-            employee.facultyCode as
-              | string
-              | undefined,
-          );
+          parseEmployeeCode(employee.employeeCode as string | undefined) ??
+          parseEmployeeCode(employee.facultyCode as string | undefined);
 
         if (!parsed) {
           continue;
         }
 
-        const currentMaximum =
-          maximumByYear.get(parsed.year) ?? 0;
+        const currentMaximum = maximumByYear.get(parsed.year) ?? 0;
 
         if (parsed.sequence > currentMaximum) {
-          maximumByYear.set(
-            parsed.year,
-            parsed.sequence,
-          );
+          maximumByYear.set(parsed.year, parsed.sequence);
         }
       }
 
-      for (const [
-        year,
-        maximum,
-      ] of maximumByYear.entries()) {
-        await ensureEmployeeCounterAtLeast(
-          year,
-          maximum,
-        );
+      for (const [year, maximum] of maximumByYear.entries()) {
+        await ensureEmployeeCounterAtLeast(year, maximum);
       }
 
       /*
@@ -697,20 +648,16 @@ async function ensureEmployeeCodesBackfilled() {
          */
         const legacyCode =
           employee.role === "educator"
-            ? parseEmployeeCode(
-                employee.facultyCode,
-              )
+            ? parseEmployeeCode(employee.facultyCode)
             : null;
 
         if (legacyCode) {
-          const legacyEmployeeCode =
-            `SIQ-EMP-${legacyCode.year}-${String(
-              legacyCode.sequence,
-            ).padStart(4, "0")}`;
+          const legacyEmployeeCode = `SIQ-EMP-${legacyCode.year}-${String(
+            legacyCode.sequence,
+          ).padStart(4, "0")}`;
 
           const collision = await users.findOne({
-            employeeCode:
-              legacyEmployeeCode,
+            employeeCode: legacyEmployeeCode,
 
             id: {
               $ne: employee.id,
@@ -718,8 +665,7 @@ async function ensureEmployeeCodesBackfilled() {
           } as any);
 
           if (!collision) {
-            employeeCode =
-              legacyEmployeeCode;
+            employeeCode = legacyEmployeeCode;
 
             await ensureEmployeeCounterAtLeast(
               legacyCode.year,
@@ -729,16 +675,11 @@ async function ensureEmployeeCodesBackfilled() {
         }
 
         if (!employeeCode) {
-          const year =
-            getEmployeeCodeYear(
-              employee.approvedAt ??
-                employee.createdAt,
-            );
+          const year = getEmployeeCodeYear(
+            employee.approvedAt ?? employee.createdAt,
+          );
 
-          employeeCode =
-            await generateEmployeeCode(
-              year,
-            );
+          employeeCode = await generateEmployeeCode(year);
         }
 
         await users.updateOne(
@@ -764,8 +705,7 @@ async function ensureEmployeeCodesBackfilled() {
             $set: {
               employeeCode,
 
-              updatedAt:
-                new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
             },
           },
         );
@@ -805,7 +745,7 @@ async function ensureUserIndexes() {
           { unique: true, name: "users_unique_emailKey" },
         ),
       ]);
-            /*
+      /*
        * Assign Faculty IDs to educators already
        * present in the system.
        */
@@ -1208,7 +1148,6 @@ export async function getMockQuizQuestions() {
   return stripMongoIds(await collection.find({}).toArray());
 }
 
-
 // =========================
 // Quiz Arena Progress
 // =========================
@@ -1247,27 +1186,19 @@ export type QuizArenaProgress = {
   updatedAt: string;
 };
 
-type QuizArenaProgressDocument =
-  Document &
-  QuizArenaProgress;
-
+type QuizArenaProgressDocument = Document & QuizArenaProgress;
 
 function normalizeQuizArenaCompletedRounds(
   value: unknown,
 ): Record<number, QuizRound[]> {
-  if (
-    !value ||
-    typeof value !== "object" ||
-    Array.isArray(value)
-  ) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
   }
 
   const result: Record<number, QuizRound[]> = {};
 
   for (let level = 1; level <= 10; level += 1) {
-    const rawRounds =
-      (value as Record<string, unknown>)[String(level)];
+    const rawRounds = (value as Record<string, unknown>)[String(level)];
 
     if (!Array.isArray(rawRounds)) {
       continue;
@@ -1284,9 +1215,7 @@ function normalizeQuizArenaCompletedRounds(
               round <= QUIZ_ROUNDS_PER_LEVEL,
           ),
       ),
-    ].sort(
-      (left, right) => left - right,
-    ) as QuizRound[];
+    ].sort((left, right) => left - right) as QuizRound[];
 
     if (rounds.length) {
       result[level] = rounds;
@@ -1295,7 +1224,6 @@ function normalizeQuizArenaCompletedRounds(
 
   return result;
 }
-
 
 export async function getQuizArenaProgress(input: {
   userId: string;
@@ -1312,78 +1240,57 @@ export async function getQuizArenaProgress(input: {
 
   difficulty: Difficulty;
 }): Promise<QuizArenaProgress | null> {
-  const collection =
-    await getCollection<QuizArenaProgressDocument>(
-      COLLECTIONS.quizArenaProgress,
-    );
+  const collection = await getCollection<QuizArenaProgressDocument>(
+    COLLECTIONS.quizArenaProgress,
+  );
 
   const document = await collection.findOne({
-    userId:
-      input.userId,
+    userId: input.userId,
 
-    learningCategory:
-      input.learningCategory,
+    learningCategory: input.learningCategory,
 
-    exam:
-      input.exam,
+    exam: input.exam,
 
-    schoolClass:
-      input.schoolClass,
+    schoolClass: input.schoolClass,
 
-    board:
-      input.board,
+    board: input.board,
 
-    subject:
-      input.subject,
+    subject: input.subject,
 
-    difficulty:
-      input.difficulty,
+    difficulty: input.difficulty,
   });
 
   if (!document) {
     return null;
   }
 
-  const progress =
-    stripMongoId(document) as QuizArenaProgress;
+  const progress = stripMongoId(document) as QuizArenaProgress;
 
   return {
     ...progress,
 
-    schoolClass:
-      progress.schoolClass ?? null,
+    schoolClass: progress.schoolClass ?? null,
 
-    board:
-      progress.board ?? null,
+    board: progress.board ?? null,
 
-    unlockedLevel:
-      Math.max(
-        1,
-        Math.min(
-          10,
-          Number(progress.unlockedLevel) || 1,
-        ),
-      ) as QuizJourneyLevel,
+    unlockedLevel: Math.max(
+      1,
+      Math.min(10, Number(progress.unlockedLevel) || 1),
+    ) as QuizJourneyLevel,
 
-    completedRounds:
-      normalizeQuizArenaCompletedRounds(
-        progress.completedRounds,
-      ),
+    completedRounds: normalizeQuizArenaCompletedRounds(
+      progress.completedRounds,
+    ),
 
-    totalQuestionsCompleted:
-      Number(progress.totalQuestionsCompleted) || 0,
+    totalQuestionsCompleted: Number(progress.totalQuestionsCompleted) || 0,
 
-    totalCorrectAnswers:
-      Number(progress.totalCorrectAnswers) || 0,
+    totalCorrectAnswers: Number(progress.totalCorrectAnswers) || 0,
 
-    totalIncorrectAnswers:
-      Number(progress.totalIncorrectAnswers) || 0,
+    totalIncorrectAnswers: Number(progress.totalIncorrectAnswers) || 0,
 
-    totalScore:
-      Number(progress.totalScore) || 0,
+    totalScore: Number(progress.totalScore) || 0,
   };
 }
-
 
 export async function saveQuizArenaRoundProgress(input: {
   userId: string;
@@ -1410,223 +1317,151 @@ export async function saveQuizArenaRoundProgress(input: {
 
   score: number;
 }): Promise<QuizArenaProgress> {
-  const collection =
-    await getCollection<QuizArenaProgressDocument>(
-      COLLECTIONS.quizArenaProgress,
-    );
+  const collection = await getCollection<QuizArenaProgressDocument>(
+    COLLECTIONS.quizArenaProgress,
+  );
 
-  const existing =
-    await getQuizArenaProgress({
-      userId:
-        input.userId,
+  const existing = await getQuizArenaProgress({
+    userId: input.userId,
 
-      learningCategory:
-        input.learningCategory,
+    learningCategory: input.learningCategory,
 
-      exam:
-        input.exam,
+    exam: input.exam,
 
-      schoolClass:
-        input.schoolClass,
+    schoolClass: input.schoolClass,
 
-      board:
-        input.board,
+    board: input.board,
 
-      subject:
-        input.subject,
+    subject: input.subject,
 
-      difficulty:
-        input.difficulty,
-    });
+    difficulty: input.difficulty,
+  });
 
-  const now =
-    new Date().toISOString();
+  const now = new Date().toISOString();
 
-  const completedRounds =
-    normalizeQuizArenaCompletedRounds(
-      existing?.completedRounds,
-    );
+  const completedRounds = normalizeQuizArenaCompletedRounds(
+    existing?.completedRounds,
+  );
 
-  const existingLevelRounds =
-    completedRounds[
-      input.progressionLevel
-    ] ?? [];
+  const existingLevelRounds = completedRounds[input.progressionLevel] ?? [];
 
-  const roundAlreadyCompleted =
-    existingLevelRounds.includes(
-      input.round,
-    );
+  const roundAlreadyCompleted = existingLevelRounds.includes(input.round);
 
   if (!roundAlreadyCompleted) {
-    completedRounds[
-      input.progressionLevel
-    ] = [
+    completedRounds[input.progressionLevel] = [
       ...existingLevelRounds,
       input.round,
-    ].sort(
-      (left, right) => left - right,
-    ) as QuizRound[];
+    ].sort((left, right) => left - right) as QuizRound[];
   }
 
   const completedCurrentLevel =
-    (
-      completedRounds[
-        input.progressionLevel
-      ]?.length ?? 0
-    ) >= QUIZ_ROUNDS_PER_LEVEL;
+    (completedRounds[input.progressionLevel]?.length ?? 0) >=
+    QUIZ_ROUNDS_PER_LEVEL;
 
-  let unlockedLevel =
-    Math.max(
-      existing?.unlockedLevel ?? 1,
-      input.progressionLevel,
+  let unlockedLevel = Math.max(
+    existing?.unlockedLevel ?? 1,
+    input.progressionLevel,
+  ) as QuizJourneyLevel;
+
+  if (completedCurrentLevel && input.progressionLevel < 10) {
+    unlockedLevel = Math.max(
+      unlockedLevel,
+      input.progressionLevel + 1,
     ) as QuizJourneyLevel;
-
-  if (
-    completedCurrentLevel &&
-    input.progressionLevel < 10
-  ) {
-    unlockedLevel =
-      Math.max(
-        unlockedLevel,
-        input.progressionLevel + 1,
-      ) as QuizJourneyLevel;
   }
 
-  const questionsToAdd =
-    roundAlreadyCompleted
-      ? 0
-      : QUIZ_QUESTIONS_PER_ROUND;
+  const questionsToAdd = roundAlreadyCompleted ? 0 : QUIZ_QUESTIONS_PER_ROUND;
 
-  const correctToAdd =
-    roundAlreadyCompleted
-      ? 0
-      : Math.max(
-          0,
-          Math.min(
-            QUIZ_QUESTIONS_PER_ROUND,
-            Math.floor(
-              Number(input.correctAnswers) || 0,
-            ),
-          ),
-        );
+  const correctToAdd = roundAlreadyCompleted
+    ? 0
+    : Math.max(
+        0,
+        Math.min(
+          QUIZ_QUESTIONS_PER_ROUND,
+          Math.floor(Number(input.correctAnswers) || 0),
+        ),
+      );
 
-  const incorrectToAdd =
-    roundAlreadyCompleted
-      ? 0
-      : Math.max(
-          0,
-          Math.min(
-            QUIZ_QUESTIONS_PER_ROUND,
-            Math.floor(
-              Number(input.incorrectAnswers) || 0,
-            ),
-          ),
-        );
+  const incorrectToAdd = roundAlreadyCompleted
+    ? 0
+    : Math.max(
+        0,
+        Math.min(
+          QUIZ_QUESTIONS_PER_ROUND,
+          Math.floor(Number(input.incorrectAnswers) || 0),
+        ),
+      );
 
-  const scoreToAdd =
-    roundAlreadyCompleted
-      ? 0
-      : Math.max(
-          0,
-          Math.floor(
-            Number(input.score) || 0,
-          ),
-        );
+  const scoreToAdd = roundAlreadyCompleted
+    ? 0
+    : Math.max(0, Math.floor(Number(input.score) || 0));
 
   const progress: QuizArenaProgress = {
-    id:
-      existing?.id ??
-      `quiz-progress-${randomUUID()}`,
+    id: existing?.id ?? `quiz-progress-${randomUUID()}`,
 
-    userId:
-      input.userId,
+    userId: input.userId,
 
-    learningCategory:
-      input.learningCategory,
+    learningCategory: input.learningCategory,
 
-    exam:
-      input.exam,
+    exam: input.exam,
 
-    schoolClass:
-      input.schoolClass,
+    schoolClass: input.schoolClass,
 
-    board:
-      input.board,
+    board: input.board,
 
-    subject:
-      input.subject,
+    subject: input.subject,
 
-    difficulty:
-      input.difficulty,
+    difficulty: input.difficulty,
 
     unlockedLevel,
 
     completedRounds,
 
-    totalQuestionsCompleted:
-      Math.min(
-        500,
-        (existing?.totalQuestionsCompleted ?? 0) +
-          questionsToAdd,
-      ),
+    totalQuestionsCompleted: Math.min(
+      500,
+      (existing?.totalQuestionsCompleted ?? 0) + questionsToAdd,
+    ),
 
-    totalCorrectAnswers:
-      (existing?.totalCorrectAnswers ?? 0) +
-      correctToAdd,
+    totalCorrectAnswers: (existing?.totalCorrectAnswers ?? 0) + correctToAdd,
 
     totalIncorrectAnswers:
-      (existing?.totalIncorrectAnswers ?? 0) +
-      incorrectToAdd,
+      (existing?.totalIncorrectAnswers ?? 0) + incorrectToAdd,
 
-    totalScore:
-      (existing?.totalScore ?? 0) +
-      scoreToAdd,
+    totalScore: (existing?.totalScore ?? 0) + scoreToAdd,
 
-    createdAt:
-      existing?.createdAt ?? now,
+    createdAt: existing?.createdAt ?? now,
 
-    updatedAt:
-      now,
+    updatedAt: now,
   };
 
   await collection.updateOne(
     {
-      userId:
-        input.userId,
+      userId: input.userId,
 
-      learningCategory:
-        input.learningCategory,
+      learningCategory: input.learningCategory,
 
-      exam:
-        input.exam,
+      exam: input.exam,
 
-      schoolClass:
-        input.schoolClass,
+      schoolClass: input.schoolClass,
 
-      board:
-        input.board,
+      board: input.board,
 
-      subject:
-        input.subject,
+      subject: input.subject,
 
-      difficulty:
-        input.difficulty,
+      difficulty: input.difficulty,
     },
 
     {
-      $set:
-        progress,
+      $set: progress,
     },
 
     {
-      upsert:
-        true,
+      upsert: true,
     },
   );
 
   return progress;
 }
-
 
 // =========================
 // Quiz Arena Round Attempts
@@ -1650,11 +1485,12 @@ export type QuizArenaAttemptQuestion = {
   timeTakenMs: number;
 };
 
-
 export type QuizArenaRoundAttempt = {
   id: string;
 
   userId: string;
+
+  draftId?: string;
 
   learningCategory: EducationLevel;
 
@@ -1687,7 +1523,6 @@ export type QuizArenaRoundAttempt = {
   completedAt: string;
 };
 
-
 export async function createQuizArenaRoundAttempt(
   input: Omit<
     QuizArenaRoundAttempt,
@@ -1699,31 +1534,68 @@ export async function createQuizArenaRoundAttempt(
       COLLECTIONS.quizArenaAttempts,
     );
 
+  const attemptId = input.draftId
+    ? `quiz-attempt-${input.draftId}`
+    : `quiz-attempt-${randomUUID()}`;
+
+  if (input.draftId) {
+    await collection.createIndex(
+      { id: 1 },
+      {
+        unique: true,
+        name: "quiz_arena_attempt_unique_id",
+      },
+    );
+  }
+
+  const existing = await collection.findOne({
+    id: attemptId,
+    userId: input.userId,
+  });
+
+  if (existing) {
+    return stripMongoId(existing);
+  }
+
   const attempt: QuizArenaRoundAttempt = {
-    id:
-      `quiz-attempt-${randomUUID()}`,
+    id: attemptId,
 
     ...input,
 
-    completedAt:
-      new Date().toISOString(),
+    completedAt: new Date().toISOString(),
   };
 
-  await collection.insertOne(
-    attempt,
-  );
+  try {
+    await collection.insertOne(attempt);
 
-  return attempt;
+    return attempt;
+  } catch (error) {
+    const isDuplicateKey =
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000;
+
+    if (isDuplicateKey && input.draftId) {
+      const savedAttempt =
+        await collection.findOne({
+          id: attemptId,
+          userId: input.userId,
+        });
+
+      if (savedAttempt) {
+        return stripMongoId(savedAttempt);
+      }
+    }
+
+    throw error;
+  }
 }
 
-
-export async function getQuizArenaAttemptsForUser(
-  userId: string,
-) {
-  const collection =
-    await getCollection<QuizArenaRoundAttempt>(
-      COLLECTIONS.quizArenaAttempts,
-    );
+export async function getQuizArenaAttemptsForUser(userId: string) {
+  const collection = await getCollection<QuizArenaRoundAttempt>(
+    COLLECTIONS.quizArenaAttempts,
+  );
 
   return stripMongoIds(
     await collection
@@ -2178,7 +2050,7 @@ export async function createMessage(input: {
     author: input.author,
     audience: input.audience?.length
       ? input.audience
-        : ["student", "educator", "staff", "admin", "parent"],
+      : ["student", "educator", "staff", "admin", "parent"],
     userIds: input.userIds?.length ? input.userIds : undefined,
     createdAt: new Date().toISOString(),
     expiresAt: input.expiresAt ?? null,
@@ -2845,9 +2717,7 @@ export async function getPendingEducatorRequests() {
   return users.map(toManagedUser);
 }
 
-export async function approveEducatorRequest(
-  userId: string,
-) {
+export async function approveEducatorRequest(userId: string) {
   const collection = await getUsersCollection();
 
   const educator = await collection.findOne({
@@ -2941,9 +2811,7 @@ export async function approveUserRequest(userId: string) {
     deletedAt: { $exists: false },
   } as any);
 
-  return updatedUser
-    ? toManagedUser(updatedUser)
-    : null;
+  return updatedUser ? toManagedUser(updatedUser) : null;
 }
 
 export async function rejectUserRequest(userId: string) {
@@ -3037,8 +2905,7 @@ export async function createUserRecord(input: {
   profile?: UserProfile;
   assignedFacultyIds?: string[];
 }) {
-  const normalizedEmail =
-    input.email.trim().toLowerCase();
+  const normalizedEmail = input.email.trim().toLowerCase();
 
   const collection = await getUsersCollection();
 
@@ -3046,38 +2913,29 @@ export async function createUserRecord(input: {
 
   const status = input.status ?? "active";
 
-
   const employeeCode =
-    (input.role === "educator" ||
-      input.role === "staff") &&
-    status === "active"
-      ? await generateEmployeeCode(
-          new Date().getFullYear(),
-        )
+    (input.role === "educator" || input.role === "staff") && status === "active"
+      ? await generateEmployeeCode(new Date().getFullYear())
       : undefined;
   const document: UserDocument = {
-    
     ...(employeeCode
       ? {
           employeeCode,
         }
       : {}),
-id: randomUUID(),
-name: input.name.trim(),
+    id: randomUUID(),
+    name: input.name.trim(),
 
     email: normalizedEmail,
     emailKey: normalizedEmail,
 
     mobile: input.mobile,
-    mobileKey: input.mobile
-      ?.replace(/[^\d]/g, "")
-      .slice(-10),
+    mobileKey: input.mobile?.replace(/[^\d]/g, "").slice(-10),
 
     parentMobile: input.parentMobile,
 
     linkedStudentId: input.linkedStudentId,
-    linkedStudentMobile:
-      input.linkedStudentMobile,
+    linkedStudentMobile: input.linkedStudentMobile,
 
     role: input.role,
     label: getRoleLabel(input.role),
@@ -3092,8 +2950,7 @@ name: input.name.trim(),
 
     profile: input.profile,
 
-    assignedFacultyIds:
-      input.assignedFacultyIds,
+    assignedFacultyIds: input.assignedFacultyIds,
   };
 
   await collection.insertOne(document);
@@ -3116,9 +2973,7 @@ export async function updateUserRecord(input: {
 }) {
   const collection = await getUsersCollection();
 
-  const normalizedEmail = input.email
-    .trim()
-    .toLowerCase();
+  const normalizedEmail = input.email.trim().toLowerCase();
 
   /*
    * Load the existing user first.
@@ -3134,20 +2989,15 @@ export async function updateUserRecord(input: {
   } as any);
 
   if (!existingUser) {
-    throw new Error(
-      "User could not be found in MongoDB.",
-    );
+    throw new Error("User could not be found in MongoDB.");
   }
 
-  const nextStatus =
-    input.status ??
-    existingUser.status ??
-    "active";
+  const nextStatus = input.status ?? existingUser.status ?? "active";
 
   const now = new Date().toISOString();
 
   const setFields: Record<string, unknown> = {
-name: input.name.trim(),
+    name: input.name.trim(),
 
     email: normalizedEmail,
     emailKey: normalizedEmail,
@@ -3171,24 +3021,20 @@ name: input.name.trim(),
    * existing account's role to Faculty.
    */
 
-
   /*
    * Every ACTIVE employee must have a permanent
    * human-readable Employee ID.
    */
   if (
-    (input.role === "educator" ||
-      input.role === "staff") &&
+    (input.role === "educator" || input.role === "staff") &&
     nextStatus === "active" &&
     !existingUser.employeeCode
   ) {
-    setFields.employeeCode =
-      await generateEmployeeCode(
-        new Date().getFullYear(),
-      );
+    setFields.employeeCode = await generateEmployeeCode(
+      new Date().getFullYear(),
+    );
 
-    setFields.approvedAt =
-      existingUser.approvedAt ?? now;
+    setFields.approvedAt = existingUser.approvedAt ?? now;
   }
   /*
    * Only update the password when admin has
@@ -3207,8 +3053,7 @@ name: input.name.trim(),
   }
 
   if (input.assignedFacultyIds !== undefined) {
-    setFields.assignedFacultyIds =
-      input.assignedFacultyIds ?? null;
+    setFields.assignedFacultyIds = input.assignedFacultyIds ?? null;
   }
 
   /*
@@ -3218,10 +3063,7 @@ name: input.name.trim(),
    * "profile.profilePhoto" in the same MongoDB
    * operation, which can cause a path conflict.
    */
-  if (
-    input.profile !== undefined ||
-    input.profilePhoto !== undefined
-  ) {
+  if (input.profile !== undefined || input.profilePhoto !== undefined) {
     const mergedProfile: UserProfile = {
       ...(existingUser.profile || {}),
       ...(input.profile || {}),
@@ -3229,17 +3071,14 @@ name: input.name.trim(),
 
     if (input.profilePhoto !== undefined) {
       if (input.profilePhoto) {
-        mergedProfile.profilePhoto =
-          input.profilePhoto;
+        mergedProfile.profilePhoto = input.profilePhoto;
       } else {
         delete mergedProfile.profilePhoto;
       }
     }
 
     setFields.profile =
-      Object.keys(mergedProfile).length > 0
-        ? mergedProfile
-        : {};
+      Object.keys(mergedProfile).length > 0 ? mergedProfile : {};
   }
 
   await collection.updateOne(
@@ -3262,9 +3101,7 @@ name: input.name.trim(),
   } as any);
 
   if (!updated) {
-    throw new Error(
-      "Updated user could not be found in MongoDB.",
-    );
+    throw new Error("Updated user could not be found in MongoDB.");
   }
 
   return toManagedUser(updated);
@@ -5564,7 +5401,8 @@ export async function getEffectiveModulesForUser(
     }
   }
 
-  const directModules = ((user as any).customModules || []) as AvailableModule[];
+  const directModules = ((user as any).customModules ||
+    []) as AvailableModule[];
   const directAccess = ((user as any).customModuleAccess || {}) as Partial<
     Record<AvailableModule, "read" | "write">
   >;
@@ -6271,11 +6109,14 @@ function buildDashboardAnalytics(input: {
     0,
   );
 
-  const attendanceValue = attendanceRate === null ? "Ã¢â‚¬â€" : `${attendanceRate}%`;
+  const attendanceValue =
+    attendanceRate === null ? "Ã¢â‚¬â€" : `${attendanceRate}%`;
 
-  const assessmentValue = averageScore === null ? "Ã¢â‚¬â€" : `${averageScore}%`;
+  const assessmentValue =
+    averageScore === null ? "Ã¢â‚¬â€" : `${averageScore}%`;
 
-  const learningValue = completionRate === null ? "Ã¢â‚¬â€" : `${completionRate}%`;
+  const learningValue =
+    completionRate === null ? "Ã¢â‚¬â€" : `${completionRate}%`;
 
   let metrics: DashboardMetric[];
 
@@ -7950,11 +7791,7 @@ export async function getTeacherPayoutsForRole(role: Role, userId?: string) {
     );
   }
 
-  if (
-    (role === "educator" ||
-      role === "staff") &&
-    userId
-  ) {
+  if ((role === "educator" || role === "staff") && userId) {
     return stripMongoIds(
       await collection
         .find({ teacherId: userId })
@@ -10465,11 +10302,7 @@ export async function getStaffPayoutsForRole(role: Role, userId?: string) {
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
   }
-  if (
-    (role === "educator" ||
-      role === "staff") &&
-    userId
-  ) {
+  if ((role === "educator" || role === "staff") && userId) {
     return stripMongoIds(
       await collection
         .find({ staffId: userId })
@@ -11590,10 +11423,18 @@ export async function getActionLogs(filters: {
         filters.dateTo + "T23:59:59.999Z";
   }
 
-  const allowedSortFields = ["timestamp", "action", "category", "userName", "email", "ip"];
-  const sortField = filters.sortBy && allowedSortFields.includes(filters.sortBy)
-    ? filters.sortBy
-    : "timestamp";
+  const allowedSortFields = [
+    "timestamp",
+    "action",
+    "category",
+    "userName",
+    "email",
+    "ip",
+  ];
+  const sortField =
+    filters.sortBy && allowedSortFields.includes(filters.sortBy)
+      ? filters.sortBy
+      : "timestamp";
   const sortDir = filters.sortOrder === "asc" ? 1 : -1;
 
   const page = Math.max(1, filters.page ?? 1);
@@ -11616,7 +11457,11 @@ export async function getActionLogs(filters: {
 export async function getActionLogStats() {
   const collection = await getCollection(COLLECTIONS.actionLogs);
   const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).toISOString();
 
   const [allLogs, todayLogs] = await Promise.all([
     collection.find({}).toArray(),
@@ -11647,8 +11492,3 @@ export async function getActionLogStats() {
     uniqueIps: ips.size,
   };
 }
-
-
-
-
-

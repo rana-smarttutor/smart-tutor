@@ -1,5 +1,9 @@
 import { Metadata } from "next";
 import QuizArenaClient from '@/components/quiz-arena-client';
+import { redirect } from 'next/navigation';
+import { getSessionUser } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: "Quiz Arena | SmartIQ Institute",
@@ -9,7 +13,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function QuizArenaPage() {
+export default async function QuizArenaPage() {
+  const session = await getSessionUser();
+  if (!session) redirect("/login?next=%2Fquiz-arena&reason=login_required");
+  if (session.role !== "student" || (session.status && session.status !== "active")) {
+    redirect("/dashboard");
+  }
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

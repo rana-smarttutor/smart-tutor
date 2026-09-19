@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 
 import { RealLoginForm } from "@/components/real-login-form";
 import { getSessionUser } from "@/lib/auth";
+import { safeReturnPath, requiresStudentRole } from "@/lib/access-routes";
 
 const APK_DOWNLOAD_URL =
   "https://s4hwk9dbjuligkqz.public.blob.vercel-storage.com/smart%20tutors.apk";
@@ -21,8 +22,14 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
   const session = await getSessionUser();
+  const query = await searchParams;
+  const next = safeReturnPath(Array.isArray(query.next) ? query.next[0] : query.next);
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -33,7 +40,10 @@ export default async function LoginPage() {
   };
 
   if (session) {
-    redirect("/dashboard");
+    const studentOnly = next
+      ? requiresStudentRole(new URL(next, "https://smartiqinstitute.in").pathname)
+      : false;
+    redirect(next && (!studentOnly || session.role === "student") ? next : "/dashboard");
   }
 
   const apkQrSvg = await QRCode.toString(APK_DOWNLOAD_URL, {

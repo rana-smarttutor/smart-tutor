@@ -12,6 +12,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalLayout } from "@/components/conditional-layout";
 import { PageLoader } from "@/components/page-loader";
+import { AuthAccessExperience } from "@/components/auth-access-experience";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -500,6 +501,8 @@ export default function RootLayout({
       <SiteHeader />
     </div>
   </ConditionalLayout>
+
+  <AuthAccessExperience />
 
   {children}
 
