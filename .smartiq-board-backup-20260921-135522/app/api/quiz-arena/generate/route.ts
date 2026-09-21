@@ -17,17 +17,6 @@ import {
     type QuizSchoolClass,type Stream,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
-import { getBoardSubjects } from "@/lib/quiz-board-subjects";
-import { getQuizBoardSyllabus } from "@/lib/quiz-board-syllabus";
-import {
-  auditSchoolBoardQuiz,
-  findLikelyRepeatedQuizQuestion,
-} from "@/lib/quiz-question-audit";
-import {
-  getPreviouslySeenQuizQuestions,
-  questionHash,
-  reserveQuizQuestions,
-} from "@/lib/quiz-seen-questions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,7 +34,6 @@ type GenerateQuizRequest = {
 };
 
 type GeneratedQuestion = {
-  syllabusUnit?: string;
   question: string;
   options: string[];
   correctAnswer: string;
@@ -115,14 +103,7 @@ function isQuizBoard(
   );
 }
 
-function getAllowedSubjects(
-  exam: CompetitiveExam | null,
-  schoolClass: QuizSchoolClass | null,
-  board: QuizBoard | null,
-): string[] {
-  if (requiresQuizBoard(exam)) {
-    return getBoardSubjects(exam, schoolClass, board);
-  }
+function getAllowedSubjects(exam: CompetitiveExam | null): string[] {
   return getExamDetails(exam)?.subjects ?? [];
 }
 
@@ -316,7 +297,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const allowedSubjects = getAllowedSubjects(exam, normalizedSchoolClass, normalizedBoard);
+    const allowedSubjects = getAllowedSubjects(exam);
 
     if (!allowedSubjects.includes(subject)) {
       return NextResponse.json(
@@ -325,29 +306,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Board syllabi are enforced only for school courses in classes 9-12.
-    // Missing catalog entries fail closed, never silently switch board or class.
-    const syllabus = normalizedBoard && normalizedSchoolClass
-      ? getQuizBoardSyllabus(exam, normalizedSchoolClass, normalizedBoard, subject)
-      : null;
-    if (requiresQuizBoard(exam) && !syllabus) {
-      return NextResponse.json(
-        { error: "Syllabus outline is not configured for this board, class and subject. Please contact SmartIQ support." },
-        { status: 422 },
-      );
-    }
-
-    const syllabusUnits = syllabus?.units ?? [];
     const questionCount = QUIZ_QUESTIONS_PER_ROUND;
     const studentCategory = getStudentCategory(level, exam);
-    const previouslySeen = await getPreviouslySeenQuizQuestions(session.id);
-    const seenHashes = new Set(previouslySeen.map(questionHash));
-    const examplesToAvoid = previouslySeen.slice(-35)
-      .map((text, index) => `${index + 1}. ${text}`)
-      .join("\n");
-
-    let academicAuditRejected = false;
-    for (let generationAttempt = 0; generationAttempt < 3; generationAttempt += 1) {
     const attemptId = randomUUID();
 
     const prompt = `
@@ -368,18 +328,6 @@ Student category: ${studentCategory}
 Subject: ${subject}
 Difficulty: ${difficulty}
 
-${syllabus ? `CURRICULUM RESTRICTIONS (school board course):
-Academic year: ${syllabus.academicYear}
-Board: ${syllabus.board}
-Class: ${syllabus.schoolClass}
-Subject: ${syllabus.subject}
-Permitted curriculum units ONLY (use their names verbatim):
-${syllabus.units.map((unit, index) => `${index + 1}. ${unit}`).join("\n")}
-Reference: ${syllabus.sourceUrl}
-These are editable topical outlines, not an exhaustive official chapter transcription. Do NOT invent textbook chapters or claim that the question was verified from a document you cannot access.
-Attach a syllabusUnit to EVERY question, and it MUST exactly equal a permitted unit above.
-Use only subtopics demonstrably appropriate to the named unit, class and board. No higher-class or entrance-only material.` : ""}
-
 Quiz Arena progression level: ${progressionLevel} of 10
 Round: ${round} of 5
 Progression guidance: ${getJourneyDifficultyGuidance(progressionLevel)}
@@ -387,18 +335,9 @@ Progression guidance: ${getJourneyDifficultyGuidance(progressionLevel)}
 Number of questions: ${questionCount}
 Attempt reference: ${attemptId}
 
-Questions this user has already seen (DO NOT reuse or simply paraphrase these):
-${examplesToAvoid || "None recorded yet."}
-
-Board curriculum source (when applicable): ${normalizedBoard === "CBSE" ? "CBSE 2026-27, https://cbseacademic.nic.in/curriculum_2027.html" : normalizedBoard ? "Maharashtra official Balbharati textbooks, https://ebooks.ebalbharati.in/" : "Selected entrance examination syllabus"}
-Selected subject must be taught in the exact selected class and board.
-The current subject list is a subject catalog, not a verified chapter allowlist;
-do not claim source verification or invent official chapter names.
-
 Strict rules:
 - Generate exactly ${questionCount} unique questions.
 - Every question must match the selected course/exam and subject.
-- For a school-board question, syllabusUnit must be selected verbatim from the permitted curriculum units. For other examinations, use syllabusUnit = "Not applicable".
 - Every question must have exactly 4 distinct options.
 - Exactly one option must be correct.
 - The correctAnswer must exactly match one option string.
@@ -409,8 +348,8 @@ Strict rules:
 - If a school class is selected, every question must stay inside that exact class syllabus level.
 - Never mix Class 6, Class 7, Class 8, Class 9 or Class 10 syllabus levels.
 - Never mix Class 11 and Class 12 syllabus levels.
-- If Maharashtra State Board is selected, use Maharashtra State Board syllabus scope only.
-- If Maharashtra State Board is selected, do not use CBSE-specific syllabus content.
+- If HSC is selected, use Maharashtra State Board syllabus scope only.
+- If HSC is selected, do not use CBSE-specific syllabus content.
 - If CBSE is selected, use CBSE / NCERT-aligned syllabus scope only.
 - If CBSE is selected, do not use Maharashtra HSC-specific syllabus content.
 - For Class 11 or Class 12, stay inside the selected stream and selected subject.
@@ -455,10 +394,6 @@ Strict rules:
                   items: {
                     type: "OBJECT",
                     properties: {
-                      syllabusUnit: {
-                        type: "STRING",
-                        description: "Exact selected curriculum unit for school courses; Not applicable for other exams.",
-                      },
                       question: {
                         type: "STRING",
                         description: "The quiz question.",
@@ -484,7 +419,6 @@ Strict rules:
                       },
                     },
                     required: [
-                      "syllabusUnit",
                       "question",
                       "options",
                       "correctAnswer",
@@ -558,16 +492,19 @@ Strict rules:
       !Array.isArray(parsed.questions) ||
       parsed.questions.length !== questionCount
     ) {
-      academicAuditRejected = true;
-      continue;
+      return NextResponse.json(
+        {
+          error: "The generated quiz is incomplete. Please try again.",
+        },
+        { status: 502 },
+      );
     }
 
     const invalidQuestion = parsed.questions.some((question) => {
-      const uniqueOptions = new Set(Array.isArray(question.options) ? question.options : []);
+      const uniqueOptions = new Set(question.options);
 
       return (
         !question.question ||
-        (syllabus ? !syllabusUnits.includes(question.syllabusUnit ?? "") : false) ||
         !Array.isArray(question.options) ||
         question.options.length !== 4 ||
         uniqueOptions.size !== 4 ||
@@ -578,8 +515,12 @@ Strict rules:
     });
 
     if (invalidQuestion) {
-      academicAuditRejected = true;
-      continue;
+      return NextResponse.json(
+        {
+          error: "The generated question data is invalid. Please try again.",
+        },
+        { status: 502 },
+      );
     }
 
     const questions: QuizQuestion[] = parsed.questions.map(
@@ -593,73 +534,11 @@ Strict rules:
         progressionLevel,
         round,
         question: question.question,
-        ...(syllabus ? {
-          syllabusUnit: question.syllabusUnit,
-          syllabusAcademicYear: syllabus.academicYear,
-          syllabusVerification: syllabus.verification,
-        } : {}),
         options: question.options,
         correctAnswer: question.correctAnswer,
         explanation: question.explanation,
       }),
     );
-
-    const generatedHashes = questions.map((item) => questionHash(item.question));
-    if (
-      new Set(generatedHashes).size !== questions.length ||
-      generatedHashes.some((hash) => seenHashes.has(hash))
-    ) {
-      continue;
-    }
-
-    // Stage 3: best-effort near-duplicate check against ALL saved questions,
-    // including earlier Quiz Arena and Mock Test attempts, plus this batch.
-    const texts = questions.map((item) => item.question);
-    const resemblesSeen = texts.some((text, index) =>
-      findLikelyRepeatedQuizQuestion(
-        text,
-        [...previouslySeen, ...texts.slice(0, index)],
-      ) !== null,
-    );
-    if (resemblesSeen) {
-      continue;
-    }
-
-    // Stage 3: a separate academic review screens the COMPLETE board round.
-    // This is AI-assisted screening, not certification against official PDFs.
-    if (syllabus) {
-      const review = await auditSchoolBoardQuiz({
-        apiKey,
-        board: syllabus.board,
-        schoolClass: syllabus.schoolClass,
-        subject: syllabus.subject,
-        academicYear: syllabus.academicYear,
-        allowedUnits: syllabus.units,
-        questions: questions.map((item) => ({
-          question: item.question,
-          options: item.options,
-          correctAnswer: item.correctAnswer,
-          explanation: item.explanation,
-          syllabusUnit: item.syllabusUnit,
-        })),
-        previouslySeen,
-      });
-      if (!review.ok) {
-        academicAuditRejected = true;
-        console.warn("Quiz Arena: academic review rejected round:", review.reason);
-        continue;
-      }
-    }
-
-    const reserved = await reserveQuizQuestions(
-      session.id,
-      texts,
-    );
-    if (!reserved) {
-      // Another request may have reserved an overlapping question.
-      for (const item of questions) seenHashes.add(questionHash(item.question));
-      continue;
-    }
 
     return NextResponse.json({
       questions,
@@ -667,16 +546,6 @@ Strict rules:
       provider: "gemini",
       attemptId,
     });
-    }
-
-    return NextResponse.json(
-      {
-        error: academicAuditRejected
-          ? "We could not create ten questions that passed the independent syllabus and answer review. Please try again."
-          : "Unable to generate ten sufficiently distinct new questions without repeats. Please try again.",
-      },
-      { status: academicAuditRejected ? 422 : 409 },
-    );
   } catch (error) {
     console.error("Quiz Arena generation route error:", error);
 

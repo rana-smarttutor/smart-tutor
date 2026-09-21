@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
-import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 
 import {
   competitiveExams,
@@ -306,9 +305,7 @@ export async function POST(
 
     if (
       !subject ||
-      !(requiresQuizBoard(body.exam)
-        ? getBoardSubjects(body.exam, schoolClass, board)
-        : examDetails.subjects).includes(subject)
+      !examDetails.subjects.includes(subject)
     ) {
       return errorResponse(
         "Invalid quiz subject.",

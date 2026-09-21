@@ -18,7 +18,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Choose your board and required school subjects for personalised tutoring through home tutors or online sessions. Optional future-skill courses can also be selected during registration.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 6 Students",
     courseNamesIncluded: [
       "Mathematics",
@@ -58,7 +58,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Choose your board and subjects for personalised academic support, concept clarity, regular revision, and better confidence in school.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 7 Students",
     courseNamesIncluded: [
       "Mathematics",
@@ -98,7 +98,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Choose your board and subjects for structured academic tutoring, concept development, homework support, and regular assessment preparation.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 8 Students",
     courseNamesIncluded: [
       "Mathematics",
@@ -138,7 +138,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Class 9 is a major foundation year. Select your board and required subjects for targeted tutoring, revision, tests, and doubt-solving.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 9 Students",
     courseNamesIncluded: [
       "Mathematics",
@@ -179,7 +179,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Get structured tuition, chapter completion, revision, doubt-solving, and practice support for the school subjects you select.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 10 Students",
     courseNamesIncluded: [
       "Mathematics",
@@ -220,7 +220,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Choose your board and multiple subjects for academic support, concept clarity, regular revision, and exam readiness.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 11 Students",
     courseNamesIncluded: [
       "Science Stream",
@@ -259,7 +259,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Students receive structured support for selected Science, Commerce, Arts, and Computer Science subjects with consistent revision and board-exam practice.",
     duration: "Full Academic Year",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Class 12 Students",
     courseNamesIncluded: [
       "Science Stream",
@@ -588,7 +588,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Deep GS coverage, Optional subject support, and current affairs analysis. We focus on answer writing and strategic syllabus completion.",
     duration: "12-18 Months",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Aspirants",
     courseNamesIncluded: [
       "UPSC Civil Services",
@@ -619,7 +619,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   description:
     "Structured preparation for state civil services examinations covering prelims, mains, current affairs, aptitude, state-specific general knowledge, answer writing, and interview guidance.",
   duration: "10-15 Months",
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
   audienceLabel: "State Civil Services Aspirants",
   courseNamesIncluded: [
     "MPSC",
@@ -670,7 +670,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Master logical puzzles, fast quant calculations, and banking awareness. Regular mock tests to improve your percentile. Special focus on SBI PO and NABARD tracks.",
     duration: "6 Months",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Bank Aspirants",
     courseNamesIncluded: [
       "IBPS PO",
@@ -711,7 +711,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   description:
     "Prepare for RBI, NABARD, SEBI, IRDAI, LIC, NIACL, and other regulatory and insurance examinations through aptitude, finance, economics, reasoning, English, general awareness, and mock-test practice.",
   duration: "6-10 Months",
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
   audienceLabel: "Finance & Insurance Aspirants",
   courseNamesIncluded: [
     "RBI Grade B",
@@ -761,7 +761,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Master Quantitative Aptitude, General Intelligence, English, and General Awareness at the advanced level needed for SSC CGL Tier I & II and CPO exams. Includes descriptive writing practice for Tier III.",
     duration: "8 Months",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "SSC Aspirants",
     courseNamesIncluded: [
       "SSC CGL",
@@ -802,7 +802,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   description:
     "Complete preparation for CTET, State TET, DSSSB, KVS, NVS, UGC NET, CSIR NET, and SET examinations with subject knowledge, teaching aptitude, reasoning, language, research aptitude, and mock tests.",
   duration: "6-10 Months",
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
   audienceLabel: "Teaching & Academic Aspirants",
   courseNamesIncluded: [
     "CTET",
@@ -852,7 +852,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Prepare for Police Bharti and Army Bharti exams with complete support for written exam subjects, general knowledge, reasoning, mathematics, current affairs, and basic physical-readiness guidance. Includes practice tests, previous-year question support, fitness awareness, and selection strategy.",
     duration: "6-8 Months",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Police & Army Aspirants",
     courseNamesIncluded: [
       "Police Bharti",
@@ -899,7 +899,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Prepare for LLB entrance exams with focused coaching for legal aptitude, logical reasoning, English, general knowledge, current affairs, and analytical ability. Includes support for 3-year and 5-year law entrance pathways, mock tests, previous-year questions, and exam strategy.",
     duration: "6-8 Months",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "Law Aspirants",
     courseNamesIncluded: [
       "MH CET Law 3 Year",
@@ -950,7 +950,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
     description:
       "Prepare for MBA entrance exams with structured coaching for quantitative aptitude, logical reasoning, verbal ability, data interpretation, general awareness, and interview readiness. Includes mock tests, exam strategy, previous-year question practice, and guidance for management entrance pathways.",
     duration: "6-8 Months",
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
     audienceLabel: "MBA Aspirants",
     courseNamesIncluded: [
       "MBA CET",
@@ -1003,7 +1003,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   description:
     "Prepare for GATE and related postgraduate technical examinations with branch-specific subject preparation, engineering mathematics, aptitude, previous-year questions, mock tests, postgraduate admission guidance, and PSU recruitment awareness.",
   duration: "8-12 Months",
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
   audienceLabel: "Engineering Graduates & Final-Year Students",
   courseNamesIncluded: [
     "GATE",
@@ -1053,7 +1053,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   description:
     "Prepare for RRB NTPC, Group D, ALP, Technician, Junior Engineer, RPF Constable, and RPF Sub Inspector examinations with maths, reasoning, general science, general awareness, technical preparation, and mock tests.",
   duration: "6-8 Months",
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
   audienceLabel: "Railway Aspirants",
   courseNamesIncluded: [
     "RRB NTPC",
@@ -1100,7 +1100,7 @@ export const courseLibrary: Omit<CourseItem, "id">[] = [
   description:
     "Prepare for NDA, CDS, AFCAT, CAPF, Agniveer, Coast Guard, and other defence recruitment pathways through written examination coaching, current affairs, physical-readiness guidance, personality development, and SSB preparation.",
   duration: "6-12 Months",
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
   audienceLabel: "Defence & Paramilitary Aspirants",
   courseNamesIncluded: [
     "NDA",

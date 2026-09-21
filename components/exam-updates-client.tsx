@@ -430,9 +430,13 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
             {/* LIVE UPDATES TICKER */}
             <section className="mt-3 flex min-h-[44px] items-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               {/* FIXED LABEL */}
-              <div className="relative z-10 flex shrink-0 items-center gap-2 border-r border-slate-100 bg-white px-4 py-3 text-[9px] font-black uppercase tracking-[0.1em] text-red-600">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
-                Live Updates
+              <div className="relative z-10 flex min-h-[44px] shrink-0 items-center gap-2.5 bg-red-600 px-5 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-white shadow-[4px_0_14px_rgba(220,38,38,0.12)]">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+                </span>
+
+                <span className="whitespace-nowrap">LIVE UPDATES</span>
               </div>
 
               {/* RUNNING NEWS */}
@@ -450,7 +454,10 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         >
                           <span>{update.title}</span>
 
-                          <span className="text-blue-300">â€¢</span>
+                          <span
+                            aria-hidden="true"
+                            className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500"
+                          />
                         </a>
                       ),
                     )}
@@ -464,75 +471,68 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
             </section>
 
             {/* CATEGORIES */}
-<section id="exam-categories" className="mt-7 scroll-mt-28">
-  <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
-    Explore Exam Categories
-  </p>
+            <section id="exam-categories" className="mt-7 scroll-mt-28">
+              <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
+                Explore Exam Categories
+              </p>
 
-  <h2 className="mt-1.5 text-2xl font-black text-slate-950">
-    Find updates by exam category
-  </h2>
+              <h2 className="mt-1.5 text-2xl font-black text-slate-950">
+                Find updates by exam category
+              </h2>
 
-  <div className="mt-4 grid gap-4 md:grid-cols-3">
-    {CATEGORY_CARDS.map((category) => {
-      const Icon = category.icon;
-      const active = activeCategory === category.name;
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                {CATEGORY_CARDS.map((category) => {
+                  const Icon = category.icon;
+                  const active = activeCategory === category.name;
 
-      return (
-        <button
-          key={category.name}
-          type="button"
-          onClick={() => selectCategory(category.name)}
-          className={`rounded-[22px] border p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
-            active
-              ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
-              : "border-slate-200 bg-white hover:border-blue-200"
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div
-              className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                active
-                  ? "bg-blue-600 text-white"
-                  : "bg-blue-50 text-blue-600"
-              }`}
-            >
-              <Icon className="h-5 w-5" />
-            </div>
+                  return (
+                    <button
+                      key={category.name}
+                      type="button"
+                      onClick={() => selectCategory(category.name)}
+                      className={`rounded-[22px] border p-6 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                        active
+                          ? "border-blue-400 bg-blue-50 ring-2 ring-blue-100"
+                          : "border-slate-200 bg-white hover:border-blue-200"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                            active
+                              ? "bg-blue-600 text-white"
+                              : "bg-blue-50 text-blue-600"
+                          }`}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
 
-            <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-black text-slate-600">
-              {counts[category.name]}
-            </span>
-          </div>
+                        <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-black text-slate-600">
+                          {counts[category.name]}
+                        </span>
+                      </div>
 
-          <h3 className="mt-5 text-lg font-black text-slate-950">
-            {category.title}
-          </h3>
+                      <h3 className="mt-5 text-lg font-black text-slate-950">
+                        {category.title}
+                      </h3>
 
-          <p className="mt-1.5 text-xs font-bold text-blue-600">
-            {category.examples}
-          </p>
+                      <p className="mt-1.5 text-xs font-bold text-blue-600">
+                        {category.examples}
+                      </p>
 
-          <p className="mt-3 min-h-[48px] text-xs font-medium leading-5 text-slate-500">
-            {category.description}
-          </p>
+                      <p className="mt-3 min-h-[48px] text-xs font-medium leading-5 text-slate-500">
+                        {category.description}
+                      </p>
 
-          <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-blue-600">
-            View Updates
-            <ChevronRight className="h-4 w-4" />
-          </span>
-        </button>
-      );
-    })}
-  </div>
-</section>
-
-            {/* FEATURED + IMPORTANT */}
-            <div className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
-              <FeaturedUpdate update={featuredUpdate} />
-
-              <ImportantDates updates={importantUpdates} />
-            </div>
+                      <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-black text-blue-600">
+                        View Updates
+                        <ChevronRight className="h-4 w-4" />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           </div>
 
           {/* ==================================================
@@ -573,66 +573,18 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                 })}
               </div>
             </section>
-
-            {/* COURSE CTA */}
-            <section className="relative overflow-hidden rounded-[20px] border border-blue-100 bg-gradient-to-br from-[#eef5ff] to-[#dfeaff] p-5">
-              <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-blue-300/30 blur-2xl" />
-
-              <div className="relative">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                  <Trophy className="h-5 w-5" />
-                </div>
-
-                <h3 className="mt-4 text-lg font-black leading-tight text-[#102447]">
-                  Prepare Smarter.
-                  <span className="block text-blue-600">Stay Ahead.</span>
-                </h3>
-
-                <p className="mt-2 text-[10px] font-medium leading-4 text-slate-600">
-                  Explore SmartIQ Institute courses and structured learning
-                  programs.
-                </p>
-
-                <Link
-                  href="/courses"
-                  className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-[10px] font-black text-white"
-                >
-                  Explore Courses
-                  <ArrowRight className="h-3 w-3" />
-                </Link>
-              </div>
-            </section>
-
-            {/* SOURCES */}
-            <section className="rounded-[20px] bg-[#09285e] p-4 text-white shadow-sm">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-emerald-300" />
-
-                <h3 className="text-[11px] font-black uppercase tracking-[0.08em]">
-                  Official Sources
-                </h3>
-              </div>
-
-              <p className="mt-2 text-[10px] font-medium leading-4 text-blue-100/70">
-                Exam links open directly on approved official authority
-                websites.
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {sources.map((source) => (
-                  <a
-                    key={source.key}
-                    href={source.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[9px] font-black text-white transition hover:bg-white/20"
-                  >
-                    {source.name}
-                  </a>
-                ))}
-              </div>
-            </section>
           </aside>
+        </div>
+
+        {/* ==================================================
+            FEATURED UPDATE + IMPORTANT DATES
+            FULL-WIDTH SECTION
+        ================================================== */}
+
+        <div className="mt-5 grid w-full gap-5 lg:grid-cols-[1.15fr_.85fr]">
+          <FeaturedUpdate update={featuredUpdate} />
+
+          <ImportantDates updates={importantUpdates} />
         </div>
 
         {/* ==================================================
@@ -979,4 +931,3 @@ function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
     </section>
   );
 }
-
