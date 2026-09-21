@@ -537,25 +537,42 @@ export default function CourseModal({
     topicsCovered: false,
   });
   useEffect(() => {
+    const isAcademicCourse = course
+      ? REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey)
+      : false;
+
+    const preselectedCourse =
+      !isAcademicCourse &&
+      initialAdditionalCourse &&
+      course?.courseNamesIncluded.includes(initialAdditionalCourse)
+        ? initialAdditionalCourse
+        : "";
+
     setIsSuccess(false);
-    setSelectedCourseName("");
+
+    setSelectedCourseName(preselectedCourse);
+
     setMhtCetSubExam("");
     setSelectedBoard("");
     setSelectedStream("");
     setSelectedSubjects([]);
     setOtherSubject("");
+
+    setSelectedAdditionalCourses(
+      isAcademicCourse && initialAdditionalCourse
+        ? [initialAdditionalCourse]
+        : [],
+    );
+
     setSelectedLearningMode("");
     setSelectedSlot("");
-    setOpenAccordions({ whatYoullLearn: true, skillsYoullGain: false, topicsCovered: false });
 
-    if (initialAdditionalCourse) {
-      setSelectedAdditionalCourses([initialAdditionalCourse]);
-    } else {
-      setSelectedAdditionalCourses([]);
-      setSelectedLearningMode("");
-      setSelectedSlot("");
-    }
-  }, [course?.standardKey, initialAdditionalCourse]);
+    setOpenAccordions({
+      whatYoullLearn: true,
+      skillsYoullGain: false,
+      topicsCovered: false,
+    });
+  }, [course?.id, course?.standardKey, initialAdditionalCourse]);
 
   if (!course) {
     return null;
@@ -664,13 +681,31 @@ export default function CourseModal({
     setName("");
     setContact("");
     setRole("student");
-    setSelectedCourseName("");
+
+    setSelectedCourseName(
+      course &&
+        !REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey) &&
+        initialAdditionalCourse &&
+        course.courseNamesIncluded.includes(initialAdditionalCourse)
+        ? initialAdditionalCourse
+        : "",
+    );
+
     setMhtCetSubExam("");
     setSelectedBoard("");
     setSelectedStream("");
     setSelectedSubjects([]);
     setOtherSubject("");
-    setSelectedAdditionalCourses([]);
+
+    setSelectedAdditionalCourses(
+      course &&
+        REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey) &&
+        initialAdditionalCourse
+        ? [initialAdditionalCourse]
+        : [],
+    );
+
+    setSelectedLearningMode("");
     setSelectedSlot("");
   }
 

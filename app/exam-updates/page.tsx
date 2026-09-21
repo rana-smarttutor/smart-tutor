@@ -7,7 +7,7 @@ import {
 } from "@/lib/exam-updates";
 
 export const runtime = "nodejs";
-export const revalidate = 3600;
+export const revalidate = 900;
 
 export const metadata: Metadata = {
   title: "Exam Updates | SmartIQ Institute",
