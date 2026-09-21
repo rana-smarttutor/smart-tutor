@@ -189,7 +189,6 @@ export const COLLECTIONS = {
   quizArenaProgress: "quiz_arena_progress",
   quizArenaAttempts: "quiz_arena_attempts",
   quizArenaDrafts: "quiz_arena_drafts",
-  quizArenaSeenQuestions: "quiz_arena_seen_questions",
   library: "digital_library",
   performance: "performance_reports",
   heuristics: "performance_heuristics",

@@ -24,7 +24,6 @@ import {
   type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
-import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 import type { QuizArenaDraft } from "@/lib/quiz-arena-drafts";
 
 type Step =
@@ -146,12 +145,12 @@ export default function QuizArenaClient() {
   }, [selectedExam]);
 
   const subjects = useMemo(() => {
-    if (!selectedExamDetails) return [];
-    if (requiresQuizBoard(selectedExam)) {
-      return getBoardSubjects(selectedExam, selectedSchoolClass, selectedBoard);
+    if (!selectedExamDetails) {
+      return [];
     }
+
     return selectedExamDetails.subjects;
-  }, [selectedExamDetails, selectedExam, selectedSchoolClass, selectedBoard]);
+  }, [selectedExamDetails]);
 
   const playfulMode =
     selectedExam === "class-6-8" || selectedExam === "class-9-10";

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CompetitiveExam,
   Difficulty,
   EducationLevel,
@@ -31,10 +31,6 @@ export type QuizQuestion = {
   round?: QuizRound;
 
   question: string;
-
-  syllabusUnit?: string;
-  syllabusAcademicYear?: string;
-  syllabusVerification?: "official-pdf-checked" | "editorial-outline-needs-review";
 
   options: string[];
 

@@ -20,10 +20,6 @@ import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 import { getQuizBoardSyllabus } from "@/lib/quiz-board-syllabus";
 import {
-  auditSchoolBoardQuiz,
-  findLikelyRepeatedQuizQuestion,
-} from "@/lib/quiz-question-audit";
-import {
   getPreviouslySeenQuizQuestions,
   questionHash,
   reserveQuizQuestions,
@@ -346,7 +342,6 @@ export async function POST(request: Request) {
       .map((text, index) => `${index + 1}. ${text}`)
       .join("\n");
 
-    let academicAuditRejected = false;
     for (let generationAttempt = 0; generationAttempt < 3; generationAttempt += 1) {
     const attemptId = randomUUID();
 
@@ -558,8 +553,12 @@ Strict rules:
       !Array.isArray(parsed.questions) ||
       parsed.questions.length !== questionCount
     ) {
-      academicAuditRejected = true;
-      continue;
+      return NextResponse.json(
+        {
+          error: "The generated quiz is incomplete. Please try again.",
+        },
+        { status: 502 },
+      );
     }
 
     const invalidQuestion = parsed.questions.some((question) => {
@@ -578,8 +577,12 @@ Strict rules:
     });
 
     if (invalidQuestion) {
-      academicAuditRejected = true;
-      continue;
+      return NextResponse.json(
+        {
+          error: "The generated question data is invalid. Please try again.",
+        },
+        { status: 502 },
+      );
     }
 
     const questions: QuizQuestion[] = parsed.questions.map(
@@ -612,48 +615,9 @@ Strict rules:
       continue;
     }
 
-    // Stage 3: best-effort near-duplicate check against ALL saved questions,
-    // including earlier Quiz Arena and Mock Test attempts, plus this batch.
-    const texts = questions.map((item) => item.question);
-    const resemblesSeen = texts.some((text, index) =>
-      findLikelyRepeatedQuizQuestion(
-        text,
-        [...previouslySeen, ...texts.slice(0, index)],
-      ) !== null,
-    );
-    if (resemblesSeen) {
-      continue;
-    }
-
-    // Stage 3: a separate academic review screens the COMPLETE board round.
-    // This is AI-assisted screening, not certification against official PDFs.
-    if (syllabus) {
-      const review = await auditSchoolBoardQuiz({
-        apiKey,
-        board: syllabus.board,
-        schoolClass: syllabus.schoolClass,
-        subject: syllabus.subject,
-        academicYear: syllabus.academicYear,
-        allowedUnits: syllabus.units,
-        questions: questions.map((item) => ({
-          question: item.question,
-          options: item.options,
-          correctAnswer: item.correctAnswer,
-          explanation: item.explanation,
-          syllabusUnit: item.syllabusUnit,
-        })),
-        previouslySeen,
-      });
-      if (!review.ok) {
-        academicAuditRejected = true;
-        console.warn("Quiz Arena: academic review rejected round:", review.reason);
-        continue;
-      }
-    }
-
     const reserved = await reserveQuizQuestions(
       session.id,
-      texts,
+      questions.map((item) => item.question),
     );
     if (!reserved) {
       // Another request may have reserved an overlapping question.
@@ -670,12 +634,8 @@ Strict rules:
     }
 
     return NextResponse.json(
-      {
-        error: academicAuditRejected
-          ? "We could not create ten questions that passed the independent syllabus and answer review. Please try again."
-          : "Unable to generate ten sufficiently distinct new questions without repeats. Please try again.",
-      },
-      { status: academicAuditRejected ? 422 : 409 },
+      { error: "Unable to generate ten new questions without repeats. Please try again." },
+      { status: 409 },
     );
   } catch (error) {
     console.error("Quiz Arena generation route error:", error);

@@ -1,0 +1,2170 @@
+{
+  "academicYear": "2026-27",
+  "description": "Editable provisional board-wise unit outline. Only CBSE IX Mathematics units were transcribed from official 2026-27 PDF. Other units must be reconciled against actual board syllabus/textbook before calling them verified.",
+  "entries": [
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Mathematics",
+      "units": [
+        "Sets and real numbers",
+        "Polynomials and algebraic identities",
+        "Linear equations",
+        "Ratio and proportion",
+        "Coordinate geometry",
+        "Lines and angles",
+        "Triangles and quadrilaterals",
+        "Circle geometry",
+        "Constructions",
+        "Statistics and probability"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Science and Technology",
+      "units": [
+        "Measurements and motion",
+        "Force and laws of motion",
+        "Work and energy",
+        "Current electricity",
+        "Matter and its properties",
+        "Classification of elements",
+        "Acids bases and salts",
+        "Life processes and diversity",
+        "Environment and sustainability"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "History and Political Science",
+      "units": [
+        "Modern Indian history",
+        "Historical sources and interpretation",
+        "Constitution of India",
+        "Democracy and governance",
+        "Rights and responsibilities"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Geography",
+      "units": [
+        "Earth and its structure",
+        "Weather and climate",
+        "Natural resources",
+        "Population and settlements",
+        "Maps and geographic skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Mathematics Part 1",
+      "units": [
+        "Linear equations in two variables",
+        "Quadratic equations",
+        "Arithmetic progression",
+        "Financial planning",
+        "Probability",
+        "Statistics"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Mathematics Part 2",
+      "units": [
+        "Similarity",
+        "Pythagoras theorem",
+        "Circle",
+        "Geometric constructions",
+        "Coordinate geometry",
+        "Trigonometry",
+        "Mensuration"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Science and Technology Part 1",
+      "units": [
+        "Gravitation",
+        "Periodic classification of elements",
+        "Chemical reactions and equations",
+        "Effects of electric current",
+        "Heat",
+        "Refraction of light",
+        "Lenses",
+        "Metallurgy",
+        "Carbon compounds",
+        "Space missions"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Science and Technology Part 2",
+      "units": [
+        "Heredity and evolution",
+        "Life processes in living organisms",
+        "Environmental management",
+        "Towards green energy",
+        "Animal classification",
+        "Introduction to microbiology",
+        "Cell biology and biotechnology",
+        "Social health",
+        "Disaster management"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "History and Political Science",
+      "units": [
+        "Historiography and historical sources",
+        "Applied history and heritage",
+        "Indian constitution",
+        "Political parties and political processes",
+        "Social and political movements"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Geography",
+      "units": [
+        "Location and extent of India and Brazil",
+        "Physical divisions",
+        "Climate",
+        "Drainage",
+        "Natural vegetation and wildlife",
+        "Population",
+        "Human settlements",
+        "Economy and occupations",
+        "Tourism and transport",
+        "Map skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Physics",
+      "units": [
+        "Units and measurement",
+        "Vectors and motion",
+        "Laws of motion",
+        "Gravitation",
+        "Work energy and power",
+        "Mechanical properties of solids and fluids",
+        "Thermal properties of matter",
+        "Thermodynamics",
+        "Oscillations and waves"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Chemistry",
+      "units": [
+        "Basic concepts of chemistry",
+        "Atomic structure",
+        "Chemical bonding",
+        "Periodic classification",
+        "States of matter",
+        "Thermodynamics",
+        "Chemical equilibrium",
+        "Redox reactions",
+        "Basic organic chemistry",
+        "Hydrocarbons"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Mathematics and Statistics",
+      "units": [
+        "Trigonometric functions",
+        "Sets relations and functions",
+        "Complex numbers",
+        "Sequences and series",
+        "Permutations and combinations",
+        "Binomial theorem",
+        "Coordinate geometry",
+        "Limits and derivatives",
+        "Statistics and probability"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Biology",
+      "units": [
+        "Living world and classification",
+        "Plant and animal morphology",
+        "Cell biology",
+        "Biomolecules",
+        "Plant physiology",
+        "Human physiology"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Information Technology",
+      "units": [
+        "Computing systems",
+        "Digital documentation",
+        "Spreadsheets and databases",
+        "Digital communication"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Computer Science",
+      "units": [
+        "Programming fundamentals",
+        "Algorithms and problem solving",
+        "Data representation",
+        "Computing networks and databases"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Book-Keeping and Accountancy",
+      "units": [
+        "Introduction to book-keeping",
+        "Accounting concepts and principles",
+        "Journal and ledger",
+        "Subsidiary books",
+        "Trial balance",
+        "Bank reconciliation",
+        "Depreciation",
+        "Final accounts"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Organisation of Commerce and Management",
+      "units": [
+        "Introduction to commerce and business",
+        "Forms of business organisation",
+        "Trade and business services",
+        "Business environment",
+        "Management foundations"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Economics",
+      "units": [
+        "Basic economic concepts",
+        "Consumer behaviour",
+        "Demand and supply",
+        "Production and costs",
+        "Market forms",
+        "National income",
+        "Money and banking",
+        "Indian economy"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Mathematics and Statistics",
+      "units": [
+        "Trigonometric functions",
+        "Sets relations and functions",
+        "Complex numbers",
+        "Sequences and series",
+        "Permutations and combinations",
+        "Binomial theorem",
+        "Coordinate geometry",
+        "Limits and derivatives",
+        "Statistics and probability"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Secretarial Practice",
+      "units": [
+        "Introduction to secretarial practice",
+        "Company organisation",
+        "Company secretary",
+        "Business correspondence",
+        "Meetings and documentation"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Information Technology",
+      "units": [
+        "Computing systems",
+        "Digital documentation",
+        "Spreadsheets and databases",
+        "Digital communication"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "History",
+      "units": [
+        "Historical methods and sources",
+        "Ancient and medieval societies",
+        "Modern world history",
+        "Indian history and culture"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Political Science",
+      "units": [
+        "Political theory",
+        "Constitutional foundations",
+        "Rights equality and justice",
+        "Citizenship and democracy",
+        "Political institutions"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Geography",
+      "units": [
+        "Physical geography",
+        "Earth structure and landforms",
+        "Atmosphere and climate",
+        "Oceans",
+        "Geographical skills and maps"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Economics",
+      "units": [
+        "Basic economic concepts",
+        "Consumer behaviour",
+        "Demand and supply",
+        "Production and costs",
+        "Market forms",
+        "National income",
+        "Money and banking",
+        "Indian economy"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Sociology",
+      "units": [
+        "Introducing sociology",
+        "Society and social groups",
+        "Culture and socialisation",
+        "Social institutions",
+        "Social change"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Psychology",
+      "units": [
+        "Introduction to psychology",
+        "Research methods",
+        "Human development",
+        "Perception learning and memory",
+        "Motivation and emotion"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Physics",
+      "units": [
+        "Rotational motion",
+        "Mechanical properties of fluids",
+        "Kinetic theory of gases and radiation",
+        "Thermodynamics",
+        "Oscillations",
+        "Superposition of waves",
+        "Wave optics",
+        "Electrostatics",
+        "Current electricity",
+        "Magnetic fields and induction",
+        "Alternating current",
+        "Modern physics",
+        "Semiconductors"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Chemistry",
+      "units": [
+        "Solid state",
+        "Solutions",
+        "Ionic equilibria",
+        "Chemical thermodynamics",
+        "Electrochemistry",
+        "Chemical kinetics",
+        "Coordination compounds",
+        "Halogen derivatives",
+        "Alcohols phenols and ethers",
+        "Aldehydes ketones and carboxylic acids",
+        "Amines",
+        "Biomolecules"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Mathematics and Statistics",
+      "units": [
+        "Mathematical logic",
+        "Matrices",
+        "Trigonometric functions",
+        "Pair of straight lines",
+        "Vectors",
+        "Three-dimensional geometry",
+        "Line and plane",
+        "Differentiation",
+        "Applications of derivatives",
+        "Integration",
+        "Differential equations",
+        "Probability distributions"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Biology",
+      "units": [
+        "Reproduction",
+        "Genetics and evolution",
+        "Molecular basis of inheritance",
+        "Biotechnology",
+        "Organisms and populations",
+        "Ecosystems",
+        "Human health and disease"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Information Technology",
+      "units": [
+        "Computing systems",
+        "Digital documentation",
+        "Spreadsheets and databases",
+        "Digital communication"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Computer Science",
+      "units": [
+        "Programming fundamentals",
+        "Algorithms and problem solving",
+        "Data representation",
+        "Computing networks and databases"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Book-Keeping and Accountancy",
+      "units": [
+        "Partnership accounts",
+        "Not-for-profit organisations",
+        "Company accounts",
+        "Financial statements",
+        "Accounting ratios",
+        "Cash flow statements",
+        "Computerised accounting"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Organisation of Commerce and Management",
+      "units": [
+        "Principles of management",
+        "Functions of management",
+        "Entrepreneurship development",
+        "Business services",
+        "Consumer protection",
+        "Marketing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Economics",
+      "units": [
+        "Microeconomics and demand",
+        "Market and prices",
+        "National income",
+        "Money and banking",
+        "Public finance",
+        "International trade",
+        "Indian economic development"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Mathematics and Statistics",
+      "units": [
+        "Mathematical logic",
+        "Matrices",
+        "Trigonometric functions",
+        "Pair of straight lines",
+        "Vectors",
+        "Three-dimensional geometry",
+        "Line and plane",
+        "Differentiation",
+        "Applications of derivatives",
+        "Integration",
+        "Differential equations",
+        "Probability distributions"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Secretarial Practice",
+      "units": [
+        "Company meetings",
+        "Company secretary and stakeholders",
+        "Business correspondence",
+        "Corporate governance",
+        "Company documents"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Information Technology",
+      "units": [
+        "Computing systems",
+        "Digital documentation",
+        "Spreadsheets and databases",
+        "Digital communication"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "History",
+      "units": [
+        "Modern India",
+        "Colonialism and independence",
+        "World history",
+        "Sources and historical interpretation"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Political Science",
+      "units": [
+        "Constitution and governance",
+        "Indian politics",
+        "International relations",
+        "Public policy and democracy"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Geography",
+      "units": [
+        "Population and human geography",
+        "Human settlements",
+        "Economic activities",
+        "Resources and development",
+        "Geographical information and maps"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Economics",
+      "units": [
+        "Microeconomics and demand",
+        "Market and prices",
+        "National income",
+        "Money and banking",
+        "Public finance",
+        "International trade",
+        "Indian economic development"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Sociology",
+      "units": [
+        "Indian society",
+        "Social inequalities",
+        "Social change",
+        "Social movements",
+        "Globalisation"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Psychology",
+      "units": [
+        "Intelligence and aptitude",
+        "Personality",
+        "Psychological disorders",
+        "Therapeutic approaches",
+        "Social influence and attitudes"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "Maharashtra State Board",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://ebooks.ebalbharati.in/",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Mathematics",
+      "units": [
+        "Number System",
+        "Introduction to Polynomials",
+        "Sequences and Progressions",
+        "Exploring Algebraic Identities",
+        "Linear Equations in Two Variables",
+        "Coordinate Geometry",
+        "Introduction to Euclid’s Geometry: Axioms and Postulates",
+        "Lines and Angles",
+        "Triangles – Congruence Theorems",
+        "4-gons (Quadrilaterals)",
+        "Circles",
+        "Area and Perimeter",
+        "Surface Area and Volume",
+        "Statistics",
+        "Introduction to Probability"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "official-pdf-checked"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Science",
+      "units": [
+        "Matter and its nature",
+        "Atomic structure and chemical change",
+        "Cells and tissues",
+        "Motion and force",
+        "Work energy and sound",
+        "Health and environment"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Social Science",
+      "units": [
+        "History",
+        "Geography",
+        "Political Science",
+        "Economics"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Sanskrit",
+      "units": [
+        "Prescribed Sanskrit textbook lessons for the selected class",
+        "Sanskrit grammar and comprehension"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Computer Applications",
+      "units": [
+        "Computer fundamentals",
+        "Internet and digital literacy",
+        "Office applications",
+        "Computational thinking"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "9",
+      "exam": "class-9-10",
+      "subject": "Artificial Intelligence",
+      "units": [
+        "AI concepts and applications",
+        "Data literacy",
+        "AI project cycle",
+        "Responsible AI"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Mathematics",
+      "units": [
+        "Real numbers",
+        "Polynomials",
+        "Pair of linear equations in two variables",
+        "Quadratic equations",
+        "Arithmetic progressions",
+        "Triangles",
+        "Coordinate geometry",
+        "Trigonometry",
+        "Applications of trigonometry",
+        "Circles",
+        "Areas related to circles",
+        "Surface areas and volumes",
+        "Statistics",
+        "Probability"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Science",
+      "units": [
+        "Chemical reactions and equations",
+        "Acids bases and salts",
+        "Metals and non-metals",
+        "Carbon and its compounds",
+        "Life processes",
+        "Control and coordination",
+        "Reproduction and heredity",
+        "Light reflection and refraction",
+        "Human eye",
+        "Electricity",
+        "Magnetic effects of electric current",
+        "Environment"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Social Science",
+      "units": [
+        "History",
+        "Geography",
+        "Political Science",
+        "Economics"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "English",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Grammar in context",
+        "Writing skills"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Hindi",
+      "units": [
+        "Prescribed Hindi textbook prose and poetry for the selected class",
+        "Hindi grammar and writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Marathi",
+      "units": [
+        "Prescribed Marathi textbook prose and poetry for the selected class",
+        "Marathi grammar and writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Sanskrit",
+      "units": [
+        "Prescribed Sanskrit textbook lessons for the selected class",
+        "Sanskrit grammar and comprehension"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Computer Applications",
+      "units": [
+        "Computer fundamentals",
+        "Internet and digital literacy",
+        "Office applications",
+        "Computational thinking"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "10",
+      "exam": "class-9-10",
+      "subject": "Artificial Intelligence",
+      "units": [
+        "AI concepts and applications",
+        "Data literacy",
+        "AI project cycle",
+        "Responsible AI"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "English Core",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Creative and formal writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Physics",
+      "units": [
+        "Units and measurements",
+        "Motion in a straight line",
+        "Motion in a plane",
+        "Laws of motion",
+        "Work energy and power",
+        "System of particles and rotational motion",
+        "Gravitation",
+        "Properties of bulk matter",
+        "Thermodynamics",
+        "Kinetic theory",
+        "Oscillations and waves"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Chemistry",
+      "units": [
+        "Some basic concepts of chemistry",
+        "Structure of atom",
+        "Classification of elements and periodicity",
+        "Chemical bonding",
+        "Chemical thermodynamics",
+        "Equilibrium",
+        "Redox reactions",
+        "Organic chemistry basic principles",
+        "Hydrocarbons"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Mathematics",
+      "units": [
+        "Sets",
+        "Relations and functions",
+        "Trigonometric functions",
+        "Complex numbers",
+        "Linear inequalities",
+        "Permutations and combinations",
+        "Binomial theorem",
+        "Sequences and series",
+        "Straight lines",
+        "Conic sections",
+        "Introduction to three-dimensional geometry",
+        "Limits and derivatives",
+        "Statistics",
+        "Probability"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Biology",
+      "units": [
+        "Diversity of living organisms",
+        "Structural organisation in plants and animals",
+        "Cell structure and function",
+        "Plant physiology",
+        "Human physiology"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Computer Science",
+      "units": [
+        "Programming fundamentals",
+        "Algorithms and problem solving",
+        "Data representation",
+        "Computing networks and databases"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Informatics Practices",
+      "units": [
+        "Python programming",
+        "Data handling",
+        "Databases and SQL",
+        "Data visualisation",
+        "Societal impacts"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-science",
+      "subject": "Physical Education",
+      "units": [
+        "Fitness and wellness",
+        "Sports and physical education",
+        "Health and physiology",
+        "Sports training"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "English Core",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Creative and formal writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Accountancy",
+      "units": [
+        "Introduction to accounting",
+        "Theory base of accounting",
+        "Recording transactions",
+        "Bank reconciliation",
+        "Trial balance and rectification",
+        "Depreciation",
+        "Financial statements"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Business Studies",
+      "units": [
+        "Nature and purpose of business",
+        "Forms of business organisations",
+        "Public private and global enterprises",
+        "Business services",
+        "Emerging modes of business",
+        "Social responsibility",
+        "Sources of business finance",
+        "Small business",
+        "Internal trade",
+        "International business"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Economics",
+      "units": [
+        "Statistics for economics",
+        "Introduction to microeconomics",
+        "Consumer equilibrium",
+        "Demand",
+        "Production and costs",
+        "Market supply and equilibrium"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Mathematics",
+      "units": [
+        "Sets",
+        "Relations and functions",
+        "Trigonometric functions",
+        "Complex numbers",
+        "Linear inequalities",
+        "Permutations and combinations",
+        "Binomial theorem",
+        "Sequences and series",
+        "Straight lines",
+        "Conic sections",
+        "Introduction to three-dimensional geometry",
+        "Limits and derivatives",
+        "Statistics",
+        "Probability"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Applied Mathematics",
+      "units": [
+        "Algebra",
+        "Calculus and applications",
+        "Probability and statistics",
+        "Financial mathematics"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Entrepreneurship",
+      "units": [
+        "Entrepreneurial concepts",
+        "Enterprise planning",
+        "Business finance",
+        "Marketing and business operations"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Informatics Practices",
+      "units": [
+        "Python programming",
+        "Data handling",
+        "Databases and SQL",
+        "Data visualisation",
+        "Societal impacts"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-commerce",
+      "subject": "Physical Education",
+      "units": [
+        "Fitness and wellness",
+        "Sports and physical education",
+        "Health and physiology",
+        "Sports training"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "English Core",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Creative and formal writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "History",
+      "units": [
+        "Early societies",
+        "Empires and civilisations",
+        "Changing cultural traditions",
+        "Modernisation and transformations"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Political Science",
+      "units": [
+        "Constitution at work",
+        "Political theory",
+        "Rights and equality",
+        "Citizenship and secularism"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Geography",
+      "units": [
+        "Fundamentals of physical geography",
+        "India physical environment",
+        "Practical work in geography"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Economics",
+      "units": [
+        "Statistics for economics",
+        "Introduction to microeconomics",
+        "Consumer equilibrium",
+        "Demand",
+        "Production and costs",
+        "Market supply and equilibrium"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Sociology",
+      "units": [
+        "Introducing sociology",
+        "Understanding society",
+        "Culture and socialisation",
+        "Social institutions"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Psychology",
+      "units": [
+        "What is psychology",
+        "Methods of enquiry",
+        "Human development",
+        "Sensory and perceptual processes",
+        "Learning and memory",
+        "Thinking and motivation"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Legal Studies",
+      "units": [
+        "Political institutions",
+        "Law and justice",
+        "Constitutional framework",
+        "Legal concepts and rights"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "11",
+      "exam": "class-11-12-arts",
+      "subject": "Physical Education",
+      "units": [
+        "Fitness and wellness",
+        "Sports and physical education",
+        "Health and physiology",
+        "Sports training"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "English Core",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Creative and formal writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Physics",
+      "units": [
+        "Electric charges and fields",
+        "Electrostatic potential and capacitance",
+        "Current electricity",
+        "Moving charges and magnetism",
+        "Magnetism and matter",
+        "Electromagnetic induction",
+        "Alternating current",
+        "Electromagnetic waves",
+        "Ray optics",
+        "Wave optics",
+        "Dual nature of radiation",
+        "Atoms and nuclei",
+        "Semiconductor electronics"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Chemistry",
+      "units": [
+        "Solutions",
+        "Electrochemistry",
+        "Chemical kinetics",
+        "d and f block elements",
+        "Coordination compounds",
+        "Haloalkanes and haloarenes",
+        "Alcohols phenols and ethers",
+        "Aldehydes ketones and carboxylic acids",
+        "Amines",
+        "Biomolecules"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Mathematics",
+      "units": [
+        "Relations and functions",
+        "Inverse trigonometric functions",
+        "Matrices",
+        "Determinants",
+        "Continuity and differentiability",
+        "Applications of derivatives",
+        "Integrals",
+        "Applications of integrals",
+        "Differential equations",
+        "Vector algebra",
+        "Three-dimensional geometry",
+        "Linear programming",
+        "Probability"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Biology",
+      "units": [
+        "Reproduction",
+        "Genetics and evolution",
+        "Biology in human welfare",
+        "Biotechnology",
+        "Ecology and environment"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Computer Science",
+      "units": [
+        "Programming fundamentals",
+        "Algorithms and problem solving",
+        "Data representation",
+        "Computing networks and databases"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Informatics Practices",
+      "units": [
+        "Python programming",
+        "Data handling",
+        "Databases and SQL",
+        "Data visualisation",
+        "Societal impacts"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-science",
+      "subject": "Physical Education",
+      "units": [
+        "Fitness and wellness",
+        "Sports and physical education",
+        "Health and physiology",
+        "Sports training"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "English Core",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Creative and formal writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Accountancy",
+      "units": [
+        "Accounting for partnership firms",
+        "Accounting for companies",
+        "Financial statement analysis",
+        "Cash flow statement"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Business Studies",
+      "units": [
+        "Nature and significance of management",
+        "Principles of management",
+        "Business environment",
+        "Planning",
+        "Organising",
+        "Staffing",
+        "Directing",
+        "Controlling",
+        "Financial management",
+        "Financial markets",
+        "Marketing management",
+        "Consumer protection"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Economics",
+      "units": [
+        "National income and related aggregates",
+        "Money and banking",
+        "Determination of income and employment",
+        "Government budget",
+        "Balance of payments",
+        "Indian economic development"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Mathematics",
+      "units": [
+        "Relations and functions",
+        "Inverse trigonometric functions",
+        "Matrices",
+        "Determinants",
+        "Continuity and differentiability",
+        "Applications of derivatives",
+        "Integrals",
+        "Applications of integrals",
+        "Differential equations",
+        "Vector algebra",
+        "Three-dimensional geometry",
+        "Linear programming",
+        "Probability"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Applied Mathematics",
+      "units": [
+        "Algebra",
+        "Calculus and applications",
+        "Probability and statistics",
+        "Financial mathematics"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Entrepreneurship",
+      "units": [
+        "Entrepreneurial concepts",
+        "Enterprise planning",
+        "Business finance",
+        "Marketing and business operations"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Informatics Practices",
+      "units": [
+        "Python programming",
+        "Data handling",
+        "Databases and SQL",
+        "Data visualisation",
+        "Societal impacts"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-commerce",
+      "subject": "Physical Education",
+      "units": [
+        "Fitness and wellness",
+        "Sports and physical education",
+        "Health and physiology",
+        "Sports training"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "English Core",
+      "units": [
+        "Prescribed textbook prose and poetry for the selected class",
+        "Reading comprehension",
+        "Creative and formal writing"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "History",
+      "units": [
+        "Themes in Indian history I",
+        "Themes in Indian history II",
+        "Themes in Indian history III"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Political Science",
+      "units": [
+        "Contemporary world politics",
+        "Politics in India since independence"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Geography",
+      "units": [
+        "Fundamentals of human geography",
+        "India people and economy",
+        "Practical work in geography"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Economics",
+      "units": [
+        "National income and related aggregates",
+        "Money and banking",
+        "Determination of income and employment",
+        "Government budget",
+        "Balance of payments",
+        "Indian economic development"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Sociology",
+      "units": [
+        "Indian society",
+        "Social change and development in India"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Psychology",
+      "units": [
+        "Variations in psychological attributes",
+        "Self and personality",
+        "Meeting life challenges",
+        "Psychological disorders",
+        "Therapeutic approaches",
+        "Attitude and social cognition",
+        "Social influence and group processes"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Legal Studies",
+      "units": [
+        "Judiciary",
+        "Alternative dispute resolution",
+        "Human rights",
+        "Legal profession in India",
+        "International context"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    },
+    {
+      "board": "CBSE",
+      "schoolClass": "12",
+      "exam": "class-11-12-arts",
+      "subject": "Physical Education",
+      "units": [
+        "Fitness and wellness",
+        "Sports and physical education",
+        "Health and physiology",
+        "Sports training"
+      ],
+      "sourceUrl": "https://cbseacademic.nic.in/curriculum_2027.html",
+      "verification": "editorial-outline-needs-review"
+    }
+  ]
+}

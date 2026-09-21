@@ -134,7 +134,7 @@ export default async function Home() {
           <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
             <span className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-emerald-700 shadow-sm backdrop-blur-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Admissions | Exams | Placement
+              Learn | Practice | Achieve
             </span>
 
             <span className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-2 text-xs font-bold uppercase tracking-wider text-blue-700 shadow-sm backdrop-blur-sm">

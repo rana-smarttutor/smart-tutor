@@ -43,7 +43,7 @@ const RESULT_CATEGORIES = [
    {
     id: "NEET",
     label: "NEEt",
-    image: "/hof/NEET-3.jpeg",
+    image: "/hof/NEET-4.jpeg",
   },
   {
     id: "cet",

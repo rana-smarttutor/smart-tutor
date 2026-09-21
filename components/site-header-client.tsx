@@ -128,19 +128,23 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const canSeeStudentPerformance =
     userRole === "admin" || userRole === "educator";
 
-  const filteredLinks = links.filter((link) => {
-    if (link.label !== "Mock Test") {
-      return true;
-    }
+const filteredLinks = links.filter((link) => {
+  if (link.label !== "Mock Test") {
+    return true;
+  }
 
-    // Visitors can see Mock Test, but must log in to access it.
-    if (!session) {
-      return true;
-    }
+  // Logged-out visitors can see the link,
+  // but clicking it requires login.
+  if (!session) {
+    return true;
+  }
 
-    // Only students and admins can access Mock Test.
-    return userRole === "student" || userRole === "admin";
-  });
+  // Only students and admins see Mock Test.
+  return (
+    userRole === "student" ||
+    userRole === "admin"
+  );
+});
 
   const visibleLinks = canSeeStudentPerformance
     ? [...filteredLinks, ...staffOnlyLinks]

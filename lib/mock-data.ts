@@ -604,7 +604,6 @@ export function getPublicInstituteData() {
       directorName: "Prof. Ravi Rana",
       directorTitle: "Director & Founder",
       affiliatedInstitutes: [
-        "SmartIQ Academy",
         "SmartIQ Institute",
         "Prime Digital School",
       ],

@@ -155,7 +155,7 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Basic Grammar in Conversation",
       "Role-Play & Situational Dialogues",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Abacus",
@@ -175,7 +175,7 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Basic Multiplication Introduction",
       "Memory & Concentration Exercises",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Robotics",
@@ -195,7 +195,7 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "STEM Innovation Challenges",
       "Introduction to AI & Smart Devices",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Olympiad Preparation",
@@ -215,7 +215,7 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Achievers Section (HOTS Questions)",
       "Mock Tests & Previous Year Papers",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "UPSC Foundation",
@@ -235,7 +235,7 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Thinking & Analytical Skills",
       "Communication & Expression",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Personality Development",
@@ -255,7 +255,7 @@ const CLASS_6_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Interpersonal Skills",
       "Leadership Qualities for Students",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
 ];
 
@@ -279,7 +279,7 @@ const CLASS_7_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Audience Engagement Methods",
       "Group Discussion & Exchange of Ideas",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
 ];
 
@@ -302,7 +302,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "IoT & Connected Robots Introduction",
       "Hands-On Project: Build a Smart Robot",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Abacus",
@@ -322,7 +322,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Competitive Exam Math Patterns",
       "Mixed Operation Speed Challenges",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Artificial Intelligence (Basics)",
@@ -344,7 +344,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "AI Ethics, Bias & Responsible AI",
       "Hands-On: Build a Simple AI Model",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Olympiad Preparation",
@@ -364,7 +364,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Blood Relations & Venn Diagrams",
       "Previous Year Olympiad Paper Practice",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "UPSC Foundation",
@@ -384,7 +384,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Map-Based Questions Practice",
       "Answer Writing & Expression Skills",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Public Speaking",
@@ -404,7 +404,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Confidence Building Exercises",
       "Peer Feedback & Improvement",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Personality Development",
@@ -424,7 +424,7 @@ const CLASS_8_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Decision Making & Problem Solving",
       "Interview Preparation Basics",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
 ];
 
@@ -447,7 +447,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Geometry — Triangles, Circles, Area",
       "Problem Solving & Logical Thinking",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "NEET Foundation",
@@ -467,7 +467,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Environmental Science & Ecology",
       "NCERT-Based Concept Building",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "UPSC Foundation",
@@ -487,7 +487,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "International Organizations & Events",
       "Answer Writing & Critical Thinking",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Police / Army Bharti",
@@ -507,7 +507,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Map Reading & Direction Sense",
       "Discipline, Values & Motivation",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Robotics",
@@ -527,7 +527,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Autonomous Robot Design",
       "Capstone Project: Smart Robot Build",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Artificial Intelligence (Basics)",
@@ -549,7 +549,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "No-Code AI Tools (Teachable Machine)",
       "Hands-On: Build & Train a Model",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Video/Graphic Editing",
@@ -569,7 +569,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Content Creation for Instagram & YouTube",
       "Building a Design Portfolio",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Spoken English",
@@ -589,7 +589,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "News Reading & Comprehension",
       "Exam Viva & Oral Communication",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Personality Development",
@@ -609,7 +609,7 @@ const CLASS_9_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Interview & Group Discussion Skills",
       "Career Awareness & Goal Planning",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
 ];
 
@@ -632,7 +632,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Surface Area & Volume (Mensuration)",
       "Board + Entrance Integrated Problem Practice",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "NEET Foundation",
@@ -652,7 +652,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Our Environment & Ecosystem",
       "NCERT-Based Deep Dive & MCQ Practice",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "UPSC Foundation",
@@ -672,7 +672,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Ethics & Human Values",
       "Map Practice & Answer Writing",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Police / Army Bharti",
@@ -692,7 +692,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Map Reading & Direction Sense",
       "Previous Year Question Practice",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Robotics",
@@ -712,7 +712,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "IoT — Connecting Robots to Cloud",
       "Final Project: Autonomous Robot Competition",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Artificial Intelligence (Basics)",
@@ -732,7 +732,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "AI Bias, Fairness & Ethics",
       "Capstone: Build an End-to-End AI Project",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Video Editing",
@@ -752,7 +752,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Export Settings for Different Platforms",
       "Portfolio: Create a Short Film or Vlog",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Spoken English",
@@ -772,7 +772,7 @@ const CLASS_10_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
       "Reading Comprehension & Retelling",
       "Board Viva & Oral Exam Preparation",
     ],
-    mode: "Home / Online Tutoring",
+    mode: "Home / Online / Offline Tutoring",
   },
   {
     title: "Career Counselling",
@@ -868,7 +868,7 @@ const CLASS_11_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   duration: getAdditionalProgramDuration(title),
   summary: getProgramSummary(title),
   topics: getProgramTopics(title),
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
 }));
 
 const CLASS_12_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
@@ -898,7 +898,7 @@ const CLASS_12_ADDITIONAL_PROGRAMS: AdditionalProgram[] = [
   duration: getAdditionalProgramDuration(title),
   summary: getProgramSummary(title),
   topics: getProgramTopics(title),
-  mode: "Home / Online Tutoring",
+  mode: "Home / Online / Offline Tutoring",
 }));
 
 function isCourseTab(tab: string | null): tab is (typeof COURSE_TABS)[number] {

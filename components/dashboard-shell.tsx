@@ -1364,19 +1364,18 @@ export function DashboardShell({
           },
         ]
       : []),
-...(role === "educator"
-  ? [
-      {
-        label: "Faculty ID",
-        value:
-          session?.employeeCode ?? session?.facultyCode ?? "—",
-      },
-      {
-        label: "Assigned Students",
-        value: `${studentDirectory.length}`,
-      },
-    ]
-  : []),
+    ...(role === "educator"
+      ? [
+          {
+            label: "Faculty ID",
+            value: session?.employeeCode ?? session?.facultyCode ?? "—",
+          },
+          {
+            label: "Assigned Students",
+            value: `${studentDirectory.length}`,
+          },
+        ]
+      : []),
     { label: "Messages", value: `${messages.length}` },
     { label: "Tests", value: `${dashboard.tests.length}` },
   ];
@@ -1589,36 +1588,49 @@ export function DashboardShell({
       >
         {/* Brand */}
         <div
-          className={`flex items-center h-16 shrink-0 border-b border-white/5 ${sidebarCollapsed ? "justify-center px-2" : "justify-between px-5"}`}
+          className={`flex h-16 shrink-0 items-center border-b border-white/5 ${
+            sidebarCollapsed ? "justify-center px-2" : "justify-between px-4"
+          }`}
         >
           <Link
             href="/"
-            className={`flex items-center ${sidebarCollapsed ? "justify-center" : "gap-3"}`}
+            className={`flex items-center ${
+              sidebarCollapsed ? "justify-center" : "w-full"
+            }`}
+            title="SmartIQ Institute"
           >
             {sidebarCollapsed ? (
-              <Image
-                src="/Smart-institue-logo.jpeg"
-                alt="SmartIQ Institute"
-                width={32}
-                height={32}
-                className="h-8 w-auto object-contain"
-                priority
-              />
+              /* Compact logo for collapsed sidebar */
+              <div className="flex h-11 w-11 items-center overflow-hidden rounded-xl bg-white px-1 shadow-sm">
+                <Image
+                  src="/logoSIQ.png"
+                  alt="SmartIQ Institute"
+                  width={1332}
+                  height={299}
+                  className="h-[35px] w-auto max-w-none shrink-0 object-contain"
+                  priority
+                />
+              </div>
             ) : (
-              <Image
-                src="/Smart-institue-logo.jpeg"
-                alt="SmartIQ Institute"
-                width={140}
-                height={36}
-                className="h-9 w-auto object-contain"
-                priority
-              />
+              /* Full logo for expanded sidebar */
+              <div className="flex h-12 w-full max-w-[205px] items-center justify-center rounded-xl bg-white px-2 shadow-sm">
+                <Image
+                  src="/logoSIQ.png"
+                  alt="SmartIQ Institute"
+                  width={1332}
+                  height={299}
+                  className="h-auto w-full object-contain"
+                  priority
+                />
+              </div>
             )}
           </Link>
+
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 lg:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/5 hover:text-white lg:hidden"
+            aria-label="Close sidebar"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1768,7 +1780,9 @@ export function DashboardShell({
                 <p className="truncate text-sm font-bold text-white">
                   {session?.name ?? "SmartIQ Institute"}
                   {session?.verified ? (
-                    <span className="ml-1 text-[10px] text-emerald-400">âœ“</span>
+                    <span className="ml-1 text-[10px] text-emerald-400">
+                      âœ“
+                    </span>
                   ) : null}
                 </p>
                 <p className="truncate text-[11px] text-slate-400">
@@ -1872,7 +1886,9 @@ export function DashboardShell({
                   <Gift className="h-3.5 w-3.5" />
                 </span>
 
-                <span className="relative whitespace-nowrap">Earn â‚¹2,000</span>
+                <span className="relative whitespace-nowrap">
+                  Earn â‚¹2,000
+                </span>
               </button>
             ) : null}
 
@@ -2256,7 +2272,8 @@ export function DashboardShell({
 
           {showBiometric ? <BiometricIntegration role={role} /> : null}
 
-          {showStaffAttendance && (role === "counsellor" || role === "staff") ? (
+          {showStaffAttendance &&
+          (role === "counsellor" || role === "staff") ? (
             <StaffAttendanceManager
               role={role}
               managedUsers={localManagedUsers}
@@ -2293,7 +2310,8 @@ export function DashboardShell({
           ) : null}
 
           {showRewards && role === "educator" ? <RewardsManager /> : null}
-          {showStaffPayroll && (role === "admin" || role === "educator" || role === "staff") ? (
+          {showStaffPayroll &&
+          (role === "admin" || role === "educator" || role === "staff") ? (
             <StaffPayrollManager
               role={role}
               session={session}
@@ -2301,7 +2319,8 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showStaffPayouts && (role === "admin" || role === "educator" || role === "staff") ? (
+          {showStaffPayouts &&
+          (role === "admin" || role === "educator" || role === "staff") ? (
             <StaffPayoutManager
               role={role}
               session={session}
@@ -2702,5 +2721,3 @@ export function DashboardShell({
     </div>
   );
 }
-
-
