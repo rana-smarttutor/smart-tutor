@@ -129,8 +129,17 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
     userRole === "admin" || userRole === "educator";
 
   const filteredLinks = links.filter((link) => {
-    if (session && link.label === "Mock Test") return false;
-    return true;
+    if (link.label !== "Mock Test") {
+      return true;
+    }
+
+    // Visitors can see Mock Test, but must log in to access it.
+    if (!session) {
+      return true;
+    }
+
+    // Only students and admins can access Mock Test.
+    return userRole === "student" || userRole === "admin";
   });
 
   const visibleLinks = canSeeStudentPerformance
@@ -160,7 +169,7 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
           />
         </div>
 
-        <div className="relative w-full overflow-hidden border-b border-slate-200/60 bg-gradient-to-r from-[#f8f9fc]/80 via-[#eef2ff]/70 to-[#e0e7ff]/65 backdrop-blur-md">
+        <div className="relative w-full overflow-visible border-b border-slate-200/60 bg-gradient-to-r from-[#f8f9fc]/80 via-[#eef2ff]/70 to-[#e0e7ff]/65 backdrop-blur-md">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 opacity-20"
