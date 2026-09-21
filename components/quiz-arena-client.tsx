@@ -739,10 +739,7 @@ export default function QuizArenaClient() {
       return false;
     }
 
-    if (
-      finalResult.attemptedQuestions !==
-      activeQuestions.length
-    ) {
+    if (finalResult.attemptedQuestions !== activeQuestions.length) {
       return false;
     }
 
@@ -798,23 +795,16 @@ export default function QuizArenaClient() {
       };
 
       if (data.progress?.unlockedLevel) {
-        setUnlockedJourneyLevel(
-          data.progress.unlockedLevel,
-        );
+        setUnlockedJourneyLevel(data.progress.unlockedLevel);
       }
 
       if (data.progress?.completedRounds) {
-        setCompletedRounds(
-          data.progress.completedRounds,
-        );
+        setCompletedRounds(data.progress.completedRounds);
       }
 
       return Boolean(data.progress);
     } catch (error) {
-      console.warn(
-        "Unable to save Quiz Arena progress:",
-        error,
-      );
+      console.warn("Unable to save Quiz Arena progress:", error);
 
       return false;
     }
@@ -833,82 +823,62 @@ export default function QuizArenaClient() {
       return false;
     }
 
-    const difficulty =
-      getDifficultyForJourneyLevel(
-        selectedJourneyLevel,
-      );
+    const difficulty = getDifficultyForJourneyLevel(selectedJourneyLevel);
 
     try {
-      const response = await fetch(
-        "/api/quiz-arena/attempts",
-        {
-          method: "POST",
+      const response = await fetch("/api/quiz-arena/attempts", {
+        method: "POST",
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            draftId: activeDraft.id,
-
-            level: selectedLevel,
-
-            exam: selectedExam,
-
-            schoolClass: selectedSchoolClass,
-
-            board: selectedBoard,
-
-            subject: selectedSubject,
-
-            progressionLevel:
-              selectedJourneyLevel,
-
-            round: selectedRound,
-
-            difficulty,
-
-            score: finalResult.score,
-
-            correctAnswers:
-              finalResult.correctAnswers,
-
-            incorrectAnswers:
-              finalResult.incorrectAnswers,
-
-            totalTimeMs:
-              finalResult.totalTimeMs,
-
-            averageQuestionTimeMs:
-              finalResult.averageQuestionTimeMs,
-
-            questions:
-              finalResult.attempts,
-          }),
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+
+        body: JSON.stringify({
+          draftId: activeDraft.id,
+
+          level: selectedLevel,
+
+          exam: selectedExam,
+
+          schoolClass: selectedSchoolClass,
+
+          board: selectedBoard,
+
+          subject: selectedSubject,
+
+          progressionLevel: selectedJourneyLevel,
+
+          round: selectedRound,
+
+          difficulty,
+
+          score: finalResult.score,
+
+          correctAnswers: finalResult.correctAnswers,
+
+          incorrectAnswers: finalResult.incorrectAnswers,
+
+          totalTimeMs: finalResult.totalTimeMs,
+
+          averageQuestionTimeMs: finalResult.averageQuestionTimeMs,
+
+          questions: finalResult.attempts,
+        }),
+      });
 
       if (!response.ok) {
-        const payload = (await response
-          .json()
-          .catch(() => null)) as
-          | { error?: string }
-          | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
-        console.warn(
-          "Quiz Arena attempt was not saved:",
-          payload?.error,
-        );
+        console.warn("Quiz Arena attempt was not saved:", payload?.error);
 
         return false;
       }
 
       return true;
     } catch (error) {
-      console.warn(
-        "Unable to save Quiz Arena attempt:",
-        error,
-      );
+      console.warn("Unable to save Quiz Arena attempt:", error);
 
       return false;
     }
@@ -954,14 +924,8 @@ export default function QuizArenaClient() {
     setStep("journey");
   }
 
-  async function finishQuiz(
-    finalResult: QuizResult,
-  ): Promise<boolean> {
-    if (
-      isCompletingQuiz ||
-      !activeDraft ||
-      !flushQuizSaveRef.current
-    ) {
+  async function finishQuiz(finalResult: QuizResult): Promise<boolean> {
+    if (isCompletingQuiz || !activeDraft || !flushQuizSaveRef.current) {
       return false;
     }
 
@@ -972,76 +936,57 @@ export default function QuizArenaClient() {
        * Save the latest question state first.
        */
 
-      const saved =
-        await flushQuizSaveRef.current();
+      const saved = await flushQuizSaveRef.current();
 
       if (!saved) {
-        throw new Error(
-          "Unable to save your final answers.",
-        );
+        throw new Error("Unable to save your final answers.");
       }
 
       /*
        * Save the completed attempt.
        */
 
-      const attemptSaved =
-        await persistRoundAttempt(
-          finalResult,
-        );
+      const attemptSaved = await persistRoundAttempt(finalResult);
 
       if (!attemptSaved) {
-        throw new Error(
-          "Unable to save the completed attempt.",
-        );
+        throw new Error("Unable to save the completed attempt.");
       }
 
       /*
        * Save the student's level and round progress.
        */
 
-      const progressSaved =
-        await persistRoundProgress(
-          finalResult,
-        );
+      const progressSaved = await persistRoundProgress(finalResult);
 
       if (!progressSaved) {
-        throw new Error(
-          "Unable to save Quiz Arena progression.",
-        );
+        throw new Error("Unable to save Quiz Arena progression.");
       }
 
       /*
        * Mark the unfinished draft as completed.
        */
 
-      const completionResponse = await fetch(
-        "/api/quiz-arena/draft",
-        {
-          method: "DELETE",
+      const completionResponse = await fetch("/api/quiz-arena/draft", {
+        method: "DELETE",
 
-          headers: {
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify({
-            id: activeDraft.id,
-
-            status: "completed",
-          }),
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+
+        body: JSON.stringify({
+          id: activeDraft.id,
+
+          status: "completed",
+        }),
+      });
 
       if (!completionResponse.ok) {
-        const payload = (await completionResponse
-          .json()
-          .catch(() => null)) as
-          | { error?: string }
-          | null;
+        const payload = (await completionResponse.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
         throw new Error(
-          payload?.error ??
-            "Unable to finalise the completed quiz.",
+          payload?.error ?? "Unable to finalise the completed quiz.",
         );
       }
 
@@ -1065,10 +1010,7 @@ export default function QuizArenaClient() {
 
       return true;
     } catch (error) {
-      console.warn(
-        "Unable to complete Quiz Arena round:",
-        error,
-      );
+      console.warn("Unable to complete Quiz Arena round:", error);
 
       return false;
     } finally {
@@ -1795,7 +1737,6 @@ function QuizGame({
 
   onRegisterSave: (save: (() => Promise<boolean>) | null) => void;
 }) {
-  const quizCardRef = useRef<HTMLElement | null>(null);
 
   /*
    * Restore the previous quiz state when
@@ -2051,10 +1992,7 @@ function QuizGame({
 
     setQuestionElapsedMs(existingTime);
 
-    quizCardRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+
     // Time is reset only when navigating to another question.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionIndex]);
@@ -2075,69 +2013,86 @@ function QuizGame({
     };
   }, [answered, questionIndex]);
 
-function chooseAnswer(answer: string) {
-  if (!answered) {
-    const answeredAt = Date.now();
+  function chooseAnswer(answer: string) {
+    if (!answered) {
+      const answeredAt = Date.now();
 
-    const timeTakenMs = answeredAt - questionStartedAtRef.current;
+      const timeTakenMs = answeredAt - questionStartedAtRef.current;
 
-    setQuestionElapsedMs(timeTakenMs);
+      setQuestionElapsedMs(timeTakenMs);
 
-    setTimeByIndex((previous) => ({
+      setTimeByIndex((previous) => ({
+        ...previous,
+        [questionIndex]: timeTakenMs,
+      }));
+    }
+
+    // Save the selected answer.
+    setAnswersByIndex((previous) => ({
       ...previous,
-      [questionIndex]: timeTakenMs,
+      [questionIndex]: answer,
     }));
+
+    // Automatically remove Mark for Review once answered.
+    setMarkedForReview((previous) => {
+      if (!previous.has(questionIndex)) {
+        return previous;
+      }
+
+      const next = new Set(previous);
+      next.delete(questionIndex);
+
+      return next;
+    });
   }
 
-  // Save the selected answer.
-  setAnswersByIndex((previous) => ({
-    ...previous,
-    [questionIndex]: answer,
-  }));
+  function toggleMarkForReview() {
+    const alreadyMarked = markedForReview.has(questionIndex);
 
-  // Automatically remove Mark for Review once answered.
-  setMarkedForReview((previous) => {
-    if (!previous.has(questionIndex)) {
-      return previous;
+    setMarkedForReview((previous) => {
+      const next = new Set(previous);
+
+      if (alreadyMarked) {
+        next.delete(questionIndex);
+      } else {
+        next.add(questionIndex);
+      }
+
+      return next;
+    });
+
+    /*
+     * When marking a question for review,
+     * preserve its time and automatically
+     * move to the next question.
+     */
+
+    if (!alreadyMarked && questionIndex < questions.length - 1) {
+      if (!answered) {
+        const elapsed = Math.max(0, Date.now() - questionStartedAtRef.current);
+
+        setTimeByIndex((previous) => ({
+          ...previous,
+          [questionIndex]: elapsed,
+        }));
+      }
+
+      setQuestionIndex((previous) => previous + 1);
+    }
+  }
+  function goToQuestion(index: number) {
+    if (
+      index === questionIndex ||
+      index < 0 ||
+      index >= questions.length ||
+      isFinishingQuiz
+    ) {
+      return;
     }
 
-    const next = new Set(previous);
-    next.delete(questionIndex);
-
-    return next;
-  });
-}
-
-function toggleMarkForReview() {
-  const alreadyMarked = markedForReview.has(questionIndex);
-
-  setMarkedForReview((previous) => {
-    const next = new Set(previous);
-
-    if (alreadyMarked) {
-      next.delete(questionIndex);
-    } else {
-      next.add(questionIndex);
-    }
-
-    return next;
-  });
-
-  /*
-   * When marking a question for review,
-   * preserve its time and automatically
-   * move to the next question.
-   */
-
-  if (
-    !alreadyMarked &&
-    questionIndex < questions.length - 1
-  ) {
+    // Preserve time spent on the current question.
     if (!answered) {
-      const elapsed = Math.max(
-        0,
-        Date.now() - questionStartedAtRef.current,
-      );
+      const elapsed = Math.max(0, Date.now() - questionStartedAtRef.current);
 
       setTimeByIndex((previous) => ({
         ...previous,
@@ -2145,10 +2100,9 @@ function toggleMarkForReview() {
       }));
     }
 
-    setQuestionIndex((previous) => previous + 1);
+    // Open the selected question.
+    setQuestionIndex(index);
   }
-}
-
   function previousQuestion() {
     if (questionIndex === 0) {
       return;
@@ -2275,14 +2229,9 @@ function toggleMarkForReview() {
         );
       }
     } catch (error) {
-      console.warn(
-        "Quiz completion error:",
-        error,
-      );
+      console.warn("Quiz completion error:", error);
 
-      setFinishError(
-        "Unable to complete your round. Please try again.",
-      );
+      setFinishError("Unable to complete your round. Please try again.");
     } finally {
       finishInFlightRef.current = false;
 
@@ -2291,7 +2240,7 @@ function toggleMarkForReview() {
   }
 
   return (
-    <section ref={quizCardRef} className="mx-auto max-w-4xl scroll-mt-28">
+    <section className="mx-auto max-w-4xl">
       {saveError && (
         <div
           role="alert"
@@ -2357,20 +2306,35 @@ function toggleMarkForReview() {
             const isMarked = markedForReview.has(index);
 
             return (
-              <div
+              <button
                 key={question.id ?? index}
-                className={`flex h-10 items-center justify-center rounded-xl border text-sm font-black transition ${
+                type="button"
+                onClick={() => goToQuestion(index)}
+                disabled={isFinishingQuiz}
+                aria-label={`Go to question ${index + 1}${
+                  isMarked
+                    ? ", marked for review"
+                    : isAnswered
+                      ? ", answered"
+                      : ""
+                }`}
+                aria-current={isCurrent ? "step" : undefined}
+                className={`flex h-10 items-center justify-center rounded-xl border text-sm font-black transition hover:-translate-y-0.5 disabled:cursor-not-allowed ${
                   isMarked
                     ? "border-orange-400 bg-orange-500 text-white"
                     : isAnswered
                       ? "border-emerald-400 bg-emerald-500 text-white"
                       : isCurrent
                         ? "border-cyan-300 bg-cyan-300/20 text-cyan-100"
-                        : "border-white/10 bg-white/5 text-slate-400"
+                        : "border-white/10 bg-white/5 text-slate-400 hover:border-cyan-300"
+                } ${
+                  isCurrent
+                    ? "ring-2 ring-white ring-offset-2 ring-offset-indigo-950"
+                    : ""
                 }`}
               >
                 {index + 1}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -2434,10 +2398,7 @@ function toggleMarkForReview() {
           <button
             type="button"
             onClick={() => void nextQuestion()}
-            disabled={
-              isFinishingQuiz ||
-              (!answered && !isMarkedForReview)
-            }
+            disabled={isFinishingQuiz || (!answered && !isMarkedForReview)}
             className="rounded-xl bg-cyan-400 px-7 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-cyan-400"
           >
             {isFinishingQuiz
