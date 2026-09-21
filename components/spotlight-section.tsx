@@ -26,7 +26,7 @@ type SeniorClassSelection = "Class 11" | "Class 12";
 interface SpotlightSectionProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  onSelectCourse: (course: CourseItem) => void;
+  onSelectCourse: (course: CourseItem, selectedProgram?: string) => void;
   allCourses: CourseItem[];
   onSeniorClassChange?: (seniorClass: SeniorClassSelection) => void;
 }
@@ -580,7 +580,7 @@ export default function SpotlightSection({
                       type="button"
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
-                      onClick={() => onSelectCourse(currentSpotlight)}
+                      onClick={() => onSelectCourse(currentSpotlight, name)}
                       className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
                     >
                       {name}
@@ -663,7 +663,7 @@ export default function SpotlightSection({
                     type="button"
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => onSelectCourse(course)}
+                    onClick={() => onSelectCourse(course, name)}
                     className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 shadow-sm transition-all hover:bg-blue-100 hover:border-blue-300"
                   >
                     {name}
@@ -739,7 +739,7 @@ export default function SpotlightSection({
                                 <button
                                   key={name}
                                   type="button"
-                                  onClick={() => onSelectCourse(course)}
+                                  onClick={() => onSelectCourse(course, name)}
                                   className="rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-[10px] font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
                                 >
                                   {name}

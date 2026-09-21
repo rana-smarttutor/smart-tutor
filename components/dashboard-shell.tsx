@@ -1686,7 +1686,13 @@ export function DashboardShell({
         )}
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav
+          className="smartiq-sidebar-scroll flex-1 overflow-y-auto py-4 px-3 space-y-1"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#3B82F6 #0A1637",
+          }}
+        >
           {menuSections.map((section) => {
             const sectionItems = resolvedSidebarItems.filter((item) =>
               section.items.includes(item.id),
@@ -1761,34 +1767,10 @@ export function DashboardShell({
           })}
         </nav>
 
-        {/* Footer */}
+        {/* Footer — Logout only */}
         {!sidebarCollapsed && (
           <div className="border-t border-white/5 px-4 py-4">
-            <div className="flex items-center gap-3">
-              {dashboard.profile?.profilePhoto ? (
-                <img
-                  src={dashboard.profile.profilePhoto}
-                  alt={session?.name ?? "User"}
-                  className="h-9 w-9 shrink-0 rounded-full border border-white/10 object-cover"
-                />
-              ) : (
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0B40A1] text-xs font-bold text-white">
-                  {getInitials(session?.name)}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-white">
-                  {session?.name ?? "SmartIQ Institute"}
-                  {session?.verified ? (
-                    <span className="ml-1 text-[10px] text-emerald-400">
-                      âœ“
-                    </span>
-                  ) : null}
-                </p>
-                <p className="truncate text-[11px] text-slate-400">
-                  {dashboard.roleLabel}
-                </p>
-              </div>
+            <div className="flex w-full justify-center">
               <LogoutButton />
             </div>
           </div>

@@ -1451,8 +1451,9 @@ export default function CoursesRedesignClient({
         <SpotlightSection
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          onSelectCourse={(course) => {
-            setSelectedAdditionalProgram("");
+          onSelectCourse={(course, selectedProgram) => {
+            setSelectedAdditionalProgram(selectedProgram ?? "");
+            setSelectedProgramTopics([]);
             setSelectedCourse(course);
           }}
           allCourses={filteredCourses}

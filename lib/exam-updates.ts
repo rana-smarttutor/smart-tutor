@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import * as cheerio from "cheerio";
 
 export type ExamUpdateType =
@@ -218,8 +219,34 @@ function cleanTitle(value: string) {
 }
 
 function isRelevantTitle(title: string) {
-  const lower = title.toLowerCase();
+  const cleaned = cleanText(title);
 
+  const lower = cleaned.toLowerCase();
+
+  // Reject empty, extremely short and excessively long titles.
+  if (cleaned.length < 12 || cleaned.length > 220) {
+    return false;
+  }
+
+  // Reject generic website actions and headings.
+  if (
+    /^(click here to apply|apply now|exam calendar|read more|view more)$/i.test(
+      cleaned,
+    )
+  ) {
+    return false;
+  }
+
+  // Reject UPSC website navigation accidentally scraped as a notice.
+  if (
+    /^calendar\s+active examinations\s+forthcoming examinations/i.test(
+      cleaned,
+    )
+  ) {
+    return false;
+  }
+
+  // Reject irrelevant administrative notices.
   if (
     BLOCKED_KEYWORDS.some((word) =>
       lower.includes(word),
@@ -366,32 +393,31 @@ function buildRequestHeaders() {
   return {
     Accept:
       "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+
     "Accept-Language":
       "en-IN,en-US;q=0.9,en;q=0.8",
-    "Cache-Control": "no-cache",
-    Pragma: "no-cache",
+
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
   };
 }
-
 async function fetchSource(
   source: ExamSource,
 ): Promise<ExamUpdate[]> {
   const controller =
     new AbortController();
 
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 12000);
+const timeout = setTimeout(() => {
+  controller.abort();
+}, 4500);
 
   try {
     const response = await fetch(
       source.url,
       {
-        next: {
-          revalidate: 3600,
-        },
+next: {
+  revalidate: 900,
+},
         redirect: "follow",
         signal: controller.signal,
         headers: buildRequestHeaders(),
@@ -599,15 +625,9 @@ async function fetchSource(
         title =
           cleanTitle(title);
 
-        if (
-          title.length > 220
-        ) {
-          title =
-            `${title.slice(
-              0,
-              217,
-            )}...`;
-        }
+if (title.length > 220) {
+  return;
+}
 
         if (
           title.length < 12
@@ -740,21 +760,51 @@ function interleaveUpdates(
   return output;
 }
 
-export async function getExamUpdates() {
-  /*
-   * Each source handles its own failures.
-   * One blocked authority therefore never breaks
-   * the complete SmartIQ Exam Updates page.
-   */
-  const groups =
-    await Promise.all(
-      SOURCES.map(
-        (source) =>
-          fetchSource(source),
-      ),
+/*
+ * Cache the combined exam updates.
+ *
+ * Students should not have to wait for all official
+ * websites to respond on every page visit.
+ */
+
+const getCachedExamUpdates = unstable_cache(
+  async (): Promise<ExamUpdate[]> => {
+    const startedAt = Date.now();
+
+    /*
+     * Fetch authorities concurrently.
+     *
+     * Each individual source handles its own
+     * timeout and network errors.
+     */
+
+    const groups = await Promise.all(
+      SOURCES.map((source) => fetchSource(source)),
     );
 
-  return interleaveUpdates(
-    groups,
-  );
+    const updates = interleaveUpdates(groups);
+
+    console.info(
+      `[Exam Updates] Refresh completed in ${
+        Date.now() - startedAt
+      }ms. Loaded ${updates.length} updates.`,
+    );
+
+    return updates;
+  },
+
+  ["smartiq-exam-updates-v2"],
+
+  {
+    revalidate: 900,
+    tags: ["smartiq-exam-updates"],
+  },
+);
+
+/*
+ * Public function used by app/exam-updates/page.tsx
+ */
+
+export async function getExamUpdates(): Promise<ExamUpdate[]> {
+  return getCachedExamUpdates();
 }

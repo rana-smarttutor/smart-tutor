@@ -70,8 +70,12 @@ type QuizResult = {
 
   attempts: QuestionAttempt[];
 };
-export default function QuizArenaClient() {
-  const [step, setStep] = useState<Step>("welcome");
+export default function QuizArenaClient({
+  startAtCategory = false,
+}: {
+  startAtCategory?: boolean;
+}) {
+  const [step, setStep] = useState<Step>(startAtCategory ? "level" : "welcome");
 
   const [selectedLevel, setSelectedLevel] = useState<EducationLevel | null>(
     null,
@@ -232,7 +236,8 @@ export default function QuizArenaClient() {
 
     setShowResumeChoice(false);
 
-    setStep("quiz");
+    // Open course category selection directly.
+    setStep("level");
   }
 
   function startFreshQuiz() {
@@ -274,7 +279,8 @@ export default function QuizArenaClient() {
 
     setShowResumeChoice(false);
 
-    setStep("welcome");
+    // Skip the Quiz Arena welcome screen.
+    setStep("level");
   }
 
   function selectLevel(level: EducationLevel) {
@@ -1738,7 +1744,6 @@ function QuizGame({
 
   onRegisterSave: (save: (() => Promise<boolean>) | null) => void;
 }) {
-
   /*
    * Restore the previous quiz state when
    * the student resumes an unfinished attempt.
@@ -1992,7 +1997,6 @@ function QuizGame({
     questionStartedAtRef.current = Date.now() - existingTime;
 
     setQuestionElapsedMs(existingTime);
-
 
     // Time is reset only when navigating to another question.
     // eslint-disable-next-line react-hooks/exhaustive-deps

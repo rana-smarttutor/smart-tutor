@@ -34,7 +34,7 @@ export default async function MockTestPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <QuizArenaClient />
+      <QuizArenaClient startAtCategory />
     </>
   );
 }

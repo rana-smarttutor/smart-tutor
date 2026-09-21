@@ -9,14 +9,14 @@ import { useEffect, useRef, useState } from "react";
  */
 const INTRO_MESSAGES = [
   "Hi! I’m SmartIQ Institute AI Assistant 👋",
-  "I'm here to help you find the perfect learning pathway.",
-  "Which **Class** or **Level** are you in?",
+  "I'm here to help you with admissions and course enrolment.",
+  "Which **Class** or **Level** are you looking for admission in?",
 ];
 
 const STEPS = {
   CLASS: "class",
   COURSE: "course",
-  TIMING: "timing",
+  ADMISSION: "admission",
   COMPLETE: "complete",
 };
 
@@ -102,45 +102,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
   ],
 };
 
-const TIMING_OPTIONS_BY_LEVEL = {
-  "Class 6-8": ["Morning School", "Afternoon School"],
-
-  "Class 9-10": ["Morning School", "Afternoon School"],
-
-  "Class 11-12": [
-    "Morning School",
-    "Afternoon School",
-    "College / Junior College",
-  ],
-
-  Graduation: [
-    "Full-time College",
-    "Distance / Online College",
-    "Working Professional",
-  ],
-
-  "Post Graduation": [
-    "Full-time College",
-    "Distance / Online College",
-    "Working Professional",
-  ],
-
-  "Diploma / Polytechnic": ["Full-time College", "Working Professional"],
-
-  "Government Exams": [
-    "Full-time Preparation",
-    "College Student",
-    "Working Professional",
-  ],
-
-  "Skill Development": [
-    "School Student",
-    "College Student",
-    "Working Professional",
-    "Flexible Schedule",
-  ],
-};
-
 function getOptionsForStep(step, classLevel) {
   if (step === STEPS.CLASS) {
     return CLASS_OPTIONS;
@@ -150,8 +111,13 @@ function getOptionsForStep(step, classLevel) {
     return COURSE_OPTIONS_BY_LEVEL[classLevel] ?? [];
   }
 
-  if (step === STEPS.TIMING) {
-    return TIMING_OPTIONS_BY_LEVEL[classLevel] ?? [];
+  if (step === STEPS.ADMISSION) {
+    return [
+      "Start Admission",
+      "Know Eligibility",
+      "Required Documents",
+      "Fees & Counselling",
+    ];
   }
 
   return [];
@@ -191,7 +157,7 @@ export default function SmartTutorsAIChatbot() {
   const [memory, setMemory] = useState({
     classLevel: "",
     courseName: "",
-    schoolTiming: "",
+    admissionInterest: "",
   });
 
   const bottomRef = useRef(null);
@@ -404,7 +370,7 @@ export default function SmartTutorsAIChatbot() {
 
       setStep(STEPS.COURSE);
 
-      return `Nice. Since you are in ${userInput}, which area would you like to focus on for your growth?`;
+      return `Great. You selected ${userInput}. Which course or program are you interested in joining?`;
     }
 
     if (currentStep === STEPS.COURSE) {
@@ -413,29 +379,80 @@ export default function SmartTutorsAIChatbot() {
         courseName: userInput,
       }));
 
-      setStep(STEPS.TIMING);
+      setStep(STEPS.ADMISSION);
 
-      return "Understood. To plan your sessions better, may I know your current daily schedule or school timing?";
+      return `Perfect. You are interested in ${userInput}.
+
+How would you like me to help you with the admission process?`;
     }
 
-    if (currentStep === STEPS.TIMING) {
+    if (currentStep === STEPS.ADMISSION) {
       setMemory((previous) => ({
         ...previous,
-        schoolTiming: userInput,
+        admissionInterest: userInput,
       }));
 
       setStep(STEPS.COMPLETE);
 
-      return `Perfect. I've curated your profile:
+      if (userInput === "Start Admission") {
+        return `Here is the SmartIQ Institute admission process:
 
-• Academic Level: ${memory.classLevel}
-• Interest: ${memory.courseName}
-• Current Schedule: ${userInput}
+1. Select your class or course.
+2. Submit your admission enquiry/application.
+3. Our counsellor will verify your course eligibility.
+4. Share the required student documents.
+5. Complete counselling and fee confirmation.
+6. After confirmation, your admission will be activated.
 
-A SmartIQ Institute mentor will now reach out to provide your custom learning roadmap. Is there anything else you'd like to ask about our faculty or campus?`;
+Selected Level: ${memory.classLevel}
+Selected Course: ${memory.courseName}
+
+You can now proceed with the admission enquiry, and our admissions team will assist you further.`;
+      }
+
+      if (userInput === "Know Eligibility") {
+        return `For ${memory.courseName}, eligibility depends on your current academic level and the selected program.
+
+You selected:
+• Level: ${memory.classLevel}
+• Course: ${memory.courseName}
+
+Our admissions counsellor can confirm the exact eligibility before enrolment.`;
+      }
+
+      if (userInput === "Required Documents") {
+        return `The commonly required admission documents include:
+
+• Student identification proof
+• Recent passport-size photograph
+• Previous class marksheet / academic record
+• Parent or guardian contact details
+• Any course-specific documents, if applicable
+
+The admissions team will confirm the exact documents for ${memory.courseName}.`;
+      }
+
+      if (userInput === "Fees & Counselling") {
+        return `Fees may vary depending on the selected course, class level, and learning mode.
+
+For ${memory.courseName}, our admissions counsellor will confirm:
+
+• Current course fee
+• Available payment options
+• Batch availability
+• Counselling details
+• Admission confirmation process`;
+      }
+
+      return `You selected ${memory.courseName}. Our admissions team can guide you through eligibility, documentation, counselling, fees, and enrolment.`;
     }
 
-    return "I've shared your details with our counseling team. They will contact you shortly. Do you have any other questions?";
+    return `Your admission interest has been noted.
+
+Selected Level: ${memory.classLevel}
+Selected Course: ${memory.courseName}
+
+If you have any further questions about admissions, fees, faculty, batches, or campus details, you can ask me here.`;
   }
 
   /*
@@ -729,9 +746,7 @@ A SmartIQ Institute mentor will now reach out to provide your custom learning ro
                   <div style={styles.subtitleRow}>
                     <span style={styles.onlineDot} />
 
-                    <span style={styles.subtitle}>
-                      Personalized Learning Guide
-                    </span>
+                    <span style={styles.subtitle}>Admissions Assistant</span>
                   </div>
                 </div>
               </div>
