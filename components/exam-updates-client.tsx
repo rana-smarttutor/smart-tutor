@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ElementType } from "react";
 
@@ -22,7 +21,6 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
-  Trophy,
 } from "lucide-react";
 
 import type {
@@ -90,47 +88,7 @@ const CATEGORY_CARDS: Array<{
   },
 ];
 
-const QUICK_ACCESS: Array<{
-  label: string;
-  type: ExamUpdateType;
-  icon: ElementType;
-}> = [
-  {
-    label: "Latest Notifications",
-    type: "Notification",
-    icon: BellRing,
-  },
-  {
-    label: "Admit Cards",
-    type: "Admit Card",
-    icon: GraduationCap,
-  },
-  {
-    label: "Results",
-    type: "Result",
-    icon: Trophy,
-  },
-  {
-    label: "Exam Dates",
-    type: "Exam Date",
-    icon: CalendarDays,
-  },
-  {
-    label: "Answer Keys",
-    type: "Answer Key",
-    icon: FileCheck2,
-  },
-  {
-    label: "Applications",
-    type: "Application",
-    icon: FileText,
-  },
-  {
-    label: "Recruitment",
-    type: "Recruitment",
-    icon: Landmark,
-  },
-];
+
 
 function scrollToSection(id: string) {
   window.setTimeout(() => {
@@ -279,14 +237,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
     scrollToSection("latest-exam-updates");
   }
 
-  function selectQuickAccess(type: ExamUpdateType) {
-    setActiveType(type);
-    setActiveCategory("All");
-    setActiveSource("All");
-    setQuery("");
-
-    scrollToSection("latest-exam-updates");
-  }
 
   function clearFilters() {
     setQuery("");
@@ -328,7 +278,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
             TOP DASHBOARD
         ================================================== */}
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="w-full">
           <div className="min-w-0">
             {/* HERO */}
             <section className="relative min-h-[260px] overflow-hidden rounded-[22px] border border-blue-100 bg-gradient-to-br from-[#edf4ff] via-[#f8fbff] to-[#e6f0ff] p-6 shadow-sm sm:p-7">
@@ -351,7 +301,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
 
                   <p className="mt-3 max-w-[520px] text-xs font-medium leading-5 text-slate-600 sm:text-sm">
                     Get the latest official exam dates, applications, admit
-                    cards, results, answer keys and notifications â€” all
+                    cards, results, answer keys and notifications — all
                     organised in one place.
                   </p>
 
@@ -535,45 +485,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
             </section>
           </div>
 
-          {/* ==================================================
-              RIGHT SIDEBAR
-          ================================================== */}
 
-          <aside className="space-y-4">
-            {/* QUICK ACCESS */}
-            <section className="rounded-[22px] border border-slate-200 bg-white p-5 shadow-sm">
-              <h2 className="text-[13px] font-black uppercase tracking-[0.12em] text-slate-900">
-                Quick Access
-              </h2>
-
-              <div className="mt-3 divide-y divide-slate-100">
-                {QUICK_ACCESS.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => selectQuickAccess(item.type)}
-                      className="group flex w-full items-center justify-between gap-3 py-3.5 text-left"
-                    >
-                      <span className="flex items-center gap-3.5">
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition group-hover:bg-blue-600 group-hover:text-white">
-                          <Icon className="h-[18px] w-[18px]" />
-                        </span>
-
-                        <span className="text-[12px] font-bold text-slate-700 transition group-hover:text-blue-700">
-                          {item.label}
-                        </span>
-                      </span>
-
-                      <ChevronRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-blue-500" />
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          </aside>
         </div>
 
         {/* ==================================================
@@ -744,7 +656,7 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         </td>
 
                         <td className="px-4 py-5 text-xs font-semibold text-slate-500">
-                          {update.publishedLabel ?? "â€”"}
+                          {update.publishedLabel ?? "Not available"}
                         </td>
 
                         <td className="px-4 py-5 text-xs font-black text-slate-700">
@@ -916,7 +828,7 @@ function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
 
                 <p className="mt-1 text-[10px] font-semibold text-slate-400">
                   {update.source}
-                  {" â€¢ "}
+                  {" • "}
                   {update.publishedLabel}
                 </p>
               </div>

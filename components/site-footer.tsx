@@ -5,16 +5,15 @@ import { getPublicInstituteData } from "@/lib/data-store";
 export async function SiteFooter() {
   const data = await getPublicInstituteData();
 
-  const branches =
-    data.profile.branches?.length
-      ? data.profile.branches
-      : [
-          {
-            name: "SmartIQ Institute Campus",
-            address: data.profile.address,
-            mapQuery: data.profile.address,
-          },
-        ];
+  const branches = data.profile.branches?.length
+    ? data.profile.branches
+    : [
+        {
+          name: "SmartIQ Institute Campus",
+          address: data.profile.address,
+          mapQuery: data.profile.address,
+        },
+      ];
 
   return (
     <footer className="section-shell pb-8 pt-6">
@@ -32,17 +31,29 @@ export async function SiteFooter() {
               Admissions, learning, and institute operations in one workspace.
             </p>
 
-            <div className="space-y-3">
-               <Image
-                src="/ravi-rana.png"
+            {/* FOUNDER */}
+            <div className="mt-5 flex items-center gap-5">
+              <Image
+                src="/Founder.jpeg"
                 alt="Prof. Ravi Rana"
-                width={96}
-                height={96}
-                className="h-24 w-24 rounded-2xl border border-white/10 object-cover object-top shadow-lg"
+                width={120}
+                height={120}
+                className="h-[120px] w-[120px] shrink-0 rounded-2xl border border-slate-200 bg-white object-cover object-top shadow-sm"
               />
-              <p className="font-bold text-[var(--color-heading)]">
-                {data.profile.directorName} | {data.profile.directorTitle}
-              </p>
+
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-muted)]">
+                  MEET OUR FOUNDER
+                </p>
+
+                <h3 className="mt-2 text-xl font-black leading-tight tracking-tight text-[var(--color-heading)]">
+                  Prof. Ravi Rana
+                </h3>
+
+                <p className="mt-1 text-xs font-bold text-blue-600">
+                  Director &amp; Founder
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -141,21 +152,30 @@ export async function SiteFooter() {
         <div className="mt-8 border-t border-[var(--color-border)] pt-8">
           <div className="flex flex-col gap-4 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
             <nav className="flex flex-wrap gap-4">
-              <Link href="/privacy" className="hover:text-[var(--color-primary)] transition-colors">
+              <Link
+                href="/privacy"
+                className="hover:text-[var(--color-primary)] transition-colors"
+              >
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-[var(--color-primary)] transition-colors">
+              <Link
+                href="/terms"
+                className="hover:text-[var(--color-primary)] transition-colors"
+              >
                 Terms &amp; Conditions
               </Link>
-              <Link href="/eula" className="hover:text-[var(--color-primary)] transition-colors">
+              <Link
+                href="/eula"
+                className="hover:text-[var(--color-primary)] transition-colors"
+              >
                 EULA
               </Link>
             </nav>
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} SmartIQ Institute Academy. In operations
-              since 2018. All rights reserved. Results may differ between users.
-              Promotional claims may be stylized.
+              © {new Date().getFullYear()} SmartIQ Institute Academy. In
+              operations since 2018. All rights reserved. Results may differ
+              between users. Promotional claims may be stylized.
             </p>
           </div>
         </div>
