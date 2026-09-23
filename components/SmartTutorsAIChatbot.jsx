@@ -997,10 +997,10 @@ function getStyles(theme) {
       pointerEvents: "auto",
 
       width: "380px",
-      maxWidth: "calc(100vw - 32px)",
+      maxWidth: "calc(100vw - 24px)",
 
-      height: "580px",
-      maxHeight: "calc(100vh - 64px)",
+      height: "560px",
+      maxHeight: "calc(100dvh - 140px)",
 
       display: "flex",
       flexDirection: "column",
@@ -1009,7 +1009,7 @@ function getStyles(theme) {
 
       border: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
 
-      borderRadius: "26px",
+      borderRadius: "22px",
 
       background: isDark ? "#0f172a" : "#ffffff",
 
@@ -1026,7 +1026,7 @@ function getStyles(theme) {
       alignItems: "center",
       justifyContent: "space-between",
 
-      padding: "16px 18px",
+      padding: "11px 14px",
 
       background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
 
@@ -1040,8 +1040,8 @@ function getStyles(theme) {
     },
 
     headerAvatar: {
-      width: "42px",
-      height: "42px",
+      width: "36px",
+      height: "36px",
 
       flexShrink: 0,
 
@@ -1107,9 +1107,9 @@ function getStyles(theme) {
       display: "flex",
       flexDirection: "column",
 
-      gap: "12px",
+      gap: "9px",
 
-      padding: "20px",
+      padding: "14px",
 
       overflowY: "auto",
 
@@ -1130,12 +1130,12 @@ function getStyles(theme) {
     bubble: {
       maxWidth: "85%",
 
-      padding: "13px 16px",
+      padding: "10px 12px",
 
-      borderRadius: "18px",
+      borderRadius: "15px",
 
-      fontSize: "14px",
-      lineHeight: 1.5,
+      fontSize: "13px",
+      lineHeight: 1.45,
     },
 
     botBubble: {
@@ -1210,7 +1210,7 @@ function getStyles(theme) {
 
       borderRadius: "11px",
 
-      padding: "7px 12px",
+      padding: "6px 10px",
 
       background: isDark ? "#1e293b" : "#ffffff",
 
@@ -1223,7 +1223,7 @@ function getStyles(theme) {
     },
 
     footer: {
-      padding: "16px",
+      padding: "12px",
 
       borderTop: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
 
@@ -1241,7 +1241,7 @@ function getStyles(theme) {
 
       minWidth: 0,
 
-      padding: "13px 16px",
+      padding: "10px 12px",
 
       border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}`,
 
@@ -1271,7 +1271,7 @@ function getStyles(theme) {
 
       borderRadius: "14px",
 
-      padding: "0 20px",
+      padding: "0 15px",
 
       background: "#2563eb",
 
