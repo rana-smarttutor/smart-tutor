@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import {
   getSessionUser,
@@ -48,6 +48,7 @@ export async function GET() {
     return NextResponse.json(
       {
         records: records.map(toCareerRecord),
+        canDelete: session.role === "admin",
       },
       {
         headers: {

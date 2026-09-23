@@ -22,10 +22,8 @@ export default async function MockTestPage() {
   // Keep the existing restrictions for signed-in users.
   if (
     session &&
-    (
-      (session.role !== "student" && session.role !== "admin") ||
-      (session.status && session.status !== "active")
-    )
+    ((session.role !== "student" && session.role !== "admin") ||
+      (session.status && session.status !== "active"))
   ) {
     redirect("/dashboard");
   }
@@ -54,10 +52,8 @@ export default async function MockTestPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <div className="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 pt-8">
-        <div className="mx-auto max-w-6xl">
-          <ExamPortalBanner compact />
-        </div>
+      <div className="w-full bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 pt-8">
+        <ExamPortalBanner compact />
       </div>
 
       <QuizArenaClient startAtCategory />

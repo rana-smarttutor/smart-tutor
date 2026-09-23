@@ -1081,7 +1081,7 @@ export default function QuizArenaClient({
             className="w-full max-w-lg rounded-3xl border border-white/15 bg-slate-900 p-7 text-center text-white shadow-2xl sm:p-9"
           >
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/15 text-3xl">
-              ðŸ“š
+              📚
             </div>
 
             <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
@@ -1105,15 +1105,15 @@ export default function QuizArenaClient({
                 {getExamTitle(unfinishedDraft.exam)}
 
                 {unfinishedDraft.schoolClass
-                  ? ` â€¢ Class ${unfinishedDraft.schoolClass}`
+                  ? ` • Class ${unfinishedDraft.schoolClass}`
                   : ""}
 
-                {unfinishedDraft.board ? ` â€¢ ${unfinishedDraft.board}` : ""}
+                {unfinishedDraft.board ? ` • ${unfinishedDraft.board}` : ""}
               </p>
 
               <p className="mt-3 text-sm font-semibold text-cyan-200">
                 Level {unfinishedDraft.progressionLevel}
-                {" â€¢ "}
+                {" • "}
                 Round {unfinishedDraft.round}
               </p>
 
@@ -1154,7 +1154,7 @@ export default function QuizArenaClient({
           aria-label="Go back"
           className="absolute left-5 top-6 z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/15 bg-white/10 text-2xl font-semibold text-white shadow-lg backdrop-blur-md transition hover:-translate-x-1 hover:border-cyan-300 hover:bg-cyan-300/20 sm:left-8 sm:top-8"
         >
-          â†
+          ←
         </button>
       )}
 
@@ -1165,7 +1165,7 @@ export default function QuizArenaClient({
           disabled={isCompletingQuiz}
           className="absolute left-5 top-6 z-20 flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur-md transition hover:border-red-300 hover:bg-red-400/20 sm:left-8 sm:top-8"
         >
-          <span className="text-lg">â†</span>
+          <span className="text-lg">←</span>
           <span>Exit Quiz</span>
         </button>
       )}
@@ -1185,7 +1185,7 @@ export default function QuizArenaClient({
             className="w-full max-w-md rounded-3xl border border-white/15 bg-slate-900 p-7 text-center shadow-2xl shadow-black/40 sm:p-9"
           >
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-400/15 text-3xl">
-              ðŸšª
+              🚪
             </div>
 
             <h2
@@ -1258,19 +1258,19 @@ export default function QuizArenaClient({
 
               <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-slate-300">
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  ðŸ“˜ School Courses
+                  📘 School Courses
                 </span>
 
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  ðŸŽ¯ Competitive Exams
+                  🎯 Competitive Exams
                 </span>
 
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  ðŸ›ï¸ Government Exams
+                  🏛️ Government Exams
                 </span>
 
                 <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2">
-                  ðŸ“Š MBA Entrances
+                  📊 MBA Entrances
                 </span>
               </div>
 
@@ -1410,7 +1410,7 @@ export default function QuizArenaClient({
                     }}
                     className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                   >
-                    <span className="text-2xl">ðŸŽ¯</span>
+                    <span className="text-2xl">🎯</span>
 
                     <h2 className="mt-4 text-lg font-bold">{exam.title}</h2>
 
@@ -1531,7 +1531,7 @@ export default function QuizArenaClient({
               title="Choose your subject"
               subtitle={`${
                 selectedExamDetails?.title ?? "Selected course"
-              } â€¢ What would you like to practise today?`}
+              } • What would you like to practise today?`}
             />
 
             {selectedExamDetails && (
@@ -1557,7 +1557,7 @@ export default function QuizArenaClient({
                   }}
                   className="rounded-2xl border border-white/10 bg-white/10 p-6 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                 >
-                  <span className="text-3xl">ðŸ“š</span>
+                  <span className="text-3xl">📚</span>
                   <h2 className="mt-4 text-lg font-bold">{subject}</h2>
                 </button>
               ))}
@@ -2346,7 +2346,7 @@ function QuizGame({
           role="alert"
           className="mb-5 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-5 py-4 text-sm font-semibold text-amber-100"
         >
-          âš ï¸ {saveError}
+          ⚠️ {saveError}
         </div>
       )}
 
@@ -2355,7 +2355,7 @@ function QuizGame({
           role="alert"
           className="mb-5 rounded-2xl border border-red-400/40 bg-red-400/10 px-5 py-4 text-sm font-semibold text-red-100"
         >
-          âš ï¸ {finishError}
+          ⚠️ {finishError}
         </div>
       )}
 
@@ -2365,12 +2365,12 @@ function QuizGame({
             <p className="text-sm text-slate-300">
               {levelTitle}
 
-              {examTitle ? ` â€¢ ${examTitle}` : ""}
+              {examTitle ? ` • ${examTitle}` : ""}
 
-              {" â€¢ "}
+              {" • "}
               {subject}
 
-              {" â€¢ "}
+              {" • "}
 
               <span className="capitalize">{difficulty}</span>
             </p>
@@ -2569,9 +2569,9 @@ function ResultScreen({
 
         <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-300">
           Level {journeyLevel}
-          {" â€¢ "}
+          {" • "}
           Round {round}
-          {" â€¢ "}
+          {" • "}
           <span className="capitalize">{difficulty}</span>
         </p>
       </div>
@@ -2580,9 +2580,9 @@ function ResultScreen({
         <p className="text-center text-sm text-slate-300">
           {levelTitle}
 
-          {examTitle ? ` â€¢ ${examTitle}` : ""}
+          {examTitle ? ` • ${examTitle}` : ""}
 
-          {" â€¢ "}
+          {" • "}
           {subject}
         </p>
 
@@ -2598,27 +2598,27 @@ function ResultScreen({
           <ResultCard
             title="Correct"
             value={String(result.correctAnswers)}
-            icon="âœ…"
+            icon="✅"
           />
 
           <ResultCard
             title="Incorrect"
             value={String(result.incorrectAnswers)}
-            icon="âŒ"
+            icon="❌"
           />
 
-          <ResultCard title="Accuracy" value={`${accuracy}%`} icon="ðŸŽ¯" />
+          <ResultCard title="Accuracy" value={`${accuracy}%`} icon="🎯" />
 
           <ResultCard
             title="Round Time"
             value={formatQuizDuration(result.totalTimeMs)}
-            icon="â±ï¸"
+            icon="⏱️"
           />
 
           <ResultCard
             title="Avg / Question"
             value={formatQuizDuration(result.averageQuestionTimeMs)}
-            icon="ðŸ“Š"
+            icon="📊"
           />
         </div>
       </div>
@@ -2720,7 +2720,7 @@ function ResultScreen({
             : round < QUIZ_ROUNDS_PER_LEVEL
               ? `Start Round ${round + 1}`
               : journeyLevel < 10
-                ? `Start Level ${journeyLevel + 1} â€¢ Round 1`
+                ? `Start Level ${journeyLevel + 1} • Round 1`
                 : "View Completed Journey"}
         </button>
 

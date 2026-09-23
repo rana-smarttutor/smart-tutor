@@ -10,7 +10,7 @@ export function ExamPortalBanner({
   return (
     <section
       aria-labelledby="exam-portal-title"
-      className={`relative isolate overflow-hidden rounded-[2rem] border border-blue-300/30 bg-gradient-to-br from-[#071638] via-[#103B91] to-[#2563EB] text-white shadow-[0_20px_65px_-18px_rgba(29,78,216,0.45)] ${
+      className={`relative isolate overflow-hidden rounded-none border border-blue-300/30 bg-gradient-to-br from-[#071638] via-[#103B91] to-[#2563EB] text-white shadow-[0_20px_65px_-18px_rgba(29,78,216,0.45)] ${
         compact ? "p-6 sm:p-9" : "p-7 sm:p-10 lg:p-12"
       }`}
     >
