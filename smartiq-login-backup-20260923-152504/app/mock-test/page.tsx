@@ -17,15 +17,10 @@ export const metadata: Metadata = {
 
 export default async function MockTestPage() {
   const session = await getSessionUser();
-
-  // Guests may browse Mock Test.
-  // Keep the existing restrictions for signed-in users.
+  if (!session) redirect("/login?next=%2Fmock-test&reason=login_required");
   if (
-    session &&
-    (
-      (session.role !== "student" && session.role !== "admin") ||
-      (session.status && session.status !== "active")
-    )
+    (session.role !== "student" && session.role !== "admin") ||
+    (session.status && session.status !== "active")
   ) {
     redirect("/dashboard");
   }

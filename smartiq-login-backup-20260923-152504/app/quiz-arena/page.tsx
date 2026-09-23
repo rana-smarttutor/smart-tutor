@@ -15,16 +15,8 @@ export const metadata: Metadata = {
 
 export default async function QuizArenaPage() {
   const session = await getSessionUser();
-
-  // Guests may explore Quiz Arena.
-  // Preserve restrictions for signed-in users.
-  if (
-    session &&
-    (
-      session.role !== "student" ||
-      (session.status && session.status !== "active")
-    )
-  ) {
+  if (!session) redirect("/login?next=%2Fquiz-arena&reason=login_required");
+  if (session.role !== "student" || (session.status && session.status !== "active")) {
     redirect("/dashboard");
   }
   const breadcrumbJsonLd = {

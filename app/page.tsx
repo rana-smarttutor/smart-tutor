@@ -26,6 +26,7 @@ import { courseLibrary } from "@/lib/course-library";
 import { CampusHighlightsCarousel } from "@/components/campus-highlights-carousel";
 import { ProgramCarousel } from "@/components/program-carousel";
 import { FeaturesSection } from "@/components/features-section";
+import { ExamPortalBanner } from "@/components/exam-portal-banner";
 
 export const metadata: Metadata = {
   description:
@@ -335,6 +336,12 @@ export default async function Home() {
             />
           </div>
         </RevealOnScroll>
+      </section>
+
+      {/* SMARTIQ EXAM PORTAL - FEATURED */}
+
+      <section className="section-shell py-10 sm:py-14">
+        <ExamPortalBanner />
       </section>
 
       <section className="pt-14 sm:pt-20 pb-0">

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -19,6 +19,7 @@ import {
   UserRoundCheck,
   X,
 } from "lucide-react";
+import { UserRoundSearch } from "lucide-react";
 import { LiveClock } from "@/components/live-clock";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -194,6 +195,16 @@ const DashboardEnquiryManager = dynamic(
   },
 );
 
+const CareerCounsellingManager = dynamic(
+  () =>
+    import("@/components/career-counselling-manager").then(
+      (module) => module.CareerCounsellingManager,
+    ),
+  {
+    loading: () => <SectionLoading />,
+    ssr: false,
+  },
+);
 const PasswordResetRequestManager = dynamic(
   () =>
     import("@/components/password-reset-request-manager").then(
@@ -387,6 +398,7 @@ const sidebarByRole = {
 
   educator: [
     { id: "overview", label: "Overview" },
+    { id: "career-counselling", label: "Career Counselling" },
     { id: "profile", label: "Profile" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
@@ -415,6 +427,7 @@ const sidebarByRole = {
 
   staff: [
     { id: "overview", label: "Overview" },
+    { id: "career-counselling", label: "Career Counselling" },
     { id: "profile", label: "Employee Profile" },
     { id: "staff-attendance", label: "My Attendance" },
     { id: "leave", label: "Leave" },
@@ -426,12 +439,14 @@ const sidebarByRole = {
 
   counsellor: [
     { id: "overview", label: "Overview" },
+    { id: "career-counselling", label: "Career Counselling" },
     { id: "staff-attendance", label: "My Attendance" },
     { id: "staff-payouts", label: "My Payouts" },
   ],
 
   admin: [
     { id: "overview", label: "Overview" },
+    { id: "career-counselling", label: "Career Counselling" },
     { id: "profile", label: "Profile" },
     { id: "accounts", label: "Accounts" },
     { id: "branches", label: "Branches" },
@@ -600,6 +615,7 @@ const menuSections = [
       "student-feedback",
       "leave",
       "enquiries",
+      "career-counselling",
       "password-reset-requests",
       "sales-crm",
     ],
@@ -900,6 +916,9 @@ const navIcons: Record<string, React.ReactNode> = {
         d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
       />
     </svg>
+  ),
+  "career-counselling": (
+    <UserRoundSearch className="h-4 w-4 shrink-0" />
   ),
   enquiries: (
     <svg
@@ -1313,6 +1332,8 @@ export function DashboardShell({
   const showHomework = activeSection === "homework";
   const showNotifications = activeSection === "notifications";
   const showEnquiries = activeSection === "enquiries";
+  const showCareerCounselling =
+    activeSection === "career-counselling";
   const showPasswordResetRequests = activeSection === "password-reset-requests";
   const showSalesCrm = activeSection === "sales-crm";
   const showPlacementJobs = activeSection === "placement-jobs";
@@ -1988,6 +2009,13 @@ export function DashboardShell({
             />
           ) : null}
 
+          {showCareerCounselling &&
+          (role === "admin" ||
+            role === "educator" ||
+            role === "staff" ||
+            role === "counsellor") ? (
+            <CareerCounsellingManager />
+          ) : null}
           {showEnquiries && role === "admin" ? (
             <DashboardEnquiryManager />
           ) : null}

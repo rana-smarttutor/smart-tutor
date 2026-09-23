@@ -309,7 +309,7 @@ export function StudentFeeReceiptsView({
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
-    const logoUrl = `${window.location.origin}/stpl.jpeg`;
+    const logoUrl = `${window.location.origin}/siqn-pvtltd.jpeg`;
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
     const now = new Date();

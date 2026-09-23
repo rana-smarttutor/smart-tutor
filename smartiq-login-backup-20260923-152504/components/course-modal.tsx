@@ -17,7 +17,6 @@ import {
 } from "@/components/ui-icons";
 import { motion, AnimatePresence } from "motion/react";
 import type { CourseItem } from "@/lib/types";
-import { requestLoginIfNeeded } from "@/lib/request-login";
 
 interface CourseModalProps {
   course: CourseItem | null;
@@ -755,12 +754,6 @@ export default function CourseModal({
 
     if (!selectedSlot) {
       alert("Please select your preferred session slot.");
-      return;
-    }
-
-    const canEnroll = await requestLoginIfNeeded("/courses");
-
-    if (!canEnroll) {
       return;
     }
 

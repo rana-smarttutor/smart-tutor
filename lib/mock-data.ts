@@ -30,7 +30,7 @@ const WHATSAPP_LINK =
   "https://wa.me/918850447887?text=Hello%20Smart%20Tutors";
 const INSTAGRAM_LINK =
   process.env.NEXT_PUBLIC_INSTAGRAM_LINK ||
-  "https://www.instagram.com/smart_tutor_no1?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
+  "https://www.instagram.com/Smartiq_institute?igsh=MmVnZDllb3h4Y3I3&utm_source=qr";
 
 export const demoCredentials = [
   {
@@ -393,7 +393,7 @@ const contactMethods: ContactMethod[] = [
   },
   {
     label: "Instagram",
-    value: "@smart_tutor_no1",
+    value: "@Smartiq_institute",
     href: INSTAGRAM_LINK,
     description: "Official SmartIQ Institute announcements and updates.",
     color: "#E4405F",

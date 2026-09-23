@@ -53,3 +53,7 @@ backup-staff-role-20260912-130823/data-store.ts
 components/exam-updates-client.tsx.backup-20260921-165559
 # SmartIQ development backups
 .smartiq-*-backup-*/
+lib/quiz-arena-config.ts.backup-20260923-143304
+components/quiz-arena-client.tsx.backup-20260923-143304
+components/quiz-arena-client.tsx.backup-20260923-144912
+login-popup-files.txt

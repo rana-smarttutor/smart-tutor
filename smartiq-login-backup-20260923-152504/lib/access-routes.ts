@@ -4,12 +4,6 @@ const PUBLIC = [
   "/signup",
   "/application-submitted",
   "/waiting-approval",
-
-  // Public browsing - protected actions still require login.
-  "/courses",
-  "/mock-test",
-  "/quiz-arena",
-  "/library",
 ];
 
 const ASSET = /\.(?:png|svg|ico|webp|jpe?g|gif|avif|apk|css|js|json|xml|txt|pdf|woff2?|ttf|otf|map)$/i;
