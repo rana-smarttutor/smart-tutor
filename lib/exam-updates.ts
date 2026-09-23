@@ -409,7 +409,7 @@ async function fetchSource(
 
 const timeout = setTimeout(() => {
   controller.abort();
-}, 4500);
+}, 12000);
 
   try {
     const response = await fetch(
@@ -778,9 +778,21 @@ const getCachedExamUpdates = unstable_cache(
      * timeout and network errors.
      */
 
-    const groups = await Promise.all(
-      SOURCES.map((source) => fetchSource(source)),
+const groups = await Promise.all(
+  SOURCES.map(async (source) => {
+    const startedAt = Date.now();
+
+    const updates = await fetchSource(source);
+
+    console.info(
+      `[Exam Updates] ${source.name}: ${updates.length} updates in ${
+        Date.now() - startedAt
+      }ms`,
     );
+
+    return updates;
+  }),
+);
 
     const updates = interleaveUpdates(groups);
 
@@ -793,8 +805,7 @@ const getCachedExamUpdates = unstable_cache(
     return updates;
   },
 
-  ["smartiq-exam-updates-v2"],
-
+["smartiq-exam-updates-v3"],
   {
     revalidate: 900,
     tags: ["smartiq-exam-updates"],
