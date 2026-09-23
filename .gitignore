@@ -57,3 +57,7 @@ lib/quiz-arena-config.ts.backup-20260923-143304
 components/quiz-arena-client.tsx.backup-20260923-143304
 components/quiz-arena-client.tsx.backup-20260923-144912
 login-popup-files.txt
+career-delete-backup-20260923-172317/components/career-counselling-manager.tsx
+career-delete-backup-20260923-172317/app/api/career-counselling/\[id]/route.ts
+.gitignore
+career-delete-backup-20260923-172317/app/api/career-counselling/route.ts

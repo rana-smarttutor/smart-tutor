@@ -1,11 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type {
-  ChangeEvent,
-  FormEvent,
-  ReactNode,
-} from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
 
 import {
   ArrowLeft,
@@ -14,6 +10,7 @@ import {
   ClipboardList,
   Download,
   Loader2,
+  Trash2,
   MessageCircle,
   Plus,
   RefreshCw,
@@ -23,11 +20,7 @@ import {
   UserRound,
 } from "lucide-react";
 
-type CareerStatus =
-  | "new"
-  | "in-progress"
-  | "follow-up"
-  | "completed";
+type CareerStatus = "new" | "in-progress" | "follow-up" | "completed";
 
 type CareerDetails = {
   studentName: string;
@@ -70,13 +63,11 @@ type CareerRecord = CareerDetails & {
 };
 
 type StringField = {
-  [K in keyof CareerDetails]:
-    CareerDetails[K] extends string ? K : never;
+  [K in keyof CareerDetails]: CareerDetails[K] extends string ? K : never;
 }[keyof CareerDetails];
 
 type ArrayField = {
-  [K in keyof CareerDetails]:
-    CareerDetails[K] extends string[] ? K : never;
+  [K in keyof CareerDetails]: CareerDetails[K] extends string[] ? K : never;
 }[keyof CareerDetails];
 
 const EMPTY_FORM: CareerDetails = {
@@ -108,26 +99,249 @@ const EMPTY_FORM: CareerDetails = {
   whatsappConsent: false,
 };
 
-const SCHOOL_SUBJECTS = [
+// ============================================================
+// CLASS, BOARD AND STREAM BASED SUBJECT OPTIONS
+// ============================================================
+
+const PRIMARY_SUBJECTS = [
+  "English",
+  "Hindi",
+  "Marathi",
+  "Mathematics",
+  "Environmental Studies",
+  "Science",
+  "Social Studies",
+  "Computer Science",
+  "General Knowledge",
+];
+
+const SECONDARY_SUBJECTS = [
   "English",
   "Hindi",
   "Marathi",
   "Mathematics",
   "Science",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "Computer Science",
   "History",
   "Geography",
+  "Civics",
   "Economics",
+  "Computer Science",
+  "Information Technology",
+];
+
+const SCIENCE_SUBJECTS = [
+  "English",
+  "Physics",
+  "Chemistry",
+  "Mathematics",
+  "Biology",
+  "Computer Science",
+  "Information Technology",
+  "Electronics",
+  "Psychology",
+  "Physical Education",
+];
+
+const COMMERCE_SUBJECTS = [
+  "English",
   "Accountancy",
+  "Book Keeping",
+  "Economics",
   "Business Studies",
+  "Organisation of Commerce",
+  "Secretarial Practice",
+  "Mathematics",
+  "Statistics",
+  "Computer Science",
+  "Information Technology",
+];
+
+const ARTS_SUBJECTS = [
+  "English",
+  "History",
+  "Geography",
   "Political Science",
   "Psychology",
   "Sociology",
-  "Statistics",
+  "Economics",
+  "Philosophy",
+  "Mathematics",
+  "Fine Arts",
+  "Hindi",
+  "Marathi",
 ];
+
+function getCareerSubjects(
+  classLevel: string,
+  board: string,
+  stream: string,
+): string[] {
+  if (!classLevel) {
+    return [];
+  }
+
+  const normalizedBoard = board.toLowerCase();
+
+  const isMaharashtra = normalizedBoard.includes("maharashtra");
+
+  const isCBSE = normalizedBoard.includes("cbse");
+
+  const isICSE = normalizedBoard.includes("icse");
+
+  const isCambridge = normalizedBoard.includes("cambridge");
+
+  const isIB = normalizedBoard === "ib";
+
+  // Classes 6, 7 and 8
+  if (["Class 6", "Class 7", "Class 8"].includes(classLevel)) {
+    if (isMaharashtra) {
+      return [
+        "English",
+        "Marathi",
+        "Hindi",
+        "Mathematics",
+        "General Science",
+        "History",
+        "Civics",
+        "Geography",
+        "Computer Science",
+      ];
+    }
+
+    if (isCBSE) {
+      return [
+        "English",
+        "Hindi",
+        "Mathematics",
+        "Science",
+        "Social Science",
+        "Computer Science",
+        "Sanskrit",
+        "Marathi",
+      ];
+    }
+
+    if (isICSE) {
+      return [
+        "English",
+        "Hindi",
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "History",
+        "Civics",
+        "Geography",
+        "Computer Studies",
+      ];
+    }
+
+    if (isCambridge || isIB) {
+      return [
+        "English",
+        "Mathematics",
+        "Science",
+        "Biology",
+        "Chemistry",
+        "Physics",
+        "Individuals and Societies",
+        "Humanities",
+        "Computer Science",
+        "Design",
+        "Languages",
+      ];
+    }
+
+    return PRIMARY_SUBJECTS;
+  }
+
+  // Classes 9 and 10
+  if (["Class 9", "Class 10"].includes(classLevel)) {
+    if (isMaharashtra) {
+      return [
+        "English",
+        "Marathi",
+        "Hindi",
+        "Mathematics",
+        "Algebra",
+        "Geometry",
+        "Science and Technology",
+        "Science and Technology Part 1",
+        "Science and Technology Part 2",
+        "History",
+        "Political Science",
+        "Geography",
+        "Economics",
+        "Information Technology",
+      ];
+    }
+
+    if (isCBSE) {
+      return [
+        "English",
+        "Hindi",
+        "Mathematics",
+        "Science",
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "Social Science",
+        "History",
+        "Geography",
+        "Political Science",
+        "Economics",
+        "Information Technology",
+        "Artificial Intelligence",
+        "Sanskrit",
+      ];
+    }
+
+    if (isICSE) {
+      return [
+        "English",
+        "Hindi",
+        "Mathematics",
+        "Physics",
+        "Chemistry",
+        "Biology",
+        "History",
+        "Civics",
+        "Geography",
+        "Computer Applications",
+        "Economics",
+        "Commercial Studies",
+      ];
+    }
+
+    return SECONDARY_SUBJECTS;
+  }
+
+  // Classes 11 and 12
+  if (["Class 11", "Class 12"].includes(classLevel)) {
+    if (stream.startsWith("Science")) {
+      return SCIENCE_SUBJECTS;
+    }
+
+    if (stream === "Commerce") {
+      return COMMERCE_SUBJECTS;
+    }
+
+    if (stream === "Arts / Humanities") {
+      return ARTS_SUBJECTS;
+    }
+
+    // Until a stream is selected, show options
+    // across the three major streams.
+    return [
+      ...new Set([...SCIENCE_SUBJECTS, ...COMMERCE_SUBJECTS, ...ARTS_SUBJECTS]),
+    ];
+  }
+
+  // Diploma, undergraduate, postgraduate and
+  // working professionals have programme-specific
+  // subjects. Allow users to enter custom subjects.
+  return [];
+}
 
 const INTEREST_OPTIONS = [
   "Technology",
@@ -249,10 +463,7 @@ function formatDate(value: string) {
 }
 
 function formatStatus(status: CareerStatus) {
-  return (
-    STATUS_OPTIONS.find((item) => item.value === status)
-      ?.label ?? status
-  );
+  return STATUS_OPTIONS.find((item) => item.value === status)?.label ?? status;
 }
 
 function escapeHtml(value: string) {
@@ -293,13 +504,9 @@ function Section({
           </div>
 
           <div>
-            <h2 className="text-lg font-black text-slate-900">
-              {title}
-            </h2>
+            <h2 className="text-lg font-black text-slate-900">{title}</h2>
 
-            <p className="mt-1 text-sm text-slate-500">
-              {description}
-            </p>
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
           </div>
         </div>
       </div>
@@ -328,17 +535,13 @@ function Field({
     <div>
       <label className={LABEL_CLASS}>
         {label}
-        {required ? (
-          <span className="ml-1 text-red-500">*</span>
-        ) : null}
+        {required ? <span className="ml-1 text-red-500">*</span> : null}
       </label>
 
       <input
         type={type}
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         required={required}
         className={INPUT_CLASS}
@@ -364,16 +567,12 @@ function SelectField({
     <div>
       <label className={LABEL_CLASS}>
         {label}
-        {required ? (
-          <span className="ml-1 text-red-500">*</span>
-        ) : null}
+        {required ? <span className="ml-1 text-red-500">*</span> : null}
       </label>
 
       <select
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
+        onChange={(event) => onChange(event.target.value)}
         required={required}
         className={INPUT_CLASS}
       >
@@ -404,15 +603,11 @@ function TextAreaField({
 }) {
   return (
     <div>
-      <label className={LABEL_CLASS}>
-        {label}
-      </label>
+      <label className={LABEL_CLASS}>{label}</label>
 
       <textarea
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
+        onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
         rows={rows}
         className={`${INPUT_CLASS} resize-y leading-6`}
@@ -454,10 +649,7 @@ function MultiSelect({
 
     for (const value of values) {
       if (
-        !combined.some(
-          (item) =>
-            item.toLowerCase() === value.toLowerCase(),
-        )
+        !combined.some((item) => item.toLowerCase() === value.toLowerCase())
       ) {
         combined.push(value);
       }
@@ -494,9 +686,7 @@ function MultiSelect({
         })}
       </div>
 
-      {selected.some(
-        (item) => !options.includes(item),
-      ) ? (
+      {selected.some((item) => !options.includes(item)) ? (
         <div className="mt-3 flex flex-wrap gap-2">
           {selected
             .filter((item) => !options.includes(item))
@@ -517,9 +707,7 @@ function MultiSelect({
       <div className="mt-3 flex gap-2">
         <input
           value={customValue}
-          onChange={(event) =>
-            setCustomValue(event.target.value)
-          }
+          onChange={(event) => setCustomValue(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
@@ -530,11 +718,7 @@ function MultiSelect({
           className={INPUT_CLASS}
         />
 
-        <button
-          type="button"
-          onClick={addCustom}
-          className={SECONDARY_BUTTON}
-        >
+        <button type="button" onClick={addCustom} className={SECONDARY_BUTTON}>
           Add
         </button>
       </div>
@@ -542,9 +726,7 @@ function MultiSelect({
   );
 }
 
-function buildWhatsAppMessage(
-  record: CareerRecord,
-) {
+function buildWhatsAppMessage(record: CareerRecord) {
   const lines = [
     "*SMARTIQ INSTITUTE*",
     "*CAREER COUNSELLING REPORT*",
@@ -571,19 +753,14 @@ function buildWhatsAppMessage(
 }
 
 function buildPrintableHtml(record: CareerRecord) {
-  const row = (
-    label: string,
-    value: string,
-  ) => `
+  const row = (label: string, value: string) => `
     <div class="row">
       <div class="label">${escapeHtml(label)}</div>
       <div class="value">${escapeHtml(value || "Not specified")}</div>
     </div>
   `;
 
-  const aiText = escapeHtml(
-    record.aiSuggestion || "Not generated",
-  );
+  const aiText = escapeHtml(record.aiSuggestion || "Not generated");
 
   return `
 <!DOCTYPE html>
@@ -747,19 +924,19 @@ function buildPrintableHtml(record: CareerRecord) {
 }
 
 export function CareerCounsellingManager() {
-  const [records, setRecords] = useState<
-    CareerRecord[]
-  >([]);
+  const [records, setRecords] = useState<CareerRecord[]>([]);
 
-  const [form, setForm] = useState<CareerDetails>(
-    createEmptyForm,
+  const [form, setForm] = useState<CareerDetails>(createEmptyForm);
+
+  const availableSubjects = useMemo(() => {
+    return getCareerSubjects(form.classLevel, form.board, form.preferredStream);
+  }, [form.classLevel, form.board, form.preferredStream]);
+
+  const [selectedRecord, setSelectedRecord] = useState<CareerRecord | null>(
+    null,
   );
 
-  const [selectedRecord, setSelectedRecord] =
-    useState<CareerRecord | null>(null);
-
-  const [aiSuggestion, setAiSuggestion] =
-    useState("");
+  const [aiSuggestion, setAiSuggestion] = useState("");
 
   const [dirty, setDirty] = useState(false);
 
@@ -767,11 +944,13 @@ export function CareerCounsellingManager() {
 
   const [saving, setSaving] = useState(false);
 
-  const [generating, setGenerating] =
-    useState(false);
+  const [canDelete, setCanDelete] = useState(false);
 
-  const [reviewing, setReviewing] =
-    useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [generating, setGenerating] = useState(false);
+
+  const [reviewing, setReviewing] = useState(false);
 
   const [search, setSearch] = useState("");
 
@@ -781,8 +960,7 @@ export function CareerCounsellingManager() {
 
   const [success, setSuccess] = useState("");
 
-  const [refreshKey, setRefreshKey] =
-    useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -792,29 +970,21 @@ export function CareerCounsellingManager() {
         setLoading(true);
         setError("");
 
-        const response = await fetch(
-          "/api/career-counselling",
-          {
-            credentials: "same-origin",
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        );
+        const response = await fetch("/api/career-counselling", {
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        });
 
         const payload = await response.json();
 
         if (!response.ok) {
-          throw new Error(
-            payload.error ||
-              "Unable to load records.",
-          );
+          throw new Error(payload.error || "Unable to load records.");
         }
 
-        setRecords(
-          Array.isArray(payload.records)
-            ? payload.records
-            : [],
-        );
+        setRecords(Array.isArray(payload.records) ? payload.records : []);
+
+        setCanDelete(payload.canDelete === true);
       } catch (loadError) {
         if (controller.signal.aborted) return;
 
@@ -838,9 +1008,7 @@ export function CareerCounsellingManager() {
   }, [refreshKey]);
 
   const filteredRecords = useMemo(() => {
-    const query = search
-      .trim()
-      .toLowerCase();
+    const query = search.trim().toLowerCase();
 
     if (!query) return records;
 
@@ -864,28 +1032,20 @@ export function CareerCounsellingManager() {
     () => ({
       total: records.length,
 
-      new: records.filter(
-        (record) => record.status === "new",
-      ).length,
+      new: records.filter((record) => record.status === "new").length,
 
       progress: records.filter(
         (record) =>
-          record.status === "in-progress" ||
-          record.status === "follow-up",
+          record.status === "in-progress" || record.status === "follow-up",
       ).length,
 
-      completed: records.filter(
-        (record) =>
-          record.status === "completed",
-      ).length,
+      completed: records.filter((record) => record.status === "completed")
+        .length,
     }),
     [records],
   );
 
-  function updateString(
-    field: StringField,
-    value: string,
-  ) {
+  function updateString(field: StringField, value: string) {
     setForm((previous) => ({
       ...previous,
       [field]: value,
@@ -895,10 +1055,7 @@ export function CareerCounsellingManager() {
     setSuccess("");
   }
 
-  function updateArray(
-    field: ArrayField,
-    value: string[],
-  ) {
+  function updateArray(field: ArrayField, value: string[]) {
     setForm((previous) => ({
       ...previous,
       [field]: value,
@@ -942,30 +1099,18 @@ export function CareerCounsellingManager() {
     setForm({
       ...record,
 
-      strongSubjects: [
-        ...record.strongSubjects,
-      ],
+      strongSubjects: [...record.strongSubjects],
 
-      weakSubjects: [
-        ...record.weakSubjects,
-      ],
+      weakSubjects: [...record.weakSubjects],
 
-      interests: [
-        ...record.interests,
-      ],
+      interests: [...record.interests],
 
-      examInterests: [
-        ...record.examInterests,
-      ],
+      examInterests: [...record.examInterests],
 
-      recommendedPrograms: [
-        ...record.recommendedPrograms,
-      ],
+      recommendedPrograms: [...record.recommendedPrograms],
     });
 
-    setAiSuggestion(
-      record.aiSuggestion || "",
-    );
+    setAiSuggestion(record.aiSuggestion || "");
 
     setDirty(false);
 
@@ -977,16 +1122,10 @@ export function CareerCounsellingManager() {
 
   function upsertRecord(record: CareerRecord) {
     setRecords((previous) => {
-      const exists = previous.some(
-        (item) => item.id === record.id,
-      );
+      const exists = previous.some((item) => item.id === record.id);
 
       return exists
-        ? previous.map((item) =>
-            item.id === record.id
-              ? record
-              : item,
-          )
+        ? previous.map((item) => (item.id === record.id ? record : item))
         : [record, ...previous];
     });
 
@@ -995,37 +1134,23 @@ export function CareerCounsellingManager() {
     setForm({
       ...record,
 
-      strongSubjects: [
-        ...record.strongSubjects,
-      ],
+      strongSubjects: [...record.strongSubjects],
 
-      weakSubjects: [
-        ...record.weakSubjects,
-      ],
+      weakSubjects: [...record.weakSubjects],
 
-      interests: [
-        ...record.interests,
-      ],
+      interests: [...record.interests],
 
-      examInterests: [
-        ...record.examInterests,
-      ],
+      examInterests: [...record.examInterests],
 
-      recommendedPrograms: [
-        ...record.recommendedPrograms,
-      ],
+      recommendedPrograms: [...record.recommendedPrograms],
     });
 
-    setAiSuggestion(
-      record.aiSuggestion || "",
-    );
+    setAiSuggestion(record.aiSuggestion || "");
 
     setDirty(false);
   }
 
-  async function saveRecord(
-    reviewed = false,
-  ): Promise<CareerRecord | null> {
+  async function saveRecord(reviewed = false): Promise<CareerRecord | null> {
     if (
       !form.studentName.trim() ||
       !form.classLevel.trim() ||
@@ -1043,17 +1168,14 @@ export function CareerCounsellingManager() {
     setSuccess("");
 
     try {
-      const existingId =
-        selectedRecord?.id;
+      const existingId = selectedRecord?.id;
 
       const url = existingId
         ? `/api/career-counselling/${existingId}`
         : "/api/career-counselling";
 
       const response = await fetch(url, {
-        method: existingId
-          ? "PATCH"
-          : "POST",
+        method: existingId ? "PATCH" : "POST",
 
         credentials: "same-origin",
 
@@ -1073,14 +1195,10 @@ export function CareerCounsellingManager() {
       const payload = await response.json();
 
       if (!response.ok || !payload.record) {
-        throw new Error(
-          payload.error ||
-            "Unable to save record.",
-        );
+        throw new Error(payload.error || "Unable to save record.");
       }
 
-      const record =
-        payload.record as CareerRecord;
+      const record = payload.record as CareerRecord;
 
       upsertRecord(record);
 
@@ -1105,9 +1223,73 @@ export function CareerCounsellingManager() {
     }
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function deleteCareerEnquiry(record: CareerRecord) {
+    if (!canDelete || deletingId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Permanently delete the career counselling enquiry for ${record.studentName}?
+
+This action cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(record.id);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        `/api/career-counselling/${encodeURIComponent(record.id)}`,
+        {
+          method: "DELETE",
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || payload?.success !== true) {
+        throw new Error(
+          payload?.error || "Unable to delete counselling enquiry.",
+        );
+      }
+
+      // Immediately remove the record from the directory.
+      // Summary counts update automatically from records.
+      setRecords((previous) =>
+        previous.filter((item) => item.id !== record.id),
+      );
+
+      // Reset editor if the deleted record was selected.
+      if (selectedRecord?.id === record.id) {
+        setSelectedRecord(null);
+        setForm(createEmptyForm());
+        setAiSuggestion("");
+        setDirty(false);
+        setShowForm(false);
+      }
+
+      setSuccess(
+        `Career counselling enquiry for ${record.studentName} deleted successfully.`,
+      );
+    } catch (deleteError) {
+      setError(
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Unable to delete counselling enquiry.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     await saveRecord(false);
@@ -1115,17 +1297,13 @@ export function CareerCounsellingManager() {
 
   async function generateAI() {
     if (!selectedRecord) {
-      setError(
-        "Save the counselling enquiry before generating AI guidance.",
-      );
+      setError("Save the counselling enquiry before generating AI guidance.");
 
       return;
     }
 
     if (dirty) {
-      setError(
-        "Save the latest changes before generating AI guidance.",
-      );
+      setError("Save the latest changes before generating AI guidance.");
 
       return;
     }
@@ -1153,28 +1331,20 @@ export function CareerCounsellingManager() {
         },
       );
 
-      const payload =
-        await response.json();
+      const payload = await response.json();
 
       if (!response.ok || !payload.record) {
-        throw new Error(
-          payload.error ||
-            "Unable to generate career guidance.",
-        );
+        throw new Error(payload.error || "Unable to generate career guidance.");
       }
 
-      upsertRecord(
-        payload.record as CareerRecord,
-      );
+      upsertRecord(payload.record as CareerRecord);
 
       setSuccess(
         "AI guidance generated. Review and edit the report before approving it.",
       );
     } catch (aiError) {
       setError(
-        aiError instanceof Error
-          ? aiError.message
-          : "AI generation failed.",
+        aiError instanceof Error ? aiError.message : "AI generation failed.",
       );
     } finally {
       setGenerating(false);
@@ -1185,17 +1355,13 @@ export function CareerCounsellingManager() {
     if (!selectedRecord) return;
 
     if (!aiSuggestion.trim()) {
-      setError(
-        "Generate or enter a career guidance report before approval.",
-      );
+      setError("Generate or enter a career guidance report before approval.");
 
       return;
     }
 
     if (dirty) {
-      setError(
-        "Save the counselling changes before approving the AI report.",
-      );
+      setError("Save the counselling changes before approving the AI report.");
 
       return;
     }
@@ -1209,107 +1375,68 @@ export function CareerCounsellingManager() {
     if (!selectedRecord) return;
 
     if (dirty) {
-      setError(
-        "Save the latest changes before sharing.",
-      );
+      setError("Save the latest changes before sharing.");
 
       return;
     }
 
-    if (
-      !selectedRecord.aiReviewed ||
-      !selectedRecord.aiSuggestion.trim()
-    ) {
-      setError(
-        "Review and approve the career guidance before sharing.",
-      );
+    if (!selectedRecord.aiReviewed || !selectedRecord.aiSuggestion.trim()) {
+      setError("Review and approve the career guidance before sharing.");
 
       return;
     }
 
     if (!selectedRecord.whatsappConsent) {
-      setError(
-        "Record the customer's WhatsApp sharing consent first.",
-      );
+      setError("Record the customer's WhatsApp sharing consent first.");
 
       return;
     }
 
-    let phone =
-      selectedRecord.parentWhatsapp.replace(
-        /\D/g,
-        "",
-      );
+    let phone = selectedRecord.parentWhatsapp.replace(/\D/g, "");
 
     if (phone.length === 10) {
       phone = `91${phone}`;
     }
 
-    if (
-      phone.length < 10 ||
-      phone.length > 15
-    ) {
-      setError(
-        "Enter a valid parent/customer WhatsApp number.",
-      );
+    if (phone.length < 10 || phone.length > 15) {
+      setError("Enter a valid parent/customer WhatsApp number.");
 
       return;
     }
 
-    const message =
-      buildWhatsAppMessage(selectedRecord);
+    const message = buildWhatsAppMessage(selectedRecord);
 
-    const url =
-      `https://wa.me/${phone}?text=` +
-      encodeURIComponent(message);
+    const url = `https://wa.me/${phone}?text=` + encodeURIComponent(message);
 
-    window.open(
-      url,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   function printReport() {
     if (!selectedRecord) return;
 
     if (dirty) {
-      setError(
-        "Save the latest changes before exporting the report.",
-      );
+      setError("Save the latest changes before exporting the report.");
 
       return;
     }
 
-    if (
-      !selectedRecord.aiReviewed ||
-      !selectedRecord.aiSuggestion.trim()
-    ) {
-      setError(
-        "Approve the counselling report before exporting it.",
-      );
+    if (!selectedRecord.aiReviewed || !selectedRecord.aiSuggestion.trim()) {
+      setError("Approve the counselling report before exporting it.");
 
       return;
     }
 
-    const printWindow = window.open(
-      "",
-      "_blank",
-    );
+    const printWindow = window.open("", "_blank");
 
     if (!printWindow) {
-      setError(
-        "Allow pop-ups to open the printable report.",
-      );
+      setError("Allow pop-ups to open the printable report.");
 
       return;
     }
 
     printWindow.document.open();
 
-    printWindow.document.write(
-      buildPrintableHtml(selectedRecord),
-    );
+    printWindow.document.write(buildPrintableHtml(selectedRecord));
 
     printWindow.document.close();
   }
@@ -1323,7 +1450,6 @@ export function CareerCounsellingManager() {
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-blue-100">
               <Sparkles size={15} />
-
               SmartIQ Institute
             </div>
 
@@ -1332,9 +1458,8 @@ export function CareerCounsellingManager() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
-              Manage student enquiries, assess academic
-              strengths and interests, and prepare
-              personalised career guidance reports.
+              Manage student enquiries, assess academic strengths and interests,
+              and prepare personalised career guidance reports.
             </p>
           </div>
 
@@ -1344,7 +1469,6 @@ export function CareerCounsellingManager() {
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-[#0B40A1] shadow-sm transition hover:bg-blue-50"
           >
             <Plus size={17} />
-
             New Counselling Enquiry
           </button>
         </div>
@@ -1405,9 +1529,7 @@ export function CareerCounsellingManager() {
                   {item.label}
                 </p>
 
-                <p
-                  className={`mt-3 text-3xl font-black ${item.color}`}
-                >
+                <p className={`mt-3 text-3xl font-black ${item.color}`}>
                   {item.value}
                 </p>
               </div>
@@ -1424,22 +1546,16 @@ export function CareerCounsellingManager() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  View and update student career
-                  counselling records.
+                  View and update student career counselling records.
                 </p>
               </div>
 
               <button
                 type="button"
-                onClick={() =>
-                  setRefreshKey(
-                    (previous) => previous + 1,
-                  )
-                }
+                onClick={() => setRefreshKey((previous) => previous + 1)}
                 className={SECONDARY_BUTTON}
               >
                 <RefreshCw size={16} />
-
                 Refresh
               </button>
             </div>
@@ -1453,9 +1569,7 @@ export function CareerCounsellingManager() {
 
                 <input
                   value={search}
-                  onChange={(event) =>
-                    setSearch(event.target.value)
-                  }
+                  onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search student, parent, class, career or counsellor..."
                   className={`${INPUT_CLASS} pl-11`}
                 />
@@ -1463,27 +1577,19 @@ export function CareerCounsellingManager() {
 
               {loading ? (
                 <div className="flex min-h-56 items-center justify-center gap-3 text-sm font-semibold text-slate-500">
-                  <Loader2
-                    size={20}
-                    className="animate-spin"
-                  />
-
+                  <Loader2 size={20} className="animate-spin" />
                   Loading enquiries...
                 </div>
               ) : filteredRecords.length === 0 ? (
                 <div className="flex min-h-64 flex-col items-center justify-center text-center">
-                  <ClipboardList
-                    size={42}
-                    className="text-blue-300"
-                  />
+                  <ClipboardList size={42} className="text-blue-300" />
 
                   <h3 className="mt-4 text-lg font-black text-slate-800">
                     No counselling enquiries found
                   </h3>
 
                   <p className="mt-2 text-sm text-slate-500">
-                    Create a new counselling
-                    enquiry to get started.
+                    Create a new counselling enquiry to get started.
                   </p>
 
                   <button
@@ -1492,7 +1598,6 @@ export function CareerCounsellingManager() {
                     className={`${PRIMARY_BUTTON} mt-5`}
                   >
                     <Plus size={16} />
-
                     Create Enquiry
                   </button>
                 </div>
@@ -1517,34 +1622,26 @@ export function CareerCounsellingManager() {
                             <p className="mt-1 text-xs font-semibold text-slate-500">
                               {record.classLevel}
 
-                              {record.board
-                                ? ` • ${record.board}`
-                                : ""}
+                              {record.board ? ` • ${record.board}` : ""}
                             </p>
 
                             <p className="mt-2 text-xs text-slate-500">
                               Career Interest:{" "}
-                              {record.careerGoal ||
-                                "Exploring options"}
+                              {record.careerGoal || "Exploring options"}
                             </p>
 
                             <p className="mt-1 text-xs text-slate-400">
                               Created by{" "}
-                              {record.createdByName ||
-                                "Institute Staff"}
+                              {record.createdByName || "Institute Staff"}
                               {" • "}
-                              {formatDate(
-                                record.createdAt,
-                              )}
+                              {formatDate(record.createdAt)}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-3">
                           <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-[#0B40A1]">
-                            {formatStatus(
-                              record.status,
-                            )}
+                            {formatStatus(record.status)}
                           </span>
 
                           {record.aiReviewed ? (
@@ -1555,13 +1652,31 @@ export function CareerCounsellingManager() {
 
                           <button
                             type="button"
-                            onClick={() =>
-                              openRecord(record)
-                            }
+                            onClick={() => openRecord(record)}
                             className={PRIMARY_BUTTON}
                           >
                             View / Edit
                           </button>
+
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => void deleteCareerEnquiry(record)}
+                              disabled={deletingId !== null}
+                              aria-label={`Delete career counselling enquiry for ${record.studentName}`}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {deletingId === record.id ? (
+                                <Loader2 size={16} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={16} />
+                              )}
+
+                              {deletingId === record.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </article>
@@ -1579,12 +1694,7 @@ export function CareerCounsellingManager() {
             <button
               type="button"
               onClick={() => {
-                if (
-                  dirty &&
-                  !window.confirm(
-                    "Discard unsaved changes?",
-                  )
-                ) {
+                if (dirty && !window.confirm("Discard unsaved changes?")) {
                   return;
                 }
 
@@ -1595,7 +1705,6 @@ export function CareerCounsellingManager() {
               className={SECONDARY_BUTTON}
             >
               <ArrowLeft size={16} />
-
               Back to Enquiries
             </button>
 
@@ -1606,10 +1715,7 @@ export function CareerCounsellingManager() {
             </span>
           </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-6"
-          >
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* SECTION 1 */}
 
             <Section
@@ -1622,12 +1728,7 @@ export function CareerCounsellingManager() {
                   label="Student Full Name"
                   required
                   value={form.studentName}
-                  onChange={(value) =>
-                    updateString(
-                      "studentName",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("studentName", value)}
                   placeholder="Enter student's full name"
                 />
 
@@ -1635,12 +1736,7 @@ export function CareerCounsellingManager() {
                   label="Date of Birth"
                   type="date"
                   value={form.dateOfBirth}
-                  onChange={(value) =>
-                    updateString(
-                      "dateOfBirth",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("dateOfBirth", value)}
                 />
 
                 <SelectField
@@ -1648,46 +1744,46 @@ export function CareerCounsellingManager() {
                   required
                   value={form.classLevel}
                   options={CLASS_OPTIONS}
-                  onChange={(value) =>
-                    updateString(
-                      "classLevel",
-                      value,
-                    )
-                  }
+                  onChange={(value) => {
+                    setForm((previous) => ({
+                      ...previous,
+                      classLevel: value,
+                      strongSubjects: [],
+                      weakSubjects: [],
+                    }));
+
+                    setDirty(true);
+                    setSuccess("");
+                  }}
                 />
 
                 <SelectField
                   label="Education Board"
                   value={form.board}
                   options={BOARD_OPTIONS}
-                  onChange={(value) =>
-                    updateString(
-                      "board",
-                      value,
-                    )
-                  }
+                  onChange={(value) => {
+                    setForm((previous) => ({
+                      ...previous,
+                      board: value,
+                      strongSubjects: [],
+                      weakSubjects: [],
+                    }));
+
+                    setDirty(true);
+                    setSuccess("");
+                  }}
                 />
 
                 <Field
                   label="School / College Name"
                   value={form.school}
-                  onChange={(value) =>
-                    updateString(
-                      "school",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("school", value)}
                 />
 
                 <Field
                   label="City"
                   value={form.city}
-                  onChange={(value) =>
-                    updateString(
-                      "city",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("city", value)}
                 />
               </div>
             </Section>
@@ -1703,35 +1799,20 @@ export function CareerCounsellingManager() {
                 <Field
                   label="Student Phone Number"
                   value={form.studentPhone}
-                  onChange={(value) =>
-                    updateString(
-                      "studentPhone",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("studentPhone", value)}
                 />
 
                 <Field
                   label="Parent / Guardian Name"
                   value={form.parentName}
-                  onChange={(value) =>
-                    updateString(
-                      "parentName",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("parentName", value)}
                 />
 
                 <Field
                   label="Parent / Customer WhatsApp"
                   required
                   value={form.parentWhatsapp}
-                  onChange={(value) =>
-                    updateString(
-                      "parentWhatsapp",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("parentWhatsapp", value)}
                   placeholder="+91 9876543210"
                 />
 
@@ -1739,12 +1820,7 @@ export function CareerCounsellingManager() {
                   label="Email Address"
                   type="email"
                   value={form.email}
-                  onChange={(value) =>
-                    updateString(
-                      "email",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("email", value)}
                 />
               </div>
             </Section>
@@ -1759,55 +1835,30 @@ export function CareerCounsellingManager() {
               <div className="space-y-6">
                 <Field
                   label="Overall Academic Percentage / CGPA"
-                  value={
-                    form.academicPercentage
-                  }
+                  value={form.academicPercentage}
                   onChange={(value) =>
-                    updateString(
-                      "academicPercentage",
-                      value,
-                    )
+                    updateString("academicPercentage", value)
                   }
                   placeholder="e.g. 82% or 8.2 CGPA"
                 />
 
                 <MultiSelect
                   label="Strong Subjects"
-                  options={
-                    SCHOOL_SUBJECTS
-                  }
-                  selected={
-                    form.strongSubjects
-                  }
-                  onChange={(values) =>
-                    updateArray(
-                      "strongSubjects",
-                      values,
-                    )
-                  }
+                  options={availableSubjects}
+                  selected={form.strongSubjects}
+                  onChange={(values) => updateArray("strongSubjects", values)}
                 />
 
                 <MultiSelect
                   label="Weak Subjects / Areas for Improvement"
-                  options={
-                    SCHOOL_SUBJECTS
-                  }
-                  selected={
-                    form.weakSubjects
-                  }
-                  onChange={(values) =>
-                    updateArray(
-                      "weakSubjects",
-                      values,
-                    )
-                  }
+                  options={availableSubjects}
+                  selected={form.weakSubjects}
+                  onChange={(values) => updateArray("weakSubjects", values)}
                 />
 
                 <SelectField
                   label="Preferred Learning Style"
-                  value={
-                    form.preferredLearningStyle
-                  }
+                  value={form.preferredLearningStyle}
                   options={[
                     "Practical / Hands-on",
                     "Theory / Reading",
@@ -1818,10 +1869,7 @@ export function CareerCounsellingManager() {
                     "Not Sure",
                   ]}
                   onChange={(value) =>
-                    updateString(
-                      "preferredLearningStyle",
-                      value,
-                    )
+                    updateString("preferredLearningStyle", value)
                   }
                 />
               </div>
@@ -1837,37 +1885,21 @@ export function CareerCounsellingManager() {
               <div className="space-y-6">
                 <MultiSelect
                   label="Student Interests"
-                  options={
-                    INTEREST_OPTIONS
-                  }
-                  selected={
-                    form.interests
-                  }
-                  onChange={(values) =>
-                    updateArray(
-                      "interests",
-                      values,
-                    )
-                  }
+                  options={INTEREST_OPTIONS}
+                  selected={form.interests}
+                  onChange={(values) => updateArray("interests", values)}
                 />
 
                 <Field
                   label="Current Career Goal"
                   value={form.careerGoal}
-                  onChange={(value) =>
-                    updateString(
-                      "careerGoal",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("careerGoal", value)}
                   placeholder="e.g. Engineer, Doctor, IAS Officer, Entrepreneur"
                 />
 
                 <SelectField
                   label="Preferred Stream"
-                  value={
-                    form.preferredStream
-                  }
+                  value={form.preferredStream}
                   options={[
                     "Science - PCM",
                     "Science - PCB",
@@ -1878,38 +1910,21 @@ export function CareerCounsellingManager() {
                     "Undecided",
                     "Not Applicable",
                   ]}
-                  onChange={(value) =>
-                    updateString(
-                      "preferredStream",
-                      value,
-                    )
-                  }
+                  onChange={(value) => updateString("preferredStream", value)}
                 />
 
                 <MultiSelect
                   label="Entrance Exam Interests"
                   options={EXAM_OPTIONS}
-                  selected={
-                    form.examInterests
-                  }
-                  onChange={(values) =>
-                    updateArray(
-                      "examInterests",
-                      values,
-                    )
-                  }
+                  selected={form.examInterests}
+                  onChange={(values) => updateArray("examInterests", values)}
                 />
 
                 <TextAreaField
                   label="Parent / Guardian Expectations"
-                  value={
-                    form.parentExpectations
-                  }
+                  value={form.parentExpectations}
                   onChange={(value) =>
-                    updateString(
-                      "parentExpectations",
-                      value,
-                    )
+                    updateString("parentExpectations", value)
                   }
                   placeholder="What does the parent expect from the student's career?"
                 />
@@ -1926,29 +1941,15 @@ export function CareerCounsellingManager() {
               <div className="space-y-5">
                 <TextAreaField
                   label="Student Challenges"
-                  value={
-                    form.challenges
-                  }
-                  onChange={(value) =>
-                    updateString(
-                      "challenges",
-                      value,
-                    )
-                  }
+                  value={form.challenges}
+                  onChange={(value) => updateString("challenges", value)}
                   placeholder="Academic difficulties, uncertainty about career choices, study habits..."
                 />
 
                 <TextAreaField
                   label="Counsellor Observations"
-                  value={
-                    form.counsellorNotes
-                  }
-                  onChange={(value) =>
-                    updateString(
-                      "counsellorNotes",
-                      value,
-                    )
-                  }
+                  value={form.counsellorNotes}
+                  onChange={(value) => updateString("counsellorNotes", value)}
                   rows={5}
                   placeholder="Write your assessment and important discussion points..."
                 />
@@ -1972,14 +1973,9 @@ export function CareerCounsellingManager() {
                     "AI Basics",
                     "Skill Development",
                   ]}
-                  selected={
-                    form.recommendedPrograms
-                  }
+                  selected={form.recommendedPrograms}
                   onChange={(values) =>
-                    updateArray(
-                      "recommendedPrograms",
-                      values,
-                    )
+                    updateArray("recommendedPrograms", values)
                   }
                 />
 
@@ -1987,55 +1983,31 @@ export function CareerCounsellingManager() {
                   <Field
                     label="Follow-up Date"
                     type="date"
-                    value={
-                      form.followUpDate
-                    }
-                    onChange={(value) =>
-                      updateString(
-                        "followUpDate",
-                        value,
-                      )
-                    }
+                    value={form.followUpDate}
+                    onChange={(value) => updateString("followUpDate", value)}
                   />
 
                   <div>
-                    <label className={LABEL_CLASS}>
-                      Enquiry Status
-                    </label>
+                    <label className={LABEL_CLASS}>Enquiry Status</label>
 
                     <select
                       value={form.status}
-                      onChange={(
-                        event: ChangeEvent<HTMLSelectElement>,
-                      ) => {
-                        setForm(
-                          (previous) => ({
-                            ...previous,
+                      onChange={(event: ChangeEvent<HTMLSelectElement>) => {
+                        setForm((previous) => ({
+                          ...previous,
 
-                            status:
-                              event.target
-                                .value as CareerStatus,
-                          }),
-                        );
+                          status: event.target.value as CareerStatus,
+                        }));
 
                         setDirty(true);
                       }}
                       className={INPUT_CLASS}
                     >
-                      {STATUS_OPTIONS.map(
-                        (option) => (
-                          <option
-                            key={
-                              option.value
-                            }
-                            value={
-                              option.value
-                            }
-                          >
-                            {option.label}
-                          </option>
-                        ),
-                      )}
+                      {STATUS_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -2053,46 +2025,31 @@ export function CareerCounsellingManager() {
                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <input
                     type="checkbox"
-                    checked={
-                      form.aiConsent
-                    }
+                    checked={form.aiConsent}
                     onChange={(event) =>
-                      updateBoolean(
-                        "aiConsent",
-                        event.target.checked,
-                      )
+                      updateBoolean("aiConsent", event.target.checked)
                     }
                     className="mt-1 h-4 w-4 accent-blue-700"
                   />
 
                   <span className="text-sm leading-6 text-slate-700">
-                    The student or parent
-                    has agreed to the use
-                    of relevant academic
-                    information for AI-assisted
-                    career guidance.
+                    The student or parent has agreed to the use of relevant
+                    academic information for AI-assisted career guidance.
                   </span>
                 </label>
 
                 <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
                   <input
                     type="checkbox"
-                    checked={
-                      form.whatsappConsent
-                    }
+                    checked={form.whatsappConsent}
                     onChange={(event) =>
-                      updateBoolean(
-                        "whatsappConsent",
-                        event.target.checked,
-                      )
+                      updateBoolean("whatsappConsent", event.target.checked)
                     }
                     className="mt-1 h-4 w-4 accent-blue-700"
                   />
 
                   <span className="text-sm leading-6 text-slate-700">
-                    The customer has
-                    agreed to receive
-                    the counselling summary
+                    The customer has agreed to receive the counselling summary
                     through WhatsApp.
                   </span>
                 </label>
@@ -2108,10 +2065,7 @@ export function CareerCounsellingManager() {
                 className={PRIMARY_BUTTON}
               >
                 {saving ? (
-                  <Loader2
-                    size={17}
-                    className="animate-spin"
-                  />
+                  <Loader2 size={17} className="animate-spin" />
                 ) : (
                   <Save size={17} />
                 )}
@@ -2135,10 +2089,7 @@ export function CareerCounsellingManager() {
             <div className="space-y-5">
               <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
                 <div className="flex items-start gap-3">
-                  <Sparkles
-                    size={22}
-                    className="shrink-0 text-[#0B40A1]"
-                  />
+                  <Sparkles size={22} className="shrink-0 text-[#0B40A1]" />
 
                   <div>
                     <h3 className="font-black text-slate-900">
@@ -2146,13 +2097,9 @@ export function CareerCounsellingManager() {
                     </h3>
 
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      AI will examine the
-                      recorded academic strengths,
-                      improvement areas, interests
-                      and career preferences to
-                      prepare possible career
-                      pathways for counsellor
-                      review.
+                      AI will examine the recorded academic strengths,
+                      improvement areas, interests and career preferences to
+                      prepare possible career pathways for counsellor review.
                     </p>
                   </div>
                 </div>
@@ -2160,9 +2107,7 @@ export function CareerCounsellingManager() {
 
               <button
                 type="button"
-                onClick={() =>
-                  void generateAI()
-                }
+                onClick={() => void generateAI()}
                 disabled={
                   !selectedRecord ||
                   dirty ||
@@ -2173,10 +2118,7 @@ export function CareerCounsellingManager() {
                 className={PRIMARY_BUTTON}
               >
                 {generating ? (
-                  <Loader2
-                    size={17}
-                    className="animate-spin"
-                  />
+                  <Loader2 size={17} className="animate-spin" />
                 ) : (
                   <Sparkles size={17} />
                 )}
@@ -2188,13 +2130,11 @@ export function CareerCounsellingManager() {
 
               {!selectedRecord ? (
                 <p className="text-xs font-semibold text-amber-700">
-                  Save the enquiry first
-                  to enable AI guidance.
+                  Save the enquiry first to enable AI guidance.
                 </p>
               ) : dirty ? (
                 <p className="text-xs font-semibold text-amber-700">
-                  Save your latest changes
-                  before generating guidance.
+                  Save your latest changes before generating guidance.
                 </p>
               ) : null}
 
@@ -2212,22 +2152,17 @@ export function CareerCounsellingManager() {
                 placeholder="The AI-generated report will appear here. You may also write or edit the guidance manually."
               />
 
-              {selectedRecord?.aiReviewed &&
-              !dirty ? (
+              {selectedRecord?.aiReviewed && !dirty ? (
                 <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
                   <CheckCircle2 size={18} />
-
-                  Reviewed and approved
-                  for customer sharing
+                  Reviewed and approved for customer sharing
                 </div>
               ) : null}
 
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
-                  onClick={() =>
-                    void approveAI()
-                  }
+                  onClick={() => void approveAI()}
                   disabled={
                     !selectedRecord ||
                     !aiSuggestion.trim() ||
@@ -2238,30 +2173,20 @@ export function CareerCounsellingManager() {
                   className={PRIMARY_BUTTON}
                 >
                   {reviewing ? (
-                    <Loader2
-                      size={16}
-                      className="animate-spin"
-                    />
+                    <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    <CheckCircle2
-                      size={16}
-                    />
+                    <CheckCircle2 size={16} />
                   )}
-
                   Approve Career Guidance
                 </button>
 
                 <button
                   type="button"
                   onClick={printReport}
-                  disabled={
-                    !selectedRecord?.aiReviewed ||
-                    dirty
-                  }
+                  disabled={!selectedRecord?.aiReviewed || dirty}
                   className={SECONDARY_BUTTON}
                 >
                   <Download size={16} />
-
                   Print / Save PDF
                 </button>
 
@@ -2276,20 +2201,14 @@ export function CareerCounsellingManager() {
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <MessageCircle size={17} />
-
                   Send on WhatsApp
                 </button>
               </div>
 
               <p className="text-xs leading-5 text-slate-500">
-                WhatsApp opens with
-                the report prepared for
-                the customer's number.
-                The staff member confirms
-                sending the message.
-                For PDF, select Save as PDF
-                from the browser's print
-                dialog.
+                WhatsApp opens with the report prepared for the customer's
+                number. The staff member confirms sending the message. For PDF,
+                select Save as PDF from the browser's print dialog.
               </p>
             </div>
           </Section>

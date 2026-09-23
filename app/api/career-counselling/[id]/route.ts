@@ -1,4 +1,4 @@
-﻿import { ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 
 import { NextResponse } from "next/server";
 
@@ -169,6 +169,79 @@ export async function PATCH(
       {
         status: 500,
       },
+    );
+  }
+}
+
+
+// ============================================================
+// DELETE CAREER COUNSELLING ENQUIRY
+// ADMIN ONLY
+// ============================================================
+
+export async function DELETE(
+  _request: Request,
+  { params }: Context,
+) {
+  try {
+    const session = await getSessionUser();
+
+    // Counsellors may view/edit, but only admins may delete.
+    if (
+      !session ||
+      session.role !== "admin" ||
+      (session.status && session.status !== "active")
+    ) {
+      return NextResponse.json(
+        { error: "Only admins can delete counselling enquiries." },
+        { status: 403 },
+      );
+    }
+
+    const { id } = await params;
+
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+      return NextResponse.json(
+        { error: "Invalid record ID." },
+        { status: 400 },
+      );
+    }
+
+    const collection = await careerCollection();
+
+    const result = await collection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    if (result.deletedCount !== 1) {
+      return NextResponse.json(
+        { error: "Counselling enquiry not found." },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        deletedId: id,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
+    );
+  } catch (error) {
+    console.error(
+      "Career counselling DELETE failed:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        error: "Unable to delete counselling enquiry.",
+      },
+      { status: 500 },
     );
   }
 }

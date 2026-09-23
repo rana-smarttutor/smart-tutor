@@ -340,7 +340,7 @@ export default async function Home() {
 
       {/* SMARTIQ EXAM PORTAL - FEATURED */}
 
-      <section className="section-shell py-10 sm:py-14">
+      <section className="w-full px-0 py-10 sm:py-14">
         <ExamPortalBanner />
       </section>
 
