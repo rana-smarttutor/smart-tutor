@@ -26,7 +26,6 @@ import {
 import type { QuizQuestion } from "@/lib/quiz-arena-questions";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 import type { QuizArenaDraft } from "@/lib/quiz-arena-drafts";
-import { requestLoginIfNeeded } from "@/lib/request-login";
 
 type Step =
   | "welcome"
@@ -679,16 +678,6 @@ export default function QuizArenaClient({
   async function startChallenge() {
     if (!selectedJourneyLevel || !selectedRound) {
       setMessage("Please select a level and round first.");
-      return;
-    }
-
-    const returnPath = window.location.pathname.startsWith("/mock-test")
-      ? "/mock-test"
-      : "/quiz-arena";
-
-    const canStart = await requestLoginIfNeeded(returnPath);
-
-    if (!canStart) {
       return;
     }
 

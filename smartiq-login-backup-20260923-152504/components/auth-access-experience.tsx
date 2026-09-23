@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,6 +35,12 @@ type QuizNotice = {
 
 const PREFIX = "siq-login-prompts-v1:";
 
+const FIRST_SHOWN = PREFIX + "first-shown";
+const FIRST_DISMISSED = PREFIX + "first-dismissed";
+const SECOND_SHOWN = PREFIX + "second-shown";
+
+const FIRST_ELAPSED = PREFIX + "first-elapsed";
+const SECOND_ELAPSED = PREFIX + "second-elapsed";
 
 function stored(key: string): string | null {
   try {
@@ -52,6 +58,11 @@ function store(key: string, value: string): void {
   }
 }
 
+function elapsed(key: string): number {
+  const number = Number(stored(key) ?? "0");
+
+  return Number.isFinite(number) ? Math.max(0, number) : 0;
+}
 
 export function AuthAccessExperience() {
   const pathname = usePathname();
@@ -70,6 +81,10 @@ export function AuthAccessExperience() {
 
   const [showQuiz, setShowQuiz] = useState(false);
 
+  const elapsedRef = useRef({
+    first: 0,
+    second: 0,
+  });
 
   // ==========================================
   // CHECK LOGIN SESSION
@@ -150,41 +165,6 @@ export function AuthAccessExperience() {
   // PROTECTED LINK POPUP
   // ==========================================
 
-  // Open the existing login popup when a visitor attempts
-  // an action that requires authentication.
-  useEffect(() => {
-    function handleLoginRequired(event: Event) {
-      const customEvent = event as CustomEvent<{
-        next?: string;
-      }>;
-
-      const next = safeReturnPath(customEvent.detail?.next);
-
-      if (!next) {
-        return;
-      }
-
-      setReminder(null);
-
-      setGate({
-        next,
-        direct: false,
-      });
-    }
-
-    window.addEventListener(
-      "smartiq:login-required",
-      handleLoginRequired,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "smartiq:login-required",
-        handleLoginRequired,
-      );
-    };
-  }, []);
-
   useEffect(() => {
     function intercept(event: MouseEvent) {
       if (
@@ -250,6 +230,71 @@ export function AuthAccessExperience() {
       document.removeEventListener("click", intercept, true);
     };
   }, [auth]);
+
+  // ==========================================
+  // HOMEPAGE LOGIN REMINDERS
+  //
+  // First: 7 seconds
+  // Second: 120 seconds after first dismissal
+  // Only counts active, visible browsing time.
+  // ==========================================
+
+  useEffect(() => {
+    if (pathname !== "/" || auth !== "guest" || gate || reminder) {
+      return;
+    }
+
+    elapsedRef.current = {
+      first: elapsed(FIRST_ELAPSED),
+      second: elapsed(SECOND_ELAPSED),
+    };
+
+    let last = performance.now();
+
+    const timer = window.setInterval(() => {
+      const now = performance.now();
+
+      const delta = Math.min(1500, Math.max(0, now - last));
+
+      last = now;
+
+      if (document.visibilityState !== "visible" || !document.hasFocus()) {
+        return;
+      }
+
+      if (stored(FIRST_SHOWN) !== "yes") {
+        elapsedRef.current.first += delta;
+
+        store(FIRST_ELAPSED, String(elapsedRef.current.first));
+
+        if (elapsedRef.current.first >= 7000) {
+          store(FIRST_SHOWN, "yes");
+
+          setReminder("first");
+        }
+
+        return;
+      }
+
+      if (stored(FIRST_DISMISSED) !== "yes" || stored(SECOND_SHOWN) === "yes") {
+        return;
+      }
+
+      elapsedRef.current.second += delta;
+
+      store(SECOND_ELAPSED, String(elapsedRef.current.second));
+
+      if (elapsedRef.current.second >= 120000) {
+        store(SECOND_SHOWN, "yes");
+
+        setReminder("second");
+      }
+    }, 250);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [pathname, auth, gate, reminder]);
 
   useEffect(() => {
     if (pathname !== "/" || auth !== "guest") {
@@ -324,6 +369,10 @@ export function AuthAccessExperience() {
   // ==========================================
 
   function dismiss() {
+    if (reminder === "first") {
+      store(FIRST_DISMISSED, "yes");
+    }
+
     setReminder(null);
     setGate(null);
   }

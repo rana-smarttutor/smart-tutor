@@ -2,7 +2,6 @@
 
 import { upload } from "@vercel/blob/client";
 import { useEffect, useMemo, useState } from "react";
-import { requestLoginIfNeeded } from "@/lib/request-login";
 
 type Book = {
   _id?: string;
@@ -873,9 +872,10 @@ export function DigitalLibraryClient({
   }
 
   async function downloadBook(book: Book) {
-    const canDownload = await requestLoginIfNeeded("/library");
-
-    if (!canDownload) {
+    if (!loggedIn && !allowedToManage) {
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(
+        "/library",
+      )}`;
       return;
     }
 
@@ -908,10 +908,11 @@ export function DigitalLibraryClient({
     }
   }
 
-  async function previewBook(book: Book) {
-    const canPreview = await requestLoginIfNeeded("/library");
-
-    if (!canPreview) {
+  function previewBook(book: Book) {
+    if (!loggedIn && !allowedToManage) {
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(
+        "/library",
+      )}`;
       return;
     }
 
