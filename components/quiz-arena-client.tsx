@@ -189,14 +189,12 @@ export default function QuizArenaClient({
 
           // Each draft has its own unique ID.
           // Show the automatic reminder only once per browser.
-          const reminderKey =
-            `smartiq-quiz-reminder-shown-${data.draft.id}`;
+          const reminderKey = `smartiq-quiz-reminder-shown-${data.draft.id}`;
 
           let alreadyShown = false;
 
           try {
-            alreadyShown =
-              window.localStorage.getItem(reminderKey) === "1";
+            alreadyShown = window.localStorage.getItem(reminderKey) === "1";
 
             if (!alreadyShown) {
               window.localStorage.setItem(reminderKey, "1");
@@ -398,11 +396,7 @@ export default function QuizArenaClient({
         return;
       }
 
-      setStep(
-        selectedExam?.startsWith("ssc-")
-          ? "ssc"
-          : "exam"
-      );
+      setStep(selectedExam?.startsWith("ssc-") ? "ssc" : "exam");
       return;
     }
 
@@ -1071,33 +1065,57 @@ export default function QuizArenaClient({
     <main className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white">
       {showResumeChoice && unfinishedDraft && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 py-5 backdrop-blur-sm"
           role="presentation"
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="resume-quiz-title"
-            className="w-full max-w-lg rounded-3xl border border-white/15 bg-slate-900 p-7 text-center text-white shadow-2xl sm:p-9"
+            className="relative max-h-[calc(100dvh-2.5rem)] w-full max-w-md overflow-y-auto rounded-[26px] border border-white/15 bg-slate-900 p-5 text-center text-white shadow-2xl sm:p-6"
           >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/15 text-3xl">
+            {/* CLOSE BUTTON */}
+
+            <button
+              type="button"
+              onClick={() => setShowResumeChoice(false)}
+              aria-label="Close unfinished quiz reminder"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-slate-300 transition hover:border-cyan-300 hover:bg-white/10 hover:text-white"
+            >
+              ×
+            </button>
+
+            {/* ICON */}
+
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400/15 text-2xl">
               📚
             </div>
 
-            <p className="mt-5 text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
+            {/* BRAND */}
+
+            <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">
               SmartIQ Institute
             </p>
 
-            <h2 id="resume-quiz-title" className="mt-3 text-3xl font-black">
+            {/* HEADING */}
+
+            <h2
+              id="resume-quiz-title"
+              className="mt-2 text-[27px] font-black leading-tight"
+            >
               Welcome Back!
             </h2>
 
-            <p className="mt-4 text-sm leading-7 text-slate-300">
+            {/* DESCRIPTION */}
+
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-300">
               You have an unfinished quiz from your previous session.
             </p>
 
-            <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-5 text-left">
-              <p className="text-lg font-bold text-white">
+            {/* SAVED QUIZ DETAILS */}
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-left">
+              <p className="text-base font-bold text-white">
                 {unfinishedDraft.subject}
               </p>
 
@@ -1111,23 +1129,27 @@ export default function QuizArenaClient({
                 {unfinishedDraft.board ? ` • ${unfinishedDraft.board}` : ""}
               </p>
 
-              <p className="mt-3 text-sm font-semibold text-cyan-200">
+              <p className="mt-2 text-sm font-semibold text-cyan-200">
                 Level {unfinishedDraft.progressionLevel}
                 {" • "}
                 Round {unfinishedDraft.round}
               </p>
 
-              <div className="mt-4 rounded-xl bg-cyan-400/10 px-4 py-3 text-sm font-bold text-cyan-200">
+              {/* QUESTION PROGRESS */}
+
+              <div className="mt-3 rounded-xl bg-cyan-400/10 px-4 py-3 text-sm font-bold text-cyan-200">
                 {Object.keys(unfinishedDraft.answersByIndex).length} of{" "}
                 {unfinishedDraft.questions.length} questions answered
               </div>
             </div>
 
-            <div className="mt-7 grid gap-3">
+            {/* ACTION BUTTONS */}
+
+            <div className="mt-5 grid gap-3">
               <button
                 type="button"
                 onClick={resumePreviousQuiz}
-                className="rounded-xl bg-cyan-400 px-6 py-4 font-bold text-slate-950 transition hover:bg-cyan-300"
+                className="rounded-xl bg-cyan-400 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
               >
                 Continue Previous Quiz
               </button>
@@ -1135,13 +1157,15 @@ export default function QuizArenaClient({
               <button
                 type="button"
                 onClick={startFreshQuiz}
-                className="rounded-xl border border-white/20 bg-white/5 px-6 py-4 font-bold text-white transition hover:bg-white/10"
+                className="rounded-xl border border-white/20 bg-white/5 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
               >
                 Start New Quiz
               </button>
             </div>
 
-            <p className="mt-5 text-xs leading-5 text-slate-400">
+            {/* FOOTER */}
+
+            <p className="mt-4 text-xs leading-5 text-slate-400">
               Your saved quiz is associated with your account.
             </p>
           </div>
@@ -1376,57 +1400,57 @@ export default function QuizArenaClient({
                   .filter((exam) =>
                     step === "ssc"
                       ? exam.id.startsWith("ssc-")
-                      : !exam.id.startsWith("ssc-")
+                      : !exam.id.startsWith("ssc-"),
                   )
                   .map((exam) => (
-                  <button
-                    type="button"
-                    key={exam.id}
-                    onClick={() => {
-                      if (exam.id === "ssc") {
-                        setSelectedExam(null);
-                        setStep("ssc");
-                        return;
-                      }
+                    <button
+                      type="button"
+                      key={exam.id}
+                      onClick={() => {
+                        if (exam.id === "ssc") {
+                          setSelectedExam(null);
+                          setStep("ssc");
+                          return;
+                        }
 
-                      setSelectedExam(exam.id);
+                        setSelectedExam(exam.id);
 
-                      setSelectedSchoolClass(null);
-                      setSelectedBoard(null);
-                      setSelectedSubject(null);
+                        setSelectedSchoolClass(null);
+                        setSelectedBoard(null);
+                        setSelectedSubject(null);
 
-                      setSelectedJourneyLevel(null);
-                      setSelectedRound(null);
+                        setSelectedJourneyLevel(null);
+                        setSelectedRound(null);
 
-                      setMessage("");
+                        setMessage("");
 
-                      const classes = getQuizSchoolClasses(exam.id);
+                        const classes = getQuizSchoolClasses(exam.id);
 
-                      if (classes.length > 0) {
-                        setStep("class");
-                      } else {
-                        setStep("subject");
-                      }
-                    }}
-                    className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
-                  >
-                    <span className="text-2xl">🎯</span>
+                        if (classes.length > 0) {
+                          setStep("class");
+                        } else {
+                          setStep("subject");
+                        }
+                      }}
+                      className="rounded-2xl border border-white/10 bg-white/10 p-5 text-left transition hover:-translate-y-1 hover:border-cyan-300"
+                    >
+                      <span className="text-2xl">🎯</span>
 
-                    <h2 className="mt-4 text-lg font-bold">{exam.title}</h2>
+                      <h2 className="mt-4 text-lg font-bold">{exam.title}</h2>
 
-                    <p className="mt-3 text-sm leading-6 text-slate-300">
-                      {exam.eligibility}
-                    </p>
+                      <p className="mt-3 text-sm leading-6 text-slate-300">
+                        {exam.eligibility}
+                      </p>
 
-                    <p className="mt-3 rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-cyan-200">
-                      {exam.trendNote}
-                    </p>
+                      <p className="mt-3 rounded-xl bg-white/5 px-3 py-2 text-xs font-semibold text-cyan-200">
+                        {exam.trendNote}
+                      </p>
 
-                    <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      {exam.subjects.length} subjects
-                    </p>
-                  </button>
-                ))}
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        {exam.subjects.length} subjects
+                      </p>
+                    </button>
+                  ))}
               </div>
             )}
           </section>
