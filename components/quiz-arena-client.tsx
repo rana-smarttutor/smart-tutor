@@ -74,8 +74,10 @@ type QuizResult = {
 };
 export default function QuizArenaClient({
   startAtCategory = false,
+  mockTestMode = false,
 }: {
   startAtCategory?: boolean;
+  mockTestMode?: boolean;
 }) {
   const [step, setStep] = useState<Step>(startAtCategory ? "level" : "welcome");
 
@@ -1171,7 +1173,7 @@ export default function QuizArenaClient({
           </div>
         </div>
       )}
-      {step !== "welcome" && step !== "quiz" && (
+      {step !== "welcome" && step !== "level" && step !== "quiz" && (
         <button
           type="button"
           onClick={goBack}
