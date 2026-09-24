@@ -221,14 +221,14 @@ const filteredLinks = links.filter((link) => {
                   alt="SmartIQ Institute Logo"
                   width={400}
                   height={100}
-                  className="h-auto w-[230px] object-contain sm:w-[280px] lg:w-[370px]"
+                  className="h-auto w-[230px] object-contain sm:w-[280px] lg:w-[290px] xl:w-[320px] 2xl:w-[350px]"
                   priority
                 />
               </Link>
 
               <div className="hidden h-full flex-1 items-start justify-end gap-4 lg:flex">
-                <div className="flex h-[4.5rem] items-center rounded-b-[2.5rem] border-b border-[#2a4365]/40 bg-gradient-to-r from-[#0a1b38] to-[#1a365d] px-8 shadow-xl">
-                  <nav className="mr-6 flex h-full items-stretch space-x-7">
+                <div className="flex h-[4.5rem] min-w-0 items-center rounded-b-[2.5rem] border-b border-[#2a4365]/40 bg-gradient-to-r from-[#0a1b38] to-[#1a365d] px-5 shadow-xl xl:px-6">
+                  <nav className="mr-4 flex h-full items-stretch gap-4 xl:gap-5">
                     {visibleLinks.map((link) => {
                       const isActive = isLinkActive(link.href);
 
@@ -237,7 +237,7 @@ const filteredLinks = links.filter((link) => {
                           key={link.href}
                           href={link.href}
                           onClick={closeMenu}
-                          className={`group relative flex h-full items-center px-1 text-[15px] font-medium transition-colors duration-300 ${
+                          className={`group relative flex h-full shrink-0 items-center whitespace-nowrap px-1 text-[14px] font-medium transition-colors duration-300 xl:text-[15px] ${
                             isActive
                               ? "text-[#3b82f6]"
                               : "text-gray-300 hover:text-white"
