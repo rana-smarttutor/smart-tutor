@@ -2,20 +2,14 @@
 
 import { upload } from "@vercel/blob/client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { requestLoginIfNeeded } from "@/lib/request-login";
 
 import {
-  ArrowRight,
   BookOpen,
   ChevronRight,
   Download,
-  FileText,
   GraduationCap,
   Landmark,
   Layers3,
@@ -102,8 +96,7 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "school-learning",
     label: "School Learning Library",
-    description:
-      "School subjects, board exams, concepts and textbook support.",
+    description: "School subjects, board exams, concepts and textbook support.",
     keywords: [
       "school",
       "ssc",
@@ -127,8 +120,7 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "competitive-exam",
     label: "All Competitive Exam Library",
-    description:
-      "JEE, NEET, CET, entrance exams and competitive preparation.",
+    description: "JEE, NEET, CET, entrance exams and competitive preparation.",
     keywords: [
       "jee",
       "neet",
@@ -163,8 +155,7 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "fiction",
     label: "Fiction Books Library",
-    description:
-      "Novels, stories and creative reading books.",
+    description: "Novels, stories and creative reading books.",
     keywords: [
       "fiction",
       "novel",
@@ -179,8 +170,7 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "non-fiction",
     label: "Non-Fiction Books Library",
-    description:
-      "Knowledge books, practical learning and real-world subjects.",
+    description: "Knowledge books, practical learning and real-world subjects.",
     keywords: [
       "non fiction",
       "non-fiction",
@@ -196,8 +186,7 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "biography",
     label: "Biography & Autobiography Library",
-    description:
-      "Life stories, leaders, achievers and inspirational journeys.",
+    description: "Life stories, leaders, achievers and inspirational journeys.",
     keywords: [
       "biography",
       "autobiography",
@@ -213,8 +202,7 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
   {
     id: "personality-development",
     label: "Personality Development Library",
-    description:
-      "Confidence, communication, habits, mindset and self-growth.",
+    description: "Confidence, communication, habits, mindset and self-growth.",
     keywords: [
       "personality",
       "confidence",
@@ -281,233 +269,115 @@ const DEFAULT_LIBRARY_CATEGORIES: LibraryCategory[] = [
 ];
 
 // =====================================================
-// SIDEBAR ACADEMIC GROUPS
+// FILTER MENU OPTIONS
 // =====================================================
 
-const ACADEMIC_SIDEBAR_GROUPS = [
-  {
-    title: "School Books",
-    icon: BookOpen,
-    filter: "school-books" as LibraryFilter,
-
-    items: [
-      {
-        label: "SSC (Maharashtra)",
-        filter: "ssc-maharashtra" as LibraryFilter,
-      },
-      {
-        label: "CBSE",
-        filter: "cbse-school" as LibraryFilter,
-      },
-      {
-        label: "6th Standard",
-        filter: "grade-6" as LibraryFilter,
-      },
-      {
-        label: "7th Standard",
-        filter: "grade-7" as LibraryFilter,
-      },
-      {
-        label: "8th Standard",
-        filter: "grade-8" as LibraryFilter,
-      },
-      {
-        label: "9th Standard",
-        filter: "grade-9" as LibraryFilter,
-      },
-      {
-        label: "10th Standard",
-        filter: "grade-10" as LibraryFilter,
-      },
-    ],
-  },
-  {
-    title: "Junior College Books",
-    icon: GraduationCap,
-    filter: "junior-college" as LibraryFilter,
-
-    items: [
-      {
-        label: "Science (11th–12th)",
-        filter: "science" as LibraryFilter,
-      },
-      {
-        label: "Commerce (11th–12th)",
-        filter: "commerce" as LibraryFilter,
-      },
-      {
-        label: "Arts (11th–12th)",
-        filter: "arts" as LibraryFilter,
-      },
-    ],
-  },
-  {
-    title: "HSC Books",
-    icon: BookOpen,
-    filter: "junior-college" as LibraryFilter,
-
-    items: [
-      {
-        label: "11th Standard",
-        filter: "grade-11" as LibraryFilter,
-      },
-      {
-        label: "12th Standard",
-        filter: "grade-12" as LibraryFilter,
-      },
-    ],
-  },
-];
-
-// =====================================================
-// OTHER SIDEBAR CATEGORIES
-// =====================================================
+const SCHOOL_STANDARDS = [6, 7, 8, 9, 10] as const;
+const JUNIOR_STANDARDS = [11, 12] as const;
+const JUNIOR_STREAMS = ["Science", "Commerce", "Arts"] as const;
 
 const OTHER_SIDEBAR_CATEGORIES = [
   {
     id: "competitive-exam",
-    label: "All Competitive Exam",
+    label: "Competitive Exams",
     icon: Trophy,
+    topics: [
+      { label: "JEE", keywords: ["jee"] },
+      { label: "NEET", keywords: ["neet"] },
+      { label: "MHT-CET", keywords: ["mht cet", "mht-cet"] },
+      { label: "CUET", keywords: ["cuet"] },
+      { label: "Other Entrance Exams", keywords: ["entrance", "aptitude"] },
+    ],
   },
   {
     id: "government-exam",
-    label: "All Government Exam",
+    label: "Government Exams",
     icon: Landmark,
+    topics: [
+      { label: "UPSC", keywords: ["upsc"] },
+      { label: "MPSC", keywords: ["mpsc"] },
+      {
+        label: "SSC Recruitment",
+        keywords: ["ssc", "staff selection commission"],
+      },
+      { label: "Banking", keywords: ["banking", "ibps", "bank po"] },
+      { label: "Railway", keywords: ["railway", "rrb"] },
+    ],
   },
   {
     id: "fiction",
     label: "Fiction Books",
     icon: BookOpen,
+    topics: [
+      { label: "Novels", keywords: ["novel"] },
+      { label: "Stories", keywords: ["story", "stories"] },
+      { label: "Poetry & Drama", keywords: ["poetry", "poem", "drama"] },
+    ],
   },
   {
     id: "non-fiction",
     label: "Non-Fiction Books",
     icon: Layers3,
+    topics: [
+      { label: "History", keywords: ["history"] },
+      { label: "Science", keywords: ["science"] },
+      { label: "Business & Finance", keywords: ["business", "finance"] },
+      { label: "Psychology", keywords: ["psychology"] },
+    ],
   },
   {
     id: "biography",
     label: "Biography & Autobiography",
     icon: BookOpen,
+    topics: [
+      { label: "Biography", keywords: ["biography", "life story"] },
+      { label: "Autobiography", keywords: ["autobiography"] },
+      { label: "Memoirs", keywords: ["memoir"] },
+    ],
   },
   {
     id: "personality-development",
     label: "Personality Development",
     icon: Sparkles,
+    topics: [
+      { label: "Confidence", keywords: ["confidence"] },
+      { label: "Communication", keywords: ["communication"] },
+      { label: "Habits & Mindset", keywords: ["habits", "mindset"] },
+      { label: "Leadership", keywords: ["leadership"] },
+    ],
   },
   {
     id: "spoken-english",
     label: "Spoken English",
     icon: BookOpen,
+    topics: [
+      { label: "Grammar", keywords: ["grammar"] },
+      { label: "Vocabulary", keywords: ["vocabulary"] },
+      { label: "Speaking & Fluency", keywords: ["speaking", "fluency"] },
+    ],
   },
   {
     id: "technology-ai",
     label: "Technology & AI",
     icon: Sparkles,
+    topics: [
+      { label: "Programming", keywords: ["python", "coding", "programming"] },
+      {
+        label: "Artificial Intelligence",
+        keywords: ["artificial intelligence", "machine learning", " ai "],
+      },
+      { label: "Data Analytics", keywords: ["data analytics", "data science"] },
+    ],
   },
   {
     id: "career-placement",
     label: "Career & Placement",
     icon: GraduationCap,
-  },
-];
-
-// =====================================================
-// DASHBOARD CATEGORY TILES
-// =====================================================
-
-const DASHBOARD_TILES = [
-  {
-    id: "school-learning",
-    filter: "school-books" as LibraryFilter,
-    title: "School Learning",
-    subtitle: "6th–10th · SSC · CBSE",
-    icon: BookOpen,
-    color: "bg-[#ecf6ff]",
-    ink: "text-blue-600",
-  },
-  {
-    id: "school-learning",
-    filter: "junior-college" as LibraryFilter,
-    title: "Junior College",
-    subtitle: "11th–12th · All streams",
-    icon: GraduationCap,
-    color: "bg-[#eafbf4]",
-    ink: "text-emerald-700",
-  },
-  {
-    id: "competitive-exam",
-    filter: "all" as LibraryFilter,
-    title: "Competitive Exams",
-    subtitle: "JEE · NEET · CET",
-    icon: Trophy,
-    color: "bg-[#fff3e8]",
-    ink: "text-amber-600",
-  },
-  {
-    id: "government-exam",
-    filter: "all" as LibraryFilter,
-    title: "Government Exams",
-    subtitle: "SSC · Banking · UPSC",
-    icon: Landmark,
-    color: "bg-[#f1edff]",
-    ink: "text-indigo-700",
-  },
-  {
-    id: "fiction",
-    filter: "all" as LibraryFilter,
-    title: "Fiction Books",
-    subtitle: "Novels · Stories",
-    icon: BookOpen,
-    color: "bg-[#fff0f3]",
-    ink: "text-rose-600",
-  },
-  {
-    id: "non-fiction",
-    filter: "all" as LibraryFilter,
-    title: "Non-Fiction",
-    subtitle: "Knowledge · Self help",
-    icon: Layers3,
-    color: "bg-[#e7fbf3]",
-    ink: "text-teal-700",
-  },
-];
-
-// =====================================================
-// POPULAR LIBRARIES
-// =====================================================
-
-const POPULAR_LIBRARIES = [
-  {
-    category: "school-learning",
-    filter: "school-books" as LibraryFilter,
-    title: "School Books",
-    caption: "SSC · CBSE",
-    icon: BookOpen,
-    bg: "from-[#dceeff] to-[#eff7ff]",
-  },
-  {
-    category: "school-learning",
-    filter: "junior-college" as LibraryFilter,
-    title: "11th–12th Junior College",
-    caption: "Science · Commerce · Arts",
-    icon: GraduationCap,
-    bg: "from-[#ffeadb] to-[#fff6ec]",
-  },
-  {
-    category: "government-exam",
-    filter: "all" as LibraryFilter,
-    title: "Government Exams",
-    caption: "SSC · Banking · UPSC",
-    icon: Landmark,
-    bg: "from-[#e9e5ff] to-[#f7f5ff]",
-  },
-  {
-    category: "competitive-exam",
-    filter: "all" as LibraryFilter,
-    title: "Competitive Exams",
-    caption: "JEE · NEET · CET",
-    icon: Trophy,
-    bg: "from-[#ddfaf1] to-[#effff9]",
+    topics: [
+      { label: "Resume & CV", keywords: ["resume", " cv "] },
+      { label: "Interviews", keywords: ["interview"] },
+      { label: "Job Skills", keywords: ["placement", "job", "corporate"] },
+    ],
   },
 ];
 
@@ -565,12 +435,7 @@ function editPriceValue(value?: string) {
 }
 
 function getBookSearchText(book: Book) {
-  return [
-    book.title,
-    book.description,
-    book.fileName,
-    book.categoryLabel,
-  ]
+  return [book.title, book.description, book.fileName, book.categoryLabel]
     .filter(Boolean)
     .join(" ")
     .toLowerCase()
@@ -588,20 +453,17 @@ function getBookCategoryIds(book: Book) {
 
   const searchText = getBookSearchText(book);
 
-  const matchedCategories =
-    DEFAULT_LIBRARY_CATEGORIES.filter((category) => {
-      if (category.id === "all") {
-        return true;
-      }
+  const matchedCategories = DEFAULT_LIBRARY_CATEGORIES.filter((category) => {
+    if (category.id === "all") {
+      return true;
+    }
 
-      return category.keywords.some((keyword) =>
-        searchText.includes(keyword.toLowerCase())
-      );
-    });
+    return category.keywords.some((keyword) =>
+      searchText.includes(keyword.toLowerCase()),
+    );
+  });
 
-  return matchedCategories.map(
-    (category) => category.id
-  );
+  return matchedCategories.map((category) => category.id);
 }
 
 // =====================================================
@@ -609,12 +471,7 @@ function getBookCategoryIds(book: Book) {
 // =====================================================
 
 function getAcademicBookInfo(book: Book) {
-  const text = [
-    book.title,
-    book.description,
-    book.fileName,
-    book.categoryLabel,
-  ]
+  const text = [book.title, book.description, book.fileName, book.categoryLabel]
     .filter(Boolean)
     .join(" ")
     .toLowerCase()
@@ -625,14 +482,10 @@ function getAcademicBookInfo(book: Book) {
   // Detect Class 6 through Class 12.
 
   const gradeMatch = text.match(
-    /\b(?:class|std|standard|grade)\s*(6|7|8|9|10|11|12)\b|\b(6|7|8|9|10|11|12)(?:st|nd|rd|th)\b/i
+    /\b(?:class|std|standard|grade)\s*(6|7|8|9|10|11|12)\b|\b(6|7|8|9|10|11|12)(?:st|nd|rd|th)\b/i,
   );
 
-  const grade = Number(
-    gradeMatch?.[1] ||
-    gradeMatch?.[2] ||
-    0
-  );
+  const grade = Number(gradeMatch?.[1] || gradeMatch?.[2] || 0);
 
   const hasJuniorRange =
     /\b11\s*(?:and|to|&)\s*12\b/.test(text) ||
@@ -643,47 +496,35 @@ function getAcademicBookInfo(book: Book) {
   const isGovernment =
     book.categoryId === "government-exam" ||
     /\b(?:ssc cgl|ssc chsl|ssc mts|ssc gd|staff selection commission|upsc|mpsc|ibps|banking recruitment|railway recruitment)\b/.test(
-      text
+      text,
     );
 
   const isCompetitive =
     book.categoryId === "competitive-exam" ||
     /\b(?:jee main|jee advanced|neet ug|mht cet|competitive exam preparation)\b/.test(
-      text
+      text,
     );
 
-  const isSchoolCategory =
-    book.categoryId === "school-learning";
+  const isSchoolCategory = book.categoryId === "school-learning";
 
   const isMaharashtra =
-    /\b(?:maharashtra|state board|msbshse|balbharati)\b/.test(
-      text
-    );
+    /\b(?:maharashtra|state board|msbshse|balbharati)\b/.test(text);
 
-  const hasSSC =
-    /\bssc\b/.test(text);
+  const hasSSC = /\bssc\b/.test(text);
 
-  const isCBSE =
-    /\bcbse\b/.test(text);
+  const isCBSE = /\bcbse\b/.test(text);
 
-  const isHSC =
-    /\bhsc\b/.test(text);
+  const isHSC = /\bhsc\b/.test(text);
 
   // Junior College classification.
 
   const isJunior =
     !isGovernment &&
     !isCompetitive &&
-    (
-      grade === 11 ||
+    (grade === 11 ||
       grade === 12 ||
       hasJuniorRange ||
-      (
-        grade === 0 &&
-        isHSC &&
-        isSchoolCategory
-      )
-    );
+      (grade === 0 && isHSC && isSchoolCategory));
 
   // School classification.
 
@@ -691,18 +532,8 @@ function getAcademicBookInfo(book: Book) {
     !isGovernment &&
     !isCompetitive &&
     !isJunior &&
-    (
-      (grade >= 6 && grade <= 10) ||
-      (
-        grade === 0 &&
-        isSchoolCategory &&
-        (
-          hasSSC ||
-          isCBSE ||
-          isMaharashtra
-        )
-      )
-    );
+    ((grade >= 6 && grade <= 10) ||
+      (grade === 0 && isSchoolCategory && (hasSSC || isCBSE || isMaharashtra)));
 
   return {
     text,
@@ -723,10 +554,7 @@ function getAcademicBookInfo(book: Book) {
 // EXACT ACADEMIC FILTERING
 // =====================================================
 
-function matchesLibraryFilter(
-  book: Book,
-  filter: LibraryFilter
-): boolean {
+function matchesLibraryFilter(book: Book, filter: LibraryFilter): boolean {
   if (filter === "all") {
     return true;
   }
@@ -744,34 +572,24 @@ function matchesLibraryFilter(
       return (
         info.isSchool &&
         !info.isCBSE &&
-        (
-          info.isMaharashtra ||
-          (
-            info.hasSSC &&
-            book.categoryId === "school-learning"
-          )
-        )
+        (info.isMaharashtra ||
+          (info.hasSSC && book.categoryId === "school-learning"))
       );
 
     case "cbse-school":
-      return (
-        info.isSchool &&
-        info.isCBSE
-      );
+      return info.isSchool && info.isCBSE;
 
     case "science":
       return (
         info.isJunior &&
-        /\b(?:science|physics|chemistry|biology|pcm|pcb)\b/.test(
-          info.text
-        )
+        /\b(?:science|physics|chemistry|biology|pcm|pcb)\b/.test(info.text)
       );
 
     case "commerce":
       return (
         info.isJunior &&
         /\b(?:commerce|accountancy|accounts|economics|business studies|secretarial practice)\b/.test(
-          info.text
+          info.text,
         )
       );
 
@@ -779,7 +597,7 @@ function matchesLibraryFilter(
       return (
         info.isJunior &&
         /\b(?:arts|humanities|history|geography|political science|sociology|psychology)\b/.test(
-          info.text
+          info.text,
         )
       );
 
@@ -789,27 +607,15 @@ function matchesLibraryFilter(
     case "grade-9":
     case "grade-10":
       return (
-        info.isSchool &&
-        info.grade === Number(
-          filter.replace("grade-", "")
-        )
+        info.isSchool && info.grade === Number(filter.replace("grade-", ""))
       );
 
     case "grade-11":
     case "grade-12":
       return (
         info.isJunior &&
-        (
-          info.grade === Number(
-            filter.replace("grade-", "")
-          ) ||
-          (
-            info.hasJuniorRange &&
-            Number(
-              filter.replace("grade-", "")
-            ) === 12
-          )
-        )
+        (info.grade === Number(filter.replace("grade-", "")) ||
+          (info.hasJuniorRange && Number(filter.replace("grade-", "")) === 12))
       );
 
     default:
@@ -821,25 +627,22 @@ function matchesLibraryFilter(
 // COMBINED BOOK MATCHING
 // =====================================================
 
+// =====================================================
+// COMBINED BOOK MATCHING
+// =====================================================
+
 function matchesBookSelection(
   book: Book,
   category: string,
-  filter: LibraryFilter
-) {
-  const categoryIds =
-    getBookCategoryIds(book);
+  filter: LibraryFilter,
+): boolean {
+  const categoryIds = getBookCategoryIds(book);
 
-  const matchesCategory =
-    category === "all" ||
-    categoryIds.includes(category);
+  const matchesCategory = category === "all" || categoryIds.includes(category);
 
-  const matchesAcademicFilter =
-    matchesLibraryFilter(book, filter);
+  const matchesAcademicFilter = matchesLibraryFilter(book, filter);
 
-  return (
-    matchesCategory &&
-    matchesAcademicFilter
-  );
+  return matchesCategory && matchesAcademicFilter;
 }
 
 // =====================================================
@@ -860,10 +663,7 @@ async function readJsonResponse<
   try {
     return JSON.parse(text) as T;
   } catch {
-    throw new Error(
-      text ||
-      "The server returned an invalid response."
-    );
+    throw new Error(text || "The server returned an invalid response.");
   }
 }
 
@@ -871,11 +671,7 @@ async function readJsonResponse<
 // BOOK THUMBNAIL
 // =====================================================
 
-function BookThumbnail({
-  book,
-}: {
-  book: Book;
-}) {
+function BookThumbnail({ book }: { book: Book }) {
   if (book.thumbnailUrl) {
     return (
       <img
@@ -893,9 +689,7 @@ function BookThumbnail({
       <div className="text-center text-white">
         <p className="text-4xl">📘</p>
 
-        <p className="mt-2 text-xl font-black">
-          PDF
-        </p>
+        <p className="mt-2 text-xl font-black">PDF</p>
       </div>
     </div>
   );
@@ -917,128 +711,87 @@ export function DigitalLibraryClient({
   // BOOK STATES
   // ===================================================
 
-  const [books, setBooks] =
-    useState<Book[]>(initialBooks);
+  const [books, setBooks] = useState<Book[]>(initialBooks);
 
-  const [
-    allowedToManage,
-    setAllowedToManage,
-  ] = useState(canManage);
+  const [allowedToManage, setAllowedToManage] = useState(canManage);
 
-  const [loggedIn, setLoggedIn] =
-    useState(isLoggedIn);
+  const [loggedIn, setLoggedIn] = useState(isLoggedIn);
 
   // ===================================================
   // FILTER STATES
   // ===================================================
 
-  const [query, setQuery] =
-    useState("");
+  const [query, setQuery] = useState("");
 
-  const [
-    activeLibraryCategory,
-    setActiveLibraryCategory,
-  ] = useState("all");
+  const [activeLibraryCategory, setActiveLibraryCategory] = useState("all");
 
-  const [
-    activeLibraryFilter,
-    setActiveLibraryFilter,
-  ] = useState<LibraryFilter>("all");
+  const [activeLibraryFilter, setActiveLibraryFilter] =
+    useState<LibraryFilter>("all");
+
+  const [selectedBoard, setSelectedBoard] = useState("");
+  const [selectedStandard, setSelectedStandard] = useState<number | null>(null);
+  const [selectedStream, setSelectedStream] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
 
   // ===================================================
   // CUSTOM LIBRARY SECTIONS
   // ===================================================
 
-  const [
-    customLibraryCategories,
-    setCustomLibraryCategories,
-  ] = useState<LibraryCategory[]>([]);
+  const [customLibraryCategories, setCustomLibraryCategories] = useState<
+    LibraryCategory[]
+  >([]);
 
-  const [
-    librarySectionId,
-    setLibrarySectionId,
-  ] = useState("school-learning");
+  const [librarySectionId, setLibrarySectionId] = useState("school-learning");
 
-  const [
-    isSectionModalOpen,
-    setIsSectionModalOpen,
-  ] = useState(false);
+  const [isSectionModalOpen, setIsSectionModalOpen] = useState(false);
 
-  const [
-    newSectionName,
-    setNewSectionName,
-  ] = useState("");
+  const [newSectionName, setNewSectionName] = useState("");
 
-  const [
-    newSectionDescription,
-    setNewSectionDescription,
-  ] = useState("");
+  const [newSectionDescription, setNewSectionDescription] = useState("");
 
-  const [
-    isCreatingSection,
-    setIsCreatingSection,
-  ] = useState(false);
+  const [isCreatingSection, setIsCreatingSection] = useState(false);
 
-  const [
-    sectionError,
-    setSectionError,
-  ] = useState("");
+  const [sectionError, setSectionError] = useState("");
 
   // ===================================================
   // UPLOAD AND EDIT STATES
   // ===================================================
 
-  const [isLoading, setIsLoading] =
-    useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const [isModalOpen, setIsModalOpen] =
-    useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [editingBook, setEditingBook] =
-    useState<Book | null>(null);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
 
-  const [bookName, setBookName] =
-    useState("");
+  const [bookName, setBookName] = useState("");
 
-  const [description, setDescription] =
-    useState("");
+  const [description, setDescription] = useState("");
 
-  const [price, setPrice] =
-    useState("0");
+  const [price, setPrice] = useState("0");
 
-  const [pdfFile, setPdfFile] =
-    useState<File | null>(null);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
 
-  const [thumbnailFile, setThumbnailFile] =
-    useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
-  const [isSaving, setIsSaving] =
-    useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const [uploadStatus, setUploadStatus] =
-    useState("");
+  const [uploadStatus, setUploadStatus] = useState("");
 
   // ===================================================
   // DELETE STATES
   // ===================================================
 
-  const [bookToDelete, setBookToDelete] =
-    useState<Book | null>(null);
+  const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
 
-  const [isDeleting, setIsDeleting] =
-    useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const [deleteError, setDeleteError] =
-    useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   // ===================================================
   // TRANSFER PROGRESS
   // ===================================================
 
-  const [
-    transferState,
-    setTransferState,
-  ] = useState<TransferState>({
+  const [transferState, setTransferState] = useState<TransferState>({
     label: "",
     progress: 0,
     visible: false,
@@ -1049,24 +802,17 @@ export function DigitalLibraryClient({
   // ===================================================
 
   const libraryCategories = useMemo(() => {
-    const map =
-      new Map<string, LibraryCategory>();
+    const map = new Map<string, LibraryCategory>();
 
-    [
-      ...DEFAULT_LIBRARY_CATEGORIES,
-      ...customLibraryCategories,
-    ].forEach((category) => {
-      if (!map.has(category.id)) {
-        map.set(
-          category.id,
-          category
-        );
-      }
-    });
-
-    return Array.from(
-      map.values()
+    [...DEFAULT_LIBRARY_CATEGORIES, ...customLibraryCategories].forEach(
+      (category) => {
+        if (!map.has(category.id)) {
+          map.set(category.id, category);
+        }
+      },
     );
+
+    return Array.from(map.values());
   }, [customLibraryCategories]);
 
   // ===================================================
@@ -1074,28 +820,164 @@ export function DigitalLibraryClient({
   // ===================================================
 
   const filteredBooks = useMemo(() => {
-    const searchValue =
-      query.trim().toLowerCase();
+    const searchValue = query.trim().toLowerCase();
 
     return books.filter((book) => {
-      const bookSearchText =
-        getBookSearchText(book);
+      const bookSearchText = getBookSearchText(book);
 
-      const matchesCategory =
-        matchesBookSelection(
-          book,
-          activeLibraryCategory,
-          activeLibraryFilter
-        );
+      const info = getAcademicBookInfo(book);
+
+      // =====================================================
+      // GOVERNMENT SSC RECRUITMENT
+      // =====================================================
+
+      const isGovernmentSSCSelection =
+        activeLibraryCategory === "government-exam" &&
+        selectedTopic === "SSC Recruitment";
+
+      const sscSearchText = [
+        book.title,
+        book.description,
+        book.fileName,
+        book.categoryLabel,
+        book.categoryId,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .replace(/[_-]/g, " ");
+
+      const isSSCBook = /\bssc\b|\bstaff selection commission\b/.test(
+        sscSearchText,
+      );
+
+      // Prevent Maharashtra SSC school textbooks from appearing
+      // in Government SSC Recruitment.
+
+      const isSchoolSSC =
+        book.categoryId === "school-learning" ||
+        info.isMaharashtra ||
+        info.isCBSE ||
+        info.isHSC ||
+        (info.grade >= 6 && info.grade <= 12);
+
+      const isGovernmentSSCBook = isSSCBook && !isSchoolSSC;
+
+      // =====================================================
+      // CATEGORY MATCHING
+      // =====================================================
+
+      // =====================================================
+      // GOVERNMENT EXAM PARENT COLLECTION
+      // =====================================================
+
+      const governmentKeywords =
+        /\b(?:government exams?|govt exams?|upsc|mpsc|ssc|staff selection commission|banking|ibps|railway|rrb|bank po|police recruitment)\b/i;
+
+      const governmentSearchText = [
+        book.title,
+        book.description,
+        book.fileName,
+        book.categoryId,
+        book.categoryLabel,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+        .replace(/[_-]/g, " ");
+
+      const isSchoolMaterial =
+        book.categoryId === "school-learning" ||
+        (!info.isGovernment &&
+          (info.isMaharashtra ||
+            info.isCBSE ||
+            info.isHSC ||
+            info.isSchool ||
+            info.isJunior));
+
+      const isGovernmentBook =
+        book.categoryId === "government-exam" ||
+        (!isSchoolMaterial && governmentKeywords.test(governmentSearchText));
+
+      const isGovernmentSelection = activeLibraryCategory === "government-exam";
+
+      const matchesCategory = isGovernmentSelection
+        ? isGovernmentBook
+        : matchesBookSelection(
+            book,
+            activeLibraryCategory,
+            activeLibraryFilter,
+          );
+
+      // =====================================================
+      // BOARD MATCHING
+      // =====================================================
+
+      const matchesBoard =
+        !selectedBoard ||
+        (selectedBoard === "maharashtra"
+          ? !info.isCBSE && (info.isMaharashtra || info.hasSSC || info.isHSC)
+          : info.isCBSE);
+
+      // =====================================================
+      // STANDARD MATCHING
+      // =====================================================
+
+      const matchesStandard =
+        selectedStandard === null || info.grade === selectedStandard;
+
+      // =====================================================
+      // STREAM MATCHING
+      // =====================================================
+
+      const streamKeywords: Record<string, RegExp> = {
+        Science: /\b(?:science|physics|chemistry|biology|pcm|pcb)\b/,
+
+        Commerce:
+          /\b(?:commerce|accountancy|accounts|economics|business studies|secretarial practice)\b/,
+
+        Arts: /\b(?:arts|humanities|history|geography|political science|sociology|psychology)\b/,
+      };
+
+      const matchesStream =
+        !selectedStream ||
+        streamKeywords[selectedStream]?.test(info.text) === true;
+
+      // =====================================================
+      // TOPIC MATCHING
+      // =====================================================
+
+      const topicOptions = OTHER_SIDEBAR_CATEGORIES.find(
+        (category) => category.id === activeLibraryCategory,
+      )?.topics;
+
+      const keywords = topicOptions?.find(
+        (topic) => topic.label === selectedTopic,
+      )?.keywords;
+
+      const matchesTopic = isGovernmentSSCSelection
+        ? isGovernmentSSCBook
+        : !selectedTopic ||
+          !keywords ||
+          keywords.some((keyword) => ` ${bookSearchText} `.includes(keyword));
+
+      // =====================================================
+      // SEARCH MATCHING
+      // =====================================================
 
       const matchesSearch =
-        !searchValue ||
-        bookSearchText.includes(
-          searchValue
-        );
+        !searchValue || bookSearchText.includes(searchValue);
+
+      // =====================================================
+      // FINAL RESULT
+      // =====================================================
 
       return (
         matchesCategory &&
+        matchesBoard &&
+        matchesStandard &&
+        matchesStream &&
+        matchesTopic &&
         matchesSearch
       );
     });
@@ -1104,6 +986,10 @@ export function DigitalLibraryClient({
     query,
     activeLibraryCategory,
     activeLibraryFilter,
+    selectedBoard,
+    selectedStandard,
+    selectedStream,
+    selectedTopic,
   ]);
 
   // ===================================================
@@ -1113,30 +999,51 @@ export function DigitalLibraryClient({
   function selectLibrary(
     category: string = "all",
     filter: LibraryFilter = "all",
-    scroll: boolean = true
+    scroll: boolean = true,
   ) {
-    setActiveLibraryCategory(
-      category
-    );
+    setActiveLibraryCategory(category);
 
-    setActiveLibraryFilter(
-      filter
-    );
+    setActiveLibraryFilter(filter);
 
     setQuery("");
+    setSelectedBoard("");
+    setSelectedStandard(null);
+    setSelectedStream("");
+    setSelectedTopic("");
 
     if (scroll) {
       requestAnimationFrame(() => {
-        document
-          .getElementById(
-            "library-files"
-          )
-          ?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
+        document.getElementById("library-files")?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
       });
     }
+  }
+
+  function selectAcademic(
+    filter: "school-books" | "junior-college",
+    board = "",
+    standard: number | null = null,
+    stream = "",
+  ) {
+    setActiveLibraryCategory("all");
+    setActiveLibraryFilter(filter);
+    setSelectedBoard(board);
+    setSelectedStandard(standard);
+    setSelectedStream(stream);
+    setSelectedTopic("");
+    setQuery("");
+  }
+
+  function selectTopic(category: string, topic = "") {
+    setActiveLibraryCategory(category);
+    setActiveLibraryFilter("all");
+    setSelectedBoard("");
+    setSelectedStandard(null);
+    setSelectedStream("");
+    setSelectedTopic(topic);
+    setQuery("");
   }
 
   // ===================================================
@@ -1145,32 +1052,20 @@ export function DigitalLibraryClient({
 
   async function loadCustomSections() {
     try {
-      const response = await fetch(
-        "/api/digital-library/sections",
-        {
-          cache: "no-store",
-        }
-      );
+      const response = await fetch("/api/digital-library/sections", {
+        cache: "no-store",
+      });
 
-      const data =
-        (await response.json()) as {
-          success?: boolean;
-          sections?: LibraryCategory[];
-        };
+      const data = (await response.json()) as {
+        success?: boolean;
+        sections?: LibraryCategory[];
+      };
 
-      if (
-        response.ok &&
-        data.success
-      ) {
-        setCustomLibraryCategories(
-          data.sections || []
-        );
+      if (response.ok && data.success) {
+        setCustomLibraryCategories(data.sections || []);
       }
     } catch (error) {
-      console.error(
-        "Custom library sections load error:",
-        error
-      );
+      console.error("Custom library sections load error:", error);
     }
   }
 
@@ -1179,13 +1074,10 @@ export function DigitalLibraryClient({
   // ===================================================
 
   async function createLibrarySection() {
-    const label =
-      newSectionName.trim();
+    const label = newSectionName.trim();
 
     if (!label) {
-      setSectionError(
-        "Please enter a section name."
-      );
+      setSectionError("Please enter a section name.");
 
       return;
     }
@@ -1194,57 +1086,37 @@ export function DigitalLibraryClient({
     setSectionError("");
 
     try {
-      const response = await fetch(
-        "/api/digital-library/sections",
-        {
-          method: "POST",
+      const response = await fetch("/api/digital-library/sections", {
+        method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-          body: JSON.stringify({
-            label,
+        body: JSON.stringify({
+          label,
 
-            description:
-              newSectionDescription.trim() ||
-              "Custom digital library section.",
-          }),
-        }
-      );
+          description:
+            newSectionDescription.trim() || "Custom digital library section.",
+        }),
+      });
 
-      const data =
-        (await response.json()) as {
-          success?: boolean;
-          message?: string;
-          sections?: LibraryCategory[];
-          section?: LibraryCategory;
-        };
+      const data = (await response.json()) as {
+        success?: boolean;
+        message?: string;
+        sections?: LibraryCategory[];
+        section?: LibraryCategory;
+      };
 
-      if (
-        !response.ok ||
-        !data.success
-      ) {
-        throw new Error(
-          data.message ||
-          "Failed to create section."
-        );
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to create section.");
       }
 
-      setCustomLibraryCategories(
-        data.sections || []
-      );
+      setCustomLibraryCategories(data.sections || []);
 
-      selectLibrary(
-        data.section?.id || "all",
-        "all"
-      );
+      selectLibrary(data.section?.id || "all", "all");
 
-      setLibrarySectionId(
-        data.section?.id ||
-        "school-learning"
-      );
+      setLibrarySectionId(data.section?.id || "school-learning");
 
       setNewSectionName("");
       setNewSectionDescription("");
@@ -1252,9 +1124,7 @@ export function DigitalLibraryClient({
       setIsSectionModalOpen(false);
     } catch (error) {
       setSectionError(
-        error instanceof Error
-          ? error.message
-          : "Failed to create section."
+        error instanceof Error ? error.message : "Failed to create section.",
       );
     } finally {
       setIsCreatingSection(false);
@@ -1273,59 +1143,32 @@ export function DigitalLibraryClient({
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "/api/digital-library",
-        {
-          cache: "no-store",
-        }
-      );
+      const response = await fetch("/api/digital-library", {
+        cache: "no-store",
+      });
 
-      const data =
-        await readJsonResponse(
-          response
-        );
+      const data = await readJsonResponse(response);
 
-      if (
-        !response.ok ||
-        !data.success
-      ) {
-        throw new Error(
-          data.message ||
-          "Failed to load library."
-        );
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to load library.");
       }
 
-      setBooks(
-        data.books || []
-      );
+      setBooks(data.books || []);
 
-      if (
-        typeof data.canManage ===
-        "boolean"
-      ) {
-        setAllowedToManage(
-          data.canManage
-        );
+      if (typeof data.canManage === "boolean") {
+        setAllowedToManage(data.canManage);
       }
 
-      if (
-        typeof data.isLoggedIn ===
-        "boolean"
-      ) {
-        setLoggedIn(
-          data.isLoggedIn
-        );
+      if (typeof data.isLoggedIn === "boolean") {
+        setLoggedIn(data.isLoggedIn);
       }
     } catch (error) {
-      console.error(
-        "Library loading error:",
-        error
-      );
+      console.error("Library loading error:", error);
 
       alert(
         error instanceof Error
           ? error.message
-          : "Failed to load digital library."
+          : "Failed to load digital library.",
       );
     } finally {
       setIsLoading(false);
@@ -1345,9 +1188,7 @@ export function DigitalLibraryClient({
     setDescription("");
     setPrice("0");
 
-    setLibrarySectionId(
-      "school-learning"
-    );
+    setLibrarySectionId("school-learning");
 
     setPdfFile(null);
     setThumbnailFile(null);
@@ -1378,24 +1219,13 @@ export function DigitalLibraryClient({
   function openEdit(book: Book) {
     setEditingBook(book);
 
-    setBookName(
-      book.title
-    );
+    setBookName(book.title);
 
-    setDescription(
-      book.description || ""
-    );
+    setDescription(book.description || "");
 
-    setPrice(
-      editPriceValue(
-        book.price
-      )
-    );
+    setPrice(editPriceValue(book.price));
 
-    setLibrarySectionId(
-      book.categoryId ||
-      "school-learning"
-    );
+    setLibrarySectionId(book.categoryId || "school-learning");
 
     setPdfFile(null);
     setThumbnailFile(null);
@@ -1427,7 +1257,7 @@ export function DigitalLibraryClient({
 
   async function uploadPdf(
     pathname: string,
-    file: File
+    file: File,
   ): Promise<UploadedBlobInfo> {
     setTransferState({
       label: "Uploading PDF...",
@@ -1435,48 +1265,32 @@ export function DigitalLibraryClient({
       visible: true,
     });
 
-    const blob = await upload(
-      pathname,
-      file,
-      {
-        access: "public",
+    const blob = await upload(pathname, file, {
+      access: "public",
 
-        contentType:
-          "application/pdf",
+      contentType: "application/pdf",
 
-        handleUploadUrl:
-          "/api/digital-library/upload",
+      handleUploadUrl: "/api/digital-library/upload",
 
-        clientPayload:
-          JSON.stringify({
-            assetType: "book",
-          }),
+      clientPayload: JSON.stringify({
+        assetType: "book",
+      }),
 
-        onUploadProgress: ({
-          percentage,
-        }) => {
-          setTransferState(
-            (current) => ({
-              ...current,
+      onUploadProgress: ({ percentage }) => {
+        setTransferState((current) => ({
+          ...current,
 
-              label:
-                "Uploading PDF...",
+          label: "Uploading PDF...",
 
-              progress:
-                Math.round(
-                  percentage
-                ),
+          progress: Math.round(percentage),
 
-              visible: true,
-            })
-          );
-        },
-      }
-    );
+          visible: true,
+        }));
+      },
+    });
 
     setTransferState({
-      label:
-        "PDF uploaded successfully.",
+      label: "PDF uploaded successfully.",
 
       progress: 100,
 
@@ -1484,15 +1298,11 @@ export function DigitalLibraryClient({
     });
 
     return {
-      pathname:
-        blob.pathname,
+      pathname: blob.pathname,
 
-      url:
-        blob.url,
+      url: blob.url,
 
-      downloadUrl:
-        blob.downloadUrl ||
-        blob.url,
+      downloadUrl: blob.downloadUrl || blob.url,
     };
   }
 
@@ -1502,55 +1312,36 @@ export function DigitalLibraryClient({
 
   async function uploadThumbnail(
     pathname: string,
-    file: File
+    file: File,
   ): Promise<UploadedBlobInfo> {
-    const blob = await upload(
-      pathname,
-      file,
-      {
-        access: "public",
+    const blob = await upload(pathname, file, {
+      access: "public",
 
-        contentType:
-          file.type ||
-          undefined,
+      contentType: file.type || undefined,
 
-        handleUploadUrl:
-          "/api/digital-library/upload",
+      handleUploadUrl: "/api/digital-library/upload",
 
-        clientPayload:
-          JSON.stringify({
-            assetType:
-              "thumbnail",
-          }),
+      clientPayload: JSON.stringify({
+        assetType: "thumbnail",
+      }),
 
-        onUploadProgress: ({
-          percentage,
-        }) => {
-          setTransferState({
-            label:
-              "Uploading thumbnail...",
+      onUploadProgress: ({ percentage }) => {
+        setTransferState({
+          label: "Uploading thumbnail...",
 
-            progress:
-              Math.round(
-                percentage
-              ),
+          progress: Math.round(percentage),
 
-            visible: true,
-          });
-        },
-      }
-    );
+          visible: true,
+        });
+      },
+    });
 
     return {
-      pathname:
-        blob.pathname,
+      pathname: blob.pathname,
 
-      url:
-        blob.url,
+      url: blob.url,
 
-      downloadUrl:
-        blob.downloadUrl ||
-        blob.url,
+      downloadUrl: blob.downloadUrl || blob.url,
     };
   }
 
@@ -1558,123 +1349,77 @@ export function DigitalLibraryClient({
   // CREATE OR EDIT MATERIAL
   // ===================================================
 
-  async function submitMaterial(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
+  async function submitMaterial(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!allowedToManage) {
-      alert(
-        "Only admins and educators can upload or edit materials."
-      );
+      alert("Only admins and educators can upload or edit materials.");
 
       return;
     }
 
-    const title =
-      bookName.trim();
+    const title = bookName.trim();
 
     if (!title) {
-      alert(
-        "Please enter the name of the book."
-      );
+      alert("Please enter the name of the book.");
 
       return;
     }
 
-    if (
-      !editingBook &&
-      !pdfFile
-    ) {
-      alert(
-        "Please select a PDF file."
-      );
+    if (!editingBook && !pdfFile) {
+      alert("Please select a PDF file.");
 
       return;
     }
 
-    if (
-      !editingBook &&
-      !thumbnailFile
-    ) {
-      alert(
-        "Please select a thumbnail image."
-      );
+    if (!editingBook && !thumbnailFile) {
+      alert("Please select a thumbnail image.");
 
       return;
     }
 
     if (
       pdfFile &&
-      pdfFile.type !==
-        "application/pdf" &&
-      !pdfFile.name
-        .toLowerCase()
-        .endsWith(".pdf")
+      pdfFile.type !== "application/pdf" &&
+      !pdfFile.name.toLowerCase().endsWith(".pdf")
     ) {
-      alert(
-        "Book upload must be a PDF file."
-      );
+      alert("Book upload must be a PDF file.");
 
       return;
     }
 
-    if (
-      thumbnailFile &&
-      !/\.(png|jpg|jpeg|webp)$/i.test(
-        thumbnailFile.name
-      )
-    ) {
-      alert(
-        "Thumbnail must be PNG, JPG or WEBP."
-      );
+    if (thumbnailFile && !/\.(png|jpg|jpeg|webp)$/i.test(thumbnailFile.name)) {
+      alert("Thumbnail must be PNG, JPG or WEBP.");
 
       return;
     }
 
-    const safeTitle =
-      safeBookName(title);
+    const safeTitle = safeBookName(title);
 
     if (!safeTitle) {
-      alert(
-        "Invalid book name."
-      );
+      alert("Invalid book name.");
 
       return;
     }
 
     const selectedLibrarySection =
-      libraryCategories.find(
-        (category) =>
-          category.id ===
-          librarySectionId
-      ) ||
-      libraryCategories.find(
-        (category) =>
-          category.id ===
-          "school-learning"
-      ) ||
+      libraryCategories.find((category) => category.id === librarySectionId) ||
+      libraryCategories.find((category) => category.id === "school-learning") ||
       DEFAULT_LIBRARY_CATEGORIES[1];
 
     const safeSectionId =
-      selectedLibrarySection.id ===
-      "all"
+      selectedLibrarySection.id === "all"
         ? "school-learning"
         : selectedLibrarySection.id;
 
-    const storedPrice =
-      normalizeStoredPrice(
-        price
-      );
+    const storedPrice = normalizeStoredPrice(price);
 
-    const storedDescription =
-      safeBookName(
-        description ||
-          "Access this PDF study material for focused learning and revision"
-      ).slice(0, 90);
+    const storedDescription = safeBookName(
+      description ||
+        "Access this PDF study material for focused learning and revision",
+    ).slice(0, 90);
 
-    const assetKey =
-      `${Date.now()}__${storedPrice}__${safeSectionId}__${storedDescription}__${safeTitle}`;
+    const assetKey = `${Date.now()}__${storedPrice}__${safeSectionId}__${storedDescription}__${safeTitle}`;
 
     setIsSaving(true);
 
@@ -1685,104 +1430,70 @@ export function DigitalLibraryClient({
     });
 
     try {
-      let uploadedPdf:
-        UploadedBlobInfo | null =
-        null;
+      let uploadedPdf: UploadedBlobInfo | null = null;
 
-      let uploadedThumbnail:
-        UploadedBlobInfo | null =
-        null;
+      let uploadedThumbnail: UploadedBlobInfo | null = null;
 
       // Upload PDF if selected.
 
       if (pdfFile) {
-        setUploadStatus(
-          "Uploading PDF..."
-        );
+        setUploadStatus("Uploading PDF...");
 
-        uploadedPdf =
-          await uploadPdf(
-            `digital-library/books/${assetKey}.pdf`,
-            pdfFile
-          );
+        uploadedPdf = await uploadPdf(
+          `digital-library/books/${assetKey}.pdf`,
+          pdfFile,
+        );
       }
 
       // Upload thumbnail if selected.
 
       if (thumbnailFile) {
-        setUploadStatus(
-          "Uploading thumbnail..."
+        setUploadStatus("Uploading thumbnail...");
+
+        const thumbnailExtension = getExtension(thumbnailFile.name);
+
+        uploadedThumbnail = await uploadThumbnail(
+          `digital-library/thumbnails/${assetKey}${thumbnailExtension}`,
+          thumbnailFile,
         );
-
-        const thumbnailExtension =
-          getExtension(
-            thumbnailFile.name
-          );
-
-        uploadedThumbnail =
-          await uploadThumbnail(
-            `digital-library/thumbnails/${assetKey}${thumbnailExtension}`,
-            thumbnailFile
-          );
       }
 
       // Create new material.
 
       if (!editingBook) {
-        setUploadStatus(
-          "Saving book metadata..."
-        );
+        setUploadStatus("Saving book metadata...");
 
-        const response =
-          await fetch(
-            "/api/digital-library",
-            {
-              method: "POST",
+        const response = await fetch("/api/digital-library", {
+          method: "POST",
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+          headers: {
+            "Content-Type": "application/json",
+          },
 
-              body:
-                JSON.stringify({
-                  title,
-                  price,
-                  description,
+          body: JSON.stringify({
+            title,
+            price,
+            description,
 
-                  categoryId:
-                    safeSectionId,
+            categoryId: safeSectionId,
 
-                  categoryLabel:
-                    selectedLibrarySection.label,
+            categoryLabel: selectedLibrarySection.label,
 
-                  assetKey,
+            assetKey,
 
-                  uploadedPdf,
+            uploadedPdf,
 
-                  uploadedThumbnail,
-                }),
-            }
-          );
+            uploadedThumbnail,
+          }),
+        });
 
-        const result =
-          await readJsonResponse(
-            response
-          );
+        const result = await readJsonResponse(response);
 
-        if (
-          !response.ok ||
-          !result.success
-        ) {
-          throw new Error(
-            result.message ||
-              "Unable to save material."
-          );
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || "Unable to save material.");
         }
 
-        setUploadStatus(
-          "Upload completed."
-        );
+        setUploadStatus("Upload completed.");
 
         resetModal();
 
@@ -1793,80 +1504,53 @@ export function DigitalLibraryClient({
 
       // Edit existing material.
 
-      if (
-        !editingBook.pathname
-      ) {
-        throw new Error(
-          "Unable to identify the material being edited."
-        );
+      if (!editingBook.pathname) {
+        throw new Error("Unable to identify the material being edited.");
       }
 
-      setUploadStatus(
-        "Saving material changes..."
+      setUploadStatus("Saving material changes...");
+
+      const response = await fetch(
+        `/api/digital-library/${encodeURIComponent(editingBook.pathname)}`,
+        {
+          method: "PATCH",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            title,
+            price,
+            description,
+
+            categoryId: safeSectionId,
+
+            categoryLabel: selectedLibrarySection.label,
+
+            assetKey,
+
+            uploadedPdf,
+
+            uploadedThumbnail,
+          }),
+        },
       );
 
-      const response =
-        await fetch(
-          `/api/digital-library/${encodeURIComponent(
-            editingBook.pathname
-          )}`,
-          {
-            method: "PATCH",
+      const result = await readJsonResponse(response);
 
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                title,
-                price,
-                description,
-
-                categoryId:
-                  safeSectionId,
-
-                categoryLabel:
-                  selectedLibrarySection.label,
-
-                assetKey,
-
-                uploadedPdf,
-
-                uploadedThumbnail,
-              }),
-          }
-        );
-
-      const result =
-        await readJsonResponse(
-          response
-        );
-
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.message ||
-            "Unable to save material."
-        );
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to save material.");
       }
 
       resetModal();
 
       await loadBooks();
     } catch (error) {
-      console.error(
-        "Material save error:",
-        error
-      );
+      console.error("Material save error:", error);
 
       alert(
-        error instanceof Error
-          ? error.message
-          : "Unable to save material."
+        error instanceof Error ? error.message : "Unable to save material.",
       );
     } finally {
       setIsSaving(false);
@@ -1885,20 +1569,14 @@ export function DigitalLibraryClient({
   // REQUEST DELETE
   // ===================================================
 
-  function requestDeleteBook(
-    book: Book
-  ) {
-    if (
-      !canDeleteBooks
-    ) {
+  function requestDeleteBook(book: Book) {
+    if (!canDeleteBooks) {
       return;
     }
 
     setDeleteError("");
 
-    setBookToDelete(
-      book
-    );
+    setBookToDelete(book);
   }
 
   // ===================================================
@@ -1920,19 +1598,12 @@ export function DigitalLibraryClient({
   // ===================================================
 
   async function confirmDeleteBook() {
-    if (
-      !canDeleteBooks ||
-      !bookToDelete
-    ) {
+    if (!canDeleteBooks || !bookToDelete) {
       return;
     }
 
-    if (
-      !bookToDelete.pathname
-    ) {
-      setDeleteError(
-        "Unable to identify this material."
-      );
+    if (!bookToDelete.pathname) {
+      setDeleteError("Unable to identify this material.");
 
       return;
     }
@@ -1941,45 +1612,26 @@ export function DigitalLibraryClient({
     setDeleteError("");
 
     try {
-      const response =
-        await fetch(
-          `/api/digital-library/${encodeURIComponent(
-            bookToDelete.pathname
-          )}`,
-          {
-            method: "DELETE",
-          }
-        );
+      const response = await fetch(
+        `/api/digital-library/${encodeURIComponent(bookToDelete.pathname)}`,
+        {
+          method: "DELETE",
+        },
+      );
 
-      const result =
-        await readJsonResponse(
-          response
-        );
+      const result = await readJsonResponse(response);
 
-      if (
-        !response.ok ||
-        !result.success
-      ) {
-        throw new Error(
-          result.message ||
-            "Delete failed."
-        );
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Delete failed.");
       }
 
       setBookToDelete(null);
 
       await loadBooks();
     } catch (error) {
-      console.error(
-        "Delete material error:",
-        error
-      );
+      console.error("Delete material error:", error);
 
-      setDeleteError(
-        error instanceof Error
-          ? error.message
-          : "Delete failed."
-      );
+      setDeleteError(error instanceof Error ? error.message : "Delete failed.");
     } finally {
       setIsDeleting(false);
     }
@@ -1989,67 +1641,41 @@ export function DigitalLibraryClient({
   // DOWNLOAD BOOK
   // ===================================================
 
-  async function downloadBook(
-    book: Book
-  ) {
-    const canDownload =
-      await requestLoginIfNeeded(
-        "/library"
-      );
+  async function downloadBook(book: Book) {
+    const canDownload = await requestLoginIfNeeded("/library");
 
-    if (
-      !canDownload
-    ) {
+    if (!canDownload) {
       return;
     }
 
-    const url =
-      book.downloadUrl;
+    const url = book.downloadUrl;
 
     if (!url) {
-      alert(
-        "Download is not available for this material."
-      );
+      alert("Download is not available for this material.");
 
       return;
     }
 
     try {
-      const response =
-        await fetch(
-          url,
-          {
-            cache:
-              "no-store",
-          }
-        );
+      const response = await fetch(url, {
+        cache: "no-store",
+      });
 
-      const result =
-        await readJsonResponse<{
-          success?: boolean;
-          message?: string;
-          redirectUrl?: string;
-        }>(response);
+      const result = await readJsonResponse<{
+        success?: boolean;
+        message?: string;
+        redirectUrl?: string;
+      }>(response);
 
-      if (
-        !response.ok ||
-        !result.success ||
-        !result.redirectUrl
-      ) {
+      if (!response.ok || !result.success || !result.redirectUrl) {
         throw new Error(
-          result.message ||
-            "Download is not available for this material."
+          result.message || "Download is not available for this material.",
         );
       }
 
-      window.location.href =
-        result.redirectUrl;
+      window.location.href = result.redirectUrl;
     } catch (error) {
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Download failed."
-      );
+      alert(error instanceof Error ? error.message : "Download failed.");
     }
   }
 
@@ -2057,39 +1683,24 @@ export function DigitalLibraryClient({
   // PREVIEW BOOK
   // ===================================================
 
-  async function previewBook(
-    book: Book
-  ) {
-    const canPreview =
-      await requestLoginIfNeeded(
-        "/library"
-      );
+  async function previewBook(book: Book) {
+    const canPreview = await requestLoginIfNeeded("/library");
 
-    if (
-      !canPreview
-    ) {
+    if (!canPreview) {
       return;
     }
 
-    if (
-      !book.pathname
-    ) {
-      alert(
-        "Preview is not available for this material."
-      );
+    if (!book.pathname) {
+      alert("Preview is not available for this material.");
 
       return;
     }
 
-    const previewUrl =
-      `/api/digital-library/preview?pathname=${encodeURIComponent(
-        book.pathname
-      )}`;
+    const previewUrl = `/api/digital-library/preview?pathname=${encodeURIComponent(
+      book.pathname,
+    )}`;
 
-    window.open(
-      previewUrl,
-      "_blank"
-    );
+    window.open(previewUrl, "_blank");
   }
 
   // ===================================================
@@ -2098,24 +1709,17 @@ export function DigitalLibraryClient({
 
   return (
     <main className="min-h-screen bg-[#f7faff] text-[#12213c]">
-      <div className="mx-auto flex w-full max-w-[1920px] items-start">
-
+      <div className="mx-auto flex w-full max-w-[1920px] flex-col items-start lg:flex-row">
         {/* =========================================
             DIGITAL LIBRARY SIDEBAR
         ========================================= */}
 
-        <aside className="hidden w-[265px] shrink-0 self-stretch border-r border-blue-100 bg-white px-3 py-5 lg:block">
-
+        <aside className="w-full shrink-0 self-stretch border-b border-blue-100 bg-white px-3 py-5 lg:w-[265px] lg:border-b-0 lg:border-r">
           {/* ALL LIBRARIES */}
 
           <button
             type="button"
-            onClick={() =>
-              selectLibrary(
-                "all",
-                "all"
-              )
-            }
+            onClick={() => selectLibrary("all", "all")}
             className={`
               flex w-full
               items-center gap-3
@@ -2126,211 +1730,227 @@ export function DigitalLibraryClient({
               transition
 
               ${
-                activeLibraryCategory ===
-                  "all" &&
-                activeLibraryFilter ===
-                  "all"
+                activeLibraryCategory === "all" && activeLibraryFilter === "all"
                   ? "bg-blue-600 text-white"
                   : "text-slate-700 hover:bg-blue-50"
               }
             `}
           >
             <LibraryBig size={19} />
-
             All Libraries
           </button>
 
-          {/* ACADEMIC LIBRARY GROUPS */}
-
-          <div className="mt-5 space-y-5 px-2">
-            {ACADEMIC_SIDEBAR_GROUPS.map(
-              (group) => {
-                const Icon =
-                  group.icon;
-
-                return (
-                  <div
-                    key={
-                      group.title
-                    }
+          {/* COLLAPSIBLE FILTER SECTIONS */}
+          <div className="mt-5 space-y-3 px-2">
+            <details
+              className="group rounded-xl border border-blue-100 bg-white"
+              open
+            >
+              <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-3 text-sm font-extrabold text-slate-900 hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
+                <BookOpen size={18} className="text-blue-600" />
+                <span className="flex-1">School Books</span>
+                <ChevronRight
+                  size={16}
+                  className="transition-transform group-open:rotate-90"
+                />
+              </summary>
+              <div className="space-y-2 px-3 pb-3">
+                <button
+                  type="button"
+                  onClick={() => selectAcademic("school-books")}
+                  className="block w-full rounded-lg px-3 py-2 text-left text-xs font-bold text-blue-700 hover:bg-blue-50"
+                >
+                  All School Books
+                </button>
+                {[
+                  { id: "maharashtra", label: "Maharashtra State Board (SSC)" },
+                  { id: "cbse", label: "CBSE" },
+                ].map((board) => (
+                  <details
+                    key={board.id}
+                    className="group/board rounded-lg bg-slate-50"
                   >
-                    {/* GROUP HEADING */}
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        selectLibrary(
-                          "all",
-                          group.filter
-                        )
-                      }
-                      className={`
-                        mb-2 flex w-full
-                        items-center gap-2
-                        rounded-lg
-                        px-2 py-2
-                        text-left
-                        text-[13px]
-                        font-extrabold
-                        transition
-
-                        ${
-                          activeLibraryFilter ===
-                            group.filter &&
-                          activeLibraryCategory ===
-                            "all"
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-slate-900 hover:bg-blue-50"
-                        }
-                      `}
-                    >
-                      <Icon
-                        className="text-blue-600"
-                        size={19}
-                      />
-
-                      {
-                        group.title
-                      }
-                    </button>
-
-                    {/* SUBCATEGORIES */}
-
-                    <div className="space-y-0.5 border-l border-blue-100 pl-3">
-                      {group.items.map(
-                        (item) => {
-                          const isActive =
-                            activeLibraryFilter ===
-                              item.filter &&
-                            activeLibraryCategory ===
-                              "all";
-
-                          return (
-                            <button
-                              key={`${group.title}-${item.label}`}
-                              type="button"
-                              onClick={() =>
-                                selectLibrary(
-                                  "all",
-                                  item.filter
-                                )
-                              }
-                              className={`
-                                flex w-full
-                                items-center gap-2
-                                rounded-lg
-                                px-2 py-1.5
-                                text-left text-xs
-                                transition
-
-                                ${
-                                  isActive
-                                    ? "bg-blue-50 font-extrabold text-blue-700"
-                                    : "text-slate-600 hover:bg-blue-50 hover:text-blue-700"
-                                }
-                              `}
-                            >
-                              <FileText
-                                size={14}
-                              />
-
-                              {
-                                item.label
-                              }
-                            </button>
-                          );
-                        }
-                      )}
-                    </div>
-                  </div>
-                );
-              }
-            )}
-
-            {/* OTHER LIBRARIES */}
-
-            <div className="border-t border-slate-100 pt-3">
-              {OTHER_SIDEBAR_CATEGORIES.map(
-                (category) => {
-                  const Icon =
-                    category.icon;
-
-                  const isActive =
-                    activeLibraryCategory ===
-                      category.id &&
-                    activeLibraryFilter ===
-                      "all";
-
-                  return (
-                    <button
-                      key={
-                        category.id
-                      }
-                      type="button"
-                      onClick={() =>
-                        selectLibrary(
-                          category.id,
-                          "all"
-                        )
-                      }
-                      className={`
-                        flex w-full
-                        items-center gap-2
-                        rounded-lg
-                        px-2 py-2
-                        text-left text-xs
-                        font-bold
-                        transition
-
-                        ${
-                          isActive
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-slate-700 hover:bg-blue-50"
-                        }
-                      `}
-                    >
-                      <Icon
-                        size={18}
-                        className="shrink-0 text-blue-600"
-                      />
-
-                      <span className="flex-1">
-                        {
-                          category.label
-                        }
-                      </span>
-
+                    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
+                      <span className="flex-1">{board.label}</span>
                       <ChevronRight
                         size={14}
+                        className="transition-transform group-open/board:rotate-90"
                       />
-                    </button>
-                  );
-                }
-              )}
-
-              {/* CUSTOM LIBRARY SECTIONS */}
-
-              {customLibraryCategories.length >
-                0 && (
-                <div className="mt-4 border-t border-slate-100 pt-3">
-                  <p className="mb-2 px-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
-                    More Libraries
-                  </p>
-
-                  {customLibraryCategories.map(
-                    (category) => (
+                    </summary>
+                    <div className="space-y-1 border-l border-blue-100 pb-2 pl-3 pr-2">
                       <button
-                        key={
-                          category.id
-                        }
+                        type="button"
+                        onClick={() => selectAcademic("school-books", board.id)}
+                        className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-blue-700 hover:bg-blue-100"
+                      >
+                        All Standards
+                      </button>
+                      {SCHOOL_STANDARDS.map((standard) => (
+                        <button
+                          type="button"
+                          key={standard}
+                          onClick={() =>
+                            selectAcademic("school-books", board.id, standard)
+                          }
+                          className={`block w-full rounded-lg px-2 py-1.5 text-left text-xs hover:bg-blue-100 ${activeLibraryFilter === "school-books" && selectedBoard === board.id && selectedStandard === standard ? "bg-blue-100 font-extrabold text-blue-700" : "text-slate-600"}`}
+                        >
+                          {standard}th Standard
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </details>
+
+            <details className="group rounded-xl border border-blue-100 bg-white">
+              <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-3 text-sm font-extrabold text-slate-900 hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
+                <GraduationCap size={18} className="text-blue-600" />
+                <span className="flex-1">Junior College Books</span>
+                <ChevronRight
+                  size={16}
+                  className="transition-transform group-open:rotate-90"
+                />
+              </summary>
+              <div className="space-y-2 px-3 pb-3">
+                <button
+                  type="button"
+                  onClick={() => selectAcademic("junior-college")}
+                  className="block w-full rounded-lg px-3 py-2 text-left text-xs font-bold text-blue-700 hover:bg-blue-50"
+                >
+                  All Junior College Books
+                </button>
+                {[
+                  { id: "maharashtra", label: "Maharashtra State Board (HSC)" },
+                  { id: "cbse", label: "CBSE" },
+                ].map((board) => (
+                  <details
+                    key={board.id}
+                    className="group/board rounded-lg bg-slate-50"
+                  >
+                    <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-xs font-bold text-slate-700 [&::-webkit-details-marker]:hidden">
+                      <span className="flex-1">{board.label}</span>
+                      <ChevronRight
+                        size={14}
+                        className="transition-transform group-open/board:rotate-90"
+                      />
+                    </summary>
+                    <div className="space-y-1 border-l border-blue-100 pb-2 pl-3 pr-2">
+                      <button
                         type="button"
                         onClick={() =>
-                          selectLibrary(
-                            category.id,
-                            "all"
-                          )
+                          selectAcademic("junior-college", board.id)
                         }
-                        className={`
+                        className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-blue-700 hover:bg-blue-100"
+                      >
+                        All Standards & Streams
+                      </button>
+                      {JUNIOR_STANDARDS.map((standard) => (
+                        <details
+                          key={standard}
+                          className="group/standard rounded-lg"
+                        >
+                          <summary className="flex cursor-pointer list-none items-center gap-2 px-2 py-1.5 text-xs font-semibold text-slate-700 [&::-webkit-details-marker]:hidden">
+                            <span className="flex-1">
+                              {standard}th Standard
+                            </span>
+                            <ChevronRight
+                              size={13}
+                              className="transition-transform group-open/standard:rotate-90"
+                            />
+                          </summary>
+                          <div className="space-y-1 pl-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                selectAcademic(
+                                  "junior-college",
+                                  board.id,
+                                  standard,
+                                )
+                              }
+                              className="block w-full rounded-lg px-2 py-1.5 text-left text-xs text-blue-700 hover:bg-blue-100"
+                            >
+                              All Streams
+                            </button>
+                            {JUNIOR_STREAMS.map((stream) => (
+                              <button
+                                type="button"
+                                key={stream}
+                                onClick={() =>
+                                  selectAcademic(
+                                    "junior-college",
+                                    board.id,
+                                    standard,
+                                    stream,
+                                  )
+                                }
+                                className={`block w-full rounded-lg px-2 py-1.5 text-left text-xs hover:bg-blue-100 ${activeLibraryFilter === "junior-college" && selectedBoard === board.id && selectedStandard === standard && selectedStream === stream ? "bg-blue-100 font-extrabold text-blue-700" : "text-slate-600"}`}
+                              >
+                                {stream}
+                              </button>
+                            ))}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </details>
+
+            {OTHER_SIDEBAR_CATEGORIES.map((category) => {
+              const Icon = category.icon;
+              return (
+                <details
+                  key={category.id}
+                  className="group rounded-xl border border-blue-100 bg-white"
+                >
+                  <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-3 text-sm font-extrabold text-slate-900 hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
+                    <Icon size={18} className="text-blue-600" />
+                    <span className="flex-1">{category.label}</span>
+                    <ChevronRight
+                      size={16}
+                      className="transition-transform group-open:rotate-90"
+                    />
+                  </summary>
+                  <div className="space-y-1 border-l border-blue-100 pb-3 pl-4 pr-3">
+                    <button
+                      type="button"
+                      onClick={() => selectTopic(category.id)}
+                      className="block w-full rounded-lg px-2 py-2 text-left text-xs font-bold text-blue-700 hover:bg-blue-50"
+                    >
+                      All {category.label}
+                    </button>
+                    {category.topics.map((topic) => (
+                      <button
+                        type="button"
+                        key={topic.label}
+                        onClick={() => selectTopic(category.id, topic.label)}
+                        className={`block w-full rounded-lg px-2 py-2 text-left text-xs hover:bg-blue-50 ${activeLibraryCategory === category.id && selectedTopic === topic.label ? "bg-blue-100 font-extrabold text-blue-700" : "text-slate-600"}`}
+                      >
+                        {topic.label}
+                      </button>
+                    ))}
+                  </div>
+                </details>
+              );
+            })}
+
+            {/* CUSTOM LIBRARY SECTIONS */}
+
+            {customLibraryCategories.length > 0 && (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <p className="mb-2 px-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
+                  More Libraries
+                </p>
+
+                {customLibraryCategories.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => selectLibrary(category.id, "all")}
+                    className={`
                           flex w-full
                           items-center gap-2
                           rounded-lg
@@ -2340,31 +1960,20 @@ export function DigitalLibraryClient({
                           transition
 
                           ${
-                            activeLibraryCategory ===
-                              category.id &&
-                            activeLibraryFilter ===
-                              "all"
+                            activeLibraryCategory === category.id &&
+                            activeLibraryFilter === "all"
                               ? "bg-blue-50 text-blue-700"
                               : "text-slate-700 hover:bg-blue-50"
                           }
                         `}
-                      >
-                        <Layers3
-                          size={18}
-                          className="shrink-0 text-blue-600"
-                        />
+                  >
+                    <Layers3 size={18} className="shrink-0 text-blue-600" />
 
-                        <span className="flex-1">
-                          {
-                            category.label
-                          }
-                        </span>
-                      </button>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
+                    <span className="flex-1">{category.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
 
@@ -2373,55 +1982,33 @@ export function DigitalLibraryClient({
         ========================================= */}
 
         <div className="min-w-0 flex-1 px-4 pb-12 pt-6 sm:px-6 xl:px-8">
-
           {/* PAGE HEADING */}
 
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
-
             <div>
               <p className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                <LibraryBig
-                  size={15}
-                />
-
+                <LibraryBig size={15} />
                 Library
               </p>
 
               <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0f1e3d] sm:text-4xl">
-                Digital{" "}
-
-                <span className="text-blue-600">
-                  Library
-                </span>
+                Digital <span className="text-blue-600">Library</span>
               </h1>
 
               <p className="mt-2 max-w-xl text-sm text-slate-600">
-                Access study materials,
-                textbooks, notes and
-                reference books for your
-                learning needs.
+                Access study materials, textbooks, notes and reference books for
+                your learning needs.
               </p>
             </div>
 
             {/* SEARCH */}
 
             <label className="flex h-12 w-full items-center gap-3 rounded-xl border border-blue-100 bg-white px-4 shadow-sm sm:max-w-[400px]">
-              <Search
-                size={19}
-                className="shrink-0 text-slate-600"
-              />
+              <Search size={19} className="shrink-0 text-slate-600" />
 
               <input
-                value={
-                  query
-                }
-                onChange={(
-                  event
-                ) =>
-                  setQuery(
-                    event.target.value
-                  )
-                }
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search books, subjects, chapters..."
                 aria-label="Search library"
                 className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
@@ -2430,9 +2017,7 @@ export function DigitalLibraryClient({
               {query && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setQuery("")
-                  }
+                  onClick={() => setQuery("")}
                   className="text-xs font-bold text-blue-600"
                 >
                   Clear
@@ -2442,348 +2027,15 @@ export function DigitalLibraryClient({
           </div>
 
           {/* =====================================
-              DASHBOARD CATEGORY TILES
-          ===================================== */}
-
-          <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            {DASHBOARD_TILES.map(
-              (tile, index) => {
-                const Icon =
-                  tile.icon;
-
-                const isActive =
-                  activeLibraryCategory ===
-                    tile.id &&
-                  activeLibraryFilter ===
-                    tile.filter;
-
-                return (
-                  <button
-                    type="button"
-                    key={`${tile.id}-${index}`}
-                    onClick={() =>
-                      selectLibrary(
-                        tile.id,
-                        tile.filter
-                      )
-                    }
-                    className={`
-                      group flex
-                      min-h-[170px]
-                      flex-col
-                      items-center
-                      justify-center
-                      rounded-2xl
-                      border p-3
-                      text-center
-                      transition
-                      hover:-translate-y-1
-                      hover:shadow-md
-
-                      ${tile.color}
-
-                      ${
-                        isActive
-                          ? "border-blue-400 ring-1 ring-blue-300"
-                          : "border-transparent"
-                      }
-                    `}
-                  >
-                    <Icon
-                      size={33}
-                      strokeWidth={2.1}
-                      className={
-                        tile.ink
-                      }
-                    />
-
-                    <h2 className="mt-3 text-[13px] font-black leading-snug text-slate-900">
-                      {
-                        tile.title
-                      }
-                    </h2>
-
-                    <p className="mt-1 text-[11px] leading-4 text-slate-600">
-                      {
-                        tile.subtitle
-                      }
-                    </p>
-
-                    <span
-                      className={`
-                        mt-2 flex
-                        h-6 w-6
-                        items-center
-                        justify-center
-                        rounded-full
-                        bg-white/80
-
-                        ${tile.ink}
-                      `}
-                    >
-                      <ArrowRight
-                        size={13}
-                      />
-                    </span>
-                  </button>
-                );
-              }
-            )}
-          </div>
-
-          {/* =====================================
-              POPULAR LIBRARIES
-          ===================================== */}
-
-          <div className="mt-8 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-black">
-              Popular Libraries
-            </h2>
-
-            <button
-              type="button"
-              onClick={() =>
-                selectLibrary(
-                  "all",
-                  "all"
-                )
-              }
-              className="flex items-center gap-2 text-sm font-bold text-blue-600"
-            >
-              View All
-
-              <ArrowRight
-                size={16}
-              />
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {POPULAR_LIBRARIES.map(
-              (card) => {
-                const Icon =
-                  card.icon;
-
-                const matchingBooks =
-                  books.filter(
-                    (book) =>
-                      matchesBookSelection(
-                        book,
-                        card.category,
-                        card.filter
-                      )
-                  );
-
-                const cover =
-                  matchingBooks.find(
-                    (book) =>
-                      Boolean(
-                        book.thumbnailUrl
-                      )
-                  );
-
-                const matchingCount =
-                  matchingBooks.length;
-
-                return (
-                  <button
-                    type="button"
-                    key={
-                      card.title
-                    }
-                    onClick={() =>
-                      selectLibrary(
-                        card.category,
-                        card.filter
-                      )
-                    }
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                  >
-
-                    {/* COVER */}
-
-                    <div
-                      className={`
-                        flex h-36
-                        items-center
-                        justify-center
-                        overflow-hidden
-                        bg-gradient-to-br
-
-                        ${card.bg}
-                      `}
-                    >
-                      {cover?.thumbnailUrl ? (
-                        <img
-                          src={
-                            cover.thumbnailUrl
-                          }
-                          alt=""
-                          loading="lazy"
-                          className="h-full w-full object-contain p-3 transition group-hover:scale-105"
-                        />
-                      ) : (
-                        <Icon
-                          size={66}
-                          strokeWidth={1.4}
-                          className="text-blue-600/70"
-                        />
-                      )}
-                    </div>
-
-                    {/* CONTENT */}
-
-                    <div className="p-4">
-                      <div className="flex items-start justify-between gap-2">
-
-                        <h3 className="min-h-10 text-sm font-black leading-snug">
-                          {
-                            card.title
-                          }
-                        </h3>
-
-                        <ArrowRight
-                          size={17}
-                          className="shrink-0 text-blue-600"
-                        />
-                      </div>
-
-                      <p className="text-xs text-slate-500">
-                        {
-                          card.caption
-                        }
-                      </p>
-
-                      <p className="mt-3 text-xs font-bold text-blue-700">
-                        {
-                          matchingCount
-                        }{" "}
-                        materials
-                      </p>
-                    </div>
-                  </button>
-                );
-              }
-            )}
-          </div>
-
-          {/* =====================================
-              RECENTLY ADDED
-          ===================================== */}
-
-          <div className="mt-8 flex items-center justify-between gap-4">
-            <h2 className="text-xl font-black">
-              Recently Added
-            </h2>
-
-            <button
-              type="button"
-              onClick={() =>
-                selectLibrary(
-                  "all",
-                  "all"
-                )
-              }
-              className="flex items-center gap-2 text-sm font-bold text-blue-600"
-            >
-              View All
-
-              <ArrowRight
-                size={16}
-              />
-            </button>
-          </div>
-
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            {books
-              .slice(0, 6)
-              .map(
-                (book) => (
-                  <article
-                    key={`recent-${book.pathname || book.id || book.title}`}
-                    className="min-w-0 rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm"
-                  >
-                    <div className="relative h-24 overflow-hidden rounded-lg bg-blue-50">
-                      <BookThumbnail
-                        book={
-                          book
-                        }
-                      />
-                    </div>
-
-                    <h3 className="mt-2 line-clamp-2 min-h-9 text-xs font-extrabold leading-4">
-                      {
-                        book.title
-                      }
-                    </h3>
-
-                    <p className="mt-1 truncate text-[11px] text-slate-500">
-                      {
-                        book.categoryLabel ||
-                        "Study material"
-                      }
-                    </p>
-
-                    <div className="mt-2 flex items-center justify-between gap-2">
-
-                      <span className="text-[10px] font-bold text-blue-700">
-                        PDF ·{" "}
-
-                        {displayPrice(
-                          book.price
-                        )}
-                      </span>
-
-                      <button
-                        type="button"
-                        aria-label={`Download ${book.title}`}
-                        onClick={() =>
-                          void downloadBook(
-                            book
-                          )
-                        }
-                        className="rounded-full bg-blue-50 p-1.5 text-blue-600 hover:bg-blue-100"
-                      >
-                        <Download
-                          size={15}
-                        />
-                      </button>
-                    </div>
-                  </article>
-                )
-              )}
-
-            {books.length ===
-              0 && (
-              <p className="col-span-full rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
-                Recently added materials
-                will appear here when
-                available.
-              </p>
-            )}
-          </div>
-
-          {/* =====================================
               UPLOAD PROGRESS
           ===================================== */}
 
           {transferState.visible && (
             <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
               <div className="flex justify-between gap-4 text-sm font-bold text-blue-700">
+                <span>{transferState.label || "Processing..."}</span>
 
-                <span>
-                  {
-                    transferState.label ||
-                    "Processing..."
-                  }
-                </span>
-
-                <span>
-                  {
-                    transferState.progress
-                  }
-                  %
-                </span>
+                <span>{transferState.progress}%</span>
               </div>
 
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-blue-100">
@@ -2805,11 +2057,9 @@ export function DigitalLibraryClient({
             id="library-files"
             className="mt-9 scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
           >
-
             {/* COLLECTION HEADER */}
 
             <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-5 sm:flex-row sm:items-center">
-
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.22em] text-blue-600">
                   Library Collection
@@ -2823,13 +2073,10 @@ export function DigitalLibraryClient({
               {/* ADMIN ACTIONS */}
 
               <div className="flex flex-wrap gap-2">
-
                 {allowedToManage && (
                   <button
                     type="button"
-                    onClick={
-                      openUpload
-                    }
+                    onClick={openUpload}
                     className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
                   >
                     + Upload Material
@@ -2840,13 +2087,9 @@ export function DigitalLibraryClient({
                   <button
                     type="button"
                     onClick={() => {
-                      setSectionError(
-                        ""
-                      );
+                      setSectionError("");
 
-                      setIsSectionModalOpen(
-                        true
-                      );
+                      setIsSectionModalOpen(true);
                     }}
                     className="rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-600"
                   >
@@ -2864,177 +2107,124 @@ export function DigitalLibraryClient({
               <p className="mt-6 rounded-xl bg-slate-50 p-8 text-center text-sm text-slate-500">
                 Loading library...
               </p>
-            ) : filteredBooks.length ===
-              0 ? (
+            ) : filteredBooks.length === 0 ? (
               <p className="mt-6 rounded-xl bg-slate-50 p-8 text-center text-sm text-slate-500">
-                No PDFs found in this
-                library section.
+                No matching PDFs found. Try another board, standard, stream or
+                category. Books need their board and class in the title or
+                description to appear in these filters.
               </p>
             ) : (
-
               /* BOOK COLLECTION */
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                {filteredBooks.map(
-                  (book) => {
-                    const priceText =
-                      displayPrice(
-                        book.price
-                      );
+                {filteredBooks.map((book) => {
+                  const priceText = displayPrice(book.price);
 
-                    const isFree =
-                      priceText ===
-                      "Free";
+                  const isFree = priceText === "Free";
 
-                    return (
-                      <article
-                        key={
-                          book.pathname ||
-                          book.id ||
-                          book._id ||
-                          book.title
-                        }
-                        className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                      >
+                  return (
+                    <article
+                      key={book.pathname || book.id || book._id || book.title}
+                      className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      {/* THUMBNAIL */}
 
-                        {/* THUMBNAIL */}
+                      <div className="h-44 overflow-hidden rounded-xl bg-slate-100">
+                        <BookThumbnail book={book} />
+                      </div>
 
-                        <div className="h-44 overflow-hidden rounded-xl bg-slate-100">
-                          <BookThumbnail
-                            book={
-                              book
-                            }
-                          />
-                        </div>
+                      {/* PRICE BADGES */}
 
-                        {/* PRICE BADGES */}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white">
+                          PDF
+                        </span>
 
-                        <div className="mt-3 flex flex-wrap gap-2">
-
-                          <span className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white">
-                            PDF
-                          </span>
-
-                          <span
-                            className={`
+                        <span
+                          className={`
                               rounded-md
                               px-2.5 py-1
                               text-[11px]
                               font-bold
                               text-white
 
-                              ${
-                                isFree
-                                  ? "bg-emerald-500"
-                                  : "bg-blue-600"
-                              }
+                              ${isFree ? "bg-emerald-500" : "bg-blue-600"}
                             `}
-                          >
-                            {
-                              priceText
-                            }
-                          </span>
-                        </div>
+                        >
+                          {priceText}
+                        </span>
+                      </div>
 
-                        {/* BOOK TITLE */}
+                      {/* BOOK TITLE */}
 
-                        <h3 className="mt-3 line-clamp-2 min-h-10 break-words text-base font-extrabold leading-5">
-                          {
-                            book.title
-                          }
-                        </h3>
+                      <h3 className="mt-3 line-clamp-2 min-h-10 break-words text-base font-extrabold leading-5">
+                        {book.title}
+                      </h3>
 
-                        {/* DESCRIPTION */}
+                      {/* DESCRIPTION */}
 
-                        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
-                          {
-                            book.description ||
-                            "Access this PDF study material for focused learning and revision."
-                          }
-                        </p>
+                      <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
+                        {book.description ||
+                          "Access this PDF study material for focused learning and revision."}
+                      </p>
 
-                        {/* DOWNLOAD AND PREVIEW */}
+                      {/* DOWNLOAD AND PREVIEW */}
 
-                        <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+                      <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => void downloadBook(book)}
+                          className="rounded-xl bg-blue-600 px-2 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
+                        >
+                          {isFree ? "Download ↓" : "Buy & Download"}
+                        </button>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void downloadBook(
-                                book
-                              )
-                            }
-                            className="rounded-xl bg-blue-600 px-2 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
-                          >
-                            {isFree
-                              ? "Download ↓"
-                              : "Buy & Download"}
-                          </button>
+                        <button
+                          type="button"
+                          onClick={() => void previewBook(book)}
+                          className="rounded-xl border border-slate-200 px-2 py-2.5 text-xs font-bold hover:bg-slate-50"
+                        >
+                          Preview 👁
+                        </button>
+                      </div>
 
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void previewBook(
-                                book
-                              )
-                            }
-                            className="rounded-xl border border-slate-200 px-2 py-2.5 text-xs font-bold hover:bg-slate-50"
-                          >
-                            Preview 👁
-                          </button>
-                        </div>
+                      {/* MANAGEMENT ACTIONS */}
 
-                        {/* MANAGEMENT ACTIONS */}
-
-                        {allowedToManage && (
-                          <div
-                            className={`
+                      {allowedToManage && (
+                        <div
+                          className={`
                               mt-2 grid
                               gap-2
 
-                              ${
-                                canDeleteBooks
-                                  ? "grid-cols-2"
-                                  : "grid-cols-1"
-                              }
+                              ${canDeleteBooks ? "grid-cols-2" : "grid-cols-1"}
                             `}
+                        >
+                          {/* EDIT */}
+
+                          <button
+                            type="button"
+                            onClick={() => openEdit(book)}
+                            className="rounded-xl border border-blue-200 px-2 py-2 text-xs font-bold text-blue-700"
                           >
+                            Edit
+                          </button>
 
-                            {/* EDIT */}
+                          {/* DELETE */}
 
+                          {canDeleteBooks && (
                             <button
                               type="button"
-                              onClick={() =>
-                                openEdit(
-                                  book
-                                )
-                              }
-                              className="rounded-xl border border-blue-200 px-2 py-2 text-xs font-bold text-blue-700"
+                              onClick={() => requestDeleteBook(book)}
+                              className="rounded-xl border border-red-200 px-2 py-2 text-xs font-bold text-red-600"
                             >
-                              Edit
+                              Delete
                             </button>
-
-                            {/* DELETE */}
-
-                            {canDeleteBooks && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  requestDeleteBook(
-                                    book
-                                  )
-                                }
-                                className="rounded-xl border border-red-200 px-2 py-2 text-xs font-bold text-red-600"
-                              >
-                                Delete
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </article>
-                    );
-                  }
-                )}
+                          )}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -3045,31 +2235,21 @@ export function DigitalLibraryClient({
           CREATE SECTION MODAL
       ========================================= */}
 
-      {allowedToManage &&
-        isSectionModalOpen && (
+      {allowedToManage && isSectionModalOpen && (
         <div
           className="fixed inset-0 z-[105] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
           onMouseDown={() => {
-            if (
-              !isCreatingSection
-            ) {
-              setIsSectionModalOpen(
-                false
-              );
+            if (!isCreatingSection) {
+              setIsSectionModalOpen(false);
             }
           }}
         >
           <div
             role="dialog"
             aria-modal="true"
-            onMouseDown={(
-              event
-            ) =>
-              event.stopPropagation()
-            }
+            onMouseDown={(event) => event.stopPropagation()}
             className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl sm:p-7"
           >
-
             <p className="text-xs font-black uppercase tracking-[0.28em] text-emerald-500">
               New Library Section
             </p>
@@ -3079,7 +2259,6 @@ export function DigitalLibraryClient({
             </h2>
 
             <div className="mt-6 grid gap-4">
-
               {/* SECTION NAME */}
 
               <label className="grid gap-2">
@@ -3088,16 +2267,8 @@ export function DigitalLibraryClient({
                 </span>
 
                 <input
-                  value={
-                    newSectionName
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setNewSectionName(
-                      event.target.value
-                    )
-                  }
+                  value={newSectionName}
+                  onChange={(event) => setNewSectionName(event.target.value)}
                   placeholder="Example: Olympiad Library"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-emerald-500"
                 />
@@ -3111,15 +2282,9 @@ export function DigitalLibraryClient({
                 </span>
 
                 <textarea
-                  value={
-                    newSectionDescription
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setNewSectionDescription(
-                      event.target.value
-                    )
+                  value={newSectionDescription}
+                  onChange={(event) =>
+                    setNewSectionDescription(event.target.value)
                   }
                   placeholder="Write what this section is for"
                   rows={3}
@@ -3131,9 +2296,7 @@ export function DigitalLibraryClient({
 
               {sectionError && (
                 <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600">
-                  {
-                    sectionError
-                  }
+                  {sectionError}
                 </div>
               )}
             </div>
@@ -3141,17 +2304,10 @@ export function DigitalLibraryClient({
             {/* ACTIONS */}
 
             <div className="mt-7 flex justify-end gap-3">
-
               <button
                 type="button"
-                onClick={() =>
-                  setIsSectionModalOpen(
-                    false
-                  )
-                }
-                disabled={
-                  isCreatingSection
-                }
+                onClick={() => setIsSectionModalOpen(false)}
+                disabled={isCreatingSection}
                 className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black"
               >
                 Cancel
@@ -3159,17 +2315,11 @@ export function DigitalLibraryClient({
 
               <button
                 type="button"
-                onClick={() =>
-                  void createLibrarySection()
-                }
-                disabled={
-                  isCreatingSection
-                }
+                onClick={() => void createLibrarySection()}
+                disabled={isCreatingSection}
                 className="rounded-xl bg-emerald-500 px-6 py-3 text-sm font-black text-white transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isCreatingSection
-                  ? "Creating..."
-                  : "Create Section"}
+                {isCreatingSection ? "Creating..." : "Create Section"}
               </button>
             </div>
           </div>
@@ -3180,27 +2330,19 @@ export function DigitalLibraryClient({
           DELETE CONFIRMATION MODAL
       ========================================= */}
 
-      {canDeleteBooks &&
-        bookToDelete && (
+      {canDeleteBooks && bookToDelete && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/65 px-4 py-8 backdrop-blur-[2px]"
-          onMouseDown={
-            cancelDeleteBook
-          }
+          onMouseDown={cancelDeleteBook}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-material-title"
             aria-describedby="delete-material-description"
-            onMouseDown={(
-              event
-            ) =>
-              event.stopPropagation()
-            }
+            onMouseDown={(event) => event.stopPropagation()}
             className="w-full max-w-md rounded-[28px] border border-slate-200 bg-white p-7 text-center shadow-2xl sm:p-8"
           >
-
             {/* DELETE ICON */}
 
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl">
@@ -3222,43 +2364,28 @@ export function DigitalLibraryClient({
               id="delete-material-description"
               className="mt-3 text-sm font-medium leading-6 text-slate-600"
             >
-              Are you sure you want
-              to delete{" "}
-
+              Are you sure you want to delete{" "}
               <span className="font-black text-slate-950">
-                “
-                {
-                  bookToDelete.title
-                }
-                ”
+                “{bookToDelete.title}”
               </span>
-
-              ? This action cannot
-              be undone.
+              ? This action cannot be undone.
             </p>
 
             {/* ERROR */}
 
             {deleteError && (
               <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-600">
-                {
-                  deleteError
-                }
+                {deleteError}
               </div>
             )}
 
             {/* BUTTONS */}
 
             <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row">
-
               <button
                 type="button"
-                onClick={
-                  cancelDeleteBook
-                }
-                disabled={
-                  isDeleting
-                }
+                onClick={cancelDeleteBook}
+                disabled={isDeleting}
                 className="flex-1 rounded-xl border border-slate-200 px-5 py-3 font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Cancel
@@ -3266,17 +2393,11 @@ export function DigitalLibraryClient({
 
               <button
                 type="button"
-                onClick={() =>
-                  void confirmDeleteBook()
-                }
-                disabled={
-                  isDeleting
-                }
+                onClick={() => void confirmDeleteBook()}
+                disabled={isDeleting}
                 className="flex-1 rounded-xl bg-red-500 px-5 py-3 font-black text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isDeleting
-                  ? "Deleting..."
-                  : "Delete PDF"}
+                {isDeleting ? "Deleting..." : "Delete PDF"}
               </button>
             </div>
           </div>
@@ -3287,56 +2408,33 @@ export function DigitalLibraryClient({
           UPLOAD / EDIT MODAL
       ========================================= */}
 
-      {allowedToManage &&
-        isModalOpen && (
+      {allowedToManage && isModalOpen && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4 py-8 backdrop-blur-sm"
-          onMouseDown={
-            closeModal
-          }
+          onMouseDown={closeModal}
         >
           <form
-            onSubmit={(
-              event
-            ) =>
-              void submitMaterial(
-                event
-              )
-            }
-            onMouseDown={(
-              event
-            ) =>
-              event.stopPropagation()
-            }
+            onSubmit={(event) => void submitMaterial(event)}
+            onMouseDown={(event) => event.stopPropagation()}
             className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[28px] border border-slate-200 bg-white p-6 shadow-2xl sm:p-7"
           >
-
             {/* HEADER */}
 
             <div className="flex items-start justify-between gap-5">
-
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.28em] text-blue-600">
-                  {editingBook
-                    ? "Edit Center"
-                    : "Upload Center"}
+                  {editingBook ? "Edit Center" : "Upload Center"}
                 </p>
 
                 <h2 className="mt-2 text-2xl font-black">
-                  {editingBook
-                    ? "Edit Material"
-                    : "Upload New Material"}
+                  {editingBook ? "Edit Material" : "Upload New Material"}
                 </h2>
               </div>
 
               <button
                 type="button"
-                onClick={
-                  closeModal
-                }
-                disabled={
-                  isSaving
-                }
+                onClick={closeModal}
+                disabled={isSaving}
                 className="rounded-full border border-slate-200 px-3 py-2 text-sm font-black"
               >
                 ✕
@@ -3346,7 +2444,6 @@ export function DigitalLibraryClient({
             {/* FORM FIELDS */}
 
             <div className="mt-6 grid gap-4">
-
               {/* BOOK NAME */}
 
               <label className="grid gap-2">
@@ -3356,16 +2453,8 @@ export function DigitalLibraryClient({
 
                 <input
                   required
-                  value={
-                    bookName
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setBookName(
-                      event.target.value
-                    )
-                  }
+                  value={bookName}
+                  onChange={(event) => setBookName(event.target.value)}
                   placeholder="Enter book name"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500"
                 />
@@ -3379,16 +2468,8 @@ export function DigitalLibraryClient({
                 </span>
 
                 <textarea
-                  value={
-                    description
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setDescription(
-                      event.target.value
-                    )
-                  }
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
                   placeholder="Enter description shown on the PDF card"
                   rows={3}
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold leading-6 outline-none focus:border-blue-500"
@@ -3403,41 +2484,18 @@ export function DigitalLibraryClient({
                 </span>
 
                 <select
-                  value={
-                    librarySectionId
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setLibrarySectionId(
-                      event.target.value
-                    )
-                  }
+                  value={librarySectionId}
+                  onChange={(event) => setLibrarySectionId(event.target.value)}
                   required
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500"
                 >
                   {libraryCategories
-                    .filter(
-                      (category) =>
-                        category.id !==
-                        "all"
-                    )
-                    .map(
-                      (category) => (
-                        <option
-                          key={
-                            category.id
-                          }
-                          value={
-                            category.id
-                          }
-                        >
-                          {
-                            category.label
-                          }
-                        </option>
-                      )
-                    )}
+                    .filter((category) => category.id !== "all")
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.label}
+                      </option>
+                    ))}
                 </select>
               </label>
 
@@ -3445,31 +2503,22 @@ export function DigitalLibraryClient({
 
               <label className="grid gap-2">
                 <span className="text-sm font-bold text-slate-600">
-                  Book upload
-                  (PDF only)
+                  Book upload (PDF only)
                 </span>
 
                 <input
-                  required={
-                    !editingBook
-                  }
+                  required={!editingBook}
                   type="file"
                   accept="application/pdf,.pdf"
-                  onChange={(
-                    event
-                  ) =>
-                    setPdfFile(
-                      event.target.files?.[0] ||
-                        null
-                    )
+                  onChange={(event) =>
+                    setPdfFile(event.target.files?.[0] || null)
                   }
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white"
                 />
 
                 {editingBook && (
                   <span className="text-xs font-bold text-slate-500">
-                    Leave blank to keep
-                    the current PDF.
+                    Leave blank to keep the current PDF.
                   </span>
                 )}
               </label>
@@ -3482,26 +2531,18 @@ export function DigitalLibraryClient({
                 </span>
 
                 <input
-                  required={
-                    !editingBook
-                  }
+                  required={!editingBook}
                   type="file"
                   accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-                  onChange={(
-                    event
-                  ) =>
-                    setThumbnailFile(
-                      event.target.files?.[0] ||
-                        null
-                    )
+                  onChange={(event) =>
+                    setThumbnailFile(event.target.files?.[0] || null)
                   }
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-bold file:mr-3 file:rounded-full file:border-0 file:bg-blue-600 file:px-4 file:py-2 file:font-black file:text-white"
                 />
 
                 {editingBook && (
                   <span className="text-xs font-bold text-slate-500">
-                    Leave blank to keep
-                    the current thumbnail.
+                    Leave blank to keep the current thumbnail.
                   </span>
                 )}
               </label>
@@ -3518,55 +2559,32 @@ export function DigitalLibraryClient({
                   min="0"
                   type="number"
                   inputMode="numeric"
-                  value={
-                    price
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setPrice(
-                      event.target.value
-                    )
-                  }
+                  value={price}
+                  onChange={(event) => setPrice(event.target.value)}
                   placeholder="Enter 0 for Free"
                   className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 font-bold outline-none focus:border-blue-500"
                 />
 
                 <span className="text-xs font-bold text-slate-500">
-                  Display price:{" "}
-
-                  {displayPrice(
-                    price
-                  )}
+                  Display price: {displayPrice(price)}
                 </span>
               </label>
 
               {/* UPLOAD PROGRESS */}
 
-              {isSaving &&
-                transferState.visible && (
+              {isSaving && transferState.visible && (
                 <div className="rounded-2xl bg-blue-50 p-4">
-
                   <div className="flex items-center justify-between gap-4 text-sm font-bold text-blue-600">
-
                     <span>
-                      {
-                        transferState.label ||
+                      {transferState.label ||
                         uploadStatus ||
-                        "Saving material..."
-                      }
+                        "Saving material..."}
                     </span>
 
-                    <span>
-                      {
-                        transferState.progress
-                      }
-                      %
-                    </span>
+                    <span>{transferState.progress}%</span>
                   </div>
 
-                  {transferState.progress >
-                    0 && (
+                  {transferState.progress > 0 && (
                     <div className="mt-3 h-2 overflow-hidden rounded-full bg-blue-100">
                       <div
                         className="h-full rounded-full bg-blue-600 transition-all"
@@ -3583,15 +2601,10 @@ export function DigitalLibraryClient({
             {/* FORM ACTIONS */}
 
             <div className="mt-7 flex justify-end gap-3">
-
               <button
                 type="button"
-                onClick={
-                  closeModal
-                }
-                disabled={
-                  isSaving
-                }
+                onClick={closeModal}
+                disabled={isSaving}
                 className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-black"
               >
                 Cancel
@@ -3599,9 +2612,7 @@ export function DigitalLibraryClient({
 
               <button
                 type="submit"
-                disabled={
-                  isSaving
-                }
+                disabled={isSaving}
                 className="rounded-xl bg-blue-600 px-6 py-3 text-sm font-black text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaving
