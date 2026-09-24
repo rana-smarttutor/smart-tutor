@@ -175,7 +175,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Fundamentals",
     description:
       "Build confidence with essential concepts and straightforward questions.",
-    icon: "ðŸŒ±",
+    icon: "\u{1F331}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -187,7 +187,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Core Concepts",
     description:
       "Strengthen the important concepts required for deeper learning.",
-    icon: "ðŸ“˜",
+    icon: "\u{1F4D8}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -199,7 +199,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Applied Basics",
     description:
       "Apply foundational knowledge to practical and mixed-concept questions.",
-    icon: "ðŸ§ ",
+    icon: "\u{1F9E0}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -211,7 +211,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Intermediate",
     description:
       "Move beyond the basics with stronger reasoning and application.",
-    icon: "âš¡",
+    icon: "\u26A1",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -223,7 +223,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Strong Concepts",
     description:
       "Test stronger conceptual understanding across important topics.",
-    icon: "ðŸŽ¯",
+    icon: "\u{1F3AF}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -235,7 +235,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Application",
     description:
       "Solve more demanding application-oriented questions and scenarios.",
-    icon: "ðŸš€",
+    icon: "\u{1F680}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -245,8 +245,9 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     id: 7,
     title: "Level 7",
     subtitle: "Exam Practice",
-    description: "Practise questions closer to real examination standards.",
-    icon: "ðŸ“",
+    description:
+      "Practise questions closer to real examination standards.",
+    icon: "\u{1F4DD}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -256,8 +257,9 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     id: 8,
     title: "Level 8",
     subtitle: "Advanced Practice",
-    description: "Handle advanced concepts, combinations and exam-style traps.",
-    icon: "ðŸ”¥",
+    description:
+      "Handle advanced concepts, combinations and exam-style traps.",
+    icon: "\u{1F525}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -269,7 +271,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Expert Challenge",
     description:
       "Take on high-level questions requiring deeper reasoning and precision.",
-    icon: "ðŸ†",
+    icon: "\u{1F3C6}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -281,7 +283,7 @@ export const quizJourneyLevels: QuizJourneyLevelOption[] = [
     subtitle: "Master Challenge",
     description:
       "Complete the toughest stage of the SmartIQ Quiz Arena journey.",
-    icon: "ðŸ‘‘",
+    icon: "\u{1F451}",
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
@@ -321,7 +323,7 @@ export function getQuizJourneyLevelTitle(
     return "";
   }
 
-  return `${option.title} â€¢ ${option.subtitle}`;
+  return `${option.title} \u2022 ${option.subtitle}`;
 }
 
 export const levelOptions: LevelOption[] = [
@@ -400,9 +402,9 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "science",
     eligibility:
-      "Class 11â€“12 Science students studying under Maharashtra State Board or CBSE boards.",
+      "Class 11 and 12 Science students studying under Maharashtra State Board or CBSE boards.",
     trendNote:
-      "Best for PCM/PCB students preparing for Class 11â€“12 board exams.",
+      "Best for PCM/PCB students preparing for Class 11 and 12 board exams.",
     subjects: [
       "Physics",
       "Chemistry",
@@ -418,7 +420,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "commerce",
     eligibility:
-      "Class 11â€“12 Commerce students studying under Maharashtra State Board or CBSE boards.",
+      "Class 11 and 12 Commerce students studying under Maharashtra State Board or CBSE boards.",
     trendNote:
       "Best for Accounts, Economics, Business Studies and Commerce board preparation.",
     subjects: [
@@ -435,7 +437,7 @@ export const competitiveExams: ExamOption[] = [
     category: "school-junior-college",
     stream: "arts",
     eligibility:
-      "Class 11â€“12 Arts/Humanities students studying under Maharashtra State Board or CBSE boards.",
+      "Class 11 and 12 Arts/Humanities students studying under Maharashtra State Board or CBSE boards.",
     trendNote: "Best for Humanities and Arts subjects under Maharashtra State Board or CBSE.",
     subjects: [
       "History",
@@ -453,7 +455,7 @@ export const competitiveExams: ExamOption[] = [
     category: "competitive-exam",
     stream: "engineering",
     eligibility:
-      "Class 11Ã¢â‚¬â€œ12 Science students with Physics, Chemistry and Mathematics.",
+      "Class 11 and 12 Science students with Physics, Chemistry and Mathematics.",
     trendNote: "Best for engineering aspirants.",
     subjects: ["Physics", "Chemistry", "Mathematics"],
   },
@@ -463,7 +465,7 @@ export const competitiveExams: ExamOption[] = [
     category: "competitive-exam",
     stream: "medical",
     eligibility:
-      "Class 11Ã¢â‚¬â€œ12 Science students with Physics, Chemistry and Biology.",
+      "Class 11 and 12 Science students with Physics, Chemistry and Biology.",
     trendNote: "Best for medical aspirants.",
     subjects: ["Physics", "Chemistry", "Biology"],
   },
@@ -473,7 +475,7 @@ export const competitiveExams: ExamOption[] = [
     category: "competitive-exam",
     stream: "science",
     eligibility:
-      "Class 11Ã¢â‚¬â€œ12 Science students, usually PCM or PCB depending on course.",
+      "Class 11 and 12 Science students, usually PCM or PCB depending on course.",
     trendNote: "Important for Maharashtra professional courses.",
     subjects: ["Physics", "Chemistry", "Mathematics", "Biology"],
   },
@@ -1065,21 +1067,23 @@ export const difficultyOptions: DifficultyOption[] = [
     title: "Easy",
     questions: 10,
     description: "Warm up and build confidence",
-    icon: "Ã°Å¸Å’Â±",
+    icon: "\u{1F331}",
   },
+
   {
     id: "medium",
     title: "Medium",
     questions: 10,
     description: "Test your preparation level",
-    icon: "Ã¢Å¡Â¡",
+    icon: "\u26A1",
   },
+
   {
     id: "hard",
     title: "Hard",
     questions: 10,
     description: "Take the serious exam challenge",
-    icon: "Ã°Å¸â€Â¥",
+    icon: "\u{1F525}",
   },
 ];
 
