@@ -1936,44 +1936,6 @@ export function DigitalLibraryClient({
                 </details>
               );
             })}
-
-            {/* CUSTOM LIBRARY SECTIONS */}
-
-            {customLibraryCategories.length > 0 && (
-              <div className="mt-4 border-t border-slate-100 pt-3">
-                <p className="mb-2 px-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
-                  More Libraries
-                </p>
-
-                {customLibraryCategories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => selectLibrary(category.id, "all")}
-                    className={`
-                          flex w-full
-                          items-center gap-2
-                          rounded-lg
-                          px-2 py-2
-                          text-left text-xs
-                          font-bold
-                          transition
-
-                          ${
-                            activeLibraryCategory === category.id &&
-                            activeLibraryFilter === "all"
-                              ? "bg-blue-50 text-blue-700"
-                              : "text-slate-700 hover:bg-blue-50"
-                          }
-                        `}
-                  >
-                    <Layers3 size={18} className="shrink-0 text-blue-600" />
-
-                    <span className="flex-1">{category.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </aside>
 
