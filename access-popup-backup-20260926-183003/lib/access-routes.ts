@@ -10,8 +10,6 @@ const PUBLIC = [
   "/mock-test",
   "/quiz-arena",
   "/library",
-  "/exam-updates",
-  "/digital-library",
 ];
 
 const ASSET = /\.(?:png|svg|ico|webp|jpe?g|gif|avif|apk|css|js|json|xml|txt|pdf|woff2?|ttf|otf|map)$/i;

@@ -1683,7 +1683,13 @@ export function DigitalLibraryClient({
   // PREVIEW BOOK
   // ===================================================
 
-  function previewBook(book: Book) {
+  async function previewBook(book: Book) {
+    const canPreview = await requestLoginIfNeeded("/library");
+
+    if (!canPreview) {
+      return;
+    }
+
     if (!book.pathname) {
       alert("Preview is not available for this material.");
 
