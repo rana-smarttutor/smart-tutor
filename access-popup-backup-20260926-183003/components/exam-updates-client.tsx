@@ -1,6 +1,4 @@
-"use client";
-
-import { requestLoginIfNeeded } from "@/lib/request-login";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import type { ElementType } from "react";
@@ -174,21 +172,6 @@ function getTypeClasses(type: ExamUpdateType) {
   }
 }
 
-async function openOfficialExamLink(url: string) {
-  const canOpen = await requestLoginIfNeeded("/exam-updates");
-
-  if (!canOpen) {
-    return;
-  }
-
-  const newWindow = window.open(url, "_blank");
-
-  if (newWindow) {
-    newWindow.opener = null;
-  } else {
-    window.location.href = url;
-  }
-}
 export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
   const [query, setQuery] = useState("");
 
@@ -415,10 +398,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         <a
                           key={`${update.id}-${index}`}
                           href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex shrink-0 items-center gap-4 whitespace-nowrap px-5 py-3 text-[10px] font-bold text-slate-600 transition hover:text-blue-700"
@@ -687,10 +666,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         <td className="px-6 py-5 text-right">
                           <a
                             href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-[11px] font-black text-blue-600 hover:text-blue-800"
@@ -812,10 +787,6 @@ function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
 
       <a
         href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-black text-white transition hover:bg-blue-700"
@@ -844,10 +815,6 @@ function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
             <a
               key={update.id}
               href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-start gap-3"

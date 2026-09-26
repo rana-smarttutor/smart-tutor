@@ -39,10 +39,7 @@ import {
   getCompetitiveExamTopics,
 } from "@/lib/competitive-exam-topics";
 
-import {
-  getMbaExamSyllabus,
-  getMbaExamTopics,
-} from "@/lib/mba-exam-topics";
+import { getMbaExamSyllabus, getMbaExamTopics } from "@/lib/mba-exam-topics";
 
 type Step =
   | "welcome"
@@ -184,11 +181,7 @@ export default function QuizArenaClient({
   }, [selectedExamDetails, selectedExam, selectedSchoolClass, selectedBoard]);
 
   const governmentSyllabus = useMemo(() => {
-    if (
-      selectedLevel !== "government-exam" ||
-      !selectedExam ||
-      !mockTestMode
-    ) {
+    if (selectedLevel !== "government-exam" || !selectedExam || !mockTestMode) {
       return null;
     }
 
@@ -208,88 +201,48 @@ export default function QuizArenaClient({
   }, [selectedLevel, selectedExam, mockTestMode]);
 
   const mbaSyllabus = useMemo(() => {
-    if (
-      selectedLevel !== "mba-entrance" ||
-      !selectedExam ||
-      !mockTestMode
-    ) {
+    if (selectedLevel !== "mba-entrance" || !selectedExam || !mockTestMode) {
       return null;
     }
 
-    return getMbaExamSyllabus(
-      selectedExam,
-    );
-  }, [
-    selectedLevel,
-    selectedExam,
-    mockTestMode,
-  ]);
+    return getMbaExamSyllabus(selectedExam);
+  }, [selectedLevel, selectedExam, mockTestMode]);
 
   const governmentTopics = useMemo(() => {
     if (!governmentSyllabus || !selectedExam || !selectedSubject) {
       return [];
     }
 
-    return getGovernmentExamTopics(
-      selectedExam,
-      selectedSubject,
-    );
-  }, [
-    governmentSyllabus,
-    selectedExam,
-    selectedSubject,
-  ]);
+    return getGovernmentExamTopics(selectedExam, selectedSubject);
+  }, [governmentSyllabus, selectedExam, selectedSubject]);
 
   const competitiveTopics = useMemo(() => {
     if (!competitiveSyllabus || !selectedExam || !selectedSubject) {
       return [];
     }
 
-    return getCompetitiveExamTopics(
-      selectedExam,
-      selectedSubject,
-    );
-  }, [
-    competitiveSyllabus,
-    selectedExam,
-    selectedSubject,
-  ]);
+    return getCompetitiveExamTopics(selectedExam, selectedSubject);
+  }, [competitiveSyllabus, selectedExam, selectedSubject]);
 
   const mbaTopics = useMemo(() => {
-    if (
-      !mbaSyllabus ||
-      !selectedExam ||
-      !selectedSubject
-    ) {
+    if (!mbaSyllabus || !selectedExam || !selectedSubject) {
       return [];
     }
 
-    return getMbaExamTopics(
-      selectedExam,
-      selectedSubject,
-    );
-  }, [
-    mbaSyllabus,
-    selectedExam,
-    selectedSubject,
-  ]);
+    return getMbaExamTopics(selectedExam, selectedSubject);
+  }, [mbaSyllabus, selectedExam, selectedSubject]);
 
   const topicSyllabus =
-    governmentSyllabus ??
-    competitiveSyllabus ??
-    mbaSyllabus;
+    governmentSyllabus ?? competitiveSyllabus ?? mbaSyllabus;
 
-  const currentTopics =
-    governmentSyllabus
-      ? governmentTopics
-      : competitiveSyllabus
-        ? competitiveTopics
-        : mbaTopics;
+  const currentTopics = governmentSyllabus
+    ? governmentTopics
+    : competitiveSyllabus
+      ? competitiveTopics
+      : mbaTopics;
 
   const selectedTopicDetails = useMemo(() => {
-    return currentTopics.find(
-      (topic) => topic.id === selectedTopic,
-    );
+    return currentTopics.find((topic) => topic.id === selectedTopic);
   }, [currentTopics, selectedTopic]);
 
   const playfulMode =
@@ -542,30 +495,26 @@ export default function QuizArenaClient({
       return;
     }
 
-if (step === "topic") {
-  setSelectedTopic(null);
+    if (step === "topic") {
+      setSelectedTopic(null);
 
-  setSelectedJourneyLevel(null);
+      setSelectedJourneyLevel(null);
 
-  setSelectedRound(null);
+      setSelectedRound(null);
 
-  setStep("subject");
-  return;
-}
+      setStep("subject");
+      return;
+    }
 
-if (step === "journey") {
-  setSelectedJourneyLevel(null);
+    if (step === "journey") {
+      setSelectedJourneyLevel(null);
 
-  setSelectedRound(null);
+      setSelectedRound(null);
 
-  setStep(
-    topicSyllabus
-      ? "topic"
-      : "subject",
-  );
+      setStep(topicSyllabus ? "topic" : "subject");
 
-  return;
-}
+      return;
+    }
 
     if (step === "round") {
       setSelectedRound(null);
@@ -838,8 +787,10 @@ if (step === "journey") {
     }
   }
 
-  async function startChallenge() {
-    if (!selectedJourneyLevel || !selectedRound) {
+  async function startChallenge(roundOverride?: QuizRound) {
+    const roundToStart = roundOverride ?? selectedRound;
+
+    if (!selectedJourneyLevel || !roundToStart) {
       setMessage("Please select a level and round first.");
       return;
     }
@@ -854,10 +805,14 @@ if (step === "journey") {
       return;
     }
 
-    await generateChallenge(selectedJourneyLevel, selectedRound);
+    setSelectedRound(roundToStart);
+
+    await generateChallenge(selectedJourneyLevel, roundToStart);
   }
-  async function openJourney(subjectOverride?: string) {
+  async function openJourney(subjectOverride?: string, topicOverride?: string) {
     const journeySubject = subjectOverride?.trim() || selectedSubject?.trim();
+
+    const journeyTopic = topicOverride?.trim() || selectedTopic?.trim();
 
     if (!selectedLevel || !selectedExam || !journeySubject) {
       setMessage("Please complete your quiz selection first.");
@@ -888,10 +843,9 @@ if (step === "journey") {
         params.set("board", selectedBoard);
       }
 
-      if (topicSyllabus && selectedTopic) {
-        params.set("topicId", selectedTopic);
+      if (topicSyllabus && journeyTopic) {
+        params.set("topicId", journeyTopic);
       }
-
       const response = await fetch(
         `/api/quiz-arena/progress?${params.toString()}`,
         {
@@ -923,8 +877,12 @@ if (step === "journey") {
           setSelectedJourneyLevel(1);
         }
       } else {
-        const error = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(error?.error ?? "Unable to retrieve your saved progress.");
+        const error = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(
+          error?.error ?? "Unable to retrieve your saved progress.",
+        );
       }
 
       setSelectedRound(null);
@@ -943,7 +901,11 @@ if (step === "journey") {
     } catch (error) {
       console.warn("Unable to load Quiz Arena progress:", error);
 
-      setMessage(error instanceof Error ? error.message : "Unable to retrieve saved progress.");
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to retrieve saved progress.",
+      );
     } finally {
       setIsProgressLoading(false);
     }
@@ -1759,24 +1721,24 @@ if (step === "journey") {
                 <button
                   type="button"
                   key={subject}
-onClick={() => {
-  setSelectedSubject(subject);
+                  onClick={() => {
+                    setSelectedSubject(subject);
 
-  setSelectedTopic(null);
+                    setSelectedTopic(null);
 
-  setSelectedJourneyLevel(null);
+                    setSelectedJourneyLevel(null);
 
-  setSelectedRound(null);
+                    setSelectedRound(null);
 
-  setMessage("");
+                    setMessage("");
 
-  if (topicSyllabus) {
-    setStep("topic");
-    return;
-  }
+                    if (topicSyllabus) {
+                      setStep("topic");
+                      return;
+                    }
 
-  void openJourney(subject);
-}}
+                    void openJourney(subject);
+                  }}
                   className="rounded-2xl border border-white/10 bg-white/10 p-6 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                 >
                   <span className="text-3xl">📚</span>
@@ -1787,148 +1749,148 @@ onClick={() => {
           </section>
         )}
 
-{step === "topic" && topicSyllabus && (
-  <section>
-    <Header
-      title="Choose your topic"
-      subtitle={`${
-        selectedExamDetails?.title ?? "Selected Exam"
-      } • ${selectedSubject ?? ""}`}
-    />
+        {step === "topic" && topicSyllabus && (
+          <section>
+            <Header
+              title="Choose your topic"
+              subtitle={`${
+                selectedExamDetails?.title ?? "Selected Exam"
+              } • ${selectedSubject ?? ""}`}
+            />
 
-    <div className="mx-auto mb-8 max-w-4xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-6 text-center">
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
-        Topic-Wise Mock Test
-      </p>
-
-      <h2 className="mt-3 text-2xl font-black text-white">
-        Master One Topic at a Time
-      </h2>
-
-      <p className="mt-3 text-sm leading-7 text-slate-300">
-        Select a topic from your examination syllabus.
-        Each topic will have its own question bank and
-        progressive difficulty levels.
-      </p>
-
-      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-        <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
-          {currentTopics.length} Topics
-        </span>
-
-        <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
-          10 Levels
-        </span>
-
-        <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
-          {governmentSyllabus
-            ? "500 Questions per Topic Target"
-            : "AI Questions Generated on Demand"}
-        </span>
-      </div>
-    </div>
-
-    {currentTopics.length === 0 ? (
-      <div className="mx-auto max-w-3xl rounded-2xl border border-amber-400/20 bg-amber-400/10 p-6 text-center">
-        <h3 className="text-lg font-bold text-amber-200">
-          Topics are being prepared
-        </h3>
-
-        <p className="mt-2 text-sm text-slate-300">
-          The topic catalog for this subject is not available yet.
-        </p>
-      </div>
-    ) : (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {currentTopics.map((topic, index) => {
-          const isSelected = selectedTopic === topic.id;
-
-          return (
-            <button
-              key={topic.id}
-              type="button"
-              onClick={() => {
-                setSelectedTopic(topic.id);
-
-                setSelectedJourneyLevel(null);
-
-                setSelectedRound(null);
-
-                setMessage("");
-              }}
-              className={`group rounded-2xl border p-6 text-left transition-all duration-300 hover:-translate-y-1 ${
-                isSelected
-                  ? "border-cyan-300 bg-cyan-400/20 shadow-lg shadow-cyan-500/10"
-                  : "border-white/10 bg-white/10 hover:border-cyan-300 hover:bg-white/15"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-sm font-black text-cyan-300">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-
-                {isSelected && (
-                  <span className="rounded-full bg-cyan-400 px-3 py-1 text-xs font-bold text-[#071633]">
-                    Selected
-                  </span>
-                )}
-              </div>
-
-              <h3 className="mt-5 text-lg font-bold text-white">
-                {topic.title}
-              </h3>
-
-              <p className="mt-3 text-sm text-slate-300">
-                Topic-wise practice with progressive difficulty.
+            <div className="mx-auto mb-8 max-w-4xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-6 text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                Topic-Wise Mock Test
               </p>
 
-              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-                <span className="text-xs font-semibold text-cyan-200">
+              <h2 className="mt-3 text-2xl font-black text-white">
+                Master One Topic at a Time
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Select a topic from your examination syllabus. Each topic will
+                have its own question bank and progressive difficulty levels.
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
+                  {currentTopics.length} Topics
+                </span>
+
+                <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
                   10 Levels
                 </span>
-
-                <span className="text-xs font-semibold text-slate-300 transition-transform group-hover:translate-x-1">
-                  Select Topic →
-                </span>
               </div>
-            </button>
-          );
-        })}
-      </div>
-    )}
+            </div>
 
-    {message && (
-      <p role="alert" className="mx-auto mt-6 max-w-3xl rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
-        {message}
-      </p>
-    )}
+            {currentTopics.length === 0 ? (
+              <div className="mx-auto max-w-3xl rounded-2xl border border-amber-400/20 bg-amber-400/10 p-6 text-center">
+                <h3 className="text-lg font-bold text-amber-200">
+                  Topics are being prepared
+                </h3>
 
-    {selectedTopicDetails && (
-      <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-cyan-400/30 bg-[#112b4e] p-6 text-center">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
-          Your Selected Topic
-        </p>
+                <p className="mt-2 text-sm text-slate-300">
+                  The topic catalog for this subject is not available yet.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {currentTopics.map((topic, index) => {
+                  const isSelected = selectedTopic === topic.id;
 
-        <h3 className="mt-3 text-2xl font-black text-white">
-          {selectedTopicDetails.title}
-        </h3>
+                  return (
+                    <button
+                      key={topic.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedTopic(topic.id);
 
-        <p className="mt-2 text-sm text-slate-300">
-          {selectedExamDetails?.title} • {selectedSubject}
-        </p>
+                        setSelectedJourneyLevel(null);
 
-        <button
-          type="button"
-          disabled={isProgressLoading}
-          onClick={() => void openJourney()}
-          className="mt-6 inline-flex items-center justify-center rounded-full bg-cyan-400 px-8 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-wait disabled:opacity-60"
-        >
-          {isProgressLoading ? "Loading Topic Progress..." : "Start Topic Tests"}
-        </button>
-      </div>
-    )}
-  </section>
-)}
+                        setSelectedRound(null);
+
+                        setMessage("");
+
+                        void openJourney(undefined, topic.id);
+                      }}
+                      className={`group rounded-2xl border p-6 text-left transition-all duration-300 hover:-translate-y-1 ${
+                        isSelected
+                          ? "border-cyan-300 bg-cyan-400/20 shadow-lg shadow-cyan-500/10"
+                          : "border-white/10 bg-white/10 hover:border-cyan-300 hover:bg-white/15"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-sm font-black text-cyan-300">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+
+                        {isSelected && (
+                          <span className="rounded-full bg-cyan-400 px-3 py-1 text-xs font-bold text-[#071633]">
+                            Selected
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="mt-5 text-lg font-bold text-white">
+                        {topic.title}
+                      </h3>
+
+                      <p className="mt-3 text-sm text-slate-300">
+                        Topic-wise practice with progressive difficulty.
+                      </p>
+
+                      <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                        <span className="text-xs font-semibold text-cyan-200">
+                          10 Levels
+                        </span>
+
+                        <span className="text-xs font-semibold text-slate-300 transition-transform group-hover:translate-x-1">
+                          Select Topic →
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {message && (
+              <p
+                role="alert"
+                className="mx-auto mt-6 max-w-3xl rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100"
+              >
+                {message}
+              </p>
+            )}
+
+            {selectedTopicDetails && (
+              <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-cyan-400/30 bg-[#112b4e] p-6 text-center">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                  Your Selected Topic
+                </p>
+
+                <h3 className="mt-3 text-2xl font-black text-white">
+                  {selectedTopicDetails.title}
+                </h3>
+
+                <p className="mt-2 text-sm text-slate-300">
+                  {selectedExamDetails?.title} • {selectedSubject}
+                </p>
+
+                <button
+                  type="button"
+                  disabled={isProgressLoading}
+                  onClick={() => void openJourney()}
+                  className="mt-6 inline-flex items-center justify-center rounded-full bg-cyan-400 px-8 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isProgressLoading
+                    ? "Loading Topic Progress..."
+                    : "Start Topic Tests"}
+                </button>
+              </div>
+            )}
+          </section>
+        )}
 
         {step === "journey" && (
           <section>
@@ -2042,15 +2004,16 @@ onClick={() => {
                     <button
                       type="button"
                       key={round}
-                      disabled={locked}
+                      disabled={locked || isGenerating}
                       onClick={() => {
-                        if (locked) {
+                        if (locked || isGenerating) {
                           return;
                         }
 
                         setSelectedRound(round);
-
                         setMessage("");
+
+                        void startChallenge(round);
                       }}
                       className={`rounded-2xl border p-5 text-center transition ${
                         locked
@@ -2095,7 +2058,7 @@ onClick={() => {
                     className="rounded-2xl bg-cyan-400 px-8 py-4 font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isGenerating
-                      ? "Creating Quiz..."
+                      ? "loading"
                       : `Start Round ${selectedRound}`}
                   </button>
                 </div>
@@ -2183,25 +2146,13 @@ function formatLiveQuizDuration(milliseconds: number) {
   )}`;
 }
 
-function QuestionVisualPanel({
-  visual,
-}: {
-  visual: QuizQuestionVisual;
-}) {
-  const palette = [
-    "#22d3ee",
-    "#a78bfa",
-    "#f59e0b",
-    "#34d399",
-  ];
+function QuestionVisualPanel({ visual }: { visual: QuizQuestionVisual }) {
+  const palette = ["#22d3ee", "#a78bfa", "#f59e0b", "#34d399"];
 
   const labels = visual.labels;
   const series = visual.series;
 
-  if (
-    labels.length === 0 ||
-    series.length === 0
-  ) {
+  if (labels.length === 0 || series.length === 0) {
     return null;
   }
 
@@ -2267,14 +2218,9 @@ function QuestionVisualPanel({
    * PIE CHART
    */
   if (visual.type === "pie-chart") {
-    const values =
-      series[0]?.values ?? [];
+    const values = series[0]?.values ?? [];
 
-    const total = values.reduce(
-      (sum, value) =>
-        sum + Math.max(0, value),
-      0,
-    );
+    const total = values.reduce((sum, value) => sum + Math.max(0, value), 0);
 
     if (total <= 0) {
       return null;
@@ -2282,22 +2228,15 @@ function QuestionVisualPanel({
 
     let cumulative = 0;
 
-    const stops = values.map(
-      (value, index) => {
-        const start =
-          (cumulative / total) * 100;
+    const stops = values.map((value, index) => {
+      const start = (cumulative / total) * 100;
 
-        cumulative +=
-          Math.max(0, value);
+      cumulative += Math.max(0, value);
 
-        const end =
-          (cumulative / total) * 100;
+      const end = (cumulative / total) * 100;
 
-        return `${
-          palette[index % palette.length]
-        } ${start}% ${end}%`;
-      },
-    );
+      return `${palette[index % palette.length]} ${start}% ${end}%`;
+    });
 
     return (
       <div className="mt-6 rounded-2xl border border-white/15 bg-slate-950/35 p-5 sm:p-6">
@@ -2311,45 +2250,37 @@ function QuestionVisualPanel({
             aria-label={visual.title}
             className="h-56 w-56 shrink-0 rounded-full border-[10px] border-white/10 shadow-2xl"
             style={{
-              background:
-                `conic-gradient(${stops.join(", ")})`,
+              background: `conic-gradient(${stops.join(", ")})`,
             }}
           />
 
           <div className="grid min-w-[220px] gap-3">
-            {labels.map(
-              (label, index) => (
-                <div
-                  key={`${label}-${index}`}
-                  className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3"
-                >
-                  <span
-                    className="h-3 w-3 shrink-0 rounded-full"
-                    style={{
-                      backgroundColor:
-                        palette[
-                          index %
-                            palette.length
-                        ],
-                    }}
-                  />
+            {labels.map((label, index) => (
+              <div
+                key={`${label}-${index}`}
+                className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3"
+              >
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{
+                    backgroundColor: palette[index % palette.length],
+                  }}
+                />
 
-                  <span className="text-sm font-semibold text-slate-200">
-                    {label}
-                  </span>
+                <span className="text-sm font-semibold text-slate-200">
+                  {label}
+                </span>
 
-                  <span className="ml-auto text-sm font-black text-white">
-                    {values[index]}
-                  </span>
-                </div>
-              ),
-            )}
+                <span className="ml-auto text-sm font-black text-white">
+                  {values[index]}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     );
   }
-
 
   /*
    * BAR / LINE / MIXED
@@ -2363,51 +2294,24 @@ function QuestionVisualPanel({
   const top = 55;
   const bottom = 80;
 
-  const plotWidth =
-    width - left - right;
+  const plotWidth = width - left - right;
 
-  const plotHeight =
-    height - top - bottom;
+  const plotHeight = height - top - bottom;
 
-  const allValues =
-    series.flatMap(
-      (item) => item.values,
-    );
+  const allValues = series.flatMap((item) => item.values);
 
-  const minimum =
-    Math.min(
-      0,
-      ...allValues,
-    );
+  const minimum = Math.min(0, ...allValues);
 
-  const maximum =
-    Math.max(
-      0,
-      ...allValues,
-    );
+  const maximum = Math.max(0, ...allValues);
 
-  const range =
-    maximum - minimum || 1;
+  const range = maximum - minimum || 1;
 
-  const yFor = (
-    value: number,
-  ) =>
-    top +
-    (
-      (maximum - value) /
-      range
-    ) *
-      plotHeight;
+  const yFor = (value: number) =>
+    top + ((maximum - value) / range) * plotHeight;
 
-  const zeroY =
-    yFor(0);
+  const zeroY = yFor(0);
 
-  const categoryWidth =
-    plotWidth /
-    Math.max(
-      labels.length,
-      1,
-    );
+  const categoryWidth = plotWidth / Math.max(labels.length, 1);
 
   const barSeries =
     visual.type === "mixed-chart"
@@ -2423,18 +2327,10 @@ function QuestionVisualPanel({
         ? series
         : [];
 
-  const barWidth =
-    Math.min(
-      42,
-      (
-        categoryWidth *
-        0.72
-      ) /
-        Math.max(
-          barSeries.length,
-          1,
-        ),
-    );
+  const barWidth = Math.min(
+    42,
+    (categoryWidth * 0.72) / Math.max(barSeries.length, 1),
+  );
 
   return (
     <div className="mt-6 overflow-hidden rounded-2xl border border-white/15 bg-slate-950/35 p-4 sm:p-6">
@@ -2454,17 +2350,11 @@ function QuestionVisualPanel({
               length: 5,
             },
             (_, index) => {
-              const ratio =
-                index / 4;
+              const ratio = index / 4;
 
-              const value =
-                maximum -
-                range * ratio;
+              const value = maximum - range * ratio;
 
-              const y =
-                top +
-                plotHeight *
-                  ratio;
+              const y = top + plotHeight * ratio;
 
               return (
                 <g key={`grid-${index}`}>
@@ -2484,11 +2374,7 @@ function QuestionVisualPanel({
                     fontSize="11"
                     fill="#cbd5e1"
                   >
-                    {
-                      Math.round(
-                        value * 100,
-                      ) / 100
-                    }
+                    {Math.round(value * 100) / 100}
                   </text>
                 </g>
               );
@@ -2504,240 +2390,126 @@ function QuestionVisualPanel({
             strokeWidth="1.5"
           />
 
-          {barSeries.flatMap(
-            (
-              item,
-              seriesIndex,
-            ) =>
-              item.values.map(
-                (
-                  value,
-                  labelIndex,
-                ) => {
-                  const groupX =
-                    left +
-                    labelIndex *
-                      categoryWidth;
+          {barSeries.flatMap((item, seriesIndex) =>
+            item.values.map((value, labelIndex) => {
+              const groupX = left + labelIndex * categoryWidth;
 
-                  const totalWidth =
-                    barWidth *
-                    barSeries.length;
+              const totalWidth = barWidth * barSeries.length;
 
-                  const x =
-                    groupX +
-                    categoryWidth / 2 -
-                    totalWidth / 2 +
-                    seriesIndex *
-                      barWidth;
+              const x =
+                groupX +
+                categoryWidth / 2 -
+                totalWidth / 2 +
+                seriesIndex * barWidth;
 
-                  const valueY =
-                    yFor(value);
+              const valueY = yFor(value);
 
-                  const y =
-                    Math.min(
-                      valueY,
-                      zeroY,
-                    );
+              const y = Math.min(valueY, zeroY);
 
-                  const h =
-                    Math.max(
-                      2,
-                      Math.abs(
-                        zeroY -
-                          valueY,
-                      ),
-                    );
+              const h = Math.max(2, Math.abs(zeroY - valueY));
+
+              return (
+                <g key={`bar-${item.name}-${labelIndex}`}>
+                  <rect
+                    x={x + 2}
+                    y={y}
+                    width={Math.max(2, barWidth - 4)}
+                    height={h}
+                    rx="4"
+                    fill={palette[seriesIndex % palette.length]}
+                    opacity="0.9"
+                  />
+
+                  <text
+                    x={x + barWidth / 2}
+                    y={value >= 0 ? y - 7 : y + h + 14}
+                    textAnchor="middle"
+                    fontSize="10"
+                    fontWeight="700"
+                    fill="#e2e8f0"
+                  >
+                    {value}
+                  </text>
+                </g>
+              );
+            }),
+          )}
+
+          {lineSeries.map((item, seriesIndex) => {
+            const colorIndex =
+              visual.type === "mixed-chart" ? seriesIndex + 1 : seriesIndex;
+
+            const points = item.values
+              .map((value, index) => {
+                const x = left + index * categoryWidth + categoryWidth / 2;
+
+                return `${x},${yFor(value)}`;
+              })
+              .join(" ");
+
+            return (
+              <g key={`line-${item.name}`}>
+                <polyline
+                  points={points}
+                  fill="none"
+                  stroke={palette[colorIndex % palette.length]}
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+
+                {item.values.map((value, index) => {
+                  const x = left + index * categoryWidth + categoryWidth / 2;
+
+                  const y = yFor(value);
 
                   return (
-                    <g
-                      key={`bar-${item.name}-${labelIndex}`}
-                    >
-                      <rect
-                        x={x + 2}
-                        y={y}
-                        width={Math.max(
-                          2,
-                          barWidth - 4,
-                        )}
-                        height={h}
-                        rx="4"
-                        fill={
-                          palette[
-                            seriesIndex %
-                              palette.length
-                          ]
-                        }
-                        opacity="0.9"
+                    <g key={`point-${item.name}-${index}`}>
+                      <circle
+                        cx={x}
+                        cy={y}
+                        r="5"
+                        fill={palette[colorIndex % palette.length]}
+                        stroke="#0f172a"
+                        strokeWidth="2"
                       />
 
                       <text
-                        x={
-                          x +
-                          barWidth / 2
-                        }
-                        y={
-                          value >= 0
-                            ? y - 7
-                            : y +
-                              h +
-                              14
-                        }
+                        x={x}
+                        y={y - 10}
                         textAnchor="middle"
                         fontSize="10"
-                        fontWeight="700"
                         fill="#e2e8f0"
                       >
                         {value}
                       </text>
                     </g>
                   );
-                },
-              ),
-          )}
+                })}
+              </g>
+            );
+          })}
 
-          {lineSeries.map(
-            (
-              item,
-              seriesIndex,
-            ) => {
-              const colorIndex =
-                visual.type ===
-                "mixed-chart"
-                  ? seriesIndex + 1
-                  : seriesIndex;
+          {labels.map((label, index) => {
+            const x = left + index * categoryWidth + categoryWidth / 2;
 
-              const points =
-                item.values
-                  .map(
-                    (
-                      value,
-                      index,
-                    ) => {
-                      const x =
-                        left +
-                        index *
-                          categoryWidth +
-                        categoryWidth /
-                          2;
-
-                      return `${x},${yFor(value)}`;
-                    },
-                  )
-                  .join(" ");
-
-              return (
-                <g
-                  key={`line-${item.name}`}
-                >
-                  <polyline
-                    points={points}
-                    fill="none"
-                    stroke={
-                      palette[
-                        colorIndex %
-                          palette.length
-                      ]
-                    }
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-
-                  {item.values.map(
-                    (
-                      value,
-                      index,
-                    ) => {
-                      const x =
-                        left +
-                        index *
-                          categoryWidth +
-                        categoryWidth /
-                          2;
-
-                      const y =
-                        yFor(value);
-
-                      return (
-                        <g
-                          key={`point-${item.name}-${index}`}
-                        >
-                          <circle
-                            cx={x}
-                            cy={y}
-                            r="5"
-                            fill={
-                              palette[
-                                colorIndex %
-                                  palette.length
-                              ]
-                            }
-                            stroke="#0f172a"
-                            strokeWidth="2"
-                          />
-
-                          <text
-                            x={x}
-                            y={y - 10}
-                            textAnchor="middle"
-                            fontSize="10"
-                            fill="#e2e8f0"
-                          >
-                            {value}
-                          </text>
-                        </g>
-                      );
-                    },
-                  )}
-                </g>
-              );
-            },
-          )}
-
-          {labels.map(
-            (
-              label,
-              index,
-            ) => {
-              const x =
-                left +
-                index *
-                  categoryWidth +
-                categoryWidth /
-                  2;
-
-              return (
-                <text
-                  key={`label-${index}`}
-                  x={x}
-                  y={
-                    height -
-                    bottom +
-                    27
-                  }
-                  textAnchor="middle"
-                  fontSize="11"
-                  fill="#cbd5e1"
-                >
-                  {
-                    label.length > 14
-                      ? `${label.slice(
-                          0,
-                          12,
-                        )}…`
-                      : label
-                  }
-                </text>
-              );
-            },
-          )}
+            return (
+              <text
+                key={`label-${index}`}
+                x={x}
+                y={height - bottom + 27}
+                textAnchor="middle"
+                fontSize="11"
+                fill="#cbd5e1"
+              >
+                {label.length > 14 ? `${label.slice(0, 12)}…` : label}
+              </text>
+            );
+          })}
 
           {visual.xLabel && (
             <text
-              x={
-                left +
-                plotWidth / 2
-              }
+              x={left + plotWidth / 2}
               y={height - 15}
               textAnchor="middle"
               fontSize="12"
@@ -2751,18 +2523,12 @@ function QuestionVisualPanel({
           {visual.yLabel && (
             <text
               x="18"
-              y={
-                top +
-                plotHeight / 2
-              }
+              y={top + plotHeight / 2}
               textAnchor="middle"
               fontSize="12"
               fontWeight="700"
               fill="#67e8f9"
-              transform={`rotate(-90 18 ${
-                top +
-                plotHeight / 2
-              })`}
+              transform={`rotate(-90 18 ${top + plotHeight / 2})`}
             >
               {visual.yLabel}
             </text>
@@ -2771,30 +2537,21 @@ function QuestionVisualPanel({
       </div>
 
       <div className="mt-4 flex flex-wrap justify-center gap-3">
-        {series.map(
-          (
-            item,
-            index,
-          ) => (
+        {series.map((item, index) => (
+          <span
+            key={`${item.name}-${index}`}
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200"
+          >
             <span
-              key={`${item.name}-${index}`}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200"
-            >
-              <span
-                className="h-2.5 w-2.5 rounded-full"
-                style={{
-                  backgroundColor:
-                    palette[
-                      index %
-                        palette.length
-                    ],
-                }}
-              />
+              className="h-2.5 w-2.5 rounded-full"
+              style={{
+                backgroundColor: palette[index % palette.length],
+              }}
+            />
 
-              {item.name}
-            </span>
-          ),
-        )}
+            {item.name}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -3430,11 +3187,7 @@ function QuizGame({
         </p>
 
         {currentQuestion.visual && (
-          <QuestionVisualPanel
-            visual={
-              currentQuestion.visual
-            }
-          />
+          <QuestionVisualPanel visual={currentQuestion.visual} />
         )}
 
         <h2 className="mt-5 text-2xl font-bold leading-relaxed sm:text-3xl">
@@ -3657,13 +3410,7 @@ function ResultScreen({
               </div>
             </div>
 
-            {attempt.visual && (
-              <QuestionVisualPanel
-                visual={
-                  attempt.visual
-                }
-              />
-            )}
+            {attempt.visual && <QuestionVisualPanel visual={attempt.visual} />}
 
             <h3 className="mt-5 text-xl font-bold leading-relaxed text-white sm:text-2xl">
               {attempt.question}

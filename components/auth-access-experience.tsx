@@ -412,7 +412,7 @@ export function AuthAccessExperience() {
                   ? "Placement Resources"
                   : "learning resources";
 
-  const title = "Your Learning Journey Awaits";
+  const title = "Your Learning Journey Is Awaiting";
 
   const description =
     modal === "gate"
