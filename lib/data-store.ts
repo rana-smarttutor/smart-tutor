@@ -1,4 +1,4 @@
-import { cache } from "react";
+﻿import { cache } from "react";
 import { randomUUID } from "crypto";
 
 import type { Document } from "mongodb";
@@ -148,6 +148,7 @@ type DashboardTemplate = {
 type UserDocument = SessionUser & {
   password: string;
   program: string;
+  batchName?: string;
   employeeCode?: string;
 
   facultyCode?: string;
@@ -185,8 +186,11 @@ export const COLLECTIONS = {
   tests: "tests",
   messages: "messages",
   submissions: "test_submissions",
-  quizzes: "quiz_questions",
-  quizArenaProgress: "quiz_arena_progress",
+quizzes: "quiz_questions",
+
+governmentQuestionBank: "government_question_bank",
+
+quizArenaProgress: "quiz_arena_progress",
   quizArenaAttempts: "quiz_arena_attempts",
   quizArenaDrafts: "quiz_arena_drafts",
   quizArenaSeenQuestions: "quiz_arena_seen_questions",
@@ -800,6 +804,7 @@ async function getContentDocument<T extends Document>(id: string) {
 function toSessionUser(user: UserDocument): SessionUser {
   return {
     id: user.id,
+    employeeCode: user.employeeCode,
     facultyCode: user.facultyCode,
     name: user.name,
     email: user.email,
@@ -815,6 +820,7 @@ function toManagedUser(user: UserDocument): ManagedUser {
   return {
     ...toSessionUser(user),
     program: user.program,
+    batchName: user.batchName,
     status: (user.status === "rejected" ? "pending" : user.status) ?? "active",
     linkedStudentId: user.linkedStudentId,
     assignedFacultyIds: user.assignedFacultyIds,
@@ -1168,6 +1174,8 @@ export type QuizArenaProgress = {
 
   subject: string;
 
+  topicId?: string | null;
+
   difficulty: Difficulty;
 
   unlockedLevel: QuizJourneyLevel;
@@ -1239,6 +1247,8 @@ export async function getQuizArenaProgress(input: {
 
   subject: string;
 
+  topicId?: string | null;
+
   difficulty: Difficulty;
 }): Promise<QuizArenaProgress | null> {
   const collection = await getCollection<QuizArenaProgressDocument>(
@@ -1258,6 +1268,8 @@ export async function getQuizArenaProgress(input: {
 
     subject: input.subject,
 
+    topicId: input.topicId ?? null,
+
     difficulty: input.difficulty,
   });
 
@@ -1273,6 +1285,8 @@ export async function getQuizArenaProgress(input: {
     schoolClass: progress.schoolClass ?? null,
 
     board: progress.board ?? null,
+
+    topicId: progress.topicId ?? null,
 
     unlockedLevel: Math.max(
       1,
@@ -1306,6 +1320,8 @@ export async function saveQuizArenaRoundProgress(input: {
 
   subject: string;
 
+  topicId?: string | null;
+
   difficulty: Difficulty;
 
   progressionLevel: QuizJourneyLevel;
@@ -1334,6 +1350,8 @@ export async function saveQuizArenaRoundProgress(input: {
     board: input.board,
 
     subject: input.subject,
+
+    topicId: input.topicId ?? null,
 
     difficulty: input.difficulty,
   });
@@ -1412,6 +1430,8 @@ export async function saveQuizArenaRoundProgress(input: {
 
     subject: input.subject,
 
+    topicId: input.topicId ?? null,
+
     difficulty: input.difficulty,
 
     unlockedLevel,
@@ -1448,6 +1468,8 @@ export async function saveQuizArenaRoundProgress(input: {
       board: input.board,
 
       subject: input.subject,
+
+      topicId: input.topicId ?? null,
 
       difficulty: input.difficulty,
     },
@@ -1502,6 +1524,8 @@ export type QuizArenaRoundAttempt = {
   board: QuizBoard | null;
 
   subject: string;
+
+  topicId?: string | null;
 
   progressionLevel: QuizJourneyLevel;
 
@@ -3044,7 +3068,7 @@ export async function updateUserRecord(input: {
   if (
     typeof input.password === "string" &&
     input.password.trim().length > 0 &&
-    input.password !== "â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+    input.password !== "Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
   ) {
     setFields.password = input.password;
   }
@@ -5830,7 +5854,7 @@ function getAnalyticsPercent(value: number, total: number) {
 }
 
 function formatAnalyticsCurrency(value: number) {
-  return `Ã¢â€šÂ¹${Math.round(value).toLocaleString("en-IN")}`;
+  return `ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹${Math.round(value).toLocaleString("en-IN")}`;
 }
 
 function buildDashboardAnalytics(input: {
@@ -6111,13 +6135,13 @@ function buildDashboardAnalytics(input: {
   );
 
   const attendanceValue =
-    attendanceRate === null ? "Ã¢â‚¬â€" : `${attendanceRate}%`;
+    attendanceRate === null ? "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" : `${attendanceRate}%`;
 
   const assessmentValue =
-    averageScore === null ? "Ã¢â‚¬â€" : `${averageScore}%`;
+    averageScore === null ? "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" : `${averageScore}%`;
 
   const learningValue =
-    completionRate === null ? "Ã¢â‚¬â€" : `${completionRate}%`;
+    completionRate === null ? "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" : `${completionRate}%`;
 
   let metrics: DashboardMetric[];
 
@@ -9488,6 +9512,28 @@ export async function upsertStaffAttendance(record: StaffAttendanceRecord) {
   return record;
 }
 
+function calculateStaffWorkingHours(
+  checkIn?: string,
+  checkOut?: string,
+): number | undefined {
+  if (!checkIn || !checkOut) {
+    return undefined;
+  }
+
+  const [inHour, inMinute] = checkIn.split(":").map(Number);
+  const [outHour, outMinute] = checkOut.split(":").map(Number);
+
+  const minutes =
+    outHour * 60 +
+    outMinute -
+    (inHour * 60 + inMinute);
+
+  if (!Number.isFinite(minutes) || minutes < 0) {
+    return undefined;
+  }
+
+  return Math.round((minutes / 60) * 10) / 10;
+}
 export async function bulkMarkStaffAttendance(
   records: {
     userId: string;
@@ -9509,9 +9555,15 @@ export async function bulkMarkStaffAttendance(
   const results: StaffAttendanceRecord[] = [];
   for (const rec of records) {
     const id = randomUUID();
+
+    const hoursWorked = calculateStaffWorkingHours(
+      rec.checkIn,
+      rec.checkOut,
+    );
     const doc: StaffAttendanceRecord = {
       id,
       ...rec,
+      hoursWorked,
       date,
       markedBy,
       markedAt: now,
@@ -9526,6 +9578,9 @@ export async function bulkMarkStaffAttendance(
           status: rec.status,
           checkIn: rec.checkIn,
           checkOut: rec.checkOut,
+          hoursWorked,
+          category: rec.category,
+          employmentType: rec.employmentType,
           updatedAt: now,
           markedBy,
         },
@@ -9539,6 +9594,14 @@ export async function bulkMarkStaffAttendance(
   return results;
 }
 
+function getAttendanceTimeInIndia(date: Date): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(date);
+}
 export async function selfCheckIn(
   userId: string,
   userName: string,
@@ -9551,7 +9614,7 @@ export async function selfCheckIn(
   );
   const existing = await collection.findOne({ userId, date } as any);
   const now = new Date();
-  const timeStr = now.toTimeString().slice(0, 5);
+  const timeStr = getAttendanceTimeInIndia(now);
   const id = existing?.id ?? randomUUID();
   const category = getStaffCategory(role);
   if (existing) {
@@ -9587,12 +9650,9 @@ export async function selfCheckOut(userId: string, date: string) {
   const existing = await collection.findOne({ userId, date } as any);
   if (!existing) return null;
   const now = new Date();
-  const timeStr = now.toTimeString().slice(0, 5);
-  const checkIn = existing.checkIn || "00:00";
-  const [h1, m1] = checkIn.split(":").map(Number);
-  const [h2, m2] = timeStr.split(":").map(Number);
+  const timeStr = getAttendanceTimeInIndia(now);
   const hoursWorked =
-    Math.round(((h2 * 60 + m2 - (h1 * 60 + m1)) / 60) * 10) / 10;
+    calculateStaffWorkingHours(existing.checkIn, timeStr) ?? 0;
   await collection.updateOne({ _id: existing._id } as any, {
     $set: {
       checkOut: timeStr,
@@ -10522,7 +10582,7 @@ export async function getStaffPayoutAuditLogsByPayout(
   );
 }
 
-// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Fee Transaction Log Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â Fee Transaction Log ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
 
 export async function appendFeeTransactionLog(
   entry: Omit<FeeTransactionLog, "id" | "createdAt">,
@@ -11374,7 +11434,7 @@ export async function deleteBusinessExpense(
   return result.deletedCount > 0;
 }
 
-// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â Action Audit Log Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
+// ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â Action Audit Log ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
 
 export async function appendActionLogEntries(
   entries: Record<string, unknown>[],
@@ -11493,3 +11553,7 @@ export async function getActionLogStats() {
     uniqueIps: ips.size,
   };
 }
+
+
+
+

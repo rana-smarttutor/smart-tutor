@@ -1,6 +1,8 @@
-"use client";
+﻿"use client";
 
 import React, { useCallback, useEffect, useState } from "react";
+import { StaffActivityEditor } from "@/components/staff-activity-editor";
+
 import type {
   ManagedUser,
   Role,
@@ -52,6 +54,10 @@ export function StaffAttendanceManager({
     role === "admin" ? "admin" : "mine",
   );
   const [saving, setSaving] = useState(false);
+
+  const [staffFilter, setStaffFilter] = useState<
+    "all" | "teaching" | "non_teaching"
+  >("all");
 
   // Bulk edit state
   const [editMap, setEditMap] = useState<
@@ -212,11 +218,15 @@ export function StaffAttendanceManager({
     try {
       const staffUsers = managedUsers.filter(
         (u) =>
-          u.role === "educator" ||
-          u.role === "admin" ||
-          u.role === "counsellor",
+          u.role === "educator" || u.role === "staff" || u.role === "admin" || u.role === "counsellor",
       );
-      const recordsToSave = staffUsers.map((u) => {
+      const recordsToSave = staffUsers
+        .filter(
+          (u) =>
+            filteredStaffUsers.some((staff) => staff.id === u.id) &&
+            Boolean(editMap[u.id]?.status),
+        )
+        .map((u) => {
         const edit = editMap[u.id] || {
           status: "absent" as StaffAttendanceStatus,
           checkIn: "",
@@ -227,8 +237,8 @@ export function StaffAttendanceManager({
             ? "Admin"
             : u.role === "counsellor"
               ? "Counsellor"
-              : "Teacher";
-        const employmentType: EmploymentType = "full_time";
+              : u.role === "staff" ? "Staff" : "Teacher";
+        const employmentType: EmploymentType = u.profile?.employmentType ?? "full_time";
         return {
           userId: u.id,
           userName: u.name,
@@ -240,6 +250,11 @@ export function StaffAttendanceManager({
           checkOut: edit.checkOut || undefined,
         };
       });
+      if (recordsToSave.length === 0) {
+        alert("Mark at least one employee before saving.");
+        return;
+      }
+
       const res = await fetch("/api/staff-attendance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -265,14 +280,7 @@ export function StaffAttendanceManager({
 
   function setAllStatus(status: StaffAttendanceStatus) {
     const newMap = { ...editMap };
-    managedUsers
-      .filter(
-        (u) =>
-          u.role === "educator" ||
-          u.role === "admin" ||
-          u.role === "counsellor",
-      )
-      .forEach((u) => {
+    filteredStaffUsers.forEach((u) => {
         newMap[u.id] = {
           ...(newMap[u.id] || { status: "absent", checkIn: "", checkOut: "" }),
           status,
@@ -349,8 +357,20 @@ export function StaffAttendanceManager({
 
   const staffUsers = managedUsers.filter(
     (u) =>
-      u.role === "educator" || u.role === "admin" || u.role === "counsellor",
+      u.role === "educator" || u.role === "staff" || u.role === "admin" || u.role === "counsellor",
   );
+
+  const filteredStaffUsers = staffUsers.filter((user) => {
+    if (staffFilter === "teaching") {
+      return user.role === "educator";
+    }
+
+    if (staffFilter === "non_teaching") {
+      return user.role === "staff";
+    }
+
+    return true;
+  });
 
   const myRecord = records.find((r) => r.userId === userId);
 
@@ -400,7 +420,7 @@ export function StaffAttendanceManager({
       ) : null}
 
       {/* Self Check-in/out */}
-      {(role === "educator" || role === "counsellor" || role === "admin") && (
+      {(role === "educator" || role === "staff" || role === "counsellor" || role === "admin") && (
         <div className="surface rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:p-6">
           <div className="flex min-h-[90px] flex-col justify-center gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
@@ -428,7 +448,7 @@ export function StaffAttendanceManager({
                 <div className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
                   {date} &middot;{" "}
                   {myRecord
-                    ? `Checked in at ${myRecord.checkIn || "—"}${
+                    ? `Checked in at ${myRecord.checkIn || "â€”"}${
                         myRecord.checkOut ? `, out at ${myRecord.checkOut}` : ""
                       }`
                     : "Not checked in yet"}
@@ -531,6 +551,29 @@ export function StaffAttendanceManager({
       {/* Admin: Bulk Mark */}
       {viewTab === "admin" && role === "admin" && (
         <div className="surface rounded-[2rem] overflow-hidden">
+
+          <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-white p-4">
+            {(
+              [
+                ["all", "All Staff"],
+                ["teaching", "Teaching Staff"],
+                ["non_teaching", "Non-Teaching Staff"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setStaffFilter(value)}
+                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                  staffFilter === value
+                    ? "bg-[#0B40A1] text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-blue-50"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-3 flex-wrap">
             <div className="flex items-center gap-3">
               <svg
@@ -611,7 +654,7 @@ export function StaffAttendanceManager({
                 </tr>
               </thead>
               <tbody>
-                {staffUsers.map((user) => {
+                {filteredStaffUsers.map((user) => {
                   const existing = records.find((r) => r.userId === user.id);
                   const edit = editMap[user.id] || {
                     status: existing?.status || "absent",
@@ -623,7 +666,7 @@ export function StaffAttendanceManager({
                       ? "Admin"
                       : user.role === "counsellor"
                         ? "Counsellor"
-                        : "Teacher";
+                        : user.role === "staff" ? "Staff" : "Teacher";
                   const initials = user.name
                     .split(" ")
                     .map((s) => s[0])
@@ -662,7 +705,7 @@ export function StaffAttendanceManager({
                       </td>
                       <td className="px-4 py-3">
                         <select
-                          value={edit.status}
+                          value={editMap[user.id]?.status ?? existing?.status ?? ""}
                           onChange={(e) =>
                             setEditMap((prev) => ({
                               ...prev,
@@ -677,6 +720,7 @@ export function StaffAttendanceManager({
                           }
                           className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-1.5 text-xs text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)]"
                         >
+                          <option value="" disabled>Mark attendance</option>
                           <option value="present">Present</option>
                           <option value="absent">Absent</option>
                           <option value="half_day">Half Day</option>
@@ -737,6 +781,14 @@ export function StaffAttendanceManager({
         </div>
       )}
 
+      {/* Daily teaching and work activities */}
+
+      <StaffActivityEditor
+        role={role}
+        managedUsers={managedUsers}
+        userId={userId}
+      />
+
       {/* My History */}
       {(viewTab === "mine" || role !== "admin") && (
         <div className="surface rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.07)] sm:p-6">
@@ -786,8 +838,8 @@ export function StaffAttendanceManager({
                     </div>
 
                     <div className="mt-1 text-xs font-medium text-[var(--color-muted)] sm:text-sm">
-                      {r.checkIn ? `In: ${r.checkIn}` : "In: —"} &middot;{" "}
-                      {r.checkOut ? `Out: ${r.checkOut}` : "Out: —"}
+                      {r.checkIn ? `In: ${r.checkIn}` : "In: â€”"} &middot;{" "}
+                      {r.checkOut ? `Out: ${r.checkOut}` : "Out: â€”"}
                       {r.hoursWorked ? ` (${r.hoursWorked}h)` : ""}
                     </div>
                   </div>
@@ -847,7 +899,7 @@ export function StaffAttendanceManager({
                       {req.requestedCheckOut
                         ? `Out: ${req.requestedCheckOut}`
                         : ""}{" "}
-                      → {req.requestedStatus.replace("_", " ")}
+                      â†’ {req.requestedStatus.replace("_", " ")}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -911,7 +963,7 @@ export function StaffAttendanceManager({
                 onClick={() => setShowRegulariseModal(false)}
                 className="text-[var(--color-muted)] hover:text-[var(--color-heading)]"
               >
-                ✕
+                âœ•
               </button>
             </div>
             <div className="space-y-4">
@@ -996,3 +1048,6 @@ export function StaffAttendanceManager({
     </div>
   );
 }
+
+
+

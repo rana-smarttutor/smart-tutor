@@ -4,6 +4,25 @@ import { getSessionUser } from "@/lib/auth";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 
 import {
+  getGovernmentExamSyllabus,
+  isValidGovernmentExamTopic,
+} from "@/lib/government-exam-topics";
+
+import {
+  getCompetitiveExamSyllabus,
+  isValidCompetitiveExamTopic,
+} from "@/lib/competitive-exam-topics";
+
+import {
+  getMbaExamSyllabus,
+  isValidMbaExamTopic,
+} from "@/lib/mba-exam-topics";
+
+import {
+  getGovernmentTopicQuestions,
+} from "@/lib/government-question-bank";
+
+import {
   competitiveExams,
   getDifficultyForJourneyLevel,
   getExamDetails,
@@ -316,6 +335,87 @@ export async function POST(
       );
     }
 
+    const topicId =
+      typeof body.topicId === "string"
+        ? body.topicId.trim()
+        : "";
+
+    const requiresGovernmentTopic =
+      body.source === "mock-test" &&
+      body.level === "government-exam" &&
+      Boolean(
+        getGovernmentExamSyllabus(
+          body.exam,
+        ),
+      );
+
+    const requiresCompetitiveTopic =
+      body.source === "mock-test" &&
+      body.level === "competitive-exam" &&
+      Boolean(
+        getCompetitiveExamSyllabus(
+          body.exam,
+        ),
+      );
+
+    const requiresMbaTopic =
+      body.source === "mock-test" &&
+      body.level === "mba-entrance" &&
+      Boolean(
+        getMbaExamSyllabus(
+          body.exam,
+        ),
+      );
+
+    const requiresTopic =
+      requiresGovernmentTopic ||
+      requiresCompetitiveTopic ||
+      requiresMbaTopic;
+
+    const validTopic =
+      requiresGovernmentTopic
+        ? isValidGovernmentExamTopic(
+            body.exam,
+            subject,
+            topicId,
+          )
+        : requiresCompetitiveTopic
+          ? isValidCompetitiveExamTopic(
+              body.exam,
+              subject,
+              topicId,
+            )
+          : requiresMbaTopic
+            ? isValidMbaExamTopic(
+                body.exam,
+                subject,
+                topicId,
+              )
+            : false;
+
+    if (
+      requiresTopic &&
+      (
+        !topicId ||
+        !validTopic
+      )
+    ) {
+      return errorResponse(
+        "Please select a valid Mock Test topic.",
+        400,
+      );
+    }
+
+    if (
+      !requiresTopic &&
+      topicId
+    ) {
+      return errorResponse(
+        "Topic selection is not available for this quiz.",
+        400,
+      );
+    }
+
     if (
       !isJourneyLevel(body.progressionLevel)
     ) {
@@ -371,6 +471,7 @@ export async function POST(
           question.level === body.level &&
           question.exam === body.exam &&
           question.subject === subject &&
+          (question.topicId ?? "") === topicId &&
           question.difficulty ===
             body.difficulty &&
           question.progressionLevel ===
@@ -386,6 +487,35 @@ export async function POST(
         "Questions do not match the selected quiz.",
         400,
       );
+    }
+
+    if (requiresGovernmentTopic) {
+      /*
+       * Government bank questions must be
+       * server-approved.
+       *
+       * Competitive questions are generated
+       * on demand and validated against their
+       * exam / subject / topic context.
+       */
+      const approved = await getGovernmentTopicQuestions({
+        exam: body.exam,
+        subject,
+        topicId,
+        progressionLevel: body.progressionLevel,
+      });
+      const byId = new Map(approved.map((item) => [item.id, item]));
+      const allApproved = questions.every((question) => {
+        const stored = byId.get(question.id);
+        return stored &&
+          stored.question === question.question &&
+          JSON.stringify(stored.options) === JSON.stringify(question.options) &&
+          stored.correctAnswer === question.correctAnswer &&
+          stored.explanation === question.explanation;
+      });
+      if (!allApproved || new Set(questions.map((item) => item.id)).size !== questions.length) {
+        return errorResponse("This round contains questions that are not approved for the selected topic and level.", 400);
+      }
     }
 
     const existing =
@@ -417,6 +547,8 @@ export async function POST(
       board,
 
       subject,
+
+      topicId: topicId || null,
 
       progressionLevel:
         body.progressionLevel,

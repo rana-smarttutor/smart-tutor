@@ -278,6 +278,8 @@ export async function POST(
 
         subject?: string;
 
+        topicId?: string | null;
+
         progressionLevel?:
           QuizJourneyLevel;
 
@@ -481,6 +483,7 @@ export async function POST(
       draft.schoolClass !== schoolContext.schoolClass ||
       draft.board !== schoolContext.board ||
       draft.subject !== subject ||
+      (draft.topicId ?? null) !== (body.topicId?.trim() || null) ||
       draft.progressionLevel !== body.progressionLevel ||
       draft.round !== body.round ||
       draft.difficulty !== body.difficulty
@@ -543,6 +546,8 @@ const attempt =
           schoolContext.board,
 
         subject,
+
+        topicId: draft.topicId ?? null,
 
         progressionLevel:
           body.progressionLevel,

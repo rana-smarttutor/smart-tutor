@@ -52,6 +52,7 @@ export type DemoUserRecord = SessionUser & {
 
 export type ManagedUser = SessionUser & {
   program: string;
+  batchName?: string;
   status: UserStatus;
   passwordHint?: string;
   linkedStudentId?: string;
@@ -2123,6 +2124,7 @@ export type Certificate = {
   createdAt: string;
   updatedAt?: string;
 };
+
 
 
 

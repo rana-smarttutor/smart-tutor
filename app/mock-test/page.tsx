@@ -56,7 +56,7 @@ export default async function MockTestPage() {
         <ExamPortalBanner compact />
       </div>
 
-      <QuizArenaClient startAtCategory />
+      <QuizArenaClient startAtCategory mockTestMode />
     </>
   );
 }

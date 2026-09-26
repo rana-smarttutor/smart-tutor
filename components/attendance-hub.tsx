@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { AttendanceManager } from "@/components/attendance-manager";
+import { WeeklyAttendanceReports } from "@/components/weekly-attendance-reports";
 import { StaffAttendanceManager } from "@/components/staff-attendance-manager";
 
 import type {
@@ -28,7 +29,8 @@ type AttendanceHubProps = {
 
 type AttendanceHubTab =
   | "staff"
-  | "students";
+  | "students"
+  | "weekly";
 
 export function AttendanceHub({
   role,
@@ -78,7 +80,7 @@ export function AttendanceHub({
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className={`grid gap-4 ${role === "admin" ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
         <button
           type="button"
           onClick={() =>
@@ -136,6 +138,31 @@ export function AttendanceHub({
             </div>
           </div>
         </button>
+        {role === "admin" && (
+          <button
+            type="button"
+            onClick={() => setActiveTab("weekly")}
+            className={`rounded-2xl border p-4 text-left transition ${
+              activeTab === "weekly"
+                ? "border-emerald-300 bg-emerald-50 shadow-sm"
+                : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <Clock3 size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900">
+                  Weekly Reports
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Review seven-day student attendance and export reports.
+                </p>
+              </div>
+            </div>
+          </button>
+        )}
       </div>
 
       {activeTab === "staff" ? (
@@ -146,6 +173,8 @@ export function AttendanceHub({
           userName={userName}
           embedded
         />
+      ) : activeTab === "weekly" && role === "admin" ? (
+        <WeeklyAttendanceReports />
       ) : (
         <AttendanceManager
           role={role}

@@ -23,10 +23,26 @@ import {
   type QuizRound,
   type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
-import type { QuizQuestion } from "@/lib/quiz-arena-questions";
+import type {
+  QuizQuestion,
+  QuizQuestionVisual,
+} from "@/lib/quiz-arena-questions";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 import type { QuizArenaDraft } from "@/lib/quiz-arena-drafts";
 import { requestLoginIfNeeded } from "@/lib/request-login";
+import {
+  getGovernmentExamSyllabus,
+  getGovernmentExamTopics,
+} from "@/lib/government-exam-topics";
+import {
+  getCompetitiveExamSyllabus,
+  getCompetitiveExamTopics,
+} from "@/lib/competitive-exam-topics";
+
+import {
+  getMbaExamSyllabus,
+  getMbaExamTopics,
+} from "@/lib/mba-exam-topics";
 
 type Step =
   | "welcome"
@@ -36,6 +52,7 @@ type Step =
   | "class"
   | "board"
   | "subject"
+  | "topic"
   | "journey"
   | "round"
   | "quiz"
@@ -43,7 +60,11 @@ type Step =
 
 type QuestionAttempt = {
   questionId: string;
+
   question: string;
+
+  visual?: QuizQuestionVisual;
+
   options: string[];
 
   selectedAnswer: string;
@@ -94,6 +115,7 @@ export default function QuizArenaClient({
   const [selectedBoard, setSelectedBoard] = useState<QuizBoard | null>(null);
 
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [selectedJourneyLevel, setSelectedJourneyLevel] =
     useState<QuizJourneyLevel | null>(null);
 
@@ -160,6 +182,115 @@ export default function QuizArenaClient({
     }
     return selectedExamDetails.subjects;
   }, [selectedExamDetails, selectedExam, selectedSchoolClass, selectedBoard]);
+
+  const governmentSyllabus = useMemo(() => {
+    if (
+      selectedLevel !== "government-exam" ||
+      !selectedExam ||
+      !mockTestMode
+    ) {
+      return null;
+    }
+
+    return getGovernmentExamSyllabus(selectedExam);
+  }, [selectedLevel, selectedExam, mockTestMode]);
+
+  const competitiveSyllabus = useMemo(() => {
+    if (
+      selectedLevel !== "competitive-exam" ||
+      !selectedExam ||
+      !mockTestMode
+    ) {
+      return null;
+    }
+
+    return getCompetitiveExamSyllabus(selectedExam);
+  }, [selectedLevel, selectedExam, mockTestMode]);
+
+  const mbaSyllabus = useMemo(() => {
+    if (
+      selectedLevel !== "mba-entrance" ||
+      !selectedExam ||
+      !mockTestMode
+    ) {
+      return null;
+    }
+
+    return getMbaExamSyllabus(
+      selectedExam,
+    );
+  }, [
+    selectedLevel,
+    selectedExam,
+    mockTestMode,
+  ]);
+
+  const governmentTopics = useMemo(() => {
+    if (!governmentSyllabus || !selectedExam || !selectedSubject) {
+      return [];
+    }
+
+    return getGovernmentExamTopics(
+      selectedExam,
+      selectedSubject,
+    );
+  }, [
+    governmentSyllabus,
+    selectedExam,
+    selectedSubject,
+  ]);
+
+  const competitiveTopics = useMemo(() => {
+    if (!competitiveSyllabus || !selectedExam || !selectedSubject) {
+      return [];
+    }
+
+    return getCompetitiveExamTopics(
+      selectedExam,
+      selectedSubject,
+    );
+  }, [
+    competitiveSyllabus,
+    selectedExam,
+    selectedSubject,
+  ]);
+
+  const mbaTopics = useMemo(() => {
+    if (
+      !mbaSyllabus ||
+      !selectedExam ||
+      !selectedSubject
+    ) {
+      return [];
+    }
+
+    return getMbaExamTopics(
+      selectedExam,
+      selectedSubject,
+    );
+  }, [
+    mbaSyllabus,
+    selectedExam,
+    selectedSubject,
+  ]);
+
+  const topicSyllabus =
+    governmentSyllabus ??
+    competitiveSyllabus ??
+    mbaSyllabus;
+
+  const currentTopics =
+    governmentSyllabus
+      ? governmentTopics
+      : competitiveSyllabus
+        ? competitiveTopics
+        : mbaTopics;
+
+  const selectedTopicDetails = useMemo(() => {
+    return currentTopics.find(
+      (topic) => topic.id === selectedTopic,
+    );
+  }, [currentTopics, selectedTopic]);
 
   const playfulMode =
     selectedExam === "class-6-8" || selectedExam === "class-9-10";
@@ -243,6 +374,8 @@ export default function QuizArenaClient({
 
     setSelectedSubject(draft.subject);
 
+    setSelectedTopic(draft.topicId ?? null);
+
     setSelectedJourneyLevel(draft.progressionLevel);
 
     setSelectedRound(draft.round);
@@ -293,6 +426,7 @@ export default function QuizArenaClient({
     setSelectedBoard(null);
 
     setSelectedSubject(null);
+    setSelectedTopic(null);
 
     setSelectedJourneyLevel(null);
 
@@ -313,6 +447,7 @@ export default function QuizArenaClient({
     setSelectedSchoolClass(null);
     setSelectedBoard(null);
     setSelectedSubject(null);
+    setSelectedTopic(null);
 
     setSelectedJourneyLevel(null);
     setSelectedRound(null);
@@ -331,6 +466,7 @@ export default function QuizArenaClient({
     setSelectedSchoolClass(null);
     setSelectedBoard(null);
     setSelectedSubject(null);
+    setSelectedTopic(null);
 
     setSelectedJourneyLevel(null);
     setSelectedRound(null);
@@ -357,6 +493,7 @@ export default function QuizArenaClient({
       setSelectedSchoolClass(null);
       setSelectedBoard(null);
       setSelectedSubject(null);
+      setSelectedTopic(null);
 
       setStep("level");
       return;
@@ -372,6 +509,7 @@ export default function QuizArenaClient({
       setSelectedSchoolClass(null);
       setSelectedBoard(null);
       setSelectedSubject(null);
+      setSelectedTopic(null);
 
       setStep("exam");
       return;
@@ -380,6 +518,7 @@ export default function QuizArenaClient({
     if (step === "board") {
       setSelectedBoard(null);
       setSelectedSubject(null);
+      setSelectedTopic(null);
 
       setStep("class");
       return;
@@ -387,6 +526,7 @@ export default function QuizArenaClient({
 
     if (step === "subject") {
       setSelectedSubject(null);
+      setSelectedTopic(null);
 
       if (requiresQuizBoard(selectedExam)) {
         setStep("board");
@@ -402,13 +542,30 @@ export default function QuizArenaClient({
       return;
     }
 
-    if (step === "journey") {
-      setSelectedJourneyLevel(null);
-      setSelectedRound(null);
+if (step === "topic") {
+  setSelectedTopic(null);
 
-      setStep("subject");
-      return;
-    }
+  setSelectedJourneyLevel(null);
+
+  setSelectedRound(null);
+
+  setStep("subject");
+  return;
+}
+
+if (step === "journey") {
+  setSelectedJourneyLevel(null);
+
+  setSelectedRound(null);
+
+  setStep(
+    topicSyllabus
+      ? "topic"
+      : "subject",
+  );
+
+  return;
+}
 
     if (step === "round") {
       setSelectedRound(null);
@@ -527,6 +684,11 @@ export default function QuizArenaClient({
       return;
     }
 
+    if (topicSyllabus && !selectedTopic) {
+      setMessage("Select a topic before starting the mock test.");
+      return;
+    }
+
     const effectiveDifficulty = getDifficultyForJourneyLevel(progressionLevel);
 
     const source = window.location.pathname.startsWith("/mock-test")
@@ -569,6 +731,8 @@ export default function QuizArenaClient({
 
           subject: selectedSubject,
 
+          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
+
           difficulty: effectiveDifficulty,
 
           progressionLevel,
@@ -607,6 +771,8 @@ export default function QuizArenaClient({
           board: selectedBoard,
 
           subject: selectedSubject,
+
+          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
 
           progressionLevel,
 
@@ -722,6 +888,10 @@ export default function QuizArenaClient({
         params.set("board", selectedBoard);
       }
 
+      if (topicSyllabus && selectedTopic) {
+        params.set("topicId", selectedTopic);
+      }
+
       const response = await fetch(
         `/api/quiz-arena/progress?${params.toString()}`,
         {
@@ -753,21 +923,27 @@ export default function QuizArenaClient({
           setSelectedJourneyLevel(1);
         }
       } else {
-        setUnlockedJourneyLevel(1);
-        setCompletedRounds({});
-        setSelectedJourneyLevel(1);
+        const error = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(error?.error ?? "Unable to retrieve your saved progress.");
       }
 
       setSelectedRound(null);
       setStep("journey");
+
+      /*
+       * Move directly to the newly rendered
+       * level screen after Topic -> Journey.
+       */
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      });
     } catch (error) {
       console.warn("Unable to load Quiz Arena progress:", error);
 
-      setUnlockedJourneyLevel(1);
-      setCompletedRounds({});
-      setSelectedJourneyLevel(1);
-      setSelectedRound(null);
-      setStep("journey");
+      setMessage(error instanceof Error ? error.message : "Unable to retrieve saved progress.");
     } finally {
       setIsProgressLoading(false);
     }
@@ -807,6 +983,8 @@ export default function QuizArenaClient({
           board: selectedBoard,
 
           subject: selectedSubject,
+
+          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
 
           difficulty: "easy",
 
@@ -891,6 +1069,8 @@ export default function QuizArenaClient({
           board: selectedBoard,
 
           subject: selectedSubject,
+
+          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
 
           progressionLevel: selectedJourneyLevel,
 
@@ -1173,7 +1353,7 @@ export default function QuizArenaClient({
           </div>
         </div>
       )}
-      {step !== "welcome" && step !== "level" && step !== "quiz" && (
+      {step !== "welcome" && step !== "quiz" && (
         <button
           type="button"
           onClick={goBack}
@@ -1420,6 +1600,7 @@ export default function QuizArenaClient({
                         setSelectedSchoolClass(null);
                         setSelectedBoard(null);
                         setSelectedSubject(null);
+                        setSelectedTopic(null);
 
                         setSelectedJourneyLevel(null);
                         setSelectedRound(null);
@@ -1477,6 +1658,7 @@ export default function QuizArenaClient({
 
                     setSelectedBoard(null);
                     setSelectedSubject(null);
+                    setSelectedTopic(null);
 
                     setSelectedJourneyLevel(null);
 
@@ -1526,6 +1708,7 @@ export default function QuizArenaClient({
                     setSelectedBoard(board.id);
 
                     setSelectedSubject(null);
+                    setSelectedTopic(null);
 
                     setSelectedJourneyLevel(null);
 
@@ -1576,11 +1759,24 @@ export default function QuizArenaClient({
                 <button
                   type="button"
                   key={subject}
-                  onClick={() => {
-                    setSelectedSubject(subject);
-                    setMessage("");
-                    void openJourney(subject);
-                  }}
+onClick={() => {
+  setSelectedSubject(subject);
+
+  setSelectedTopic(null);
+
+  setSelectedJourneyLevel(null);
+
+  setSelectedRound(null);
+
+  setMessage("");
+
+  if (topicSyllabus) {
+    setStep("topic");
+    return;
+  }
+
+  void openJourney(subject);
+}}
                   className="rounded-2xl border border-white/10 bg-white/10 p-6 text-left transition hover:-translate-y-1 hover:border-cyan-300"
                 >
                   <span className="text-3xl">📚</span>
@@ -1590,11 +1786,155 @@ export default function QuizArenaClient({
             </div>
           </section>
         )}
+
+{step === "topic" && topicSyllabus && (
+  <section>
+    <Header
+      title="Choose your topic"
+      subtitle={`${
+        selectedExamDetails?.title ?? "Selected Exam"
+      } • ${selectedSubject ?? ""}`}
+    />
+
+    <div className="mx-auto mb-8 max-w-4xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-6 text-center">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+        Topic-Wise Mock Test
+      </p>
+
+      <h2 className="mt-3 text-2xl font-black text-white">
+        Master One Topic at a Time
+      </h2>
+
+      <p className="mt-3 text-sm leading-7 text-slate-300">
+        Select a topic from your examination syllabus.
+        Each topic will have its own question bank and
+        progressive difficulty levels.
+      </p>
+
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+        <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
+          {currentTopics.length} Topics
+        </span>
+
+        <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
+          10 Levels
+        </span>
+
+        <span className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white">
+          {governmentSyllabus
+            ? "500 Questions per Topic Target"
+            : "AI Questions Generated on Demand"}
+        </span>
+      </div>
+    </div>
+
+    {currentTopics.length === 0 ? (
+      <div className="mx-auto max-w-3xl rounded-2xl border border-amber-400/20 bg-amber-400/10 p-6 text-center">
+        <h3 className="text-lg font-bold text-amber-200">
+          Topics are being prepared
+        </h3>
+
+        <p className="mt-2 text-sm text-slate-300">
+          The topic catalog for this subject is not available yet.
+        </p>
+      </div>
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {currentTopics.map((topic, index) => {
+          const isSelected = selectedTopic === topic.id;
+
+          return (
+            <button
+              key={topic.id}
+              type="button"
+              onClick={() => {
+                setSelectedTopic(topic.id);
+
+                setSelectedJourneyLevel(null);
+
+                setSelectedRound(null);
+
+                setMessage("");
+              }}
+              className={`group rounded-2xl border p-6 text-left transition-all duration-300 hover:-translate-y-1 ${
+                isSelected
+                  ? "border-cyan-300 bg-cyan-400/20 shadow-lg shadow-cyan-500/10"
+                  : "border-white/10 bg-white/10 hover:border-cyan-300 hover:bg-white/15"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-400/10 text-sm font-black text-cyan-300">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+
+                {isSelected && (
+                  <span className="rounded-full bg-cyan-400 px-3 py-1 text-xs font-bold text-[#071633]">
+                    Selected
+                  </span>
+                )}
+              </div>
+
+              <h3 className="mt-5 text-lg font-bold text-white">
+                {topic.title}
+              </h3>
+
+              <p className="mt-3 text-sm text-slate-300">
+                Topic-wise practice with progressive difficulty.
+              </p>
+
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                <span className="text-xs font-semibold text-cyan-200">
+                  10 Levels
+                </span>
+
+                <span className="text-xs font-semibold text-slate-300 transition-transform group-hover:translate-x-1">
+                  Select Topic →
+                </span>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    )}
+
+    {message && (
+      <p role="alert" className="mx-auto mt-6 max-w-3xl rounded-xl border border-red-400/30 bg-red-400/10 p-4 text-center text-sm text-red-100">
+        {message}
+      </p>
+    )}
+
+    {selectedTopicDetails && (
+      <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-cyan-400/30 bg-[#112b4e] p-6 text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+          Your Selected Topic
+        </p>
+
+        <h3 className="mt-3 text-2xl font-black text-white">
+          {selectedTopicDetails.title}
+        </h3>
+
+        <p className="mt-2 text-sm text-slate-300">
+          {selectedExamDetails?.title} • {selectedSubject}
+        </p>
+
+        <button
+          type="button"
+          disabled={isProgressLoading}
+          onClick={() => void openJourney()}
+          className="mt-6 inline-flex items-center justify-center rounded-full bg-cyan-400 px-8 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-wait disabled:opacity-60"
+        >
+          {isProgressLoading ? "Loading Topic Progress..." : "Start Topic Tests"}
+        </button>
+      </div>
+    )}
+  </section>
+)}
+
         {step === "journey" && (
           <section>
             <Header
               title="Choose your Quiz Journey Level"
-              subtitle={`${selectedSubject ?? ""} - Select a level to continue.`}
+              subtitle={`${selectedSubject ?? ""}${selectedTopicDetails ? ` • ${selectedTopicDetails.title}` : ""} - Select a level to continue.`}
             />
 
             <div className="mx-auto grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -1843,6 +2183,622 @@ function formatLiveQuizDuration(milliseconds: number) {
   )}`;
 }
 
+function QuestionVisualPanel({
+  visual,
+}: {
+  visual: QuizQuestionVisual;
+}) {
+  const palette = [
+    "#22d3ee",
+    "#a78bfa",
+    "#f59e0b",
+    "#34d399",
+  ];
+
+  const labels = visual.labels;
+  const series = visual.series;
+
+  if (
+    labels.length === 0 ||
+    series.length === 0
+  ) {
+    return null;
+  }
+
+  /*
+   * TABLE
+   */
+  if (visual.type === "table") {
+    return (
+      <div className="mt-6 overflow-hidden rounded-2xl border border-white/15 bg-slate-950/35">
+        <div className="border-b border-white/10 px-5 py-4">
+          <p className="text-center text-lg font-black text-white">
+            {visual.title}
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                <th className="px-4 py-3 text-left font-black text-cyan-200">
+                  Category
+                </th>
+
+                {series.map((item) => (
+                  <th
+                    key={item.name}
+                    className="px-4 py-3 text-right font-black text-cyan-200"
+                  >
+                    {item.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {labels.map((label, labelIndex) => (
+                <tr
+                  key={`${label}-${labelIndex}`}
+                  className="border-b border-white/5 last:border-0"
+                >
+                  <td className="px-4 py-3 font-semibold text-white">
+                    {label}
+                  </td>
+
+                  {series.map((item) => (
+                    <td
+                      key={`${item.name}-${labelIndex}`}
+                      className="px-4 py-3 text-right font-bold text-slate-200"
+                    >
+                      {item.values[labelIndex]}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  /*
+   * PIE CHART
+   */
+  if (visual.type === "pie-chart") {
+    const values =
+      series[0]?.values ?? [];
+
+    const total = values.reduce(
+      (sum, value) =>
+        sum + Math.max(0, value),
+      0,
+    );
+
+    if (total <= 0) {
+      return null;
+    }
+
+    let cumulative = 0;
+
+    const stops = values.map(
+      (value, index) => {
+        const start =
+          (cumulative / total) * 100;
+
+        cumulative +=
+          Math.max(0, value);
+
+        const end =
+          (cumulative / total) * 100;
+
+        return `${
+          palette[index % palette.length]
+        } ${start}% ${end}%`;
+      },
+    );
+
+    return (
+      <div className="mt-6 rounded-2xl border border-white/15 bg-slate-950/35 p-5 sm:p-6">
+        <p className="text-center text-lg font-black text-white">
+          {visual.title}
+        </p>
+
+        <div className="mt-6 flex flex-col items-center gap-7 md:flex-row md:justify-center">
+          <div
+            role="img"
+            aria-label={visual.title}
+            className="h-56 w-56 shrink-0 rounded-full border-[10px] border-white/10 shadow-2xl"
+            style={{
+              background:
+                `conic-gradient(${stops.join(", ")})`,
+            }}
+          />
+
+          <div className="grid min-w-[220px] gap-3">
+            {labels.map(
+              (label, index) => (
+                <div
+                  key={`${label}-${index}`}
+                  className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-3"
+                >
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor:
+                        palette[
+                          index %
+                            palette.length
+                        ],
+                    }}
+                  />
+
+                  <span className="text-sm font-semibold text-slate-200">
+                    {label}
+                  </span>
+
+                  <span className="ml-auto text-sm font-black text-white">
+                    {values[index]}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
+  /*
+   * BAR / LINE / MIXED
+   */
+
+  const width = 760;
+  const height = 350;
+
+  const left = 70;
+  const right = 30;
+  const top = 55;
+  const bottom = 80;
+
+  const plotWidth =
+    width - left - right;
+
+  const plotHeight =
+    height - top - bottom;
+
+  const allValues =
+    series.flatMap(
+      (item) => item.values,
+    );
+
+  const minimum =
+    Math.min(
+      0,
+      ...allValues,
+    );
+
+  const maximum =
+    Math.max(
+      0,
+      ...allValues,
+    );
+
+  const range =
+    maximum - minimum || 1;
+
+  const yFor = (
+    value: number,
+  ) =>
+    top +
+    (
+      (maximum - value) /
+      range
+    ) *
+      plotHeight;
+
+  const zeroY =
+    yFor(0);
+
+  const categoryWidth =
+    plotWidth /
+    Math.max(
+      labels.length,
+      1,
+    );
+
+  const barSeries =
+    visual.type === "mixed-chart"
+      ? series.slice(0, 1)
+      : visual.type === "bar-chart"
+        ? series
+        : [];
+
+  const lineSeries =
+    visual.type === "mixed-chart"
+      ? series.slice(1)
+      : visual.type === "line-chart"
+        ? series
+        : [];
+
+  const barWidth =
+    Math.min(
+      42,
+      (
+        categoryWidth *
+        0.72
+      ) /
+        Math.max(
+          barSeries.length,
+          1,
+        ),
+    );
+
+  return (
+    <div className="mt-6 overflow-hidden rounded-2xl border border-white/15 bg-slate-950/35 p-4 sm:p-6">
+      <p className="text-center text-lg font-black text-white">
+        {visual.title}
+      </p>
+
+      <div className="mt-4 overflow-x-auto">
+        <svg
+          role="img"
+          aria-label={visual.title}
+          viewBox={`0 0 ${width} ${height}`}
+          className="w-full min-w-[620px]"
+        >
+          {Array.from(
+            {
+              length: 5,
+            },
+            (_, index) => {
+              const ratio =
+                index / 4;
+
+              const value =
+                maximum -
+                range * ratio;
+
+              const y =
+                top +
+                plotHeight *
+                  ratio;
+
+              return (
+                <g key={`grid-${index}`}>
+                  <line
+                    x1={left}
+                    y1={y}
+                    x2={width - right}
+                    y2={y}
+                    stroke="rgba(255,255,255,0.12)"
+                    strokeWidth="1"
+                  />
+
+                  <text
+                    x={left - 10}
+                    y={y + 4}
+                    textAnchor="end"
+                    fontSize="11"
+                    fill="#cbd5e1"
+                  >
+                    {
+                      Math.round(
+                        value * 100,
+                      ) / 100
+                    }
+                  </text>
+                </g>
+              );
+            },
+          )}
+
+          <line
+            x1={left}
+            y1={zeroY}
+            x2={width - right}
+            y2={zeroY}
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="1.5"
+          />
+
+          {barSeries.flatMap(
+            (
+              item,
+              seriesIndex,
+            ) =>
+              item.values.map(
+                (
+                  value,
+                  labelIndex,
+                ) => {
+                  const groupX =
+                    left +
+                    labelIndex *
+                      categoryWidth;
+
+                  const totalWidth =
+                    barWidth *
+                    barSeries.length;
+
+                  const x =
+                    groupX +
+                    categoryWidth / 2 -
+                    totalWidth / 2 +
+                    seriesIndex *
+                      barWidth;
+
+                  const valueY =
+                    yFor(value);
+
+                  const y =
+                    Math.min(
+                      valueY,
+                      zeroY,
+                    );
+
+                  const h =
+                    Math.max(
+                      2,
+                      Math.abs(
+                        zeroY -
+                          valueY,
+                      ),
+                    );
+
+                  return (
+                    <g
+                      key={`bar-${item.name}-${labelIndex}`}
+                    >
+                      <rect
+                        x={x + 2}
+                        y={y}
+                        width={Math.max(
+                          2,
+                          barWidth - 4,
+                        )}
+                        height={h}
+                        rx="4"
+                        fill={
+                          palette[
+                            seriesIndex %
+                              palette.length
+                          ]
+                        }
+                        opacity="0.9"
+                      />
+
+                      <text
+                        x={
+                          x +
+                          barWidth / 2
+                        }
+                        y={
+                          value >= 0
+                            ? y - 7
+                            : y +
+                              h +
+                              14
+                        }
+                        textAnchor="middle"
+                        fontSize="10"
+                        fontWeight="700"
+                        fill="#e2e8f0"
+                      >
+                        {value}
+                      </text>
+                    </g>
+                  );
+                },
+              ),
+          )}
+
+          {lineSeries.map(
+            (
+              item,
+              seriesIndex,
+            ) => {
+              const colorIndex =
+                visual.type ===
+                "mixed-chart"
+                  ? seriesIndex + 1
+                  : seriesIndex;
+
+              const points =
+                item.values
+                  .map(
+                    (
+                      value,
+                      index,
+                    ) => {
+                      const x =
+                        left +
+                        index *
+                          categoryWidth +
+                        categoryWidth /
+                          2;
+
+                      return `${x},${yFor(value)}`;
+                    },
+                  )
+                  .join(" ");
+
+              return (
+                <g
+                  key={`line-${item.name}`}
+                >
+                  <polyline
+                    points={points}
+                    fill="none"
+                    stroke={
+                      palette[
+                        colorIndex %
+                          palette.length
+                      ]
+                    }
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+
+                  {item.values.map(
+                    (
+                      value,
+                      index,
+                    ) => {
+                      const x =
+                        left +
+                        index *
+                          categoryWidth +
+                        categoryWidth /
+                          2;
+
+                      const y =
+                        yFor(value);
+
+                      return (
+                        <g
+                          key={`point-${item.name}-${index}`}
+                        >
+                          <circle
+                            cx={x}
+                            cy={y}
+                            r="5"
+                            fill={
+                              palette[
+                                colorIndex %
+                                  palette.length
+                              ]
+                            }
+                            stroke="#0f172a"
+                            strokeWidth="2"
+                          />
+
+                          <text
+                            x={x}
+                            y={y - 10}
+                            textAnchor="middle"
+                            fontSize="10"
+                            fill="#e2e8f0"
+                          >
+                            {value}
+                          </text>
+                        </g>
+                      );
+                    },
+                  )}
+                </g>
+              );
+            },
+          )}
+
+          {labels.map(
+            (
+              label,
+              index,
+            ) => {
+              const x =
+                left +
+                index *
+                  categoryWidth +
+                categoryWidth /
+                  2;
+
+              return (
+                <text
+                  key={`label-${index}`}
+                  x={x}
+                  y={
+                    height -
+                    bottom +
+                    27
+                  }
+                  textAnchor="middle"
+                  fontSize="11"
+                  fill="#cbd5e1"
+                >
+                  {
+                    label.length > 14
+                      ? `${label.slice(
+                          0,
+                          12,
+                        )}…`
+                      : label
+                  }
+                </text>
+              );
+            },
+          )}
+
+          {visual.xLabel && (
+            <text
+              x={
+                left +
+                plotWidth / 2
+              }
+              y={height - 15}
+              textAnchor="middle"
+              fontSize="12"
+              fontWeight="700"
+              fill="#67e8f9"
+            >
+              {visual.xLabel}
+            </text>
+          )}
+
+          {visual.yLabel && (
+            <text
+              x="18"
+              y={
+                top +
+                plotHeight / 2
+              }
+              textAnchor="middle"
+              fontSize="12"
+              fontWeight="700"
+              fill="#67e8f9"
+              transform={`rotate(-90 18 ${
+                top +
+                plotHeight / 2
+              })`}
+            >
+              {visual.yLabel}
+            </text>
+          )}
+        </svg>
+      </div>
+
+      <div className="mt-4 flex flex-wrap justify-center gap-3">
+        {series.map(
+          (
+            item,
+            index,
+          ) => (
+            <span
+              key={`${item.name}-${index}`}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-200"
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor:
+                    palette[
+                      index %
+                        palette.length
+                    ],
+                }}
+              />
+
+              {item.name}
+            </span>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
 function QuizGame({
   draft,
   questions,
@@ -2279,6 +3235,8 @@ function QuizGame({
 
         question: question.question,
 
+        visual: question.visual,
+
         options: question.options,
 
         selectedAnswer: answer,
@@ -2470,6 +3428,14 @@ function QuizGame({
         <p className="text-sm font-black uppercase tracking-[0.2em] text-cyan-300">
           Choose your answer
         </p>
+
+        {currentQuestion.visual && (
+          <QuestionVisualPanel
+            visual={
+              currentQuestion.visual
+            }
+          />
+        )}
 
         <h2 className="mt-5 text-2xl font-bold leading-relaxed sm:text-3xl">
           {currentQuestion.question}
@@ -2690,6 +3656,14 @@ function ResultScreen({
                 </span>
               </div>
             </div>
+
+            {attempt.visual && (
+              <QuestionVisualPanel
+                visual={
+                  attempt.visual
+                }
+              />
+            )}
 
             <h3 className="mt-5 text-xl font-bold leading-relaxed text-white sm:text-2xl">
               {attempt.question}

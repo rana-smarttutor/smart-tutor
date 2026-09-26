@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -455,6 +455,7 @@ const sidebarByRole = {
     { id: "enquiries", label: "Enquiries" },
     { id: "password-reset-requests", label: "Password Reset Requests" },
     { id: "biometric", label: "Biometric" },
+    { id: "attendance", label: "Attendance Management" },
     { id: "leave", label: "Leave" },
     { id: "doubt-box", label: "Doubt Box" },
     { id: "courses", label: "Courses" },
@@ -2731,3 +2732,5 @@ export function DashboardShell({
     </div>
   );
 }
+
+

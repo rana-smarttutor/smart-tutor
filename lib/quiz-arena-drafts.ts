@@ -49,6 +49,8 @@ export type QuizArenaDraft = {
 
   subject: string;
 
+  topicId?: string | null;
+
   progressionLevel: QuizJourneyLevel;
 
   round: QuizRound;
