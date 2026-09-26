@@ -10,6 +10,21 @@ import {
 import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
 
 import {
+  getGovernmentExamSyllabus,
+  isValidGovernmentExamTopic,
+} from "@/lib/government-exam-topics";
+
+import {
+  getCompetitiveExamSyllabus,
+  isValidCompetitiveExamTopic,
+} from "@/lib/competitive-exam-topics";
+
+import {
+  getMbaExamSyllabus,
+  isValidMbaExamTopic,
+} from "@/lib/mba-exam-topics";
+
+import {
   getQuizArenaProgress,
   saveQuizArenaRoundProgress,
 } from "@/lib/data-store";
@@ -209,6 +224,9 @@ export async function GET(
         .get("subject")
         ?.trim();
 
+    const topicId =
+      searchParams.get("topicId")?.trim() || null;
+
     const difficulty =
       searchParams.get("difficulty");
 
@@ -291,6 +309,102 @@ export async function GET(
       );
     }
 
+    const requiresGovernmentTopic =
+      searchParams.get("source") ===
+        "mock-test" &&
+      learningCategory ===
+        "government-exam" &&
+      Boolean(
+        getGovernmentExamSyllabus(
+          exam,
+        ),
+      );
+
+    const requiresCompetitiveTopic =
+      searchParams.get("source") ===
+        "mock-test" &&
+      learningCategory ===
+        "competitive-exam" &&
+      Boolean(
+        getCompetitiveExamSyllabus(
+          exam,
+        ),
+      );
+
+    const requiresMbaTopic =
+      searchParams.get("source") ===
+        "mock-test" &&
+      learningCategory ===
+        "mba-entrance" &&
+      Boolean(
+        getMbaExamSyllabus(
+          exam,
+        ),
+      );
+
+    const requiresTopic =
+      requiresGovernmentTopic ||
+      requiresCompetitiveTopic ||
+      requiresMbaTopic;
+
+    const validTopic =
+      topicId !== null &&
+      (
+        (
+          requiresGovernmentTopic &&
+          isValidGovernmentExamTopic(
+            exam,
+            subject,
+            topicId,
+          )
+        ) ||
+        (
+          requiresCompetitiveTopic &&
+          isValidCompetitiveExamTopic(
+            exam,
+            subject,
+            topicId,
+          )
+        ) ||
+        (
+          requiresMbaTopic &&
+          isValidMbaExamTopic(
+            exam,
+            subject,
+            topicId,
+          )
+        )
+      );
+
+    if (
+      requiresTopic &&
+      !validTopic
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please select a valid Mock Test topic.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      !requiresTopic &&
+      topicId
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Topic selection is not available for this examination.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
     const progress =
       await getQuizArenaProgress({
         userId:
@@ -307,6 +421,8 @@ export async function GET(
           schoolContext.board,
 
         subject,
+
+        topicId,
 
         difficulty,
       });
@@ -371,6 +487,8 @@ export async function POST(
           QuizBoard | null;
 
         subject?: string;
+
+        topicId?: string | null;
 
         difficulty?: Difficulty;
 
@@ -460,6 +578,9 @@ export async function POST(
     const subject =
       body.subject?.trim();
 
+    const topicId =
+      body.topicId?.trim() || null;
+
     if (!subject) {
       return NextResponse.json(
         {
@@ -520,6 +641,115 @@ export async function POST(
       );
     }
 
+    const requiresGovernmentTopic =
+      body.source === "mock-test" &&
+      body.level ===
+        "government-exam" &&
+      Boolean(
+        getGovernmentExamSyllabus(
+          body.exam,
+        ),
+      );
+
+    const requiresCompetitiveTopic =
+      body.source === "mock-test" &&
+      body.level ===
+        "competitive-exam" &&
+      Boolean(
+        getCompetitiveExamSyllabus(
+          body.exam,
+        ),
+      );
+
+    const requiresMbaTopic =
+      body.source === "mock-test" &&
+      body.level ===
+        "mba-entrance" &&
+      Boolean(
+        getMbaExamSyllabus(
+          body.exam,
+        ),
+      );
+
+    const requiresTopic =
+      requiresGovernmentTopic ||
+      requiresCompetitiveTopic ||
+      requiresMbaTopic;
+
+    const validTopic =
+      topicId !== null &&
+      (
+        (
+          requiresGovernmentTopic &&
+          isValidGovernmentExamTopic(
+            body.exam,
+            subject,
+            topicId,
+          )
+        ) ||
+        (
+          requiresCompetitiveTopic &&
+          isValidCompetitiveExamTopic(
+            body.exam,
+            subject,
+            topicId,
+          )
+        ) ||
+        (
+          requiresMbaTopic &&
+          isValidMbaExamTopic(
+            body.exam,
+            subject,
+            topicId,
+          )
+        )
+      );
+
+    if (
+      requiresTopic &&
+      !validTopic
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please select a valid Mock Test topic.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      !requiresTopic &&
+      topicId
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Topic selection is not available for this examination.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+    if (requiresTopic) {
+      const draft = await getActiveQuizArenaDraft(session.id);
+      if (
+        !draft || draft.source !== "mock-test" ||
+        draft.level !== body.level || draft.exam !== body.exam ||
+        draft.subject !== subject || (draft.topicId ?? null) !== topicId ||
+        draft.progressionLevel !== body.progressionLevel ||
+        draft.round !== body.round
+      ) {
+        return NextResponse.json(
+          { error: "The topic progress does not match the active saved mock test." },
+          { status: 409 },
+        );
+      }
+    }
+
     const progress =
       await saveQuizArenaRoundProgress({
         userId:
@@ -538,6 +768,8 @@ export async function POST(
           schoolContext.board,
 
         subject,
+
+        topicId,
 
         difficulty:
           body.difficulty,

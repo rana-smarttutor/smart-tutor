@@ -1,4 +1,4 @@
-export type EducationLevel =
+﻿export type EducationLevel =
   | "school-junior-college"
   | "competitive-exam"
   | "government-exam"

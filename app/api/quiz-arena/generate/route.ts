@@ -1,4 +1,5 @@
-import { randomUUID } from "crypto";
+import { randomUUID, randomInt } from "crypto";
+import type { Document } from "mongodb";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 
@@ -16,7 +17,30 @@ import {
   type QuizRound,
     type QuizSchoolClass,type Stream,
 } from "@/lib/quiz-arena-config";
-import type { QuizQuestion } from "@/lib/quiz-arena-questions";
+import type {
+  QuizQuestion,
+  QuizQuestionVisual,
+  QuizVisualType,
+} from "@/lib/quiz-arena-questions";
+import { getGovernmentExamSyllabus, isValidGovernmentExamTopic } from "@/lib/government-exam-topics";
+import {
+  getCompetitiveExamSyllabus,
+  getCompetitiveExamTopics,
+  isValidCompetitiveExamTopic,
+} from "@/lib/competitive-exam-topics";
+
+import {
+  getMbaExamSyllabus,
+  getMbaExamTopics,
+  isValidMbaExamTopic,
+} from "@/lib/mba-exam-topics";
+import {
+  createGovernmentQuestionFingerprint,
+  ensureGovernmentQuestionBankIndexes,
+  getGovernmentTopicQuestions,
+  type GovernmentQuestion,
+} from "@/lib/government-question-bank";
+import { COLLECTIONS, getCollection } from "@/lib/data-store";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 import { getQuizBoardSyllabus } from "@/lib/quiz-board-syllabus";
 import {
@@ -31,6 +55,8 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// On-demand generation can require multiple Gemini calls; actual hosting limits still apply.
+export const maxDuration = 300;
 
 type GenerateQuizRequest = {
   source?: "quiz-arena" | "mock-test";
@@ -42,15 +68,177 @@ type GenerateQuizRequest = {
   difficulty?: Difficulty;
   progressionLevel?: QuizJourneyLevel;
   round?: QuizRound;
+  topicId?: string | null;
 };
 
 type GeneratedQuestion = {
   syllabusUnit?: string;
+
   question: string;
+
+  /*
+   * Gemini returns visual data as a JSON-encoded string.
+   *
+   * We parse it into `visual` after receiving the response.
+   * This keeps Gemini's structured-output schema shallow.
+   */
+  visualJson?: string;
+
+  visual?: QuizQuestionVisual;
+
   options: string[];
+
   correctAnswer: string;
+
   explanation: string;
 };
+
+function getRequiredVisualType(
+  topicTitle: string | null | undefined,
+): QuizVisualType | null {
+  const topic =
+    (topicTitle ?? "")
+      .trim()
+      .toLowerCase();
+
+  if (!topic) {
+    return null;
+  }
+
+  if (
+    topic.includes("bar graph") ||
+    topic.includes("bar chart")
+  ) {
+    return "bar-chart";
+  }
+
+  if (
+    topic.includes("line graph") ||
+    topic.includes("line chart")
+  ) {
+    return "line-chart";
+  }
+
+  if (
+    topic.includes("pie chart") ||
+    topic.includes("pie graph")
+  ) {
+    return "pie-chart";
+  }
+
+  if (
+    topic.includes("mixed graph") ||
+    topic.includes("mixed chart") ||
+    topic.includes("graphics interpretation")
+  ) {
+    return "mixed-chart";
+  }
+
+  if (
+    topic === "tables" ||
+    topic.includes("table analysis") ||
+    topic.includes("data table")
+  ) {
+    return "table";
+  }
+
+  return null;
+}
+
+function isValidQuizVisual(
+  value: unknown,
+): value is QuizQuestionVisual {
+  if (
+    !value ||
+    typeof value !== "object"
+  ) {
+    return false;
+  }
+
+  const visual =
+    value as Partial<QuizQuestionVisual>;
+
+  const validTypes: QuizVisualType[] = [
+    "bar-chart",
+    "line-chart",
+    "pie-chart",
+    "table",
+    "mixed-chart",
+  ];
+
+  if (
+    !visual.type ||
+    !validTypes.includes(visual.type)
+  ) {
+    return false;
+  }
+
+  if (
+    typeof visual.title !== "string" ||
+    visual.title.trim().length < 3
+  ) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(visual.labels) ||
+    visual.labels.length < 2 ||
+    visual.labels.length > 12 ||
+    visual.labels.some(
+      (label) =>
+        typeof label !== "string" ||
+        !label.trim(),
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !Array.isArray(visual.series) ||
+    visual.series.length < 1 ||
+    visual.series.length > 4
+  ) {
+    return false;
+  }
+
+  for (const series of visual.series) {
+
+    if (
+      !series ||
+      typeof series !== "object" ||
+      typeof series.name !== "string" ||
+      !series.name.trim() ||
+      !Array.isArray(series.values) ||
+      series.values.length !==
+        visual.labels.length ||
+      series.values.some(
+        (value) =>
+          typeof value !== "number" ||
+          !Number.isFinite(value),
+      )
+    ) {
+      return false;
+    }
+  }
+
+  if (visual.type === "pie-chart") {
+
+    if (
+      visual.series.length !== 1 ||
+      visual.series[0].values.some(
+        (value) => value < 0,
+      ) ||
+      visual.series[0].values.reduce(
+        (sum, value) => sum + value,
+        0,
+      ) <= 0
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
 
 type GeminiResponse = {
   candidates?: Array<{
@@ -172,6 +360,253 @@ function extractGeminiText(data: GeminiResponse): string | null {
   return text || null;
 }
 
+/*
+ * Topic-wise Government Mock Tests: generate only what the current round needs.
+ * The existing approved MongoDB bank is used first. This runs ONLY for a
+ * catalogued Government Exam topic; subject-wise, school and MBA flows are unchanged.
+ */
+const governmentLevelGuidance: Record<QuizJourneyLevel, string> = {
+  1: "Basic one-step recognition; easy calculations and definitions.",
+  2: "Core understanding and straightforward applications.",
+  3: "Applied basics and familiar exam-style contexts.",
+  4: "Intermediate multi-step questions.",
+  5: "Combined concepts and closer distractors.",
+  6: "Demanding applications with careful reasoning.",
+  7: "Exam-standard timed-practice reasoning.",
+  8: "Advanced multi-step and tricky but fair choices.",
+  9: "Expert problems requiring deeper analysis.",
+  10: "Most challenging appropriate exam-style problems.",
+};
+
+async function askGovernmentGemini(
+  apiKey: string,
+  prompt: string,
+  temperature: number,
+): Promise<unknown> {
+  const model = process.env.GEMINI_QUESTION_MODEL || "gemini-3.1-flash-lite";
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature,
+            responseMimeType: "application/json",
+            maxOutputTokens: 8192,
+          },
+        }),
+        signal: AbortSignal.timeout(55000),
+      });
+
+      if (!response.ok) {
+        // Transient service/quota failures should not publish unchecked content.
+        if ((response.status === 429 || response.status >= 500) && attempt < 3) {
+          await new Promise((resolve) => setTimeout(resolve, attempt * 1500));
+          continue;
+        }
+        throw new Error(`Gemini HTTP ${response.status}`);
+      }
+
+      const payload = (await response.json()) as GeminiResponse;
+      const text = extractGeminiText(payload);
+      if (!text) throw new Error("Gemini returned an empty response.");
+      return JSON.parse(text) as unknown;
+    } catch (error) {
+      if (
+        attempt < 3 &&
+        error instanceof Error &&
+        (error.name === "TimeoutError" || error.name === "AbortError")
+      ) {
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw new Error("Gemini could not complete the request.");
+}
+
+type GovernmentAIQuestion = {
+  question: string;
+  options: string[];
+  correctAnswer: string;
+  explanation: string;
+};
+
+function isValidGovernmentAIQuestion(value: unknown): value is GovernmentAIQuestion {
+  if (!value || typeof value !== "object") return false;
+  const q = value as Partial<GovernmentAIQuestion>;
+  return (
+    typeof q.question === "string" && q.question.trim().length >= 12 &&
+    Array.isArray(q.options) && q.options.length === 4 &&
+    q.options.every((option) => typeof option === "string" && option.trim().length > 0) &&
+    new Set(q.options.map((option) => option.trim().toLowerCase())).size === 4 &&
+    typeof q.correctAnswer === "string" && q.options.includes(q.correctAnswer) &&
+    typeof q.explanation === "string" && q.explanation.trim().length >= 15
+  );
+}
+
+async function fillGovernmentTopicBank(input: {
+  exam: CompetitiveExam;
+  subject: string;
+  topicId: string;
+  progressionLevel: QuizJourneyLevel;
+  previouslySeen: string[];
+}): Promise<number> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY is missing from the server environment.");
+
+  const syllabus = getGovernmentExamSyllabus(input.exam);
+  const topic = syllabus?.subjects
+    .find((entry) => entry.subject === input.subject)?.topics
+    .find((entry) => entry.id === input.topicId);
+  if (!syllabus || !topic) throw new Error("Invalid Government Exam topic.");
+
+  await ensureGovernmentQuestionBankIndexes();
+  const bank = await getCollection<Document & GovernmentQuestion>(
+    COLLECTIONS.governmentQuestionBank,
+  );
+  const topicScope = {
+    exam: input.exam,
+    subject: input.subject,
+    topicId: input.topicId,
+  };
+  const levelScope = { ...topicScope, progressionLevel: input.progressionLevel };
+  const maxPerLevel = 50;
+  const requiredForRound = QUIZ_QUESTIONS_PER_ROUND;
+  const seenHashes = new Set(input.previouslySeen.map(questionHash));
+  let inserted = 0;
+
+  // A student never has to wait for all 50 questions to be populated.
+  // Generate at most the currently missing questions, in small batches.
+  for (let batch = 0; batch < 6; batch += 1) {
+    const approved = await getGovernmentTopicQuestions(levelScope);
+    const unused = approved.filter((q) => !seenHashes.has(questionHash(q.question)));
+    if (unused.length >= requiredForRound || approved.length >= maxPerLevel) break;
+
+    const desired = Math.min(
+      5,
+      requiredForRound - unused.length,
+      maxPerLevel - approved.length,
+    );
+    if (desired <= 0) break;
+
+    const stored = await bank.find(topicScope, {
+      projection: { _id: 0, question: 1, fingerprint: 1 },
+    }).toArray();
+    const knownTexts: string[] = stored
+      .map((item) => item.question)
+      .filter((question): question is string => typeof question === "string");
+    const hashes = new Set(knownTexts.map(createGovernmentQuestionFingerprint));
+
+    const generationPrompt = `Generate EXACTLY ${desired} original multiple-choice questions for SmartIQ Institute.
+Exam: ${syllabus.title} (ID: ${input.exam}).
+Subject: ${input.subject}. Topic: ${topic.title} (ID: ${input.topicId}).
+Difficulty: Level ${input.progressionLevel}/10. ${governmentLevelGuidance[input.progressionLevel]}
+STRICT SCOPE: Only this exam, subject, topic and difficulty. Exactly FOUR distinct options,
+exactly ONE correct answer matching an option verbatim, and a clear accurate explanation.
+Solve quantitative questions BEFORE writing answer choices; avoid ambiguous questions.
+For current affairs or changing facts, use stable knowledge rather than unsupported live claims.
+This is AI-generated practice, never claim to be an official or previous-year exam question.
+Avoid repeated or close-paraphrased questions, including these bank/user examples:
+${[...knownTexts.slice(-30), ...input.previouslySeen.slice(-15)].join("\n") || "None"}
+Return JSON ONLY: {"questions":[{"question":"...","options":["...","...","...","..."],"correctAnswer":"exact option text","explanation":"..."}]}`;
+
+    try {
+      const generated = await askGovernmentGemini(apiKey, generationPrompt, 0.85) as {
+        questions?: unknown;
+      };
+      if (!Array.isArray(generated?.questions) ||
+          generated.questions.length !== desired) {
+        throw new Error("Generator did not return the requested number of questions.");
+      }
+
+      const candidates: GovernmentAIQuestion[] = [];
+      for (const candidate of generated.questions) {
+        if (!isValidGovernmentAIQuestion(candidate)) continue;
+        const fingerprint = createGovernmentQuestionFingerprint(candidate.question);
+        if (hashes.has(fingerprint)) continue;
+        if (seenHashes.has(questionHash(candidate.question))) continue;
+        if (findLikelyRepeatedQuizQuestion(
+          candidate.question,
+          [...knownTexts, ...input.previouslySeen, ...candidates.map((q) => q.question)],
+        )) continue;
+        hashes.add(fingerprint);
+        candidates.push(candidate);
+      }
+      if (candidates.length === 0) continue;
+
+      // Separate independent AI pass. Never store rejected or uncertain answers.
+      const reviewPrompt = `Independently solve and review EACH MCQ from scratch.
+Exam ${syllabus.title}; subject ${input.subject}; topic ${topic.title}; level ${input.progressionLevel}/10.
+Reject inaccurate answers, faulty explanations, off-topic questions, multiple correct
+choices, inappropriate difficulty, ambiguous wording and uncertain factual claims.
+Return one result per index. Input: ${JSON.stringify(candidates.map((q, i) => ({ index: i, ...q })))}
+Return JSON ONLY: {"checks":[{"index":0,"pass":true,"reason":"short mathematical or factual justification"}]}`;
+      const reviewed = await askGovernmentGemini(apiKey, reviewPrompt, 0.1) as {
+        checks?: Array<{ index?: unknown; pass?: unknown; reason?: unknown }>;
+      };
+      if (!Array.isArray(reviewed?.checks) ||
+          reviewed.checks.length !== candidates.length) {
+        throw new Error("Independent review returned an incomplete response.");
+      }
+      const checks = new Map(reviewed.checks.map((check) => [check.index, check]));
+      if (checks.size !== candidates.length) {
+        throw new Error("Independent review returned duplicate indexes.");
+      }
+
+      for (const [index, question] of candidates.entries()) {
+        const check = checks.get(index);
+        if (!check || check.pass !== true ||
+            typeof check.reason !== "string" || check.reason.trim().length < 6) {
+          continue;
+        }
+        // Preserve the existing 50-per-level bank restriction.
+        const count = await bank.countDocuments({ ...levelScope, status: "approved" });
+        if (count >= maxPerLevel) break;
+        const now = new Date().toISOString();
+        const document: GovernmentQuestion = {
+          id: `government-question-${randomUUID()}`,
+          ...levelScope,
+          topicName: topic.title,
+          question: question.question.trim(),
+          options: question.options.map((option) => option.trim()),
+          correctAnswer: question.correctAnswer.trim(),
+          explanation: question.explanation.trim(),
+          fingerprint: createGovernmentQuestionFingerprint(question.question),
+          status: "approved",
+          source: "gemini",
+          syllabusYear: syllabus.syllabusYear,
+          createdAt: now,
+          updatedAt: now,
+          reviewedAt: now,
+          reviewedBy: "automated-gemini-check-NOT-human-verified",
+        };
+        try {
+          await bank.insertOne(document);
+          inserted += 1;
+        } catch (error) {
+          // Another student's request may have created the same question.
+          if (!(error && typeof error === "object" && "code" in error &&
+                error.code === 11000)) throw error;
+        }
+      }
+    } catch (error) {
+      // Malformed JSON and temporary Gemini errors must not poison the bank.
+      console.warn("Government round AI batch failed:", error);
+    }
+  }
+  return inserted;
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getSessionUser();
@@ -187,18 +622,6 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
-    const apiKey = process.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return NextResponse.json(
-        {
-          error:
-            "GEMINI_API_KEY is missing. Add it in .env or .env.local and restart the server.",
-        },
-        { status: 500 },
-      );
-    }
-
     const body = (await request.json()) as GenerateQuizRequest;
 
     if (session.role === "admin" && body.source !== "mock-test") {
@@ -325,6 +748,260 @@ export async function POST(request: Request) {
       );
     }
 
+    // Government Mock Tests: use approved bank questions first, generate missing
+    // questions on demand using the SAME Gemini flow and an independent AI review.
+    // All other categories retain the original subject-wise generation below.
+    const requiresGovernmentTopic =
+      body.source === "mock-test" &&
+      level === "government-exam" &&
+      Boolean(getGovernmentExamSyllabus(exam));
+
+    const requiresCompetitiveTopic =
+      body.source === "mock-test" &&
+      level === "competitive-exam" &&
+      Boolean(getCompetitiveExamSyllabus(exam));
+
+    const requiresMbaTopic =
+      body.source === "mock-test" &&
+      level === "mba-entrance" &&
+      Boolean(getMbaExamSyllabus(exam));
+
+    const topicId =
+      typeof body.topicId === "string"
+        ? body.topicId.trim()
+        : "";
+
+    if (
+      requiresCompetitiveTopic &&
+      (
+        !topicId ||
+        !isValidCompetitiveExamTopic(
+          exam,
+          subject,
+          topicId,
+        )
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please select a valid Competitive Exam topic.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      requiresMbaTopic &&
+      (
+        !topicId ||
+        !isValidMbaExamTopic(
+          exam,
+          subject,
+          topicId,
+        )
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please select a valid MBA Entrance topic.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (requiresGovernmentTopic) {
+      if (!topicId || !isValidGovernmentExamTopic(exam, subject, topicId)) {
+        return NextResponse.json(
+          { error: "Please select a valid Government Exam topic." },
+          { status: 400 },
+        );
+      }
+
+      const previouslySeen = await getPreviouslySeenQuizQuestions(session.id);
+      const seen = new Set(previouslySeen.map(questionHash));
+      let bankQuestions = await getGovernmentTopicQuestions({
+        exam,
+        subject,
+        topicId,
+        progressionLevel,
+      });
+      let unused = bankQuestions.filter((q) => !seen.has(questionHash(q.question)));
+      let newlyGenerated = 0;
+
+      if (unused.length < QUIZ_QUESTIONS_PER_ROUND && bankQuestions.length < 50) {
+        try {
+          newlyGenerated = await fillGovernmentTopicBank({
+            exam,
+            subject,
+            topicId,
+            progressionLevel,
+            previouslySeen,
+          });
+        } catch (error) {
+          console.error("Government Mock Test on-demand generation failed:", error);
+          return NextResponse.json(
+            { error: "Could not generate this topic round. Check the server Gemini key and try again." },
+            { status: 503 },
+          );
+        }
+        bankQuestions = await getGovernmentTopicQuestions({
+          exam,
+          subject,
+          topicId,
+          progressionLevel,
+        });
+        unused = bankQuestions.filter((q) => !seen.has(questionHash(q.question)));
+      }
+
+      if (unused.length < QUIZ_QUESTIONS_PER_ROUND) {
+        const bankFull = bankQuestions.length >= 50;
+        return NextResponse.json(
+          {
+            error: bankFull
+              ? "This level's 50-question bank has no full unused round left for your account. Your five rounds may already be completed."
+              : `Only ${unused.length} unused questions are available so far. AI could not complete this round; please try again.`,
+          },
+          { status: bankFull ? 409 : 503 },
+        );
+      }
+
+      for (let i = unused.length - 1; i > 0; i -= 1) {
+        const j = randomInt(i + 1);
+        [unused[i], unused[j]] = [unused[j], unused[i]];
+      }
+      const picked = unused.slice(0, QUIZ_QUESTIONS_PER_ROUND);
+      const questions: QuizQuestion[] = picked.map((question) => ({
+        id: question.id,
+        level,
+        stream: selectedExamDetails.stream,
+        exam,
+        subject,
+        topicId,
+        difficulty,
+        progressionLevel,
+        round,
+        question: question.question,
+        options: question.options,
+        correctAnswer: question.correctAnswer,
+        explanation: question.explanation,
+      }));
+      const reserved = await reserveQuizQuestions(
+        session.id,
+        questions.map((question) => question.question),
+      );
+      if (!reserved) {
+        return NextResponse.json(
+          { error: "Another request already selected these questions. Please start the round again." },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({
+        questions,
+        generatedByAI: newlyGenerated > 0,
+        provider: newlyGenerated > 0
+          ? "gemini-verified-government-question-bank"
+          : "approved-government-question-bank",
+      });
+    }
+
+    if (
+      topicId &&
+      !requiresCompetitiveTopic &&
+      !requiresMbaTopic
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Topic selection is not supported in this quiz.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const competitiveTopic =
+      requiresCompetitiveTopic
+        ? getCompetitiveExamTopics(
+            exam,
+            subject,
+          ).find(
+            (topic) =>
+              topic.id === topicId,
+          ) ?? null
+        : null;
+
+    const mbaTopic =
+      requiresMbaTopic
+        ? getMbaExamTopics(
+            exam,
+            subject,
+          ).find(
+            (topic) =>
+              topic.id === topicId,
+          ) ?? null
+        : null;
+
+    if (
+      requiresCompetitiveTopic &&
+      !competitiveTopic
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "The selected Competitive Exam topic is not configured.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (
+      requiresMbaTopic &&
+      !mbaTopic
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "The selected MBA Entrance topic is not configured.",
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    const selectedPracticeTopic =
+      competitiveTopic ??
+      mbaTopic;
+
+    /*
+     * Some entrance-exam topics make no sense without
+     * the actual chart/table.
+     *
+     * Example:
+     * CAT -> DILR -> Bar Graphs
+     */
+    const requiredVisualType =
+      getRequiredVisualType(
+        selectedPracticeTopic?.title,
+      );
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY is missing. Add it in .env or .env.local and restart the server." },
+        { status: 500 },
+      );
+    }
+
     // Board syllabi are enforced only for school courses in classes 9-12.
     // Missing catalog entries fail closed, never silently switch board or class.
     const syllabus = normalizedBoard && normalizedSchoolClass
@@ -366,7 +1043,15 @@ Selected board: ${normalizedBoard ?? "Not applicable"}
 Selected stream: ${selectedExamDetails.stream}
 Student category: ${studentCategory}
 Subject: ${subject}
+Selected topic: ${selectedPracticeTopic ? `${selectedPracticeTopic.title} (ID: ${topicId})` : "Not applicable"}
 Difficulty: ${difficulty}
+
+Visual requirement:
+${
+  requiredVisualType
+    ? `MANDATORY. Every question in this round MUST contain a visual object of type "${requiredVisualType}". The student must need to READ the displayed chart/table to answer the question. Never ask generic theory questions such as "What does the height of a bar represent?"`
+    : "No mandatory chart/table for this selected topic."
+}
 
 ${syllabus ? `CURRICULUM RESTRICTIONS (school board course):
 Academic year: ${syllabus.academicYear}
@@ -398,6 +1083,17 @@ do not claim source verification or invent official chapter names.
 Strict rules:
 - Generate exactly ${questionCount} unique questions.
 - Every question must match the selected course/exam and subject.
+- If a Competitive Exam or MBA Entrance topic is selected, EVERY question must stay strictly inside that exact selected topic. Do not drift into another chapter, skill, paper or subject.
+- When Visual requirement is MANDATORY, EVERY generated question must include visualJson.
+- visualJson MUST be a valid JSON-encoded string representing this object shape:
+  {"type":"bar-chart | line-chart | pie-chart | table | mixed-chart","title":"...","xLabel":"...","yLabel":"...","labels":["..."],"series":[{"name":"...","values":[1,2,3]}]}
+- Do not put markdown around visualJson.
+- labels and every series.values array must have exactly the same length.
+- A mandatory visual question MUST require the learner to inspect and calculate/read from the chart or table.
+- Never replace a mandatory chart question with a definition or theory question about charts.
+- The numerical data inside visual.labels and visual.series must contain everything needed to answer the question.
+- The correctAnswer and explanation must be mathematically consistent with the displayed visual data.
+- Give every chart a clear title, meaningful labels, and series names.
 - For a school-board question, syllabusUnit must be selected verbatim from the permitted curriculum units. For other examinations, use syllabusUnit = "Not applicable".
 - Every question must have exactly 4 distinct options.
 - Exactly one option must be correct.
@@ -443,7 +1139,12 @@ Strict rules:
           ],
           generationConfig: {
             temperature: 0.9,
-            maxOutputTokens: difficulty === "hard" ? 8192 : 5000,
+            maxOutputTokens:
+              requiredVisualType
+                ? 8192
+                : difficulty === "hard"
+                  ? 8192
+                  : 5000,
             responseMimeType: "application/json",
             responseSchema: {
               type: "OBJECT",
@@ -459,9 +1160,15 @@ Strict rules:
                         type: "STRING",
                         description: "Exact selected curriculum unit for school courses; Not applicable for other exams.",
                       },
+                      visualJson: {
+                        type: "STRING",
+                        description:
+                          "For mandatory visual questions, return the chart/table as a JSON-encoded string. The encoded object must contain type, title, labels and series. Example: {\"type\":\"bar-chart\",\"title\":\"Annual Sales\",\"xLabel\":\"Year\",\"yLabel\":\"Sales\",\"labels\":[\"2022\",\"2023\"],\"series\":[{\"name\":\"Sales\",\"values\":[120,160]}]}. For non-visual questions use an empty string.",
+                      },
                       question: {
                         type: "STRING",
-                        description: "The quiz question.",
+                        description:
+                          "Question the learner answers. For mandatory visual topics this must require reading the visual.",
                       },
                       options: {
                         type: "ARRAY",
@@ -562,6 +1269,29 @@ Strict rules:
       continue;
     }
 
+    /*
+     * Decode chart/table data after Gemini returns.
+     *
+     * Keeping this outside responseSchema avoids sending Gemini
+     * a deeply nested structured-output schema.
+     */
+    for (const question of parsed.questions) {
+      if (
+        typeof question.visualJson === "string" &&
+        question.visualJson.trim()
+      ) {
+        try {
+          question.visual =
+            JSON.parse(
+              question.visualJson,
+            ) as QuizQuestionVisual;
+        } catch {
+          question.visual =
+            undefined;
+        }
+      }
+    }
+
     const invalidQuestion = parsed.questions.some((question) => {
       const uniqueOptions = new Set(Array.isArray(question.options) ? question.options : []);
 
@@ -573,7 +1303,20 @@ Strict rules:
         uniqueOptions.size !== 4 ||
         !question.correctAnswer ||
         !question.options.includes(question.correctAnswer) ||
-        !question.explanation
+        !question.explanation ||
+        (
+          requiredVisualType
+            ? (
+                !question.visual ||
+                question.visual.type !== requiredVisualType ||
+                !isValidQuizVisual(question.visual)
+              )
+            : (
+                question.visual
+                  ? !isValidQuizVisual(question.visual)
+                  : false
+              )
+        )
       );
     });
 
@@ -589,9 +1332,22 @@ Strict rules:
         stream: selectedExamDetails.stream,
         exam,
         subject,
+        ...(selectedPracticeTopic
+          ? {
+              topicId,
+            }
+          : {}),
+
         difficulty,
         progressionLevel,
         round,
+
+        ...(question.visual
+          ? {
+              visual: question.visual,
+            }
+          : {}),
+
         question: question.question,
         ...(syllabus ? {
           syllabusUnit: question.syllabusUnit,
@@ -624,6 +1380,153 @@ Strict rules:
     if (resemblesSeen) {
       continue;
     }
+
+    /*
+     * Competitive Mock Test review.
+     *
+     * Questions are still generated ON DEMAND.
+     * We do not pre-generate a 500-question Competitive bank.
+     *
+     * A separate Gemini call checks:
+     *
+     * - answer correctness
+     * - ambiguity
+     * - selected topic scope
+     * - exam suitability
+     */
+
+    if (selectedPracticeTopic) {
+      try {
+        const reviewed =
+          await askGovernmentGemini(
+            apiKey,
+
+            `Independently solve and review EACH MCQ from scratch.
+
+Exam: ${selectedExamDetails.title}
+Subject: ${subject}
+Topic: ${selectedPracticeTopic.title}
+
+Progression Level:
+${progressionLevel}/10
+
+Round:
+${round}/5
+
+Reject a question if ANY of these apply:
+
+- incorrect answer
+- ambiguous wording
+- more than one correct option
+- no correct option
+- incorrect explanation
+- outside the exact selected topic
+- outside the selected subject
+- unsuitable for the selected exam
+- unsuitable for the selected progression level
+- required chart/table is missing
+- question does not actually require reading the visual
+- displayed chart/table data does not support the claimed correct answer
+- visual labels, values or series are internally inconsistent
+
+Required visual type:
+${requiredVisualType ?? "none"}
+
+Questions:
+
+${JSON.stringify(
+  questions.map(
+    (question, index) => ({
+      index,
+
+      visual:
+        question.visual ?? null,
+
+      question:
+        question.question,
+
+      options:
+        question.options,
+
+      correctAnswer:
+        question.correctAnswer,
+
+      explanation:
+        question.explanation,
+    }),
+  ),
+)}
+
+Return JSON ONLY:
+
+{
+  "checks": [
+    {
+      "index": 0,
+      "pass": true,
+      "reason": "short factual or mathematical justification"
+    }
+  ]
+}`,
+
+            0.1,
+          ) as {
+            checks?: Array<{
+              index?: unknown;
+              pass?: unknown;
+              reason?: unknown;
+            }>;
+          };
+
+        const checks =
+          reviewed.checks;
+
+        if (
+          !Array.isArray(checks) ||
+          checks.length !==
+            questions.length ||
+          new Set(
+            checks.map(
+              (check) =>
+                check.index,
+            ),
+          ).size !==
+            questions.length ||
+          checks.some(
+            (
+              check,
+              index,
+            ) =>
+              check.index !==
+                index ||
+              check.pass !==
+                true ||
+              typeof check.reason !==
+                "string" ||
+              check.reason
+                .trim()
+                .length < 6,
+          )
+        ) {
+          academicAuditRejected =
+            true;
+
+          continue;
+        }
+      }
+      catch (error) {
+        console.warn(
+          "Topic-wise entrance exam independent review failed:",
+          error,
+        );
+
+        academicAuditRejected =
+          true;
+
+        continue;
+      }
+    }
+
 
     // Stage 3: a separate academic review screens the COMPLETE board round.
     // This is AI-assisted screening, not certification against official PDFs.

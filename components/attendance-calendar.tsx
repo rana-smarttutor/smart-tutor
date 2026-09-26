@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ManagedUser, Role, StaffAttendanceRecord, StaffAttendanceStatus, RegularisationRequest } from "@/lib/types";
@@ -212,7 +212,7 @@ export function AttendanceCalendar({ role, managedUsers, userId }: Props) {
   }
 
   const staffOptions = useMemo(
-    () => managedUsers.filter((u) => u.role === "educator" || u.role === "admin" || u.role === "counsellor"),
+    () => managedUsers.filter((u) => u.role === "educator" || u.role === "staff" || u.role === "admin" || u.role === "counsellor"),
     [managedUsers],
   );
 
@@ -533,7 +533,7 @@ export function AttendanceCalendar({ role, managedUsers, userId }: Props) {
                         {day.date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                       </div>
                       <div className="text-[11px] text-slate-400">
-                        {day.isWeekend ? "Weekend" : rec ? `${rec.checkIn || "—"} → ${rec.checkOut || "—"}` : "No record"}
+                        {day.isWeekend ? "Weekend" : rec ? `${rec.checkIn || "â€”"} â†’ ${rec.checkOut || "â€”"}` : "No record"}
                       </div>
                     </div>
                   </div>
@@ -572,7 +572,7 @@ export function AttendanceCalendar({ role, managedUsers, userId }: Props) {
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
               <h3 className="text-lg font-bold text-slate-900">Request Regularisation</h3>
-              <button type="button" onClick={() => setShowRegulariseModal(false)} className="text-slate-400 hover:text-slate-700">✕</button>
+              <button type="button" onClick={() => setShowRegulariseModal(false)} className="text-slate-400 hover:text-slate-700">âœ•</button>
             </div>
             <div className="space-y-4">
               <div>
@@ -642,3 +642,4 @@ export function AttendanceCalendar({ role, managedUsers, userId }: Props) {
     </div>
   );
 }
+

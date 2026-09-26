@@ -1,0 +1,1002 @@
+[
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "What is 10% of 180?",
+    "options": [
+      "17",
+      "18",
+      "16",
+      "15"
+    ],
+    "correctAnswer": "18",
+    "explanation": "10% of 180 = (10/100) × 180 = 18.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "What is 20% of 240?",
+    "options": [
+      "48",
+      "47",
+      "46",
+      "45"
+    ],
+    "correctAnswer": "48",
+    "explanation": "20% of 240 = (20/100) × 240 = 48.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "What is 25% of 320?",
+    "options": [
+      "80",
+      "77",
+      "79",
+      "78"
+    ],
+    "correctAnswer": "80",
+    "explanation": "25% of 320 = (25/100) × 320 = 80.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "What is 40% of 450?",
+    "options": [
+      "179",
+      "178",
+      "177",
+      "180"
+    ],
+    "correctAnswer": "180",
+    "explanation": "40% of 450 = (40/100) × 450 = 180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "What is 50% of 560?",
+    "options": [
+      "278",
+      "280",
+      "279",
+      "277"
+    ],
+    "correctAnswer": "280",
+    "explanation": "50% of 560 = (50/100) × 560 = 280.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "18 is 10% of which number?",
+    "options": [
+      "180",
+      "179",
+      "178",
+      "177"
+    ],
+    "correctAnswer": "180",
+    "explanation": "Whole = 18 × 100 ÷ 10 = 180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "32 is 20% of which number?",
+    "options": [
+      "159",
+      "158",
+      "157",
+      "160"
+    ],
+    "correctAnswer": "160",
+    "explanation": "Whole = 32 × 100 ÷ 20 = 160.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "45 is 25% of which number?",
+    "options": [
+      "177",
+      "178",
+      "179",
+      "180"
+    ],
+    "correctAnswer": "180",
+    "explanation": "Whole = 45 × 100 ÷ 25 = 180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "64 is 40% of which number?",
+    "options": [
+      "160",
+      "158",
+      "159",
+      "157"
+    ],
+    "correctAnswer": "160",
+    "explanation": "Whole = 64 × 100 ÷ 40 = 160.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "75 is 50% of which number?",
+    "options": [
+      "149",
+      "147",
+      "150",
+      "148"
+    ],
+    "correctAnswer": "150",
+    "explanation": "Whole = 75 × 100 ÷ 50 = 150.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity increases from 200 to 220. What is the percentage increase?",
+    "options": [
+      "8%",
+      "7%",
+      "10%",
+      "9%"
+    ],
+    "correctAnswer": "10%",
+    "explanation": "Percentage increase = (20 ÷ 200) × 100 = 10%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity increases from 250 to 300. What is the percentage increase?",
+    "options": [
+      "17%",
+      "19%",
+      "20%",
+      "18%"
+    ],
+    "correctAnswer": "20%",
+    "explanation": "Percentage increase = (50 ÷ 250) × 100 = 20%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity increases from 320 to 400. What is the percentage increase?",
+    "options": [
+      "23%",
+      "22%",
+      "25%",
+      "24%"
+    ],
+    "correctAnswer": "25%",
+    "explanation": "Percentage increase = (80 ÷ 320) × 100 = 25%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity increases from 450 to 540. What is the percentage increase?",
+    "options": [
+      "19%",
+      "17%",
+      "20%",
+      "18%"
+    ],
+    "correctAnswer": "20%",
+    "explanation": "Percentage increase = (90 ÷ 450) × 100 = 20%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity increases from 600 to 720. What is the percentage increase?",
+    "options": [
+      "18%",
+      "17%",
+      "20%",
+      "19%"
+    ],
+    "correctAnswer": "20%",
+    "explanation": "Percentage increase = (120 ÷ 600) × 100 = 20%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity decreases from 250 to 225. What is the percentage decrease?",
+    "options": [
+      "10%",
+      "8%",
+      "7%",
+      "9%"
+    ],
+    "correctAnswer": "10%",
+    "explanation": "Percentage decrease = (25 ÷ 250) × 100 = 10%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity decreases from 300 to 240. What is the percentage decrease?",
+    "options": [
+      "20%",
+      "18%",
+      "19%",
+      "17%"
+    ],
+    "correctAnswer": "20%",
+    "explanation": "Percentage decrease = (60 ÷ 300) × 100 = 20%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity decreases from 400 to 300. What is the percentage decrease?",
+    "options": [
+      "23%",
+      "24%",
+      "25%",
+      "22%"
+    ],
+    "correctAnswer": "25%",
+    "explanation": "Percentage decrease = (100 ÷ 400) × 100 = 25%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity decreases from 500 to 350. What is the percentage decrease?",
+    "options": [
+      "28%",
+      "30%",
+      "29%",
+      "27%"
+    ],
+    "correctAnswer": "30%",
+    "explanation": "Percentage decrease = (150 ÷ 500) × 100 = 30%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A quantity decreases from 800 to 600. What is the percentage decrease?",
+    "options": [
+      "23%",
+      "25%",
+      "24%",
+      "22%"
+    ],
+    "correctAnswer": "25%",
+    "explanation": "Percentage decrease = (200 ÷ 800) × 100 = 25%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "Express 1/4 as a percentage.",
+    "options": [
+      "24%",
+      "25%",
+      "23%",
+      "22%"
+    ],
+    "correctAnswer": "25%",
+    "explanation": "(1 ÷ 4) × 100 = 25%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "Express 2/5 as a percentage.",
+    "options": [
+      "40%",
+      "39%",
+      "38%",
+      "37%"
+    ],
+    "correctAnswer": "40%",
+    "explanation": "(2 ÷ 5) × 100 = 40%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "Express 3/4 as a percentage.",
+    "options": [
+      "72%",
+      "73%",
+      "74%",
+      "75%"
+    ],
+    "correctAnswer": "75%",
+    "explanation": "(3 ÷ 4) × 100 = 75%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "Express 4/5 as a percentage.",
+    "options": [
+      "79%",
+      "77%",
+      "80%",
+      "78%"
+    ],
+    "correctAnswer": "80%",
+    "explanation": "(4 ÷ 5) × 100 = 80%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "Express 5/4 as a percentage.",
+    "options": [
+      "124%",
+      "125%",
+      "122%",
+      "123%"
+    ],
+    "correctAnswer": "125%",
+    "explanation": "(5 ÷ 4) × 100 = 125%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "An item marked at ₹200 is sold at a discount of 10%. What is its selling price?",
+    "options": [
+      "₹180",
+      "₹177",
+      "₹179",
+      "₹178"
+    ],
+    "correctAnswer": "₹180",
+    "explanation": "Discount = 200 × 10/100 = 20; selling price = 200 − 20 = ₹180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "An item marked at ₹300 is sold at a discount of 20%. What is its selling price?",
+    "options": [
+      "₹240",
+      "₹239",
+      "₹237",
+      "₹238"
+    ],
+    "correctAnswer": "₹240",
+    "explanation": "Discount = 300 × 20/100 = 60; selling price = 300 − 60 = ₹240.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "An item marked at ₹400 is sold at a discount of 25%. What is its selling price?",
+    "options": [
+      "₹300",
+      "₹297",
+      "₹299",
+      "₹298"
+    ],
+    "correctAnswer": "₹300",
+    "explanation": "Discount = 400 × 25/100 = 100; selling price = 400 − 100 = ₹300.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "An item marked at ₹500 is sold at a discount of 40%. What is its selling price?",
+    "options": [
+      "₹298",
+      "₹300",
+      "₹297",
+      "₹299"
+    ],
+    "correctAnswer": "₹300",
+    "explanation": "Discount = 500 × 40/100 = 200; selling price = 500 − 200 = ₹300.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "An item marked at ₹800 is sold at a discount of 50%. What is its selling price?",
+    "options": [
+      "₹397",
+      "₹398",
+      "₹400",
+      "₹399"
+    ],
+    "correctAnswer": "₹400",
+    "explanation": "Discount = 800 × 50/100 = 400; selling price = 800 − 400 = ₹400.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A student scores 42 marks out of 60. What percentage of marks did the student score?",
+    "options": [
+      "67%",
+      "69%",
+      "68%",
+      "70%"
+    ],
+    "correctAnswer": "70%",
+    "explanation": "Percentage = (42 ÷ 60) × 100 = 70%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A student scores 56 marks out of 80. What percentage of marks did the student score?",
+    "options": [
+      "69%",
+      "68%",
+      "70%",
+      "67%"
+    ],
+    "correctAnswer": "70%",
+    "explanation": "Percentage = (56 ÷ 80) × 100 = 70%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A student scores 72 marks out of 90. What percentage of marks did the student score?",
+    "options": [
+      "79%",
+      "78%",
+      "80%",
+      "77%"
+    ],
+    "correctAnswer": "80%",
+    "explanation": "Percentage = (72 ÷ 90) × 100 = 80%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A student scores 84 marks out of 120. What percentage of marks did the student score?",
+    "options": [
+      "68%",
+      "69%",
+      "70%",
+      "67%"
+    ],
+    "correctAnswer": "70%",
+    "explanation": "Percentage = (84 ÷ 120) × 100 = 70%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A student scores 96 marks out of 160. What percentage of marks did the student score?",
+    "options": [
+      "59%",
+      "58%",
+      "57%",
+      "60%"
+    ],
+    "correctAnswer": "60%",
+    "explanation": "Percentage = (96 ÷ 160) × 100 = 60%.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "In a group of 180 people, 10% are absent. How many people are absent?",
+    "options": [
+      "18",
+      "17",
+      "16",
+      "15"
+    ],
+    "correctAnswer": "18",
+    "explanation": "Absent people = (10/100) × 180 = 18.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "In a group of 240 people, 20% are absent. How many people are absent?",
+    "options": [
+      "46",
+      "47",
+      "48",
+      "45"
+    ],
+    "correctAnswer": "48",
+    "explanation": "Absent people = (20/100) × 240 = 48.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "In a group of 320 people, 25% are absent. How many people are absent?",
+    "options": [
+      "79",
+      "80",
+      "77",
+      "78"
+    ],
+    "correctAnswer": "80",
+    "explanation": "Absent people = (25/100) × 320 = 80.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "In a group of 450 people, 40% are absent. How many people are absent?",
+    "options": [
+      "180",
+      "179",
+      "177",
+      "178"
+    ],
+    "correctAnswer": "180",
+    "explanation": "Absent people = (40/100) × 450 = 180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "In a group of 560 people, 50% are absent. How many people are absent?",
+    "options": [
+      "278",
+      "280",
+      "277",
+      "279"
+    ],
+    "correctAnswer": "280",
+    "explanation": "Absent people = (50/100) × 560 = 280.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A shop sold 18 notebooks, which is 10% of its total stock. How many notebooks were in the stock initially?",
+    "options": [
+      "180",
+      "179",
+      "178",
+      "177"
+    ],
+    "correctAnswer": "180",
+    "explanation": "Initial stock = 18 × 100 ÷ 10 = 180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A shop sold 32 notebooks, which is 20% of its total stock. How many notebooks were in the stock initially?",
+    "options": [
+      "160",
+      "159",
+      "157",
+      "158"
+    ],
+    "correctAnswer": "160",
+    "explanation": "Initial stock = 32 × 100 ÷ 20 = 160.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A shop sold 45 notebooks, which is 25% of its total stock. How many notebooks were in the stock initially?",
+    "options": [
+      "180",
+      "178",
+      "177",
+      "179"
+    ],
+    "correctAnswer": "180",
+    "explanation": "Initial stock = 45 × 100 ÷ 25 = 180.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A shop sold 64 notebooks, which is 40% of its total stock. How many notebooks were in the stock initially?",
+    "options": [
+      "159",
+      "157",
+      "160",
+      "158"
+    ],
+    "correctAnswer": "160",
+    "explanation": "Initial stock = 64 × 100 ÷ 40 = 160.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "A shop sold 75 notebooks, which is 50% of its total stock. How many notebooks were in the stock initially?",
+    "options": [
+      "148",
+      "149",
+      "147",
+      "150"
+    ],
+    "correctAnswer": "150",
+    "explanation": "Initial stock = 75 × 100 ÷ 50 = 150.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "The price of a service is ₹200. After a 10% increase, what is the new price?",
+    "options": [
+      "₹217",
+      "₹218",
+      "₹219",
+      "₹220"
+    ],
+    "correctAnswer": "₹220",
+    "explanation": "Increase = 200 × 10/100 = 20; new price = 200 + 20 = ₹220.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "The price of a service is ₹250. After a 20% increase, what is the new price?",
+    "options": [
+      "₹299",
+      "₹300",
+      "₹297",
+      "₹298"
+    ],
+    "correctAnswer": "₹300",
+    "explanation": "Increase = 250 × 20/100 = 50; new price = 250 + 50 = ₹300.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "The price of a service is ₹400. After a 25% increase, what is the new price?",
+    "options": [
+      "₹498",
+      "₹500",
+      "₹497",
+      "₹499"
+    ],
+    "correctAnswer": "₹500",
+    "explanation": "Increase = 400 × 25/100 = 100; new price = 400 + 100 = ₹500.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "The price of a service is ₹500. After a 40% increase, what is the new price?",
+    "options": [
+      "₹697",
+      "₹698",
+      "₹699",
+      "₹700"
+    ],
+    "correctAnswer": "₹700",
+    "explanation": "Increase = 500 × 40/100 = 200; new price = 500 + 200 = ₹700.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  },
+  {
+    "exam": "ssc-cgl",
+    "subject": "Quantitative Aptitude",
+    "topicId": "percentage",
+    "topicName": "Percentage",
+    "progressionLevel": 1,
+    "question": "The price of a service is ₹800. After a 50% increase, what is the new price?",
+    "options": [
+      "₹1198",
+      "₹1199",
+      "₹1200",
+      "₹1197"
+    ],
+    "correctAnswer": "₹1200",
+    "explanation": "Increase = 800 × 50/100 = 400; new price = 800 + 400 = ₹1200.",
+    "source": "import",
+    "syllabusYear": 2026,
+    "reviewApproved": false,
+    "reviewNotes": ""
+  }
+]
