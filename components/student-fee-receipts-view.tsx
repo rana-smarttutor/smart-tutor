@@ -549,7 +549,7 @@ export function StudentFeeReceiptsView({
         <div style="text-align:center;width:220px;">
           <img src="${escapeHtml(signatureUrl)}" alt="Founder Signature" style="display:block;width:180px;height:64px;margin:0 auto 6px;object-fit:contain;" />
           <div style="border-top:1.5px solid #334155;margin-top:4px;padding-top:6px;">
-            <div style="font-size:13px;font-weight:800;color:#1e293b;">Mr. Ravi Rana</div>
+            <div style="font-size:13px;font-weight:800;color:#1e293b;">Mr. Adv. Reena Kumari</div>
             <div style="font-size:11px;color:#64748b;margin-top:1px;">Director &amp; Founder</div>
             <div style="font-size:11px;color:#64748b;margin-top:1px;">SmartIQ Institute Pvt. Ltd.</div>
           </div>

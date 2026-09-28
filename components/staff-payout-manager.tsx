@@ -469,7 +469,7 @@ export function StaffPayoutManager({ role, session, managedUsers }: Props) {
         </div>
         <div class="signature">
           <img src="${escapeHtml(signatureUrl)}" alt="Founder Signature" style="display:block;width:180px;height:72px;margin:0 auto 4px;object-fit:contain;" />
-          <div class="line">Prof. Ravi Rana</div>
+          <div class="line">Prof. Adv. Reena Kumari</div>
           <div class="sub">Founder – SmartIQ Institute</div>
         </div>
       </div>

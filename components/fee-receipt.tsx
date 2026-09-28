@@ -274,11 +274,11 @@ export default function FeeReceipt() {
                     "'Brush Script MT', 'Caveat', 'Great Vibes', cursive",
                 }}
               >
-                Ravi Rana
+                Adv. Reena Kumari
               </div>
               <div className="w-48 border-t-[1.5px] border-slate-800 mb-1"></div>
               <div className="text-[14px] font-bold text-gray-900">
-                Mr. Ravi Rana
+                Mr. Adv. Reena Kumari
               </div>
               <div className="text-[12px] text-gray-700">
                 Director & Founder
