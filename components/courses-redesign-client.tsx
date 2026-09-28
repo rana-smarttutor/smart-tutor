@@ -9,6 +9,7 @@ import ToppersSection from "@/components/toppers-section";
 import SpotlightSection from "@/components/spotlight-section";
 import WhyChooseSmartTutors from "@/components/why-choose-smart-tutors";
 import CourseModal from "@/components/course-modal";
+import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
 import SmartTutorsAIChatbot from "@/components/SmartTutorsAIChatbot";
 import WhatsAppFAB from "@/components/whatsapp-fab";
 
@@ -1494,26 +1495,14 @@ export default function CoursesRedesignClient({
             </p>
 
             <div className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={() => {
-                  const fallbackCourse =
-                    coursesWithRequiredSkills.find(
-                      (course: CourseItem) =>
-                        course.standardKey === "class-6-additional",
-                    ) ??
-                    coursesWithRequiredSkills[0] ??
-                    null;
-
-                  if (fallbackCourse) {
-                    setSelectedCourse(fallbackCourse);
-                  }
-                }}
+              <ConsultationEnquiryButton
+                label="Book a Free Counseling Session"
+                requestType="consultation"
+                source="courses-page"
+                courseTitle={activeTab}
+                courseKey={activeTab.toLowerCase().replace(/\s+/g, "-")}
                 className="w-full cursor-pointer rounded bg-blue-600 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-blue-500 sm:w-auto"
-              >
-                Book a Free Counseling Session
-              </motion.button>
+              />
 
               <button
                 type="button"
