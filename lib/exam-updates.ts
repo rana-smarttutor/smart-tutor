@@ -112,15 +112,6 @@ const SOURCES: ExamSource[] = [
   },
 
   {
-    key: "ibps",
-    name: "IBPS Banking",
-    category: "Government Exams",
-    url: "https://www.ibps.in/",
-    allowedHosts: ["ibps.in", "ibpsreg.ibps.in"],
-    maxItems: 40,
-  },
-
-  {
     key: "mpsc",
     name: "MPSC",
     category: "Government Exams",
@@ -129,14 +120,35 @@ const SOURCES: ExamSource[] = [
     maxItems: 35,
   },
 
+  // =====================================================
+  // BANKING — COMMON EXAM AUTHORITY
+  // =====================================================
+
+  {
+    key: "ibps",
+    name: "IBPS Banking",
+    category: "Government Exams",
+    url: "https://www.ibps.in/",
+    allowedHosts: ["ibps.in", "ibpsreg.ibps.in", "ibpsonline.ibps.in"],
+    maxItems: 50,
+  },
+
+  // =====================================================
+  // STATE BANK OF INDIA
+  // =====================================================
+
   {
     key: "sbi-recruitment",
     name: "SBI Recruitment",
     category: "Government Exams",
     url: "https://sbi.co.in/web/careers/current-openings",
-    allowedHosts: ["sbi.co.in"],
-    maxItems: 30,
+    allowedHosts: ["sbi.co.in", "ibpsonline.ibps.in"],
+    maxItems: 40,
   },
+
+  // =====================================================
+  // RESERVE BANK OF INDIA
+  // =====================================================
 
   {
     key: "rbi-recruitment",
@@ -144,8 +156,232 @@ const SOURCES: ExamSource[] = [
     category: "Government Exams",
     url: "https://opportunities.rbi.org.in/Scripts/Vacancies.aspx",
     allowedHosts: ["rbi.org.in", "opportunities.rbi.org.in"],
-    maxItems: 30,
+    maxItems: 40,
   },
+
+  // =====================================================
+  // CANARA BANK
+  // =====================================================
+
+  {
+    key: "canara-bank",
+    name: "Canara Bank",
+    category: "Government Exams",
+    url: "https://www.canarabank.bank.in/pages/recruitment",
+    allowedHosts: [
+      "canarabank.bank.in",
+      "canarabank.com",
+      "ibpsonline.ibps.in",
+      "ibps.in",
+    ],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // BANK OF INDIA
+  // =====================================================
+
+  {
+    key: "bank-of-india",
+    name: "Bank of India",
+    category: "Government Exams",
+    url: "https://bankofindia.co.in/career",
+    allowedHosts: ["bankofindia.co.in", "ibpsonline.ibps.in", "ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // BANK OF BARODA
+  // =====================================================
+
+  {
+    key: "bank-of-baroda",
+    name: "Bank of Baroda",
+    category: "Government Exams",
+    url: "https://www.bankofbaroda.in/career/current-opportunities",
+    allowedHosts: [
+      "bankofbaroda.in",
+      "bankofbaroda.co.in",
+      "ibpsonline.ibps.in",
+      "ibps.in",
+    ],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // PUNJAB NATIONAL BANK
+  // =====================================================
+
+  {
+    key: "pnb",
+    name: "Punjab National Bank",
+    category: "Government Exams",
+    url: "https://www.pnbindia.in/recruitments.aspx",
+    allowedHosts: ["pnbindia.in", "ibpsonline.ibps.in", "ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // UNION BANK OF INDIA
+  // =====================================================
+
+  {
+    key: "union-bank",
+    name: "Union Bank of India",
+    category: "Government Exams",
+    url: "https://www.unionbankofindia.bank.in/en/common/recruitment",
+    allowedHosts: [
+      "unionbankofindia.bank.in",
+      "unionbankofindia.co.in",
+      "ibpsonline.ibps.in",
+      "ibps.in",
+    ],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // INDIAN BANK
+  // =====================================================
+
+  {
+    key: "indian-bank",
+    name: "Indian Bank",
+    category: "Government Exams",
+    url: "https://www.indianbank.in/career/",
+    allowedHosts: ["indianbank.in", "ibpsonline.ibps.in", "ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // CENTRAL BANK OF INDIA
+  // =====================================================
+
+  {
+    key: "central-bank-india",
+    name: "Central Bank of India",
+    category: "Government Exams",
+    url: "https://centralbank.bank.in/en/recruitments",
+    allowedHosts: [
+      "centralbank.bank.in",
+      "centralbankofindia.co.in",
+      "ibpsonline.ibps.in",
+      "ibps.in",
+    ],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // INDIAN OVERSEAS BANK
+  // =====================================================
+
+  {
+    key: "indian-overseas-bank",
+    name: "Indian Overseas Bank",
+    category: "Government Exams",
+    url: "https://www.iob.in/Careers",
+    allowedHosts: ["iob.in", "ibpsonline.ibps.in", "ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // UCO BANK
+  // =====================================================
+
+  {
+    key: "uco-bank",
+    name: "UCO Bank",
+    category: "Government Exams",
+    url: "https://www.uco.bank.in/web/guest/job-opportunities",
+    allowedHosts: [
+      "uco.bank.in",
+      "ucobank.com",
+      "ibpsonline.ibps.in",
+      "ibps.in",
+    ],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // BANK OF MAHARASHTRA
+  // =====================================================
+
+  {
+    key: "bank-of-maharashtra",
+    name: "Bank of Maharashtra",
+    category: "Government Exams",
+    url: "https://bankofmaharashtra.in/current-openings",
+    allowedHosts: ["bankofmaharashtra.in", "ibpsonline.ibps.in", "ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // PUNJAB & SIND BANK
+  // =====================================================
+
+  {
+    key: "punjab-sind-bank",
+    name: "Punjab & Sind Bank",
+    category: "Government Exams",
+    url: "https://punjabandsindbank.co.in/content/recuitment",
+    allowedHosts: ["punjabandsindbank.co.in", "ibpsonline.ibps.in", "ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // IDBI BANK
+  // =====================================================
+
+  {
+    key: "idbi-bank",
+    name: "IDBI Bank",
+    category: "Government Exams",
+    url: "https://www.idbi.bank.in/idbi-bank-careers-current-openings.aspx",
+    allowedHosts: ["idbi.bank.in", "idbibank.in", "ibpsonline.ibps.in"],
+    maxItems: 40,
+  },
+
+  // =====================================================
+  // NABARD
+  // =====================================================
+
+  {
+    key: "nabard",
+    name: "NABARD",
+    category: "Government Exams",
+    url: "https://www.nabard.org/careers-notices1.aspx?cid=693&id=26",
+    allowedHosts: ["nabard.org", "ibpsonline.ibps.in"],
+    maxItems: 45,
+  },
+
+  // =====================================================
+  // SIDBI
+  // =====================================================
+
+  {
+    key: "sidbi",
+    name: "SIDBI",
+    category: "Government Exams",
+    url: "https://www.sidbi.in/en/careers",
+    allowedHosts: ["sidbi.in"],
+    maxItems: 35,
+  },
+
+  // =====================================================
+  // EXIM BANK
+  // =====================================================
+
+  {
+    key: "exim-bank",
+    name: "EXIM Bank",
+    category: "Government Exams",
+    url: "https://www.eximbankindia.in/careers",
+    allowedHosts: ["eximbankindia.in"],
+    maxItems: 35,
+  },
+
+  // =====================================================
+  // RAILWAY
+  // =====================================================
 
   {
     key: "railway-rrb",
