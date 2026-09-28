@@ -1142,13 +1142,13 @@ export function InvoiceManager({
 <div class="signature">
   <img
     src="${escapeHtml(signatureUrl)}"
-    alt="Ravi Rana signature"
+    alt="Adv. Reena Kumari signature"
   />
 
   <div class="signature-rule"></div>
 
   <strong>Authorized Signatory</strong>
-  <span>Mr. Ravi Rana</span>
+  <span>Mr. Adv. Reena Kumari</span>
   <span>Director &amp; Founder</span>
   <span>SmartIQ Institute Pvt. Ltd.</span>
 </div>

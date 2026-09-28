@@ -48,7 +48,7 @@ export default async function DashboardPage() {
       : role === "educator"
         ? "Admin Desk | info@smartiqinstitute.in"
         : role === "admin"
-          ? "Operations Line | Prof. Ravi Rana | +91 88504 47887"
+          ? "Operations Line | Prof. Adv. Reena Kumari | +91 88504 47887"
           : "Admissions Desk | info@smartiqinstitute.in";
 
   return (

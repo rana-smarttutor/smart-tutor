@@ -409,7 +409,7 @@ const contactMethods: ContactMethod[] = [
   },
   {
     label: "Director & Founder",
-    value: "Prof. Ravi Rana",
+    value: "Prof. Adv. Reena Kumari",
     href: `tel:${CONTACT_PHONE.replace(/\s+/g, "")}`,
     description:
       "Leadership contact for SmartIQ Academy, SmartIQ Institute, and Prime Digital School.",
@@ -601,7 +601,7 @@ export function getPublicInstituteData() {
       email: "info@smartiqinstitute.in",
       hours: "Monday to Saturday",
       specialties: ["School Coaching", "Competitive Exams", "Civil Services"],
-      directorName: "Prof. Ravi Rana",
+      directorName: "Prof. Adv. Reena Kumari",
       directorTitle: "Director & Founder",
       affiliatedInstitutes: [
         "SmartIQ Institute",
