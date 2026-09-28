@@ -294,44 +294,149 @@ quizArenaProgress: "quiz_arena_progress",
 export async function createEnquiry(input: {
   name: string;
   contact: string;
+  email?: string;
   role: string;
+
   courseTitle: string;
   courseKey: string;
+
+  branch?: string;
+
+  preferredDate?: string;
+  preferredTime?: string;
+
+  requestType?: "general" | "consultation" | "demo";
+  source?: string;
+
   message: string;
-  suggestedCourses?: { standardKey: string; title: string }[];
+
+  suggestedCourses?: {
+    standardKey: string;
+    title: string;
+  }[];
 }) {
-  const collection = await getCollection(COLLECTIONS.enquiries);
+  const collection = await getCollection(
+    COLLECTIONS.enquiries,
+  );
+
   const enquiry = {
-    ...input,
-    suggestedCourses: input.suggestedCourses?.length
-      ? input.suggestedCourses
-      : [],
+    id: `enquiry-${randomUUID()}`,
+
+    name: input.name.trim(),
+    contact: input.contact.trim(),
+    email: input.email?.trim().toLowerCase() || "",
+
+    role: input.role.trim() || "student",
+
+    courseTitle: input.courseTitle.trim(),
+    courseKey: input.courseKey.trim(),
+
+    branch: input.branch?.trim() || "",
+
+    preferredDate:
+      input.preferredDate?.trim() || "",
+
+    preferredTime:
+      input.preferredTime?.trim() || "",
+
+    requestType:
+      input.requestType ?? "general",
+
+    source: input.source?.trim() || "",
+
+    message: input.message.trim(),
+
+    suggestedCourses:
+      input.suggestedCourses?.length
+        ? input.suggestedCourses
+        : [],
+
     createdAt: new Date().toISOString(),
     status: "new",
   };
+
   await collection.insertOne(enquiry);
-  return enquiry;
+
+  return stripMongoId(enquiry);
 }
 
 export async function getAllEnquiries() {
-  const collection = await getCollection(COLLECTIONS.enquiries);
-  return await collection.find({}).sort({ createdAt: -1 }).toArray();
+  const collection = await getCollection(
+    COLLECTIONS.enquiries,
+  );
+
+  const documents = await collection
+    .find({})
+    .sort({
+      createdAt: -1,
+    })
+    .toArray();
+
+  const enquiries = await Promise.all(
+    documents.map(async (document: any) => {
+      if (!document.id && document._id) {
+        const id = `enquiry-${document._id.toString()}`;
+
+        await collection.updateOne(
+          {
+            _id: document._id,
+          } as any,
+          {
+            $set: {
+              id,
+            },
+          },
+        );
+
+        return {
+          ...document,
+          id,
+        };
+      }
+
+      return document;
+    }),
+  );
+
+  return enquiries.map((enquiry: any) =>
+    stripMongoId(enquiry),
+  );
 }
 
 export async function updateEnquiryStatus(
   id: string,
   status: string,
 ): Promise<boolean> {
-  const collection = await getCollection(COLLECTIONS.enquiries);
-  const result = await collection.updateOne({ id }, {
-    $set: { status },
-  } as any);
-  return result.modifiedCount > 0;
+  const collection = await getCollection(
+    COLLECTIONS.enquiries,
+  );
+
+  const result = await collection.updateOne(
+    {
+      id,
+    },
+    {
+      $set: {
+        status,
+        updatedAt: new Date().toISOString(),
+      },
+    } as any,
+  );
+
+  return result.matchedCount > 0;
 }
 
-export async function deleteEnquiry(id: string): Promise<boolean> {
-  const collection = await getCollection(COLLECTIONS.enquiries);
-  const result = await collection.deleteOne({ id });
+export async function deleteEnquiry(
+  id: string,
+): Promise<boolean> {
+  const collection = await getCollection(
+    COLLECTIONS.enquiries,
+  );
+
+  const result = await collection.deleteOne({
+    id,
+  });
+
   return result.deletedCount > 0;
 }
 

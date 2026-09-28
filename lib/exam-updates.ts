@@ -32,153 +32,462 @@ type ExamSource = {
   key: string;
   name: string;
   category: ExamCategory;
+
   url: string;
+
   allowedHosts: string[];
+
   maxItems: number;
+
+  includeKeywords?: string[];
+  excludeKeywords?: string[];
 };
 
 const SOURCES: ExamSource[] = [
   // =====================================================
   // BOARD EXAMS
   // =====================================================
+
   {
     key: "cbse",
     name: "CBSE",
     category: "Board Exams",
     url: "https://www.cbse.gov.in/cbsenew/examination_Circular.html",
     allowedHosts: ["cbse.gov.in"],
-    maxItems: 30,
+    maxItems: 35,
   },
+
   {
     key: "cisce",
-    name: "CISCE",
+    name: "CISCE / ICSE / ISC",
     category: "Board Exams",
     url: "https://cisce.org/",
     allowedHosts: ["cisce.org"],
-    maxItems: 25,
+    maxItems: 30,
   },
+
   {
     key: "maharashtra-board",
-    name: "Maharashtra Board",
+    name: "Maharashtra SSC / HSC",
     category: "Board Exams",
     url: "https://mahahsscboard.in/en",
     allowedHosts: ["mahahsscboard.in"],
-    maxItems: 25,
+    maxItems: 30,
+  },
+
+  {
+    key: "nios",
+    name: "NIOS",
+    category: "Board Exams",
+    url: "https://sdmis.nios.ac.in/registration/home-notifications",
+    allowedHosts: [
+      "nios.ac.in",
+      "sdmis.nios.ac.in",
+      "exams.nios.ac.in",
+      "sdmis.s3.ap-south-1.amazonaws.com",
+    ],
+    maxItems: 35,
   },
 
   // =====================================================
   // GOVERNMENT EXAMS
   // =====================================================
+
   {
     key: "ssc",
     name: "SSC",
     category: "Government Exams",
     url: "https://ssc.gov.in/",
     allowedHosts: ["ssc.gov.in"],
-    maxItems: 30,
+    maxItems: 40,
   },
+
   {
     key: "upsc",
     name: "UPSC",
     category: "Government Exams",
     url: "https://www.upsc.gov.in/whats-new",
-    allowedHosts: [
-      "upsc.gov.in",
-      "upsconline.nic.in",
-    ],
-    maxItems: 30,
+    allowedHosts: ["upsc.gov.in", "upsconline.nic.in"],
+    maxItems: 40,
   },
+
   {
     key: "ibps",
-    name: "IBPS",
+    name: "IBPS Banking",
     category: "Government Exams",
-    url: "https://www.ibps.in/index.php/recruitment/",
-    allowedHosts: [
-      "ibps.in",
-      "ibpsreg.ibps.in",
-    ],
-    maxItems: 30,
+    url: "https://www.ibps.in/",
+    allowedHosts: ["ibps.in", "ibpsreg.ibps.in"],
+    maxItems: 40,
   },
+
   {
     key: "mpsc",
     name: "MPSC",
     category: "Government Exams",
     url: "https://mpsc.gov.in/",
     allowedHosts: ["mpsc.gov.in"],
+    maxItems: 35,
+  },
+
+  {
+    key: "sbi-recruitment",
+    name: "SBI Recruitment",
+    category: "Government Exams",
+    url: "https://sbi.co.in/web/careers/current-openings",
+    allowedHosts: ["sbi.co.in"],
     maxItems: 30,
   },
 
+  {
+    key: "rbi-recruitment",
+    name: "RBI Recruitment",
+    category: "Government Exams",
+    url: "https://opportunities.rbi.org.in/Scripts/Vacancies.aspx",
+    allowedHosts: ["rbi.org.in", "opportunities.rbi.org.in"],
+    maxItems: 30,
+  },
+
+  {
+    key: "railway-rrb",
+    name: "Railway / RRB",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 35,
+  },
+
   // =====================================================
-  // COMPETITIVE EXAMS
+  // COMPETITIVE / ENTRANCE EXAMS
   // =====================================================
+
   {
     key: "nta",
-    name: "NTA",
+    name: "NTA - Other Exams",
     category: "Competitive Exams",
     url: "https://www.nta.ac.in/",
     allowedHosts: ["nta.ac.in"],
     maxItems: 35,
   },
+
+  {
+    key: "jee-main",
+    name: "JEE Main",
+    category: "Competitive Exams",
+    url: "https://jeemain.nta.nic.in/",
+    allowedHosts: [
+      "jeemain.nta.nic.in",
+      "nta.ac.in",
+      "cdnbbsr.s3waas.gov.in",
+      "examinationservices.nic.in",
+    ],
+    maxItems: 40,
+  },
+
+  {
+    key: "jee-advanced",
+    name: "JEE Advanced",
+    category: "Competitive Exams",
+    url: "https://jeeadv.ac.in/",
+    allowedHosts: ["jeeadv.ac.in"],
+    maxItems: 35,
+  },
+
+  {
+    key: "neet",
+    name: "NEET UG",
+    category: "Competitive Exams",
+    url: "https://neet.nta.nic.in/",
+    allowedHosts: [
+      "neet.nta.nic.in",
+      "nta.ac.in",
+      "cdnbbsr.s3waas.gov.in",
+      "examinationservices.nic.in",
+    ],
+    maxItems: 40,
+  },
+
+  {
+    key: "cuet",
+    name: "CUET UG",
+    category: "Competitive Exams",
+    url: "https://cuet.nta.nic.in/",
+    allowedHosts: [
+      "cuet.nta.nic.in",
+      "nta.ac.in",
+      "cdnbbsr.s3waas.gov.in",
+      "examinationservices.nic.in",
+    ],
+    maxItems: 40,
+  },
+
   {
     key: "mht-cet",
     name: "MHT-CET",
     category: "Competitive Exams",
     url: "https://cetcell.mahacet.org/",
-    allowedHosts: [
-      "cetcell.mahacet.org",
-      "mahacet.org",
-    ],
+    allowedHosts: ["cetcell.mahacet.org", "mahacet.org"],
+    maxItems: 40,
+  },
+
+  {
+    key: "clat",
+    name: "CLAT",
+    category: "Competitive Exams",
+    url: "https://consortiumofnlus.ac.in/",
+    allowedHosts: ["consortiumofnlus.ac.in"],
     maxItems: 30,
+  },
+
+  {
+    key: "imu-cet",
+    name: "IMU CET",
+    category: "Competitive Exams",
+    url: "https://www.imu.edu.in/imunew/admissions-2026-27",
+    allowedHosts: ["imu.edu.in"],
+    maxItems: 35,
+
+    includeKeywords: [
+      "imu-cet",
+      "imu cet",
+      "admission",
+      "counselling",
+      "counseling",
+      "rank",
+      "allotment",
+      "registration",
+      "admit card",
+      "result",
+      "response sheet",
+    ],
+  },
+
+  {
+    key: "nchmct",
+    name: "NCHMCT JEE",
+    category: "Competitive Exams",
+    url: "https://www.nchm.gov.in/circularnotices",
+    allowedHosts: ["nchm.gov.in", "nchm.nic.in"],
+    maxItems: 30,
+
+    includeKeywords: [
+      "jee",
+      "entrance test",
+      "admission",
+      "seat vacancy",
+      "result",
+      "roll number",
+      "allotment",
+    ],
+
+    excludeKeywords: [
+      "affiliation",
+      "delegation of",
+      "faculty development",
+      "expression of interest",
+    ],
+  },
+
+  {
+    key: "ca-foundation",
+    name: "CA Foundation / ICAI",
+    category: "Competitive Exams",
+    url: "https://www.icai.org/category/examination",
+    allowedHosts: ["icai.org"],
+    maxItems: 30,
+
+    includeKeywords: [
+      "foundation",
+      "exam",
+      "examination",
+      "admit",
+      "result",
+      "application",
+    ],
+  },
+
+  {
+    key: "cseet",
+    name: "CS / CSEET",
+    category: "Competitive Exams",
+    url: "https://www.icsi.edu/student_rpn/cseet/",
+    allowedHosts: ["icsi.edu"],
+    maxItems: 30,
+
+    includeKeywords: [
+      "cseet",
+      "company secretary",
+      "exam",
+      "examination",
+      "result",
+      "registration",
+      "admit",
+    ],
+  },
+
+  {
+    key: "cma-foundation",
+    name: "CMA Foundation / ICMAI",
+    category: "Competitive Exams",
+    url: "https://icmai.in/studentswebsite/exam.php",
+    allowedHosts: ["icmai.in"],
+    maxItems: 30,
+
+    includeKeywords: [
+      "foundation",
+      "exam",
+      "examination",
+      "admit",
+      "result",
+      "application",
+    ],
+  },
+
+  {
+    key: "ipmat",
+    name: "IPMAT / IIM Indore",
+    category: "Competitive Exams",
+    url: "https://iimidr.ac.in/programmes/academic-programmes/five-year-integrated-programme-in-management-ipm/ipm-admissions-details/",
+    allowedHosts: ["iimidr.ac.in"],
+    maxItems: 25,
+
+    includeKeywords: [
+      "ipm",
+      "ipmat",
+      "aptitude test",
+      "admission",
+      "application",
+      "shortlist",
+      "result",
+    ],
+  },
+
+  {
+    key: "npat",
+    name: "NMIMS NPAT",
+    category: "Competitive Exams",
+    url: "https://npat.nmims.edu/",
+    allowedHosts: ["npat.nmims.edu", "nmims.edu"],
+    maxItems: 25,
+
+    includeKeywords: [
+      "npat",
+      "admission",
+      "registration",
+      "exam",
+      "merit",
+      "counselling",
+      "counseling",
+      "result",
+    ],
   },
 ];
 
-export const OFFICIAL_EXAM_SOURCES = SOURCES.map(
-  (source) => ({
-    key: source.key,
-    name: source.name,
-    category: source.category,
-    url: source.url,
-  }),
-);
+export const OFFICIAL_EXAM_SOURCES = SOURCES.map((source) => ({
+  key: source.key,
+  name: source.name,
+  category: source.category,
+  url: source.url,
+}));
 
 const RELEVANT_KEYWORDS = [
   "exam",
   "examination",
   "board examination",
+
   "admit card",
   "e-admit",
   "hall ticket",
+
   "result",
+  "results",
+
   "answer key",
+  "answer keys",
   "answerkey",
+
   "application",
+  "applications",
   "apply",
+  "apply online",
+
   "registration",
+  "register",
+
   "recruitment",
   "vacancy",
+  "vacancies",
+
   "notification",
   "notice",
+  "public notice",
+  "announcement",
   "circular",
+
   "date sheet",
   "datesheet",
   "time table",
   "timetable",
+
+  "exam date",
+  "examination date",
   "schedule",
+
   "score",
   "score card",
   "scorecard",
+
   "marks",
   "merit",
+  "merit list",
+
   "interview",
+  "interview schedule",
+
   "counselling",
   "counseling",
+
   "shortlisted",
   "shortlist",
+
   "written result",
   "final result",
+
   "provisional",
+
   "challenge",
+
   "supplementary",
+
+  "response sheet",
+  "recorded response",
+
+  "omr",
+
+  "exam city",
+  "examination city",
+  "city intimation",
+
+  "cut off",
+  "cut-off",
+  "cutoff",
+
+  "seat allotment",
+  "allotment",
+
+  "information bulletin",
+  "brochure",
+
+  "admission",
+
+  "correction",
+  "corrigendum",
+
+  "extension",
+  "extended",
+
+  "press release",
+
+  "eligibility",
 ];
 
 const BLOCKED_KEYWORDS = [
@@ -186,11 +495,14 @@ const BLOCKED_KEYWORDS = [
   "rfp",
   "tender",
   "procurement",
+
   "website policy",
   "privacy policy",
   "copyright policy",
+
   "contact us",
   "about us",
+
   "annual report",
   "sitemap",
 ];
@@ -209,60 +521,74 @@ function cleanTitle(value: string) {
   return cleanText(value)
     .replace(/\bRead More\b/gi, "")
     .replace(/\bDownload\b/gi, "")
-    .replace(
-      /\(\s*\d+(?:\.\d+)?\s*(?:KB|MB)\s*\)/gi,
-      "",
-    )
+    .replace(/\(\s*\d+(?:\.\d+)?\s*(?:KB|MB)\s*\)/gi, "")
     .replace(/\s+-\s+reg\.?$/i, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
 
-function isRelevantTitle(title: string) {
+function matchesKeywords(text: string, keywords?: string[]) {
+  if (!keywords?.length) {
+    return false;
+  }
+
+  const lower = text.toLowerCase();
+
+  return keywords.some((keyword) => lower.includes(keyword.toLowerCase()));
+}
+
+function isRelevantTitle(title: string, source: ExamSource) {
   const cleaned = cleanText(title);
 
   const lower = cleaned.toLowerCase();
 
-  // Reject empty, extremely short and excessively long titles.
-  if (cleaned.length < 12 || cleaned.length > 220) {
+  if (cleaned.length < 8 || cleaned.length > 260) {
     return false;
   }
 
-  // Reject generic website actions and headings.
   if (
-    /^(click here to apply|apply now|exam calendar|read more|view more)$/i.test(
+    /^(click here|click here to apply|apply now|exam calendar|read more|view more|view|download|more|details)$/i.test(
       cleaned,
     )
   ) {
     return false;
   }
 
-  // Reject UPSC website navigation accidentally scraped as a notice.
   if (
-    /^calendar\s+active examinations\s+forthcoming examinations/i.test(
-      cleaned,
-    )
+    /^calendar\s+active examinations\s+forthcoming examinations/i.test(cleaned)
   ) {
     return false;
   }
 
-  // Reject irrelevant administrative notices.
-  if (
-    BLOCKED_KEYWORDS.some((word) =>
-      lower.includes(word),
-    )
-  ) {
+  if (BLOCKED_KEYWORDS.some((word) => lower.includes(word))) {
     return false;
   }
 
-  return RELEVANT_KEYWORDS.some((word) =>
+  if (matchesKeywords(cleaned, source.excludeKeywords)) {
+    return false;
+  }
+
+  const matchesGlobalKeyword = RELEVANT_KEYWORDS.some((word) =>
     lower.includes(word),
   );
+
+  const matchesSourceKeyword = matchesKeywords(cleaned, source.includeKeywords);
+
+  /*
+   * For a source with exam-specific keywords,
+   * require both:
+   *
+   * 1. the notice to relate to that source/exam
+   * 2. the title to look like an actual exam update
+   */
+  if (source.includeKeywords?.length) {
+    return matchesSourceKeyword && matchesGlobalKeyword;
+  }
+
+  return matchesGlobalKeyword;
 }
 
-function classifyUpdate(
-  title: string,
-): ExamUpdateType {
+function classifyUpdate(title: string): ExamUpdateType {
   const lower = title.toLowerCase();
 
   if (
@@ -276,7 +602,8 @@ function classifyUpdate(
   if (
     lower.includes("answer key") ||
     lower.includes("answerkey") ||
-    lower.includes("recorded response")
+    lower.includes("recorded response") ||
+    lower.includes("response sheet")
   ) {
     return "Answer Key";
   }
@@ -286,7 +613,10 @@ function classifyUpdate(
     lower.includes("score card") ||
     lower.includes("scorecard") ||
     lower.includes("marks of") ||
-    lower.includes("merit list")
+    lower.includes("merit list") ||
+    lower.includes("rank certificate") ||
+    lower.includes("provisional shortlist") ||
+    lower.includes("final shortlist")
   ) {
     return "Result";
   }
@@ -307,7 +637,10 @@ function classifyUpdate(
     lower.includes("datesheet") ||
     lower.includes("exam date") ||
     lower.includes("examination date") ||
-    lower.includes("schedule")
+    lower.includes("schedule") ||
+    lower.includes("exam city") ||
+    lower.includes("examination city") ||
+    lower.includes("city intimation")
   ) {
     return "Exam Date";
   }
@@ -315,6 +648,7 @@ function classifyUpdate(
   if (
     lower.includes("recruitment") ||
     lower.includes("vacancy") ||
+    lower.includes("vacancies") ||
     lower.includes("posts of") ||
     lower.includes("post of")
   ) {
@@ -327,12 +661,9 @@ function classifyUpdate(
 function stableId(input: string) {
   let hash = 2166136261;
 
-  for (
-    let index = 0;
-    index < input.length;
-    index += 1
-  ) {
+  for (let index = 0; index < input.length; index += 1) {
     hash ^= input.charCodeAt(index);
+
     hash = Math.imul(hash, 16777619);
   }
 
@@ -344,14 +675,10 @@ function extractDateLabel(text: string) {
     "(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)";
 
   const patterns = [
-    new RegExp(
-      `\\b(${monthPattern}\\s+\\d{1,2},?\\s+20\\d{2})\\b`,
-      "i",
-    ),
-    new RegExp(
-      `\\b(\\d{1,2}\\s+${monthPattern},?\\s+20\\d{2})\\b`,
-      "i",
-    ),
+    new RegExp(`\\b(${monthPattern}\\s+\\d{1,2},?\\s+20\\d{2})\\b`, "i"),
+
+    new RegExp(`\\b(\\d{1,2}\\s+${monthPattern},?\\s+20\\d{2})\\b`, "i"),
+
     /\b(\d{1,2}[./-]\d{1,2}[./-]20\d{2})\b/,
   ];
 
@@ -366,20 +693,14 @@ function extractDateLabel(text: string) {
   return undefined;
 }
 
-function isAllowedOfficialUrl(
-  url: URL,
-  source: ExamSource,
-) {
+function isAllowedOfficialUrl(url: URL, source: ExamSource) {
   return source.allowedHosts.some(
-    (host) =>
-      url.hostname === host ||
-      url.hostname.endsWith(`.${host}`),
+    (host) => url.hostname === host || url.hostname.endsWith(`.${host}`),
   );
 }
 
 function shouldIgnoreHref(href: string) {
-  const normalized =
-    href.trim().toLowerCase();
+  const normalized = href.trim().toLowerCase();
 
   return (
     normalized.startsWith("#") ||
@@ -391,43 +712,41 @@ function shouldIgnoreHref(href: string) {
 
 function buildRequestHeaders() {
   return {
-    Accept:
-      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 
-    "Accept-Language":
-      "en-IN,en-US;q=0.9,en;q=0.8",
+    "Accept-Language": "en-IN,en-US;q=0.9,en;q=0.8",
 
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
   };
 }
-async function fetchSource(
-  source: ExamSource,
-): Promise<ExamUpdate[]> {
-  const controller =
-    new AbortController();
 
-const timeout = setTimeout(() => {
-  controller.abort();
-}, 12000);
+async function fetchSource(source: ExamSource): Promise<ExamUpdate[]> {
+  const controller = new AbortController();
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 12000);
 
   try {
-    const response = await fetch(
-      source.url,
-      {
-next: {
-  revalidate: 900,
-},
-        redirect: "follow",
-        signal: controller.signal,
-        headers: buildRequestHeaders(),
+    const response = await fetch(source.url, {
+      next: {
+        revalidate: 900,
       },
-    );
+
+      redirect: "follow",
+
+      signal: controller.signal,
+
+      headers: buildRequestHeaders(),
+    });
 
     /*
      * Government and education websites may block
-     * automated requests. A blocked source must not
-     * break the whole Exam Updates page.
+     * automated requests.
+     *
+     * One unavailable authority must never break
+     * the complete Exam Updates page.
      */
     if (!response.ok) {
       console.warn(
@@ -437,16 +756,11 @@ next: {
       return [];
     }
 
-    const contentType =
-      response.headers.get(
-        "content-type",
-      ) ?? "";
+    const contentType = response.headers.get("content-type") ?? "";
 
     if (
       !contentType.includes("text/html") &&
-      !contentType.includes(
-        "application/xhtml+xml",
-      )
+      !contentType.includes("application/xhtml+xml")
     ) {
       console.warn(
         `[Exam Updates] ${source.name} returned unsupported content type: ${contentType}`,
@@ -455,8 +769,7 @@ next: {
       return [];
     }
 
-    const html =
-      await response.text();
+    const html = await response.text();
 
     if (!html.trim()) {
       return [];
@@ -465,232 +778,155 @@ next: {
     const $ = cheerio.load(html);
 
     const updates: ExamUpdate[] = [];
-    const seenUrls =
-      new Set<string>();
 
-    $("a[href]").each(
-      (_, element) => {
-        if (
-          updates.length >=
-          source.maxItems
-        ) {
-          return false;
-        }
+    const seenUrls = new Set<string>();
 
-        const anchor =
-          $(element);
+    $("a[href]").each((_, element) => {
+      if (updates.length >= source.maxItems) {
+        return false;
+      }
 
-        const rawHref =
-          anchor.attr("href");
+      const anchor = $(element);
 
-        if (!rawHref) {
-          return;
-        }
+      const rawHref = anchor.attr("href");
 
-        if (
-          shouldIgnoreHref(
-            rawHref,
-          )
-        ) {
-          return;
-        }
+      if (!rawHref || shouldIgnoreHref(rawHref)) {
+        return;
+      }
 
-        let officialUrl: URL;
+      let officialUrl: URL;
 
-        try {
-          officialUrl =
-            new URL(
-              rawHref,
-              source.url,
-            );
-        } catch {
-          return;
-        }
+      try {
+        officialUrl = new URL(rawHref, source.url);
+      } catch {
+        return;
+      }
 
-        if (
-          officialUrl.protocol !==
-            "https:" &&
-          officialUrl.protocol !==
-            "http:"
-        ) {
-          return;
-        }
+      if (
+        officialUrl.protocol !== "https:" &&
+        officialUrl.protocol !== "http:"
+      ) {
+        return;
+      }
 
-        /*
-         * Critical security/trust check:
-         * only approved official authority hosts are
-         * allowed to appear as outbound links.
-         */
-        if (
-          !isAllowedOfficialUrl(
-            officialUrl,
-            source,
-          )
-        ) {
-          return;
-        }
+      /*
+       * Critical trust check:
+       *
+       * Only approved official authority domains
+       * are allowed to become outbound links.
+       */
+      if (!isAllowedOfficialUrl(officialUrl, source)) {
+        return;
+      }
 
-        officialUrl.hash = "";
+      officialUrl.hash = "";
 
-        const finalUrl =
-          officialUrl.toString();
+      const finalUrl = officialUrl.toString();
 
-        if (
-          seenUrls.has(finalUrl)
-        ) {
-          return;
-        }
+      if (seenUrls.has(finalUrl)) {
+        return;
+      }
 
-        const anchorText =
-          cleanText(
-            anchor.text(),
-          );
+      /*
+       * Official sites use many different structures.
+       *
+       * Some anchors contain the real title directly.
+       * Others only contain:
+       *
+       * View
+       * PDF
+       * Download
+       * Click Here
+       *
+       * Therefore collect text from both the anchor
+       * and its surrounding notice/card/table row.
+       */
+      const anchorText = cleanText(anchor.text());
 
-        const possibleContexts = [
-          anchor
-            .closest("tr")
-            .first()
-            .text(),
+      const anchorTitle = cleanText(anchor.attr("title") ?? "");
 
-          anchor
-            .closest("li")
-            .first()
-            .text(),
+      const ariaLabel = cleanText(anchor.attr("aria-label") ?? "");
 
-          anchor
-            .closest("article")
-            .first()
-            .text(),
+      const possibleContexts = [
+        anchor.closest("tr").first().text(),
 
-          anchor
-            .closest(
-              "[class*='notice']",
-            )
-            .first()
-            .text(),
+        anchor.closest("li").first().text(),
 
-          anchor
-            .closest(
-              "[class*='news']",
-            )
-            .first()
-            .text(),
+        anchor.closest("article").first().text(),
 
-          anchor
-            .closest(
-              "[class*='update']",
-            )
-            .first()
-            .text(),
+        anchor.closest("[class*='notice']").first().text(),
 
-          anchor
-            .closest(
-              "[class*='card']",
-            )
-            .first()
-            .text(),
+        anchor.closest("[class*='news']").first().text(),
 
-          anchor
-            .parent()
-            .text(),
+        anchor.closest("[class*='update']").first().text(),
 
-          anchor
-            .parent()
-            .parent()
-            .text(),
-        ]
-          .map(cleanText)
-          .filter(Boolean);
+        anchor.closest("[class*='announcement']").first().text(),
 
-        const contextText =
-          possibleContexts.find(
-            (text) =>
-              text.length >= 12 &&
-              text.length <= 500,
-          ) ?? "";
+        anchor.closest("[class*='card']").first().text(),
 
-        let title = anchorText;
+        anchor.closest("[class*='item']").first().text(),
 
-        if (
-          !title ||
-          title.length < 10 ||
-          GENERIC_LINK_TEXT.test(
-            title,
-          )
-        ) {
-          title =
-            contextText;
-        }
+        anchor.parent().text(),
 
-        title =
-          cleanTitle(title);
+        anchor.parent().parent().text(),
+      ]
+        .map(cleanText)
+        .filter(Boolean);
 
-if (title.length > 220) {
-  return;
-}
+      const contextText =
+        possibleContexts.find(
+          (text) => text.length >= 8 && text.length <= 700,
+        ) ?? "";
 
-        if (
-          title.length < 12
-        ) {
-          return;
-        }
-
-        if (
-          !isRelevantTitle(
-            title,
-          )
-        ) {
-          return;
-        }
-
-        seenUrls.add(
-          finalUrl,
+      const titleCandidates = [anchorText, anchorTitle, ariaLabel, contextText]
+        .map(cleanTitle)
+        .filter(
+          (candidate) => candidate.length >= 8 && candidate.length <= 260,
         );
 
-        updates.push({
-          id: `${source.key}-${stableId(
-            finalUrl,
-          )}`,
-          title,
-          source:
-            source.name,
-          sourceKey:
-            source.key,
-          category:
-            source.category,
-          type:
-            classifyUpdate(
-              title,
-            ),
-          officialUrl:
-            finalUrl,
-          publishedLabel:
-            extractDateLabel(
-              contextText,
-            ),
-        });
-      },
-    );
+      const title = titleCandidates.find(
+        (candidate) =>
+          !GENERIC_LINK_TEXT.test(candidate) &&
+          isRelevantTitle(candidate, source),
+      );
+
+      if (!title) {
+        return;
+      }
+
+      seenUrls.add(finalUrl);
+
+      updates.push({
+        id: `${source.key}-${stableId(finalUrl)}`,
+
+        title,
+
+        source: source.name,
+
+        sourceKey: source.key,
+
+        category: source.category,
+
+        type: classifyUpdate(title),
+
+        officialUrl: finalUrl,
+
+        publishedLabel: extractDateLabel(contextText),
+      });
+    });
 
     return updates;
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.name ===
-        "AbortError"
-    ) {
-      console.warn(
-        `[Exam Updates] ${source.name} request timed out.`,
-      );
+    if (error instanceof Error && error.name === "AbortError") {
+      console.warn(`[Exam Updates] ${source.name} request timed out.`);
 
       return [];
     }
 
     console.warn(
       `[Exam Updates] ${source.name} temporarily unavailable.`,
-      error instanceof Error
-        ? error.message
-        : String(error),
+
+      error instanceof Error ? error.message : String(error),
     );
 
     return [];
@@ -699,58 +935,53 @@ if (title.length > 220) {
   }
 }
 
-function interleaveUpdates(
-  groups: ExamUpdate[][],
-  limit = 100,
-) {
+function interleaveUpdates(groups: ExamUpdate[][], limit = 400) {
   const output: ExamUpdate[] = [];
-  const seen =
-    new Set<string>();
+
+  const seen = new Set<string>();
 
   let position = 0;
 
-  while (
-    output.length < limit
-  ) {
-    let addedSomething =
-      false;
+  /*
+   * Interleave sources instead of appending:
+   *
+   * UPSC #1
+   * SSC #1
+   * IBPS #1
+   * CBSE #1
+   * JEE #1
+   * NEET #1
+   * ...
+   *
+   * Then source #2, source #3, etc.
+   *
+   * This prevents one authority from taking over
+   * the full feed.
+   */
+  while (output.length < limit) {
+    let addedSomething = false;
 
-    for (
-      const group of groups
-    ) {
-      const item =
-        group[position];
+    for (const group of groups) {
+      const item = group[position];
 
       if (!item) {
         continue;
       }
 
-      addedSomething =
-        true;
+      addedSomething = true;
 
-      if (
-        !seen.has(
-          item.officialUrl,
-        )
-      ) {
-        seen.add(
-          item.officialUrl,
-        );
+      if (!seen.has(item.officialUrl)) {
+        seen.add(item.officialUrl);
 
         output.push(item);
       }
 
-      if (
-        output.length >=
-        limit
-      ) {
+      if (output.length >= limit) {
         break;
       }
     }
 
-    if (
-      !addedSomething
-    ) {
+    if (!addedSomething) {
       break;
     }
 
@@ -764,35 +995,39 @@ function interleaveUpdates(
  * Cache the combined exam updates.
  *
  * Students should not have to wait for all official
- * websites to respond on every page visit.
+ * authorities to respond every time the page opens.
  */
-
 const getCachedExamUpdates = unstable_cache(
   async (): Promise<ExamUpdate[]> => {
     const startedAt = Date.now();
 
     /*
-     * Fetch authorities concurrently.
+     * All authorities are fetched concurrently.
      *
-     * Each individual source handles its own
-     * timeout and network errors.
+     * Each source independently handles:
+     * - timeout
+     * - HTTP errors
+     * - unsupported response type
+     * - scraping problems
+     *
+     * Therefore one failed authority does not
+     * break the overall page.
      */
+    const groups = await Promise.all(
+      SOURCES.map(async (source) => {
+        const sourceStartedAt = Date.now();
 
-const groups = await Promise.all(
-  SOURCES.map(async (source) => {
-    const startedAt = Date.now();
+        const updates = await fetchSource(source);
 
-    const updates = await fetchSource(source);
+        console.info(
+          `[Exam Updates] ${source.name}: ${updates.length} updates in ${
+            Date.now() - sourceStartedAt
+          }ms`,
+        );
 
-    console.info(
-      `[Exam Updates] ${source.name}: ${updates.length} updates in ${
-        Date.now() - startedAt
-      }ms`,
+        return updates;
+      }),
     );
-
-    return updates;
-  }),
-);
 
     const updates = interleaveUpdates(groups);
 
@@ -805,17 +1040,26 @@ const groups = await Promise.all(
     return updates;
   },
 
-["smartiq-exam-updates-v3"],
+  /*
+   * New cache version.
+   *
+   * This prevents the old limited source result
+   * from remaining cached after deployment.
+   */
+  ["smartiq-exam-updates-v4"],
+
   {
     revalidate: 900,
+
     tags: ["smartiq-exam-updates"],
   },
 );
 
 /*
- * Public function used by app/exam-updates/page.tsx
+ * Public function used by:
+ *
+ * app/exam-updates/page.tsx
  */
-
 export async function getExamUpdates(): Promise<ExamUpdate[]> {
   return getCachedExamUpdates();
 }

@@ -544,18 +544,42 @@ export type LectureItem = {
 // Enquiry System
 // =========================
 
-export type EnquiryStatus = "new" | "contacted" | "enrolled" | "closed";
+export type EnquiryStatus =
+  | "new"
+  | "contacted"
+  | "enrolled"
+  | "closed";
+
+export type EnquiryRequestType =
+  | "general"
+  | "consultation"
+  | "demo";
 
 export type Enquiry = {
   id?: string;
+
   name: string;
   contact: string;
+  email?: string;
+
   role: string;
+
   courseTitle: string;
   courseKey: string;
+
+  branch?: string;
+
+  preferredDate?: string;
+  preferredTime?: string;
+
+  requestType?: EnquiryRequestType;
+  source?: string;
+
   message: string;
+
   createdAt: string;
   status: EnquiryStatus;
+
   suggestedCourses?: {
     standardKey: string;
     title: string;

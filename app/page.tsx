@@ -27,6 +27,7 @@ import { CampusHighlightsCarousel } from "@/components/campus-highlights-carouse
 import { ProgramCarousel } from "@/components/program-carousel";
 import { FeaturesSection } from "@/components/features-section";
 import { ExamPortalBanner } from "@/components/exam-portal-banner";
+import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
 
 export const metadata: Metadata = {
   description:
@@ -530,12 +531,12 @@ export default async function Home() {
                   </li>
                 ))}
               </ul>
-              <Link
-                href="/contact"
-                className=" mt-auto inline-flex items-center justify-center w-full py-5 bg-white text-blue-800 font-black text-lg rounded-xl hover:bg-blue-50 transition-all hover:scale-105 shadow-xl relative z-10"
-              >
-                Book a Consultation
-              </Link>
+              <ConsultationEnquiryButton
+                label="Book a Consultation"
+                requestType="consultation"
+                source="homepage"
+                className="mt-auto inline-flex w-full items-center justify-center rounded-xl bg-white py-5 text-lg font-black text-blue-800 shadow-xl transition-all hover:scale-105 hover:bg-blue-50 relative z-10"
+              />
             </article>
           </div>
         </div>
