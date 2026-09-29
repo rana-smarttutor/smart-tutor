@@ -29,7 +29,6 @@ import type {
 } from "@/lib/quiz-arena-questions";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
 import type { QuizArenaDraft } from "@/lib/quiz-arena-drafts";
-import { requestLoginIfNeeded } from "@/lib/request-login";
 import {
   getGovernmentExamSyllabus,
   getGovernmentExamTopics,
@@ -152,6 +151,7 @@ export default function QuizArenaClient({
   const [isCompletingQuiz, setIsCompletingQuiz] = useState(false);
 
   const [exitSaveError, setExitSaveError] = useState("");
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const registerQuizSave = useCallback(
     (save: (() => Promise<boolean>) | null) => {
@@ -792,22 +792,43 @@ export default function QuizArenaClient({
 
     if (!selectedJourneyLevel || !roundToStart) {
       setMessage("Please select a level and round first.");
+
       return;
     }
 
-    const returnPath = window.location.pathname.startsWith("/mock-test")
-      ? "/mock-test"
-      : "/quiz-arena";
+    try {
+      /*
+       * Check a protected Quiz Arena endpoint.
+       *
+       * If there is no session, show OUR modal
+       * directly instead of depending on the
+       * global login helper.
+       */
+      const authCheck = await fetch("/api/quiz-arena/draft", {
+        method: "GET",
+        cache: "no-store",
+      });
 
-    const canStart = await requestLoginIfNeeded(returnPath);
+      if (authCheck.status === 401 || authCheck.status === 403) {
+        setShowLoginPrompt(true);
 
-    if (!canStart) {
-      return;
+        return;
+      }
+
+      if (!authCheck.ok) {
+        setMessage("Unable to verify your login status. Please try again.");
+
+        return;
+      }
+
+      setSelectedRound(roundToStart);
+
+      await generateChallenge(selectedJourneyLevel, roundToStart);
+    } catch (error) {
+      console.warn("Login verification failed:", error);
+
+      setMessage("Unable to verify your login status. Please try again.");
     }
-
-    setSelectedRound(roundToStart);
-
-    await generateChallenge(selectedJourneyLevel, roundToStart);
   }
   async function openJourney(subjectOverride?: string, topicOverride?: string) {
     const journeySubject = subjectOverride?.trim() || selectedSubject?.trim();
@@ -816,6 +837,7 @@ export default function QuizArenaClient({
 
     if (!selectedLevel || !selectedExam || !journeySubject) {
       setMessage("Please complete your quiz selection first.");
+
       return;
     }
 
@@ -827,14 +849,13 @@ export default function QuizArenaClient({
         level: selectedLevel,
         exam: selectedExam,
         subject: journeySubject,
-
-        // Legacy progress bucket only.
-        // User-facing difficulty is now determined by Level 1-10.
         difficulty: "easy",
+
         source: window.location.pathname.startsWith("/mock-test")
           ? "mock-test"
           : "quiz-arena",
       });
+
       if (selectedSchoolClass) {
         params.set("schoolClass", selectedSchoolClass);
       }
@@ -846,6 +867,7 @@ export default function QuizArenaClient({
       if (topicSyllabus && journeyTopic) {
         params.set("topicId", journeyTopic);
       }
+
       const response = await fetch(
         `/api/quiz-arena/progress?${params.toString()}`,
         {
@@ -855,10 +877,16 @@ export default function QuizArenaClient({
       );
 
       if (response.ok) {
+        /*
+         * LOGGED-IN USER
+         * Restore saved progress.
+         */
         const data = (await response.json()) as {
           progress?: {
             unlockedLevel?: QuizJourneyLevel;
+
             completedRounds?: Record<number, QuizRound[]>;
+
             totalQuestionsCompleted?: number;
           } | null;
         };
@@ -876,22 +904,39 @@ export default function QuizArenaClient({
           setCompletedRounds({});
           setSelectedJourneyLevel(1);
         }
+      } else if (response.status === 401 || response.status === 403) {
+        /*
+         * LOGGED-OUT USER
+         *
+         * Allow the visitor to continue:
+         * Subject
+         * -> Topic
+         * -> Level
+         * -> Round
+         *
+         * Login will only be requested
+         * when the round is actually started.
+         */
+        setUnlockedJourneyLevel(1);
+        setCompletedRounds({});
+        setSelectedJourneyLevel(1);
       } else {
+        /*
+         * REAL SERVER ERROR
+         */
         const error = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
+
         throw new Error(
           error?.error ?? "Unable to retrieve your saved progress.",
         );
       }
 
       setSelectedRound(null);
+
       setStep("journey");
 
-      /*
-       * Move directly to the newly rendered
-       * level screen after Topic -> Journey.
-       */
       requestAnimationFrame(() => {
         window.scrollTo({
           top: 0,
@@ -1207,6 +1252,84 @@ export default function QuizArenaClient({
   }
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white">
+      {showLoginPrompt && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm"
+          role="presentation"
+          onClick={() => setShowLoginPrompt(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-login-title"
+            onClick={(event) => event.stopPropagation()}
+            className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/15 bg-slate-900 p-7 text-center text-white shadow-2xl shadow-black/40 sm:p-9"
+          >
+            {/* CLOSE */}
+            <button
+              type="button"
+              onClick={() => setShowLoginPrompt(false)}
+              aria-label="Close login popup"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-slate-300 transition hover:bg-white/10 hover:text-white"
+            >
+              ×
+            </button>
+
+            {/* ICON */}
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/15 text-3xl">
+              🔐
+            </div>
+
+            <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-cyan-300">
+              SmartIQ Institute
+            </p>
+
+            <h2
+              id="quiz-login-title"
+              className="mt-2 text-3xl font-black tracking-tight text-white"
+            >
+              Login to Start Your Test
+            </h2>
+
+            <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-slate-300">
+              You can explore exams, subjects, topics and levels without logging
+              in. Sign in to start the round and save your progress.
+            </p>
+
+            <div className="mt-7 grid gap-3">
+              <Link
+                href={
+                  mockTestMode
+                    ? "/login?returnTo=%2Fmock-test"
+                    : "/login?returnTo=%2Fquiz-arena"
+                }
+                className="flex w-full items-center justify-center rounded-xl bg-cyan-400 px-6 py-3.5 text-sm font-black text-slate-950 transition hover:bg-cyan-300"
+              >
+                Login & Start Test
+              </Link>
+
+              <Link
+                href={
+                  mockTestMode
+                    ? "/signup?returnTo=%2Fmock-test"
+                    : "/signup?returnTo=%2Fquiz-arena"
+                }
+                className="flex w-full items-center justify-center rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
+              >
+                Create New Account
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowLoginPrompt(false)}
+              className="mt-5 text-xs font-semibold text-slate-400 transition hover:text-white"
+            >
+              Continue Browsing
+            </button>
+          </div>
+        </div>
+      )}
       {showResumeChoice && unfinishedDraft && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 py-5 backdrop-blur-sm"
@@ -2012,8 +2135,6 @@ export default function QuizArenaClient({
 
                         setSelectedRound(round);
                         setMessage("");
-
-                        void startChallenge(round);
                       }}
                       className={`rounded-2xl border p-5 text-center transition ${
                         locked
@@ -2057,9 +2178,7 @@ export default function QuizArenaClient({
                     disabled={isGenerating}
                     className="rounded-2xl bg-cyan-400 px-8 py-4 font-black text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isGenerating
-                      ? "loading"
-                      : `Start Round ${selectedRound}`}
+                    {isGenerating ? "loading" : `Start Round ${selectedRound}`}
                   </button>
                 </div>
               )}
