@@ -966,21 +966,23 @@ export const competitiveExams: ExamOption[] = [
       "General Knowledge",
     ],
   },
-  {
-    id: "snap",
-    title: "SNAP",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting Symbiosis institutes.",
-    trendNote: "Popular for Symbiosis MBA admissions.",
-    subjects: [
-      "General English",
-      "Analytical Reasoning",
-      "Quantitative Aptitude",
-      "Data Interpretation",
-    ],
-  },
+{
+  id: "snap",
+  title: "SNAP",
+  category: "mba-entrance",
+  stream: "management",
+  eligibility:
+    "Graduates and final-year students targeting Symbiosis institutes.",
+  trendNote:
+    "SNAP 2026 includes the new Ethics, Morality and Values section.",
+  subjects: [
+    "General English",
+    "Analytical Reasoning",
+    "Quantitative Aptitude",
+    "Data Interpretation",
+    "Ethics, Morality and Values",
+  ],
+},
   {
     id: "nmat",
     title: "NMAT",

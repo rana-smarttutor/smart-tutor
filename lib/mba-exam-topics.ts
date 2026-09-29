@@ -1,6 +1,4 @@
-import type {
-  CompetitiveExam,
-} from "@/lib/quiz-arena-config";
+import type { CompetitiveExam } from "@/lib/quiz-arena-config";
 
 export type MbaExamTopic = {
   id: string;
@@ -16,7 +14,7 @@ export type MbaExamSyllabus = {
   exam: CompetitiveExam;
   title: string;
   catalogVersion: string;
-  verification: "editorial-outline-needs-review";
+  verification: string;
   subjects: MbaExamSubject[];
 };
 
@@ -32,9 +30,7 @@ export type MbaExamSyllabus = {
  * unless separately verified against the current examination source.
  */
 
-function makeTopics(
-  names: string[],
-): MbaExamTopic[] {
+function makeTopics(names: string[]): MbaExamTopic[] {
   return names.map((title) => ({
     id: title
       .toLowerCase()
@@ -45,16 +41,12 @@ function makeTopics(
   }));
 }
 
-function subject(
-  subject: string,
-  topics: string[],
-): MbaExamSubject {
+function subject(subject: string, topics: string[]): MbaExamSubject {
   return {
     subject,
     topics: makeTopics(topics),
   };
 }
-
 
 const quantitativeAptitude = [
   "Number System",
@@ -79,7 +71,6 @@ const quantitativeAptitude = [
   "Set Theory",
 ];
 
-
 const varc = [
   "Reading Comprehension - Main Idea",
   "Reading Comprehension - Inference",
@@ -94,7 +85,6 @@ const varc = [
   "Critical Reasoning",
   "Grammar and Usage",
 ];
-
 
 const dilr = [
   "Tables",
@@ -112,7 +102,6 @@ const dilr = [
   "Binary Logic",
   "Data Sufficiency",
 ];
-
 
 const logicalReasoning = [
   "Seating Arrangements",
@@ -132,7 +121,6 @@ const logicalReasoning = [
   "Data Sufficiency",
 ];
 
-
 const abstractReasoning = [
   "Number Patterns",
   "Letter Patterns",
@@ -145,7 +133,6 @@ const abstractReasoning = [
   "Embedded Logic",
   "Non-Verbal Logic in Text Form",
 ];
-
 
 const verbalAbility = [
   "Vocabulary",
@@ -160,7 +147,6 @@ const verbalAbility = [
   "Critical Reasoning",
 ];
 
-
 const readingComprehension = [
   "Main Idea",
   "Supporting Details",
@@ -173,7 +159,6 @@ const readingComprehension = [
   "Strengthen and Weaken",
   "Passage Summary",
 ];
-
 
 const generalAwareness = [
   "Business and Economy",
@@ -190,6 +175,28 @@ const generalAwareness = [
   "Stable Current Affairs Concepts",
 ];
 
+const ethicsMoralityValues = [
+  "Ethics, Morality and Values Fundamentals",
+  "Honesty and Integrity",
+  "Fairness and Impartiality",
+  "Accountability and Responsibility",
+  "Respect for Others",
+  "Professional Ethics",
+  "Workplace Ethics",
+  "Conflict of Interest",
+  "Transparency",
+  "Confidentiality and Privacy",
+  "Social Responsibility",
+  "Ethical Leadership",
+  "Responsible Use of Authority",
+  "Stakeholder Responsibility",
+  "Moral Dilemmas",
+  "Ethical Decision Making",
+  "Personal Values and Professional Values",
+  "Rights, Duties and Responsibilities",
+  "Consequences of Ethical Decisions",
+  "Situation-Based Ethical Judgement",
+];
 
 const decisionMaking = [
   "Business Decision Making",
@@ -204,7 +211,6 @@ const decisionMaking = [
   "Social and Ethical Decisions",
 ];
 
-
 const languageSkills = [
   "Reading Comprehension",
   "Vocabulary",
@@ -218,7 +224,6 @@ const languageSkills = [
   "Inference",
 ];
 
-
 const dataAnalysis = [
   "Tables",
   "Bar Charts",
@@ -231,7 +236,6 @@ const dataAnalysis = [
   "Ratios in Data",
   "Averages in Data",
 ];
-
 
 const innovationEntrepreneurship = [
   "Entrepreneurship Fundamentals",
@@ -248,425 +252,259 @@ const innovationEntrepreneurship = [
   "Government Startup Initiatives",
 ];
 
-
 export const mbaExamSyllabuses: Partial<
-  Record<
-    CompetitiveExam,
-    MbaExamSyllabus
-  >
+  Record<CompetitiveExam, MbaExamSyllabus>
 > = {
-
   cat: {
     exam: "cat",
     title: "CAT",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "VARC",
-        varc,
-      ),
+      subject("VARC", varc),
 
-      subject(
-        "DILR",
-        dilr,
-      ),
+      subject("DILR", dilr),
 
-      subject(
-        "Quantitative Aptitude",
-        quantitativeAptitude,
-      ),
+      subject("Quantitative Aptitude", quantitativeAptitude),
     ],
   },
-
 
   "mah-mba-cet": {
     exam: "mah-mba-cet",
     title: "MAH MBA CET",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Logical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Logical Reasoning", logicalReasoning),
 
-      subject(
-        "Abstract Reasoning",
-        abstractReasoning,
-      ),
+      subject("Abstract Reasoning", abstractReasoning),
 
-      subject(
-        "Quantitative Aptitude",
-        quantitativeAptitude,
-      ),
+      subject("Quantitative Aptitude", quantitativeAptitude),
 
-      subject(
-        "Verbal Ability",
-        verbalAbility,
-      ),
+      subject("Verbal Ability", verbalAbility),
 
-      subject(
-        "Reading Comprehension",
-        readingComprehension,
-      ),
+      subject("Reading Comprehension", readingComprehension),
     ],
   },
-
 
   xat: {
     exam: "xat",
     title: "XAT",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Verbal Ability",
-        [
-          ...varc,
-          "Poem Based Comprehension",
-        ],
-      ),
+      subject("Verbal Ability", [...varc, "Poem Based Comprehension"]),
 
-      subject(
-        "Decision Making",
-        decisionMaking,
-      ),
+      subject("Decision Making", decisionMaking),
 
-      subject(
-        "Quantitative Aptitude",
-        [
-          ...quantitativeAptitude,
-          "Data Interpretation",
-        ],
-      ),
+      subject("Quantitative Aptitude", [
+        ...quantitativeAptitude,
+        "Data Interpretation",
+      ]),
 
-      subject(
-        "General Knowledge",
-        generalAwareness,
-      ),
+      subject("General Knowledge", generalAwareness),
     ],
   },
-
 
   snap: {
     exam: "snap",
     title: "SNAP",
-    catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
-
+    catalogVersion: "2026-09-emv",
+    verification: "official-2026-structure-editorial-topic-outline",
     subjects: [
-      subject(
-        "General English",
-        verbalAbility,
-      ),
+      subject("General English", verbalAbility),
 
-      subject(
-        "Analytical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Analytical Reasoning", logicalReasoning),
 
-      subject(
-        "Quantitative Aptitude",
-        quantitativeAptitude,
-      ),
+      subject("Quantitative Aptitude", quantitativeAptitude),
 
-      subject(
-        "Data Interpretation",
-        dataAnalysis,
-      ),
+      subject("Data Interpretation", dataAnalysis),
+
+      subject("Ethics, Morality and Values", ethicsMoralityValues),
     ],
   },
-
 
   nmat: {
     exam: "nmat",
     title: "NMAT",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Language Skills",
-        languageSkills,
-      ),
+      subject("Language Skills", languageSkills),
 
-      subject(
-        "Logical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Logical Reasoning", logicalReasoning),
 
-      subject(
-        "Quantitative Skills",
-        [
-          ...quantitativeAptitude,
-          ...dataAnalysis,
-        ],
-      ),
+      subject("Quantitative Skills", [
+        ...quantitativeAptitude,
+        ...dataAnalysis,
+      ]),
     ],
   },
-
 
   cmat: {
     exam: "cmat",
     title: "CMAT",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Quantitative Technique",
-        [
-          ...quantitativeAptitude,
-          ...dataAnalysis,
-        ],
-      ),
+      subject("Quantitative Technique", [
+        ...quantitativeAptitude,
+        ...dataAnalysis,
+      ]),
 
-      subject(
-        "Logical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Logical Reasoning", logicalReasoning),
 
-      subject(
-        "Language Comprehension",
-        languageSkills,
-      ),
+      subject("Language Comprehension", languageSkills),
 
-      subject(
-        "General Awareness",
-        generalAwareness,
-      ),
+      subject("General Awareness", generalAwareness),
 
-      subject(
-        "Innovation and Entrepreneurship",
-        innovationEntrepreneurship,
-      ),
+      subject("Innovation and Entrepreneurship", innovationEntrepreneurship),
     ],
   },
-
 
   mat: {
     exam: "mat",
     title: "MAT",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Language Comprehension",
-        languageSkills,
-      ),
+      subject("Language Comprehension", languageSkills),
 
-      subject(
-        "Mathematical Skills",
-        quantitativeAptitude,
-      ),
+      subject("Mathematical Skills", quantitativeAptitude),
 
-      subject(
-        "Data Analysis",
-        dataAnalysis,
-      ),
+      subject("Data Analysis", dataAnalysis),
 
-      subject(
-        "Intelligence and Critical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Intelligence and Critical Reasoning", logicalReasoning),
 
-      subject(
-        "Indian and Global Environment",
-        generalAwareness,
-      ),
+      subject("Indian and Global Environment", generalAwareness),
     ],
   },
-
 
   atma: {
     exam: "atma",
     title: "ATMA",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Analytical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Analytical Reasoning", logicalReasoning),
 
-      subject(
-        "Verbal Skills",
-        languageSkills,
-      ),
+      subject("Verbal Skills", languageSkills),
 
-      subject(
-        "Quantitative Skills",
-        quantitativeAptitude,
-      ),
+      subject("Quantitative Skills", quantitativeAptitude),
     ],
   },
-
 
   gmat: {
     exam: "gmat",
     title: "GMAT",
     catalogVersion: "2026-09",
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "Quantitative Reasoning",
-        [
-          "Arithmetic",
-          "Fractions Decimals and Percentages",
-          "Ratio and Proportion",
-          "Algebra",
-          "Linear Equations",
-          "Inequalities",
-          "Word Problems",
-          "Rates and Work",
-          "Statistics",
-          "Probability",
-          "Problem Solving",
-        ],
-      ),
+      subject("Quantitative Reasoning", [
+        "Arithmetic",
+        "Fractions Decimals and Percentages",
+        "Ratio and Proportion",
+        "Algebra",
+        "Linear Equations",
+        "Inequalities",
+        "Word Problems",
+        "Rates and Work",
+        "Statistics",
+        "Probability",
+        "Problem Solving",
+      ]),
 
-      subject(
-        "Verbal Reasoning",
-        [
-          "Reading Comprehension",
-          "Critical Reasoning",
-          "Main Idea",
-          "Inference",
-          "Author Purpose",
-          "Argument Evaluation",
-          "Assumptions",
-          "Strengthen the Argument",
-          "Weaken the Argument",
-          "Resolve the Paradox",
-        ],
-      ),
+      subject("Verbal Reasoning", [
+        "Reading Comprehension",
+        "Critical Reasoning",
+        "Main Idea",
+        "Inference",
+        "Author Purpose",
+        "Argument Evaluation",
+        "Assumptions",
+        "Strengthen the Argument",
+        "Weaken the Argument",
+        "Resolve the Paradox",
+      ]),
 
-      subject(
-        "Data Insights",
-        [
-          "Data Sufficiency",
-          "Table Analysis",
-          "Graphics Interpretation",
-          "Two Part Analysis",
-          "Multi Source Reasoning",
-          "Data Comparison",
-          "Rates and Percentages",
-          "Statistics",
-          "Probability",
-          "Integrated Data Reasoning",
-        ],
-      ),
+      subject("Data Insights", [
+        "Data Sufficiency",
+        "Table Analysis",
+        "Graphics Interpretation",
+        "Two Part Analysis",
+        "Multi Source Reasoning",
+        "Data Comparison",
+        "Rates and Percentages",
+        "Statistics",
+        "Probability",
+        "Integrated Data Reasoning",
+      ]),
     ],
   },
 
-
   "tissnet-cuet-pg": {
     exam: "tissnet-cuet-pg",
-    title:
-      "TISS / CUET PG Management Prep",
+    title: "TISS / CUET PG Management Prep",
 
     catalogVersion: "2026-09",
 
-    verification:
-      "editorial-outline-needs-review",
+    verification: "editorial-outline-needs-review",
 
     subjects: [
-      subject(
-        "English",
-        languageSkills,
-      ),
+      subject("English", languageSkills),
 
-      subject(
-        "Quantitative Aptitude",
-        quantitativeAptitude,
-      ),
+      subject("Quantitative Aptitude", quantitativeAptitude),
 
-      subject(
-        "Logical Reasoning",
-        logicalReasoning,
-      ),
+      subject("Logical Reasoning", logicalReasoning),
 
-      subject(
-        "General Awareness",
-        generalAwareness,
-      ),
+      subject("General Awareness", generalAwareness),
     ],
   },
 };
 
-
 export function getMbaExamSyllabus(
   exam: CompetitiveExam | null,
 ): MbaExamSyllabus | null {
-
   if (!exam) {
     return null;
   }
 
-  return (
-    mbaExamSyllabuses[exam] ??
-    null
-  );
+  return mbaExamSyllabuses[exam] ?? null;
 }
-
 
 export function getMbaExamTopics(
   exam: CompetitiveExam | null,
   subjectName: string | null,
 ): MbaExamTopic[] {
-
-  if (
-    !exam ||
-    !subjectName
-  ) {
+  if (!exam || !subjectName) {
     return [];
   }
 
-  const syllabus =
-    getMbaExamSyllabus(exam);
+  const syllabus = getMbaExamSyllabus(exam);
 
   if (!syllabus) {
     return [];
   }
 
   return (
-    syllabus.subjects.find(
-      (item) =>
-        item.subject ===
-        subjectName,
-    )?.topics ??
-    []
+    syllabus.subjects.find((item) => item.subject === subjectName)?.topics ?? []
   );
 }
-
 
 export function isValidMbaExamTopic(
   exam: CompetitiveExam,
   subjectName: string,
   topicId: string,
 ): boolean {
-
-  return getMbaExamTopics(
-    exam,
-    subjectName,
-  ).some(
-    (topic) =>
-      topic.id === topicId,
+  return getMbaExamTopics(exam, subjectName).some(
+    (topic) => topic.id === topicId,
   );
 }
