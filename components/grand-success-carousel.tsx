@@ -13,12 +13,12 @@ const RESULT_CATEGORIES = [
   {
     id: "10-cbsc",
     label: "10th CBSE",
-    image: "/hof/10th CBSC.png",
+    image: "/hof/10th-CBSE-new.jpeg",
   },
   {
     id: "12-hsc Science",
     label: "12TH HSC SCIENCE",
-    image: "/hof/12th Hsc science.png",
+    image: "/hof/12th-Sci-new.jpeg",
   },
   {
     id: "12-hsc Commerce",
@@ -33,7 +33,7 @@ const RESULT_CATEGORIES = [
    {
     id: "12-CBSE Science",
     label: "12TH CBSE SCIENCE",
-    image: "/hof/12th  sci cbse new.jpeg",
+    image: "/hof/12th-CBSE-sci-new.jpeg",
   },
   {
     id: "jee",
