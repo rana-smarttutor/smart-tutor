@@ -41,6 +41,16 @@ type ExamSource = {
 
   includeKeywords?: string[];
   excludeKeywords?: string[];
+
+  /*
+   * Dedicated single-exam/recruitment websites can accept
+   * their own source-specific keywords without also requiring
+   * one of the generic English Exam Updates keywords.
+   *
+   * Useful for sources such as Maharashtra Police where
+   * many notices are published in Marathi.
+   */
+  sourceKeywordOnly?: boolean;
 };
 
 const SOURCES: ExamSource[] = [
@@ -103,12 +113,56 @@ const SOURCES: ExamSource[] = [
   },
 
   {
+    key: "nda",
+    name: "NDA / Naval Academy",
+    category: "Government Exams",
+    url: "https://www.upsc.gov.in/whats-new",
+    allowedHosts: [
+      "upsc.gov.in",
+      "upsconline.nic.in",
+    ],
+    maxItems: 30,
+
+    includeKeywords: [
+      "national defence academy",
+      "naval academy",
+      "nda",
+    ],
+  },
+
+  {
+    key: "cds",
+    name: "Combined Defence Services (CDS)",
+    category: "Government Exams",
+    url: "https://www.upsc.gov.in/whats-new",
+    allowedHosts: [
+      "upsc.gov.in",
+      "upsconline.nic.in",
+    ],
+    maxItems: 30,
+
+    includeKeywords: [
+      "combined defence services",
+      "cds",
+    ],
+  },
+
+  {
     key: "upsc",
     name: "UPSC",
     category: "Government Exams",
     url: "https://www.upsc.gov.in/whats-new",
     allowedHosts: ["upsc.gov.in", "upsconline.nic.in"],
     maxItems: 40,
+
+    /*
+     * NDA and CDS are handled by their own source cards above.
+     */
+    excludeKeywords: [
+      "national defence academy",
+      "naval academy",
+      "combined defence services",
+    ],
   },
 
   {
@@ -461,8 +515,18 @@ const SOURCES: ExamSource[] = [
     name: "MHT-CET",
     category: "Competitive Exams",
     url: "https://cetcell.mahacet.org/",
-    allowedHosts: ["cetcell.mahacet.org", "mahacet.org"],
+    allowedHosts: [
+      "cetcell.mahacet.org",
+      "mahacet.org",
+    ],
     maxItems: 40,
+
+    includeKeywords: [
+      "mht-cet",
+      "mht cet",
+      "pcm group",
+      "pcb group",
+    ],
   },
 
   {
@@ -615,6 +679,273 @@ const SOURCES: ExamSource[] = [
       "counseling",
       "result",
     ],
+  },
+  // =====================================================
+  // MBA ENTRANCE EXAMS
+  // =====================================================
+
+  {
+    key: "mah-mba-cet",
+    name: "MAH MBA / MMS CET",
+    category: "Competitive Exams",
+    url: "https://cetcell.mahacet.org/",
+    allowedHosts: [
+      "cetcell.mahacet.org",
+      "mahacet.org",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "mah-mba",
+      "mah mba",
+      "mba/mms",
+      "mba mms",
+      "mba/mms-cet",
+      "mba/mms cet",
+    ],
+  },
+
+  {
+    key: "cat",
+    name: "CAT",
+    category: "Competitive Exams",
+    url: "https://iimcat.ac.in/",
+    allowedHosts: [
+      "iimcat.ac.in",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "cat 2026",
+      "cat 2027",
+      "common admission test",
+      "registration",
+      "admit card",
+      "result",
+      "score",
+      "correction",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "mat",
+    name: "MAT / AIMA",
+    category: "Competitive Exams",
+    url: "https://mat.aima.in/",
+    allowedHosts: [
+      "mat.aima.in",
+      "aima.in",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "management aptitude test",
+      "mat registration",
+      "mat exam",
+      "mat admit",
+      "mat result",
+      "mat score",
+      "pbt",
+      "cbt",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "cmat",
+    name: "CMAT",
+    category: "Competitive Exams",
+    url: "https://cmat.nta.nic.in/",
+    allowedHosts: [
+      "cmat.nta.nic.in",
+      "nta.ac.in",
+      "cdnbbsr.s3waas.gov.in",
+      "examinationservices.nic.in",
+      "ntaresults.nic.in",
+      "testservices.nic.in",
+      "cnr.nic.in",
+    ],
+    maxItems: 40,
+
+    includeKeywords: [
+      "cmat",
+      "common management admission test",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "xat",
+    name: "XAT",
+    category: "Competitive Exams",
+    url: "https://xatonline.in/",
+    allowedHosts: [
+      "xatonline.in",
+      "xlri.ac.in",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "xat",
+      "registration",
+      "admit card",
+      "result",
+      "score",
+      "mock",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "nmat",
+    name: "NMAT by GMAC",
+    category: "Competitive Exams",
+    url: "https://www.mba.com/exams/nmat",
+    allowedHosts: [
+      "mba.com",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "nmat",
+      "registration",
+      "scheduling",
+      "schedule",
+      "admit card",
+      "score",
+      "result",
+      "retake",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "snap",
+    name: "SNAP",
+    category: "Competitive Exams",
+    url: "https://www.snaptest.org/snap-important-dates",
+    allowedHosts: [
+      "snaptest.org",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "snap",
+      "registration",
+      "admit card",
+      "result",
+      "test date",
+      "important dates",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+
+  // =====================================================
+  // LAW ENTRANCE EXAMS
+  // =====================================================
+
+  {
+    key: "ailet",
+    name: "AILET",
+    category: "Competitive Exams",
+    url: "https://nationallawuniversitydelhi.in/",
+    allowedHosts: [
+      "nationallawuniversitydelhi.in",
+      "nludelhi.ac.in",
+    ],
+    maxItems: 35,
+
+    includeKeywords: [
+      "ailet",
+      "admission notice",
+      "notification",
+      "registration",
+      "admit card",
+      "result",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "mah-llb-cet",
+    name: "MAH LLB CET",
+    category: "Competitive Exams",
+    url: "https://cetcell.mahacet.org/",
+    allowedHosts: [
+      "cetcell.mahacet.org",
+      "mahacet.org",
+    ],
+    maxItems: 40,
+
+    includeKeywords: [
+      "llb",
+      "ll.b",
+      "mah-llb",
+      "llb 3 yrs",
+      "llb 5 yrs",
+      "law 3 years",
+      "law 5 years",
+    ],
+  },
+
+
+  // =====================================================
+  // POLICE / ARMY BHARTI
+  // =====================================================
+
+  {
+    key: "maharashtra-police",
+    name: "Maharashtra Police Bharti",
+    category: "Government Exams",
+    url: "https://www.mahapolice.gov.in/police-recruitment",
+    allowedHosts: [
+      "mahapolice.gov.in",
+      "policerecruitment2025.mahait.org",
+    ],
+    maxItems: 45,
+
+    includeKeywords: [
+      "पोलीस",
+      "भरती",
+      "police",
+      "constable",
+      "recruitment",
+      "srpf",
+    ],
+
+    sourceKeywordOnly: true,
+  },
+
+  {
+    key: "indian-army",
+    name: "Indian Army / Agniveer",
+    category: "Government Exams",
+    url: "https://joinindianarmy.nic.in/",
+    allowedHosts: [
+      "joinindianarmy.nic.in",
+    ],
+    maxItems: 40,
+
+    includeKeywords: [
+      "agniveer",
+      "army",
+      "recruitment",
+      "common entrance examination",
+      "cee",
+      "rally",
+      "bharti",
+    ],
+
+    sourceKeywordOnly: true,
   },
 ];
 
@@ -818,7 +1149,13 @@ function isRelevantTitle(title: string, source: ExamSource) {
    * 2. the title to look like an actual exam update
    */
   if (source.includeKeywords?.length) {
-    return matchesSourceKeyword && matchesGlobalKeyword;
+    return (
+      matchesSourceKeyword &&
+      (
+        source.sourceKeywordOnly ||
+        matchesGlobalKeyword
+      )
+    );
   }
 
   return matchesGlobalKeyword;
@@ -1282,7 +1619,7 @@ const getCachedExamUpdates = unstable_cache(
    * This prevents the old limited source result
    * from remaining cached after deployment.
    */
-  ["smartiq-exam-updates-v4"],
+  ["smartiq-exam-updates-v5"],
 
   {
     revalidate: 900,
