@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { ArrowRight, GraduationCap, X } from "lucide-react";
 
 import {
   getDifficultyForJourneyLevel,
@@ -152,6 +153,15 @@ export default function QuizArenaClient({
 
   const [exitSaveError, setExitSaveError] = useState("");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  /*
+   * Used by the Mock Test browser-back integration.
+   *
+   * When the visitor reaches the first Mock Test screen,
+   * one additional browser back should be allowed to leave
+   * the Mock Test page normally.
+   */
+  const allowBrowserExitRef = useRef(false);
 
   const registerQuizSave = useCallback(
     (save: (() => Promise<boolean>) | null) => {
@@ -530,6 +540,155 @@ export default function QuizArenaClient({
       setStep("round");
     }
   }
+
+  /*
+   * ========================================================
+   * MOCK TEST - BROWSER BACK BUTTON
+   * ========================================================
+   *
+   * The browser Back button now behaves like the existing
+   * in-app Back button while the student is navigating:
+   *
+   * Round -> Level -> Topic -> Subject -> Exam -> Category
+   *
+   * We intentionally reuse goBack() so browser navigation
+   * and the visible Back button always follow identical rules.
+   *
+   * While a quiz is actively running, browser Back opens the
+   * existing Save & Exit modal instead of losing the attempt.
+   */
+  useEffect(() => {
+    if (!mockTestMode) {
+      return;
+    }
+
+    const historyKey =
+      "__smartIqMockTestBackGuard";
+
+    function currentHistoryState(): Record<string, unknown> {
+      const value =
+        window.history.state;
+
+      return value &&
+        typeof value === "object"
+        ? {
+            ...value,
+          }
+        : {};
+    }
+
+    /*
+     * Add one same-page browser-history entry.
+     *
+     * This prevents the first Back press from immediately
+     * leaving /mock-test.
+     */
+    if (
+      !(
+        window.history.state &&
+        typeof window.history.state === "object" &&
+        window.history.state[historyKey] === true
+      )
+    ) {
+      window.history.pushState(
+        {
+          ...currentHistoryState(),
+          [historyKey]: true,
+        },
+        "",
+        window.location.href,
+      );
+    }
+
+    function restoreMockTestGuard() {
+      window.history.pushState(
+        {
+          ...currentHistoryState(),
+          [historyKey]: true,
+        },
+        "",
+        window.location.href,
+      );
+    }
+
+    function handleBrowserBack() {
+      /*
+       * We intentionally called history.back() ourselves
+       * after reaching the first Mock Test screen.
+       *
+       * Let that second popstate continue normally so the
+       * browser can actually leave /mock-test.
+       */
+      if (allowBrowserExitRef.current) {
+        allowBrowserExitRef.current =
+          false;
+
+        return;
+      }
+
+      /*
+       * Never throw away an active test.
+       *
+       * Restore the Mock Test history guard and use the
+       * existing Save & Exit popup.
+       */
+      if (step === "quiz") {
+        restoreMockTestGuard();
+
+        setExitSaveError("");
+
+        setShowExitModal(true);
+
+        return;
+      }
+
+      const firstMockTestStep =
+        startAtCategory
+          ? "level"
+          : "welcome";
+
+      /*
+       * Still inside the Mock Test journey:
+       * restore our history guard and perform exactly the
+       * same navigation as the visible in-app Back button.
+       */
+      if (step !== firstMockTestStep) {
+        restoreMockTestGuard();
+
+        goBack();
+
+        return;
+      }
+
+      /*
+       * We have reached the first Mock Test screen.
+       *
+       * The same Back click should now continue to the page
+       * that the visitor was on before entering Mock Test.
+       */
+      allowBrowserExitRef.current =
+        true;
+
+      window.history.back();
+    }
+
+    window.addEventListener(
+      "popstate",
+      handleBrowserBack,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "popstate",
+        handleBrowserBack,
+      );
+    };
+  }, [
+    mockTestMode,
+    startAtCategory,
+    step,
+  ]);
+
   function requestExitQuiz() {
     setExitSaveError("");
     setShowExitModal(true);
@@ -1254,7 +1413,13 @@ export default function QuizArenaClient({
     <main className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white">
       {showLoginPrompt && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-sm"
+          className="
+            fixed inset-0 z-[9999]
+            flex items-center justify-center
+            bg-slate-950/75
+            px-4 py-5
+            backdrop-blur-md
+          "
           role="presentation"
           onClick={() => setShowLoginPrompt(false)}
         >
@@ -1262,75 +1427,263 @@ export default function QuizArenaClient({
             role="dialog"
             aria-modal="true"
             aria-labelledby="quiz-login-title"
+            aria-describedby="quiz-login-description"
             onClick={(event) => event.stopPropagation()}
-            className="relative w-full max-w-md overflow-hidden rounded-[28px] border border-white/15 bg-slate-900 p-7 text-center text-white shadow-2xl shadow-black/40 sm:p-9"
+            className="
+              relative w-full
+              max-w-[460px]
+              overflow-hidden
+              rounded-[28px]
+              border border-blue-100/80
+              bg-white
+              px-6 pb-6 pt-8
+              text-center
+              shadow-[0_30px_100px_rgba(2,20,63,0.35)]
+              sm:px-9 sm:pb-8 sm:pt-10
+            "
           >
-            {/* CLOSE */}
+            {/* Decorative background */}
+
+            <div
+              aria-hidden="true"
+              className="
+                pointer-events-none
+                absolute -left-28 -top-36
+                h-64 w-64
+                rounded-full
+                bg-blue-100/65
+                sm:h-72 sm:w-72
+              "
+            />
+
+            <div
+              aria-hidden="true"
+              className="
+                pointer-events-none
+                absolute -right-28 -top-40
+                h-64 w-64
+                rounded-full
+                bg-sky-50
+              "
+            />
+
+            <div
+              aria-hidden="true"
+              className="
+                pointer-events-none
+                absolute -bottom-36 -right-32
+                h-64 w-64
+                rounded-full
+                bg-blue-50
+              "
+            />
+
+            {/* Close */}
+
             <button
               type="button"
-              onClick={() => setShowLoginPrompt(false)}
               aria-label="Close login popup"
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-slate-300 transition hover:bg-white/10 hover:text-white"
-            >
-              ×
-            </button>
-
-            {/* ICON */}
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-400/15 text-3xl">
-              🔐
-            </div>
-
-            <p className="mt-5 text-[11px] font-black uppercase tracking-[0.22em] text-cyan-300">
-              SmartIQ Institute
-            </p>
-
-            <h2
-              id="quiz-login-title"
-              className="mt-2 text-3xl font-black tracking-tight text-white"
-            >
-              Login to Start Your Test
-            </h2>
-
-            <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-slate-300">
-              You can explore exams, subjects, topics and levels without logging
-              in. Sign in to start the round and save your progress.
-            </p>
-
-            <div className="mt-7 grid gap-3">
-              <Link
-                href={
-                  mockTestMode
-                    ? "/login?returnTo=%2Fmock-test"
-                    : "/login?returnTo=%2Fquiz-arena"
-                }
-                className="flex w-full items-center justify-center rounded-xl bg-cyan-400 px-6 py-3.5 text-sm font-black text-slate-950 transition hover:bg-cyan-300"
-              >
-                Login & Start Test
-              </Link>
-
-              <Link
-                href={
-                  mockTestMode
-                    ? "/signup?returnTo=%2Fmock-test"
-                    : "/signup?returnTo=%2Fquiz-arena"
-                }
-                className="flex w-full items-center justify-center rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
-              >
-                Create New Account
-              </Link>
-            </div>
-
-            <button
-              type="button"
               onClick={() => setShowLoginPrompt(false)}
-              className="mt-5 text-xs font-semibold text-slate-400 transition hover:text-white"
+              className="
+                absolute right-4 top-4 z-20
+                flex h-9 w-9
+                items-center justify-center
+                rounded-full
+                border border-blue-100
+                bg-white/90
+                text-slate-500
+                shadow-sm
+                transition-all duration-200
+                hover:rotate-90
+                hover:border-blue-200
+                hover:bg-blue-50
+                hover:text-blue-700
+              "
             >
-              Continue Browsing
+              <X size={17} />
             </button>
+
+            <div className="relative z-10">
+
+              {/* Icon */}
+
+              <div
+                className="
+                  mx-auto
+                  flex h-[74px] w-[74px]
+                  items-center justify-center
+                  rounded-[22px]
+                  border border-blue-100/80
+                  bg-gradient-to-br
+                  from-blue-50
+                  via-[#e8f1ff]
+                  to-[#d9e9ff]
+                  shadow-[0_8px_24px_rgba(37,99,235,0.10)]
+                  sm:h-[82px] sm:w-[82px]
+                "
+              >
+                <GraduationCap
+                  size={37}
+                  strokeWidth={1.8}
+                  className="text-[#154bb5] drop-shadow-sm"
+                />
+              </div>
+
+              {/* Brand */}
+
+              <p
+                className="
+                  mt-5
+                  text-[10px]
+                  font-black
+                  uppercase
+                  tracking-[0.27em]
+                  text-[#1454c5]
+                  sm:text-xs
+                "
+              >
+                SmartIQ Institute
+              </p>
+
+              {/* Heading */}
+
+              <h2
+                id="quiz-login-title"
+                className="
+                  mx-auto mt-5
+                  max-w-[350px]
+                  text-[27px]
+                  font-black
+                  leading-[1.13]
+                  tracking-[-0.045em]
+                  text-[#131c32]
+                  sm:text-[32px]
+                "
+              >
+                Your Learning Journey Is Awaiting
+              </h2>
+
+              {/* Description */}
+
+              <p
+                id="quiz-login-description"
+                className="
+                  mx-auto mt-5
+                  max-w-[350px]
+                  text-[13px]
+                  font-medium
+                  leading-[1.8]
+                  text-slate-500
+                  sm:text-sm
+                "
+              >
+                Log in to access{" "}
+                {mockTestMode ? "Mock Tests" : "Quiz Arena"},
+                explore learning resources and track your progress.
+              </p>
+
+              {/* Actions */}
+
+              <div className="mt-7 grid gap-3">
+
+                <Link
+                  href={
+                    mockTestMode
+                      ? "/login?returnTo=%2Fmock-test"
+                      : "/login?returnTo=%2Fquiz-arena"
+                  }
+                  className="
+                    group
+                    flex w-full
+                    items-center justify-center
+                    gap-2
+                    rounded-xl
+                    border border-blue-500
+                    bg-gradient-to-r
+                    from-[#1176f8]
+                    to-[#1654ed]
+                    px-5 py-3.5
+                    text-[14px]
+                    font-bold
+                    text-white
+                    shadow-[0_10px_22px_rgba(37,99,235,0.22)]
+                    transition-all duration-200
+                    hover:-translate-y-0.5
+                    hover:from-[#0965e6]
+                    hover:to-[#1345d7]
+                  "
+                >
+                  Login Now
+
+                  <ArrowRight
+                    size={17}
+                    className="
+                      transition-transform
+                      group-hover:translate-x-1
+                    "
+                  />
+                </Link>
+
+                <Link
+                  href={
+                    mockTestMode
+                      ? "/signup?returnTo=%2Fmock-test"
+                      : "/signup?returnTo=%2Fquiz-arena"
+                  }
+                  className="
+                    group
+                    flex w-full
+                    items-center justify-center
+                    gap-2
+                    rounded-xl
+                    border border-blue-200
+                    bg-gradient-to-r
+                    from-[#f4f8ff]
+                    to-[#ebf3ff]
+                    px-5 py-3.5
+                    text-[14px]
+                    font-bold
+                    text-[#1550c5]
+                    transition-all duration-200
+                    hover:-translate-y-0.5
+                    hover:border-blue-300
+                    hover:from-[#eaf3ff]
+                    hover:to-[#dfeeff]
+                  "
+                >
+                  Create Free Account
+
+                  <ArrowRight
+                    size={16}
+                    className="
+                      transition-transform
+                      group-hover:translate-x-1
+                    "
+                  />
+                </Link>
+              </div>
+
+              {/* Keep existing dismiss behaviour */}
+
+              <button
+                type="button"
+                onClick={() => setShowLoginPrompt(false)}
+                className="
+                  mt-5
+                  text-xs
+                  font-semibold
+                  text-slate-400
+                  transition
+                  hover:text-slate-700
+                "
+              >
+                Continue Browsing
+              </button>
+            </div>
           </div>
         </div>
       )}
-      {showResumeChoice && unfinishedDraft && (
+{showResumeChoice && unfinishedDraft && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 py-5 backdrop-blur-sm"
           role="presentation"
