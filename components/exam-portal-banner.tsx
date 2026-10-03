@@ -98,10 +98,10 @@ export function ExamPortalBanner({
             href="https://smartiqexamportal.in"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Explore SmartIQ Exam Portal mock test series in a new tab"
+            aria-label="Explore SmartIQ Exam Portal full mock test series in a new tab"
             className="group inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-7 py-4 text-center text-sm font-black text-[#103B91] shadow-[0_12px_35px_-10px_rgba(0,0,0,0.35)] transition-all duration-300 hover:-translate-y-1 hover:bg-cyan-100 hover:shadow-xl sm:w-auto sm:text-base"
           >
-            Explore Mock Test Series
+            Explore Full Mock Test Series
 
             <ArrowUpRight className="h-5 w-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
           </a>
