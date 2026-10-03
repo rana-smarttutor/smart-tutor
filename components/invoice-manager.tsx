@@ -43,6 +43,7 @@ type InvoiceDraft = {
   title: string;
   particulars: string;
   amount: string;
+  paidAmount: string;
   dueDate: string;
   paymentMode: PaymentMode | "";
   transactionId: string;
@@ -52,6 +53,14 @@ type InvoiceDraft = {
   notes: string;
 };
 
+type EditInvoiceDraft = {
+  title: string;
+  amount: string;
+  paidAmount: string;
+  dueDate: string;
+  paymentMode: PaymentMode | "";
+  notes: string;
+};
 type PaymentDraft = {
   paidAmount: string;
   paidDate: string;
@@ -79,6 +88,7 @@ function createDraft(studentId = ""): InvoiceDraft {
     title: "Monthly Fee Invoice",
     particulars: "Monthly Tuition Fee",
     amount: "",
+    paidAmount: "",
     dueDate: today(),
     paymentMode: "",
     transactionId: "",
@@ -335,6 +345,12 @@ export function InvoiceManager({
     null,
   );
 
+  const [invoiceToEdit, setInvoiceToEdit] = useState<FeeInvoice | null>(null);
+
+  const [editDraft, setEditDraft] = useState<EditInvoiceDraft | null>(null);
+
+  const [isUpdatingInvoice, setIsUpdatingInvoice] = useState(false);
+
   const [invoiceToPay, setInvoiceToPay] = useState<FeeInvoice | null>(null);
   const [paymentDraft, setPaymentDraft] = useState<PaymentDraft>(
     createPaymentDraft(0),
@@ -432,7 +448,9 @@ export function InvoiceManager({
   }
 
   async function createInvoice() {
-    const amount = Number(draft.amount);
+    const totalAmount = Number(draft.amount);
+
+    const paidAmount = draft.paidAmount.trim() ? Number(draft.paidAmount) : 0;
 
     if (!draft.studentId) {
       showMessage("error", "Select a student first.");
@@ -449,8 +467,26 @@ export function InvoiceManager({
       return;
     }
 
-    if (!Number.isFinite(amount) || amount <= 0) {
-      showMessage("error", "Enter a valid fee amount.");
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+      showMessage("error", "Enter a valid total amount.");
+      return;
+    }
+
+    if (!Number.isFinite(paidAmount) || paidAmount < 0) {
+      showMessage("error", "Enter a valid paid amount.");
+      return;
+    }
+
+    if (paidAmount > totalAmount) {
+      showMessage(
+        "error",
+        "Paid amount cannot be greater than the total amount.",
+      );
+      return;
+    }
+
+    if (paidAmount > 0 && !draft.paymentMode) {
+      showMessage("error", "Select a payment mode for the paid amount.");
       return;
     }
 
@@ -461,29 +497,38 @@ export function InvoiceManager({
         studentId: draft.studentId,
         title: draft.title,
         particulars: draft.particulars,
-        amount,
+        amount: totalAmount,
         dueDate: draft.dueDate,
         notes: draft.notes,
       };
 
-      if (draft.paymentMode) {
+      if (paidAmount > 0 && draft.paymentMode) {
         bodyPayload.paymentMode = draft.paymentMode;
+
         bodyPayload.transaction = {
-          paidAmount: amount,
-          paidDate: draft.dueDate,
+          paidAmount,
+
+          paidDate: today(),
+
           paymentMode: draft.paymentMode,
+
           transactionId: draft.transactionId || undefined,
+
           chequeNumber: draft.chequeNumber || undefined,
+
           bankName: draft.bankName || undefined,
+
           accountLast4: draft.accountLast4 || undefined,
         };
       }
 
       const response = await fetch("/api/invoices", {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
         },
+
         body: JSON.stringify(bodyPayload),
       });
 
@@ -497,11 +542,13 @@ export function InvoiceManager({
       }
 
       setInvoices((current) => [payload.feeInvoice!, ...current]);
+
       setShowForm(false);
       setStudentDetails(null);
+
       setDraft(createDraft(studentOptions[0]?.id ?? ""));
 
-      showMessage("success", "Invoice created with student and batch details.");
+      showMessage("success", "Invoice created successfully.");
     } catch (error) {
       showMessage(
         "error",
@@ -512,6 +559,147 @@ export function InvoiceManager({
     }
   }
 
+  function openEditInvoice(invoice: FeeInvoice) {
+    setInvoiceToEdit(invoice);
+
+    setEditDraft({
+      title: invoice.title ?? "",
+
+      amount: String(invoice.amount ?? 0),
+
+      paidAmount: String(invoice.paidAmount ?? 0),
+
+      dueDate: invoice.dueDate ?? today(),
+
+      paymentMode: (invoice.paymentMode as PaymentMode | undefined) ?? "",
+
+      notes: invoice.notes ?? "",
+    });
+  }
+
+  function updateEditDraft<K extends keyof EditInvoiceDraft>(
+    key: K,
+    value: EditInvoiceDraft[K],
+  ) {
+    setEditDraft((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [key]: value,
+      };
+    });
+  }
+
+  async function saveEditedInvoice() {
+    if (!invoiceToEdit || !editDraft) {
+      return;
+    }
+
+    const totalAmount = Number(editDraft.amount);
+
+    const paidAmount = editDraft.paidAmount.trim()
+      ? Number(editDraft.paidAmount)
+      : 0;
+
+    if (!editDraft.title.trim()) {
+      showMessage("error", "Enter a description.");
+      return;
+    }
+
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+      showMessage("error", "Enter a valid total amount.");
+      return;
+    }
+
+    if (!Number.isFinite(paidAmount) || paidAmount < 0) {
+      showMessage("error", "Enter a valid paid amount.");
+      return;
+    }
+
+    if (paidAmount > totalAmount) {
+      showMessage(
+        "error",
+        "Paid amount cannot be greater than the total amount.",
+      );
+      return;
+    }
+
+    if (paidAmount > 0 && !editDraft.paymentMode) {
+      showMessage("error", "Select a payment mode.");
+      return;
+    }
+
+    const dueDateTime = new Date(`${editDraft.dueDate}T23:59:59`).getTime();
+
+    const isOverdue = Number.isFinite(dueDateTime) && dueDateTime < Date.now();
+
+    const status: FeeInvoice["status"] =
+      paidAmount <= 0
+        ? isOverdue
+          ? "overdue"
+          : "unpaid"
+        : paidAmount >= totalAmount
+          ? "paid"
+          : "partial";
+
+    try {
+      setIsUpdatingInvoice(true);
+
+      const response = await fetch(`/api/invoices/${invoiceToEdit.id}`, {
+        method: "PATCH",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          title: editDraft.title.trim(),
+
+          amount: totalAmount,
+
+          paidAmount,
+
+          dueDate: editDraft.dueDate,
+
+          status,
+
+          paymentMode: paidAmount > 0 ? editDraft.paymentMode : "",
+
+          notes: editDraft.notes.trim(),
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        feeInvoice?: FeeInvoice;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.feeInvoice) {
+        throw new Error(payload.error || "Unable to update invoice.");
+      }
+
+      setInvoices((current) =>
+        current.map((invoice) =>
+          invoice.id === payload.feeInvoice!.id ? payload.feeInvoice! : invoice,
+        ),
+      );
+
+      setInvoiceToEdit(null);
+      setEditDraft(null);
+
+      showMessage("success", "Invoice updated successfully.");
+    } catch (error) {
+      showMessage(
+        "error",
+        error instanceof Error ? error.message : "Unable to update invoice.",
+      );
+    } finally {
+      setIsUpdatingInvoice(false);
+    }
+  }
   async function deleteInvoice(invoiceId: string) {
     try {
       setDeletingId(invoiceId);
@@ -637,7 +825,7 @@ export function InvoiceManager({
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
-    const logoUrl = `${window.location.origin}/stpl.jpeg`;
+    const logoUrl = `${window.location.origin}/siqn-pvtltd.jpeg`;
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
     const now = new Date();
@@ -927,16 +1115,43 @@ export function InvoiceManager({
       color: #142758;
     }
 .footer {
-  display: grid;
-  grid-template-columns: 1fr 50mm;
-  gap: 8mm;
-  align-items: end;
   margin-top: 3.5mm;
   padding: 2.5mm 2mm 0;
   border-top: 1.5px solid ${NAVY};
 }
-    .terms { font-size: 8.6px; line-height: 1.75; }
-    .terms ul { margin: 0; padding-left: 4mm; }
+
+.fee-warning {
+  margin: 0 0 5mm;
+  color: #dc2626;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.footer-bottom {
+  display: grid;
+  grid-template-columns: 1fr 54mm;
+  gap: 8mm;
+  align-items: end;
+}
+
+.terms {
+  color: #111827;
+  font-size: 8.6px;
+  font-weight: 600;
+  line-height: 1.75;
+}
+
+.terms ul {
+  margin: 0;
+  padding-left: 4mm;
+}
+
+.terms li {
+  color: #111827;
+  margin-bottom: 0.8mm;
+}
+
 .signature {
   width: 54mm;
   justify-self: end;
@@ -1130,30 +1345,37 @@ export function InvoiceManager({
       <tbody>${historyRows}</tbody>
     </table>
 
-    <footer class="footer">
-      <div class="terms">
-        <ul>
-          <li>This is a computer-generated receipt and does not require a physical signature.</li>
-          <li>Fees once paid are non-refundable under any circumstances.</li>
-          <li>Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.</li>
-        </ul>
-      </div>
+<footer class="footer">
+  <div class="fee-warning">
+    • Fees once paid are non-refundable under any circumstances.
+  </div>
 
-<div class="signature">
-  <img
-    src="${escapeHtml(signatureUrl)}"
-    alt="Adv. Reena Kumari signature"
-  />
+  <div class="footer-bottom">
+    <div class="terms">
+      <ul>
+        <li>
+          This is a computer-generated receipt and does not require a physical signature.
+        </li>
 
-  <div class="signature-rule"></div>
+        <li>
+          Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.
+        </li>
+      </ul>
+    </div>
 
-  <strong>Authorized Signatory</strong>
-  <span>Mr. Adv. Reena Kumari</span>
-  <span>Director &amp; Founder</span>
-  <span>SmartIQ Institute Pvt. Ltd.</span>
-</div>
+    <div class="signature">
+      <img
+        src="${escapeHtml(signatureUrl)}"
+        alt="Authorized Signature"
+      />
 
-    </footer>
+      <div class="signature-rule"></div>
+
+      <strong>Authorized Signatory</strong>
+      <span>SmartIQ Institute</span>
+    </div>
+  </div>
+</footer>
 
 <div class="bottom-note">
   www.smartiqinstitute.in
@@ -1284,14 +1506,41 @@ export function InvoiceManager({
               />
             </FieldLabel>
 
-            <FieldLabel label="Amount (₹) *">
+            <FieldLabel label="Total Amount (₹) *">
               <input
                 type="number"
                 min="1"
                 value={draft.amount}
                 onChange={(event) => updateDraft("amount", event.target.value)}
                 className={fieldClass}
-                placeholder="2000"
+                placeholder="30000"
+              />
+            </FieldLabel>
+
+            <FieldLabel label="Paid Amount (₹)">
+              <input
+                type="number"
+                min="0"
+                value={draft.paidAmount}
+                onChange={(event) =>
+                  updateDraft("paidAmount", event.target.value)
+                }
+                className={fieldClass}
+                placeholder="10000"
+              />
+            </FieldLabel>
+
+            <FieldLabel label="Balance (₹)">
+              <input
+                readOnly
+                value={String(
+                  Math.max(
+                    (Number(draft.amount) || 0) -
+                      (Number(draft.paidAmount) || 0),
+                    0,
+                  ),
+                )}
+                className={`${fieldClass} bg-slate-50 font-bold`}
               />
             </FieldLabel>
 
@@ -1304,7 +1553,7 @@ export function InvoiceManager({
               />
             </FieldLabel>
 
-            <FieldLabel label="Payment Status *">
+            <FieldLabel label="Payment Mode">
               <select
                 value={draft.paymentMode}
                 onChange={(event) =>
@@ -1315,16 +1564,15 @@ export function InvoiceManager({
                 }
                 className={fieldClass}
               >
-                <option value="">Unpaid</option>
-                <option value="Cash">Paid - Cash</option>
-                <option value="UPI">Paid - UPI</option>
-                <option value="Bank Transfer">Paid - Bank Transfer</option>
-                <option value="Card">Paid - Card</option>
-                <option value="Online Payment">Paid - Online Payment</option>
-                <option value="Cheque">Paid - Cheque</option>
+                <option value="">Select payment mode</option>
+                <option value="Cash">Cash</option>
+                <option value="UPI">UPI</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Card">Card</option>
+                <option value="Online Payment">Online Payment</option>
+                <option value="Cheque">Cheque</option>
               </select>
             </FieldLabel>
-
             {draft.paymentMode && draft.paymentMode !== "Cash" ? (
               <>
                 {draft.paymentMode === "Cheque" ? (
@@ -1500,7 +1748,7 @@ export function InvoiceManager({
                   </td>
 
                   <td className="px-5 py-4 text-right">
-                    <div className="flex min-w-[340px] justify-end gap-2">
+                    <div className="flex min-w-[440px] justify-end gap-2">
                       {canManage && balance > 0 ? (
                         <button
                           type="button"
@@ -1518,6 +1766,16 @@ export function InvoiceManager({
                       >
                         Download Receipt
                       </button>
+
+                      {canManage ? (
+                        <button
+                          type="button"
+                          onClick={() => openEditInvoice(invoice)}
+                          className="rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-black text-amber-700 transition hover:bg-amber-100"
+                        >
+                          Edit
+                        </button>
+                      ) : null}
 
                       {canManage ? (
                         <button
@@ -1543,6 +1801,175 @@ export function InvoiceManager({
         ) : null}
       </div>
 
+      {invoiceToEdit && editDraft ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-amber-600">
+                  Edit Invoice
+                </p>
+
+                <h3 className="mt-2 text-xl font-black text-slate-950">
+                  {invoiceToEdit.studentName}
+                </h3>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Update the invoice values below. Balance and status are
+                  calculated automatically.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setInvoiceToEdit(null);
+                  setEditDraft(null);
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-lg font-bold text-slate-500 transition hover:bg-slate-50"
+                aria-label="Close edit invoice"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <FieldLabel label="Description *">
+                <input
+                  value={editDraft.title}
+                  onChange={(event) =>
+                    updateEditDraft("title", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Due Date *">
+                <input
+                  type="date"
+                  value={editDraft.dueDate}
+                  onChange={(event) =>
+                    updateEditDraft("dueDate", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Total Amount (₹) *">
+                <input
+                  type="number"
+                  min="1"
+                  value={editDraft.amount}
+                  onChange={(event) =>
+                    updateEditDraft("amount", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Paid Amount (₹)">
+                <input
+                  type="number"
+                  min="0"
+                  value={editDraft.paidAmount}
+                  onChange={(event) =>
+                    updateEditDraft("paidAmount", event.target.value)
+                  }
+                  className={fieldClass}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Balance (₹)">
+                <input
+                  readOnly
+                  value={String(
+                    Math.max(
+                      (Number(editDraft.amount) || 0) -
+                        (Number(editDraft.paidAmount) || 0),
+                      0,
+                    ),
+                  )}
+                  className={`${fieldClass} bg-slate-50 font-bold`}
+                />
+              </FieldLabel>
+
+              <FieldLabel label="Payment Mode">
+                <select
+                  value={editDraft.paymentMode}
+                  onChange={(event) =>
+                    updateEditDraft(
+                      "paymentMode",
+                      event.target.value as PaymentMode | "",
+                    )
+                  }
+                  className={fieldClass}
+                >
+                  <option value="">Select payment mode</option>
+                  <option value="Cash">Cash</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Card">Card</option>
+                  <option value="Online Payment">Online Payment</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
+              </FieldLabel>
+            </div>
+
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                  Automatic Status
+                </p>
+
+                <p className="mt-2 text-lg font-black text-slate-950">
+                  {(Number(editDraft.paidAmount) || 0) <= 0
+                    ? new Date(`${editDraft.dueDate}T23:59:59`).getTime() <
+                      Date.now()
+                      ? "OVERDUE"
+                      : "UNPAID"
+                    : (Number(editDraft.paidAmount) || 0) >=
+                        (Number(editDraft.amount) || 0)
+                      ? "PAID"
+                      : "PARTIAL"}
+                </p>
+              </div>
+
+              <FieldLabel label="Notes">
+                <input
+                  value={editDraft.notes}
+                  onChange={(event) =>
+                    updateEditDraft("notes", event.target.value)
+                  }
+                  className={fieldClass}
+                  placeholder="Optional internal note"
+                />
+              </FieldLabel>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setInvoiceToEdit(null);
+                  setEditDraft(null);
+                }}
+                className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isUpdatingInvoice}
+                onClick={() => void saveEditedInvoice()}
+                className="rounded-full bg-amber-500 px-5 py-2.5 text-sm font-black text-slate-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isUpdatingInvoice ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {invoiceToDelete ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
           <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">

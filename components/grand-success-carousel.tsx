@@ -68,7 +68,7 @@ const RESULT_CATEGORIES = [
   {
     id: "banking",
     label: "Banking Exam",
-    image: "/hof/Banking-exam.jpeg",
+    image: "/hof/banking-exam-new.jpeg",
   },
   {
     id: "law",

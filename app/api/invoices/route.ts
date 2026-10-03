@@ -138,28 +138,107 @@ export async function POST(request: Request) {
     }).format(new Date(`${dueDate}T12:00:00`));
 
     const paymentMode = getText(body.paymentMode, 60);
+
     let transactions: PaymentTransaction[] = [];
     let paidAmount = 0;
-    let status: "paid" | "unpaid" | "partial" = "unpaid";
 
-    if (body.transaction && paymentMode) {
-      const t = body.transaction as Record<string, unknown>;
-      const tx: PaymentTransaction = {
-        paidAmount: amount,
-        paidDate: (t.paidDate as string) || dueDate,
-        paymentMode: (paymentMode as PaymentTransaction["paymentMode"]) || "Cash",
-        transactionId: getText(t.transactionId, 200) || undefined,
-        chequeNumber: getText(t.chequeNumber, 50) || undefined,
-        bankName: getText(t.bankName, 100) || undefined,
-        accountLast4: getText(t.accountLast4, 10) || undefined,
-        recordedBy: session.id,
-        recordedAt: new Date().toISOString(),
-      };
-      transactions = [tx];
-      paidAmount = amount;
-      status = "paid";
+    let status:
+      | "paid"
+      | "unpaid"
+      | "partial" = "unpaid";
+
+    if (body.transaction) {
+      const t =
+        body.transaction as Record<string, unknown>;
+
+      const requestedPaidAmount =
+        Number(t.paidAmount);
+
+      if (
+        !Number.isFinite(requestedPaidAmount) ||
+        requestedPaidAmount < 0
+      ) {
+        return NextResponse.json(
+          {
+            error: "Enter a valid paid amount.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      if (requestedPaidAmount > amount) {
+        return NextResponse.json(
+          {
+            error:
+              "Paid amount cannot be greater than total amount.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      paidAmount =
+        Math.round(requestedPaidAmount);
+
+      if (paidAmount > 0) {
+        if (!paymentMode) {
+          return NextResponse.json(
+            {
+              error:
+                "Payment mode is required when a paid amount is entered.",
+            },
+            {
+              status: 400,
+            },
+          );
+        }
+
+        const tx: PaymentTransaction = {
+          paidAmount,
+
+          paidDate:
+            typeof t.paidDate === "string" &&
+            t.paidDate
+              ? t.paidDate
+              : dueDate,
+
+          paymentMode:
+            paymentMode as PaymentTransaction["paymentMode"],
+
+          transactionId:
+            getText(t.transactionId, 200) ||
+            undefined,
+
+          chequeNumber:
+            getText(t.chequeNumber, 50) ||
+            undefined,
+
+          bankName:
+            getText(t.bankName, 100) ||
+            undefined,
+
+          accountLast4:
+            getText(t.accountLast4, 10) ||
+            undefined,
+
+          recordedBy: session.id,
+          recordedAt: new Date().toISOString(),
+        };
+
+        transactions = [tx];
+      }
+
+      if (paidAmount <= 0) {
+        status = "unpaid";
+      } else if (paidAmount >= amount) {
+        status = "paid";
+      } else {
+        status = "partial";
+      }
     }
-
     const feeInvoice = await createFeeInvoice({
       studentId: studentDetails.studentId,
       studentName: studentDetails.studentName,
