@@ -14,63 +14,38 @@ export function StudentPerformanceReportPrintActions({
   period,
 }: StudentPerformanceReportPrintActionsProps) {
   function handlePrint() {
-    const originalTitle = document.title;
-
-    document.title = `${studentName} - ${reportType} Performance Report`;
-
     window.print();
-
-    window.setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
   }
 
   return (
-    <>
-      <div className="report-print-actions fixed left-4 right-4 top-4 z-50 mx-auto flex max-w-5xl flex-col gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 px-2">
-          <p className="truncate text-sm font-bold text-slate-900">
-            {studentName}
-          </p>
-          <p className="truncate text-xs text-slate-500">
-            {reportType} report · {period}
-          </p>
-        </div>
+    <div className="report-print-actions no-print fixed left-4 right-4 top-4 z-50 mx-auto flex max-w-5xl items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur print:hidden">
+      <div className="min-w-0 px-2">
+        <p className="truncate text-sm font-bold text-slate-900">
+          {studentName}
+        </p>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-          >
-            Dashboard
-          </Link>
-
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
-          >
-            Print / Save PDF
-          </button>
-        </div>
+        <p className="truncate text-xs text-slate-500">
+          {reportType} Report
+          {period ? ` • ${period}` : ""}
+        </p>
       </div>
 
-      <style jsx global>{`
-        @page {
-          size: A4;
-          margin: 10mm;
-        }
+      <div className="flex items-center gap-2">
+        <Link
+          href="/student-performance"
+          className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+        >
+          Back
+        </Link>
 
-        @media print {
-          .report-print-actions {
-            display: none !important;
-          }
-
-          body {
-            background: #ffffff !important;
-          }
-        }
-      `}</style>
-    </>
+        <button
+          type="button"
+          onClick={handlePrint}
+          className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
+        >
+          Print / Save PDF
+        </button>
+      </div>
+    </div>
   );
 }
