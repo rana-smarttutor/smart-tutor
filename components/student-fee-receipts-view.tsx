@@ -537,21 +537,114 @@ export function StudentFeeReceiptsView({
         <!-- Payment History -->
         ${renderTransactionRows()}
       </div>
-
       <!-- Footer -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:16px 24px 0;border-top:2px solid ${NAVY};margin-top:16px;min-height:120px;">
-        <div style="max-width:50%;font-size:11px;font-weight:600;color:#64748b;">
-          <p style="margin:3px 0;">This is a computer-generated receipt and does not require a physical signature.</p>
-          <p style="margin:3px 0;font-weight:800;color:#1e293b;font-size:12px;">FEES ONCE PAID ARE NON-REFUNDABLE UNDER ANY CIRCUMSTANCES.</p>
-          <p style="margin:8px 3px 3px;">Thank you for choosing SmartIQ Institute Pvt. Ltd.</p>
-          <p style="margin:3px 0;">We appreciate your trust.</p>
+      <div
+        style="
+          padding:16px 24px 0;
+          border-top:2px solid ${NAVY};
+          margin-top:16px;
+        "
+      >
+        <!-- Important Fee Warning -->
+        <div
+          style="
+            margin-bottom:22px;
+            color:#dc2626;
+            font-size:11px;
+            font-weight:800;
+            line-height:1.6;
+          "
+        >
+          • Fees once paid are non-refundable under any circumstances.
         </div>
-        <div style="text-align:center;width:220px;">
-          <img src="${escapeHtml(signatureUrl)}" alt="Founder Signature" style="display:block;width:180px;height:64px;margin:0 auto 6px;object-fit:contain;" />
-          <div style="border-top:1.5px solid #334155;margin-top:4px;padding-top:6px;">
-            <div style="font-size:13px;font-weight:800;color:#1e293b;">Mr. Adv. Reena Kumari</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px;">Director &amp; Founder</div>
-            <div style="font-size:11px;color:#64748b;margin-top:1px;">SmartIQ Institute Pvt. Ltd.</div>
+
+        <!-- Lower Footer -->
+        <div
+          style="
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-end;
+            gap:30px;
+            min-height:100px;
+          "
+        >
+          <!-- Other Terms -->
+          <div
+            style="
+              flex:1;
+              color:#111827;
+              font-size:11px;
+              font-weight:600;
+              line-height:1.7;
+              padding-bottom:8px;
+            "
+          >
+            <p
+              style="
+                margin:4px 0;
+                color:#111827;
+              "
+            >
+              • This is a computer-generated receipt and does not require a physical signature.
+            </p>
+
+            <p
+              style="
+                margin:4px 0;
+                color:#111827;
+              "
+            >
+              • Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.
+            </p>
+          </div>
+
+          <!-- Signature -->
+          <div
+            style="
+              width:220px;
+              flex-shrink:0;
+              text-align:center;
+            "
+          >
+            <img
+              src="${escapeHtml(signatureUrl)}"
+              alt="Authorized Signature"
+              style="
+                display:block;
+                width:180px;
+                height:64px;
+                margin:0 auto 6px;
+                object-fit:contain;
+              "
+            />
+
+            <div
+              style="
+                border-top:1.5px solid #334155;
+                margin-top:4px;
+                padding-top:6px;
+              "
+            >
+              <div
+                style="
+                  font-size:13px;
+                  font-weight:800;
+                  color:#1e293b;
+                "
+              >
+                Authorized Signatory
+              </div>
+
+              <div
+                style="
+                  margin-top:2px;
+                  font-size:11px;
+                  color:#64748b;
+                "
+              >
+                SmartIQ Institute
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -870,8 +963,6 @@ export function StudentFeeReceiptsView({
                                   {inst.installmentTitle ||
                                     `Installment ${inst.installmentNumber}`}
                                 </div>
-
-    
                               </td>
                               <td className="px-4 py-3 text-right">
                                 {formatCurrency(inst.amount)}

@@ -97,3 +97,10 @@ optional-batch-backup-20260926-133945/app/api/daily-routines/route.ts
 optional-batch-backup-20260926-133945/app/api/homework/route.ts
 optional-batch-backup-20260926-133945/components/lecture-manager.tsx
 optional-batch-backup-20260926-133945/components/student-feedback-manager.tsx
+app/api/invoices/route.ts.bak-20261003-133047
+.gitignore
+components/invoice-manager.tsx.bak-20261003-133047
+components/invoice-manager.tsx.bak-20261003-135928
+components/invoice-manager.tsx.bak-20261003-140818
+components/student-fee-receipts-view.tsx.bak-20261003-135928
+components/student-fee-receipts-view.tsx.bak-20261003-140818

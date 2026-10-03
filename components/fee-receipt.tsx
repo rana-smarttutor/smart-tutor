@@ -277,12 +277,6 @@ export default function FeeReceipt() {
                 Adv. Reena Kumari
               </div>
               <div className="w-48 border-t-[1.5px] border-slate-800 mb-1"></div>
-              <div className="text-[14px] font-bold text-gray-900">
-                Mr. Adv. Reena Kumari
-              </div>
-              <div className="text-[12px] text-gray-700">
-                Director & Founder
-              </div>
             </div>
           </div>
 
