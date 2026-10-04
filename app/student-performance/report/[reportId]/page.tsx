@@ -1,8 +1,6 @@
-import { redirect } from "next/navigation";
-
 import {
-  StudentPerformanceReportPrintActions,
-} from "@/components/student-performance-report-print-actions";
+  redirect,
+} from "next/navigation";
 
 import {
   getSessionUser,
@@ -32,7 +30,9 @@ export default async function StudentPerformanceReportPage({
     await getSessionUser();
 
   if (!session) {
-    redirect("/login");
+    redirect(
+      "/login",
+    );
   }
 
   const {
@@ -58,84 +58,21 @@ export default async function StudentPerformanceReportPage({
           </h1>
 
           <p className="mt-3 text-slate-300">
-            This report does not
-            exist or is not
-            available for your
-            account.
+            This report does
+            not exist or is
+            not available for
+            your account.
           </p>
         </section>
       </main>
     );
   }
 
-  const report =
-    result.report as Record<
-      string,
-      any
-    >;
-
-  /*
-   * New performance reports save
-   * student information inside
-   * report.student.
-   *
-   * Older reports may still have
-   * report.studentName, so keep
-   * that as a fallback.
-   */
-  const studentName =
-    typeof report.student
-      ?.name ===
-      "string" &&
-    report.student.name.trim()
-      ? report.student.name.trim()
-      : typeof report.studentName ===
-            "string" &&
-          report.studentName.trim()
-        ? report.studentName.trim()
-        : "Student";
-
-  const reportType =
-    typeof report.reportType ===
-      "string" &&
-    report.reportType.trim()
-      ? `${report.reportType
-          .charAt(0)
-          .toUpperCase()}${report.reportType.slice(
-          1,
-        )}`
-      : "Performance";
-
-  const period =
-    typeof report.period ===
-      "string" &&
-    report.period.trim()
-      ? report.period.trim()
-      : typeof report.periodLabel ===
-            "string" &&
-          report.periodLabel.trim()
-        ? report.periodLabel.trim()
-        : "Academic Report";
-
   return (
-    <>
-      <StudentPerformanceReportPrintActions
-        studentName={
-          studentName
-        }
-        reportType={
-          reportType
-        }
-        period={
-          period
-        }
-      />
-
-      <StudentPerformanceReport
-        report={
-          report as any
-        }
-      />
-    </>
+    <StudentPerformanceReport
+      report={
+        result.report as any
+      }
+    />
   );
 }

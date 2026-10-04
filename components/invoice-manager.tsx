@@ -825,7 +825,7 @@ export function InvoiceManager({
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
-    const logoUrl = `${window.location.origin}/siqn-pvtltd.jpeg`;
+    const logoUrl = `${window.location.origin}/sqipvtldt-new.jpeg`;
     const signatureUrl = `${window.location.origin}/founder-sign.png`;
     const transactions = invoice.transactions ?? [];
     const now = new Date();
@@ -952,21 +952,32 @@ export function InvoiceManager({
       background: ${NAVY};
     }
     .brand {
-      height: 54mm;
+      width: 100%;
+      height: 32mm;
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      padding: 0;
+      background: #fff;
     }
     .brand img {
       display: block;
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transform: none;
+      margin: 0;
     }
-    .brand-divider { border-top: 1.5px solid ${NAVY}; }
+    .brand-divider {
+      border-top: 1.5px solid ${NAVY};
+      margin-top: 0;
+    }
     .receipt-title {
-      margin: 4mm 0 2.5mm;
+      margin: 2mm 0 2.5mm;
       text-align: center;
       color: ${NAVY};
       font-size: 25px;
@@ -1127,6 +1138,13 @@ export function InvoiceManager({
   font-weight: 800;
   line-height: 1.5;
 }
+.complete-warning {
+  margin: 0 0 5mm;
+  color: #dc2626;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.5;
+}
 
 .footer-bottom {
   display: grid;
@@ -1196,7 +1214,21 @@ export function InvoiceManager({
       .toolbar { width: calc(100% - 16px); }
       .receipt-page { width: calc(100% - 8px); margin-bottom: 0; padding: 0 3mm 3mm; }
       .top-strip { margin: 0 -3mm; }
-      .brand { height: 42mm; }
+      .brand {
+        height: 30mm;
+        padding: 0;
+        overflow: hidden;
+      }
+      .brand img {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transform: none;
+        margin: 0;
+      }
       .detail-item { grid-template-columns: 30mm 4mm 1fr; font-size: 9px; }
       .fee-table, .history-table { font-size: 8px; }
     }
@@ -1212,7 +1244,21 @@ export function InvoiceManager({
         box-shadow: none;
       }
       .top-strip { margin: 0 -4mm; }
-      .brand { height: 50mm; }
+      .brand {
+        height: 32mm;
+        padding: 0;
+        overflow: hidden;
+      }
+      .brand img {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transform: none;
+        margin: 0;
+      }
       .receipt-title { margin-top: 3mm; }
     }
   </style>
@@ -1349,7 +1395,11 @@ export function InvoiceManager({
   <div class="fee-warning">
     • Fees once paid are non-refundable under any circumstances.
   </div>
+  <div class="complete-warning">
+    • the subscription is valid until the portion completed.
+  </div>
 
+  
   <div class="footer-bottom">
     <div class="terms">
       <ul>

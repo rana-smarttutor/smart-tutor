@@ -183,7 +183,6 @@ export default function ReportCreatorForm() {
       present: true,
     },
   ]);
-
   function updateForm(name: string, value: string) {
     setForm((current) => ({
       ...current,
@@ -327,6 +326,56 @@ export default function ReportCreatorForm() {
   }, [form.correct, form.wrong]);
 
   /*
+   * Accuracy Breakdown
+   *
+   * This visual breakdown uses ALL questions:
+   * correct + wrong + unattempted.
+   *
+   * The Accuracy KPI above still uses only:
+   * correct / (correct + wrong).
+   */
+  const accuracyBreakdown = useMemo(() => {
+    const correctValue = Number(form.correct);
+    const wrongValue = Number(form.wrong);
+    const unattemptedValue = Number(form.unattempted);
+
+    const correct =
+      Number.isFinite(correctValue) && correctValue >= 0 ? correctValue : 0;
+
+    const wrong =
+      Number.isFinite(wrongValue) && wrongValue >= 0 ? wrongValue : 0;
+
+    const unattempted =
+      Number.isFinite(unattemptedValue) && unattemptedValue >= 0
+        ? unattemptedValue
+        : 0;
+
+    const total = correct + wrong + unattempted;
+
+    if (total <= 0) {
+      return {
+        correct,
+        wrong,
+        unattempted,
+        total: 0,
+        correctPercentage: 0,
+        wrongPercentage: 0,
+        unattemptedPercentage: 0,
+      };
+    }
+
+    return {
+      correct,
+      wrong,
+      unattempted,
+      total,
+      correctPercentage: roundMetric((correct / total) * 100),
+      wrongPercentage: roundMetric((wrong / total) * 100),
+      unattemptedPercentage: roundMetric((unattempted / total) * 100),
+    };
+  }, [form.correct, form.wrong, form.unattempted]);
+
+  /*
    * ==========================================
    * KPI 5
    * IMPROVEMENT
@@ -383,8 +432,9 @@ export default function ReportCreatorForm() {
    * ==========================================
    * LOAD PREVIOUS PERFORMANCE REPORT
    *
-   * This API is used ONLY for Improvement.
-   * It does not control the other KPIs.
+   * Improvement compares the current Average
+   * Score with the newest saved report for the
+   * same registered student and report type.
    * ==========================================
    */
   useEffect(() => {
@@ -410,36 +460,39 @@ export default function ReportCreatorForm() {
       setImprovementMessage("Checking previous report...");
 
       try {
-        const params = new URLSearchParams({
-          studentId: selectedStudentId,
-
-          reportType: form.reportType,
+        const response = await fetch("/api/student-performance/reports", {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal,
         });
-
-        const response = await fetch(
-          `/api/student-performance/previous-report?${params.toString()}`,
-          {
-            cache: "no-store",
-
-            signal: controller.signal,
-          },
-        );
 
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          throw new Error(result.message || "Unable to load previous report.");
+          throw new Error(result.message || "Unable to load previous reports.");
         }
 
-        if (
-          result.found === true &&
-          typeof result.previousAverageScore === "number" &&
-          Number.isFinite(result.previousAverageScore)
-        ) {
-          setPreviousAverageScore(result.previousAverageScore);
+        const reports = Array.isArray(result.reports) ? result.reports : [];
+
+        const previousReport = reports.find((report: any) => {
+          const sameStudent =
+            report.linkedStudentId === selectedStudentId ||
+            report.studentId === selectedStudentId;
+
+          const sameType = report.reportType === form.reportType;
+
+          const previousScore = Number(report.metrics?.averageScore);
+
+          return sameStudent && sameType && Number.isFinite(previousScore);
+        });
+
+        if (previousReport) {
+          const previousScore = Number(previousReport.metrics?.averageScore);
+
+          setPreviousAverageScore(previousScore);
 
           setImprovementMessage(
-            `Compared with previous ${form.reportType} report: ${result.previousAverageScore}%.`,
+            `Compared with previous ${form.reportType} report: ${previousScore}%.`,
           );
         } else {
           setPreviousAverageScore(null);
@@ -1652,14 +1705,6 @@ export default function ReportCreatorForm() {
             />
 
             <Field
-              label="Improvement (%)"
-              name="improvementPercentage"
-              value={metricText(improvementPercentage)}
-              onChange={() => {}}
-              readOnly
-            />
-
-            <Field
               label="Accuracy (%)"
               name="accuracyPercentage"
               value={metricText(accuracyPercentage)}
@@ -1671,16 +1716,22 @@ export default function ReportCreatorForm() {
           <div
             style={{
               marginTop: "16px",
-
               color: "#94a3b8",
-
               fontSize: "12px",
-
               fontWeight: 700,
-
               lineHeight: 1.9,
             }}
           >
+            <div
+              style={{
+                marginTop: "8px",
+                color: "#bfdbfe",
+              }}
+            >
+              {isLoadingPreviousReport
+                ? "Checking previous performance report..."
+                : improvementMessage}
+            </div>
           </div>
         </section>
 
@@ -1983,6 +2034,165 @@ export default function ReportCreatorForm() {
               value={form.unattempted}
               onChange={updateForm}
             />
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-slate-700/70 bg-slate-950/25 p-5">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-black text-white">
+                  Accuracy Breakdown
+                </h3>
+
+                <p className="mt-1 text-sm font-semibold text-slate-400">
+                  Correct, wrong and unattempted questions as a percentage of
+                  all questions.
+                </p>
+              </div>
+
+              <div className="rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-sm font-black text-blue-200">
+                Total Questions: {accuracyBreakdown.total}
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className="grid grid-cols-[42px_1fr_auto] items-center gap-4">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-emerald-500 text-lg font-black text-white">
+                  ✓
+                </div>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center justify-between gap-4">
+                    <span className="font-black text-slate-200">Correct</span>
+
+                    <span className="text-sm font-black text-emerald-300">
+                      {accuracyBreakdown.correctPercentage}%
+                    </span>
+                  </div>
+
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(0, accuracyBreakdown.correctPercentage),
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="min-w-[72px] text-right">
+                  <strong className="block text-xl font-black text-white">
+                    {accuracyBreakdown.correct}
+                  </strong>
+
+                  <span className="text-xs font-bold text-slate-500">
+                    answers
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[42px_1fr_auto] items-center gap-4">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-amber-500 text-lg font-black text-white">
+                  !
+                </div>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center justify-between gap-4">
+                    <span className="font-black text-slate-200">Wrong</span>
+
+                    <span className="text-sm font-black text-amber-300">
+                      {accuracyBreakdown.wrongPercentage}%
+                    </span>
+                  </div>
+
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-amber-500 transition-all duration-300"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(0, accuracyBreakdown.wrongPercentage),
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="min-w-[72px] text-right">
+                  <strong className="block text-xl font-black text-white">
+                    {accuracyBreakdown.wrong}
+                  </strong>
+
+                  <span className="text-xs font-bold text-slate-500">
+                    answers
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[42px_1fr_auto] items-center gap-4">
+                <div className="grid h-10 w-10 place-items-center rounded-full bg-rose-500 text-lg font-black text-white">
+                  ×
+                </div>
+
+                <div className="min-w-0">
+                  <div className="mb-2 flex items-center justify-between gap-4">
+                    <span className="font-black text-slate-200">
+                      Unattempted
+                    </span>
+
+                    <span className="text-sm font-black text-rose-300">
+                      {accuracyBreakdown.unattemptedPercentage}%
+                    </span>
+                  </div>
+
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-rose-500 transition-all duration-300"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.max(0, accuracyBreakdown.unattemptedPercentage),
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="min-w-[72px] text-right">
+                  <strong className="block text-xl font-black text-white">
+                    {accuracyBreakdown.unattempted}
+                  </strong>
+
+                  <span className="text-xs font-bold text-slate-500">
+                    questions
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 rounded-xl border border-slate-700/60 bg-slate-900/55 p-4 sm:grid-cols-2">
+              <div>
+                <span className="block text-xs font-black uppercase tracking-wider text-slate-500">
+                  Attempted Questions
+                </span>
+
+                <strong className="mt-1 block text-lg font-black text-white">
+                  {accuracyBreakdown.correct + accuracyBreakdown.wrong}
+                </strong>
+              </div>
+
+              <div>
+                <span className="block text-xs font-black uppercase tracking-wider text-slate-500">
+                  Accuracy KPI
+                </span>
+
+                <strong className="mt-1 block text-lg font-black text-blue-300">
+                  {accuracyPercentage ?? 0}%
+                </strong>
+              </div>
+            </div>
           </div>
         </section>
 
