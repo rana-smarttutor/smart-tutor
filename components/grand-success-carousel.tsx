@@ -23,7 +23,7 @@ const RESULT_CATEGORIES = [
   {
     id: "12-hsc Commerce",
     label: "12TH HSC COMMERCE",
-    image: "/hof/12th Hsc commerce.png",
+    image: "/hof/12th-commerce-new.png",
   },
     {
     id: "12-hsc Arts",
@@ -83,7 +83,7 @@ const RESULT_CATEGORIES = [
   {
     id: "ssc-cgl",
     label: "SSC CGL",
-    image: "/hof/SSC CGL UPDATED.png",
+    image: "/hof/ssc-cgl-new.png",
   },
 ];
 
