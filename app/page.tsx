@@ -28,8 +28,7 @@ import { ProgramCarousel } from "@/components/program-carousel";
 import { FeaturesSection } from "@/components/features-section";
 import { ExamPortalBanner } from "@/components/exam-portal-banner";
 import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
-import { HomeVideoSection } from "@/components/home-video-section";
-import { HomeAdmissionsStrip } from "@/components/home-admissions-strip";
+import { HomeJourneySection } from "@/components/home-journey-section";
 
 export const metadata: Metadata = {
   description:
@@ -267,49 +266,9 @@ export default async function Home() {
               </span>
             </div>
           </div>
-
-          <div className="pt-10 border-t border-[var(--color-border)] mt-10">
-            <div className="relative isolate overflow-hidden rounded-4xl p-6 sm:p-10 shadow-xl transition-all duration-500 hover:shadow-blue-500/10 border border-blue-100 group bg-white">
-              <div className="absolute top-0 right-0 -z-10 h-100 w-100 bg-gradient-to-br from-blue-600/20 to-indigo-600/20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-blue-600/30 transition-all duration-700 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 -z-10 h-[300px] w-[300px] bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 blur-[80px] rounded-full -translate-x-1/4 translate-y-1/4 group-hover:bg-emerald-500/20 transition-all duration-700 pointer-events-none" />
-
-              <div className="relative z-10 grid lg:grid-cols-[1fr_auto] gap-10 items-center text-center lg:text-left">
-                <div className="max-w-2xl mx-auto lg:mx-0">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-black uppercase tracking-widest mb-6">
-                    <span className="h-2 w-2 rounded-full bg-blue-600 animate-ping" />
-                    Limited Slots for 2026-27
-                  </div>
-                  <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6 leading-[1.1] tracking-tight">
-                    Ready to Start Your{" "}
-                    <span className="text-blue-600">Journey?</span>
-                  </h3>
-                  <p className="text-lg text-[var(--color-muted)] mb-0 leading-relaxed font-medium">
-                    Join 500+ students already excelling with SmartIQ Institute.
-                    Get access to expert mentoring and disciplined preparation.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row lg:flex-col gap-4 min-w-[240px] justify-center lg:justify-start">
-                  <Link
-                    href="/login"
-                    className="group/btn relative inline-flex h-14 items-center justify-center gap-3 bg-blue-600 text-white px-8 rounded-xl font-black text-base transition-all hover:bg-blue-700 hover:scale-[1.02] shadow-xl shadow-blue-500/25 active:scale-95 overflow-hidden"
-                  >
-                    Enroll Now
-                  </Link>
-
-                  <a
-                    href="https://wa.me/918850447887"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex h-14 items-center justify-center gap-3 bg-emerald-50 text-emerald-700 px-8 rounded-xl font-black text-base border-2 border-emerald-100 transition-all hover:bg-emerald-100 hover:scale-[1.02] active:scale-95"
-                  >
-                    WhatsApp
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
         </RevealOnScroll>
+
+
 
         <RevealOnScroll
           className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24"
@@ -341,13 +300,9 @@ export default async function Home() {
         </RevealOnScroll>
       </section>
 
-      {/* ADMISSIONS OPEN */}
+{/* JOURNEY + ADMISSIONS + SMARTIQ EXPERIENCE */}
 
-      <HomeAdmissionsStrip />
-
-      {/* SMARTIQ INSTITUTE VIDEO */}
-
-      <HomeVideoSection />
+<HomeJourneySection />
 
       {/* SMARTIQ EXAM PORTAL - FEATURED */}
 
