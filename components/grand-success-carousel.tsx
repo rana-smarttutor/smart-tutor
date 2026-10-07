@@ -28,7 +28,7 @@ const RESULT_CATEGORIES = [
     {
     id: "12-hsc Arts",
     label: "12TH HSC ARTS",
-    image: "/hof/12th Hsc arts.png",
+    image: "/hof/12th-arts-new.png",
   },
    {
     id: "12-CBSE Science",
