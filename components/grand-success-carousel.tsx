@@ -28,7 +28,7 @@ const RESULT_CATEGORIES = [
     {
     id: "12-hsc Arts",
     label: "12TH HSC ARTS",
-    image: "/hof/12th-arts-new.png",
+    image: "/hof/12th-arts-new.jpeg",
   },
    {
     id: "12-CBSE Science",
@@ -83,7 +83,7 @@ const RESULT_CATEGORIES = [
   {
     id: "ssc-cgl",
     label: "SSC CGL",
-    image: "/hof/ssc-cgl-new.png",
+    image: "/hof/ssc-cgl-new.jpeg",
   },
 ];
 
