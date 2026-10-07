@@ -28,6 +28,8 @@ import { ProgramCarousel } from "@/components/program-carousel";
 import { FeaturesSection } from "@/components/features-section";
 import { ExamPortalBanner } from "@/components/exam-portal-banner";
 import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
+import { HomeVideoSection } from "@/components/home-video-section";
+import { HomeAdmissionsStrip } from "@/components/home-admissions-strip";
 
 export const metadata: Metadata = {
   description:
@@ -338,6 +340,14 @@ export default async function Home() {
           </div>
         </RevealOnScroll>
       </section>
+
+      {/* ADMISSIONS OPEN */}
+
+      <HomeAdmissionsStrip />
+
+      {/* SMARTIQ INSTITUTE VIDEO */}
+
+      <HomeVideoSection />
 
       {/* SMARTIQ EXAM PORTAL - FEATURED */}
 
