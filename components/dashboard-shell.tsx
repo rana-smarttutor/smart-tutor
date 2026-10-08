@@ -35,6 +35,7 @@ import { FeeInstallmentManager } from "./fee-installment-manager";
 import { NotificationCenter } from "./notification-center";
 import { NotificationBell } from "./notification-bell";
 import { DashboardAnalytics } from "./dashboard-analytics";
+import { AdmissionManagement } from "./admission-management";
 import type {
   AvailableModule,
   DashboardBundle,
@@ -428,6 +429,7 @@ const sidebarByRole = {
   staff: [
     { id: "overview", label: "Overview" },
     { id: "career-counselling", label: "Career Counselling" },
+    { id: "new-admission-form", label: "Admissions" },
     { id: "profile", label: "Employee Profile" },
     { id: "staff-attendance", label: "My Attendance" },
     { id: "leave", label: "Leave" },
@@ -439,6 +441,7 @@ const sidebarByRole = {
 
   counsellor: [
     { id: "overview", label: "Overview" },
+    { id: "new-admission-form", label: "Admissions" },
     { id: "career-counselling", label: "Career Counselling" },
     { id: "staff-attendance", label: "My Attendance" },
     { id: "staff-payouts", label: "My Payouts" },
@@ -447,6 +450,7 @@ const sidebarByRole = {
   admin: [
     { id: "overview", label: "Overview" },
     { id: "career-counselling", label: "Career Counselling" },
+    { id: "new-admission-form", label: "Admissions" },
     { id: "profile", label: "Profile" },
     { id: "accounts", label: "Accounts" },
     { id: "branches", label: "Branches" },
@@ -617,6 +621,7 @@ const menuSections = [
       "leave",
       "enquiries",
       "career-counselling",
+      "new-admission-form",
       "password-reset-requests",
       "sales-crm",
     ],
@@ -918,9 +923,8 @@ const navIcons: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
-  "career-counselling": (
-    <UserRoundSearch className="h-4 w-4 shrink-0" />
-  ),
+  "career-counselling": <UserRoundSearch className="h-4 w-4 shrink-0" />,
+  "new-admission-form": <FileBarChart2 className="h-4 w-4 shrink-0" />,
   enquiries: (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1333,8 +1337,8 @@ export function DashboardShell({
   const showHomework = activeSection === "homework";
   const showNotifications = activeSection === "notifications";
   const showEnquiries = activeSection === "enquiries";
-  const showCareerCounselling =
-    activeSection === "career-counselling";
+  const showCareerCounselling = activeSection === "career-counselling";
+  const showAdmissions = activeSection === "new-admission-form";
   const showPasswordResetRequests = activeSection === "password-reset-requests";
   const showSalesCrm = activeSection === "sales-crm";
   const showPlacementJobs = activeSection === "placement-jobs";
@@ -2016,6 +2020,10 @@ export function DashboardShell({
             role === "staff" ||
             role === "counsellor") ? (
             <CareerCounsellingManager />
+          ) : null}
+          {showAdmissions &&
+          (role === "admin" || role === "counsellor" || role === "staff") ? (
+            <AdmissionManagement />
           ) : null}
           {showEnquiries && role === "admin" ? (
             <DashboardEnquiryManager />
@@ -2732,5 +2740,3 @@ export function DashboardShell({
     </div>
   );
 }
-
-
