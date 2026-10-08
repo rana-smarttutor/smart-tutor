@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowRight, GraduationCap, X } from "lucide-react";
 
 import {
@@ -97,6 +98,12 @@ export default function QuizArenaClient({
   startAtCategory?: boolean;
   mockTestMode?: boolean;
 }) {
+  const pathname = usePathname();
+  const isMockTestPage =
+    mockTestMode ||
+    pathname === "/mock-test" ||
+    pathname?.startsWith("/mock-test/") === true;
+
   const [step, setStep] = useState<Step>(startAtCategory ? "level" : "welcome");
 
   const [selectedLevel, setSelectedLevel] = useState<EducationLevel | null>(
@@ -191,32 +198,39 @@ export default function QuizArenaClient({
   }, [selectedExamDetails, selectedExam, selectedSchoolClass, selectedBoard]);
 
   const governmentSyllabus = useMemo(() => {
-    if (selectedLevel !== "government-exam" || !selectedExam || !mockTestMode) {
+    if (selectedLevel !== "government-exam" || !selectedExam || !isMockTestPage) {
       return null;
     }
 
     return getGovernmentExamSyllabus(selectedExam);
-  }, [selectedLevel, selectedExam, mockTestMode]);
+  }, [selectedLevel, selectedExam, isMockTestPage]);
 
   const competitiveSyllabus = useMemo(() => {
     if (
       selectedLevel !== "competitive-exam" ||
       !selectedExam ||
-      !mockTestMode
+      !isMockTestPage
     ) {
       return null;
     }
 
     return getCompetitiveExamSyllabus(selectedExam);
-  }, [selectedLevel, selectedExam, mockTestMode]);
+  }, [selectedLevel, selectedExam, isMockTestPage]);
 
   const mbaSyllabus = useMemo(() => {
-    if (selectedLevel !== "mba-entrance" || !selectedExam || !mockTestMode) {
+    if (selectedLevel !== "mba-entrance" || !selectedExam || !isMockTestPage) {
       return null;
     }
 
     return getMbaExamSyllabus(selectedExam);
-  }, [selectedLevel, selectedExam, mockTestMode]);
+  }, [selectedLevel, selectedExam, isMockTestPage]);
+
+  // The API requires topic-scoped progress for these Mock Tests.
+  // Keep the selection flow protected even if client syllabus metadata is absent.
+  const isKnownTopicBasedCompetitiveExam =
+    isMockTestPage &&
+    selectedLevel === "competitive-exam" &&
+    (selectedExam === "jee" || selectedExam === "mht-cet");
 
   const governmentTopics = useMemo(() => {
     if (!governmentSyllabus || !selectedExam || !selectedSubject) {
@@ -227,12 +241,21 @@ export default function QuizArenaClient({
   }, [governmentSyllabus, selectedExam, selectedSubject]);
 
   const competitiveTopics = useMemo(() => {
-    if (!competitiveSyllabus || !selectedExam || !selectedSubject) {
+    if (
+      (!competitiveSyllabus && !isKnownTopicBasedCompetitiveExam) ||
+      !selectedExam ||
+      !selectedSubject
+    ) {
       return [];
     }
 
     return getCompetitiveExamTopics(selectedExam, selectedSubject);
-  }, [competitiveSyllabus, selectedExam, selectedSubject]);
+  }, [
+    competitiveSyllabus,
+    isKnownTopicBasedCompetitiveExam,
+    selectedExam,
+    selectedSubject,
+  ]);
 
   const mbaTopics = useMemo(() => {
     if (!mbaSyllabus || !selectedExam || !selectedSubject) {
@@ -245,9 +268,15 @@ export default function QuizArenaClient({
   const topicSyllabus =
     governmentSyllabus ?? competitiveSyllabus ?? mbaSyllabus;
 
+  // Derive the navigation gate independently from the rendered syllabus.
+  // Otherwise a missing client catalogue could send a topic-less request
+  // which the server correctly rejects with HTTP 400.
+  const requiresTopicSelection =
+    Boolean(topicSyllabus) || isKnownTopicBasedCompetitiveExam;
+
   const currentTopics = governmentSyllabus
     ? governmentTopics
-    : competitiveSyllabus
+    : competitiveSyllabus || isKnownTopicBasedCompetitiveExam
       ? competitiveTopics
       : mbaTopics;
 
@@ -521,7 +550,7 @@ export default function QuizArenaClient({
 
       setSelectedRound(null);
 
-      setStep(topicSyllabus ? "topic" : "subject");
+      setStep(requiresTopicSelection ? "topic" : "subject");
 
       return;
     }
@@ -558,7 +587,7 @@ export default function QuizArenaClient({
    * existing Save & Exit modal instead of losing the attempt.
    */
   useEffect(() => {
-    if (!mockTestMode) {
+    if (!isMockTestPage) {
       return;
     }
 
@@ -684,7 +713,7 @@ export default function QuizArenaClient({
       );
     };
   }, [
-    mockTestMode,
+    isMockTestPage,
     startAtCategory,
     step,
   ]);
@@ -792,14 +821,19 @@ export default function QuizArenaClient({
       return;
     }
 
-    if (topicSyllabus && !selectedTopic) {
-      setMessage("Select a topic before starting the mock test.");
+    if (
+      requiresTopicSelection &&
+      (!selectedTopic ||
+        !currentTopics.some((topic) => topic.id === selectedTopic))
+    ) {
+      setMessage("Select a valid topic before starting the mock test.");
+      setStep("topic");
       return;
     }
 
     const effectiveDifficulty = getDifficultyForJourneyLevel(progressionLevel);
 
-    const source = window.location.pathname.startsWith("/mock-test")
+    const source = isMockTestPage
       ? "mock-test"
       : "quiz-arena";
 
@@ -839,7 +873,7 @@ export default function QuizArenaClient({
 
           subject: selectedSubject,
 
-          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
+          ...(requiresTopicSelection ? { topicId: selectedTopic } : {}),
 
           difficulty: effectiveDifficulty,
 
@@ -880,7 +914,7 @@ export default function QuizArenaClient({
 
           subject: selectedSubject,
 
-          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
+          ...(requiresTopicSelection ? { topicId: selectedTopic } : {}),
 
           progressionLevel,
 
@@ -1000,6 +1034,21 @@ export default function QuizArenaClient({
       return;
     }
 
+    // Topic-based Mock Tests must not query progress without a valid topic.
+    // This also protects against missing props or a fresh mobile browser state.
+    if (requiresTopicSelection) {
+      const validTopic =
+        Boolean(journeyTopic) &&
+        currentTopics.some((topic) => topic.id === journeyTopic);
+
+      if (!validTopic) {
+        setSelectedTopic(null);
+        setMessage("Please select a valid topic before continuing.");
+        setStep("topic");
+        return;
+      }
+    }
+
     try {
       setIsProgressLoading(true);
       setMessage("");
@@ -1010,7 +1059,7 @@ export default function QuizArenaClient({
         subject: journeySubject,
         difficulty: "easy",
 
-        source: window.location.pathname.startsWith("/mock-test")
+        source: isMockTestPage
           ? "mock-test"
           : "quiz-arena",
       });
@@ -1023,7 +1072,7 @@ export default function QuizArenaClient({
         params.set("board", selectedBoard);
       }
 
-      if (topicSyllabus && journeyTopic) {
+      if (requiresTopicSelection && journeyTopic) {
         params.set("topicId", journeyTopic);
       }
 
@@ -1150,11 +1199,11 @@ export default function QuizArenaClient({
 
           subject: selectedSubject,
 
-          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
+          ...(requiresTopicSelection ? { topicId: selectedTopic } : {}),
 
           difficulty: "easy",
 
-          source: window.location.pathname.startsWith("/mock-test")
+          source: isMockTestPage
             ? "mock-test"
             : "quiz-arena",
 
@@ -1236,7 +1285,7 @@ export default function QuizArenaClient({
 
           subject: selectedSubject,
 
-          ...(topicSyllabus ? { topicId: selectedTopic } : {}),
+          ...(requiresTopicSelection ? { topicId: selectedTopic } : {}),
 
           progressionLevel: selectedJourneyLevel,
 
@@ -1578,7 +1627,7 @@ export default function QuizArenaClient({
                 "
               >
                 Log in to access{" "}
-                {mockTestMode ? "Mock Tests" : "Quiz Arena"},
+                {isMockTestPage ? "Mock Tests" : "Quiz Arena"},
                 explore learning resources and track your progress.
               </p>
 
@@ -1588,7 +1637,7 @@ export default function QuizArenaClient({
 
                 <Link
                   href={
-                    mockTestMode
+                    isMockTestPage
                       ? "/login?returnTo=%2Fmock-test"
                       : "/login?returnTo=%2Fquiz-arena"
                   }
@@ -1626,7 +1675,7 @@ export default function QuizArenaClient({
 
                 <Link
                   href={
-                    mockTestMode
+                    isMockTestPage
                       ? "/signup?returnTo=%2Fmock-test"
                       : "/signup?returnTo=%2Fquiz-arena"
                   }
@@ -2208,7 +2257,7 @@ export default function QuizArenaClient({
 
                     setMessage("");
 
-                    if (topicSyllabus) {
+                    if (requiresTopicSelection) {
                       setStep("topic");
                       return;
                     }
@@ -2225,7 +2274,7 @@ export default function QuizArenaClient({
           </section>
         )}
 
-        {step === "topic" && topicSyllabus && (
+        {step === "topic" && requiresTopicSelection && (
           <section>
             <Header
               title="Choose your topic"
