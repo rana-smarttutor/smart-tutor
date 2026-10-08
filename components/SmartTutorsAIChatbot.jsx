@@ -1,25 +1,31 @@
 "use client";
-
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-
 /*
  * Messages shown one-by-one when the chatbot
  * is opened for the first time.
  */
 const INTRO_MESSAGES = [
-  "Hi! I’m SmartIQ Institute AI Assistant 👋",
-  "I'm here to help you with admissions and course enrolment.",
-  "Which **Class** or **Level** are you looking for admission in?",
+  "Hi! 👋 Welcome to SmartIQ Institute.",
+  "I can help with courses, mock tests, fees, admissions, and more.",
+  "**How can I assist you today?**",
 ];
-
 const STEPS = {
+  HELP: "help",
   CLASS: "class",
   COURSE: "course",
   ADMISSION: "admission",
   COMPLETE: "complete",
 };
 
+const HELP_OPTIONS = [
+  "Explore Courses",
+  "Admissions",
+  "Fees & Batches",
+  "Mock Tests & Exams",
+  "Career Counselling",
+  "Other Questions",
+];
 const CLASS_OPTIONS = [
   "Class 6-8",
   "Class 9-10",
@@ -28,7 +34,6 @@ const CLASS_OPTIONS = [
   "Government Exams",
   "Skill Development",
 ];
-
 const COURSE_OPTIONS_BY_LEVEL = {
   "Class 6-8": [
     "Regular Academic",
@@ -40,7 +45,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "Public Speaking",
     "Personality Development",
   ],
-
   "Class 9-10": [
     "Regular Academic / Board Prep",
     "JEE Foundation",
@@ -53,7 +57,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "Spoken English",
     "Career Counselling",
   ],
-
   "Class 11-12": [
     "Science - PCM / PCB",
     "Commerce",
@@ -73,7 +76,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "Railway Exams",
     "Interview & Personality Development",
   ],
-
   Graduation: [
     "Government Exam Preparation",
     "Banking Exams",
@@ -81,7 +83,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "Railway Exams",
     "Skill Development",
   ],
-
   "Government Exams": [
     "UPSC Civil Services",
     "MPSC / State PSC",
@@ -91,7 +92,6 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "NDA / CDS",
     "Police / Army Bharti",
   ],
-
   "Skill Development": [
     "Communication & Personality",
     "Global / Foreign Languages",
@@ -101,16 +101,21 @@ const COURSE_OPTIONS_BY_LEVEL = {
     "Performing Arts & Hobby Skills",
   ],
 };
-
 function getOptionsForStep(step, classLevel) {
+  if (step === STEPS.HELP) {
+    return HELP_OPTIONS;
+  }
+
+  if (step === STEPS.COMPLETE) {
+    return ["Main Menu"];
+  }
+
   if (step === STEPS.CLASS) {
     return CLASS_OPTIONS;
   }
-
   if (step === STEPS.COURSE) {
     return COURSE_OPTIONS_BY_LEVEL[classLevel] ?? [];
   }
-
   if (step === STEPS.ADMISSION) {
     return [
       "Start Admission",
@@ -119,21 +124,15 @@ function getOptionsForStep(step, classLevel) {
       "Fees & Counselling",
     ];
   }
-
   return [];
 }
-
 export default function SmartTutorsAIChatbot() {
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState("light");
-
   const [open, setOpen] = useState(false);
-
   const [showGreeting, setShowGreeting] = useState(true);
   const [isAssistantHovered, setIsAssistantHovered] = useState(false);
-
   const [input, setInput] = useState("");
-
   /*
    * IMPORTANT:
    * Start empty.
@@ -142,45 +141,37 @@ export default function SmartTutorsAIChatbot() {
    * which is why the entire greeting appeared immediately.
    */
   const [messages, setMessages] = useState([]);
-
   const [typing, setTyping] = useState(false);
-
   /*
    * Used so we don't replay the introduction after
    * the user has already started chatting.
    */
   const [introComplete, setIntroComplete] = useState(false);
   const [introRunning, setIntroRunning] = useState(false);
-
-  const [step, setStep] = useState(STEPS.CLASS);
-
+  const [step, setStep] = useState(STEPS.HELP);
   const [memory, setMemory] = useState({
+    helpType: "",
     classLevel: "",
     courseName: "",
     admissionInterest: "",
   });
-
   const bottomRef = useRef(null);
   const introTimersRef = useRef([]);
   const chatBoxRef = useRef(null);
-
   const styles = getStyles(theme);
   const currentOptions = getOptionsForStep(step, memory.classLevel);
-
   /*
    * Client mount
    */
   useEffect(() => {
     setMounted(true);
   }, []);
-
   /*
    * Detect website light/dark theme.
    */
   useEffect(() => {
     const updateTheme = () => {
       const html = document.documentElement;
-
       setTheme(
         html.classList.contains("dark") ||
           html.getAttribute("data-theme") === "dark"
@@ -188,19 +179,14 @@ export default function SmartTutorsAIChatbot() {
           : "light",
       );
     };
-
     updateTheme();
-
     const observer = new MutationObserver(updateTheme);
-
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class", "data-theme"],
     });
-
     return () => observer.disconnect();
   }, []);
-
   /*
    * Close chatbot when clicking outside it.
    * The X button continues to work separately.
@@ -209,20 +195,16 @@ export default function SmartTutorsAIChatbot() {
     if (!open) {
       return;
     }
-
     function handleOutsideClick(event) {
       if (chatBoxRef.current && !chatBoxRef.current.contains(event.target)) {
         setOpen(false);
       }
     }
-
     document.addEventListener("mousedown", handleOutsideClick);
-
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, [open]);
-
   /*
    * Small "Hii" bubble beside assistant icon.
    */
@@ -231,29 +213,21 @@ export default function SmartTutorsAIChatbot() {
       setShowGreeting(false);
       return;
     }
-
     let hideTimer;
-
     const showGreetingBriefly = () => {
       setShowGreeting(true);
-
       window.clearTimeout(hideTimer);
-
       hideTimer = window.setTimeout(() => {
         setShowGreeting(false);
       }, 4000);
     };
-
     showGreetingBriefly();
-
     const repeatTimer = window.setInterval(showGreetingBriefly, 25000);
-
     return () => {
       window.clearInterval(repeatTimer);
       window.clearTimeout(hideTimer);
     };
   }, [open]);
-
   /*
    * NEW:
    * Play the introduction one message at a time.
@@ -278,10 +252,8 @@ export default function SmartTutorsAIChatbot() {
     if (!open || introComplete || messages.length > 0) {
       return;
     }
-
     setIntroRunning(true);
     setTyping(true);
-
     const timer1 = window.setTimeout(() => {
       setMessages([
         {
@@ -289,14 +261,11 @@ export default function SmartTutorsAIChatbot() {
           content: INTRO_MESSAGES[0],
         },
       ]);
-
       setTyping(false);
     }, 450);
-
     const typing2 = window.setTimeout(() => {
       setTyping(true);
     }, 700);
-
     const timer2 = window.setTimeout(() => {
       setMessages((current) => [
         ...current,
@@ -305,14 +274,11 @@ export default function SmartTutorsAIChatbot() {
           content: INTRO_MESSAGES[1],
         },
       ]);
-
       setTyping(false);
     }, 1050);
-
     const typing3 = window.setTimeout(() => {
       setTyping(true);
     }, 1300);
-
     const timer3 = window.setTimeout(() => {
       setMessages((current) => [
         ...current,
@@ -321,15 +287,12 @@ export default function SmartTutorsAIChatbot() {
           content: INTRO_MESSAGES[2],
         },
       ]);
-
       setTyping(false);
     }, 1650);
-
     const finishTimer = window.setTimeout(() => {
       setIntroComplete(true);
       setIntroRunning(false);
     }, 1950);
-
     return () => {
       window.clearTimeout(timer1);
       window.clearTimeout(typing2);
@@ -339,7 +302,6 @@ export default function SmartTutorsAIChatbot() {
       window.clearTimeout(finishTimer);
     };
   }, [open]);
-
   /*
    * Automatically scroll to newest message.
    */
@@ -347,112 +309,182 @@ export default function SmartTutorsAIChatbot() {
     if (!open) {
       return;
     }
-
     const timer = window.setTimeout(() => {
       bottomRef.current?.scrollIntoView({
         behavior: "smooth",
         block: "end",
       });
     }, 100);
-
     return () => window.clearTimeout(timer);
   }, [open, messages, typing]);
-
   /*
    * Progressive questionnaire responses.
    */
+  function answerGeneralQuestion(userInput) {
+    const question = userInput.toLowerCase();
+
+    if (
+      /\b(fee|fees|price|cost|payment|batch|timing|schedule)\b/.test(question)
+    ) {
+      return "Course fees, batch availability and schedules depend on the program and class. Choose **Fees & Batches** from the main menu to share what you are interested in, or contact our institute team for confirmed details.";
+    }
+
+    if (/\b(mock|quiz|test|exam|admit card|result)\b/.test(question)) {
+      return "You can explore practice tests on our **Mock Test** page (/mock-test) and updates on our **Exam Updates** page (/exam-updates). If you need help finding a particular exam, tell me its name.";
+    }
+
+    if (
+      /\b(course|courses|program|programs|subject|class|classes|study)\b/.test(
+        question,
+      )
+    ) {
+      return "We offer school academics, exam preparation and skill-development options. Choose **Explore Courses** from the main menu to see the options for your class or level.";
+    }
+
+    if (/\b(admission|admissions|enrol|enroll|joining|join)\b/.test(question)) {
+      setMemory((previous) => ({ ...previous, helpType: "admissions" }));
+      setStep(STEPS.CLASS);
+      return "I can guide you through admissions. Which **class or level** are you enquiring about?";
+    }
+
+    if (
+      /\b(counsellor|counselor|contact|phone|call|support|human|person)\b/.test(
+        question,
+      )
+    ) {
+      return "For personalised guidance, our institute team can help with counselling, programs and admission enquiries. Please use the contact or enquiry option on the SmartIQ Institute website. I can also help you choose a course here.";
+    }
+
+    return "I can help with **courses, mock tests, exam updates, fees, batches, admissions and counselling**. Choose an option from the main menu or tell me what you are looking for. For details I cannot confirm here, our institute team can assist.";
+  }
+
   function getProgressiveResponse(userInput, currentStep) {
+    const normalized = userInput.toLowerCase().trim();
+
+    if (
+      normalized === "main menu" ||
+      normalized === "menu" ||
+      normalized === "start over"
+    ) {
+      setMemory({
+        helpType: "",
+        classLevel: "",
+        courseName: "",
+        admissionInterest: "",
+      });
+      setStep(STEPS.HELP);
+      return "Of course! **How can I assist you today?**";
+    }
+
+    if (currentStep === STEPS.HELP) {
+      if (userInput === "Explore Courses") {
+        setMemory({
+          helpType: "courses",
+          classLevel: "",
+          courseName: "",
+          admissionInterest: "",
+        });
+        setStep(STEPS.CLASS);
+        return "Sure! Which **class or level** would you like to explore?";
+      }
+
+      if (userInput === "Admissions") {
+        setMemory({
+          helpType: "admissions",
+          classLevel: "",
+          courseName: "",
+          admissionInterest: "",
+        });
+        setStep(STEPS.CLASS);
+        return "I'd be happy to help with admissions. Which **class or level** are you interested in?";
+      }
+
+      if (userInput === "Fees & Batches") {
+        setMemory({
+          helpType: "fees",
+          classLevel: "",
+          courseName: "",
+          admissionInterest: "",
+        });
+        setStep(STEPS.CLASS);
+        return "I'll help you find the right fee and batch information. Which **class or level** are you interested in?";
+      }
+
+      if (userInput === "Mock Tests & Exams") {
+        setStep(STEPS.COMPLETE);
+        return "You can try practice tests at **/mock-test** and find exam updates at **/exam-updates**. You can also ask me about a specific exam. Select **Main Menu** for other help.";
+      }
+
+      if (userInput === "Career Counselling") {
+        setStep(STEPS.COMPLETE);
+        return "SmartIQ Institute can guide you in exploring study and career pathways. For personalised counselling, please use the website's contact or enquiry section. What class, stream or career are you considering?";
+      }
+
+      if (userInput === "Other Questions") {
+        setStep(STEPS.COMPLETE);
+        return "Of course! **Type your question below.** I can help with SmartIQ courses, exam preparation, the website and general institute enquiries.";
+      }
+
+      return answerGeneralQuestion(userInput);
+    }
+
     if (currentStep === STEPS.CLASS) {
-      setMemory((previous) => ({
-        ...previous,
-        classLevel: userInput,
-      }));
-
+      setMemory((previous) => ({ ...previous, classLevel: userInput }));
       setStep(STEPS.COURSE);
-
-      return `Great. You selected ${userInput}. Which course or program are you interested in joining?`;
+      return `Thanks! You selected **${userInput}**. Which course or program are you interested in?`;
     }
 
     if (currentStep === STEPS.COURSE) {
-      setMemory((previous) => ({
-        ...previous,
-        courseName: userInput,
-      }));
+      setMemory((previous) => ({ ...previous, courseName: userInput }));
 
-      setStep(STEPS.ADMISSION);
+      if (memory.helpType === "admissions") {
+        setStep(STEPS.ADMISSION);
+        return `You selected **${userInput}**. What would you like to know about admissions?`;
+      }
 
-      return `Perfect. You are interested in ${userInput}.
+      setStep(STEPS.COMPLETE);
+      if (memory.helpType === "fees") {
+        return `For **${userInput}** (${memory.classLevel}), course fees, batch timings and available seats must be confirmed by our institute team. Please use the website's contact or enquiry section for current details. You can ask another question below or choose **Main Menu**.`;
+      }
 
-How would you like me to help you with the admission process?`;
+      return `**${userInput}** is the program you selected under ${memory.classLevel}. For its curriculum, class format, availability and enrolment details, our institute team can help. You can ask another question below, or choose **Main Menu** to explore something else.`;
     }
 
     if (currentStep === STEPS.ADMISSION) {
-      setMemory((previous) => ({
-        ...previous,
-        admissionInterest: userInput,
-      }));
-
+      setMemory((previous) => ({ ...previous, admissionInterest: userInput }));
       setStep(STEPS.COMPLETE);
 
       if (userInput === "Start Admission") {
-        return `Here is the SmartIQ Institute admission process:
+        return `Here is the general SmartIQ Institute admission process:
 
-1. Select your class or course.
+1. Select your class and program.
 2. Submit your admission enquiry/application.
-3. Our counsellor will verify your course eligibility.
-4. Share the required student documents.
-5. Complete counselling and fee confirmation.
-6. After confirmation, your admission will be activated.
+3. Our counsellor checks eligibility and requirements.
+4. Provide the requested documents.
+5. Confirm counselling, fees and your enrolment.
 
-Selected Level: ${memory.classLevel}
-Selected Course: ${memory.courseName}
+**Level:** ${memory.classLevel}
+**Course:** ${memory.courseName}
 
-You can now proceed with the admission enquiry, and our admissions team will assist you further.`;
+Please use the institute's enquiry/application section to start. You can also ask another question here.`;
       }
 
       if (userInput === "Know Eligibility") {
-        return `For ${memory.courseName}, eligibility depends on your current academic level and the selected program.
-
-You selected:
-• Level: ${memory.classLevel}
-• Course: ${memory.courseName}
-
-Our admissions counsellor can confirm the exact eligibility before enrolment.`;
+        return `Eligibility for **${memory.courseName}** depends on the selected program and your academic level (${memory.classLevel}). Our counsellor can confirm the exact requirements before enrolment.`;
       }
 
       if (userInput === "Required Documents") {
-        return `The commonly required admission documents include:
-
-• Student identification proof
-• Recent passport-size photograph
-• Previous class marksheet / academic record
-• Parent or guardian contact details
-• Any course-specific documents, if applicable
-
-The admissions team will confirm the exact documents for ${memory.courseName}.`;
+        return `Commonly requested documents may include a student ID, recent photograph, academic records and parent/guardian contact details. Exact requirements for **${memory.courseName}** should be confirmed by our admissions team.`;
       }
 
       if (userInput === "Fees & Counselling") {
-        return `Fees may vary depending on the selected course, class level, and learning mode.
-
-For ${memory.courseName}, our admissions counsellor will confirm:
-
-• Current course fee
-• Available payment options
-• Batch availability
-• Counselling details
-• Admission confirmation process`;
+        return `Fees, available batches and counselling details for **${memory.courseName}** (${memory.classLevel}) must be confirmed by our admissions team. Please use the site's contact or enquiry section.`;
       }
 
-      return `You selected ${memory.courseName}. Our admissions team can guide you through eligibility, documentation, counselling, fees, and enrolment.`;
+      return answerGeneralQuestion(userInput);
     }
 
-    return `Your admission interest has been noted.
-
-Selected Level: ${memory.classLevel}
-Selected Course: ${memory.courseName}
-
-If you have any further questions about admissions, fees, faculty, batches, or campus details, you can ask me here.`;
+    return answerGeneralQuestion(userInput);
   }
 
   /*
@@ -466,14 +498,11 @@ If you have any further questions about admissions, fees, faculty, batches, or c
     if (typing || introRunning || !introComplete) {
       return;
     }
-
     const text =
       typeof textOverride === "string" ? textOverride.trim() : input.trim();
-
     if (!text) {
       return;
     }
-
     setMessages((current) => [
       ...current,
       {
@@ -481,16 +510,13 @@ If you have any further questions about admissions, fees, faculty, batches, or c
         content: text,
       },
     ]);
-
     setInput("");
     setTyping(true);
-
     /*
      * Small realistic response delay.
      */
     window.setTimeout(() => {
       const aiResponse = getProgressiveResponse(text, step);
-
       setMessages((current) => [
         ...current,
         {
@@ -498,32 +524,25 @@ If you have any further questions about admissions, fees, faculty, batches, or c
           content: aiResponse,
         },
       ]);
-
       setTyping(false);
     }, 2000);
   }
-
   /*
    * Handles bold text and multiple lines.
    */
   function formatContent(content) {
     const lines = content.split("\n");
-
     return lines.map((line, index) => (
       <div
         key={`${line}-${index}`}
         style={{
           marginBottom: index < lines.length - 1 ? "4px" : 0,
-
           minHeight: line.trim() ? "auto" : "6px",
-
           opacity: 0,
-
           animationName: "chat-text-rise",
           animationDuration: "0.35s",
           animationTimingFunction: "ease-out",
           animationFillMode: "both",
-
           animationDelay: `${0.05 + index * 0.07}s`,
         }}
       >
@@ -545,7 +564,6 @@ If you have any further questions about admissions, fees, faculty, batches, or c
       </div>
     ));
   }
-
   /*
    * Better typing indicator.
    */
@@ -570,14 +588,12 @@ If you have any further questions about admissions, fees, faculty, batches, or c
               animationDelay: "0s",
             }}
           />
-
           <span
             style={{
               ...styles.typingDot,
               animationDelay: "0.16s",
             }}
           />
-
           <span
             style={{
               ...styles.typingDot,
@@ -588,11 +604,9 @@ If you have any further questions about admissions, fees, faculty, batches, or c
       </div>
     );
   }
-
   if (!mounted) {
     return null;
   }
-
   return (
     <>
       <style>{`
@@ -601,60 +615,50 @@ If you have any further questions about admissions, fees, faculty, batches, or c
             opacity: 0;
             transform: translateY(18px) scale(0.96);
           }
-
           to {
             opacity: 1;
             transform: translateY(0) scale(1);
           }
         }
-
         @keyframes greeting-strip-in {
           from {
             opacity: 0;
             transform: translateX(10px) scale(0.94);
           }
-
           to {
             opacity: 1;
             transform: translateX(0) scale(1);
           }
         }
-
         @keyframes greeting-letter-rise {
           from {
             opacity: 0;
             transform: translateY(10px);
           }
-
           to {
             opacity: 1;
             transform: translateY(0);
           }
         }
-
         @keyframes chat-text-rise {
           from {
             opacity: 0;
             transform: translateY(8px);
           }
-
           to {
             opacity: 1;
             transform: translateY(0);
           }
         }
-
         @keyframes chat-float {
           0%,
           100% {
             transform: translateY(0);
           }
-
           50% {
             transform: translateY(-4px);
           }
         }
-
         @keyframes chatbot-typing-dot {
           0%,
           60%,
@@ -662,22 +666,18 @@ If you have any further questions about admissions, fees, faculty, batches, or c
             transform: translateY(0);
             opacity: 0.35;
           }
-
           30% {
             transform: translateY(-5px);
             opacity: 1;
           }
         }
-
         .no-scrollbar::-webkit-scrollbar {
           display: none;
         }
-
         .no-scrollbar {
           scrollbar-width: none;
         }
       `}</style>
-
       <div style={styles.wrapper}>
         {!open ? (
           <div
@@ -702,7 +702,6 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                 </span>
               </div>
             ) : null}
-
             <button
               type="button"
               onClick={() => setOpen(true)}
@@ -739,18 +738,16 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                     }}
                   />
                 </div>
-
                 <div>
                   <div style={styles.title}>SmartIQ Institute AI</div>
-
                   <div style={styles.subtitleRow}>
                     <span style={styles.onlineDot} />
-
-                    <span style={styles.subtitle}>Admissions Assistant</span>
+                    <span style={styles.subtitle}>
+                      SmartIQ Virtual Assistant
+                    </span>
                   </div>
                 </div>
               </div>
-
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -760,7 +757,6 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                 ×
               </button>
             </header>
-
             {/* MESSAGES */}
             <div className="no-scrollbar" style={styles.messages}>
               {messages.map((message, index) => (
@@ -768,7 +764,6 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                   key={`${message.role}-${index}`}
                   style={{
                     ...styles.msgRow,
-
                     justifyContent:
                       message.role === "user" ? "flex-end" : "flex-start",
                   }}
@@ -776,7 +771,6 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                   <div
                     style={{
                       ...styles.bubble,
-
                       ...(message.role === "user"
                         ? styles.userBubble
                         : styles.botBubble),
@@ -786,17 +780,15 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                   </div>
                 </div>
               ))}
-
               {/* REALISTIC TYPING DOTS */}
               {typing ? <TypingIndicator /> : null}
-
               {/*
                * OPTIONS ARE HIDDEN UNTIL:
                * 1. Intro sequence has finished
                * 2. Assistant isn't typing
                * 3. Questionnaire isn't complete
                */}
-              {introComplete && !typing && step !== STEPS.COMPLETE ? (
+              {introComplete && !typing ? (
                 <div style={styles.optionsContainer}>
                   {currentOptions.map((option) => (
                     <button
@@ -810,10 +802,8 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                   ))}
                 </div>
               ) : null}
-
               <div ref={bottomRef} />
             </div>
-
             {/* FOOTER */}
             <footer style={styles.footer}>
               <div style={styles.inputRow}>
@@ -821,51 +811,30 @@ If you have any further questions about admissions, fees, faculty, batches, or c
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" && step === STEPS.COMPLETE) {
+                    if (event.key === "Enter") {
                       sendMessage();
                     }
                   }}
-                  disabled={
-                    typing ||
-                    introRunning ||
-                    !introComplete ||
-                    step !== STEPS.COMPLETE
-                  }
+                  disabled={typing || introRunning || !introComplete}
                   placeholder={
                     !introComplete
                       ? "SmartIQ AI is typing..."
-                      : step !== STEPS.COMPLETE
-                        ? "Please select an option above..."
-                        : "Type your reply..."
+                      : "Ask me anything..."
                   }
                   style={{
                     ...styles.input,
-
-                    ...(!introComplete ||
-                    typing ||
-                    introRunning ||
-                    step !== STEPS.COMPLETE
+                    ...(!introComplete || typing || introRunning
                       ? styles.disabledInput
                       : {}),
                   }}
                 />
-
                 <button
                   type="button"
                   onClick={() => sendMessage()}
-                  disabled={
-                    typing ||
-                    introRunning ||
-                    !introComplete ||
-                    step !== STEPS.COMPLETE
-                  }
+                  disabled={typing || introRunning || !introComplete}
                   style={{
                     ...styles.sendBtn,
-
-                    ...(!introComplete ||
-                    typing ||
-                    introRunning ||
-                    step !== STEPS.COMPLETE
+                    ...(!introComplete || typing || introRunning
                       ? styles.disabledSendBtn
                       : {}),
                   }}
@@ -880,413 +849,271 @@ If you have any further questions about admissions, fees, faculty, batches, or c
     </>
   );
 }
-
 function getStyles(theme) {
   const isDark = theme === "dark";
-
   return {
     wrapper: {
       position: "fixed",
       right: "24px",
       bottom: "112px",
       zIndex: 100000,
-
       display: "flex",
       flexDirection: "column",
       alignItems: "flex-end",
-
       fontFamily: "Inter, Arial, sans-serif",
-
       pointerEvents: "none",
     },
-
     compactAssistant: {
       display: "flex",
       alignItems: "center",
       gap: "7px",
-
       pointerEvents: "auto",
-
       animationName: "chat-float",
       animationDuration: "3.5s",
       animationTimingFunction: "ease-in-out",
       animationIterationCount: "infinite",
     },
-
     hoverPrompt: {
       width: "78px",
       height: "36px",
-
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-
       boxSizing: "border-box",
-
       border: "1px solid rgba(37, 99, 235, 0.13)",
       borderRadius: "999px",
-
       background: "#ffffff",
       color: "#2563eb",
-
       boxShadow: "0 9px 20px rgba(15, 23, 42, 0.16)",
-
       animationName: "greeting-strip-in",
       animationDuration: "0.35s",
       animationTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
       animationFillMode: "both",
     },
-
     greetingText: {
       display: "inline-flex",
       overflow: "hidden",
-
       fontSize: "15px",
       fontWeight: 800,
-
       letterSpacing: "-0.2px",
       lineHeight: 1,
     },
-
     greetingLetter: {
       display: "inline-block",
-
       opacity: 0,
-
       animationName: "greeting-letter-rise",
       animationDuration: "0.35s",
       animationTimingFunction: "ease-out",
       animationFillMode: "both",
     },
-
     toggleBtn: {
       pointerEvents: "auto",
-
       width: "68px",
       height: "68px",
-
       padding: "3px",
-
       border: "3px solid #ffffff",
       borderRadius: "50%",
-
       background: "#2563eb",
-
       cursor: "pointer",
-
       boxShadow:
         "0 14px 28px rgba(15, 23, 42, 0.22), 0 0 0 4px rgba(59, 130, 246, 0.1)",
-
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-
       overflow: "hidden",
     },
-
     avatarImage: {
       width: "100%",
       height: "100%",
-
       borderRadius: "50%",
-
       objectFit: "cover",
     },
-
     chatBox: {
       pointerEvents: "auto",
-
       width: "380px",
       maxWidth: "calc(100vw - 24px)",
-
       height: "560px",
       maxHeight: "calc(100dvh - 140px)",
-
       display: "flex",
       flexDirection: "column",
-
       overflow: "hidden",
-
       border: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
-
       borderRadius: "22px",
-
       background: isDark ? "#0f172a" : "#ffffff",
-
       boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-
       animationName: "chat-fade-in",
       animationDuration: "0.3s",
       animationTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
       animationFillMode: "both",
     },
-
     header: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-
       padding: "11px 14px",
-
       background: "linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)",
-
       color: "#ffffff",
     },
-
     headerLeft: {
       display: "flex",
       alignItems: "center",
       gap: "11px",
     },
-
     headerAvatar: {
       width: "36px",
       height: "36px",
-
       flexShrink: 0,
-
       padding: "2px",
-
       borderRadius: "50%",
-
       background: "#ffffff",
-
       overflow: "hidden",
     },
-
     title: {
       fontSize: "17px",
       fontWeight: 800,
-
       letterSpacing: "-0.4px",
     },
-
     subtitleRow: {
       display: "flex",
       alignItems: "center",
       gap: "6px",
-
       marginTop: "3px",
     },
-
     subtitle: {
       fontSize: "11px",
-
       opacity: 0.88,
     },
-
     onlineDot: {
       width: "7px",
       height: "7px",
-
       borderRadius: "50%",
-
       background: "#4ade80",
-
       boxShadow: "0 0 0 3px rgba(74, 222, 128, 0.18)",
     },
-
     closeBtn: {
       border: "none",
-
       background: "transparent",
-
       color: "#ffffff",
-
       fontSize: "28px",
       lineHeight: 1,
-
       cursor: "pointer",
-
       opacity: 0.9,
     },
-
     messages: {
       flex: 1,
-
       display: "flex",
       flexDirection: "column",
-
       gap: "9px",
-
       padding: "14px",
-
       overflowY: "auto",
-
       background: isDark ? "#0f172a" : "#f8fafc",
     },
-
     msgRow: {
       display: "flex",
-
       width: "100%",
-
       animationName: "chat-text-rise",
       animationDuration: "0.3s",
       animationTimingFunction: "ease-out",
       animationFillMode: "both",
     },
-
     bubble: {
       maxWidth: "85%",
-
       padding: "10px 12px",
-
       borderRadius: "15px",
-
       fontSize: "13px",
       lineHeight: 1.45,
     },
-
     botBubble: {
       border: isDark ? "1px solid #334155" : "1px solid #e6ebf2",
-
       borderBottomLeftRadius: "6px",
-
       background: isDark ? "#1e293b" : "#ffffff",
-
       color: isDark ? "#f8fafc" : "#0f172a",
-
       boxShadow: isDark ? "none" : "0 4px 12px rgba(15, 23, 42, 0.05)",
     },
-
     userBubble: {
       borderBottomRightRadius: "6px",
-
       background: "#2563eb",
-
       color: "#ffffff",
-
       fontWeight: 500,
-
       boxShadow: "0 5px 14px rgba(37, 99, 235, 0.18)",
     },
-
     typingBubble: {
       display: "flex",
       alignItems: "center",
-
       gap: "5px",
-
       width: "fit-content",
-
       padding: "13px 16px",
     },
-
     typingDot: {
       display: "block",
-
       width: "7px",
       height: "7px",
-
       borderRadius: "50%",
-
       background: isDark ? "#94a3b8" : "#64748b",
-
       animationName: "chatbot-typing-dot",
       animationDuration: "1.1s",
       animationTimingFunction: "ease-in-out",
       animationIterationCount: "infinite",
     },
-
     optionsContainer: {
       display: "flex",
       flexWrap: "wrap",
-
       gap: "8px",
-
       marginTop: "3px",
-
       paddingLeft: "3px",
-
       animationName: "chat-text-rise",
       animationDuration: "0.35s",
       animationTimingFunction: "ease-out",
       animationFillMode: "both",
     },
-
     optionBtn: {
       border: "1px solid #2563eb",
-
       borderRadius: "11px",
-
       padding: "6px 10px",
-
       background: isDark ? "#1e293b" : "#ffffff",
-
       color: "#2563eb",
-
       fontSize: "12px",
       fontWeight: 700,
-
       cursor: "pointer",
     },
-
     footer: {
       padding: "12px",
-
       borderTop: `1px solid ${isDark ? "#1e293b" : "#e2e8f0"}`,
-
       background: isDark ? "#0f172a" : "#ffffff",
     },
-
     inputRow: {
       display: "flex",
-
       gap: "10px",
     },
-
     input: {
       flex: 1,
-
       minWidth: 0,
-
       padding: "10px 12px",
-
       border: `1px solid ${isDark ? "#334155" : "#cbd5e1"}`,
-
       borderRadius: "14px",
-
       outline: "none",
-
       background: isDark ? "#1e293b" : "#ffffff",
-
       color: isDark ? "#ffffff" : "#0f172a",
-
       fontSize: "14px",
-
       transition: "border-color 0.2s ease, opacity 0.2s ease",
     },
-
     disabledInput: {
       cursor: "not-allowed",
-
       opacity: 0.6,
-
       background: isDark ? "#182235" : "#f8fafc",
     },
-
     sendBtn: {
       border: "none",
-
       borderRadius: "14px",
-
       padding: "0 15px",
-
       background: "#2563eb",
-
       color: "#ffffff",
-
       fontWeight: 700,
-
       cursor: "pointer",
-
       transition: "opacity 0.2s ease, transform 0.2s ease",
     },
-
     disabledSendBtn: {
       cursor: "not-allowed",
-
       opacity: 0.5,
     },
   };

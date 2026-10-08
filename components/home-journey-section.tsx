@@ -115,21 +115,6 @@ export function HomeJourneySection() {
           ================================================== */}
 
           <div>
-            {/* BADGE */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-blue-700">
-              <GraduationCap size={15} strokeWidth={2.5} />
-              Inside SmartIQ Institute
-            </div>
-
-            {/* TITLE */}
-            <h2 className="mt-6 max-w-[620px] text-[2.35rem] font-black leading-[1.02] tracking-[-0.05em] text-slate-950 sm:text-[3rem] lg:text-[3.15rem] xl:text-[3.45rem]">
-              See How We
-              <br />
-              <span className="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-500 bg-clip-text text-transparent">
-                Learn, Practice &amp; Achieve
-              </span>
-            </h2>
-
             {/* ADMISSIONS */}
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <div className="inline-flex items-center gap-3 rounded-full border border-emerald-200 bg-emerald-50/80 px-4 py-2.5">
@@ -137,7 +122,7 @@ export function HomeJourneySection() {
                   <CheckCircle2 size={16} strokeWidth={2.8} />
                 </span>
 
-                <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-900">
+                <span className="text-[15px] font-black uppercase tracking-[0.12em] text-slate-900">
                   Admissions Open
                 </span>
               </div>

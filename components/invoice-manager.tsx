@@ -877,27 +877,21 @@ export function InvoiceManager({
       ? transactions
           .map(
             (transaction, index) => `
-              <tr>
-                <td>${index + 1}</td>
-                <td>${escapeHtml(formatReceiptDate(transaction.paidDate))}</td>
-                <td>${escapeHtml(formatCurrency(transaction.paidAmount))}</td>
-                <td>${escapeHtml(transaction.paymentMode)}</td>
-                <td>${escapeHtml(
-                  transaction.transactionId || transaction.chequeNumber || "—",
-                )}</td>
-                <td>${escapeHtml(transaction.bankName || "—")}</td>
-              </tr>`,
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(formatReceiptDate(transaction.paidDate))}</td>
+            <td>${escapeHtml(formatCurrency(transaction.paidAmount))}</td>
+            <td>${escapeHtml(transaction.paymentMode)}</td>
+          </tr>`,
           )
           .join("")
       : `
-          <tr>
-            <td>1</td>
-            <td>${paidAmount > 0 ? escapeHtml(formatReceiptDate(invoice.createdAt)) : "—"}</td>
-            <td>${paidAmount > 0 ? escapeHtml(formatCurrency(paidAmount)) : "—"}</td>
-            <td>${paidAmount > 0 ? escapeHtml(paymentMode) : "—"}</td>
-            <td>${escapeHtml(receiptInvoice.transactionId || "—")}</td>
-            <td>—</td>
-          </tr>`;
+      <tr>
+        <td>1</td>
+        <td>${paidAmount > 0 ? escapeHtml(formatReceiptDate(invoice.createdAt || invoice.dueDate)) : "—"}</td>
+        <td>${paidAmount > 0 ? escapeHtml(formatCurrency(paidAmount)) : "—"}</td>
+        <td>${paidAmount > 0 ? escapeHtml(paymentMode) : "—"}</td>
+      </tr>`;
 
     const NAVY = "#071a52";
     const LINE = "#9eabc2";
@@ -1111,7 +1105,7 @@ export function InvoiceManager({
     }
     .summary-dates .divider { color: ${LINE}; }
     .history-table th {
-      padding: 2.2mm 1.6mm;
+      padding: 2.6mm 1.8mm;
       border: 1px solid ${LINE};
       background: #f7f8fb;
       color: ${NAVY};
@@ -1120,95 +1114,112 @@ export function InvoiceManager({
       text-align: center;
     }
     .history-table td {
-      padding: 2.2mm 1.6mm;
+      padding: 3.2mm 1.8mm;
       border: 1px solid ${LINE};
       text-align: center;
       color: #142758;
+      font-size: 9.8px;
+      font-weight: 700;
     }
-.footer {
-  margin-top: 3.5mm;
-  padding: 2.5mm 2mm 0;
-  border-top: 1.5px solid ${NAVY};
-}
 
-.fee-warning {
-  margin: 0 0 5mm;
-  color: #dc2626;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1.5;
-}
-.complete-warning {
-  margin: 0 0 5mm;
-  color: #dc2626;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1.5;
-}
+    .note-wrap {
+      margin-top: 4.5mm;
+      border: 1px solid ${LINE};
+    }
 
-.footer-bottom {
-  display: grid;
-  grid-template-columns: 1fr 54mm;
-  gap: 8mm;
-  align-items: end;
-}
+    .note-title {
+      display: inline-block;
+      min-width: 30mm;
+      padding: 2.3mm 4mm;
+      background: ${NAVY};
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
 
-.terms {
-  color: #111827;
-  font-size: 8.6px;
-  font-weight: 600;
-  line-height: 1.75;
-}
+    .note-content {
+      padding: 3.5mm 4mm 4mm;
+      color: #111827;
+      font-size: 9.6px;
+      line-height: 1.55;
+    }
 
-.terms ul {
-  margin: 0;
-  padding-left: 4mm;
-}
+    .declaration-list {
+      margin-top: 5mm;
+      display: grid;
+      gap: 2.5mm;
+      color: ${NAVY};
+      font-weight: 700;
+      font-size: 10px;
+    }
 
-.terms li {
-  color: #111827;
-  margin-bottom: 0.8mm;
-}
+    .declaration-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 2.4mm;
+      line-height: 1.45;
+    }
 
-.signature {
-  width: 54mm;
-  justify-self: end;
-  text-align: center;
-  color: ${NAVY};
-}
+    .declaration-star {
+      font-size: 11px;
+      line-height: 1;
+      margin-top: 0.2mm;
+      font-weight: 900;
+    }
 
-.signature img {
-  display: block;
-  width: 47mm;
-  height: 19mm;
-  margin: 0 auto;
-  object-fit: contain;
-}
+    .declaration-item.thank-you {
+      font-weight: 900;
+      font-size: 10.4px;
+    }
 
-.signature-rule {
-  width: 48mm;
-  margin: 0 auto 1.2mm;
-  border-top: 1.2px solid ${NAVY};
-}
+    .receipt-signatures {
+      margin-top: 18mm;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18mm;
+      align-items: end;
+    }
 
-.signature strong {
-  display: block;
-  margin-bottom: 0.7mm;
-  font-size: 9.5px;
-  line-height: 1.2;
-}
+    .signature-block {
+      text-align: center;
+      color: ${NAVY};
+    }
 
-.signature span {
-  display: block;
-  font-size: 7.8px;
-  line-height: 1.35;
-}
-.bottom-note {
-  padding: 2.5mm 2mm 0;
-  color: #697794;
-  font-size: 7px;
-  text-align: center;
-}
+    .signature-image-wrap {
+      height: 20mm;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      margin-bottom: 1.8mm;
+    }
+
+    .signature-image-wrap img {
+      max-width: 47mm;
+      max-height: 18mm;
+      object-fit: contain;
+      display: block;
+    }
+
+    .signature-line {
+      width: 82mm;
+      margin: 0 auto 2mm;
+      border-top: 1.2px solid ${NAVY};
+    }
+
+    .signature-label {
+      font-size: 9.6px;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .bottom-note {
+      padding: 5mm 2mm 0;
+      color: #697794;
+      font-size: 7px;
+      text-align: center;
+    }
     @media (max-width: 760px) {
       body { background: #fff; }
       .toolbar { width: calc(100% - 16px); }
@@ -1380,56 +1391,56 @@ export function InvoiceManager({
     <table class="history-table">
       <thead>
         <tr>
-          <th style="width:8%">#</th>
-          <th style="width:18%">Date</th>
-          <th style="width:18%">Amount (₹)</th>
-          <th style="width:17%">Mode</th>
-          <th style="width:25%">Transaction Ref</th>
-          <th style="width:14%">Bank</th>
+          <th style="width:12%">#</th>
+          <th style="width:29%">Date</th>
+          <th style="width:30%">Amount (₹)</th>
+          <th style="width:29%">Mode</th>
         </tr>
       </thead>
       <tbody>${historyRows}</tbody>
     </table>
 
-<footer class="footer">
-  <div class="fee-warning">
-    • Fees once paid are non-refundable under any circumstances.
-  </div>
-  <div class="complete-warning">
-    • the subscription is valid until the portion completed.
-  </div>
-
-  
-  <div class="footer-bottom">
-    <div class="terms">
-      <ul>
-        <li>
-          This is a computer-generated receipt and does not require a physical signature.
-        </li>
-
-        <li>
-          Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.
-        </li>
-      </ul>
+    <div class="note-wrap">
+      <div class="note-title">Terms and Conditions</div>
+      <div class="note-content">
+        Fees once paid are non-refundable under any circumstances. Subscription will be valid till the portion completed. After subscription expiry, students may attend Doubt Sessions only. Daily attendance and regularity are compulsory. More than 1 absence per week or 1 week in a month without applied leave in our SmartIQ portal may result in blacklisting. Further attendance may require parent/guardian consent. Continued absence may lead to automatic batch disqualification. Rejoining after disqualification requires ₹2,500 rejoining penalty, subject to institute approval.
+      </div>
     </div>
 
-    <div class="signature">
-      <img
-        src="${escapeHtml(signatureUrl)}"
-        alt="Authorized Signature"
-      />
+    <div class="declaration-list">
+      <div class="declaration-item">
+        <span class="declaration-star">★</span>
+        <span>I have read and understood all the above-mentioned terms and conditions.</span>
+      </div>
 
-      <div class="signature-rule"></div>
-
-      <strong>Authorized Signatory</strong>
-      <span>SmartIQ Institute</span>
+      <div class="declaration-item thank-you">
+        <span class="declaration-star">★</span>
+        <span>Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.</span>
+      </div>
     </div>
-  </div>
-</footer>
 
-<div class="bottom-note">
-  www.smartiqinstitute.in
-</div>
+    <div class="receipt-signatures">
+      <div class="signature-block">
+        <div class="signature-image-wrap"></div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Student Signature</div>
+      </div>
+
+      <div class="signature-block">
+        <div class="signature-image-wrap">
+          <img
+            src="${escapeHtml(signatureUrl)}"
+            alt="Authorised Signature"
+          />
+        </div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Authorised Signature</div>
+      </div>
+    </div>
+
+    <div class="bottom-note">
+      www.smartiqinstitute.in
+    </div>
   </main>
 </body>
 </html>`;

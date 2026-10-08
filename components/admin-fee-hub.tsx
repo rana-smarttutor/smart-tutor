@@ -1,9 +1,25 @@
+
 "use client";
 
-import { useMemo, useState } from "react";
-import type { FeeInvoice, FeeInstallmentPlan, ManagedUser, Role } from "@/lib/types";
+import {
+  AlertTriangle,
+  CalendarCheck2,
+  CalendarDays,
+  CheckCircle2,
+  IndianRupee,
+  Receipt,
+  Wallet,
+} from "lucide-react";
+
+import type {
+  FeeInvoice,
+  FeeInstallmentPlan,
+  ManagedUser,
+  Role,
+} from "@/lib/types";
+
 import { InvoiceManager } from "@/components/invoice-manager";
-import { FeeInstallmentManager } from "./fee-installment-manager";
+import { FeeInstallmentManager } from "@/components/fee-installment-manager";
 
 type Props = {
   role: Role;
@@ -12,125 +28,251 @@ type Props = {
   studentDirectory: ManagedUser[];
 };
 
-function fmtCurrency(n: number) {
-  return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+function fmtCurrency(value: number) {
+  return `₹${value.toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
 }
 
-const tabs = [
-  { id: "collections", label: "Dues & Collections", icon: "bi-cash-stack" },
-  { id: "installments", label: "EMI Installments", icon: "bi-calendar-event" },
-] as const;
+export function AdminFeeHub({
+  role,
+  feeInvoices,
+  feeInstallmentPlans,
+  studentDirectory,
+}: Props) {
+  const invoices = feeInvoices ?? [];
+  const plans = feeInstallmentPlans ?? [];
 
-type TabId = (typeof tabs)[number]["id"];
+  // Invoice totals only to avoid double-counting EMI plans.
+  const totalBilled = invoices.reduce(
+    (sum, invoice) => sum + invoice.amount,
+    0,
+  );
 
-export function AdminFeeHub({ role, feeInvoices, feeInstallmentPlans, studentDirectory }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("collections");
+  const totalCollected = invoices.reduce(
+    (sum, invoice) => sum + (invoice.paidAmount ?? 0),
+    0,
+  );
 
-  const invoices = useMemo(() => feeInvoices ?? [], [feeInvoices]);
-  const plans = useMemo(() => feeInstallmentPlans ?? [], [feeInstallmentPlans]);
+  const totalDue = invoices.reduce(
+    (sum, invoice) =>
+      sum +
+      Math.max(
+        invoice.amount - (invoice.paidAmount ?? 0),
+        0,
+      ),
+    0,
+  );
 
-  const totalBilled = useMemo(() => invoices.reduce((s, i) => s + i.amount, 0), [invoices]);
-  const totalCollected = useMemo(() => invoices.reduce((s, i) => s + (i.paidAmount ?? 0), 0), [invoices]);
-  const totalDue = Math.max(totalBilled - totalCollected, 0);
-  const unpaidCount = invoices.filter((i) => i.status === "unpaid" || i.status === "overdue").length;
-  const overdueCount = invoices.filter((i) => i.status === "overdue").length;
-  const activePlans = plans.filter((p) => p.status === "active").length;
+  const overdueCount = invoices.filter(
+    (invoice) => invoice.status === "overdue",
+  ).length;
+
+  const activePlans = plans.filter(
+    (plan) => plan.status === "active",
+  ).length;
 
   const stats = [
-    { label: "Total Billed", value: fmtCurrency(totalBilled), color: "#4F46E5", bg: "bg-indigo-50", icon: "bi-receipt" },
-    { label: "Collected", value: fmtCurrency(totalCollected), color: "#059669", bg: "bg-emerald-50", icon: "bi-check-circle" },
-    { label: "Outstanding", value: fmtCurrency(totalDue), color: totalDue > 0 ? "#DC2626" : "#059669", bg: totalDue > 0 ? "bg-red-50" : "bg-emerald-50", icon: "bi-currency-rupee" },
-    { label: "Active Plans", value: String(activePlans), color: "#7C3AED", bg: "bg-violet-50", icon: "bi-calendar-check" },
+    {
+      label: "Total Billed",
+      value: fmtCurrency(totalBilled),
+      color: "#4F46E5",
+      bg: "bg-indigo-50",
+      icon: Receipt,
+    },
+    {
+      label: "Collected",
+      value: fmtCurrency(totalCollected),
+      color: "#059669",
+      bg: "bg-emerald-50",
+      icon: CheckCircle2,
+    },
+    {
+      label: "Outstanding",
+      value: fmtCurrency(totalDue),
+      color: totalDue > 0 ? "#DC2626" : "#059669",
+      bg: totalDue > 0 ? "bg-red-50" : "bg-emerald-50",
+      icon: IndianRupee,
+    },
+    {
+      label: "Active EMI Plans",
+      value: String(activePlans),
+      color: "#7C3AED",
+      bg: "bg-violet-50",
+      icon: CalendarCheck2,
+    },
   ];
 
   return (
-    <article className="rounded-[2rem] overflow-hidden">
-      {/* ── Header ── */}
-      <div
-        className="p-5 sm:p-6 text-white"
-        style={{ background: "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%)" }}
+    <article className="min-w-0 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+      {/* HEADER */}
+      <header
+        className="p-5 text-white sm:p-6"
+        style={{
+          background:
+            "linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%)",
+        }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2.5">
-              <span className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/10 text-lg">
-                <i className="bi bi-wallet2" />
+            <h2 className="flex items-center gap-3 text-2xl font-bold tracking-tight">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white">
+                <Wallet size={25} strokeWidth={2.2} />
               </span>
+
               Smart Billing Hub
             </h2>
-            <p className="text-sm text-slate-400 mt-1.5 max-w-lg">
-              Unify collections, track dues, and manage installment schedules in one workspace
+
+            <p className="mt-2 max-w-lg text-sm leading-6 text-slate-300">
+              Manage invoices, fee collections, outstanding dues
+              and EMI installment schedules in one workspace.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-white/10 text-white">
-              <i className="bi bi-cash-stack" /> {invoices.length} Invoices
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold text-white">
+              <Receipt size={14} strokeWidth={2.3} />
+              {invoices.length} Invoices
             </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-white/10 text-white">
-              <i className="bi bi-calendar-event" /> {plans.length} Plans
+
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold text-white">
+              <CalendarDays size={14} strokeWidth={2.3} />
+              {plans.length} EMI Plans
             </span>
+
             {overdueCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-red-500/20 text-red-300">
-                <i className="bi bi-exclamation-triangle" /> {overdueCount} Overdue
+              <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-2 text-[11px] font-bold text-red-300">
+                <AlertTriangle size={14} strokeWidth={2.3} />
+                {overdueCount} Overdue Invoices
               </span>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* ── Stats ── */}
-      <div className="bg-white p-4 sm:p-5 border-b border-slate-100">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {stats.map((s) => (
-            <div key={s.label} className="rounded-2xl border border-slate-100 p-3.5 flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${s.bg}`} style={{ color: s.color }}>
-                <i className={`bi ${s.icon} text-lg`} />
+      {/* FINANCIAL SUMMARY */}
+      <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+
+            return (
+              <div
+                key={stat.label}
+                className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 transition-all hover:border-blue-100 hover:shadow-sm"
+              >
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.bg}`}
+                  style={{ color: stat.color }}
+                >
+                  <Icon
+                    size={23}
+                    strokeWidth={2.2}
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    {stat.label}
+                  </p>
+
+                  <p
+                    className="mt-1 break-words text-lg font-black"
+                    style={{ color: stat.color }}
+                  >
+                    {stat.value}
+                  </p>
+                </div>
               </div>
-              <div>
-                <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{s.label}</div>
-                <div className="text-lg font-bold" style={{ color: s.color }}>{s.value}</div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+
+        <p className="mt-3 text-xs text-slate-400">
+          Financial amounts above reflect invoices. EMI plans
+          are tracked separately to avoid double-counting fees.
+        </p>
       </div>
 
-      {/* ── Tabs ── */}
-      <div className="bg-white px-4 sm:px-5 pt-3 border-b border-slate-100">
-        <div className="flex gap-1 p-1 bg-slate-50 rounded-xl w-fit border border-slate-100">
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-                activeTab === t.id
-                  ? "bg-white text-indigo-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
-              }`}
+      {/* SINGLE UNIFIED WORKSPACE */}
+      <section className="min-w-0 bg-white p-4 sm:p-5">
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-5">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-600">
+              Unified Fee Management
+            </p>
+
+            <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950">
+              Dues, Collections &amp; EMI Installments
+            </h3>
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              Manage student invoices, record fee payments,
+              monitor outstanding balances and maintain
+              installment schedules in one place.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <a
+              href="#billing-invoices"
+              className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
             >
-              <i className={`bi ${t.icon} text-sm`} />
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
+              <Receipt size={15} strokeWidth={2.3} />
+              Invoices
+            </a>
 
-      {/* ── Tab Content ── */}
-      <div className="bg-white p-4 sm:p-5">
-        {activeTab === "collections" && (
-          <InvoiceManager
-            role={role}
-            feeInvoices={feeInvoices}
-            studentDirectory={studentDirectory}
-          />
-        )}
-        {activeTab === "installments" && (
-          <FeeInstallmentManager
-            role={role}
-            studentDirectory={studentDirectory}
-          />
-        )}
-      </div>
+            <a
+              href="#billing-installments"
+              className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-xs font-bold text-violet-700 transition hover:bg-violet-100"
+            >
+              <CalendarDays size={15} strokeWidth={2.3} />
+              EMI Schedules
+            </a>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {/* INVOICES AND COLLECTIONS */}
+          <div
+            id="billing-invoices"
+            className="min-w-0 scroll-mt-24"
+          >
+            <InvoiceManager
+              role={role}
+              feeInvoices={feeInvoices}
+              studentDirectory={studentDirectory}
+            />
+          </div>
+
+          {/* DIVIDER */}
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-slate-200" />
+
+            <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-violet-700">
+              <CalendarCheck2
+                size={15}
+                strokeWidth={2.3}
+              />
+              Installment Schedules
+            </span>
+
+            <div className="h-px flex-1 bg-slate-200" />
+          </div>
+
+          {/* EMI AND INSTALLMENT MANAGEMENT */}
+          <div
+            id="billing-installments"
+            className="min-w-0 scroll-mt-24"
+          >
+            <FeeInstallmentManager
+              role={role}
+              studentDirectory={studentDirectory}
+            />
+          </div>
+        </div>
+      </section>
     </article>
   );
 }

@@ -89,6 +89,20 @@ function daysBetween(from: string, to: string) {
   return Math.max(1, Math.round((t.getTime() - f.getTime()) / 86400000) + 1);
 }
 
+function getTodayIST(): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const part = (type: string) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
+
 export function LeaveManager({ session, role, managedUsers }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("requests");
   const [requests, setRequests] = useState<LeaveRequest[]>([]);
@@ -136,6 +150,9 @@ export function LeaveManager({ session, role, managedUsers }: Props) {
 
 // Student apply-leave popup
 const [showApplyForm, setShowApplyForm] = useState(false);
+
+// Shared late-leave warning for students, faculty and staff.
+const [showLateLeavePopup, setShowLateLeavePopup] = useState(false);
 
 // Reject modal
 const [rejectTarget, setRejectTarget] =
@@ -187,8 +204,44 @@ const isStudent = role === "student";
     }
   }, [activeTab, fetchBalances]);
 
+  function handleFromDateChange(nextDate: string) {
+    // Use the institute's calendar date rather than the browser's timezone.
+    if (nextDate && nextDate <= getTodayIST()) {
+      setShowLateLeavePopup(true);
+      setFormData((current) => ({
+        ...current,
+        fromDate: "",
+        toDate: "",
+      }));
+      return;
+    }
+
+    setFormData((current) => ({
+      ...current,
+      fromDate: nextDate,
+      toDate: current.toDate && current.toDate < nextDate ? "" : current.toDate,
+    }));
+  }
+
   async function handleApply(e: React.FormEvent) {
     e.preventDefault();
+
+    // This check is repeated during submission in case the form remained
+    // open overnight or the date was modified outside the date picker.
+    if (formData.fromDate && formData.fromDate <= getTodayIST()) {
+      setShowLateLeavePopup(true);
+      return;
+    }
+
+    if (
+      formData.fromDate &&
+      formData.toDate &&
+      formData.toDate < formData.fromDate
+    ) {
+      window.alert("The leave end date cannot be before the start date.");
+      return;
+    }
+
     if (!formData.leaveTypeId || !formData.fromDate || !formData.toDate || !formData.reason.trim()) {
       alert("Please fill all required fields.");
       return;
@@ -210,6 +263,10 @@ const isStudent = role === "student";
       });
       if (!res.ok) {
         const data = await res.json();
+        if (data.code === "LEAVE_TOO_LATE") {
+          setShowLateLeavePopup(true);
+          return;
+        }
         alert(data.error || "Failed to submit.");
         return;
       }
@@ -414,7 +471,7 @@ const stats = [
     { id: "balances", label: "Balances", show: isAdmin },
   ];
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getTodayIST();
 
   return (
     <div className="space-y-6">
@@ -694,9 +751,7 @@ const stats = [
                     <input
                       type="date"
                       value={formData.fromDate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, fromDate: e.target.value })
-                      }
+                      onChange={(e) => handleFromDateChange(e.target.value)}
                       min={today}
                       required
                       className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-2.5 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)]"
@@ -1298,13 +1353,7 @@ showApplyForm ? (
               value={
                 formData.fromDate
               }
-              onChange={(event) =>
-                setFormData({
-                  ...formData,
-                  fromDate:
-                    event.target.value,
-                })
-              }
+              onChange={(event) => handleFromDateChange(event.target.value)}
               min={today}
               required
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 text-sm text-[var(--color-heading)] outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/15"
@@ -1404,6 +1453,62 @@ showApplyForm ? (
     </div>
   </div>
 ) : null}
+      {/* Automatic rejection message: applies to all account roles. */}
+      {showLateLeavePopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="late-leave-title"
+            aria-describedby="late-leave-description"
+            className="w-full max-w-md overflow-hidden rounded-3xl border border-rose-100 bg-white shadow-2xl"
+          >
+            <div className="bg-gradient-to-r from-rose-50 to-orange-50 px-6 py-6 text-center">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-rose-100 text-3xl font-black text-rose-600">
+                ×
+              </div>
+              <h3 id="late-leave-title" className="mt-4 text-xl font-black text-slate-950">
+                Leave Application Rejected
+              </h3>
+              <p className="mt-2 text-xs font-bold uppercase tracking-wider text-rose-600">
+                Same-day or past-date leave is not permitted
+              </p>
+            </div>
+
+            <div className="space-y-5 px-6 py-6">
+              <p id="late-leave-description" className="text-center text-sm leading-7 text-slate-600">
+                You cannot apply for leave on the same day. Please submit your
+                leave application at least one calendar day before your leave starts.
+              </p>
+
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-bold text-amber-900">Need urgent leave?</p>
+                <p className="mt-2 text-xs leading-6 text-amber-800">
+                  If you need leave today or have an emergency, contact the
+                  SmartIQ Institute Support Team for assistance.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <a
+                  href="/contact"
+                  className="flex min-h-12 items-center justify-center rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700"
+                >
+                  Contact Support Team
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowLateLeavePopup(false)}
+                  className="min-h-12 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Understood
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Reject Modal ── */}
       {rejectTarget && (
         <div
