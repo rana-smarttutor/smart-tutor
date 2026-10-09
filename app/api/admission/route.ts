@@ -11,11 +11,7 @@ export const dynamic = "force-dynamic";
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_REQUEST_BYTES = 6 * 1024 * 1024;
 const FILE_KEYS = ["photo", "signatureImage", "photoId", "marksheet"] as const;
-const ALLOWED_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "application/pdf",
-]);
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "application/pdf"]);
 const NO_STORE_HEADERS = {
   "Cache-Control": "no-store",
 };
@@ -62,12 +58,7 @@ function qualificationLevels(qualification: string): string[] {
       return ["Class 10", "Class 12", "Graduation"];
 
     case "Postgraduate":
-      return [
-        "Class 10",
-        "Class 12",
-        "Graduation",
-        "Postgraduation",
-      ];
+      return ["Class 10", "Class 12", "Graduation", "Postgraduation"];
 
     case "Other":
       return ["Other qualification"];
@@ -188,9 +179,7 @@ export async function POST(request: Request) {
     const year = str(app, "year", 4);
 
     const birthDate =
-      `${year}-` +
-      `${month.padStart(2, "0")}-` +
-      `${day.padStart(2, "0")}`;
+      `${year}-` + `${month.padStart(2, "0")}-` + `${day.padStart(2, "0")}`;
 
     const parsedBirth = new Date(`${birthDate}T00:00:00Z`);
 
@@ -225,10 +214,7 @@ export async function POST(request: Request) {
       return invalid("Enter a valid mother's mobile number.");
     }
 
-    if (
-      age < 18 &&
-      str(app, "contactPreference") === "Student (18 or above)"
-    ) {
+    if (age < 18 && str(app, "contactPreference") === "Student (18 or above)") {
       return invalid(
         "Applicants under 18 must select a parent as primary contact.",
       );
@@ -239,12 +225,9 @@ export async function POST(request: Request) {
     }
 
     if (
-      str(app, "signature").toLowerCase() !==
-      str(app, "name").toLowerCase()
+      str(app, "signature").toLowerCase() !== str(app, "name").toLowerCase()
     ) {
-      return invalid(
-        "The typed signature must match the student's full name.",
-      );
+      return invalid("The typed signature must match the student's full name.");
     }
 
     // School admission: require the immediately previous class.
@@ -312,10 +295,7 @@ export async function POST(request: Request) {
         return invalid("Select a valid highest qualification.");
       }
 
-      if (
-        qualification === "Other" &&
-        !str(app, "otherQualification")
-      ) {
+      if (qualification === "Other" && !str(app, "otherQualification")) {
         return invalid("Specify your highest qualification.");
       }
 
@@ -340,9 +320,7 @@ export async function POST(request: Request) {
         const isRequired = i < levels.length;
 
         if (isRequired && str(record, "level") !== levels[i]) {
-          return invalid(
-            `Academic record ${i + 1} must be ${levels[i]}.`,
-          );
+          return invalid(`Academic record ${i + 1} must be ${levels[i]}.`);
         }
 
         const hasValues = [
@@ -373,10 +351,7 @@ export async function POST(request: Request) {
     }
 
     const signatureImage = form.get("signatureImage");
-    if (
-      !(signatureImage instanceof File) ||
-      signatureImage.size === 0
-    ) {
+    if (!(signatureImage instanceof File) || signatureImage.size === 0) {
       return invalid("A student signature image is required.");
     }
 
@@ -394,10 +369,7 @@ export async function POST(request: Request) {
 
       if (file.size === 0) continue;
 
-      if (
-        file.size > MAX_FILE_BYTES ||
-        !ALLOWED_TYPES.has(file.type)
-      ) {
+      if (file.size > MAX_FILE_BYTES || !ALLOWED_TYPES.has(file.type)) {
         return invalid(
           "Files must be JPG, PNG or PDF and no larger than 1 MB each.",
         );
@@ -442,16 +414,13 @@ export async function POST(request: Request) {
     > = {};
 
     for (const { key, file } of incoming) {
-      const upload = bucket.openUploadStream(
-        `${applicationId}-${key}`,
-        {
-          metadata: {
-            applicationId,
-            category: key,
-            mimeType: file.type,
-          },
+      const upload = bucket.openUploadStream(`${applicationId}-${key}`, {
+        metadata: {
+          applicationId,
+          category: key,
+          mimeType: file.type,
         },
-      );
+      });
 
       const bytes = Buffer.from(await file.arrayBuffer());
 
@@ -551,9 +520,7 @@ export async function POST(request: Request) {
       "board",
       "year",
       "marks",
-    ]).filter((row) =>
-      Object.values(row).some((value) => Boolean(value)),
-    );
+    ]).filter((row) => Object.values(row).some((value) => Boolean(value)));
 
     clean.achievements = normalizeRows(app.achievements, [
       "year",
@@ -596,9 +563,7 @@ export async function POST(request: Request) {
         bucketName: "admissionDocuments",
       });
 
-      await Promise.allSettled(
-        uploadedIds.map((id) => bucket.delete(id)),
-      );
+      await Promise.allSettled(uploadedIds.map((id) => bucket.delete(id)));
     }
 
     return invalid(
@@ -625,58 +590,54 @@ export async function GET() {
     const db = await getMongoDatabase();
     const collection = db.collection("admissionApplications");
 
-    const [
-      applications,
-      total,
-      submitted,
-      inReview,
-      completed,
-    ] = await Promise.all([
-      collection
-        .find(
-          {},
-          {
-            projection: {
-              _id: 0,
-              applicationId: 1,
-              name: 1,
-              course: 1,
-              exam: 1,
-              programme: 1,
-              mobile: 1,
-              email: 1,
-              city: 1,
-              qualification: 1,
-              academics: 1,
-              status: 1,
-              submittedAt: 1,
-              createdByName: 1,
-              createdByRole: 1,
+    const [applications, total, submitted, inReview, completed] =
+      await Promise.all([
+        collection
+          .find(
+            {},
+            {
+              projection: {
+                _id: 0,
+                applicationId: 1,
+                name: 1,
+                linkedStudentId: 1,
+                course: 1,
+                exam: 1,
+                programme: 1,
+                mobile: 1,
+                email: 1,
+                city: 1,
+                qualification: 1,
+                academics: 1,
+                status: 1,
+                submittedAt: 1,
+                createdByName: 1,
+                createdByRole: 1,
+              },
             },
+          )
+          .sort({ submittedAt: -1 })
+          .limit(200)
+          .toArray(),
+
+        collection.countDocuments({}),
+
+        collection.countDocuments({
+          status: "submitted",
+        }),
+
+        collection.countDocuments({
+          status: {
+            $in: ["in-review", "under-review", "in_progress"],
           },
-        )
-        .sort({ submittedAt: -1 })
-        .limit(200)
-        .toArray(),
+        }),
 
-      collection.countDocuments({}),
-
-      collection.countDocuments({
-        status: "submitted",
-      }),
-
-      collection.countDocuments({
-        status: {
-          $in: ["in-review", "under-review", "in_progress"],
-        },
-      }),
-
-      collection.countDocuments({
-        status: {
-          $in: ["completed", "approved", "admitted"],
-        },
-      }),
-    ]);
+        collection.countDocuments({
+          status: {
+            $in: ["completed", "approved", "admitted"],
+          },
+        }),
+      ]);
 
     return NextResponse.json(
       {

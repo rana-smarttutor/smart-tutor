@@ -813,11 +813,65 @@ export function InvoiceManager({
     }
   }
 
-  function downloadReceipt(invoice: FeeInvoice) {
+  async function downloadReceipt(invoice: FeeInvoice) {
     const popup = window.open("", "_blank", "width=1280,height=960");
 
     if (!popup) {
       showMessage("error", "Allow pop-ups to open the fee receipt.");
+      return;
+    }
+
+    // Fetch the student's actual uploaded signature.
+    // The endpoint verifies the invoice and logged-in user.
+    let studentSignatureDataUrl = "";
+
+    try {
+      const response = await fetch(
+        `/api/invoices/${encodeURIComponent(invoice.id)}/student-signature`,
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
+
+      if (response.ok) {
+        const imageBlob = await response.blob();
+
+        studentSignatureDataUrl = await new Promise<string>(
+          (resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = () => {
+              if (typeof reader.result === "string") {
+                resolve(reader.result);
+              } else {
+                reject(new Error("Unable to read student signature."));
+              }
+            };
+
+            reader.onerror = () => {
+              reject(new Error("Unable to load student signature."));
+            };
+
+            reader.readAsDataURL(imageBlob);
+          },
+        );
+      } else if (response.status !== 404) {
+        throw new Error(
+          "Unable to verify the student signature. Please check the admission link.",
+        );
+      }
+    } catch (error) {
+      popup.close();
+
+      showMessage(
+        "error",
+        error instanceof Error
+          ? error.message
+          : "Unable to retrieve student signature.",
+      );
+
       return;
     }
 
@@ -1419,12 +1473,22 @@ export function InvoiceManager({
       </div>
     </div>
 
-    <div class="receipt-signatures">
+<div class="receipt-signatures">
       <div class="signature-block">
-        <div class="signature-image-wrap"></div>
+        <div class="signature-image-wrap">
+          ${
+            studentSignatureDataUrl
+              ? `<img
+                   src="${escapeHtml(studentSignatureDataUrl)}"
+                   alt="Student Signature"
+                 />`
+              : ""
+          }
+        </div>
         <div class="signature-line"></div>
         <div class="signature-label">Student Signature</div>
       </div>
+
 
       <div class="signature-block">
         <div class="signature-image-wrap">
@@ -1822,7 +1886,7 @@ export function InvoiceManager({
 
                       <button
                         type="button"
-                        onClick={() => downloadReceipt(invoice)}
+                        onClick={() => void downloadReceipt(invoice)}
                         className="rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-black text-blue-700 transition hover:bg-blue-100"
                       >
                         Download Receipt

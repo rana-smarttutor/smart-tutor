@@ -305,7 +305,50 @@ export function StudentFeeReceiptsView({
 
   const hasFees = totalFees > 0;
 
-  function downloadInvoiceReceipt(invoice: FeeInvoice) {
+  async function downloadInvoiceReceipt(invoice: FeeInvoice) {
+    // Open a tab immediately to avoid browsers blocking an async popup.
+    const receiptWindow = window.open("", "_blank");
+    let studentSignatureDataUrl = "";
+
+    try {
+      const response = await fetch(
+        `/api/invoices/${encodeURIComponent(invoice.id)}/student-signature`,
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
+
+      if (response.ok) {
+        const imageBlob = await response.blob();
+        studentSignatureDataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === "string") {
+              resolve(reader.result);
+            } else {
+              reject(new Error("Unable to read the student signature."));
+            }
+          };
+          reader.onerror = () => reject(new Error("Unable to load the student signature."));
+          reader.readAsDataURL(imageBlob);
+        });
+      } else if (response.status !== 404) {
+        throw new Error(
+          "Unable to verify the student's signature. Please contact the institute.",
+        );
+      }
+    } catch (error) {
+      receiptWindow?.close();
+      window.alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to retrieve the student signature.",
+      );
+      return;
+    }
+
     const paidAmount = invoice.paidAmount ?? 0;
     const balance = Math.max(invoice.amount - paidAmount, 0);
     const receiptNo = invoice.receiptNo || invoice.id;
@@ -596,6 +639,24 @@ export function StudentFeeReceiptsView({
             >
               • Thank you for choosing SmartIQ Institute Pvt. Ltd. We appreciate your trust.
             </p>
+
+            <!-- Student signature, if uploaded and linked to this student -->
+            <div style="width:220px;max-width:100%;margin-top:18px;text-align:center;break-inside:avoid;">
+              <div style="height:64px;display:flex;justify-content:center;align-items:flex-end;">
+                ${
+                  studentSignatureDataUrl
+                    ? `<img
+                         src="${escapeHtml(studentSignatureDataUrl)}"
+                         alt="Student Signature"
+                         style="display:block;max-width:180px;max-height:60px;object-fit:contain;"
+                       />`
+                    : ""
+                }
+              </div>
+              <div style="border-top:1.5px solid #334155;margin-top:4px;padding-top:6px;font-size:13px;font-weight:800;color:#1e293b;">
+                Student Signature
+              </div>
+            </div>
           </div>
 
           <!-- Signature -->
@@ -670,24 +731,20 @@ export function StudentFeeReceiptsView({
      * Opening the finished Blob directly is more reliable on
      * iPhone and iPad than writing HTML into an about:blank popup.
      */
-    const receiptWindow = window.open(receiptUrl, "_blank");
-
-    if (!receiptWindow) {
+    if (!receiptWindow || receiptWindow.closed) {
       // Popup blocked: open receipt in the current tab.
       window.location.assign(receiptUrl);
-      return;
+    } else {
+      try {
+        receiptWindow.opener = null;
+      } catch {
+        // Some mobile browsers restrict changing the opener.
+      }
+      receiptWindow.location.replace(receiptUrl);
+      receiptWindow.focus();
     }
 
-    try {
-      receiptWindow.opener = null;
-    } catch {
-      // Some mobile browsers do not allow changing opener.
-    }
-
-    /*
-     * Allow enough time for the new tab to load before releasing
-     * the temporary browser URL.
-     */
+    // Keep the temporary URL available long enough for the receipt to load.
     window.setTimeout(() => {
       URL.revokeObjectURL(receiptUrl);
     }, 60_000);
@@ -1009,7 +1066,7 @@ export function StudentFeeReceiptsView({
                                     onClick={(event) => {
                                       event.preventDefault();
                                       event.stopPropagation();
-                                      downloadInvoiceReceipt(matchedInvoice);
+                                      void downloadInvoiceReceipt(matchedInvoice);
                                     }}
                                     className="inline-flex touch-manipulation items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
                                   >
@@ -1160,7 +1217,7 @@ export function StudentFeeReceiptsView({
                               onClick={(event) => {
                                 event.preventDefault();
                                 event.stopPropagation();
-                                downloadInvoiceReceipt(inv);
+                                void downloadInvoiceReceipt(inv);
                               }}
                               className="inline-flex touch-manipulation items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 active:scale-95"
                             >
@@ -1219,3 +1276,4 @@ export function StudentFeeReceiptsView({
     </article>
   );
 }
+
