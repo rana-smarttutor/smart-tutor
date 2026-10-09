@@ -186,11 +186,11 @@ export const COLLECTIONS = {
   tests: "tests",
   messages: "messages",
   submissions: "test_submissions",
-quizzes: "quiz_questions",
+  quizzes: "quiz_questions",
 
-governmentQuestionBank: "government_question_bank",
+  governmentQuestionBank: "government_question_bank",
 
-quizArenaProgress: "quiz_arena_progress",
+  quizArenaProgress: "quiz_arena_progress",
   quizArenaAttempts: "quiz_arena_attempts",
   quizArenaDrafts: "quiz_arena_drafts",
   quizArenaSeenQuestions: "quiz_arena_seen_questions",
@@ -315,9 +315,7 @@ export async function createEnquiry(input: {
     title: string;
   }[];
 }) {
-  const collection = await getCollection(
-    COLLECTIONS.enquiries,
-  );
+  const collection = await getCollection(COLLECTIONS.enquiries);
 
   const enquiry = {
     id: `enquiry-${randomUUID()}`,
@@ -333,23 +331,19 @@ export async function createEnquiry(input: {
 
     branch: input.branch?.trim() || "",
 
-    preferredDate:
-      input.preferredDate?.trim() || "",
+    preferredDate: input.preferredDate?.trim() || "",
 
-    preferredTime:
-      input.preferredTime?.trim() || "",
+    preferredTime: input.preferredTime?.trim() || "",
 
-    requestType:
-      input.requestType ?? "general",
+    requestType: input.requestType ?? "general",
 
     source: input.source?.trim() || "",
 
     message: input.message.trim(),
 
-    suggestedCourses:
-      input.suggestedCourses?.length
-        ? input.suggestedCourses
-        : [],
+    suggestedCourses: input.suggestedCourses?.length
+      ? input.suggestedCourses
+      : [],
 
     createdAt: new Date().toISOString(),
     status: "new",
@@ -361,9 +355,7 @@ export async function createEnquiry(input: {
 }
 
 export async function getAllEnquiries() {
-  const collection = await getCollection(
-    COLLECTIONS.enquiries,
-  );
+  const collection = await getCollection(COLLECTIONS.enquiries);
 
   const documents = await collection
     .find({})
@@ -398,18 +390,14 @@ export async function getAllEnquiries() {
     }),
   );
 
-  return enquiries.map((enquiry: any) =>
-    stripMongoId(enquiry),
-  );
+  return enquiries.map((enquiry: any) => stripMongoId(enquiry));
 }
 
 export async function updateEnquiryStatus(
   id: string,
   status: string,
 ): Promise<boolean> {
-  const collection = await getCollection(
-    COLLECTIONS.enquiries,
-  );
+  const collection = await getCollection(COLLECTIONS.enquiries);
 
   const result = await collection.updateOne(
     {
@@ -426,12 +414,8 @@ export async function updateEnquiryStatus(
   return result.matchedCount > 0;
 }
 
-export async function deleteEnquiry(
-  id: string,
-): Promise<boolean> {
-  const collection = await getCollection(
-    COLLECTIONS.enquiries,
-  );
+export async function deleteEnquiry(id: string): Promise<boolean> {
+  const collection = await getCollection(COLLECTIONS.enquiries);
 
   const result = await collection.deleteOne({
     id,
@@ -1654,15 +1638,11 @@ export type QuizArenaRoundAttempt = {
 };
 
 export async function createQuizArenaRoundAttempt(
-  input: Omit<
-    QuizArenaRoundAttempt,
-    "id" | "completedAt"
-  >,
+  input: Omit<QuizArenaRoundAttempt, "id" | "completedAt">,
 ): Promise<QuizArenaRoundAttempt> {
-  const collection =
-    await getCollection<QuizArenaRoundAttempt>(
-      COLLECTIONS.quizArenaAttempts,
-    );
+  const collection = await getCollection<QuizArenaRoundAttempt>(
+    COLLECTIONS.quizArenaAttempts,
+  );
 
   const attemptId = input.draftId
     ? `quiz-attempt-${input.draftId}`
@@ -1707,11 +1687,10 @@ export async function createQuizArenaRoundAttempt(
       error.code === 11000;
 
     if (isDuplicateKey && input.draftId) {
-      const savedAttempt =
-        await collection.findOne({
-          id: attemptId,
-          userId: input.userId,
-        });
+      const savedAttempt = await collection.findOne({
+        id: attemptId,
+        userId: input.userId,
+      });
 
       if (savedAttempt) {
         return stripMongoId(savedAttempt);
@@ -3173,7 +3152,7 @@ export async function updateUserRecord(input: {
   if (
     typeof input.password === "string" &&
     input.password.trim().length > 0 &&
-    input.password !== "Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢Ã¢â‚¬Â¢"
+    input.password !== "••••••••"
   ) {
     setFields.password = input.password;
   }
@@ -5098,9 +5077,19 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
     COLLECTIONS.attendanceSheets,
   );
 
-  if (role === "admin" || role === "educator") {
+  /*
+   * Admin, Educator and Counsellor
+   * need institution-level attendance.
+   */
+  if (role === "admin" || role === "educator" || role === "counsellor") {
     return stripMongoIds(
-      await collection.find({}).sort({ date: -1, createdAt: -1 }).toArray(),
+      await collection
+        .find({})
+        .sort({
+          date: -1,
+          createdAt: -1,
+        })
+        .toArray(),
     );
   }
 
@@ -5112,8 +5101,13 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
 
   return stripMongoIds(
     await collection
-      .find({ "records.studentId": linkedStudentId })
-      .sort({ date: -1, createdAt: -1 })
+      .find({
+        "records.studentId": linkedStudentId,
+      })
+      .sort({
+        date: -1,
+        createdAt: -1,
+      })
       .toArray(),
   );
 }
@@ -5574,13 +5568,26 @@ export async function getRolesDashboardStats() {
 export async function getFeeInvoicesForRole(role: Role, userId?: string) {
   const collection = await getCollection<FeeInvoice>(COLLECTIONS.feeInvoices);
 
-  if (role === "admin") {
+  /*
+   * Admin and Counsellor need complete
+   * fee data for dashboard analytics.
+   */
+  if (role === "admin" || role === "counsellor") {
     return stripMongoIds(
-      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+      await collection
+        .find({})
+        .sort({
+          createdAt: -1,
+        })
+        .toArray(),
     );
   }
 
-  if (role === "educator" || role === "counsellor") {
+  /*
+   * Faculty should not receive
+   * institution-wide finance data.
+   */
+  if (role === "educator") {
     return [];
   }
 
@@ -5592,8 +5599,12 @@ export async function getFeeInvoicesForRole(role: Role, userId?: string) {
 
   return stripMongoIds(
     await collection
-      .find({ studentId: linkedStudentId })
-      .sort({ createdAt: -1 })
+      .find({
+        studentId: linkedStudentId,
+      })
+      .sort({
+        createdAt: -1,
+      })
       .toArray(),
   );
 }
@@ -5959,7 +5970,7 @@ function getAnalyticsPercent(value: number, total: number) {
 }
 
 function formatAnalyticsCurrency(value: number) {
-  return `ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¹${Math.round(value).toLocaleString("en-IN")}`;
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
 }
 
 function buildDashboardAnalytics(input: {
@@ -6239,14 +6250,11 @@ function buildDashboardAnalytics(input: {
     0,
   );
 
-  const attendanceValue =
-    attendanceRate === null ? "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" : `${attendanceRate}%`;
+  const attendanceValue = attendanceRate === null ? "—" : `${attendanceRate}%`;
 
-  const assessmentValue =
-    averageScore === null ? "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" : `${averageScore}%`;
+  const assessmentValue = averageScore === null ? "—" : `${averageScore}%`;
 
-  const learningValue =
-    completionRate === null ? "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â" : `${completionRate}%`;
+  const learningValue = completionRate === null ? "—" : `${completionRate}%`;
 
   let metrics: DashboardMetric[];
 
@@ -6401,37 +6409,52 @@ function buildDashboardAnalytics(input: {
 
   return {
     refreshedAt: new Date().toISOString(),
+
     metrics,
+
     attendance: {
       rate: attendanceRate,
+
       totalRecords: attendanceRecords.length,
+
       present,
       absent,
       late,
       excused,
     },
+
     assessments: {
       averageScore,
+
       publishedTests: input.weeklyTests.filter(
         (weeklyTest) => weeklyTest.published,
       ).length,
+
       resultCount: assessmentRows.length,
+
       subjectPerformance,
     },
+
     learning: {
       activitiesRecorded: learningActivities.length,
+
       completionRate,
       homeworkRate,
       assignmentRate,
       revisionRate,
       averageStudyMinutes,
     },
+
     finance,
+
+    activeStudents: learners,
+
     operations: {
       learners,
       completedLectures,
       scheduledLectures,
     },
+
     insights: insights.slice(0, 4),
   };
 }
@@ -6475,7 +6498,9 @@ export async function getDashboardBundle(
     getFeeInstallmentPlansForRole(role, userId),
     getTeacherPayoutsForRole(role, userId),
     getCertificatesForRole(role, userId),
-    role === "admin" ? getUsersForAdmin() : Promise.resolve([]),
+    role === "admin" || role === "counsellor"
+      ? getUsersForAdmin()
+      : Promise.resolve([]),
   ]);
 
   const templates = config.templates as Partial<
@@ -7601,9 +7626,18 @@ export async function getFeeInstallmentPlansForRole(
     COLLECTIONS.feeInstallmentPlans,
   );
 
-  if (role === "admin") {
+  /*
+   * Counsellor needs institution-wide
+   * fee-plan data for finance analytics.
+   */
+  if (role === "admin" || role === "counsellor") {
     return stripMongoIds(
-      await collection.find({}).sort({ createdAt: -1 }).toArray(),
+      await collection
+        .find({})
+        .sort({
+          createdAt: -1,
+        })
+        .toArray(),
     );
   }
 
@@ -7619,12 +7653,15 @@ export async function getFeeInstallmentPlansForRole(
 
   return stripMongoIds(
     await collection
-      .find({ studentId: linkedStudentId })
-      .sort({ createdAt: -1 })
+      .find({
+        studentId: linkedStudentId,
+      })
+      .sort({
+        createdAt: -1,
+      })
       .toArray(),
   );
 }
-
 export async function getFeeInstallmentPlanById(planId: string) {
   const collection = await getCollection<FeeInstallmentPlan>(
     COLLECTIONS.feeInstallmentPlans,
@@ -9628,10 +9665,7 @@ function calculateStaffWorkingHours(
   const [inHour, inMinute] = checkIn.split(":").map(Number);
   const [outHour, outMinute] = checkOut.split(":").map(Number);
 
-  const minutes =
-    outHour * 60 +
-    outMinute -
-    (inHour * 60 + inMinute);
+  const minutes = outHour * 60 + outMinute - (inHour * 60 + inMinute);
 
   if (!Number.isFinite(minutes) || minutes < 0) {
     return undefined;
@@ -9661,10 +9695,7 @@ export async function bulkMarkStaffAttendance(
   for (const rec of records) {
     const id = randomUUID();
 
-    const hoursWorked = calculateStaffWorkingHours(
-      rec.checkIn,
-      rec.checkOut,
-    );
+    const hoursWorked = calculateStaffWorkingHours(rec.checkIn, rec.checkOut);
     const doc: StaffAttendanceRecord = {
       id,
       ...rec,
@@ -11658,7 +11689,3 @@ export async function getActionLogStats() {
     uniqueIps: ips.size,
   };
 }
-
-
-
-
