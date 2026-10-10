@@ -27,8 +27,12 @@ type Stage =
   | "graduate"
   | "working";
 
+type FilledBy = "staff" | "counsellor";
+
 type WizardData = {
-  filledBy: "student" | "parent" | "counsellor";
+  filledBy: FilledBy;
+  completedByName: string;
+
   stage: Stage | "";
   studentName: string;
   dateOfBirth: string;
@@ -37,10 +41,12 @@ type WizardData = {
   email: string;
   city: string;
   language: string;
+
   guardianName: string;
   guardianRelation: string;
   guardianMobile: string;
   guardianConsent: boolean;
+
   privacyAccepted: boolean;
   whatsappConsent: boolean;
   aiConsent: boolean;
@@ -54,6 +60,7 @@ type WizardData = {
   degree: string;
   currentStream: string;
   tuition: string;
+
   strongSubjects: string[];
   weakSubjects: string[];
   entranceExams: string[];
@@ -89,6 +96,8 @@ const DRAFT_KEY = "smartiq-career-counselling-session-draft-v1";
 
 const EMPTY: WizardData = {
   filledBy: "counsellor",
+  completedByName: "",
+
   stage: "",
   studentName: "",
   dateOfBirth: "",
@@ -97,10 +106,12 @@ const EMPTY: WizardData = {
   email: "",
   city: "",
   language: "English",
+
   guardianName: "",
   guardianRelation: "",
   guardianMobile: "",
   guardianConsent: false,
+
   privacyAccepted: false,
   whatsappConsent: false,
   aiConsent: false,
@@ -114,6 +125,7 @@ const EMPTY: WizardData = {
   degree: "",
   currentStream: "",
   tuition: "",
+
   strongSubjects: [],
   weakSubjects: [],
   entranceExams: [],
@@ -139,29 +151,13 @@ const EMPTY: WizardData = {
   preferredStudyTime: "",
 };
 
-function freshData(): WizardData {
-  return {
-    ...EMPTY,
-    strongSubjects: [],
-    weakSubjects: [],
-    entranceExams: [],
-    interestAreas: [],
-  };
-}
-
-const STAGES: {
-  value: Stage;
-  label: string;
-}[] = [
+const STAGES: { value: Stage; label: string }[] = [
   { value: "class-6-8", label: "Class 6–8" },
   { value: "class-9-10", label: "Class 9–10" },
   { value: "class-11-12", label: "Class 11–12" },
   { value: "college", label: "College" },
   { value: "graduate", label: "Graduate" },
-  {
-    value: "working",
-    label: "Working professional",
-  },
+  { value: "working", label: "Working professional" },
 ];
 
 const SUBJECTS = [
@@ -241,6 +237,16 @@ const STEP_TITLES = [
 const INPUT =
   "mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
 
+function freshData(): WizardData {
+  return {
+    ...EMPTY,
+    strongSubjects: [],
+    weakSubjects: [],
+    entranceExams: [],
+    interestAreas: [],
+  };
+}
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
@@ -262,7 +268,6 @@ function readWizardDraft(): WizardDraft | null {
     if (!isObject(parsed.data)) return null;
 
     const previous = parsed.data;
-
     const data = freshData();
 
     for (const key of Object.keys(data) as Array<keyof WizardData>) {
@@ -270,7 +275,6 @@ function readWizardDraft(): WizardDraft | null {
       const defaultValue = data[key];
 
       if (typeof defaultValue === "string" && typeof incoming === "string") {
-        // The keys are known, fixed WizardData fields.
         Object.assign(data, {
           [key]: incoming.slice(0, 4000),
         });
@@ -294,7 +298,7 @@ function readWizardDraft(): WizardDraft | null {
       data.stage = "";
     }
 
-    if (!["student", "parent", "counsellor"].includes(data.filledBy)) {
+    if (!["staff", "counsellor"].includes(data.filledBy)) {
       data.filledBy = "counsellor";
     }
 
@@ -317,7 +321,7 @@ function clearWizardDraft(): void {
   try {
     sessionStorage.removeItem(DRAFT_KEY);
   } catch {
-    // Browser storage may be disabled.
+    // Storage can be unavailable.
   }
 }
 
@@ -378,6 +382,7 @@ function InputField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
+        required={required}
         className={INPUT}
       />
     </label>
@@ -405,19 +410,22 @@ function Pick({
       <select
         className={INPUT}
         value={value}
+        required={required}
         onChange={(event) => onChange(event.target.value)}
       >
         <option value="">Select an option</option>
 
         {values.map((item) => {
           const displayLabels: Record<string, string> = {
-            staff: "staff",
+            staff: "Staff",
             counsellor: "Counsellor",
           };
 
           return (
             <option key={item} value={item}>
-              {displayLabels[item] ?? item}
+              {displayLabels[item] ??
+                STAGES.find((stage) => stage.value === item)?.label ??
+                item}
             </option>
           );
         })}
@@ -503,6 +511,10 @@ function classLevel(data: WizardData): string {
   return "";
 }
 
+/* ==========================================
+   MAIN WIZARD
+========================================== */
+
 export function CareerCounsellingWizard({
   onCancel,
   onSaved,
@@ -516,15 +528,10 @@ export function CareerCounsellingWizard({
 
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
-
   const [draftReady, setDraftReady] = useState(false);
-
   const [draftMessage, setDraftMessage] = useState("");
-
   const [draftError, setDraftError] = useState("");
 
-  // Prevent automatic draft saving after a
-  // successful database submission.
   const submittedRef = useRef(false);
 
   const age = dateAge(data.dateOfBirth);
@@ -535,7 +542,6 @@ export function CareerCounsellingWizard({
 
   const isSchool = data.stage.startsWith("class-");
 
-  // Restore once, after the client mounts.
   useEffect(() => {
     const draft = readWizardDraft();
 
@@ -551,8 +557,6 @@ export function CareerCounsellingWizard({
     setDraftReady(true);
   }, []);
 
-  // Automatically save whenever a field or
-  // the current step changes.
   useEffect(() => {
     if (!draftReady || submittedRef.current) {
       return;
@@ -566,7 +570,6 @@ export function CareerCounsellingWizard({
 
     try {
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-
       setDraftError("");
     } catch {
       setDraftError("Automatic draft saving is unavailable in this browser.");
@@ -613,6 +616,14 @@ export function CareerCounsellingWizard({
 
   function validateStep(number: number): string | null {
     if (number === 1) {
+      if (!data.completedByName.trim()) {
+        return "Enter the Staff / Counsellor Name.";
+      }
+
+      if (!["staff", "counsellor"].includes(data.filledBy)) {
+        return "Select who is completing the entry.";
+      }
+
       if (!data.stage) {
         return "Select the student's education stage.";
       }
@@ -645,15 +656,13 @@ export function CareerCounsellingWizard({
         return "Enter a valid 10-digit parent/guardian mobile number.";
       }
 
-      const guardianRequired = minor || data.filledBy === "parent";
-
-      if (guardianRequired) {
+      if (minor) {
         if (
           !data.guardianName.trim() ||
           !data.guardianRelation ||
           !validMobile(data.guardianMobile)
         ) {
-          return "Complete the parent or guardian's name, relationship and valid mobile number.";
+          return "Complete parent/guardian name, relationship and mobile number.";
         }
       }
 
@@ -727,7 +736,6 @@ export function CareerCounsellingWizard({
     }
 
     setError("");
-
     setStep((value) => Math.min(5, value + 1));
   }
 
@@ -770,6 +778,8 @@ export function CareerCounsellingWizard({
 
       aboutYou: {
         filledBy: data.filledBy,
+        completedByName: data.completedByName.trim(),
+
         educationStage: data.stage,
         studentName: data.studentName.trim(),
         dateOfBirth: data.dateOfBirth,
@@ -778,10 +788,12 @@ export function CareerCounsellingWizard({
         email: data.email.trim(),
         city: data.city.trim(),
         language: data.language,
+
         guardianName: data.guardianName.trim(),
         guardianRelation: data.guardianRelation,
         guardianMobile: data.guardianMobile,
         guardianConsent: data.guardianConsent,
+
         privacyAccepted: data.privacyAccepted,
         sendReportOnWhatsApp: data.whatsappConsent,
       },
@@ -843,21 +855,26 @@ export function CareerCounsellingWizard({
       board: data.board,
       school: data.institution,
       academicPercentage: data.recentScore,
+
       strongSubjects: data.strongSubjects,
       weakSubjects: data.weakSubjects,
       interests: data.interestAreas,
+
       careerGoal: data.careerGoal.trim(),
       preferredStream: data.preferredStream || data.currentStream,
       preferredLearningStyle: data.learningStyle,
       examInterests: data.entranceExams,
+
       parentExpectations: data.parentExpectations,
       challenges: data.biggestObstacle,
       counsellorNotes: "",
       recommendedPrograms: [],
       followUpDate: "",
       status: "new",
+
       aiConsent: data.aiConsent,
       whatsappConsent: data.whatsappConsent,
+
       questionnaire,
     };
 
@@ -880,15 +897,12 @@ export function CareerCounsellingWizard({
         throw new Error(result?.error || "Unable to save counselling entry.");
       }
 
-      // Mark submission as successful before
-      // clearing the browser draft.
       submittedRef.current = true;
 
       clearWizardDraft();
 
       onSaved();
     } catch (cause) {
-      // Keep the draft if saving fails.
       setError(
         cause instanceof Error
           ? cause.message
@@ -901,6 +915,8 @@ export function CareerCounsellingWizard({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      {/* SIDEBAR */}
+
       <aside className="h-fit rounded-xl border border-slate-200 bg-white p-5">
         <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
           Career Counselling
@@ -960,11 +976,12 @@ export function CareerCounsellingWizard({
           </p>
 
           <p className="mt-2 text-xs leading-5 text-blue-700">
-            Changes are automatically saved in this browser tab. You can resume
-            after refreshing the page.
+            Changes are automatically saved in this browser tab.
           </p>
         </div>
       </aside>
+
+      {/* MAIN FORM */}
 
       <form
         onSubmit={(event) => void submit(event)}
@@ -1019,17 +1036,26 @@ export function CareerCounsellingWizard({
           </p>
         )}
 
+        {/* STEP 1 */}
+
         {step === 1 && (
           <>
             <Block title="Student information">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Pick
                   label="Who is completing this entry?"
+                  required
                   value={data.filledBy}
-                  values={["Staff", "Counsellor"]}
-                  onChange={(value) =>
-                    update("filledBy", value as WizardData["filledBy"])
-                  }
+                  values={["staff", "counsellor" , "Admin", "branch manager"]}
+                  onChange={(value) => update("filledBy", value as FilledBy)}
+                />
+
+                <InputField
+                  label="Staff / Counsellor Name"
+                  required
+                  placeholder="Enter full name"
+                  value={data.completedByName}
+                  onChange={(value) => update("completedByName", value)}
                 />
 
                 <Pick
@@ -1037,14 +1063,13 @@ export function CareerCounsellingWizard({
                   required
                   value={data.stage}
                   values={STAGES.map((item) => item.value)}
-                  onChange={(value) => {
+                  onChange={(value) =>
                     setData((previous) => ({
                       ...previous,
                       stage: value as Stage,
                       currentClass: "",
-                    }));
-                    setError("");
-                  }}
+                    }))
+                  }
                 />
 
                 <InputField
@@ -1110,9 +1135,7 @@ export function CareerCounsellingWizard({
 
             <Block
               title={`Parent or guardian ${
-                minor || data.filledBy === "parent"
-                  ? "(required)"
-                  : "(optional)"
+                minor ? "(required)" : "(optional)"
               }`}
             >
               <div className="grid gap-4 sm:grid-cols-3">
@@ -1159,6 +1182,8 @@ export function CareerCounsellingWizard({
           </>
         )}
 
+        {/* STEP 2 */}
+
         {step === 2 && (
           <>
             <Block title="Academic information">
@@ -1168,7 +1193,13 @@ export function CareerCounsellingWizard({
                     label="Current class"
                     required
                     value={data.currentClass}
-                    values={classChoices()}
+                    values={
+                      data.stage === "class-6-8"
+                        ? ["Class 6", "Class 7", "Class 8"]
+                        : data.stage === "class-9-10"
+                          ? ["Class 9", "Class 10"]
+                          : ["Class 11", "Class 12"]
+                    }
                     onChange={(value) => update("currentClass", value)}
                   />
                 )}
@@ -1200,8 +1231,8 @@ export function CareerCounsellingWizard({
                 <InputField
                   label="Most recent percentage / CGPA"
                   value={data.recentScore}
-                  onChange={(value) => update("recentScore", value)}
                   placeholder="e.g. 85% or 8.2 CGPA"
+                  onChange={(value) => update("recentScore", value)}
                 />
 
                 {!isSchool && (
@@ -1211,7 +1242,6 @@ export function CareerCounsellingWizard({
                       required
                       value={data.degree}
                       onChange={(value) => update("degree", value)}
-                      placeholder="e.g. B.Sc. Computer Science"
                     />
 
                     <InputField
@@ -1281,6 +1311,8 @@ export function CareerCounsellingWizard({
           </>
         )}
 
+        {/* STEP 3 */}
+
         {step === 3 && (
           <Block title="Interests and career direction">
             <Chips
@@ -1295,7 +1327,6 @@ export function CareerCounsellingWizard({
                 label="Career goal (optional if exploring)"
                 value={data.careerGoal}
                 onChange={(value) => update("careerGoal", value)}
-                placeholder="e.g. Doctor, entrepreneur, exploring"
               />
 
               <Pick
@@ -1340,6 +1371,8 @@ export function CareerCounsellingWizard({
             />
           </Block>
         )}
+
+        {/* STEP 4 */}
 
         {step === 4 && (
           <Block title="Typical daily routine">
@@ -1411,17 +1444,24 @@ export function CareerCounsellingWizard({
                 onChange={(event) =>
                   update("biggestObstacle", event.target.value)
                 }
-                placeholder="e.g. focus, procrastination, time management, subject difficulty"
+                placeholder="e.g. focus, procrastination, time management"
               />
             </label>
           </Block>
         )}
+
+        {/* STEP 5 */}
 
         {step === 5 && (
           <>
             <Block title="Review student details">
               <dl className="grid gap-3 text-sm sm:grid-cols-2">
                 {[
+                  ["Entry completed by", data.completedByName],
+                  [
+                    "Staff role",
+                    data.filledBy === "staff" ? "Staff" : "Counsellor",
+                  ],
                   ["Student", data.studentName],
                   ["Stage", stageLabel || "Not selected"],
                   ["Class/level", classLevel(data)],
@@ -1520,6 +1560,8 @@ export function CareerCounsellingWizard({
           </>
         )}
 
+        {/* FORM NAVIGATION */}
+
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
           <button
             type="button"
@@ -1535,7 +1577,6 @@ export function CareerCounsellingWizard({
             }}
           >
             <ArrowLeft size={16} />
-
             {step === 1 ? "Close" : "Back"}
           </button>
 
