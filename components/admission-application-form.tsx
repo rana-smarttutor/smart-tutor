@@ -1254,7 +1254,13 @@ export function AdmissionApplicationForm({
                 <Choices
                   selected={data.studyMode}
                   onSelect={(value) => patch("studyMode", value)}
-                  values={["Classroom at Vashi", "Online"]}
+                  values={[
+                    "Classroom at Vashi",
+                    "Classroom at Panvel",
+                    "Home Tuition",
+                    "Offline",
+                    "Online",
+                  ]}
                 />
               </section>
 

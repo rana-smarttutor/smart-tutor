@@ -16,6 +16,9 @@ const PUBLIC = [
   "/exam-updates",
   "/contact",
   "/placements",
+
+  // Career counselling
+  // Covers public child pages such as /about-you
   "/career-counselling",
 
   // Local tutor landing pages
@@ -57,10 +60,7 @@ function matchesPathOrChild(
 ): boolean {
   return (
     path === base ||
-    (
-      base !== "/" &&
-      path.startsWith(`${base}/`)
-    )
+    (base !== "/" && path.startsWith(`${base}/`))
   );
 }
 

@@ -1,4 +1,5 @@
-﻿import "server-only";
+﻿
+import "server-only";
 
 import { getMongoDatabase } from "@/lib/mongodb";
 import type { Role } from "@/lib/types";
@@ -10,6 +11,12 @@ export const CAREER_ROLES: Role[] = [
   "counsellor",
 ];
 
+export const CAREER_CREATE_ROLES: Role[] = [
+  "admin",
+  "staff",
+  "counsellor",
+];
+
 export const CAREER_STATUSES = [
   "new",
   "in-progress",
@@ -17,7 +24,8 @@ export const CAREER_STATUSES = [
   "completed",
 ] as const;
 
-export type CareerStatus = (typeof CAREER_STATUSES)[number];
+export type CareerStatus =
+  (typeof CAREER_STATUSES)[number];
 
 export type CareerDetails = {
   studentName: string;
@@ -48,16 +56,24 @@ export type CareerDetails = {
   whatsappConsent: boolean;
 };
 
-export type CareerRecord = CareerDetails & {
-  id: string;
-  aiSuggestion: string;
-  aiReviewed: boolean;
-  createdBy: string;
-  createdByName: string;
-  updatedBy: string;
-  updatedAt: string;
-  createdAt: string;
-};
+export type CareerRecord =
+  CareerDetails & {
+    id: string;
+
+    // Complete five-step questionnaire.
+    // Legacy enquiries may not have one.
+    questionnaire: unknown | null;
+
+    aiSuggestion: string;
+    aiReviewed: boolean;
+
+    createdBy: string;
+    createdByName: string;
+    updatedBy: string;
+
+    updatedAt: string;
+    createdAt: string;
+  };
 
 export const EMPTY_CAREER_DETAILS: CareerDetails = {
   studentName: "",
@@ -117,14 +133,19 @@ const ARRAY_FIELDS = [
   "recommendedPrograms",
 ] as const;
 
-export function parseCareerDetails(input: unknown): CareerDetails {
+export function parseCareerDetails(
+  input: unknown,
+): CareerDetails {
   const obj =
-    input && typeof input === "object" && !Array.isArray(input)
+    input &&
+    typeof input === "object" &&
+    !Array.isArray(input)
       ? (input as Record<string, unknown>)
       : {};
 
   const result: CareerDetails = {
     ...EMPTY_CAREER_DETAILS,
+
     strongSubjects: [],
     weakSubjects: [],
     interests: [],
@@ -135,10 +156,14 @@ export function parseCareerDetails(input: unknown): CareerDetails {
   for (const field of STRING_FIELDS) {
     result[field] =
       typeof obj[field] === "string"
-        ? obj[field].trim().slice(
-            0,
-            field === "counsellorNotes" ? 4000 : 800,
-          )
+        ? obj[field]
+            .trim()
+            .slice(
+              0,
+              field === "counsellorNotes"
+                ? 4000
+                : 800,
+            )
         : "";
   }
 
@@ -147,29 +172,41 @@ export function parseCareerDetails(input: unknown): CareerDetails {
 
     result[field] = Array.isArray(raw)
       ? raw
-          .filter((value): value is string => typeof value === "string")
-          .map((value) => value.trim().slice(0, 100))
+          .filter(
+            (value): value is string =>
+              typeof value === "string",
+          )
+          .map((value) =>
+            value.trim().slice(0, 100),
+          )
           .filter(Boolean)
           .slice(0, 30)
       : [];
   }
 
-  result.status = CAREER_STATUSES.includes(
-    obj.status as CareerStatus,
-  )
-    ? (obj.status as CareerStatus)
-    : "new";
+  result.status =
+    CAREER_STATUSES.includes(
+      obj.status as CareerStatus,
+    )
+      ? (obj.status as CareerStatus)
+      : "new";
 
-  result.aiConsent = obj.aiConsent === true;
-  result.whatsappConsent = obj.whatsappConsent === true;
+  result.aiConsent =
+    obj.aiConsent === true;
+
+  result.whatsappConsent =
+    obj.whatsappConsent === true;
 
   return result;
 }
 
 export async function careerCollection() {
-  const database = await getMongoDatabase();
+  const database =
+    await getMongoDatabase();
 
-  return database.collection("career_counselling_enquiries");
+  return database.collection(
+    "career_counselling_enquiries",
+  );
 }
 
 export function toCareerRecord(
@@ -180,21 +217,34 @@ export function toCareerRecord(
 
     id: String(doc._id),
 
+    questionnaire:
+      doc.questionnaire &&
+      typeof doc.questionnaire === "object" &&
+      !Array.isArray(doc.questionnaire)
+        ? doc.questionnaire
+        : null,
+
     aiSuggestion:
       typeof doc.aiSuggestion === "string"
         ? doc.aiSuggestion
         : "",
 
-    aiReviewed: doc.aiReviewed === true,
+    aiReviewed:
+      doc.aiReviewed === true,
 
-    createdBy: String(doc.createdBy ?? ""),
+    createdBy:
+      String(doc.createdBy ?? ""),
 
-    createdByName: String(doc.createdByName ?? ""),
+    createdByName:
+      String(doc.createdByName ?? ""),
 
-    updatedBy: String(doc.updatedBy ?? ""),
+    updatedBy:
+      String(doc.updatedBy ?? ""),
 
-    createdAt: String(doc.createdAt ?? ""),
+    createdAt:
+      String(doc.createdAt ?? ""),
 
-    updatedAt: String(doc.updatedAt ?? ""),
+    updatedAt:
+      String(doc.updatedAt ?? ""),
   };
 }
