@@ -66,8 +66,8 @@ export function DashboardMessageCenter({
     : role === "educator"
       ? "Write message"
       : "Write institute message";
-  const canPost = role === "student" || role === "educator" || role === "admin";
-  const canPostToEveryone = role === "admin";
+  const canPost = role === "student" || role === "educator" || role === "admin" || role === "staff";
+  const canPostToEveryone = role === "admin" || role === "staff";
 
   const studentEducators = useMemo(() => {
     if (role !== "student" || !managedUsers || !assignedFacultyIds) return [];
@@ -149,6 +149,12 @@ export function DashboardMessageCenter({
   }
 
   function buildAudienceAndUserIds() {
+    if (role === "staff") {
+      return {
+        audience: ["student"] as const,
+        userIds: targetMode === "selected-students" ? selectedStudentIds : undefined,
+      };
+    }
     if (role === "admin") {
       if (targetMode === "selected-students") {
         return {

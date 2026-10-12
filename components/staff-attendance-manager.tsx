@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useState } from "react";
 import { StaffActivityEditor } from "@/components/staff-activity-editor";
@@ -448,7 +448,7 @@ export function StaffAttendanceManager({
                 <div className="mt-1 text-sm leading-6 text-[var(--color-muted)]">
                   {date} &middot;{" "}
                   {myRecord
-                    ? `Checked in at ${myRecord.checkIn || "â€”"}${
+                    ? `Checked in at ${myRecord.checkIn || "—"}${
                         myRecord.checkOut ? `, out at ${myRecord.checkOut}` : ""
                       }`
                     : "Not checked in yet"}
@@ -838,8 +838,8 @@ export function StaffAttendanceManager({
                     </div>
 
                     <div className="mt-1 text-xs font-medium text-[var(--color-muted)] sm:text-sm">
-                      {r.checkIn ? `In: ${r.checkIn}` : "In: â€”"} &middot;{" "}
-                      {r.checkOut ? `Out: ${r.checkOut}` : "Out: â€”"}
+                      {r.checkIn ? `In: ${r.checkIn}` : "In: —"} &middot;{" "}
+                      {r.checkOut ? `Out: ${r.checkOut}` : "Out: —"}
                       {r.hoursWorked ? ` (${r.hoursWorked}h)` : ""}
                     </div>
                   </div>
@@ -899,7 +899,7 @@ export function StaffAttendanceManager({
                       {req.requestedCheckOut
                         ? `Out: ${req.requestedCheckOut}`
                         : ""}{" "}
-                      â†’ {req.requestedStatus.replace("_", " ")}
+                      → {req.requestedStatus.replace("_", " ")}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -963,7 +963,7 @@ export function StaffAttendanceManager({
                 onClick={() => setShowRegulariseModal(false)}
                 className="text-[var(--color-muted)] hover:text-[var(--color-heading)]"
               >
-                âœ•
+                ✕
               </button>
             </div>
             <div className="space-y-4">

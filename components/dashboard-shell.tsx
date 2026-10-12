@@ -1,5 +1,5 @@
-﻿"use client";
-
+"use client";
+import { StaffLectureOverview } from "@/components/staff-lecture-overview";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -76,6 +76,7 @@ function SectionLoading() {
 }
 
 import { DashboardOverview } from "@/components/dashboard-overview";
+import { StaffOperationsManager } from "@/components/staff-operations-manager";
 import { DashboardProfileSettings } from "@/components/dashboard-profile-settings";
 
 const DashboardAccountDirectory = dynamic(
@@ -427,18 +428,26 @@ const sidebarByRole = {
   ],
 
   staff: [
-    { id: "overview", label: "Overview" },
+    { id: "overview", label: "Dashboard" },
+    { id: "lectures", label: "Lecture Management" },
+    { id: "attendance", label: "Student Attendance" },
+    { id: "weekly-tests", label: "Test Management" },
+    { id: "ptm", label: "Parents Teacher Meeting" },
+    { id: "new-admission-form", label: "Admission Form" },
     { id: "career-counselling", label: "Career Counselling" },
-    { id: "new-admission-form", label: "Admissions" },
+    { id: "sales-crm", label: "Lead Management" },
+    { id: "fees", label: "Fees Collection" },
+    { id: "branch-expenses", label: "Branch Expenses" },
+    { id: "staff-attendance", label: "Attendance & Leave" },
+    { id: "staff-tasks", label: "Staff Tasks & Reports" },
+    { id: "performance", label: "Student Performance Reports" },
+    { id: "daily-branch-report", label: "Daily Branch Report" },
+    { id: "messages", label: "Notices & Announcements" },
+    { id: "complaints", label: "Student Queries & Complaints" },
     { id: "profile", label: "Employee Profile" },
-    { id: "staff-attendance", label: "My Attendance" },
-    { id: "leave", label: "Leave" },
-    { id: "staff-payroll", label: "Payroll & Salary" },
-    { id: "staff-payouts", label: "My Payouts" },
-    { id: "messages", label: "Notice Board" },
+    { id: "leave", label: "My Leave" },
     { id: "chat", label: "Chat" },
   ],
-
   counsellor: [
     { id: "overview", label: "Overview" },
     { id: "new-admission-form", label: "Admissions" },
@@ -643,6 +652,36 @@ const menuSections = [
   { label: "Placement", items: ["placement-jobs"] },
 ];
 
+const staffMenuSections = [
+  {
+    label: "1. Overview",
+    items: ["overview"],
+  },
+  {
+    label: "2. Academic Management",
+    items: ["lectures", "attendance", "weekly-tests", "ptm"],
+  },
+  {
+    label: "3. Admissions Management",
+    items: ["new-admission-form", "career-counselling", "sales-crm"],
+  },
+  {
+    label: "4. Finance",
+    items: ["fees", "fee-installments", "branch-expenses"],
+  },
+  {
+    label: "5. Staff Management",
+    items: ["staff-attendance", "staff-tasks"],
+  },
+  {
+    label: "6. Reports & Communication",
+    items: ["performance", "daily-branch-report", "messages", "complaints"],
+  },
+  {
+    label: "7. My Account",
+    items: ["profile", "leave", "chat"],
+  },
+];
 const navIcons: Record<string, React.ReactNode> = {
   overview: (
     <svg
@@ -1377,7 +1416,7 @@ export function DashboardShell({
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
     ...(role === "student" || role === "parent"
-      ? [{ label: "Student ID", value: session?.id ?? "â€”" }]
+      ? [{ label: "Student ID", value: session?.id ?? "—" }]
       : []),
     ...(role === "student" || role === "parent"
       ? [
@@ -1719,78 +1758,85 @@ export function DashboardShell({
             scrollbarColor: "#3B82F6 #0A1637",
           }}
         >
-          {menuSections.map((section) => {
-            const sectionItems = resolvedSidebarItems.filter((item) =>
-              section.items.includes(item.id),
-            );
-            const filteredItems = sidebarSearch
-              ? sectionItems.filter((item) =>
-                  item.label
-                    .toLowerCase()
-                    .includes(sidebarSearch.toLowerCase()),
-                )
-              : sectionItems;
-            if (!filteredItems.length) return null;
-            return (
-              <div key={section.label} className="sb-group">
-                {!sidebarCollapsed && (
-                  <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                    {section.label}
-                  </div>
-                )}
-                {filteredItems.map((item) => {
-                  const itemLabel =
-                    isGovExamStudent && item.id === "tests"
-                      ? "Mock Test"
-                      : item.label;
+          {(role === "staff" ? staffMenuSections : menuSections).map(
+            (section) => {
+              const sectionItems = resolvedSidebarItems.filter((item) =>
+                section.items.includes(item.id),
+              );
+              const filteredItems = sidebarSearch
+                ? sectionItems.filter((item) =>
+                    item.label
+                      .toLowerCase()
+                      .includes(sidebarSearch.toLowerCase()),
+                  )
+                : sectionItems;
+              if (!filteredItems.length) return null;
+              return (
+                <div key={section.label} className="sb-group">
+                  {!sidebarCollapsed && (
+                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                      {section.label}
+                    </div>
+                  )}
+                  {filteredItems.map((item) => {
+                    const itemLabel =
+                      isGovExamStudent && item.id === "tests"
+                        ? "Mock Test"
+                        : item.label;
 
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-label={itemLabel.toLowerCase()}
-                      className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
-                        sidebarCollapsed ? "justify-center" : ""
-                      } ${
-                        activeSection === item.id
-                          ? "bg-[#0B40A1] text-white shadow-md"
-                          : "text-slate-400 hover:bg-white/5 hover:text-white"
-                      }`}
-                      onClick={() => {
-                        if (isGovExamStudent && item.id === "tests") {
-                          window.location.assign("/mock-test");
-                          return;
-                        }
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        data-label={itemLabel.toLowerCase()}
+                        className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                          sidebarCollapsed ? "justify-center" : ""
+                        } ${
+                          activeSection === item.id
+                            ? "bg-[#0B40A1] text-white shadow-md"
+                            : "text-slate-400 hover:bg-white/5 hover:text-white"
+                        }`}
+                        onClick={() => {
+                          if (role === "staff" && item.id === "performance") {
+                            window.location.assign("/student-performance");
+                            return;
+                          }
 
-                        setActiveSection(item.id);
-                      }}
-                      title={sidebarCollapsed ? itemLabel : undefined}
-                    >
-                      {navIcons[item.id] || (
-                        <svg
-                          className="h-5 w-5 shrink-0"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                          />
-                        </svg>
-                      )}
+                          if (isGovExamStudent && item.id === "tests") {
+                            window.location.assign("/mock-test");
+                            return;
+                          }
 
-                      {!sidebarCollapsed && (
-                        <span className="truncate">{itemLabel}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
+                          setActiveSection(item.id);
+                        }}
+                        title={sidebarCollapsed ? itemLabel : undefined}
+                      >
+                        {navIcons[item.id] || (
+                          <svg
+                            className="h-5 w-5 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                            />
+                          </svg>
+                        )}
+
+                        {!sidebarCollapsed && (
+                          <span className="truncate">{itemLabel}</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            },
+          )}
         </nav>
 
         {/* Footer — Logout only */}
@@ -1894,9 +1940,7 @@ export function DashboardShell({
                   <Gift className="h-3.5 w-3.5" />
                 </span>
 
-                <span className="relative whitespace-nowrap">
-                  Earn â‚¹2,000
-                </span>
+                <span className="relative whitespace-nowrap">Earn ₹2,000</span>
               </button>
             ) : null}
 
@@ -1930,7 +1974,10 @@ export function DashboardShell({
           ) : null}
 
           {showProfile &&
-          (role === "student" || role === "educator" || role === "parent") ? (
+          (role === "student" ||
+            role === "educator" ||
+            role === "parent" ||
+            role === "staff") ? (
             <DashboardProfileSettings
               session={session}
               role={role}
@@ -1973,19 +2020,24 @@ export function DashboardShell({
             role === "educator" ||
             role === "student" ||
             role === "parent" ||
-            role === "counsellor") ? (
+            role === "counsellor" ||
+            role === "staff") ? (
             <DashboardPtmManager session={session} role={role} />
           ) : null}
           {showComplaints &&
           (role === "admin" ||
             role === "educator" ||
             role === "student" ||
-            role === "parent") ? (
+            role === "parent" ||
+            role === "staff") ? (
             <DashboardComplaintBox session={session} role={role} />
           ) : null}
 
           {showHomework &&
-          (role === "student" || role === "educator" || role === "parent") ? (
+          (role === "student" ||
+            role === "educator" ||
+            role === "parent" ||
+            role === "staff") ? (
             <HomeworkSection
               session={session}
               role={role}
@@ -2035,7 +2087,8 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showSalesCrm && (role === "admin" || role === "counsellor") ? (
+          {showSalesCrm &&
+          (role === "admin" || role === "counsellor" || role === "staff") ? (
             <SalesCrmManager role={role} />
           ) : null}
 
@@ -2048,7 +2101,10 @@ export function DashboardShell({
           ) : null}
 
           {showCertificates &&
-          (role === "student" || role === "educator" || role === "parent") ? (
+          (role === "student" ||
+            role === "educator" ||
+            role === "parent" ||
+            role === "staff") ? (
             <DashboardCertificatesSection
               certificates={dashboard.certificates ?? []}
               userName={session?.name ?? ""}
@@ -2136,7 +2192,7 @@ export function DashboardShell({
                 <div>
                   <p className="section-label">Course / Program Master</p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Top-level hierarchy: Course â†’ Subject â†’ Topic
+                    Top-level hierarchy: Course → Subject → Topic
                   </h2>
                 </div>
                 <span className="pill">{dashboard.courses.length} courses</span>
@@ -2264,7 +2320,8 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showAttendance && (role === "admin" || role === "educator") ? (
+          {showAttendance &&
+          (role === "admin" || role === "educator" || role === "staff") ? (
             <AttendanceHub
               role={role}
               attendanceSheets={dashboard.attendanceSheets}
@@ -2311,11 +2368,18 @@ export function DashboardShell({
           {showProfitLoss && role === "admin" ? (
             <AdminProfitLossManager />
           ) : null}
-          {showFees && role === "admin" ? (
+          {showFees && (role === "admin" || role === "staff") ? (
             <AdminFeeHub
               role={role}
               feeInvoices={dashboard.feeInvoices}
               feeInstallmentPlans={dashboard.feeInstallmentPlans ?? []}
+              studentDirectory={studentDirectory}
+            />
+          ) : null}
+
+          {showFeeInstallments && role === "staff" ? (
+            <FeeInstallmentManager
+              role={role}
               studentDirectory={studentDirectory}
             />
           ) : null}
@@ -2359,7 +2423,20 @@ export function DashboardShell({
             <FacultyPerformanceManager />
           ) : null}
 
-          {showLectures ? (
+          {role === "staff" && activeSection === "staff-tasks" ? (
+            <StaffOperationsManager kind="tasks" />
+          ) : null}
+          {role === "staff" && activeSection === "branch-expenses" ? (
+            <StaffOperationsManager kind="expenses" />
+          ) : null}
+          {role === "staff" && activeSection === "daily-branch-report" ? (
+            <StaffOperationsManager kind="daily-reports" />
+          ) : null}
+
+          {showLectures && role === "staff" ? (
+            <StaffLectureOverview lectures={dashboard.lectures} />
+          ) : null}
+          {showLectures && role !== "staff" ? (
             <LectureManager
               role={role}
               lectures={dashboard.lectures}
@@ -2690,7 +2767,9 @@ export function DashboardShell({
                   ) : null}
 
                   {/* Admin and Educator Report Creator */}
-                  {role === "educator" || role === "admin" ? (
+                  {role === "educator" ||
+                  role === "admin" ||
+                  role === "staff" ? (
                     <PerformanceReportCreator
                       session={session}
                       studentDirectory={studentDirectory}

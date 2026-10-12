@@ -1,4 +1,4 @@
-﻿import { cache } from "react";
+import { cache } from "react";
 import { randomUUID } from "crypto";
 
 import type { Document } from "mongodb";
@@ -277,7 +277,7 @@ export const COLLECTIONS = {
   // Staff Payout Audit Logs
   staffPayoutAuditLogs: "staffPayoutAuditLogs",
 
-  // Fee Transaction Logs
+// ===== Fee Transaction Log =====
   feeTransactionLogs: "feeTransactionLogs",
 
   // Action Logs
@@ -4781,7 +4781,7 @@ export async function updateMentorshipRequest(input: {
 export async function getPtmSessionsForRole(role: Role, userId?: string) {
   const collection = await getCollection<PtmSession>(COLLECTIONS.ptmSessions);
 
-  if (role === "admin") {
+  if (role === "admin" || role === "staff") {
     return stripMongoIds(
       await collection
         .find({})
@@ -5081,7 +5081,7 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
    * Admin, Educator and Counsellor
    * need institution-level attendance.
    */
-  if (role === "admin" || role === "educator" || role === "counsellor") {
+  if (role === "admin" || role === "educator" || role === "counsellor" || role === "staff") {
     return stripMongoIds(
       await collection
         .find({})
@@ -5572,7 +5572,7 @@ export async function getFeeInvoicesForRole(role: Role, userId?: string) {
    * Admin and Counsellor need complete
    * fee data for dashboard analytics.
    */
-  if (role === "admin" || role === "counsellor") {
+  if (role === "admin" || role === "counsellor" || role === "staff") {
     return stripMongoIds(
       await collection
         .find({})
@@ -5828,7 +5828,7 @@ export async function deleteFeeInvoice(invoiceId: string) {
 export async function getLecturesForRole(role: Role, userId?: string) {
   const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
 
-  if (role === "admin") {
+  if (role === "admin" || role === "staff") {
     return stripMongoIds(
       await collection.find({}).sort({ startsAt: -1 }).toArray(),
     );
@@ -6741,7 +6741,7 @@ async function generateFeeReceiptNo() {
 export async function getWeeklyTestsForRole(role: Role, userId?: string) {
   const collection = await getCollection<WeeklyTest>(COLLECTIONS.weeklyTests);
 
-  if (role === "admin") {
+  if (role === "admin" || role === "staff") {
     return stripMongoIds(
       await collection.find({}).sort({ testDate: -1, createdAt: -1 }).toArray(),
     );
@@ -7630,7 +7630,7 @@ export async function getFeeInstallmentPlansForRole(
    * Counsellor needs institution-wide
    * fee-plan data for finance analytics.
    */
-  if (role === "admin" || role === "counsellor") {
+  if (role === "admin" || role === "counsellor" || role === "staff") {
     return stripMongoIds(
       await collection
         .find({})
@@ -10718,7 +10718,7 @@ export async function getStaffPayoutAuditLogsByPayout(
   );
 }
 
-// ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â Fee Transaction Log ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+// ===== Fee Transaction Log =====
 
 export async function appendFeeTransactionLog(
   entry: Omit<FeeTransactionLog, "id" | "createdAt">,
@@ -11570,7 +11570,7 @@ export async function deleteBusinessExpense(
   return result.deletedCount > 0;
 }
 
-// ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â Action Audit Log ÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚ÂÃƒÂ¢Ã¢â‚¬Â¢Ã‚Â
+// ===== Action Audit Log =====
 
 export async function appendActionLogEntries(
   entries: Record<string, unknown>[],

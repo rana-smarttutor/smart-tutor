@@ -137,7 +137,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.role !== "admin" && session.role !== "educator") {
+    if (session.role !== "admin" && session.role !== "educator" && session.role !== "staff") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

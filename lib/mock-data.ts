@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   ContactAction,
   ContactMethod,
   CourseItem,
@@ -176,7 +176,7 @@ const rolePermissions: Record<Role, PermissionItem[]> = {
     {
       title: "View-only access",
       description:
-        "View performance reports, attendance, test results, fees, and lecture schedules â€” no editing rights.",
+        "View performance reports, attendance, test results, fees, and lecture schedules — no editing rights.",
     },
     {
       title: "Notifications & forms",
@@ -889,12 +889,12 @@ export function getDashboardBundle(role: Role, userId?: string) {
     student: {
       title: `Welcome back${user ? `, ${user.name.split(" ")[0]}` : ""}`,
       description:
-        "Track tests, attendance, lectures, and results â€” everything you need to stay on top of your learning.",
+        "Track tests, attendance, lectures, and results — everything you need to stay on top of your learning.",
     },
     parent: {
       title: "Parent Dashboard",
       description:
-        "View institute updates, notices, fee details, and connect with educators â€” all in one place.",
+        "View institute updates, notices, fee details, and connect with educators — all in one place.",
     },
     educator: {
       title: `Educator Console${user ? ` | ${user.name}` : ""}`,
@@ -1227,7 +1227,7 @@ export function getTemplateSeedData() {
             roleLabel: "Parent Dashboard",
             heroTitle: "Parent Dashboard",
             heroDescription:
-              "View institute updates, notices, fee details, and connect with educators â€” all in one place.",
+              "View institute updates, notices, fee details, and connect with educators — all in one place.",
             stats: dashboardStats.parent,
             primaryPanel: getDashboardBundle("parent").primaryPanel,
             permissions: rolePermissions.parent,

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import {
@@ -52,6 +52,7 @@ import type {
   StaffAttendanceRecord,
   DoubtItem,
 } from "@/lib/types";
+import { StaffOperationsOverview } from "@/components/staff-operations-overview";
 type Props = {
   session: SessionUser | null;
   role: Role;
@@ -96,16 +97,16 @@ export function DashboardOverview({
       />
     );
   }
-  if (role === "staff") {
-    return (
-      <StaffOverview
-        session={session}
-        messages={messages}
-        onSetActiveSection={onSetActiveSection}
-        managedUsers={managedUsers}
-      />
-    );
-  }
+if (role === "staff") {
+  return (
+    <StaffOperationsOverview
+      session={session}
+      dashboard={dashboard}
+      messages={messages}
+      onSetActiveSection={onSetActiveSection}
+    />
+  );
+}
   if (role === "parent") {
     return (
       <ParentOverview
@@ -230,7 +231,7 @@ function Sparkline({
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ ADMIN DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ----------- ADMIN DASHBOARD -----------
 function StaffOverview({
   session,
   messages,
@@ -720,7 +721,7 @@ function GenericOverview({
 
   return (
     <div className="space-y-5">
-      {/* â”€â”€ Hero Section â”€â”€ */}
+      {/* -- Hero Section -- */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
         style={{
@@ -758,7 +759,7 @@ function GenericOverview({
         </div>
       </div>
 
-      {/* â”€â”€ KPI Cards â”€â”€ */}
+      {/* -- KPI Cards -- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
@@ -791,7 +792,7 @@ function GenericOverview({
         })}
       </div>
 
-      {/* â”€â”€ Quick Actions â”€â”€ */}
+      {/* -- Quick Actions -- */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {quickActions.map((action, idx) => {
           const Icon = action.icon;
@@ -814,7 +815,7 @@ function GenericOverview({
         })}
       </div>
 
-      {/* â”€â”€ Main Content Grid â”€â”€ */}
+      {/* -- Main Content Grid -- */}
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-5">
         {/* Left */}
         <div className="space-y-5">
@@ -1160,7 +1161,7 @@ function GenericOverview({
         </div>
       </div>
 
-      {/* â”€â”€ Bottom Grid â”€â”€ */}
+      {/* -- Bottom Grid -- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Upcoming Exams */}
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
@@ -1288,7 +1289,7 @@ function GenericOverview({
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ STUDENT DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ----------- STUDENT DASHBOARD -----------
 
 function StudentOverview({
   session,
@@ -1586,7 +1587,7 @@ function StudentOverview({
 
   return (
     <div className="space-y-5">
-      {/* â”€â”€ Hero Section â”€â”€ */}
+      {/* -- Hero Section -- */}
       <div
         className="relative overflow-hidden rounded-2xl p-5 sm:p-6 lg:p-8 text-white"
         style={{
@@ -1689,7 +1690,7 @@ function StudentOverview({
           </div>
         </div>
       </div>
-      {/* â”€â”€ KPI Cards â”€â”€ */}
+      {/* -- KPI Cards -- */}
       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
         {kpiCards.map((card, idx) => {
           const Icon = card.icon;
@@ -1740,7 +1741,7 @@ function StudentOverview({
         })}
       </div>
 
-      {/* â”€â”€ Main Two-Column â”€â”€ */}
+      {/* -- Main Two-Column -- */}
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-5">
         {/* Left */}
         <div className="space-y-5">
@@ -2177,7 +2178,7 @@ function StudentOverview({
         </div>
       </div>
 
-      {/* â”€â”€ Quick Access Grid â”€â”€ */}
+      {/* -- Quick Access Grid -- */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] p-4 sm:p-5 lg:p-6">
         <h2 className="text-sm sm:text-base font-bold text-slate-900 mb-3 sm:mb-4">
           Quick Access
@@ -2209,7 +2210,7 @@ function StudentOverview({
         </div>
       </div>
 
-      {/* â”€â”€ Recent Results â”€â”€ */}
+      {/* -- Recent Results -- */}
       {testScores.length > 0 && (
         <div className="bg-white rounded-2xl border border-[#E8EDF2] p-5 sm:p-6">
           <div className="flex items-center justify-between mb-4 gap-2">
@@ -2256,7 +2257,7 @@ function StudentOverview({
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PARENT DASHBOARD (View-only mirror of Student) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ----------- PARENT DASHBOARD (View-only mirror of Student) -----------
 
 function ParentOverview({
   session,
@@ -2642,7 +2643,7 @@ function ParentOverview({
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ EDUCATOR DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ----------- EDUCATOR DASHBOARD -----------
 
 function EducatorOverview({
   session,
@@ -3097,7 +3098,7 @@ function EducatorOverview({
   ];
   return (
     <div className="space-y-5">
-      {/* â”€â”€ Hero â”€â”€ */}
+      {/* -- Hero -- */}
       <div
         className="relative overflow-hidden rounded-2xl p-6 sm:p-8 text-white"
         style={{
@@ -3168,7 +3169,7 @@ function EducatorOverview({
         )}
       </div>
 
-      {/* â”€â”€ KPI Row â”€â”€ */}
+      {/* -- KPI Row -- */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
@@ -3225,7 +3226,7 @@ function EducatorOverview({
         })}
       </div>
 
-      {/* â”€â”€ Charts Row â”€â”€ */}
+      {/* -- Charts Row -- */}
       <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-2">
         {/* Educator Attendance Report */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
@@ -3506,7 +3507,7 @@ function EducatorOverview({
           </div>
         </div>
       </div>
-      {/* â”€â”€ Earnings and Home Tutoring Row â”€â”€ */}
+      {/* -- Earnings and Home Tutoring Row -- */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* My Earnings */}
         <div className="overflow-hidden rounded-2xl border border-[#E8EDF2] bg-white">
@@ -3704,7 +3705,7 @@ function EducatorOverview({
         </div>
       </div>
 
-      {/* â”€â”€ Pending Homework Reviews â”€â”€ */}
+      {/* -- Pending Homework Reviews -- */}
       <div className="bg-white rounded-2xl border border-[#E8EDF2] overflow-hidden">
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-[#F1F5F9] gap-2">
           <h2 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5 sm:gap-2 min-w-0">
@@ -3773,7 +3774,7 @@ function EducatorOverview({
         </div>
       </div>
 
-      {/* â”€â”€ Quick Actions â”€â”€ */}
+      {/* -- Quick Actions -- */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {quickActions.map((action, idx) => {
           const Icon = action.icon;
@@ -3800,7 +3801,7 @@ function EducatorOverview({
   );
 }
 
-// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ PROFILE CARD HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ----------- PROFILE CARD HELPERS -----------
 
 function PField({
   label,

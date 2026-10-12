@@ -94,7 +94,7 @@ export async function GET() {
      */
     if (
       session.role !==
-      "admin"
+      "admin" && session.role !== "staff"
     ) {
       return NextResponse.json(
         {

@@ -215,7 +215,7 @@ export function AttendanceManager({
 
   embedded = false,
 }: AttendanceManagerProps) {
-  const canEdit = role === "admin" || role === "educator";
+  const canEdit = role === "admin" || role === "educator" || role === "staff";
 
   const isAdmin = role === "admin" || role === "educator";
 

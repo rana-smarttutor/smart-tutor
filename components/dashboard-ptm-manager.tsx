@@ -141,7 +141,7 @@ export function DashboardPtmManager({
   session,
   role,
 }: DashboardPtmManagerProps) {
-  const isFaculty = role === "admin" || role === "educator";
+  const isFaculty = role === "admin" || role === "educator" || role === "staff";
 
   const [ptmSessions, setPtmSessions] = useState<PtmSession[]>([]);
   const [students, setStudents] = useState<PtmStudent[]>([]);

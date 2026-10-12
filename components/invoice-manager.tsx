@@ -325,7 +325,7 @@ export function InvoiceManager({
   feeInvoices,
   studentDirectory,
 }: InvoiceManagerProps) {
-  const canManage = role === "admin";
+  const canManage = role === "admin" || role === "staff";
 
   const [invoices, setInvoices] = useState<FeeInvoice[]>(feeInvoices);
   const [showForm, setShowForm] = useState(false);
@@ -1902,7 +1902,7 @@ export function InvoiceManager({
                         </button>
                       ) : null}
 
-                      {canManage ? (
+                      {role === "admin" ? (
                         <button
                           type="button"
                           onClick={() => setInvoiceToDelete(invoice)}

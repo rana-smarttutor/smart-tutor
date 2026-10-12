@@ -301,7 +301,7 @@ export function DashboardComplaintBox({
   role,
 }: DashboardComplaintBoxProps) {
   const isAdmin =
-    role === "admin";
+    role === "admin" || role === "staff";
 
   const canSubmit =
     role === "student" ||
@@ -1358,7 +1358,7 @@ export function DashboardComplaintBox({
                             />
                           </button>
 
-                          <button
+                          {role === "admin" ? <button
                             type="button"
                             disabled={
                               deletingId ===
@@ -1384,7 +1384,7 @@ export function DashboardComplaintBox({
                             )}
 
                             Delete
-                          </button>
+                          </button> : null}
                         </div>
                       </div>
                     </article>

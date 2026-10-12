@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!hasAnyRole(session, ["student", "educator", "admin"])) {
+  if (!hasAnyRole(session, ["student", "educator", "admin", "staff"])) {
     return NextResponse.json(
       { error: "Only educators and admins can post institute messages." },
       { status: 403 },
@@ -85,6 +85,12 @@ export async function POST(request: Request) {
 
   // ---- Role-based audience restrictions ----
   let audience = body.audience ?? [];
+
+  if (session.role === "staff") {
+    if (audience.length !== 1 || audience[0] !== "student") {
+      return NextResponse.json({ error: "Staff may publish notices only to students." }, { status: 403 });
+    }
+  }
 
   if (session.role === "student") {
     // Students may only send to "educator" (their assigned faculty) or "admin"
@@ -165,6 +171,9 @@ export async function POST(request: Request) {
   }
 
   let resolvedUserIds = userIds;
+  if (session.role === "staff" && body.targetMode !== "selected-students") {
+    resolvedUserIds = (await getStudentDirectory()).map((student) => student.id);
+  }
   if (session.role === "educator" && audience.includes("student") && !userIds.length) {
     const assignedStudents = await getStudentDirectory(session.id);
     resolvedUserIds = assignedStudents.map((s) => s.id);

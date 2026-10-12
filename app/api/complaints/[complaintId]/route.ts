@@ -74,11 +74,11 @@ export async function PUT(
 
     /*
      * Complaint records and management
-     * are available only to administrators.
+     * are available to authorized staff and administrators.
      */
     if (
       session.role !==
-      "admin"
+      "admin" && session.role !== "staff"
     ) {
       return NextResponse.json(
         {

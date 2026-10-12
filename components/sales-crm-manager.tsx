@@ -291,7 +291,7 @@ function EmptyState({
 export function SalesCrmManager({
   role = "admin",
 }: {
-  role?: "admin" | "counsellor";
+  role?: "admin" | "counsellor" | "staff";
 }) {
   const isAdmin = role === "admin";
 

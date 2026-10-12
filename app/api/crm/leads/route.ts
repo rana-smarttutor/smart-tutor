@@ -84,7 +84,7 @@ export async function GET() {
       );
     }
 
-    if (session.role === "admin") {
+    if (session.role === "admin" || session.role === "staff") {
       return NextResponse.json(await getCrmAdminWorkspace());
     }
 
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (session.role !== "admin" && session.role !== "counsellor") {
+    if (session.role !== "admin" && session.role !== "counsellor" && session.role !== "staff") {
       return NextResponse.json(
         { error: "Only admins and counsellors can create CRM leads." },
         { status: 403 },

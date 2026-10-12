@@ -57,11 +57,7 @@ export function AdminFeeHub({
 
   const totalDue = invoices.reduce(
     (sum, invoice) =>
-      sum +
-      Math.max(
-        invoice.amount - (invoice.paidAmount ?? 0),
-        0,
-      ),
+      sum + Math.max(invoice.amount - (invoice.paidAmount ?? 0), 0),
     0,
   );
 
@@ -69,9 +65,7 @@ export function AdminFeeHub({
     (invoice) => invoice.status === "overdue",
   ).length;
 
-  const activePlans = plans.filter(
-    (plan) => plan.status === "active",
-  ).length;
+  const activePlans = plans.filter((plan) => plan.status === "active").length;
 
   const stats = [
     {
@@ -120,78 +114,88 @@ export function AdminFeeHub({
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white">
                 <Wallet size={25} strokeWidth={2.2} />
               </span>
-
               Smart Billing Hub
             </h2>
 
             <p className="mt-2 max-w-lg text-sm leading-6 text-slate-300">
-              Manage invoices, fee collections, outstanding dues
-              and EMI installment schedules in one workspace.
+              Manage invoices, fee collections, outstanding dues and EMI
+              installment schedules in one workspace.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold text-white">
-              <Receipt size={14} strokeWidth={2.3} />
-              {invoices.length} Invoices
-            </span>
-
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold text-white">
-              <CalendarDays size={14} strokeWidth={2.3} />
-              {plans.length} EMI Plans
-            </span>
-
-            {overdueCount > 0 && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-2 text-[11px] font-bold text-red-300">
-                <AlertTriangle size={14} strokeWidth={2.3} />
-                {overdueCount} Overdue Invoices
+          {role !== "staff" && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold text-white">
+                <Receipt size={14} strokeWidth={2.3} />
+                {invoices.length} Invoices
               </span>
-            )}
-          </div>
+
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-[11px] font-bold text-white">
+                <CalendarDays size={14} strokeWidth={2.3} />
+                {plans.length} EMI Plans
+              </span>
+
+              {overdueCount > 0 && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-red-500/20 px-3 py-2 text-[11px] font-bold text-red-300">
+                  <AlertTriangle size={14} strokeWidth={2.3} />
+                  {overdueCount} Overdue Invoices
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
       {/* FINANCIAL SUMMARY */}
       <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {stats.map((stat) => {
-            const Icon = stat.icon;
+        <div
+          className={`grid gap-3 ${
+            role === "staff"
+              ? "grid-cols-1 sm:grid-cols-2"
+              : "grid-cols-2 lg:grid-cols-4"
+          }`}
+        >
+          {stats
+            .filter((stat) =>
+              role === "staff"
+                ? ["Outstanding", "Active EMI Plans"].includes(stat.label)
+                : true,
+            )
+            .map((stat) => {
+              const Icon = stat.icon;
 
-            return (
-              <div
-                key={stat.label}
-                className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 transition-all hover:border-blue-100 hover:shadow-sm"
-              >
+              return (
                 <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.bg}`}
-                  style={{ color: stat.color }}
+                  key={stat.label}
+                  className="flex min-w-0 items-center gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 transition-all hover:border-blue-100 hover:shadow-sm"
                 >
-                  <Icon
-                    size={23}
-                    strokeWidth={2.2}
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    {stat.label}
-                  </p>
-
-                  <p
-                    className="mt-1 break-words text-lg font-black"
+                  <div
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${stat.bg}`}
                     style={{ color: stat.color }}
                   >
-                    {stat.value}
-                  </p>
+                    <Icon size={23} strokeWidth={2.2} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      {stat.label}
+                    </p>
+
+                    <p
+                      className="mt-1 break-words text-lg font-black"
+                      style={{ color: stat.color }}
+                    >
+                      {stat.value}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
         <p className="mt-3 text-xs text-slate-400">
-          Financial amounts above reflect invoices. EMI plans
-          are tracked separately to avoid double-counting fees.
+          Financial amounts above reflect invoices. EMI plans are tracked
+          separately to avoid double-counting fees.
         </p>
       </div>
 
@@ -208,19 +212,20 @@ export function AdminFeeHub({
             </h3>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Manage student invoices, record fee payments,
-              monitor outstanding balances and maintain
-              installment schedules in one place.
+              Manage student invoices, record fee payments, monitor outstanding
+              balances and maintain installment schedules in one place.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <a
-              href="#billing-admissions"
-              className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
-            >
-              Link Admissions
-            </a>
+            {role === "admin" && (
+              <a
+                href="#billing-admissions"
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
+              >
+                Link Admissions
+              </a>
+            )}
             <a
               href="#billing-invoices"
               className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
@@ -248,10 +253,7 @@ export function AdminFeeHub({
           ) : null}
 
           {/* INVOICES AND COLLECTIONS */}
-          <div
-            id="billing-invoices"
-            className="min-w-0 scroll-mt-24"
-          >
+          <div id="billing-invoices" className="min-w-0 scroll-mt-24">
             <InvoiceManager
               role={role}
               feeInvoices={feeInvoices}
@@ -264,10 +266,7 @@ export function AdminFeeHub({
             <div className="h-px flex-1 bg-slate-200" />
 
             <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-violet-50 px-4 py-2 text-[11px] font-black uppercase tracking-wider text-violet-700">
-              <CalendarCheck2
-                size={15}
-                strokeWidth={2.3}
-              />
+              <CalendarCheck2 size={15} strokeWidth={2.3} />
               Installment Schedules
             </span>
 
@@ -275,10 +274,7 @@ export function AdminFeeHub({
           </div>
 
           {/* EMI AND INSTALLMENT MANAGEMENT */}
-          <div
-            id="billing-installments"
-            className="min-w-0 scroll-mt-24"
-          >
+          <div id="billing-installments" className="min-w-0 scroll-mt-24">
             <FeeInstallmentManager
               role={role}
               studentDirectory={studentDirectory}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -1130,7 +1130,7 @@ const isEditing = (userId: string) => editingUserId === userId;
 
   return (
     <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
-      {/* â”€â”€ Clean CoachSutra-style Header â”€â”€ */}
+      {/* -- Clean CoachSutra-style Header -- */}
       <div
         style={{
           padding: "24px 28px 0",
@@ -1182,7 +1182,7 @@ const isEditing = (userId: string) => editingUserId === userId;
         </div>
       ) : null}
 
-      {/* â”€â”€ Main Tab Bar (CoachSutra-style) â”€â”€ */}
+      {/* -- Main Tab Bar (CoachSutra-style) -- */}
       <div className="flex flex-wrap gap-2 px-6 pt-5">
         {[
           {
@@ -1236,7 +1236,7 @@ const isEditing = (userId: string) => editingUserId === userId;
         ))}
       </div>
 
-      {/* â”€â”€ Secondary Tab Pills (Register / Directory / Verification) â”€â”€ */}
+      {/* -- Secondary Tab Pills (Register / Directory / Verification) -- */}
       <div className="flex flex-wrap gap-1.5 px-6 pt-3">
         {[
           {
@@ -1282,7 +1282,7 @@ const isEditing = (userId: string) => editingUserId === userId;
       <div className="p-6">
         {activeTab !== null ? (
           activeTab === "register" ? (
-            /* â”€â”€ REGISTER TAB (preserved) â”€â”€ */
+            /* -- REGISTER TAB (preserved) -- */
             <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
                 <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
@@ -1551,7 +1551,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                       <option value="">Select student to link...</option>
                       {studentOptions.map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} â€” {s.email}
+                          {s.name} — {s.email}
                         </option>
                       ))}
                     </select>
@@ -1747,7 +1747,7 @@ const isEditing = (userId: string) => editingUserId === userId;
               </div>
             </div>
           ) : activeTab === "directory" ? (
-            /* â”€â”€ DIRECTORY TAB (preserved) â”€â”€ */
+            /* -- DIRECTORY TAB (preserved) -- */
             <>
               <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
                 {[
@@ -1814,7 +1814,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                   <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                   <input
                     type="text"
-                    placeholder="Search name, email, programâ€¦"
+                    placeholder="Search name, email, program…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1859,7 +1859,7 @@ const isEditing = (userId: string) => editingUserId === userId;
               {renderUserGrid(filteredUsers)}
             </>
           ) : (
-            /* â”€â”€ VERIFICATION TAB (preserved) â”€â”€ */
+            /* -- VERIFICATION TAB (preserved) -- */
             <div>
               <p className="mb-4 text-sm font-bold text-[var(--color-heading)]">
                 <i className="bi bi-shield-check me-2 text-[var(--color-primary)]" />
@@ -2020,7 +2020,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID â€” Front
+                                Photo ID — Front
                               </a>
                             )}
                             {req.profile.photoIdBackUrl && (
@@ -2031,7 +2031,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID â€” Back
+                                Photo ID — Back
                               </a>
                             )}
                           </div>
@@ -2074,14 +2074,14 @@ const isEditing = (userId: string) => editingUserId === userId;
             </div>
           )
         ) : mainTab === "students" ? (
-          /* â”€â”€ STUDENTS TAB â”€â”€ */
+          /* -- STUDENTS TAB -- */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search students by name, email, programâ€¦"
+                  placeholder="Search students by name, email, program…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2213,14 +2213,14 @@ const isEditing = (userId: string) => editingUserId === userId;
             )}
           </>
         ) : mainTab === "parents" ? (
-          /* â”€â”€ PARENTS TAB â”€â”€ */
+          /* -- PARENTS TAB -- */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search parents by name, emailâ€¦"
+                  placeholder="Search parents by name, email…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2248,14 +2248,14 @@ const isEditing = (userId: string) => editingUserId === userId;
             {renderUserGrid(tabParents)}
           </>
         ) : (
-          /* â”€â”€ OTHER ACCOUNTS TAB (admin, counsellor, etc.) â”€â”€ */
+          /* -- OTHER ACCOUNTS TAB (admin, counsellor, etc.) -- */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search by name, email, roleâ€¦"
+                  placeholder="Search by name, email, role…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"

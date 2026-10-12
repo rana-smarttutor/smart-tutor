@@ -153,7 +153,7 @@ export function FeeInstallmentManager({
   role,
   studentDirectory,
 }: FeeInstallmentManagerProps) {
-  const canManage = role === "admin";
+  const canManage = role === "admin" || role === "staff";
 
   const [plans, setPlans] = useState<FeeInstallmentPlan[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState("");
@@ -1167,14 +1167,14 @@ export function FeeInstallmentManager({
                     </button>
                   ) : null}
 
-                  <button
+                  {role === "admin" ? <button
                     type="button"
                     disabled={deletingId === plan.id}
                     onClick={() => void deletePlan(plan)}
                     className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-black text-rose-600 hover:bg-rose-100 disabled:opacity-60"
                   >
                     {deletingId === plan.id ? "Deleting..." : "Delete"}
-                  </button>
+                  </button> : null}
                 </div>
               ) : null}
             </article>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DashboardBundle, SessionUser } from "@/lib/types";
@@ -432,7 +432,7 @@ export function DashboardProfileSettings({
 
   return (
     <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
-      {/* â”€â”€ Header â”€â”€ */}
+      {/* -- Header -- */}
       <div
         className="px-6 py-5"
         style={{
@@ -449,7 +449,7 @@ export function DashboardProfileSettings({
         </p>
       </div>
 
-      {/* â”€â”€ Alerts â”€â”€ */}
+      {/* -- Alerts -- */}
       {alert && (
         <div
           className={`mx-6 mt-4 flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold border ${
@@ -470,7 +470,7 @@ export function DashboardProfileSettings({
       )}
 
       <div className="p-6 max-w-3xl">
-        {/* â”€â”€ Profile Header Card â”€â”€ */}
+        {/* -- Profile Header Card -- */}
         <div className="flex flex-col sm:flex-row items-center gap-5 mb-8">
           {/* Avatar / Photo */}
           <div className="relative h-28 w-28 shrink-0">
@@ -554,7 +554,7 @@ export function DashboardProfileSettings({
           </button>
         </div>
 
-        {/* â”€â”€ READ-ONLY INFO GRID â”€â”€ */}
+        {/* -- READ-ONLY INFO GRID -- */}
         {!editing && (
           <div className="space-y-6">
             <div>
@@ -693,7 +693,7 @@ export function DashboardProfileSettings({
           </div>
         )}
 
-        {/* â”€â”€ EDIT MODE â”€â”€ */}
+        {/* -- EDIT MODE -- */}
         {editing && (
           <div className="space-y-6">
             {/* Common Fields */}
@@ -958,7 +958,7 @@ export function DashboardProfileSettings({
           </div>
         )}
 
-        {/* â”€â”€ Password Change â”€â”€ */}
+        {/* -- Password Change -- */}
         <div className="mt-10 border-t border-[var(--color-border)] pt-6">
           <button
             type="button"

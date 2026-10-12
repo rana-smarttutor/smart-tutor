@@ -9,10 +9,19 @@ import { getMongoDatabase } from "@/lib/mongodb";
 export async function POST(request: Request) {
   const session = await getSessionUser();
   if (!session) {
-    return NextResponse.json({ success: false, message: "Login required." }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Login required." },
+      { status: 401 },
+    );
   }
-  if (!hasAnyRole(session, ["admin", "educator"])) {
-    return NextResponse.json({ success: false, message: "Only educators and admins can create reports." }, { status: 403 });
+  if (!hasAnyRole(session, ["admin", "educator", "staff"])) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Only admins, educators, and staff can create reports.",
+      },
+      { status: 403 },
+    );
   }
 
   try {
@@ -32,8 +41,7 @@ export async function POST(request: Request) {
     }
 
     const requestedStudentId =
-      typeof body.linkedStudentId === "string" &&
-      body.linkedStudentId.trim()
+      typeof body.linkedStudentId === "string" && body.linkedStudentId.trim()
         ? body.linkedStudentId.trim()
         : null;
 
@@ -69,23 +77,23 @@ export async function POST(request: Request) {
 
     const db = await getMongoDatabase();
 
-const report = {
-  ...body,
-  title: periodLabel,
-  period: periodLabel,
-  periodLabel,
+    const report = {
+      ...body,
+      title: periodLabel,
+      period: periodLabel,
+      periodLabel,
 
-  linkedStudentId,
-  studentId: linkedStudentId,
+      linkedStudentId,
+      studentId: linkedStudentId,
 
-  createdBy: session.id,
-  createdByRole: session.role,
+      createdBy: session.id,
+      createdByRole: session.role,
 
-  student: studentSnapshot,
+      student: studentSnapshot,
 
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
     const result = await db.collection("performanceReports").insertOne(report);
 
@@ -97,7 +105,11 @@ const report = {
       method: "POST",
       request,
       session,
-      metadata: { reportId: result.insertedId.toString(), period: periodLabel, studentId: linkedStudentId },
+      metadata: {
+        reportId: result.insertedId.toString(),
+        period: periodLabel,
+        studentId: linkedStudentId,
+      },
     });
 
     return NextResponse.json({
@@ -121,7 +133,10 @@ const report = {
 export async function GET() {
   const session = await getSessionUser();
   if (!session) {
-    return NextResponse.json({ success: false, message: "Login required." }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Login required." },
+      { status: 401 },
+    );
   }
 
   try {
@@ -158,10 +173,19 @@ export async function GET() {
 export async function DELETE(request: Request) {
   const session = await getSessionUser();
   if (!session) {
-    return NextResponse.json({ success: false, message: "Login required." }, { status: 401 });
+    return NextResponse.json(
+      { success: false, message: "Login required." },
+      { status: 401 },
+    );
   }
   if (!hasAnyRole(session, ["admin", "educator"])) {
-    return NextResponse.json({ success: false, message: "Only educators and admins can delete reports." }, { status: 403 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Only educators and admins can delete reports.",
+      },
+      { status: 403 },
+    );
   }
 
   try {

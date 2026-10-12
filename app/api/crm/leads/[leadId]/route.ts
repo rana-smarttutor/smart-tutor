@@ -110,7 +110,7 @@ if (!session) {
   );
 }
 
-if (session.role !== "admin" && session.role !== "counsellor") {
+if (session.role !== "admin" && session.role !== "counsellor" && session.role !== "staff") {
   return NextResponse.json(
     { error: "Only admins and counsellors can update CRM leads." },
     { status: 403 },
