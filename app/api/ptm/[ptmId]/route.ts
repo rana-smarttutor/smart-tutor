@@ -103,7 +103,7 @@ function canManagePtm(
 ) {
   if (
     session.role ===
-    "admin" || session.role === "staff"
+    "admin" || (session.role === "staff" || session.role === "counsellor")
   ) {
     return true;
   }
@@ -150,7 +150,7 @@ export async function PUT(
         "admin" &&
       session.role !==
         "educator" &&
-      session.role !== "staff"
+      session.role !== "staff" && session.role !== "counsellor"
     ) {
       return NextResponse.json(
         {
@@ -534,7 +534,7 @@ export async function DELETE(
         "admin" &&
       session.role !==
         "educator" &&
-      session.role !== "staff"
+      session.role !== "staff" && session.role !== "counsellor"
     ) {
       return NextResponse.json(
         {

@@ -120,7 +120,7 @@ export async function GET() {
         "admin" ||
       session.role ===
         "educator" ||
-      session.role === "staff";
+      (session.role === "staff" || session.role === "counsellor");
 
     const students =
       canManage
@@ -197,7 +197,7 @@ export async function POST(
         "admin" &&
       session.role !==
         "educator" &&
-      session.role !== "staff"
+      session.role !== "staff" && session.role !== "counsellor"
     ) {
       return NextResponse.json(
         {

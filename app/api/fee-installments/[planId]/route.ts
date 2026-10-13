@@ -137,7 +137,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.role !== "admin" && session.role !== "staff") {
+    if (session.role !== "admin" && session.role !== "staff" && session.role !== "counsellor") {
       return NextResponse.json(
         { error: "Only admin can update fee installment plans." },
         { status: 403 },
@@ -302,7 +302,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.role !== "admin" && session.role !== "staff") {
+    if (session.role !== "admin" && session.role !== "staff" && session.role !== "counsellor") {
       return NextResponse.json(
         { error: "Only admin can delete fee installment plans." },
         { status: 403 },

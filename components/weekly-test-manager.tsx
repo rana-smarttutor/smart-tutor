@@ -157,7 +157,7 @@ export function WeeklyTestManager({
   linkedStudentId,
   initialWeeklyTests = [],
 }: WeeklyTestManagerProps) {
-  const canManage = role === "admin" || role === "educator" || role === "staff";
+  const canManage = role === "admin" || role === "educator" || (role === "staff" || role === "counsellor");
 
   const [weeklyTests, setWeeklyTests] =
     useState<WeeklyTest[]>(initialWeeklyTests);

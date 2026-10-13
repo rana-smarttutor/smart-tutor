@@ -1,3 +1,4 @@
+import { logAction } from "@/lib/audit-log";
 
 import { NextResponse } from "next/server";
 
@@ -473,6 +474,21 @@ export async function POST(
         ...record,
         _id: result.insertedId,
       });
+
+    await logAction({
+      action: "create",
+      category: "crm",
+      details: "Created career counselling record",
+      path: new URL(request.url).pathname,
+      method: request.method,
+      request,
+      session,
+      statusCode: 201,
+      metadata: {
+        recordId: String(result.insertedId),
+        module: "career-counselling",
+      },
+    });
 
     return NextResponse.json(
       {

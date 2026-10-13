@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
@@ -75,7 +75,7 @@ export async function GET() {
 let contacts: Array<{
   id: string;
   name: string;
-  role: "admin" | "educator" | "staff" | "student";
+  role: "admin" | "educator" | "staff" | "counsellor" | "student";
   status?: string;
   verified?: boolean;
 }> = [];
@@ -164,7 +164,7 @@ if (session.role === "student") {
   }
 
 
-  if (session.role === "staff") {
+  if (session.role === "staff" || session.role === "counsellor") {
     const users = await getUsersForAdmin();
 
     contacts = users
@@ -174,7 +174,7 @@ if (session.role === "student") {
           (
             user.role === "admin" ||
             user.role === "educator" ||
-            user.role === "staff"
+            (user.role === "staff" || user.role === "counsellor")
           ) &&
           user.status === "active" &&
           user.verified !== false,
@@ -313,6 +313,8 @@ export async function POST(request: Request) {
     "student",
     "educator",
     "admin",
+    "staff",
+    "counsellor",
   ];
 
   if (!validRoles.includes(body.receiverRole)) {
@@ -396,6 +398,27 @@ if (
    * Validate before creating the message.
    * Restricted messages never reach createChatMessage().
    */
+  if (session.role === "staff" || session.role === "counsellor") {
+    const allowedRoles = ["admin", "educator", "staff", "counsellor"];
+
+    const users = await getUsersForAdmin();
+
+    const recipient = users.find(
+      (user) =>
+        user.id === body.receiverId &&
+        user.role === body.receiverRole &&
+        user.id !== session.id &&
+        user.status === "active" &&
+        user.verified !== false,
+    );
+
+    if (!allowedRoles.includes(body.receiverRole ?? "") || !recipient) {
+      return NextResponse.json(
+        { error: "This chat recipient is not available to your account." },
+        { status: 403 },
+      );
+    }
+  }
   const validation =
     validateChatContent(content);
 
@@ -500,7 +523,9 @@ const message = await createChatMessage({
   receiverRole: body.receiverRole as
     | "student"
     | "educator"
-    | "admin",
+    | "admin"
+    | "staff"
+    | "counsellor",
   body: content,
 });
 

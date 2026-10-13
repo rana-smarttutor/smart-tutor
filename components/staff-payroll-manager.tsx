@@ -83,7 +83,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 export function StaffPayrollManager({ role, session, managedUsers }: StaffPayrollManagerProps) {
   const isAdmin = role === "admin";
   const isEducator = role === "educator";
-  const isStaff = role === "staff";
+  const isStaff = role === "staff" || role === "counsellor";
   const isEmployee = isEducator || isStaff;
 
   const now = new Date();

@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { logAction } from "@/lib/audit-log";
@@ -133,6 +133,8 @@ export async function GET(request: Request) {
 
     if (
       session.role !== "admin" &&
+      session.role !== "staff" &&
+      session.role !== "counsellor" &&
       requestedUserId &&
       requestedUserId !== session.id
     ) {
@@ -157,7 +159,7 @@ export async function GET(request: Request) {
       }
 
       const userId =
-        session.role === "admin"
+        (session.role === "admin" || session.role === "staff" || session.role === "counsellor")
           ? requestedUserId || undefined
           : session.id;
 
@@ -183,7 +185,7 @@ export async function GET(request: Request) {
       );
     }
 
-    if (session.role === "admin") {
+    if (session.role === "admin" || session.role === "staff" || session.role === "counsellor") {
       const records = await getStaffAttendanceForDate(date);
       const stats = await getStaffAttendanceStats(date);
 
@@ -372,7 +374,7 @@ export async function POST(request: Request) {
     // ========================================
 
     if (action === "bulk-mark") {
-      if (session.role !== "admin") {
+      if (session.role !== "admin" && session.role !== "staff" && session.role !== "counsellor") {
         return NextResponse.json(
           { error: "Only Admin can mark staff attendance." },
           { status: 403 },

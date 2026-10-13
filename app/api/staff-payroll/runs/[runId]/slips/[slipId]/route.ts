@@ -38,7 +38,7 @@ function readSession(payload: unknown): SessionUser | null {
     !user.id ||
     (user.role !== "admin" &&
       user.role !== "educator" &&
-      user.role !== "staff" &&
+      user.role !== "staff" && user.role !== "counsellor" &&
       user.role !== "student" &&
       user.role !== "parent")
   ) {

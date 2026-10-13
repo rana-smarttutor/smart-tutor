@@ -342,6 +342,18 @@ const DashboardCertificatesSection = dynamic(
     ssr: false,
   },
 );
+const AdminUserActivityLogs = dynamic(
+  () => import("@/components/admin-user-activity-logs")
+    .then((module) => module.AdminUserActivityLogs),
+);
+const AdminStaffApprovals = dynamic(
+  () =>
+    import("@/components/admin-staff-approvals").then(
+      (module) => module.AdminStaffApprovals,
+    ),
+  { loading: () => <SectionLoading /> },
+);
+
 const AdminProfitLossManager = dynamic(
   () =>
     import("@/components/admin-profit-loss-manager").then(
@@ -438,22 +450,40 @@ const sidebarByRole = {
     { id: "sales-crm", label: "Lead Management" },
     { id: "fees", label: "Fees Collection" },
     { id: "branch-expenses", label: "Branch Expenses" },
-    { id: "staff-attendance", label: "Attendance & Leave" },
+    { id: "staff-attendance", label: "Staff Attendance" },
     { id: "staff-tasks", label: "Staff Tasks & Reports" },
     { id: "performance", label: "Student Performance Reports" },
     { id: "daily-branch-report", label: "Daily Branch Report" },
     { id: "messages", label: "Notices & Announcements" },
     { id: "complaints", label: "Student Queries & Complaints" },
+    { id: "staff-payroll", label: "Payroll & Salary" },
+    { id: "staff-payouts", label: "My Payouts" },
     { id: "profile", label: "Employee Profile" },
     { id: "leave", label: "My Leave" },
     { id: "chat", label: "Chat" },
   ],
   counsellor: [
-    { id: "overview", label: "Overview" },
-    { id: "new-admission-form", label: "Admissions" },
+    { id: "overview", label: "Dashboard" },
+    { id: "lectures", label: "Lecture Management" },
+    { id: "attendance", label: "Student Attendance" },
+    { id: "weekly-tests", label: "Test Management" },
+    { id: "ptm", label: "Parents Teacher Meeting" },
+    { id: "new-admission-form", label: "Admission Form" },
     { id: "career-counselling", label: "Career Counselling" },
-    { id: "staff-attendance", label: "My Attendance" },
+    { id: "sales-crm", label: "Lead Management" },
+    { id: "fees", label: "Fees Collection" },
+    { id: "branch-expenses", label: "Branch Expenses" },
+    { id: "staff-attendance", label: "Staff Attendance" },
+    { id: "staff-tasks", label: "Staff Tasks & Reports" },
+    { id: "performance", label: "Student Performance Reports" },
+    { id: "daily-branch-report", label: "Daily Branch Report" },
+    { id: "messages", label: "Notices & Announcements" },
+    { id: "complaints", label: "Student Queries & Complaints" },
+    { id: "staff-payroll", label: "Payroll & Salary" },
     { id: "staff-payouts", label: "My Payouts" },
+    { id: "profile", label: "Employee Profile" },
+    { id: "leave", label: "My Leave" },
+    { id: "chat", label: "Chat" },
   ],
 
   admin: [
@@ -485,6 +515,8 @@ const sidebarByRole = {
     { id: "profit-loss", label: "Profit & Loss" },
     { id: "fee-deletion-audit", label: "Transaction Log" },
     { id: "audit-log", label: "Audit Log" },
+    { id: "user-activity-logs", label: "User Activity Logs" },
+    { id: "staff-approvals", label: "Staff Approvals" },
     { id: "staff-payouts", label: "Staff Payouts" },
     { id: "sales-crm", label: "Sales CRM" },
     { id: "placement-jobs", label: "Placement Jobs" },
@@ -604,6 +636,8 @@ const menuSections = [
       "biometric",
       "roles",
       "audit-log",
+      "user-activity-logs",
+      "staff-approvals",
     ],
   },
   {
@@ -659,7 +693,7 @@ const staffMenuSections = [
   },
   {
     label: "2. Academic Management",
-    items: ["lectures", "attendance", "weekly-tests", "ptm"],
+    items: ["lectures", "attendance", "staff-attendance", "weekly-tests", "ptm"],
   },
   {
     label: "3. Admissions Management",
@@ -671,7 +705,7 @@ const staffMenuSections = [
   },
   {
     label: "5. Staff Management",
-    items: ["staff-attendance", "staff-tasks"],
+    items: ["staff-tasks"],
   },
   {
     label: "6. Reports & Communication",
@@ -1758,7 +1792,7 @@ export function DashboardShell({
             scrollbarColor: "#3B82F6 #0A1637",
           }}
         >
-          {(role === "staff" ? staffMenuSections : menuSections).map(
+          {((role === "staff" || role === "counsellor") ? staffMenuSections : menuSections).map(
             (section) => {
               const sectionItems = resolvedSidebarItems.filter((item) =>
                 section.items.includes(item.id),
@@ -1797,7 +1831,7 @@ export function DashboardShell({
                             : "text-slate-400 hover:bg-white/5 hover:text-white"
                         }`}
                         onClick={() => {
-                          if (role === "staff" && item.id === "performance") {
+                          if ((role === "staff" || role === "counsellor") && item.id === "performance") {
                             window.location.assign("/student-performance");
                             return;
                           }
@@ -1977,7 +2011,7 @@ export function DashboardShell({
           (role === "student" ||
             role === "educator" ||
             role === "parent" ||
-            role === "staff") ? (
+            role === "staff" || role === "counsellor") ? (
             <DashboardProfileSettings
               session={session}
               role={role}
@@ -2029,7 +2063,7 @@ export function DashboardShell({
             role === "educator" ||
             role === "student" ||
             role === "parent" ||
-            role === "staff") ? (
+            role === "staff" || role === "counsellor") ? (
             <DashboardComplaintBox session={session} role={role} />
           ) : null}
 
@@ -2321,7 +2355,7 @@ export function DashboardShell({
           ) : null}
 
           {showAttendance &&
-          (role === "admin" || role === "educator" || role === "staff") ? (
+          (role === "admin" || role === "educator") ? (
             <AttendanceHub
               role={role}
               attendanceSheets={dashboard.attendanceSheets}
@@ -2329,6 +2363,16 @@ export function DashboardShell({
               managedUsers={localManagedUsers}
               userId={session?.id}
               userName={session?.name}
+            />
+          ) : null}
+
+          {showAttendance && (role === "staff" || role === "counsellor") ? (
+            <AttendanceManager
+              role={role}
+              attendanceSheets={dashboard.attendanceSheets}
+              studentDirectory={studentDirectory}
+              managedUsers={localManagedUsers}
+              userId={session?.id}
             />
           ) : null}
 
@@ -2368,7 +2412,7 @@ export function DashboardShell({
           {showProfitLoss && role === "admin" ? (
             <AdminProfitLossManager />
           ) : null}
-          {showFees && (role === "admin" || role === "staff") ? (
+          {showFees && (role === "admin" || role === "staff" || role === "counsellor") ? (
             <AdminFeeHub
               role={role}
               feeInvoices={dashboard.feeInvoices}
@@ -2377,7 +2421,7 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showFeeInstallments && role === "staff" ? (
+          {showFeeInstallments && (role === "staff" || role === "counsellor") ? (
             <FeeInstallmentManager
               role={role}
               studentDirectory={studentDirectory}
@@ -2394,7 +2438,7 @@ export function DashboardShell({
 
           {showRewards && role === "educator" ? <RewardsManager /> : null}
           {showStaffPayroll &&
-          (role === "admin" || role === "educator" || role === "staff") ? (
+          (role === "admin" || role === "educator" || role === "staff" || role === "counsellor") ? (
             <StaffPayrollManager
               role={role}
               session={session}
@@ -2403,7 +2447,7 @@ export function DashboardShell({
           ) : null}
 
           {showStaffPayouts &&
-          (role === "admin" || role === "educator" || role === "staff") ? (
+          (role === "admin" || role === "educator" || role === "staff" || role === "counsellor") ? (
             <StaffPayoutManager
               role={role}
               session={session}
@@ -2415,6 +2459,16 @@ export function DashboardShell({
             <FeeTransactionLogView session={session} />
           ) : null}
 
+          {activeSection === "user-activity-logs" && role === "admin" ? (
+
+            <AdminUserActivityLogs />
+
+          ) : null}
+
+          {activeSection === "staff-approvals" && role === "admin" ? (
+            <AdminStaffApprovals />
+          ) : null}
+
           {showAuditLog && role === "admin" ? (
             <AuditLogPanel session={session} />
           ) : null}
@@ -2423,20 +2477,20 @@ export function DashboardShell({
             <FacultyPerformanceManager />
           ) : null}
 
-          {role === "staff" && activeSection === "staff-tasks" ? (
+          {(role === "staff" || role === "counsellor") && activeSection === "staff-tasks" ? (
             <StaffOperationsManager kind="tasks" />
           ) : null}
-          {role === "staff" && activeSection === "branch-expenses" ? (
+          {(role === "staff" || role === "counsellor") && activeSection === "branch-expenses" ? (
             <StaffOperationsManager kind="expenses" />
           ) : null}
-          {role === "staff" && activeSection === "daily-branch-report" ? (
+          {(role === "staff" || role === "counsellor") && activeSection === "daily-branch-report" ? (
             <StaffOperationsManager kind="daily-reports" />
           ) : null}
 
-          {showLectures && role === "staff" ? (
+          {showLectures && (role === "staff" || role === "counsellor") ? (
             <StaffLectureOverview lectures={dashboard.lectures} />
           ) : null}
-          {showLectures && role !== "staff" ? (
+          {showLectures && role !== "staff" && role !== "counsellor" ? (
             <LectureManager
               role={role}
               lectures={dashboard.lectures}
@@ -2769,7 +2823,7 @@ export function DashboardShell({
                   {/* Admin and Educator Report Creator */}
                   {role === "educator" ||
                   role === "admin" ||
-                  role === "staff" ? (
+                  role === "staff" || role === "counsellor" ? (
                     <PerformanceReportCreator
                       session={session}
                       studentDirectory={studentDirectory}

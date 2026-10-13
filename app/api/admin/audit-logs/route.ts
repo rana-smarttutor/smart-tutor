@@ -5,7 +5,7 @@ import { getActionLogs, getActionLogStats } from "@/lib/data-store";
 
 export async function GET(request: Request) {
   const session = await getSessionUser();
-  if (!session || session.role !== "admin") {
+  if (!session || session.role !== "admin" || session.status !== "active" || session.deletedAt) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 

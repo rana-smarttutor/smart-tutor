@@ -519,7 +519,7 @@ export function DashboardProfileSettings({
               {session?.email}
             </p>
 
-            {(isEducator || session?.role === "staff") && (session?.employeeCode ?? session?.facultyCode) && (
+            {(isEducator || session?.role === "staff" || session?.role === "counsellor") && (session?.employeeCode ?? session?.facultyCode) && (
               <p className="mt-1 font-mono text-xs font-semibold text-[var(--color-muted)]">
                 Employee ID: {(session.employeeCode ?? session.facultyCode)}
               </p>

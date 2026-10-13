@@ -51,7 +51,7 @@ export function StaffAttendanceManager({
   const [checkingIn, setCheckingIn] = useState(false);
   const [myAttendance, setMyAttendance] = useState<StaffAttendanceRecord[]>([]);
   const [viewTab, setViewTab] = useState<"admin" | "mine">(
-    role === "admin" ? "admin" : "mine",
+    (role === "admin" || role === "staff" || role === "counsellor") ? "admin" : "mine",
   );
   const [saving, setSaving] = useState(false);
 
@@ -213,7 +213,7 @@ export function StaffAttendanceManager({
   }
 
   async function handleBulkSave() {
-    if (role !== "admin") return;
+    if (role !== "admin" && role !== "staff" && role !== "counsellor") return;
     setSaving(true);
     try {
       const staffUsers = managedUsers.filter(
@@ -366,7 +366,7 @@ export function StaffAttendanceManager({
     }
 
     if (staffFilter === "non_teaching") {
-      return user.role === "staff";
+      return user.role === "staff" || user.role === "counsellor" || user.role === "admin";
     }
 
     return true;
@@ -406,7 +406,7 @@ export function StaffAttendanceManager({
       {!embedded ? (
         <div>
           <p className="section-label">
-            {role === "admin" ? "Operations" : "My Attendance"}
+            {(role === "admin" || role === "staff" || role === "counsellor") ? "Attendance Management" : "My Attendance"}
           </p>
           <h2 className="text-3xl font-semibold tracking-tight text-[var(--color-heading)]">
             Staff Attendance
@@ -521,7 +521,7 @@ export function StaffAttendanceManager({
       </div>
 
       {/* Tabs */}
-      {role === "admin" && (
+      {(role === "admin" || role === "staff" || role === "counsellor") && (
         <div className="flex gap-2 border-b border-[var(--color-border)] pb-2">
           <button
             type="button"
@@ -549,7 +549,7 @@ export function StaffAttendanceManager({
       )}
 
       {/* Admin: Bulk Mark */}
-      {viewTab === "admin" && role === "admin" && (
+      {viewTab === "admin" && (role === "admin" || role === "staff" || role === "counsellor") && (
         <div className="surface rounded-[2rem] overflow-hidden">
 
           <div className="flex flex-wrap gap-2 border-b border-slate-200 bg-white p-4">
@@ -614,7 +614,7 @@ export function StaffAttendanceManager({
               >
                 All Absent
               </button>
-              {role === "admin" && (
+              {(role === "admin" || role === "staff" || role === "counsellor") && (
                 <button
                   type="button"
                   onClick={handleBulkSave}
@@ -790,7 +790,7 @@ export function StaffAttendanceManager({
       />
 
       {/* My History */}
-      {(viewTab === "mine" || role !== "admin") && (
+      {(viewTab === "mine") && (
         <div className="surface rounded-[2rem] border border-slate-200/80 bg-white p-5 shadow-[0_8px_26px_rgba(15,23,42,0.07)] sm:p-6">
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-xl font-black tracking-[-0.02em] text-[var(--color-heading)] sm:text-2xl">

@@ -153,7 +153,7 @@ export function FeeInstallmentManager({
   role,
   studentDirectory,
 }: FeeInstallmentManagerProps) {
-  const canManage = role === "admin" || role === "staff";
+  const canManage = role === "admin" || (role === "staff" || role === "counsellor");
 
   const [plans, setPlans] = useState<FeeInstallmentPlan[]>([]);
   const [selectedStudentId, setSelectedStudentId] = useState("");

@@ -301,7 +301,7 @@ export function DashboardComplaintBox({
   role,
 }: DashboardComplaintBoxProps) {
   const isAdmin =
-    role === "admin" || role === "staff";
+    role === "admin" || (role === "staff" || role === "counsellor");
 
   const canSubmit =
     role === "student" ||

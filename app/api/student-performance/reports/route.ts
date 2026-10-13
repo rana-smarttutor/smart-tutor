@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       { status: 401 },
     );
   }
-  if (!hasAnyRole(session, ["admin", "educator", "staff"])) {
+  if (!hasAnyRole(session, ["admin", "educator", "staff", "counsellor"])) {
     return NextResponse.json(
       {
         success: false,

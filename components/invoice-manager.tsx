@@ -325,7 +325,7 @@ export function InvoiceManager({
   feeInvoices,
   studentDirectory,
 }: InvoiceManagerProps) {
-  const canManage = role === "admin" || role === "staff";
+  const canManage = role === "admin" || (role === "staff" || role === "counsellor");
 
   const [invoices, setInvoices] = useState<FeeInvoice[]>(feeInvoices);
   const [showForm, setShowForm] = useState(false);

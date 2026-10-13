@@ -24,7 +24,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-if (session.role !== "admin" && session.role !== "staff") {
+if (session.role !== "admin" && session.role !== "staff" && session.role !== "counsellor") {
   return NextResponse.json(
     { error: "Only admin and staff can update fee invoices." },
     { status: 403 },

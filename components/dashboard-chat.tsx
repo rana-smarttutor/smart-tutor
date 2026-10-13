@@ -328,7 +328,7 @@ if (role === "student") {
     ).values(),
   ];
 }
-    if (role === "staff") {
+    if (role === "staff" || role === "counsellor") {
       return (managedUsers ?? []).filter(
         (u) =>
           u.id !== session?.id &&
@@ -337,7 +337,7 @@ if (role === "student") {
           (
             u.role === "admin" ||
             u.role === "educator" ||
-            u.role === "staff"
+            (u.role === "staff" || u.role === "counsellor")
           ),
       );
     }

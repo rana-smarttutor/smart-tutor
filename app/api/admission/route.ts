@@ -1,3 +1,4 @@
+import { logAction } from "@/lib/audit-log";
 import { randomUUID } from "node:crypto";
 import { GridFSBucket, type ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
@@ -543,6 +544,21 @@ export async function POST(request: Request) {
       status: "submitted",
       submittedAt: new Date().toISOString(),
       reviewedAt: null,
+    });
+
+    await logAction({
+      action: "create",
+      category: "students",
+      details: "Submitted admission application",
+      path: new URL(request.url).pathname,
+      method: request.method,
+      request,
+      session,
+      statusCode: 201,
+      metadata: {
+        applicationId,
+        module: "admission",
+      },
     });
 
     return NextResponse.json(

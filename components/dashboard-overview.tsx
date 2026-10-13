@@ -97,7 +97,7 @@ export function DashboardOverview({
       />
     );
   }
-if (role === "staff") {
+if (role === "staff" || role === "counsellor") {
   return (
     <StaffOperationsOverview
       session={session}

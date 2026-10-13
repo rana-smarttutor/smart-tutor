@@ -1,3 +1,4 @@
+import { logAction } from "@/lib/audit-log";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
@@ -173,6 +174,23 @@ export async function POST(request: Request) {
       changedByName: session.name,
       changedAt: now,
     });
+    await logAction({
+      action: "update",
+      category: "attendance",
+      details: "Updated staff daily activities",
+      path: new URL(request.url).pathname,
+      method: request.method,
+      request,
+      session,
+      statusCode: 200,
+      metadata: {
+        attendanceRecordId: result.attendance.id,
+        staffUserId: userId,
+        date,
+        module: "staff-attendance",
+      },
+    });
+
     return NextResponse.json({ success: true, activity, savedAt: now });
   } catch (error) {
     console.error("Save staff activities error:", error);

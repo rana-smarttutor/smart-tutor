@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { ClientSession, Db, Document } from "mongodb";
 
 import { getSessionUser } from "@/lib/auth";
+import { getMongoClient } from "@/lib/mongodb";
 import { extractRequestMeta } from "@/lib/audit-log";
 import type { SessionUser } from "@/lib/types";
 
@@ -18,7 +19,7 @@ export async function getStaffContext(
 
   if (
     !user ||
-    user.role !== "staff" ||
+    !["staff", "counsellor"].includes(user.role) ||
     user.status !== "active" ||
     user.deletedAt
   ) {
@@ -28,7 +29,7 @@ export async function getStaffContext(
   const stored = await db.collection("users").findOne(
     {
       id: user.id,
-      role: "staff",
+      role: user.role,
       status: "active",
       deletedAt: { $exists: false },
     },
@@ -99,7 +100,8 @@ export async function withStaffAudit<T>(
     session: ClientSession,
   ) => Promise<T>,
 ): Promise<T> {
-  const session = db.client.startSession();
+  const client = await getMongoClient();
+  const session = client.startSession();
 
   try {
     let output!: T;

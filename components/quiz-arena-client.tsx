@@ -198,7 +198,11 @@ export default function QuizArenaClient({
   }, [selectedExamDetails, selectedExam, selectedSchoolClass, selectedBoard]);
 
   const governmentSyllabus = useMemo(() => {
-    if (selectedLevel !== "government-exam" || !selectedExam || !isMockTestPage) {
+    if (
+      selectedLevel !== "government-exam" ||
+      !selectedExam ||
+      !isMockTestPage
+    ) {
       return null;
     }
 
@@ -409,6 +413,15 @@ export default function QuizArenaClient({
 
     setResult(null);
 
+    // If the user is on Round Selection,
+    // close the popup and stay on the same screen.
+    if (step === "round") {
+      setShowResumeChoice(false);
+      setSelectedRound(null);
+      setMessage("");
+      return;
+    }
+
     setSelectedLevel(null);
 
     setSelectedExam(null);
@@ -591,15 +604,12 @@ export default function QuizArenaClient({
       return;
     }
 
-    const historyKey =
-      "__smartIqMockTestBackGuard";
+    const historyKey = "__smartIqMockTestBackGuard";
 
     function currentHistoryState(): Record<string, unknown> {
-      const value =
-        window.history.state;
+      const value = window.history.state;
 
-      return value &&
-        typeof value === "object"
+      return value && typeof value === "object"
         ? {
             ...value,
           }
@@ -649,8 +659,7 @@ export default function QuizArenaClient({
        * browser can actually leave /mock-test.
        */
       if (allowBrowserExitRef.current) {
-        allowBrowserExitRef.current =
-          false;
+        allowBrowserExitRef.current = false;
 
         return;
       }
@@ -671,10 +680,7 @@ export default function QuizArenaClient({
         return;
       }
 
-      const firstMockTestStep =
-        startAtCategory
-          ? "level"
-          : "welcome";
+      const firstMockTestStep = startAtCategory ? "level" : "welcome";
 
       /*
        * Still inside the Mock Test journey:
@@ -695,28 +701,17 @@ export default function QuizArenaClient({
        * The same Back click should now continue to the page
        * that the visitor was on before entering Mock Test.
        */
-      allowBrowserExitRef.current =
-        true;
+      allowBrowserExitRef.current = true;
 
       window.history.back();
     }
 
-    window.addEventListener(
-      "popstate",
-      handleBrowserBack,
-    );
+    window.addEventListener("popstate", handleBrowserBack);
 
     return () => {
-      window.removeEventListener(
-        "popstate",
-        handleBrowserBack,
-      );
+      window.removeEventListener("popstate", handleBrowserBack);
     };
-  }, [
-    isMockTestPage,
-    startAtCategory,
-    step,
-  ]);
+  }, [isMockTestPage, startAtCategory, step]);
 
   function requestExitQuiz() {
     setExitSaveError("");
@@ -833,9 +828,7 @@ export default function QuizArenaClient({
 
     const effectiveDifficulty = getDifficultyForJourneyLevel(progressionLevel);
 
-    const source = isMockTestPage
-      ? "mock-test"
-      : "quiz-arena";
+    const source = isMockTestPage ? "mock-test" : "quiz-arena";
 
     try {
       setIsGenerating(true);
@@ -1059,9 +1052,7 @@ export default function QuizArenaClient({
         subject: journeySubject,
         difficulty: "easy",
 
-        source: isMockTestPage
-          ? "mock-test"
-          : "quiz-arena",
+        source: isMockTestPage ? "mock-test" : "quiz-arena",
       });
 
       if (selectedSchoolClass) {
@@ -1203,9 +1194,7 @@ export default function QuizArenaClient({
 
           difficulty: "easy",
 
-          source: isMockTestPage
-            ? "mock-test"
-            : "quiz-arena",
+          source: isMockTestPage ? "mock-test" : "quiz-arena",
 
           progressionLevel: selectedJourneyLevel,
 
@@ -1553,7 +1542,6 @@ export default function QuizArenaClient({
             </button>
 
             <div className="relative z-10">
-
               {/* Icon */}
 
               <div
@@ -1626,15 +1614,13 @@ export default function QuizArenaClient({
                   sm:text-sm
                 "
               >
-                Log in to access{" "}
-                {isMockTestPage ? "Mock Tests" : "Quiz Arena"},
+                Log in to access {isMockTestPage ? "Mock Tests" : "Quiz Arena"},
                 explore learning resources and track your progress.
               </p>
 
               {/* Actions */}
 
               <div className="mt-7 grid gap-3">
-
                 <Link
                   href={
                     isMockTestPage
@@ -1663,7 +1649,6 @@ export default function QuizArenaClient({
                   "
                 >
                   Login Now
-
                   <ArrowRight
                     size={17}
                     className="
@@ -1701,7 +1686,6 @@ export default function QuizArenaClient({
                   "
                 >
                   Create Free Account
-
                   <ArrowRight
                     size={16}
                     className="
@@ -1732,7 +1716,7 @@ export default function QuizArenaClient({
           </div>
         </div>
       )}
-{showResumeChoice && unfinishedDraft && (
+      {showResumeChoice && unfinishedDraft && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 py-5 backdrop-blur-sm"
           role="presentation"

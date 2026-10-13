@@ -65,11 +65,19 @@ export async function GET(request: Request) {
       );
     }
 
+    if (kind !== "tasks" && !ctx.branch) {
+      return reply(
+        "Your staff account must have an assigned branch to view these records.",
+        403,
+      );
+    }
+
     const items = await db
       .collection(collections[kind])
       .find(
         {
           ownerId: ctx.user.id,
+          ...(kind === "tasks" ? {} : { branch: ctx.branch }),
           deletedAt: { $exists: false },
         },
         {

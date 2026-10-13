@@ -14,7 +14,7 @@ import { logAction } from "@/lib/audit-log";
 import type { PaymentTransaction } from "@/lib/types";
 
 function canManageFees(role: string | undefined) {
-  return role === "admin" || role === "educator" || role === "staff";
+  return role === "admin" || role === "educator" || role === "staff" || role === "counsellor";
 }
 
 function getText(value: unknown, maxLength = 300) {

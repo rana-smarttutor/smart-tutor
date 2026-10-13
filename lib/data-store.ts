@@ -10499,7 +10499,7 @@ export async function getStaffPayoutsForRole(role: Role, userId?: string) {
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
   }
-  if ((role === "educator" || role === "staff") && userId) {
+  if ((role === "educator" || role === "staff" || role === "counsellor") && userId) {
     return stripMongoIds(
       await collection
         .find({ staffId: userId })
@@ -11580,6 +11580,9 @@ export async function appendActionLogEntries(
   await collection.insertMany(entries as any[], { ordered: false });
 }
 
+function escapeAuditSearch(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 export async function getActionLogs(filters: {
   userId?: string;
   action?: string;
@@ -11599,15 +11602,15 @@ export async function getActionLogs(filters: {
   if (filters.userId) query.userId = filters.userId;
   if (filters.action) query.action = filters.action;
   if (filters.category) query.category = filters.category;
-  if (filters.ip) query.ip = { $regex: filters.ip, $options: "i" };
+  if (filters.ip) query.ip = { $regex: escapeAuditSearch(filters.ip), $options: "i" };
 
   if (filters.search) {
     query.$or = [
-      { details: { $regex: filters.search, $options: "i" } },
-      { userEmail: { $regex: filters.search, $options: "i" } },
-      { userName: { $regex: filters.search, $options: "i" } },
-      { ip: { $regex: filters.search, $options: "i" } },
-      { path: { $regex: filters.search, $options: "i" } },
+      { details: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
+      { userEmail: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
+      { userName: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
+      { ip: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
+      { path: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
     ];
   }
 

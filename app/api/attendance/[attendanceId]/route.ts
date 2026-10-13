@@ -24,7 +24,7 @@ function getOptionalText(value: unknown) {
 
 async function getAllowedAttendanceSheet(
   attendanceId: string,
-  role: "admin" | "educator" | "staff",
+  role: "admin" | "educator" | "staff" | "counsellor",
   userId: string,
 ) {
   const attendanceSheets = await getAttendanceSheetsForRole(
@@ -45,7 +45,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.role !== "admin" && session.role !== "educator" && session.role !== "staff") {
+    if (session.role !== "admin" && session.role !== "educator" && session.role !== "staff" && session.role !== "counsellor") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -117,7 +117,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.role !== "admin" && session.role !== "educator" && session.role !== "staff") {
+    if (session.role !== "admin" && session.role !== "educator" && session.role !== "staff" && session.role !== "counsellor") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

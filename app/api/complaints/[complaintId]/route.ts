@@ -78,7 +78,7 @@ export async function PUT(
      */
     if (
       session.role !==
-      "admin" && session.role !== "staff"
+      "admin" && session.role !== "staff" && session.role !== "counsellor"
     ) {
       return NextResponse.json(
         {

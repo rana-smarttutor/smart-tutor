@@ -142,7 +142,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.role !== "admin" && session.role !== "staff") {
+    if (session.role !== "admin" && session.role !== "staff" && session.role !== "counsellor") {
       return NextResponse.json(
         { error: "Only admin can create fee installment plans." },
         { status: 403 },

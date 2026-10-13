@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DailyStudentAttendanceManager } from "@/components/daily-student-attendance-manager";
 
 import type {
   AttendanceSheet,
@@ -215,7 +216,7 @@ export function AttendanceManager({
 
   embedded = false,
 }: AttendanceManagerProps) {
-  const canEdit = role === "admin" || role === "educator" || role === "staff";
+  const canEdit = role === "admin" || role === "educator" || (role === "staff" || role === "counsellor");
 
   const isAdmin = role === "admin" || role === "educator";
 
@@ -236,6 +237,7 @@ export function AttendanceManager({
   const [isLoading, setIsLoading] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [directorySearch, setDirectorySearch] = useState("");
 
   const [viewMode, setViewMode] = useState<"students" | "faculty">("students");
 
@@ -819,6 +821,14 @@ export function AttendanceManager({
     return days;
   }, [calYear, calMonth, calDateMap]);
 
+  if (canEdit) {
+    return (
+      <DailyStudentAttendanceManager
+        studentDirectory={studentDirectory}
+      />
+    );
+  }
+
   return (
     <section className="space-y-6">
       {/* Hero */}
@@ -1124,6 +1134,101 @@ export function AttendanceManager({
         </div>
       ) : null}
 
+            {/* Complete student directory for attendance managers */}
+      {canEdit ? (
+        <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#0B40A1]">
+                Student Directory
+              </p>
+              <h3 className="mt-1 text-xl font-black text-slate-900">
+                All Registered Students
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {allStudents.length} students in the available directory.
+                Select a course, branch and subject below to mark attendance.
+              </p>
+            </div>
+
+            <input
+              type="search"
+              value={directorySearch}
+              onChange={(event) => setDirectorySearch(event.target.value)}
+              placeholder="Search name, ID, course or branch"
+              aria-label="Search all students"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500 sm:max-w-xs"
+            />
+          </div>
+
+          <div className="max-h-80 overflow-y-auto">
+            {allStudents
+              .filter((student) => {
+                const query = directorySearch.trim().toLowerCase();
+
+                return (
+                  !query ||
+                  student.name.toLowerCase().includes(query) ||
+                  student.id.toLowerCase().includes(query) ||
+                  getStudentCourse(student).toLowerCase().includes(query) ||
+                  getStudentBranch(student).toLowerCase().includes(query)
+                );
+              })
+              .map((student) => (
+                <div
+                  key={student.id}
+                  className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-3 last:border-b-0"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-slate-900">
+                      {student.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {student.id}
+                    </p>
+                  </div>
+
+                  <div className="text-left sm:text-right">
+                    <p className="text-xs font-semibold text-[#0B40A1]">
+                      {getStudentCourse(student)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {getStudentBranch(student)}
+                      {getStudentBatch(student)
+                        ? ` / ${getStudentBatch(student)}`
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+
+            {allStudents.length === 0 ? (
+              <div className="p-8 text-center text-sm text-slate-500">
+                No students were supplied to this dashboard.
+                Student directory access needs to be checked.
+              </div>
+            ) : null}
+
+            {allStudents.length > 0 &&
+            !allStudents.some((student) => {
+              const query = directorySearch.trim().toLowerCase();
+
+              return (
+                !query ||
+                student.name.toLowerCase().includes(query) ||
+                student.id.toLowerCase().includes(query) ||
+                getStudentCourse(student).toLowerCase().includes(query) ||
+                getStudentBranch(student).toLowerCase().includes(query)
+              );
+            }) ? (
+              <div className="p-8 text-center text-sm text-slate-500">
+                No students match your search.
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
       {/* Filter Bar */}
 
       {canEdit ? (
@@ -1340,244 +1445,246 @@ export function AttendanceManager({
         </div>
       ) : null}
 
-      {/* Attendance Grid */}
-
+            {/* Attendance Grid */}
       {localRecords.length > 0 ? (
-        <div className="surface rounded-2xl overflow-hidden">
-          {/* Session header */}
+        <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] px-5 py-4 sm:px-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--color-primary-soft)]">
+          {/* Header */}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                 <svg
-                  className="h-4 w-4 text-[var(--color-primary)]"
+                  className="h-5 w-5"
+                  viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  viewBox="0 0 24 24"
+                  strokeWidth={2}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    d="M8 3h8l4 4v14H4V3h4zm0 8h8m-8 4h8"
                   />
                 </svg>
               </div>
 
-              <div>
-                <p className="text-sm font-bold text-[var(--color-heading)]">
-                  {viewMode === "faculty" ? "Faculty" : "Students"} Attendance
-                </p>
+              <h3 className="text-base font-bold text-slate-800">
+                Attendance for {selectedDate}
+              </h3>
 
-                <p className="text-xs text-[var(--color-muted)]">
-                  {selectedCourse} · {selectedBranch} · {selectedBatchLabel} ·{" "}
-                  {subject.trim()}
-                </p>
-
-                <p className="text-xs text-[var(--color-muted)]">
-                  {new Date(selectedDate).toLocaleDateString("en-IN", {
-                    day: "numeric",
-
-                    month: "long",
-
-                    year: "numeric",
-                  })}
-                </p>
-              </div>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(event) => {
+                  if (resetLoadedAttendance()) {
+                    setSelectedDate(event.target.value);
+                  }
+                }}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500"
+              />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-success)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />{" "}
-                {stats.present} Present
-              </span>
-
-              <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-danger)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--color-danger)]" />{" "}
-                {stats.absent} Absent
-              </span>
-
-              <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-amber)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--color-amber)]" />{" "}
-                {stats.late} Late
-              </span>
-
-              {stats.unmarked > 0 ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--color-muted)]">
-                  <span className="h-2 w-2 rounded-full bg-[var(--color-border)]" />{" "}
-                  {stats.unmarked} Unmarked
-                </span>
-              ) : null}
-            </div>
-          </div>
-
-          {/* Actions bar */}
-
-          {canEdit ? (
-            <div className="flex flex-wrap items-center gap-3 border-b border-[var(--color-border)] px-5 py-3 sm:px-6">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => markAll("present")}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-3 py-1.5 text-xs font-bold text-[var(--color-success)] transition hover:bg-[var(--color-success)]/20"
+                disabled={!canEdit || isSaving}
+                className="rounded-xl bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-600 transition hover:bg-emerald-100 disabled:opacity-50"
               >
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
                 All Present
               </button>
 
               <button
                 type="button"
                 onClick={() => markAll("absent")}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-danger)]/30 bg-[var(--color-danger)]/10 px-3 py-1.5 text-xs font-bold text-[var(--color-danger)] transition hover:bg-[var(--color-danger)]/20"
+                disabled={!canEdit || isSaving}
+                className="rounded-xl bg-red-50 px-4 py-3 text-xs font-bold text-red-500 transition hover:bg-red-100 disabled:opacity-50"
               >
-                <svg
-                  className="h-3 w-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
                 All Absent
               </button>
 
-              <div className="relative ml-auto max-w-[200px] flex-1">
-                <svg
-                  className="absolute left-3 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--color-muted)]"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-
-                <input
-                  type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search name..."
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-1.5 pl-9 pr-3 text-xs text-[var(--color-heading)] outline-none transition focus:border-[var(--color-primary)]"
-                />
-              </div>
-
-              {lastSaved ? (
-                <span className="text-[10px] text-[var(--color-muted)]">
-                  Saved: {lastSaved}
-                </span>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => void saveAttendance()}
+                disabled={!canEdit || isSaving || !hasUnsaved}
+                className="rounded-full bg-[#4F46E5] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#4338CA] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSaving ? "Saving..." : "Save Attendance"}
+              </button>
             </div>
-          ) : null}
-
-          {/* Person cards */}
-
-          <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 sm:p-6">
-            {filteredPeople.map((person) => {
-              const record = localRecords.find((r) => r.personId === person.id);
-
-              const status = record?.status ?? "unmarked";
-
-              const cfg = STATUS_CONFIG[status];
-
-              return (
-                <button
-                  key={person.id}
-                  type="button"
-                  onClick={() => cycleStatus(person.id)}
-                  disabled={!canEdit || (viewMode === "faculty" && !isAdmin)}
-                  className={`relative flex items-center gap-3 rounded-xl border p-4 text-left transition-all ${
-                    !canEdit || (viewMode === "faculty" && !isAdmin)
-                      ? "cursor-default border-[var(--color-border)]"
-                      : status === "unmarked"
-                        ? "border-[var(--color-border)] hover:border-[var(--color-primary)] hover:shadow-sm cursor-pointer"
-                        : "border-transparent cursor-pointer"
-                  } ${cfg.bg}`}
-                >
-                  <div
-                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${getAvatarGradient(person.id)} text-sm font-bold text-white shadow-sm`}
-                  >
-                    {getInitials(person.name)}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-[var(--color-heading)]">
-                      {person.name}
-                    </p>
-
-                    <p className="truncate text-[10px] text-[var(--color-muted)]">
-                      {viewMode === "faculty" ? "Faculty" : person.id}
-                    </p>
-                  </div>
-
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <span className={`h-2.5 w-2.5 rounded-full ${cfg.dot}`} />
-
-                    <span className={`text-[10px] font-bold ${cfg.color}`}>
-                      {cfg.label}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
           </div>
 
-          {filteredPeople.length === 0 && search ? (
-            <div className="px-6 pb-6 text-center text-sm text-[var(--color-muted)]">
-              No students match &quot;{search}&quot;
+          {/* Filters summary and search */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50/50 px-5 py-3">
+            <div className="text-xs font-medium text-slate-600">
+              {selectedCourse} / {selectedBranch} / {selectedBatchLabel}
+              {" / "}
+              {subject}
+            </div>
+
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search student name or ID"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 outline-none focus:border-indigo-500 sm:w-64"
+            />
+          </div>
+
+          {/* Student table */}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
+              <thead>
+                <tr className="bg-[#F1F5F9] text-slate-500">
+                  <th className="px-5 py-4 font-bold">
+                    Student Name
+                  </th>
+
+                  <th className="px-5 py-4 font-bold">
+                    Course
+                  </th>
+
+                  <th className="px-5 py-4 font-bold">
+                    Batch
+                  </th>
+
+                  <th className="px-5 py-4 font-bold">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {filteredPeople.map((person) => {
+                  const record = localRecords.find(
+                    (item) => item.personId === person.id
+                  );
+
+                  const status = record?.status ?? "unmarked";
+
+                  const initials = person.name
+                    .split(" ")
+                    .filter(Boolean)
+                    .map((part) => part[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2);
+
+                  return (
+                    <tr
+                      key={person.id}
+                      className="border-b border-slate-200 transition hover:bg-slate-50"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xs font-black text-indigo-600">
+                            {initials}
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-800">
+                              {person.name}
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-500">
+                              {person.id}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <span className="inline-flex rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600">
+                          {getStudentCourse(person)}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600">
+                          {getStudentBatch(person) || "Unassigned"}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <select
+                          value={status}
+                          disabled={!canEdit || isSaving}
+                          onChange={(event) => {
+                            const nextStatus = event.target.value as AttendanceStatus | "unmarked";
+
+                            setLocalRecords((current) =>
+                              current.map((item) =>
+                                item.personId === person.id
+                                  ? { ...item, status: nextStatus }
+                                  : item
+                              )
+                            );
+
+                            setHasUnsaved(true);
+                          }}
+                          className={`min-w-[175px] rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:border-indigo-500 ${
+                            status === "present"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : status === "absent"
+                                ? "bg-red-50 text-red-600"
+                                : status === "late"
+                                  ? "bg-amber-50 text-amber-700"
+                                  : status === "excused"
+                                    ? "bg-blue-50 text-blue-700"
+                                    : "bg-white text-slate-700"
+                          }`}
+                        >
+                          <option value="unmarked">
+                            Mark attendance
+                          </option>
+                          <option value="present">
+                            Present
+                          </option>
+                          <option value="absent">
+                            Absent
+                          </option>
+                          <option value="late">
+                            Late
+                          </option>
+                          <option value="excused">
+                            On Leave
+                          </option>
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {filteredPeople.length === 0 ? (
+            <div className="p-8 text-center text-sm text-slate-500">
+              No students match your search.
             </div>
           ) : null}
 
           {/* Footer */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 px-5 py-4">
+            <p className="text-xs font-semibold text-slate-600">
+              {filteredPeople.length} students shown
+              {" | "}
+              {stats.present} present
+              {" | "}
+              {stats.absent} absent
+              {" | "}
+              {stats.unmarked} unmarked
+            </p>
 
-          <div className="border-t border-[var(--color-border)] px-5 py-4 sm:px-6">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-bold text-[var(--color-heading)]">
-                {filteredPeople.length}{" "}
-                {viewMode === "faculty" ? "faculty" : "student"}
-                {filteredPeople.length !== 1 ? "s" : ""} · {stats.unmarked}{" "}
-                unmarked
+            {lastSaved ? (
+              <p className="text-xs font-semibold text-emerald-600">
+                Last saved: {lastSaved}
               </p>
-
-              {canEdit && !(viewMode === "faculty" && !isAdmin) ? (
-                <button
-                  type="button"
-                  onClick={saveAttendance}
-                  disabled={isSaving || !hasUnsaved}
-                  className="btn-action btn-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSaving
-                    ? "Saving..."
-                    : hasUnsaved
-                      ? "Save Changes"
-                      : "No Changes"}
-                </button>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </div>
       ) : null}
-
-      {/* Empty state */}
+{/* Empty state */}
 
       {localRecords.length === 0 && canEdit ? (
         <div className="surface rounded-2xl p-10 text-center">
