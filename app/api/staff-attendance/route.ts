@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-
 import { getSessionUser } from "@/lib/auth";
 import { logAction } from "@/lib/audit-log";
 
@@ -28,12 +27,9 @@ import type {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const STAFF_ROLES: Role[] = [
-  "admin",
-  "educator",
-  "staff",
-  "counsellor",
-];
+const STAFF_ROLES: Role[] = ["admin", "educator", "staff", "counsellor"];
+
+const MANAGER_ROLES: Role[] = ["admin", "staff", "counsellor"];
 
 const VALID_STATUSES: StaffAttendanceStatus[] = [
   "present",
@@ -51,8 +47,12 @@ const VALID_EMPLOYMENT_TYPES: EmploymentType[] = [
   "hourly",
 ];
 
-function isStaffRole(role: Role): boolean {
+function isStaffRole(role: Role) {
   return STAFF_ROLES.includes(role);
+}
+
+function canManageAttendance(role: Role) {
+  return MANAGER_ROLES.includes(role);
 }
 
 function todayInIndia(): string {
@@ -63,17 +63,14 @@ function todayInIndia(): string {
     day: "2-digit",
   }).formatToParts(new Date());
 
-  const year = parts.find((part) => part.type === "year")?.value;
-  const month = parts.find((part) => part.type === "month")?.value;
-  const day = parts.find((part) => part.type === "day")?.value;
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value || "";
 
-  return `${year}-${month}-${day}`;
+  return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
-function isValidDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
+function isValidDate(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 
   const parsed = new Date(`${value}T00:00:00.000Z`);
 
@@ -83,7 +80,7 @@ function isValidDate(value: string): boolean {
   );
 }
 
-function isValidTime(value: string): boolean {
+function isValidTime(value: string) {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
 
@@ -91,20 +88,23 @@ function categoryForRole(role: Role): StaffCategory {
   if (role === "admin") return "Admin";
   if (role === "educator") return "Teacher";
   if (role === "counsellor") return "Counsellor";
-
   return "Staff";
 }
 
 function calculateStats(records: StaffAttendanceRecord[]) {
   return {
     total: records.length,
-    present: records.filter((record) => record.status === "present").length,
-    absent: records.filter((record) => record.status === "absent").length,
-    halfDay: records.filter((record) => record.status === "half_day").length,
-    late: records.filter((record) => record.status === "late").length,
-    onLeave: records.filter((record) => record.status === "on_leave").length,
-    holiday: records.filter((record) => record.status === "holiday").length,
+    present: records.filter((r) => r.status === "present").length,
+    absent: records.filter((r) => r.status === "absent").length,
+    halfDay: records.filter((r) => r.status === "half_day").length,
+    late: records.filter((r) => r.status === "late").length,
+    onLeave: records.filter((r) => r.status === "on_leave").length,
+    holiday: records.filter((r) => r.status === "holiday").length,
   };
+}
+
+function errorResponse(error: string, status: number) {
+  return NextResponse.json({ error }, { status });
 }
 
 export async function GET(request: Request) {
@@ -112,17 +112,11 @@ export async function GET(request: Request) {
     const session = await getSessionUser();
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return errorResponse("Unauthorized", 401);
     }
 
     if (!isStaffRole(session.role)) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 },
-      );
+      return errorResponse("Forbidden", 403);
     }
 
     const { searchParams } = new URL(request.url);
@@ -132,16 +126,11 @@ export async function GET(request: Request) {
     const requestedUserId = searchParams.get("userId");
 
     if (
-      session.role !== "admin" &&
-      session.role !== "staff" &&
-      session.role !== "counsellor" &&
+      !canManageAttendance(session.role) &&
       requestedUserId &&
       requestedUserId !== session.id
     ) {
-      return NextResponse.json(
-        { error: "You can only view your own attendance." },
-        { status: 403 },
-      );
+      return errorResponse("You can only view your own attendance.", 403);
     }
 
     if (startDate || endDate) {
@@ -152,21 +141,17 @@ export async function GET(request: Request) {
         !isValidDate(endDate) ||
         startDate > endDate
       ) {
-        return NextResponse.json(
-          { error: "Invalid attendance date range." },
-          { status: 400 },
-        );
+        return errorResponse("Invalid attendance date range.", 400);
       }
 
-      const userId =
-        (session.role === "admin" || session.role === "staff" || session.role === "counsellor")
-          ? requestedUserId || undefined
-          : session.id;
+      const targetUserId = canManageAttendance(session.role)
+        ? requestedUserId || undefined
+        : session.id;
 
       const records = await getStaffAttendanceForDateRange(
         startDate,
         endDate,
-        userId,
+        targetUserId,
       );
 
       return NextResponse.json({
@@ -179,15 +164,14 @@ export async function GET(request: Request) {
     const date = searchParams.get("date") || todayInIndia();
 
     if (!isValidDate(date)) {
-      return NextResponse.json(
-        { error: "Invalid date." },
-        { status: 400 },
-      );
+      return errorResponse("Invalid date.", 400);
     }
 
-    if (session.role === "admin" || session.role === "staff" || session.role === "counsellor") {
-      const records = await getStaffAttendanceForDate(date);
-      const stats = await getStaffAttendanceStats(date);
+    if (canManageAttendance(session.role)) {
+      const [records, stats] = await Promise.all([
+        getStaffAttendanceForDate(date),
+        getStaffAttendanceStats(date),
+      ]);
 
       return NextResponse.json({
         records,
@@ -196,10 +180,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const myRecord = await getStaffAttendanceForToday(
-      session.id,
-      date,
-    );
+    const myRecord = await getStaffAttendanceForToday(session.id, date);
 
     const records = myRecord ? [myRecord] : [];
 
@@ -211,10 +192,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("Get staff attendance error:", error);
 
-    return NextResponse.json(
-      { error: "Unable to load staff attendance." },
-      { status: 500 },
-    );
+    return errorResponse("Unable to load staff attendance.", 500);
   }
 }
 
@@ -223,53 +201,74 @@ export async function POST(request: Request) {
     const session = await getSessionUser();
 
     if (!session) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return errorResponse("Unauthorized", 401);
     }
 
     if (!isStaffRole(session.role)) {
-      return NextResponse.json(
-        { error: "Forbidden" },
-        { status: 403 },
-      );
+      return errorResponse("Forbidden", 403);
     }
 
-    const body = (await request.json()) as Record<string, unknown>;
+    let body: Record<string, unknown>;
+
+    try {
+      const parsed: unknown = await request.json();
+
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return errorResponse("Invalid request body.", 400);
+      }
+
+      body = parsed as Record<string, unknown>;
+    } catch {
+      return errorResponse("Invalid JSON request.", 400);
+    }
 
     const action = String(body.action || "");
+
+    // Listing requests does not require an attendance date.
+    if (action === "list-regularisations") {
+      const suppliedStatus = body.status ? String(body.status) : undefined;
+
+      const filterStatus =
+        suppliedStatus === "pending" ||
+        suppliedStatus === "approved" ||
+        suppliedStatus === "rejected"
+          ? suppliedStatus
+          : undefined;
+
+      const filterUserId =
+        session.role === "admin" && body.userId
+          ? String(body.userId)
+          : session.role === "admin"
+            ? undefined
+            : session.id;
+
+      const requests = await getRegularisationRequests({
+        status: filterStatus,
+        userId: filterUserId,
+      });
+
+      return NextResponse.json({ requests });
+    }
+
     const date = String(body.date || todayInIndia());
 
     if (!isValidDate(date)) {
-      return NextResponse.json(
-        { error: "Invalid attendance date." },
-        { status: 400 },
-      );
+      return errorResponse("Invalid attendance date.", 400);
     }
 
-    // ========================================
+    // ============================================
     // SELF CHECK-IN
-    // ========================================
+    // ============================================
 
     if (action === "checkin") {
       if (date !== todayInIndia()) {
-        return NextResponse.json(
-          { error: "Check-in is only allowed for today." },
-          { status: 400 },
-        );
+        return errorResponse("Check-in is only allowed for today.", 400);
       }
 
-      const existing = await getStaffAttendanceForToday(
-        session.id,
-        date,
-      );
+      const before = await getStaffAttendanceForToday(session.id, date);
 
-      if (existing?.checkIn) {
-        return NextResponse.json(
-          { error: "You have already checked in today." },
-          { status: 409 },
-        );
+      if (before?.checkIn) {
+        return errorResponse("You have already checked in today.", 409);
       }
 
       await selfCheckIn(
@@ -280,10 +279,7 @@ export async function POST(request: Request) {
         date,
       );
 
-      const updated = await getStaffAttendanceForToday(
-        session.id,
-        date,
-      );
+      const after = await getStaffAttendanceForToday(session.id, date);
 
       await logAction({
         action: "create",
@@ -296,55 +292,40 @@ export async function POST(request: Request) {
         metadata: {
           action: "checkin",
           date,
-          before: existing,
-          after: updated,
+          before,
+          after,
         },
       });
 
       return NextResponse.json({
         success: true,
         message: "Check-in recorded.",
-        record: updated,
+        record: after,
       });
     }
 
-    // ========================================
+    // ============================================
     // SELF CHECK-OUT
-    // ========================================
+    // ============================================
 
     if (action === "checkout") {
       if (date !== todayInIndia()) {
-        return NextResponse.json(
-          { error: "Check-out is only allowed for today." },
-          { status: 400 },
-        );
+        return errorResponse("Check-out is only allowed for today.", 400);
       }
 
-      const existing = await getStaffAttendanceForToday(
-        session.id,
-        date,
-      );
+      const before = await getStaffAttendanceForToday(session.id, date);
 
-      if (!existing?.checkIn) {
-        return NextResponse.json(
-          { error: "Check in first." },
-          { status: 400 },
-        );
+      if (!before?.checkIn) {
+        return errorResponse("Check in first.", 400);
       }
 
-      if (existing.checkOut) {
-        return NextResponse.json(
-          { error: "You have already checked out today." },
-          { status: 409 },
-        );
+      if (before.checkOut) {
+        return errorResponse("You have already checked out today.", 409);
       }
 
       await selfCheckOut(session.id, date);
 
-      const updated = await getStaffAttendanceForToday(
-        session.id,
-        date,
-      );
+      const after = await getStaffAttendanceForToday(session.id, date);
 
       await logAction({
         action: "update",
@@ -357,125 +338,149 @@ export async function POST(request: Request) {
         metadata: {
           action: "checkout",
           date,
-          before: existing,
-          after: updated,
+          before,
+          after,
         },
       });
 
       return NextResponse.json({
         success: true,
         message: "Check-out recorded.",
-        record: updated,
+        record: after,
       });
     }
 
-    // ========================================
-    // ADMIN BULK ATTENDANCE
-    // ========================================
+    // ============================================
+    // MANUAL ATTENDANCE
+    // ADMIN + STAFF + COUNSELLOR
+    // TEACHING + NON-TEACHING
+    // ============================================
 
     if (action === "bulk-mark") {
-      if (session.role !== "admin" && session.role !== "staff" && session.role !== "counsellor") {
-        return NextResponse.json(
-          { error: "Only Admin can mark staff attendance." },
-          { status: 403 },
+      if (!canManageAttendance(session.role)) {
+        return errorResponse(
+          "Only Admin, Staff and Counsellor can manage employee attendance.",
+          403,
         );
       }
 
       if (
         !Array.isArray(body.records) ||
-        body.records.length === 0 ||
+        body.records.length < 1 ||
         body.records.length > 200
       ) {
-        return NextResponse.json(
-          {
-            error:
-              "Provide between 1 and 200 attendance records.",
-          },
-          { status: 400 },
+        return errorResponse(
+          "Provide between 1 and 200 attendance records.",
+          400,
         );
       }
 
-      const submittedRecords = body.records as Array<
-        Record<string, unknown>
-      >;
-
-      const validatedRecords = [];
+      const submittedRecords = body.records as Array<Record<string, unknown>>;
 
       const seenUserIds = new Set<string>();
 
-      for (const submitted of submittedRecords) {
-        const userId = String(submitted.userId || "");
+      const validatedRecords: Array<{
+        userId: string;
+        userName: string;
+        userEmail: string;
+        category: StaffCategory;
+        employmentType: EmploymentType;
+        status: StaffAttendanceStatus;
+        checkIn?: string;
+        checkOut?: string;
+      }> = [];
 
-        if (!userId || seenUserIds.has(userId)) {
-          return NextResponse.json(
-            { error: "Missing or duplicate employee ID." },
-            { status: 400 },
-          );
+      for (const submitted of submittedRecords) {
+        if (
+          !submitted ||
+          typeof submitted !== "object" ||
+          Array.isArray(submitted)
+        ) {
+          return errorResponse("Invalid employee attendance record.", 400);
         }
 
-        seenUserIds.add(userId);
+        const targetUserId = String(submitted.userId || "").trim();
 
-        const user = await findUserById(userId);
+        if (!targetUserId || seenUserIds.has(targetUserId)) {
+          return errorResponse("Missing or duplicate employee ID.", 400);
+        }
+
+        seenUserIds.add(targetUserId);
+
+        const user = await findUserById(targetUserId);
 
         if (!user || !isStaffRole(user.role)) {
-          return NextResponse.json(
-            {
-              error: `Invalid staff account: ${userId}`,
-            },
-            { status: 400 },
-          );
+          return errorResponse(`Invalid staff account: ${targetUserId}`, 400);
         }
 
-        const status = String(
-          submitted.status || "",
-        ) as StaffAttendanceStatus;
+        const status = String(submitted.status || "") as StaffAttendanceStatus;
 
         if (!VALID_STATUSES.includes(status)) {
-          return NextResponse.json(
-            {
-              error: `Invalid attendance status for ${user.name}.`,
-            },
-            { status: 400 },
+          return errorResponse(
+            `Invalid attendance status for ${user.name}.`,
+            400,
           );
         }
 
-        const checkIn = submitted.checkIn
-          ? String(submitted.checkIn)
-          : undefined;
+        const checkIn =
+          submitted.checkIn === undefined ||
+          submitted.checkIn === null ||
+          submitted.checkIn === ""
+            ? undefined
+            : String(submitted.checkIn);
 
-        const checkOut = submitted.checkOut
-          ? String(submitted.checkOut)
-          : undefined;
+        const checkOut =
+          submitted.checkOut === undefined ||
+          submitted.checkOut === null ||
+          submitted.checkOut === ""
+            ? undefined
+            : String(submitted.checkOut);
 
         if (
           (checkIn && !isValidTime(checkIn)) ||
           (checkOut && !isValidTime(checkOut))
         ) {
-          return NextResponse.json(
-            {
-              error: `Invalid check-in/out time for ${user.name}.`,
-            },
-            { status: 400 },
+          return errorResponse(
+            `Invalid check-in/out time for ${user.name}. Use HH:MM.`,
+            400,
           );
         }
 
         if (checkOut && !checkIn) {
-          return NextResponse.json(
-            {
-              error: `${user.name} cannot check out without checking in.`,
-            },
-            { status: 400 },
+          return errorResponse(
+            `${user.name} cannot check out without checking in.`,
+            400,
           );
         }
 
-        const submittedEmploymentType = String(
+        if (checkIn && checkOut && checkOut < checkIn) {
+          return errorResponse(
+            `Check-out time must be after check-in time for ${user.name}.`,
+            400,
+          );
+        }
+
+        if (
+          (status === "absent" ||
+            status === "on_leave" ||
+            status === "holiday") &&
+          (checkIn || checkOut)
+        ) {
+          return errorResponse(
+            `Remove working times or change attendance status for ${user.name}.`,
+            400,
+          );
+        }
+
+        const providedEmploymentType = String(
           submitted.employmentType || "full_time",
         ) as EmploymentType;
 
-        const employmentType =
-          VALID_EMPLOYMENT_TYPES.includes(submittedEmploymentType)
-            ? submittedEmploymentType
-            : "full_time";
+        const employmentType = VALID_EMPLOYMENT_TYPES.includes(
+          providedEmploymentType,
+        )
+          ? providedEmploymentType
+          : "full_time";
 
         validatedRecords.push({
           userId: user.id,
@@ -489,7 +494,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const before = await getStaffAttendanceForDate(date);
+      const beforeRecords = await getStaffAttendanceForDate(date);
 
       const results = await bulkMarkStaffAttendance(
         validatedRecords,
@@ -500,8 +505,7 @@ export async function POST(request: Request) {
       await logAction({
         action: "update",
         category: "attendance",
-        details:
-          `Staff attendance marked for ${results.length} employees on ${date}`,
+        details: `Manual attendance saved by ${session.name} for ${results.length} employees on ${date}`,
         path: "/api/staff-attendance",
         method: "POST",
         request,
@@ -509,8 +513,10 @@ export async function POST(request: Request) {
         metadata: {
           action: "bulk-mark",
           date,
+          markedById: session.id,
+          markedByRole: session.role,
           recordCount: results.length,
-          before: before.filter((record) =>
+          before: beforeRecords.filter((record) =>
             seenUserIds.has(record.userId),
           ),
           after: results,
@@ -519,13 +525,14 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
+        message: `Attendance saved for ${results.length} employees.`,
         records: results,
       });
     }
 
-    // ========================================
+    // ============================================
     // REGULARISATION REQUEST
-    // ========================================
+    // ============================================
 
     if (action === "regularise") {
       const reason = String(body.reason || "").trim();
@@ -535,29 +542,20 @@ export async function POST(request: Request) {
       ) as StaffAttendanceStatus;
 
       if (!reason || reason.length > 1000) {
-        return NextResponse.json(
-          {
-            error:
-              "A reason of up to 1000 characters is required.",
-          },
-          { status: 400 },
+        return errorResponse(
+          "A reason of up to 1000 characters is required.",
+          400,
         );
       }
 
       if (!VALID_STATUSES.includes(requestedStatus)) {
-        return NextResponse.json(
-          { error: "Invalid requested status." },
-          { status: 400 },
-        );
+        return errorResponse("Invalid requested status.", 400);
       }
 
       if (date > todayInIndia()) {
-        return NextResponse.json(
-          {
-            error:
-              "Cannot regularise attendance for a future date.",
-          },
-          { status: 400 },
+        return errorResponse(
+          "Cannot regularise attendance for a future date.",
+          400,
         );
       }
 
@@ -573,29 +571,24 @@ export async function POST(request: Request) {
         (requestedCheckIn && !isValidTime(requestedCheckIn)) ||
         (requestedCheckOut && !isValidTime(requestedCheckOut))
       ) {
-        return NextResponse.json(
-          { error: "Invalid requested time." },
-          { status: 400 },
-        );
+        return errorResponse("Invalid requested check-in/out time.", 400);
       }
 
-      const regularisationRequest =
-        await createRegularisationRequest({
-          userId: session.id,
-          userName: session.name,
-          userEmail: session.email,
-          date,
-          reason,
-          requestedCheckIn,
-          requestedCheckOut,
-          requestedStatus,
-        });
+      const regularisationRequest = await createRegularisationRequest({
+        userId: session.id,
+        userName: session.name,
+        userEmail: session.email,
+        date,
+        reason,
+        requestedCheckIn,
+        requestedCheckOut,
+        requestedStatus,
+      });
 
       await logAction({
         action: "create",
         category: "attendance",
-        details:
-          `Attendance regularisation requested by ${session.name}`,
+        details: `Attendance regularisation requested by ${session.name}`,
         path: "/api/staff-attendance",
         method: "POST",
         request,
@@ -613,58 +606,48 @@ export async function POST(request: Request) {
       });
     }
 
-    // ========================================
-    // ADMIN REVIEW
-    // ========================================
+    // ============================================
+    // REGULARISATION REVIEW — ADMIN ONLY
+    // ============================================
 
     if (action === "review") {
       if (session.role !== "admin") {
-        return NextResponse.json(
-          { error: "Only Admin can review requests." },
-          { status: 403 },
+        return errorResponse(
+          "Only Admin can review regularisation requests.",
+          403,
         );
       }
 
       const requestId = String(body.requestId || "");
 
-      const reviewStatus = String(
-        body.reviewStatus || "",
-      );
+      const reviewStatus = String(body.reviewStatus || "");
 
       if (
         !requestId ||
-        (reviewStatus !== "approved" &&
-          reviewStatus !== "rejected")
+        (reviewStatus !== "approved" && reviewStatus !== "rejected")
       ) {
-        return NextResponse.json(
-          { error: "Invalid request ID or review status." },
-          { status: 400 },
-        );
+        return errorResponse("Invalid request ID or review status.", 400);
       }
 
       const reviewComment = body.reviewComment
         ? String(body.reviewComment)
         : undefined;
 
-      const reviewResult = await reviewRegularisationRequest(
+      const reviewed = await reviewRegularisationRequest(
         requestId,
         session.id,
         reviewStatus,
         reviewComment,
       );
 
-      if (!reviewResult) {
-        return NextResponse.json(
-          { error: "Request not found." },
-          { status: 404 },
-        );
+      if (!reviewed) {
+        return errorResponse("Request not found.", 404);
       }
 
       await logAction({
         action: "update",
         category: "attendance",
-        details:
-          `Regularisation ${requestId} ${reviewStatus} by ${session.name}`,
+        details: `Regularisation ${requestId} ${reviewStatus} by ${session.name}`,
         path: "/api/staff-attendance",
         method: "POST",
         request,
@@ -682,49 +665,10 @@ export async function POST(request: Request) {
       });
     }
 
-    // ========================================
-    // LIST REGULARISATION REQUESTS
-    // ========================================
-
-    if (action === "list-regularisations") {
-      const suppliedStatus = body.status
-        ? String(body.status)
-        : undefined;
-
-      const filterStatus =
-        suppliedStatus === "pending" ||
-        suppliedStatus === "approved" ||
-        suppliedStatus === "rejected"
-          ? suppliedStatus
-          : undefined;
-
-      const filterUserId =
-        session.role === "admin"
-          ? body.userId
-            ? String(body.userId)
-            : undefined
-          : session.id;
-
-      const requests = await getRegularisationRequests({
-        status: filterStatus,
-        userId: filterUserId,
-      });
-
-      return NextResponse.json({
-        requests,
-      });
-    }
-
-    return NextResponse.json(
-      { error: "Invalid action." },
-      { status: 400 },
-    );
+    return errorResponse("Invalid action.", 400);
   } catch (error) {
     console.error("Staff attendance action error:", error);
 
-    return NextResponse.json(
-      { error: "Unable to process request." },
-      { status: 500 },
-    );
+    return errorResponse("Unable to process staff attendance request.", 500);
   }
 }
