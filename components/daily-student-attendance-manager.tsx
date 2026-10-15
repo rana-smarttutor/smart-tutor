@@ -5,17 +5,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   Check,
-  CheckCheck,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
-  Clock3,
   GraduationCap,
   Loader2,
   RotateCcw,
   Save,
   Search,
-  Users,
   X,
 } from "lucide-react";
 
@@ -40,7 +38,40 @@ type Feedback = {
 
 type AttendanceTab = "daily" | "lecture" | "history";
 
+type ProgramCategory =
+  | "Competitive Exams"
+  | "Government Exams"
+  | "Skill Programs";
+
+type StudentGroup = {
+  label: string;
+  members: ManagedUser[];
+};
+
 const DAILY_KEY = "student:daily:v1";
+
+const SCHOOL_CLASSES = [
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+];
+
+const PROGRAM_CATEGORIES: ProgramCategory[] = [
+  "Competitive Exams",
+  "Government Exams",
+  "Skill Programs",
+];
+
+const ATTENDANCE_OPTIONS: AttendanceStatus[] = [
+  "present",
+  "absent",
+  "late",
+];
+
 
 const MARK_CONFIG: Record<
   Mark,
@@ -71,8 +102,7 @@ const MARK_CONFIG: Record<
   excused: {
     label: "Leave",
     active: "border-blue-600 bg-blue-600 text-white",
-    inactive:
-      "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50",
+    inactive: "border-slate-200 bg-white text-slate-600",
   },
   unmarked: {
     label: "Not marked",
@@ -81,21 +111,15 @@ const MARK_CONFIG: Record<
   },
 };
 
-const ATTENDANCE_OPTIONS: AttendanceStatus[] = [
-  "present",
-  "absent",
-  "late",
-  "excused",
-];
 
 function localDate() {
   const date = new Date();
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 function formatDate(value: string) {
@@ -123,7 +147,6 @@ function courseOf(student: ManagedUser) {
 function classRank(value: string) {
   const text = value.toLowerCase().trim();
 
-  // School classes first.
   const match = text.match(
     /(?:class|grade|standard|std\.?)\s*[-:]?\s*(\d{1,2})(?:st|nd|rd|th)?\b/i,
   );
@@ -131,27 +154,9 @@ function classRank(value: string) {
   if (match) {
     const number = Number(match[1]);
 
-    if (number >= 1 && number <= 12) return number;
-  }
-
-  if (/nursery|pre.?primary|play.?group/.test(text)) {
-    return -2;
-  }
-
-  if (/kindergarten|\bkg\b|lkg|ukg/.test(text)) {
-    return -1;
-  }
-
-  if (/postgraduate|post.?grad|m\.?sc|mca|mba/.test(text)) {
-    return 25;
-  }
-
-  if (/college|b\.?sc|b\.?com|bba|bca|undergrad|university/.test(text)) {
-    return 20;
-  }
-
-  if (/competitive|ssc|upsc|neet|jee|bank|government|mht.?cet/.test(text)) {
-    return 30;
+    if (number >= 1 && number <= 12) {
+      return number;
+    }
   }
 
   return 40;
@@ -166,6 +171,28 @@ function classLabel(student: ManagedUser) {
   }
 
   return course;
+}
+
+function programCategory(course: string): ProgramCategory {
+  const name = course.toLowerCase();
+
+  if (
+    /neet|jee|mht.?cet|cat\b|ugc.?net|\bset\b|entrance|foundation|cuet|clat/.test(
+      name,
+    )
+  ) {
+    return "Competitive Exams";
+  }
+
+  if (
+    /ssc|upsc|mpsc|bank|ibps|sbi|railway|rrb|rbi|regulatory|insurance|government|police|constable|defence/.test(
+      name,
+    )
+  ) {
+    return "Government Exams";
+  }
+
+  return "Skill Programs";
 }
 
 function initials(name: string) {
@@ -191,11 +218,17 @@ function getCounts(students: ManagedUser[], statusMap: Map<string, Mark>) {
   for (const student of students) {
     const status = statusMap.get(student.id) ?? "unmarked";
 
-    if (status === "present") counts.present++;
-    else if (status === "absent") counts.absent++;
-    else if (status === "late") counts.late++;
-    else if (status === "excused") counts.excused++;
-    else counts.unmarked++;
+    if (status === "present") {
+      counts.present++;
+    } else if (status === "absent") {
+      counts.absent++;
+    } else if (status === "late") {
+      counts.late++;
+    } else if (status === "excused") {
+      counts.excused++;
+    } else {
+      counts.unmarked++;
+    }
   }
 
   return counts;
@@ -229,9 +262,18 @@ export function DailyStudentAttendanceManager({
 }) {
   const [date, setDate] = useState(localDate);
   const [search, setSearch] = useState("");
-  const [selectedClass, setSelectedClass] = useState("");
+
+  // School class or one of the three category tiles.
+  const [selectedClass, setSelectedClass] = useState("Class 6");
+
+  const [selectedCategory, setSelectedCategory] =
+    useState<ProgramCategory | null>(null);
+
+  // Which exam/course accordion is open in Step 2.
+  const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
 
   const [entries, setEntries] = useState<Entry[]>([]);
+
   const [sheet, setSheet] = useState<AttendanceSheet | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -240,6 +282,7 @@ export function DailyStudentAttendanceManager({
   const [loadError, setLoadError] = useState(false);
 
   const [feedback, setFeedback] = useState<Feedback>(null);
+
   const [tab, setTab] = useState<AttendanceTab>("daily");
 
   const students = useMemo(() => {
@@ -255,34 +298,95 @@ export function DailyStudentAttendanceManager({
       );
   }, [studentDirectory]);
 
-  // Prepare class/course cards from actual students.
-  const classes = useMemo(() => {
+  // School classes and individual exam/course groups.
+  const classes = useMemo<StudentGroup[]>(() => {
     const grouped = new Map<string, ManagedUser[]>();
+
+    // These seven tiles always exist.
+    for (const label of SCHOOL_CLASSES) {
+      grouped.set(label, []);
+    }
 
     for (const student of students) {
       const label = classLabel(student);
-      const existing = grouped.get(label) ?? [];
+      const members = grouped.get(label) ?? [];
 
-      existing.push(student);
-      grouped.set(label, existing);
+      members.push(student);
+      grouped.set(label, members);
     }
 
-    return Array.from(grouped.entries()).map(([label, members]) => ({
+    return Array.from(grouped, ([label, members]) => ({
       label,
       members,
     }));
   }, [students]);
 
-  // The first available class is selected automatically.
-  const activeClass =
-    classes.find((item) => item.label === selectedClass) ?? classes[0] ?? null;
+  const schoolClasses = useMemo(
+    () => classes.filter((item) => SCHOOL_CLASSES.includes(item.label)),
+    [classes],
+  );
+
+  const courseGroups = useMemo(
+    () =>
+      PROGRAM_CATEGORIES.map((category) => ({
+        category,
+        courses: classes
+          .filter(
+            (item) =>
+              !SCHOOL_CLASSES.includes(item.label) &&
+              programCategory(item.label) === category,
+          )
+          .sort((a, b) => a.label.localeCompare(b.label)),
+      })),
+    [classes],
+  );
+
+  // Step 2 active school class or expanded course.
+  const activeClass = useMemo(() => {
+    if (selectedCategory) {
+      if (!expandedCourse) return null;
+
+      return (
+        courseGroups
+          .find((group) => group.category === selectedCategory)
+          ?.courses.find((item) => item.label === expandedCourse) ?? null
+      );
+    }
+
+    return schoolClasses.find((item) => item.label === selectedClass) ?? null;
+  }, [
+    selectedCategory,
+    expandedCourse,
+    selectedClass,
+    courseGroups,
+    schoolClasses,
+  ]);
 
   const activeClassName = activeClass?.label ?? "";
 
-  const classStudents = activeClass?.members ?? [];
+  const classStudents = useMemo(
+    () => activeClass?.members ?? [],
+    [activeClass],
+  );
+
+  const selectedGroup = useMemo(
+    () =>
+      selectedCategory
+        ? courseGroups.find((group) => group.category === selectedCategory)
+        : null,
+    [courseGroups, selectedCategory],
+  );
+
+  const categoryStudents = useMemo(
+    () => selectedGroup?.courses.flatMap((course) => course.members) ?? [],
+    [selectedGroup],
+  );
 
   const entryById = useMemo(
-    () => new Map(entries.map((entry) => [entry.studentId, entry.status])),
+    () =>
+      new Map<string, Mark>(
+        entries.map((entry) => [entry.studentId, entry.status]),
+      ),
     [entries],
   );
 
@@ -292,7 +396,6 @@ export function DailyStudentAttendanceManager({
 
   const query = search.trim().toLowerCase();
 
-  // Search within the selected class.
   const visibleStudents = useMemo(() => {
     if (!query) return classStudents;
 
@@ -308,6 +411,7 @@ export function DailyStudentAttendanceManager({
 
   const controlsDisabled = loading || saving || loadError;
 
+  // Load the saved daily attendance sheet.
   const load = useCallback(
     async (cancelled?: () => boolean) => {
       setLoading(true);
@@ -388,6 +492,7 @@ export function DailyStudentAttendanceManager({
   useEffect(() => {
     function beforeUnload(event: BeforeUnloadEvent) {
       if (!dirty) return;
+
       event.preventDefault();
     }
 
@@ -406,27 +511,45 @@ export function DailyStudentAttendanceManager({
     }
 
     setDate(next);
-    setFeedback(null);
     setSearch("");
+    setFeedback(null);
   }
 
   function moveDate(days: number) {
     const [year, month, day] = date.split("-").map(Number);
 
     const next = new Date(year, month - 1, day);
+
     next.setDate(next.getDate() + days);
 
-    const newDate = [
-      next.getFullYear(),
-      String(next.getMonth() + 1).padStart(2, "0"),
-      String(next.getDate()).padStart(2, "0"),
-    ].join("-");
-
-    changeDate(newDate);
+    changeDate(
+      [
+        next.getFullYear(),
+        String(next.getMonth() + 1).padStart(2, "0"),
+        String(next.getDate()).padStart(2, "0"),
+      ].join("-"),
+    );
   }
 
-  function chooseClass(label: string) {
+  function chooseSchoolClass(label: string) {
+    setSelectedCategory(null);
     setSelectedClass(label);
+    setExpandedCourse(null);
+    setSearch("");
+    setFeedback(null);
+  }
+
+  function chooseCategory(category: ProgramCategory) {
+    setSelectedCategory(category);
+    setSelectedClass("");
+    setExpandedCourse(null);
+    setSearch("");
+    setFeedback(null);
+  }
+
+  function toggleCourse(label: string) {
+    setExpandedCourse((previous) => (previous === label ? null : label));
+
     setSearch("");
     setFeedback(null);
   }
@@ -445,7 +568,9 @@ export function DailyStudentAttendanceManager({
   }
 
   function setMany(ids: string[], status: Mark) {
-    if (controlsDisabled || !ids.length) return;
+    if (controlsDisabled || !ids.length) {
+      return;
+    }
 
     const idSet = new Set(ids);
 
@@ -467,9 +592,11 @@ export function DailyStudentAttendanceManager({
   }
 
   function clearClass() {
+    if (!classStudents.length) return;
+
     if (
       !window.confirm(
-        `Clear the attendance marks for ${activeClassName}? Changes will not be saved until you click Save Attendance.`,
+        `Clear attendance marks for ${activeClassName}? Changes will not be saved until you click Save Attendance.`,
       )
     ) {
       return;
@@ -481,8 +608,11 @@ export function DailyStudentAttendanceManager({
     );
   }
 
+  // Existing API and saved record format.
   async function save() {
-    if (controlsDisabled || !dirty) return;
+    if (controlsDisabled || !dirty) {
+      return;
+    }
 
     const marked = entries
       .filter((entry) => entry.status !== "unmarked")
@@ -506,7 +636,7 @@ export function DailyStudentAttendanceManager({
     try {
       const knownIds = new Set(students.map((student) => student.id));
 
-      // Preserve records for IDs outside the current directory.
+      // Preserve records outside the current student directory.
       const preserved = (sheet?.records ?? []).filter(
         (record) => !knownIds.has(record.studentId),
       );
@@ -569,14 +699,261 @@ export function DailyStudentAttendanceManager({
     key: AttendanceTab;
     label: string;
   }[] = [
-    { key: "daily", label: "Daily Attendance" },
-    { key: "lecture", label: "Lecture Attendance" },
-    { key: "history", label: "History" },
+    {
+      key: "daily",
+      label: "Daily Attendance",
+    },
+    {
+      key: "lecture",
+      label: "Lecture Attendance",
+    },
+    {
+      key: "history",
+      label: "History",
+    },
   ];
+
+  // Reusable student attendance table.
+  function renderStudentTable() {
+    if (loading) {
+      return (
+        <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-slate-500">
+          <Loader2 size={20} className="animate-spin" />
+          Loading attendance...
+        </div>
+      );
+    }
+
+    if (loadError) {
+      return (
+        <div className="flex flex-col items-center gap-3 p-8 text-center">
+          <CircleAlert size={28} className="text-red-600" />
+
+          <p className="text-sm font-semibold text-red-700">
+            Attendance could not be loaded. Editing is disabled to protect
+            existing records.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold"
+          >
+            <RotateCcw size={15} />
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    if (!visibleStudents.length) {
+      return (
+        <div className="flex min-h-40 flex-col items-center justify-center gap-3 p-6 text-center text-slate-500">
+          <GraduationCap size={28} />
+
+          <p className="text-sm font-semibold">
+            {search
+              ? "No students match your search."
+              : "No students enrolled in this class or course."}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="overflow-x-auto px-4 pb-4">
+        <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left">
+          <thead>
+            <tr className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
+              <th className="w-16 rounded-l-lg bg-[#F2F6FD] px-3 py-3">#</th>
+
+              <th className="min-w-[230px] bg-[#F2F6FD] px-3 py-3">
+                Student Name
+              </th>
+
+              {ATTENDANCE_OPTIONS.map((status) => (
+                <th
+                  key={status}
+                  className="w-28 bg-[#F2F6FD] px-3 py-3 text-center"
+                >
+                  {MARK_CONFIG[status].label}
+                </th>
+              ))}
+
+              <th className="w-32 rounded-r-lg bg-[#F2F6FD] px-3 py-3 text-center">
+                Status
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {visibleStudents.map((student, index) => {
+              const current = entryById.get(student.id) ?? "unmarked";
+
+              return (
+                <tr
+                  key={student.id}
+                  className={`hover:bg-blue-50/40 ${
+                    current === "absent" ? "bg-red-50/40" : ""
+                  }`}
+                >
+                  <td className="border-b border-slate-100 px-3 py-3 text-xs font-semibold text-slate-500">
+                    {String(index + 1).padStart(2, "0")}
+                  </td>
+
+                  <td className="border-b border-slate-100 px-3 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-[#0A54B7]">
+                        {initials(student.name)}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#0A193A]">
+                          {student.name}
+                        </p>
+
+                        <p className="max-w-[190px] truncate text-[10px] text-slate-400">
+                          ID: {student.id}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+
+                  {ATTENDANCE_OPTIONS.map((status) => {
+                    const config = MARK_CONFIG[status];
+
+                    const selected = current === status;
+
+                    return (
+                      <td
+                        key={status}
+                        className="border-b border-slate-100 px-2 py-3 text-center"
+                      >
+                        <button
+                          type="button"
+                          disabled={controlsDisabled}
+                          aria-pressed={selected}
+                          aria-label={`${student.name}: ${config.label}`}
+                          onClick={() => setOne(student.id, status)}
+                          className={`min-h-9 w-full min-w-[75px] rounded-lg border px-3 py-2 text-[11px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                            selected ? config.active : config.inactive
+                          }`}
+                        >
+                          {config.label}
+                        </button>
+                      </td>
+                    );
+                  })}
+
+                  <td className="border-b border-slate-100 px-3 py-3 text-center">
+                    <StatusPill status={current} />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  // Shown for school classes and for an opened course in Step 2.
+  function renderAttendanceDetails() {
+    return (
+      <div className="space-y-0">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
+          <div>
+            <h3 className="text-sm font-bold text-[#0A193A]">
+              {activeClassName}
+            </h3>
+
+            <p className="mt-1 text-xs text-slate-500">
+              {classStats.total} enrolled student(s)
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={controlsDisabled || classStudents.length === 0}
+              onClick={markClassPresent}
+              className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              <Check size={14} />
+              Mark All Present
+            </button>
+
+            <button
+              type="button"
+              disabled={controlsDisabled || classStudents.length === 0}
+              onClick={clearClass}
+              className="h-10 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        {/* ATTENDANCE SUMMARY */}
+        <div className="grid grid-cols-2 gap-3 border-b border-slate-100 p-4 lg:grid-cols-4">
+          {[
+            {
+              label: "Present",
+              value: classStats.present,
+              color: "text-emerald-600",
+            },
+            {
+              label: "Absent",
+              value: classStats.absent,
+              color: "text-red-600",
+            },
+            {
+              label: "Late",
+              value: classStats.late,
+              color: "text-amber-600",
+            },
+            {
+              label: "Not marked",
+              value: classStats.unmarked,
+              color: "text-slate-600",
+            },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-lg border border-slate-200 bg-white p-3"
+            >
+              <p className="text-[11px] font-semibold text-slate-500">
+                {item.label}
+              </p>
+
+              <p className={`mt-1 text-xl font-bold ${item.color}`}>
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* STUDENT TABLE */}
+        <div className="pt-4">{renderStudentTable()}</div>
+
+        {/* FOOTER */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+          <span>
+            Showing {visibleStudents.length} of {classStudents.length} students
+          </span>
+
+          <span>
+            {classStats.present} Present · {classStats.absent} Absent ·{" "}
+            {classStats.unmarked} Not marked
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="min-w-0 space-y-4 pb-6">
-      {/* PAGE HEADING */}
+      {/* PAGE HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-medium text-slate-500">
@@ -667,15 +1044,16 @@ export function DailyStudentAttendanceManager({
 
       {tab === "daily" ? (
         <>
-          {/* STEP 1: CLASS SELECTION */}
+          {/* STEP 1 */}
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-bold text-[#0A193A]">
-                  Select class
+                  Step 1 · Select Class / Program
                 </h2>
+
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Select a class or course to mark student attendance.
+                  Choose a school class or program category.
                 </p>
               </div>
 
@@ -685,142 +1063,102 @@ export function DailyStudentAttendanceManager({
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-              {classes.map((item) => {
-                const selected = activeClassName === item.label;
+              {/* SEVEN SCHOOL TILES */}
+              {schoolClasses.map((item) => {
+                const selected =
+                  !selectedCategory && selectedClass === item.label;
 
                 const counts = getCounts(item.members, entryById);
-
-                const markedCount = counts.total - counts.unmarked;
 
                 return (
                   <button
                     key={item.label}
                     type="button"
-                    onClick={() => chooseClass(item.label)}
-                    className={`flex min-h-[60px] items-center justify-between gap-2 rounded-lg border px-3 py-3 text-left transition ${
+                    aria-pressed={selected}
+                    onClick={() => chooseSchoolClass(item.label)}
+                    className={`flex min-h-[60px] items-center justify-between gap-2 rounded-lg border px-3 py-3 text-left text-xs font-bold transition ${
                       selected
-                        ? "border-[#0A54B7] bg-[#0A54B7] text-white shadow-sm"
+                        ? "border-[#0A54B7] bg-[#0A54B7] text-white"
                         : "border-slate-200 bg-white text-[#0A193A] hover:border-blue-300 hover:bg-blue-50"
                     }`}
                   >
-                    <span className="min-w-0 break-words text-xs font-bold">
-                      {item.label}
-                    </span>
+                    <span>{item.label}</span>
 
                     <span
-                      className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-bold ${
-                        selected
-                          ? "bg-white/20 text-white"
-                          : "bg-blue-50 text-[#0A54B7]"
+                      className={`shrink-0 rounded-md px-2 py-1 text-[10px] ${
+                        selected ? "bg-white/20" : "bg-blue-50 text-[#0A54B7]"
                       }`}
                     >
-                      {markedCount}/{counts.total}
+                      {counts.total - counts.unmarked}/{counts.total}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* THREE CATEGORY TILES - NO DROPDOWNS HERE */}
+              {courseGroups.map(({ category, courses }) => {
+                const selected = selectedCategory === category;
+
+                const members = courses.flatMap((course) => course.members);
+
+                const counts = getCounts(members, entryById);
+
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => chooseCategory(category)}
+                    className={`flex min-h-[60px] items-center justify-between gap-2 rounded-lg border px-3 py-3 text-left text-xs font-bold transition ${
+                      selected
+                        ? "border-[#0A54B7] bg-[#0A54B7] text-white"
+                        : "border-slate-200 bg-white text-[#0A193A] hover:border-blue-300 hover:bg-blue-50"
+                    }`}
+                  >
+                    <span className="break-words">{category}</span>
+
+                    <span
+                      className={`shrink-0 rounded-md px-2 py-1 text-[10px] ${
+                        selected ? "bg-white/20" : "bg-blue-50 text-[#0A54B7]"
+                      }`}
+                    >
+                      {counts.total - counts.unmarked}/{counts.total}
                     </span>
                   </button>
                 );
               })}
             </div>
-
-            {classes.length === 0 && (
-              <div className="py-6 text-center text-sm text-slate-500">
-                No student classes are available.
-              </div>
-            )}
           </div>
 
-          {/* STEP 2: STUDENT ATTENDANCE */}
+          {/* STEP 2 */}
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
               <div>
                 <h2 className="text-sm font-bold text-[#0A193A]">
-                  {activeClassName || "Select a class"}
+                  Step 2 ·{" "}
+                  {selectedCategory || activeClassName || "Student Attendance"}
                 </h2>
 
                 <p className="mt-1 text-[11px] text-slate-500">
-                  {classStats.total} students in this class
+                  {selectedCategory
+                    ? `${categoryStudents.length} enrolled students across ${selectedGroup?.courses.length ?? 0} courses`
+                    : `${classStats.total} students in this class`}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="relative min-w-[180px] flex-1 sm:w-64">
-                  <Search
-                    size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+              <div className="relative w-full sm:w-64">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
 
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search name or student ID"
-                    className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-[#0A54B7]"
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  disabled={controlsDisabled || classStudents.length === 0}
-                  onClick={markClassPresent}
-                  className="inline-flex h-10 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  <Check size={14} />
-                  Mark All Present
-                </button>
-
-                <button
-                  type="button"
-                  disabled={controlsDisabled || classStudents.length === 0}
-                  onClick={clearClass}
-                  className="h-10 rounded-lg border border-slate-200 px-3 text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-
-            {/* CLASS ATTENDANCE STATISTICS */}
-            <div className="grid grid-cols-2 gap-3 border-b border-slate-100 p-4 lg:grid-cols-5">
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Present
-                </p>
-                <p className="mt-1 text-xl font-bold text-emerald-600">
-                  {classStats.present}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Absent
-                </p>
-                <p className="mt-1 text-xl font-bold text-red-600">
-                  {classStats.absent}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold text-slate-500">Late</p>
-                <p className="mt-1 text-xl font-bold text-amber-600">
-                  {classStats.late}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Leave
-                </p>
-                <p className="mt-1 text-xl font-bold text-blue-600">
-                  {classStats.excused}
-                </p>
-              </div>
-
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-[11px] font-semibold text-slate-500">
-                  Not marked
-                </p>
-                <p className="mt-1 text-xl font-bold text-slate-600">
-                  {classStats.unmarked}
-                </p>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search name or student ID"
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-[#0A54B7]"
+                />
               </div>
             </div>
 
@@ -846,159 +1184,86 @@ export function DailyStudentAttendanceManager({
               </div>
             )}
 
-            {/* STUDENT TABLE */}
-            {loading ? (
-              <div className="flex min-h-48 items-center justify-center gap-2 text-sm text-slate-500">
-                <Loader2 size={20} className="animate-spin" />
-                Loading attendance...
-              </div>
-            ) : loadError ? (
-              <div className="flex flex-col items-center gap-3 p-8 text-center">
-                <CircleAlert size={28} className="text-red-600" />
-
-                <p className="text-sm font-semibold text-red-700">
-                  Attendance could not be loaded. Editing is disabled to protect
-                  existing records.
+            {selectedCategory ? (
+              /* EXAM-WISE ACCORDION IN STEP 2 */
+              <div className="space-y-3 p-4">
+                <p className="text-xs text-slate-500">
+                  Select an exam or skill course below to view its students and
+                  mark attendance.
                 </p>
 
-                <button
-                  type="button"
-                  onClick={() => void load()}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold"
-                >
-                  <RotateCcw size={15} />
-                  Try Again
-                </button>
-              </div>
-            ) : visibleStudents.length === 0 ? (
-              <div className="flex min-h-40 flex-col items-center justify-center gap-3 p-6 text-center text-slate-500">
-                <GraduationCap size={28} />
+                {(selectedGroup?.courses ?? []).map((course) => {
+                  const open = expandedCourse === course.label;
 
-                <p className="text-sm font-semibold">
-                  {search
-                    ? "No students match your search."
-                    : "No students in this class."}
-                </p>
+                  const counts = getCounts(course.members, entryById);
+
+                  return (
+                    <div
+                      key={course.label}
+                      className="overflow-hidden rounded-xl border border-slate-200"
+                    >
+                      {/* EXAM/COURSE ROW */}
+                      <button
+                        type="button"
+                        aria-expanded={open}
+                        onClick={() => toggleCourse(course.label)}
+                        className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition ${
+                          open
+                            ? "bg-[#EEF5FF] text-[#0A54B7]"
+                            : "bg-white text-[#0A193A] hover:bg-slate-50"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <ChevronDown
+                            size={17}
+                            className={`shrink-0 transition-transform ${
+                              open ? "" : "-rotate-90"
+                            }`}
+                          />
+
+                          <span className="text-xs font-bold sm:text-sm">
+                            {course.label}
+                          </span>
+                        </span>
+
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0A54B7]">
+                            {counts.total - counts.unmarked}/{counts.total}
+                          </span>
+
+                          <span className="hidden text-[11px] text-slate-500 sm:inline">
+                            students marked
+                          </span>
+                        </span>
+                      </button>
+
+                      {/* EXPANDED STUDENT ATTENDANCE */}
+                      {open && (
+                        <div className="border-t border-slate-200 bg-white">
+                          {renderAttendanceDetails()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {(selectedGroup?.courses.length ?? 0) === 0 && (
+                  <div className="rounded-xl bg-slate-50 px-4 py-8 text-center">
+                    <GraduationCap
+                      size={28}
+                      className="mx-auto mb-3 text-slate-400"
+                    />
+
+                    <p className="text-sm font-semibold text-slate-600">
+                      No enrolled exams or courses found in this category.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="overflow-x-auto px-4 pb-4">
-                <table className="w-full min-w-[860px] border-separate border-spacing-0 text-left">
-                  <thead>
-                    <tr className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                      <th className="w-20 rounded-l-lg bg-[#F2F6FD] px-3 py-3">
-                        #
-                      </th>
-
-                      <th className="min-w-[220px] bg-[#F2F6FD] px-3 py-3">
-                        Student Name
-                      </th>
-
-                      <th className="w-28 bg-[#F2F6FD] px-3 py-3 text-center">
-                        Present
-                      </th>
-
-                      <th className="w-28 bg-[#F2F6FD] px-3 py-3 text-center">
-                        Absent
-                      </th>
-
-                      <th className="w-28 bg-[#F2F6FD] px-3 py-3 text-center">
-                        Late
-                      </th>
-
-                      <th className="w-28 bg-[#F2F6FD] px-3 py-3 text-center">
-                        Leave
-                      </th>
-
-                      <th className="w-32 rounded-r-lg bg-[#F2F6FD] px-3 py-3 text-center">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {visibleStudents.map((student, index) => {
-                      const current = entryById.get(student.id) ?? "unmarked";
-
-                      return (
-                        <tr
-                          key={student.id}
-                          className={`border-b border-slate-100 ${
-                            current === "absent"
-                              ? "bg-red-50/40"
-                              : "hover:bg-blue-50/40"
-                          }`}
-                        >
-                          <td className="border-b border-slate-100 px-3 py-3 text-xs font-semibold text-slate-500">
-                            {String(index + 1).padStart(2, "0")}
-                          </td>
-
-                          <td className="border-b border-slate-100 px-3 py-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-[#0A54B7]">
-                                {initials(student.name)}
-                              </div>
-
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold text-[#0A193A]">
-                                  {student.name}
-                                </p>
-
-                                <p className="max-w-[190px] truncate text-[10px] text-slate-400">
-                                  ID: {student.id}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-
-                          {ATTENDANCE_OPTIONS.map((status) => {
-                            const config = MARK_CONFIG[status];
-
-                            const selected = current === status;
-
-                            return (
-                              <td
-                                key={status}
-                                className="border-b border-slate-100 px-2 py-3 text-center"
-                              >
-                                <button
-                                  type="button"
-                                  disabled={controlsDisabled}
-                                  aria-pressed={selected}
-                                  aria-label={`${student.name}: ${config.label}`}
-                                  onClick={() => setOne(student.id, status)}
-                                  className={`min-h-9 w-full min-w-[75px] rounded-lg border px-3 py-2 text-[11px] font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                                    selected ? config.active : config.inactive
-                                  }`}
-                                >
-                                  {config.label}
-                                </button>
-                              </td>
-                            );
-                          })}
-
-                          <td className="border-b border-slate-100 px-3 py-3 text-center">
-                            <StatusPill status={current} />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+              /* CLASS 6–12: DIRECT ATTENDANCE TABLE */
+              renderAttendanceDetails()
             )}
-
-            {/* TABLE FOOTER */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
-              <span>
-                Showing {visibleStudents.length} of {classStudents.length}{" "}
-                students
-              </span>
-
-              <span>
-                {classStats.present} Present · {classStats.absent} Absent ·{" "}
-                {classStats.unmarked} Not marked
-              </span>
-            </div>
           </div>
         </>
       ) : (
@@ -1012,7 +1277,7 @@ export function DailyStudentAttendanceManager({
 
           <p className="max-w-md text-sm text-slate-500">
             {tab === "lecture"
-              ? "Lecture-wise attendance remains managed through the existing lecture attendance module. This daily attendance redesign does not change it."
+              ? "Lecture-wise attendance remains managed through the existing lecture attendance module."
               : "Historical attendance remains available through the existing SmartIQ attendance reporting module."}
           </p>
 

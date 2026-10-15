@@ -1,4 +1,7 @@
+
 "use client";
+import { StaffLectureAttendance } from "@/components/staff-lecture-attendance";
+
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -344,6 +347,7 @@ export function StaffAttendanceManager({
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedLectureId, setSelectedLectureId] = useState("");
   const [showAddLecture, setShowAddLecture] = useState(false);
+  const [lectureFacultyId, setLectureFacultyId] = useState("");
   const [creatingLecture, setCreatingLecture] = useState(false);
   const [lectureForm, setLectureForm] = useState({
     title: "",
@@ -370,18 +374,16 @@ export function StaffAttendanceManager({
   const canManage =
     role === "admin" || role === "staff" || role === "counsellor";
 
-
-const allStaff = useMemo(
-  () =>
-    managedUsers.filter(
-      (user) =>
-        user.role === "educator" ||
-        user.role === "staff" ||
-        user.role === "counsellor",
-    ),
-  [managedUsers],
-);
-
+  const allStaff = useMemo(
+    () =>
+      managedUsers.filter(
+        (user) =>
+          user.role === "educator" ||
+          user.role === "staff" ||
+          user.role === "counsellor",
+      ),
+    [managedUsers],
+  );
 
   const teachers = useMemo(
     () => allStaff.filter((user) => user.role === "educator"),
@@ -890,7 +892,14 @@ const allStaff = useMemo(
   }
 
   function openAddLecture() {
-    if (!selectedTeacher || !canManage) return;
+    if (!canManage || !teachers.length) return;
+
+    setLectureFacultyId(
+      teachers.some((teacher) => teacher.id === selectedTeacherId)
+        ? selectedTeacherId
+        : teachers[0].id,
+    );
+
     setLectureForm({
       title: "",
       subject: "",
@@ -901,12 +910,20 @@ const allStaff = useMemo(
       meetingLink: "",
       materialLink: "",
     });
+
     setShowAddLecture(true);
   }
 
   async function submitNewLecture(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedTeacher || !canManage || creatingLecture) return;
+    if (!canManage || creatingLecture) return;
+
+    const faculty = teachers.find((teacher) => teacher.id === lectureFacultyId);
+
+    if (!faculty) {
+      alert("Please select a faculty member.");
+      return;
+    }
     if (
       !lectureForm.title.trim() ||
       !lectureForm.date ||
@@ -937,7 +954,7 @@ const allStaff = useMemo(
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
         body: JSON.stringify({
-          teacherId: selectedTeacher.id,
+          teacherId: faculty.id,
           title: lectureForm.title.trim(),
           subject: lectureForm.subject.trim(),
           description: lectureForm.description.trim(),
@@ -953,6 +970,7 @@ const allStaff = useMemo(
         throw new Error(result.error || "Unable to create lecture.");
       }
       setShowAddLecture(false);
+      setSelectedTeacherId(faculty.id);
       setDate(lectureForm.date);
       setSelectedLectureId(result.lecture.id);
       setTeachingTab("today");
@@ -1520,28 +1538,48 @@ const allStaff = useMemo(
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-        {(
-          [
-            ["overview", "Overview"],
-            ["teaching", "Teaching Staff"],
-            ["nonTeaching", "Non-Teaching Staff"],
-            ["history", "History"],
-            ["reports", "Reports"],
-          ] as const
-        ).map(([key, label]) => (
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+        {/* MAIN NAVIGATION TABS */}
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              ["overview", "Overview"],
+              ["teaching", "Teaching Staff"],
+              ["nonTeaching", "Non-Teaching Staff"],
+              ["history", "History"],
+              ["reports", "Reports"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setTab(key);
+                setSearch("");
+              }}
+              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                tab === key
+                  ? "bg-[#0A54B7] text-white"
+                  : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* ADD LECTURE BUTTON */}
+        {tab === "teaching" && canManage && (
           <button
             type="button"
-            key={key}
-            onClick={() => {
-              setTab(key);
-              setSearch("");
-            }}
-            className={`rounded-lg px-3 py-2 text-xs font-semibold ${tab === key ? "bg-[#0A54B7] text-white" : "border border-slate-200 bg-white text-slate-600"}`}
+            onClick={openAddLecture}
+            disabled={!teachers.length}
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-xs font-bold text-[#0A54B7] shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {label}
+            <Plus size={16} />
+            Add Lecture
           </button>
-        ))}
+        )}
       </div>
 
       {tab === "overview" && (
@@ -1623,131 +1661,16 @@ const allStaff = useMemo(
             true,
             true,
           )}
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-sm font-bold text-[#0A193A]">
-                Faculty Lecture Management
-              </h3>
-              <select
-                value={selectedTeacherId}
-                disabled={role === "educator" || !teachers.length}
-                onChange={(event) => setSelectedTeacherId(event.target.value)}
-                className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
-              >
-                {teachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-5">
-              {[
-                ["Total lectures", lectureStats.total],
-                ["Completed", lectureStats.completed],
-                ["Pending", lectureStats.pending],
-                ["Cancelled", lectureStats.cancelled],
-                ["Teaching hours", lectureStats.hours],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-lg bg-slate-50 p-3">
-                  <p className="text-[11px] text-slate-500">{label}</p>
-                  <p className="mt-1 text-lg font-bold text-[#0A193A]">
-                    {value}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-              <div className="flex gap-2">
-                {(
-                  [
-                    ["today", "Today's Lectures"],
-                    ["timetable", "Weekly Timetable"],
-                    ["lectureHistory", "Lecture History"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <button
-                    type="button"
-                    key={key}
-                    onClick={() => setTeachingTab(key)}
-                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${teachingTab === key ? "bg-[#0A54B7] text-white" : "bg-slate-100 text-slate-600"}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              {canManage && selectedTeacher && (
-                <button
-                  type="button"
-                  onClick={openAddLecture}
-                  className="inline-flex items-center gap-1 rounded-lg border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700"
-                >
-                  <Plus size={14} />
-                  Add Lecture
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <div className="border-b border-slate-100 px-4 py-3 text-sm font-bold text-[#0A193A]">
-              {teachingTab === "today"
-                ? "Today's Lecture Schedule"
-                : teachingTab === "timetable"
-                  ? "Weekly Timetable"
-                  : "Lecture History"}
-            </div>
-            {renderLectureTable(
-              teachingTab === "today"
-                ? dailyLectures
-                : teachingTab === "timetable"
-                  ? weeklyLectures
-                  : previousLectures,
-            )}
-          </div>
-          {selectedLecture && teachingTab === "today" && (
-            <div className="rounded-xl border border-slate-200 bg-white p-4">
-              <h3 className="text-sm font-bold text-[#0A193A]">
-                {selectedLecture.title}
-              </h3>
-              <p className="mt-1 text-xs text-slate-500">
-                {selectedLecture.subject} ·{" "}
-                {displayTime(selectedLecture.startsAt)} –{" "}
-                {displayTime(selectedLecture.endsAt)}
-              </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {(
-                  [
-                    ["Topic Covered", selectedLecture.topicCovered],
-                    ["Homework", selectedLecture.homeworkGiven],
-                    ["Assignment", selectedLecture.assignmentGiven],
-                    ["Revision Task", selectedLecture.revisionTask],
-                    ["Doubts Solved", selectedLecture.doubtsSolved],
-                    ["Next Topic", selectedLecture.nextTopic],
-                    ["Description", selectedLecture.description],
-                  ] as const
-                ).map(([label, value]) => (
-                  <div key={label} className="rounded-lg bg-slate-50 p-3">
-                    <p className="text-[10px] font-semibold uppercase text-slate-500">
-                      {label}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-700">
-                      {value || "Not recorded"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              {selectedLecture.materialLink && (
-                <a
-                  href={selectedLecture.materialLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-block text-xs font-bold text-blue-700"
-                >
-                  Open teaching materials
-                </a>
-              )}
-            </div>
-          )}
+          <StaffLectureAttendance
+            date={date}
+            lectures={lectures}
+            teachers={teachers}
+            selectedTeacherId={selectedTeacherId}
+            onTeacherChange={setSelectedTeacherId}
+            onRefresh={loadLectures}
+            loading={lectureLoading}
+            canManage={canManage}
+          />
         </div>
       )}
 
@@ -1971,7 +1894,7 @@ const allStaff = useMemo(
         </div>
       )}
 
-      {showAddLecture && selectedTeacher && canManage && (
+      {showAddLecture && canManage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
           <form
             onSubmit={(event) => void submitNewLecture(event)}
@@ -1982,6 +1905,7 @@ const allStaff = useMemo(
           >
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-[#0A193A]">Add Lecture</h3>
+
               <button
                 type="button"
                 onClick={() => setShowAddLecture(false)}
@@ -1990,118 +1914,174 @@ const allStaff = useMemo(
                 <XCircle size={20} />
               </button>
             </div>
-            <div className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-900">
-              Faculty: <strong>{selectedTeacher.name}</strong> ·{" "}
-              {selectedTeacher.employeeCode || selectedTeacher.id}
-            </div>
-            <label className="block text-sm font-semibold">
-              Lecture title *
+
+            {/* FACULTY SELECTOR */}
+            <label className="block text-sm font-semibold text-[#0A193A]">
+              Faculty Name *
+              <select
+                required
+                value={lectureFacultyId}
+                onChange={(event) => setLectureFacultyId(event.target.value)}
+                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
+              >
+                <option value="">Select Faculty</option>
+
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.name} - {teacher.employeeCode || teacher.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {/* SUBJECT */}
+            <label className="block text-sm font-semibold text-[#0A193A]">
+              Subject *
               <input
                 required
                 value={lectureForm.title}
-                onChange={(e) =>
-                  setLectureForm((v) => ({ ...v, title: e.target.value }))
+                onChange={(event) =>
+                  setLectureForm((previous) => ({
+                    ...previous,
+                    title: event.target.value,
+                  }))
                 }
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-                placeholder="e.g. Mathematics - Algebra"
+                placeholder="e.g. Mathematics"
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
               />
             </label>
-            <label className="block text-sm font-semibold">
-              Subject
+
+            {/* TOPIC */}
+            <label className="block text-sm font-semibold text-[#0A193A]">
+              Topic
               <input
                 value={lectureForm.subject}
-                onChange={(e) =>
-                  setLectureForm((v) => ({ ...v, subject: e.target.value }))
+                onChange={(event) =>
+                  setLectureForm((previous) => ({
+                    ...previous,
+                    subject: event.target.value,
+                  }))
                 }
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                placeholder="e.g. Algebra - Linear Equations"
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
               />
             </label>
+
+            {/* DATE AND TIMES */}
             <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-sm font-semibold">
+              <label className="block text-sm font-semibold text-[#0A193A]">
                 Date *
                 <input
                   required
                   type="date"
                   value={lectureForm.date}
-                  onChange={(e) =>
-                    setLectureForm((v) => ({ ...v, date: e.target.value }))
+                  onChange={(event) =>
+                    setLectureForm((previous) => ({
+                      ...previous,
+                      date: event.target.value,
+                    }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
                 />
               </label>
-              <label className="block text-sm font-semibold">
-                Start time *
+
+              <label className="block text-sm font-semibold text-[#0A193A]">
+                Start Time *
                 <input
                   required
                   type="time"
                   value={lectureForm.startTime}
-                  onChange={(e) =>
-                    setLectureForm((v) => ({ ...v, startTime: e.target.value }))
+                  onChange={(event) =>
+                    setLectureForm((previous) => ({
+                      ...previous,
+                      startTime: event.target.value,
+                    }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
                 />
               </label>
-              <label className="block text-sm font-semibold">
-                End time *
+
+              <label className="block text-sm font-semibold text-[#0A193A]">
+                End Time *
                 <input
                   required
                   type="time"
                   value={lectureForm.endTime}
-                  onChange={(e) =>
-                    setLectureForm((v) => ({ ...v, endTime: e.target.value }))
+                  onChange={(event) =>
+                    setLectureForm((previous) => ({
+                      ...previous,
+                      endTime: event.target.value,
+                    }))
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
                 />
               </label>
             </div>
-            <label className="block text-sm font-semibold">
-              Description / class or batch details
+
+            {/* HOMEWORK / ASSIGNMENT */}
+            <label className="block text-sm font-semibold text-[#0A193A]">
+              Homework / Assignment
               <textarea
                 rows={3}
                 value={lectureForm.description}
-                onChange={(e) =>
-                  setLectureForm((v) => ({ ...v, description: e.target.value }))
+                onChange={(event) =>
+                  setLectureForm((previous) => ({
+                    ...previous,
+                    description: event.target.value,
+                  }))
                 }
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
-                placeholder="Class, batch, room or teaching details"
+                placeholder="Enter homework, assignments or instructions for students"
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
               />
             </label>
-            <label className="block text-sm font-semibold">
-              Meeting link
+
+            {/* MEETING LINK */}
+            <label className="block text-sm font-semibold text-[#0A193A]">
+              Meeting Link
               <input
                 type="url"
                 value={lectureForm.meetingLink}
-                onChange={(e) =>
-                  setLectureForm((v) => ({ ...v, meetingLink: e.target.value }))
+                onChange={(event) =>
+                  setLectureForm((previous) => ({
+                    ...previous,
+                    meetingLink: event.target.value,
+                  }))
                 }
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                placeholder="https://..."
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
               />
             </label>
-            <label className="block text-sm font-semibold">
-              Teaching material link
+
+            {/* TEACHING MATERIAL */}
+            <label className="block text-sm font-semibold text-[#0A193A]">
+              Teaching Material Link
               <input
                 type="url"
                 value={lectureForm.materialLink}
-                onChange={(e) =>
-                  setLectureForm((v) => ({
-                    ...v,
-                    materialLink: e.target.value,
+                onChange={(event) =>
+                  setLectureForm((previous) => ({
+                    ...previous,
+                    materialLink: event.target.value,
                   }))
                 }
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                placeholder="https://..."
+                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
               />
             </label>
-            <div className="flex justify-end gap-2 border-t pt-4">
+
+            {/* ACTIONS */}
+            <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
               <button
                 type="button"
                 onClick={() => setShowAddLecture(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold"
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
               >
                 Cancel
               </button>
+
               <button
                 type="submit"
-                disabled={creatingLecture}
+                disabled={creatingLecture || !lectureFacultyId}
                 className="rounded-lg bg-[#0A54B7] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {creatingLecture ? "Saving..." : "Save Lecture"}

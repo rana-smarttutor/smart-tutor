@@ -11735,3 +11735,109 @@ export async function getActionLogStats() {
     uniqueIps: ips.size,
   };
 }
+
+
+export type LectureAttendanceAction = "checkin" | "checkout" | "complete";
+
+export async function recordLectureAttendanceAction(
+  lectureId: string,
+  action: LectureAttendanceAction,
+): Promise<LectureItem | null> {
+  const collection = await getCollection<LectureItem>(
+    COLLECTIONS.lectures,
+  );
+
+  const existing = await collection.findOne({ id: lectureId });
+
+  if (!existing) return null;
+
+  if (existing.status !== "scheduled") {
+    throw new Error("This lecture is not available for attendance actions.");
+  }
+
+  const now = new Date().toISOString();
+
+  if (action === "checkin") {
+    if (existing.lectureCheckInAt) {
+      throw new Error("Lecture already checked in.");
+    }
+
+    const result = await collection.updateOne(
+      {
+        id: lectureId,
+        status: "scheduled",
+        lectureCheckInAt: { $exists: false },
+      },
+      {
+        $set: {
+          lectureCheckInAt: now,
+          updatedAt: now,
+        },
+      },
+    );
+
+    if (!result.modifiedCount) {
+      throw new Error("Lecture was already updated. Refresh the page.");
+    }
+  }
+
+  if (action === "checkout") {
+    if (!existing.lectureCheckInAt) {
+      throw new Error("Check in before checking out.");
+    }
+
+    if (existing.lectureCheckOutAt) {
+      throw new Error("Lecture already checked out.");
+    }
+
+    const result = await collection.updateOne(
+      {
+        id: lectureId,
+        status: "scheduled",
+        lectureCheckInAt: existing.lectureCheckInAt,
+        lectureCheckOutAt: { $exists: false },
+      },
+      {
+        $set: {
+          lectureCheckOutAt: now,
+          updatedAt: now,
+        },
+      },
+    );
+
+    if (!result.modifiedCount) {
+      throw new Error("Lecture was already updated. Refresh the page.");
+    }
+  }
+
+  if (action === "complete") {
+    if (!existing.lectureCheckInAt || !existing.lectureCheckOutAt) {
+      throw new Error("Check in and check out before completing the lecture.");
+    }
+
+    const result = await collection.updateOne(
+      {
+        id: lectureId,
+        status: "scheduled",
+        lectureCheckInAt: existing.lectureCheckInAt,
+        lectureCheckOutAt: existing.lectureCheckOutAt,
+      },
+      {
+        $set: {
+          status: "completed",
+          lectureCompletedAt: now,
+          lectureReportSubmittedAt: now,
+          updatedAt: now,
+        },
+      },
+    );
+
+    if (!result.modifiedCount) {
+      throw new Error("Lecture was already updated. Refresh the page.");
+    }
+  }
+
+  const updated = await collection.findOne({ id: lectureId });
+
+  return updated ? stripMongoId(updated) : null;
+}

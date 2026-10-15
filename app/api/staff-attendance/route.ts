@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import { getSessionUser } from "@/lib/auth";
 import { logAction } from "@/lib/audit-log";
 
@@ -70,7 +71,9 @@ function todayInIndia(): string {
 }
 
 function isValidDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
 
   const parsed = new Date(`${value}T00:00:00.000Z`);
 
@@ -85,27 +88,46 @@ function isValidTime(value: string) {
 }
 
 function categoryForRole(role: Role): StaffCategory {
-  if (role === "admin") return "Admin";
-  if (role === "educator") return "Teacher";
-  if (role === "counsellor") return "Counsellor";
+  if (role === "admin") {
+    return "Admin";
+  }
+
+  if (role === "educator") {
+    return "Teacher";
+  }
+
+  if (role === "counsellor") {
+    return "Counsellor";
+  }
+
   return "Staff";
 }
 
 function calculateStats(records: StaffAttendanceRecord[]) {
   return {
     total: records.length,
-    present: records.filter((r) => r.status === "present").length,
-    absent: records.filter((r) => r.status === "absent").length,
-    halfDay: records.filter((r) => r.status === "half_day").length,
-    late: records.filter((r) => r.status === "late").length,
-    onLeave: records.filter((r) => r.status === "on_leave").length,
-    holiday: records.filter((r) => r.status === "holiday").length,
+
+    present: records.filter((record) => record.status === "present").length,
+
+    absent: records.filter((record) => record.status === "absent").length,
+
+    halfDay: records.filter((record) => record.status === "half_day").length,
+
+    late: records.filter((record) => record.status === "late").length,
+
+    onLeave: records.filter((record) => record.status === "on_leave").length,
+
+    holiday: records.filter((record) => record.status === "holiday").length,
   };
 }
 
 function errorResponse(error: string, status: number) {
   return NextResponse.json({ error }, { status });
 }
+
+// ======================================================
+// GET STAFF ATTENDANCE
+// ======================================================
 
 export async function GET(request: Request) {
   try {
@@ -122,7 +144,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
     const startDate = searchParams.get("startDate");
+
     const endDate = searchParams.get("endDate");
+
     const requestedUserId = searchParams.get("userId");
 
     if (
@@ -132,6 +156,10 @@ export async function GET(request: Request) {
     ) {
       return errorResponse("You can only view your own attendance.", 403);
     }
+
+    // --------------------------------------------------
+    // DATE RANGE ATTENDANCE
+    // --------------------------------------------------
 
     if (startDate || endDate) {
       if (
@@ -148,11 +176,19 @@ export async function GET(request: Request) {
         ? requestedUserId || undefined
         : session.id;
 
+      console.log("[Staff Attendance] Loading date range", {
+        role: session.role,
+        startDate,
+        endDate,
+      });
+
       const records = await getStaffAttendanceForDateRange(
         startDate,
         endDate,
         targetUserId,
       );
+
+      console.log("[Staff Attendance] Date range loaded:", records.length);
 
       return NextResponse.json({
         records,
@@ -160,6 +196,10 @@ export async function GET(request: Request) {
         endDate,
       });
     }
+
+    // --------------------------------------------------
+    // DAILY ATTENDANCE
+    // --------------------------------------------------
 
     const date = searchParams.get("date") || todayInIndia();
 
@@ -167,11 +207,48 @@ export async function GET(request: Request) {
       return errorResponse("Invalid date.", 400);
     }
 
+    // --------------------------------------------------
+    // ADMIN / STAFF / COUNSELLOR
+    // --------------------------------------------------
+
     if (canManageAttendance(session.role)) {
-      const [records, stats] = await Promise.all([
-        getStaffAttendanceForDate(date),
-        getStaffAttendanceStats(date),
-      ]);
+      console.log("[Staff Attendance GET] Starting", {
+        role: session.role,
+        date,
+      });
+
+      // Load records separately so we can identify
+      // the failing database operation.
+
+      let records: StaffAttendanceRecord[];
+
+      try {
+        records = await getStaffAttendanceForDate(date);
+
+        console.log("[Staff Attendance] Records loaded:", records.length);
+      } catch (error) {
+        console.error(
+          "[Staff Attendance] getStaffAttendanceForDate FAILED:",
+          error,
+        );
+
+        throw error;
+      }
+
+      let stats: Awaited<ReturnType<typeof getStaffAttendanceStats>>;
+
+      try {
+        stats = await getStaffAttendanceStats(date);
+
+        console.log("[Staff Attendance] Stats loaded successfully");
+      } catch (error) {
+        console.error(
+          "[Staff Attendance] getStaffAttendanceStats FAILED:",
+          error,
+        );
+
+        throw error;
+      }
 
       return NextResponse.json({
         records,
@@ -179,6 +256,15 @@ export async function GET(request: Request) {
         date,
       });
     }
+
+    // --------------------------------------------------
+    // EDUCATOR PERSONAL ATTENDANCE
+    // --------------------------------------------------
+
+    console.log("[Staff Attendance] Loading personal attendance", {
+      role: session.role,
+      date,
+    });
 
     const myRecord = await getStaffAttendanceForToday(session.id, date);
 
@@ -195,6 +281,10 @@ export async function GET(request: Request) {
     return errorResponse("Unable to load staff attendance.", 500);
   }
 }
+
+// ======================================================
+// POST STAFF ATTENDANCE ACTIONS
+// ======================================================
 
 export async function POST(request: Request) {
   try {
@@ -224,7 +314,10 @@ export async function POST(request: Request) {
 
     const action = String(body.action || "");
 
-    // Listing requests does not require an attendance date.
+    // ==================================================
+    // LIST REGULARISATION REQUESTS
+    // ==================================================
+
     if (action === "list-regularisations") {
       const suppliedStatus = body.status ? String(body.status) : undefined;
 
@@ -247,7 +340,9 @@ export async function POST(request: Request) {
         userId: filterUserId,
       });
 
-      return NextResponse.json({ requests });
+      return NextResponse.json({
+        requests,
+      });
     }
 
     const date = String(body.date || todayInIndia());
@@ -256,9 +351,9 @@ export async function POST(request: Request) {
       return errorResponse("Invalid attendance date.", 400);
     }
 
-    // ============================================
+    // ==================================================
     // SELF CHECK-IN
-    // ============================================
+    // ==================================================
 
     if (action === "checkin") {
       if (date !== todayInIndia()) {
@@ -304,9 +399,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // ============================================
+    // ==================================================
     // SELF CHECK-OUT
-    // ============================================
+    // ==================================================
 
     if (action === "checkout") {
       if (date !== todayInIndia()) {
@@ -350,11 +445,10 @@ export async function POST(request: Request) {
       });
     }
 
-    // ============================================
+    // ==================================================
     // MANUAL ATTENDANCE
-    // ADMIN + STAFF + COUNSELLOR
-    // TEACHING + NON-TEACHING
-    // ============================================
+    // ADMIN / STAFF / COUNSELLOR
+    // ==================================================
 
     if (action === "bulk-mark") {
       if (!canManageAttendance(session.role)) {
@@ -505,20 +599,27 @@ export async function POST(request: Request) {
       await logAction({
         action: "update",
         category: "attendance",
-        details: `Manual attendance saved by ${session.name} for ${results.length} employees on ${date}`,
+
+        details:
+          `Manual attendance saved by ${session.name} ` +
+          `for ${results.length} employees on ${date}`,
+
         path: "/api/staff-attendance",
         method: "POST",
         request,
         session,
+
         metadata: {
           action: "bulk-mark",
           date,
           markedById: session.id,
           markedByRole: session.role,
           recordCount: results.length,
+
           before: beforeRecords.filter((record) =>
             seenUserIds.has(record.userId),
           ),
+
           after: results,
         },
       });
@@ -530,9 +631,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // ============================================
+    // ==================================================
     // REGULARISATION REQUEST
-    // ============================================
+    // ==================================================
 
     if (action === "regularise") {
       const reason = String(body.reason || "").trim();
@@ -588,11 +689,14 @@ export async function POST(request: Request) {
       await logAction({
         action: "create",
         category: "attendance",
+
         details: `Attendance regularisation requested by ${session.name}`,
+
         path: "/api/staff-attendance",
         method: "POST",
         request,
         session,
+
         metadata: {
           action: "regularise",
           date,
@@ -606,9 +710,9 @@ export async function POST(request: Request) {
       });
     }
 
-    // ============================================
-    // REGULARISATION REVIEW — ADMIN ONLY
-    // ============================================
+    // ==================================================
+    // REGULARISATION REVIEW - ADMIN ONLY
+    // ==================================================
 
     if (action === "review") {
       if (session.role !== "admin") {
@@ -647,11 +751,15 @@ export async function POST(request: Request) {
       await logAction({
         action: "update",
         category: "attendance",
-        details: `Regularisation ${requestId} ${reviewStatus} by ${session.name}`,
+
+        details:
+          `Regularisation ${requestId} ` + `${reviewStatus} by ${session.name}`,
+
         path: "/api/staff-attendance",
         method: "POST",
         request,
         session,
+
         metadata: {
           action: "review",
           requestId,

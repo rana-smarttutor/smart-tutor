@@ -342,9 +342,10 @@ const DashboardCertificatesSection = dynamic(
     ssr: false,
   },
 );
-const AdminUserActivityLogs = dynamic(
-  () => import("@/components/admin-user-activity-logs")
-    .then((module) => module.AdminUserActivityLogs),
+const AdminUserActivityLogs = dynamic(() =>
+  import("@/components/admin-user-activity-logs").then(
+    (module) => module.AdminUserActivityLogs,
+  ),
 );
 const AdminStaffApprovals = dynamic(
   () =>
@@ -693,7 +694,13 @@ const staffMenuSections = [
   },
   {
     label: "2. Academic Management",
-    items: ["lectures", "attendance", "staff-attendance", "weekly-tests", "ptm"],
+    items: [
+      "lectures",
+      "attendance",
+      "staff-attendance",
+      "weekly-tests",
+      "ptm",
+    ],
   },
   {
     label: "3. Admissions Management",
@@ -1792,85 +1799,89 @@ export function DashboardShell({
             scrollbarColor: "#3B82F6 #0A1637",
           }}
         >
-          {((role === "staff" || role === "counsellor") ? staffMenuSections : menuSections).map(
-            (section) => {
-              const sectionItems = resolvedSidebarItems.filter((item) =>
-                section.items.includes(item.id),
-              );
-              const filteredItems = sidebarSearch
-                ? sectionItems.filter((item) =>
-                    item.label
-                      .toLowerCase()
-                      .includes(sidebarSearch.toLowerCase()),
-                  )
-                : sectionItems;
-              if (!filteredItems.length) return null;
-              return (
-                <div key={section.label} className="sb-group">
-                  {!sidebarCollapsed && (
-                    <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
-                      {section.label}
-                    </div>
-                  )}
-                  {filteredItems.map((item) => {
-                    const itemLabel =
-                      isGovExamStudent && item.id === "tests"
-                        ? "Mock Test"
-                        : item.label;
+          {(role === "staff" || role === "counsellor"
+            ? staffMenuSections
+            : menuSections
+          ).map((section) => {
+            const sectionItems = resolvedSidebarItems.filter((item) =>
+              section.items.includes(item.id),
+            );
+            const filteredItems = sidebarSearch
+              ? sectionItems.filter((item) =>
+                  item.label
+                    .toLowerCase()
+                    .includes(sidebarSearch.toLowerCase()),
+                )
+              : sectionItems;
+            if (!filteredItems.length) return null;
+            return (
+              <div key={section.label} className="sb-group">
+                {!sidebarCollapsed && (
+                  <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+                    {section.label}
+                  </div>
+                )}
+                {filteredItems.map((item) => {
+                  const itemLabel =
+                    isGovExamStudent && item.id === "tests"
+                      ? "Mock Test"
+                      : item.label;
 
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        data-label={itemLabel.toLowerCase()}
-                        className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
-                          sidebarCollapsed ? "justify-center" : ""
-                        } ${
-                          activeSection === item.id
-                            ? "bg-[#0B40A1] text-white shadow-md"
-                            : "text-slate-400 hover:bg-white/5 hover:text-white"
-                        }`}
-                        onClick={() => {
-                          if ((role === "staff" || role === "counsellor") && item.id === "performance") {
-                            window.location.assign("/student-performance");
-                            return;
-                          }
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-label={itemLabel.toLowerCase()}
+                      className={`sb-nav-item flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-200 ${
+                        sidebarCollapsed ? "justify-center" : ""
+                      } ${
+                        activeSection === item.id
+                          ? "bg-[#0B40A1] text-white shadow-md"
+                          : "text-slate-400 hover:bg-white/5 hover:text-white"
+                      }`}
+                      onClick={() => {
+                        if (
+                          (role === "staff" || role === "counsellor") &&
+                          item.id === "performance"
+                        ) {
+                          window.location.assign("/student-performance");
+                          return;
+                        }
 
-                          if (isGovExamStudent && item.id === "tests") {
-                            window.location.assign("/mock-test");
-                            return;
-                          }
+                        if (isGovExamStudent && item.id === "tests") {
+                          window.location.assign("/mock-test");
+                          return;
+                        }
 
-                          setActiveSection(item.id);
-                        }}
-                        title={sidebarCollapsed ? itemLabel : undefined}
-                      >
-                        {navIcons[item.id] || (
-                          <svg
-                            className="h-5 w-5 shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                            />
-                          </svg>
-                        )}
+                        setActiveSection(item.id);
+                      }}
+                      title={sidebarCollapsed ? itemLabel : undefined}
+                    >
+                      {navIcons[item.id] || (
+                        <svg
+                          className="h-5 w-5 shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          />
+                        </svg>
+                      )}
 
-                        {!sidebarCollapsed && (
-                          <span className="truncate">{itemLabel}</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              );
-            },
-          )}
+                      {!sidebarCollapsed && (
+                        <span className="truncate">{itemLabel}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Footer — Logout only */}
@@ -2011,7 +2022,8 @@ export function DashboardShell({
           (role === "student" ||
             role === "educator" ||
             role === "parent" ||
-            role === "staff" || role === "counsellor") ? (
+            role === "staff" ||
+            role === "counsellor") ? (
             <DashboardProfileSettings
               session={session}
               role={role}
@@ -2063,7 +2075,8 @@ export function DashboardShell({
             role === "educator" ||
             role === "student" ||
             role === "parent" ||
-            role === "staff" || role === "counsellor") ? (
+            role === "staff" ||
+            role === "counsellor") ? (
             <DashboardComplaintBox session={session} role={role} />
           ) : null}
 
@@ -2354,8 +2367,7 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showAttendance &&
-          (role === "admin" || role === "educator") ? (
+          {showAttendance && (role === "admin" || role === "educator") ? (
             <AttendanceHub
               role={role}
               attendanceSheets={dashboard.attendanceSheets}
@@ -2412,7 +2424,8 @@ export function DashboardShell({
           {showProfitLoss && role === "admin" ? (
             <AdminProfitLossManager />
           ) : null}
-          {showFees && (role === "admin" || role === "staff" || role === "counsellor") ? (
+          {showFees &&
+          (role === "admin" || role === "staff" || role === "counsellor") ? (
             <AdminFeeHub
               role={role}
               feeInvoices={dashboard.feeInvoices}
@@ -2421,7 +2434,8 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showFeeInstallments && (role === "staff" || role === "counsellor") ? (
+          {showFeeInstallments &&
+          (role === "staff" || role === "counsellor") ? (
             <FeeInstallmentManager
               role={role}
               studentDirectory={studentDirectory}
@@ -2438,7 +2452,10 @@ export function DashboardShell({
 
           {showRewards && role === "educator" ? <RewardsManager /> : null}
           {showStaffPayroll &&
-          (role === "admin" || role === "educator" || role === "staff" || role === "counsellor") ? (
+          (role === "admin" ||
+            role === "educator" ||
+            role === "staff" ||
+            role === "counsellor") ? (
             <StaffPayrollManager
               role={role}
               session={session}
@@ -2447,7 +2464,10 @@ export function DashboardShell({
           ) : null}
 
           {showStaffPayouts &&
-          (role === "admin" || role === "educator" || role === "staff" || role === "counsellor") ? (
+          (role === "admin" ||
+            role === "educator" ||
+            role === "staff" ||
+            role === "counsellor") ? (
             <StaffPayoutManager
               role={role}
               session={session}
@@ -2460,9 +2480,7 @@ export function DashboardShell({
           ) : null}
 
           {activeSection === "user-activity-logs" && role === "admin" ? (
-
             <AdminUserActivityLogs />
-
           ) : null}
 
           {activeSection === "staff-approvals" && role === "admin" ? (
@@ -2477,19 +2495,28 @@ export function DashboardShell({
             <FacultyPerformanceManager />
           ) : null}
 
-          {(role === "staff" || role === "counsellor") && activeSection === "staff-tasks" ? (
+          {(role === "staff" || role === "counsellor") &&
+          activeSection === "staff-tasks" ? (
             <StaffOperationsManager kind="tasks" />
           ) : null}
-          {(role === "staff" || role === "counsellor") && activeSection === "branch-expenses" ? (
+          {(role === "staff" || role === "counsellor") &&
+          activeSection === "branch-expenses" ? (
             <StaffOperationsManager kind="expenses" />
           ) : null}
-          {(role === "staff" || role === "counsellor") && activeSection === "daily-branch-report" ? (
+          {(role === "staff" || role === "counsellor") &&
+          activeSection === "daily-branch-report" ? (
             <StaffOperationsManager kind="daily-reports" />
           ) : null}
 
           {showLectures && (role === "staff" || role === "counsellor") ? (
-            <StaffLectureOverview lectures={dashboard.lectures} />
+            <StaffLectureOverview
+              lectures={dashboard.lectures}
+              faculty={localManagedUsers.filter(
+                (user) => user.role === "educator",
+              )}
+            />
           ) : null}
+
           {showLectures && role !== "staff" && role !== "counsellor" ? (
             <LectureManager
               role={role}
@@ -2823,7 +2850,8 @@ export function DashboardShell({
                   {/* Admin and Educator Report Creator */}
                   {role === "educator" ||
                   role === "admin" ||
-                  role === "staff" || role === "counsellor" ? (
+                  role === "staff" ||
+                  role === "counsellor" ? (
                     <PerformanceReportCreator
                       session={session}
                       studentDirectory={studentDirectory}

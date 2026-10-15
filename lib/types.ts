@@ -1,4 +1,4 @@
-﻿export type Role =
+export type Role =
   | "student"
   | "educator"
   | "staff"
@@ -536,6 +536,9 @@ export type LectureItem = {
   nextTopic?: string;
   attendanceSheetId?: string;
   lectureReportSubmittedAt?: string;
+  lectureCheckInAt?: string;
+  lectureCheckOutAt?: string;
+  lectureCompletedAt?: string;
   teacherId?: string;
   teacherName?: string;
 };

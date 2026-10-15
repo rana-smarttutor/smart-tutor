@@ -105,3 +105,7 @@ components/invoice-manager.tsx.bak-20261003-140818
 components/student-fee-receipts-view.tsx.bak-20261003-135928
 components/student-fee-receipts-view.tsx.bak-20261003-140818
 components/admission-application-form.tsx.backup
+backup-lecture-attendance-20261015-180108/staff-attendance-manager.tsx
+backup-lecture-attendance-20261015-180108/data-store.ts
+backup-lecture-attendance-20261015-180108/lectures-route.ts
+backup-lecture-attendance-20261015-180108/types.ts
