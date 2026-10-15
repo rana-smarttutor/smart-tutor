@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   Check,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
@@ -23,6 +22,10 @@ import type {
   ManagedUser,
 } from "@/lib/types";
 
+// ======================================================
+// TYPES
+// ======================================================
+
 type Mark = AttendanceStatus | "unmarked";
 
 type Entry = {
@@ -39,14 +42,24 @@ type Feedback = {
 type AttendanceTab = "daily" | "lecture" | "history";
 
 type ProgramCategory =
-  | "Competitive Exams"
   | "Government Exams"
+  | "Competitive Exams"
   | "Skill Programs";
 
 type StudentGroup = {
   label: string;
   members: ManagedUser[];
 };
+
+type CategoryGroup = {
+  category: ProgramCategory;
+  members: ManagedUser[];
+  courses: string[];
+};
+
+// ======================================================
+// CONSTANTS
+// ======================================================
 
 const DAILY_KEY = "student:daily:v1";
 
@@ -61,17 +74,12 @@ const SCHOOL_CLASSES = [
 ];
 
 const PROGRAM_CATEGORIES: ProgramCategory[] = [
-  "Competitive Exams",
   "Government Exams",
+  "Competitive Exams",
   "Skill Programs",
 ];
 
-const ATTENDANCE_OPTIONS: AttendanceStatus[] = [
-  "present",
-  "absent",
-  "late",
-];
-
+const ATTENDANCE_OPTIONS: AttendanceStatus[] = ["present", "absent", "excused"];
 
 const MARK_CONFIG: Record<
   Mark,
@@ -96,13 +104,13 @@ const MARK_CONFIG: Record<
   late: {
     label: "Late",
     active: "border-amber-500 bg-amber-500 text-white",
-    inactive:
-      "border-slate-200 bg-white text-slate-600 hover:border-amber-300 hover:bg-amber-50",
+    inactive: "border-slate-200 bg-white text-slate-600",
   },
   excused: {
     label: "Leave",
     active: "border-blue-600 bg-blue-600 text-white",
-    inactive: "border-slate-200 bg-white text-slate-600",
+    inactive:
+      "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50",
   },
   unmarked: {
     label: "Not marked",
@@ -111,6 +119,9 @@ const MARK_CONFIG: Record<
   },
 };
 
+// ======================================================
+// DATE HELPERS
+// ======================================================
 
 function localDate() {
   const date = new Date();
@@ -123,7 +134,9 @@ function localDate() {
 }
 
 function formatDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value;
+  }
 
   const [year, month, day] = value.split("-").map(Number);
 
@@ -135,6 +148,10 @@ function formatDate(value: string) {
   });
 }
 
+// ======================================================
+// STUDENT COURSE HELPERS
+// ======================================================
+
 function courseOf(student: ManagedUser) {
   return (
     student.profile?.courseWantedTitle?.trim() ||
@@ -144,40 +161,57 @@ function courseOf(student: ManagedUser) {
   );
 }
 
-function classRank(value: string) {
-  const text = value.toLowerCase().trim();
+function coursesOf(student: ManagedUser) {
+  const possibleCourses = [
+    student.profile?.courseWantedTitle,
+    student.profile?.courseWanted,
+    student.program,
+  ];
 
-  const match = text.match(
+  const courses = new Map<string, string>();
+
+  for (const value of possibleCourses) {
+    const course = value?.trim();
+
+    if (!course) continue;
+
+    const key = course.toLowerCase();
+
+    if (!courses.has(key)) {
+      courses.set(key, course);
+    }
+  }
+
+  return Array.from(courses.values());
+}
+
+function classRank(value: string) {
+  const match = value.match(
     /(?:class|grade|standard|std\.?)\s*[-:]?\s*(\d{1,2})(?:st|nd|rd|th)?\b/i,
   );
 
-  if (match) {
-    const number = Number(match[1]);
+  if (!match) return 40;
 
-    if (number >= 1 && number <= 12) {
-      return number;
-    }
+  const number = Number(match[1]);
+
+  if (number >= 1 && number <= 12) {
+    return number;
   }
 
   return 40;
 }
 
 function classLabel(student: ManagedUser) {
-  const course = courseOf(student);
-  const rank = classRank(course);
+  const rank = classRank(courseOf(student));
 
-  if (rank >= 1 && rank <= 12) {
-    return `Class ${rank}`;
-  }
-
-  return course;
+  return rank <= 12 ? `Class ${rank}` : courseOf(student);
 }
 
 function programCategory(course: string): ProgramCategory {
   const name = course.toLowerCase();
 
   if (
-    /neet|jee|mht.?cet|cat\b|ugc.?net|\bset\b|entrance|foundation|cuet|clat/.test(
+    /neet|jee|mht.?cet|\bcat\b|ugc.?net|\bset\b|entrance|foundation|cuet|clat/.test(
       name,
     )
   ) {
@@ -195,15 +229,12 @@ function programCategory(course: string): ProgramCategory {
   return "Skill Programs";
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join("")
-    .toUpperCase();
+function isSchoolStudent(student: ManagedUser) {
+  const rank = classRank(courseOf(student));
+
+  return rank >= 6 && rank <= 12;
 }
+
 
 function getCounts(students: ManagedUser[], statusMap: Map<string, Mark>) {
   const counts = {
@@ -218,17 +249,11 @@ function getCounts(students: ManagedUser[], statusMap: Map<string, Mark>) {
   for (const student of students) {
     const status = statusMap.get(student.id) ?? "unmarked";
 
-    if (status === "present") {
-      counts.present++;
-    } else if (status === "absent") {
-      counts.absent++;
-    } else if (status === "late") {
-      counts.late++;
-    } else if (status === "excused") {
-      counts.excused++;
-    } else {
-      counts.unmarked++;
-    }
+    if (status === "present") counts.present++;
+    else if (status === "absent") counts.absent++;
+    else if (status === "late") counts.late++;
+    else if (status === "excused") counts.excused++;
+    else counts.unmarked++;
   }
 
   return counts;
@@ -243,17 +268,18 @@ function StatusPill({ status }: { status: Mark }) {
     unmarked: "bg-slate-100 text-slate-500",
   };
 
-  const label =
-    status === "unmarked" ? "Not marked" : MARK_CONFIG[status].label;
-
   return (
     <span
       className={`inline-flex whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-bold ${styles[status]}`}
     >
-      {label}
+      {MARK_CONFIG[status].label}
     </span>
   );
 }
+
+// ======================================================
+// MAIN COMPONENT
+// ======================================================
 
 export function DailyStudentAttendanceManager({
   studentDirectory,
@@ -263,14 +289,10 @@ export function DailyStudentAttendanceManager({
   const [date, setDate] = useState(localDate);
   const [search, setSearch] = useState("");
 
-  // School class or one of the three category tiles.
   const [selectedClass, setSelectedClass] = useState("Class 6");
 
   const [selectedCategory, setSelectedCategory] =
     useState<ProgramCategory | null>(null);
-
-  // Which exam/course accordion is open in Step 2.
-  const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
 
   const [entries, setEntries] = useState<Entry[]>([]);
 
@@ -285,102 +307,125 @@ export function DailyStudentAttendanceManager({
 
   const [tab, setTab] = useState<AttendanceTab>("daily");
 
+  // ====================================================
+  // STUDENT DIRECTORY
+  // ====================================================
+
   const students = useMemo(() => {
-    return studentDirectory
-      .filter((student) => student.role === "student")
-      .sort(
-        (a, b) =>
-          classRank(courseOf(a)) - classRank(courseOf(b)) ||
-          classLabel(a).localeCompare(classLabel(b), undefined, {
-            numeric: true,
-          }) ||
-          a.name.localeCompare(b.name),
-      );
+    const unique = new Map<string, ManagedUser>();
+
+    for (const student of studentDirectory) {
+      if (student.role !== "student") continue;
+
+      const existing = unique.get(student.id);
+
+      if (!existing) {
+        unique.set(student.id, student);
+      }
+    }
+
+    return Array.from(unique.values()).sort(
+      (a, b) =>
+        classRank(courseOf(a)) - classRank(courseOf(b)) ||
+        a.name.localeCompare(b.name),
+    );
   }, [studentDirectory]);
 
-  // School classes and individual exam/course groups.
-  const classes = useMemo<StudentGroup[]>(() => {
-    const grouped = new Map<string, ManagedUser[]>();
+  // ====================================================
+  // SCHOOL CLASS GROUPS
+  // ====================================================
 
-    // These seven tiles always exist.
-    for (const label of SCHOOL_CLASSES) {
-      grouped.set(label, []);
-    }
-
-    for (const student of students) {
-      const label = classLabel(student);
-      const members = grouped.get(label) ?? [];
-
-      members.push(student);
-      grouped.set(label, members);
-    }
-
-    return Array.from(grouped, ([label, members]) => ({
+  const schoolClasses = useMemo<StudentGroup[]>(() => {
+    return SCHOOL_CLASSES.map((label) => ({
       label,
-      members,
+      members: students.filter(
+        (student) => isSchoolStudent(student) && classLabel(student) === label,
+      ),
     }));
   }, [students]);
 
-  const schoolClasses = useMemo(
-    () => classes.filter((item) => SCHOOL_CLASSES.includes(item.label)),
-    [classes],
-  );
+  // ====================================================
+  // COMBINED PROGRAM CATEGORY GROUPS
+  // ====================================================
 
-  const courseGroups = useMemo(
-    () =>
-      PROGRAM_CATEGORIES.map((category) => ({
+  const courseGroups = useMemo<CategoryGroup[]>(() => {
+    return PROGRAM_CATEGORIES.map((category) => {
+      const uniqueStudents = new Map<string, ManagedUser>();
+
+      const uniqueCourses = new Map<string, string>();
+
+      for (const student of students) {
+        if (isSchoolStudent(student)) {
+          continue;
+        }
+
+        const matchingCourses = coursesOf(student).filter(
+          (course) =>
+            programCategory(course) === category && classRank(course) > 12,
+        );
+
+        if (!matchingCourses.length) {
+          continue;
+        }
+
+        uniqueStudents.set(student.id, student);
+
+        for (const course of matchingCourses) {
+          const key = course.toLowerCase();
+
+          if (!uniqueCourses.has(key)) {
+            uniqueCourses.set(key, course);
+          }
+        }
+      }
+
+      return {
         category,
-        courses: classes
-          .filter(
-            (item) =>
-              !SCHOOL_CLASSES.includes(item.label) &&
-              programCategory(item.label) === category,
-          )
-          .sort((a, b) => a.label.localeCompare(b.label)),
-      })),
-    [classes],
-  );
+        members: Array.from(uniqueStudents.values()).sort((a, b) =>
+          a.name.localeCompare(b.name),
+        ),
+        courses: Array.from(uniqueCourses.values()).sort(),
+      };
+    });
+  }, [students]);
 
-  // Step 2 active school class or expanded course.
-  const activeClass = useMemo(() => {
+  // ====================================================
+  // ACTIVE STUDENT GROUP
+  // ====================================================
+
+  const selectedGroup = useMemo(() => {
+    if (!selectedCategory) return null;
+
+    return (
+      courseGroups.find((group) => group.category === selectedCategory) ?? null
+    );
+  }, [courseGroups, selectedCategory]);
+
+  const activeClass = useMemo<StudentGroup>(() => {
     if (selectedCategory) {
-      if (!expandedCourse) return null;
-
-      return (
-        courseGroups
-          .find((group) => group.category === selectedCategory)
-          ?.courses.find((item) => item.label === expandedCourse) ?? null
-      );
+      return {
+        label: selectedCategory,
+        members: selectedGroup?.members ?? [],
+      };
     }
 
-    return schoolClasses.find((item) => item.label === selectedClass) ?? null;
-  }, [
-    selectedCategory,
-    expandedCourse,
-    selectedClass,
-    courseGroups,
-    schoolClasses,
-  ]);
+    return (
+      schoolClasses.find((group) => group.label === selectedClass) ?? {
+        label: selectedClass,
+        members: [],
+      }
+    );
+  }, [selectedCategory, selectedGroup, schoolClasses, selectedClass]);
 
-  const activeClassName = activeClass?.label ?? "";
+  const activeClassName = activeClass.label;
 
-  const classStudents = useMemo(
-    () => activeClass?.members ?? [],
-    [activeClass],
-  );
+  const classStudents = activeClass.members;
 
-  const selectedGroup = useMemo(
-    () =>
-      selectedCategory
-        ? courseGroups.find((group) => group.category === selectedCategory)
-        : null,
-    [courseGroups, selectedCategory],
-  );
+  const categoryStudents = selectedGroup?.members ?? [];
 
-  const categoryStudents = useMemo(
-    () => selectedGroup?.courses.flatMap((course) => course.members) ?? [],
-    [selectedGroup],
-  );
+  // ====================================================
+  // ATTENDANCE COUNTS
+  // ====================================================
 
   const entryById = useMemo(
     () =>
@@ -394,24 +439,34 @@ export function DailyStudentAttendanceManager({
 
   const allStats = getCounts(students, entryById);
 
+  // ====================================================
+  // SEARCH WITHIN SELECTED CATEGORY / CLASS
+  // ====================================================
+
   const query = search.trim().toLowerCase();
 
   const visibleStudents = useMemo(() => {
     if (!query) return classStudents;
 
-    return classStudents.filter((student) =>
-      [
+    return classStudents.filter((student) => {
+      const values = [
         student.name,
         student.id,
-        courseOf(student),
+        student.employeeCode ?? "",
         student.batchName ?? "",
-      ].some((value) => value.toLowerCase().includes(query)),
-    );
+        ...coursesOf(student),
+      ];
+
+      return values.some((value) => value.toLowerCase().includes(query));
+    });
   }, [classStudents, query]);
 
   const controlsDisabled = loading || saving || loadError;
 
-  // Load the saved daily attendance sheet.
+  // ====================================================
+  // LOAD DAILY ATTENDANCE
+  // ====================================================
+
   const load = useCallback(
     async (cancelled?: () => boolean) => {
       setLoading(true);
@@ -489,6 +544,10 @@ export function DailyStudentAttendanceManager({
     };
   }, [load]);
 
+  // ====================================================
+  // UNSAVED CHANGES PROTECTION
+  // ====================================================
+
   useEffect(() => {
     function beforeUnload(event: BeforeUnloadEvent) {
       if (!dirty) return;
@@ -498,17 +557,23 @@ export function DailyStudentAttendanceManager({
 
     window.addEventListener("beforeunload", beforeUnload);
 
-    return () => {
-      window.removeEventListener("beforeunload", beforeUnload);
-    };
+    return () => window.removeEventListener("beforeunload", beforeUnload);
   }, [dirty]);
+
+  function confirmDiscard() {
+    if (!dirty) return true;
+
+    return window.confirm("Discard unsaved attendance changes?");
+  }
+
+  // ====================================================
+  // DATE NAVIGATION
+  // ====================================================
 
   function changeDate(next: string) {
     if (!next || next === date) return;
 
-    if (dirty && !window.confirm("Discard unsaved attendance changes?")) {
-      return;
-    }
+    if (!confirmDiscard()) return;
 
     setDate(next);
     setSearch("");
@@ -531,10 +596,13 @@ export function DailyStudentAttendanceManager({
     );
   }
 
+  // ====================================================
+  // SELECT SCHOOL CLASS / CATEGORY
+  // ====================================================
+
   function chooseSchoolClass(label: string) {
     setSelectedCategory(null);
     setSelectedClass(label);
-    setExpandedCourse(null);
     setSearch("");
     setFeedback(null);
   }
@@ -542,17 +610,13 @@ export function DailyStudentAttendanceManager({
   function chooseCategory(category: ProgramCategory) {
     setSelectedCategory(category);
     setSelectedClass("");
-    setExpandedCourse(null);
     setSearch("");
     setFeedback(null);
   }
 
-  function toggleCourse(label: string) {
-    setExpandedCourse((previous) => (previous === label ? null : label));
-
-    setSearch("");
-    setFeedback(null);
-  }
+  // ====================================================
+  // MARK ATTENDANCE
+  // ====================================================
 
   function setOne(id: string, status: Mark) {
     if (controlsDisabled) return;
@@ -568,7 +632,7 @@ export function DailyStudentAttendanceManager({
   }
 
   function setMany(ids: string[], status: Mark) {
-    if (controlsDisabled || !ids.length) {
+    if (controlsDisabled || ids.length === 0) {
       return;
     }
 
@@ -594,13 +658,11 @@ export function DailyStudentAttendanceManager({
   function clearClass() {
     if (!classStudents.length) return;
 
-    if (
-      !window.confirm(
-        `Clear attendance marks for ${activeClassName}? Changes will not be saved until you click Save Attendance.`,
-      )
-    ) {
-      return;
-    }
+    const confirmed = window.confirm(
+      `Clear attendance marks for ${activeClassName}? Changes will not be saved until you click Save Attendance.`,
+    );
+
+    if (!confirmed) return;
 
     setMany(
       classStudents.map((student) => student.id),
@@ -608,7 +670,10 @@ export function DailyStudentAttendanceManager({
     );
   }
 
-  // Existing API and saved record format.
+  // ====================================================
+  // SAVE ATTENDANCE — EXISTING API
+  // ====================================================
+
   async function save() {
     if (controlsDisabled || !dirty) {
       return;
@@ -636,7 +701,8 @@ export function DailyStudentAttendanceManager({
     try {
       const knownIds = new Set(students.map((student) => student.id));
 
-      // Preserve records outside the current student directory.
+      // Keep records that are outside the
+      // currently loaded student directory.
       const preserved = (sheet?.records ?? []).filter(
         (record) => !knownIds.has(record.studentId),
       );
@@ -695,6 +761,10 @@ export function DailyStudentAttendanceManager({
     }
   }
 
+  // ====================================================
+  // TABS
+  // ====================================================
+
   const attendanceTabs: {
     key: AttendanceTab;
     label: string;
@@ -713,7 +783,10 @@ export function DailyStudentAttendanceManager({
     },
   ];
 
-  // Reusable student attendance table.
+  // ====================================================
+  // STUDENT ATTENDANCE TABLE
+  // ====================================================
+
   function renderStudentTable() {
     if (loading) {
       return (
@@ -754,7 +827,7 @@ export function DailyStudentAttendanceManager({
           <p className="text-sm font-semibold">
             {search
               ? "No students match your search."
-              : "No students enrolled in this class or course."}
+              : "No students enrolled in this category or class."}
           </p>
         </div>
       );
@@ -762,13 +835,17 @@ export function DailyStudentAttendanceManager({
 
     return (
       <div className="overflow-x-auto px-4 pb-4">
-        <table className="w-full min-w-[900px] border-separate border-spacing-0 text-left">
+        <table className="w-full min-w-[1000px] border-separate border-spacing-0 text-left">
           <thead>
             <tr className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-              <th className="w-16 rounded-l-lg bg-[#F2F6FD] px-3 py-3">#</th>
+              <th className="w-14 rounded-l-lg bg-[#F2F6FD] px-3 py-3">#</th>
 
-              <th className="min-w-[230px] bg-[#F2F6FD] px-3 py-3">
-                Student Name
+              <th className="min-w-[220px] bg-[#F2F6FD] px-3 py-3">
+                Student Name / ID
+              </th>
+
+              <th className="min-w-[190px] bg-[#F2F6FD] px-3 py-3">
+                Enrolled Course
               </th>
 
               {ATTENDANCE_OPTIONS.map((status) => (
@@ -790,6 +867,12 @@ export function DailyStudentAttendanceManager({
             {visibleStudents.map((student, index) => {
               const current = entryById.get(student.id) ?? "unmarked";
 
+              const displayCourses = selectedCategory
+                ? coursesOf(student).filter(
+                    (course) => programCategory(course) === selectedCategory,
+                  )
+                : coursesOf(student);
+
               return (
                 <tr
                   key={student.id}
@@ -802,20 +885,30 @@ export function DailyStudentAttendanceManager({
                   </td>
 
                   <td className="border-b border-slate-100 px-3 py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-[#0A54B7]">
-                        {initials(student.name)}
-                      </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-[#0A193A]">
+                        {student.name}
+                      </p>
 
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-[#0A193A]">
-                          {student.name}
-                        </p>
+                      <p className="mt-1 max-w-[220px] break-all text-[10px] text-slate-500">
+                        ID: {student.id}
+                      </p>
+                    </div>
+                  </td>
 
-                        <p className="max-w-[190px] truncate text-[10px] text-slate-400">
-                          ID: {student.id}
-                        </p>
-                      </div>
+                  <td className="border-b border-slate-100 px-3 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {(displayCourses.length
+                        ? displayCourses
+                        : [courseOf(student)]
+                      ).map((course) => (
+                        <span
+                          key={course}
+                          className="inline-flex rounded-md bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700"
+                        >
+                          {course}
+                        </span>
+                      ))}
                     </div>
                   </td>
 
@@ -857,7 +950,10 @@ export function DailyStudentAttendanceManager({
     );
   }
 
-  // Shown for school classes and for an opened course in Step 2.
+  // ====================================================
+  // DIRECT ATTENDANCE DETAILS
+  // ====================================================
+
   function renderAttendanceDetails() {
     return (
       <div className="space-y-0">
@@ -868,7 +964,7 @@ export function DailyStudentAttendanceManager({
             </h3>
 
             <p className="mt-1 text-xs text-slate-500">
-              {classStats.total} enrolled student(s)
+              {classStats.total} unique enrolled student(s)
             </p>
           </div>
 
@@ -894,7 +990,6 @@ export function DailyStudentAttendanceManager({
           </div>
         </div>
 
-        {/* ATTENDANCE SUMMARY */}
         <div className="grid grid-cols-2 gap-3 border-b border-slate-100 p-4 lg:grid-cols-4">
           {[
             {
@@ -908,12 +1003,12 @@ export function DailyStudentAttendanceManager({
               color: "text-red-600",
             },
             {
-              label: "Late",
-              value: classStats.late,
-              color: "text-amber-600",
+              label: "Leave",
+              value: classStats.excused,
+              color: "text-blue-600",
             },
             {
-              label: "Not marked",
+              label: "Not Marked",
               value: classStats.unmarked,
               color: "text-slate-600",
             },
@@ -933,10 +1028,8 @@ export function DailyStudentAttendanceManager({
           ))}
         </div>
 
-        {/* STUDENT TABLE */}
         <div className="pt-4">{renderStudentTable()}</div>
 
-        {/* FOOTER */}
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
           <span>
             Showing {visibleStudents.length} of {classStudents.length} students
@@ -944,16 +1037,21 @@ export function DailyStudentAttendanceManager({
 
           <span>
             {classStats.present} Present · {classStats.absent} Absent ·{" "}
-            {classStats.unmarked} Not marked
+            {classStats.excused} Leave · {classStats.unmarked} Not Marked
           </span>
         </div>
       </div>
     );
   }
 
+  // ====================================================
+  // RENDER
+  // ====================================================
+
   return (
     <section className="min-w-0 space-y-4 pb-6">
       {/* PAGE HEADER */}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-xs font-medium text-slate-500">
@@ -1019,6 +1117,7 @@ export function DailyStudentAttendanceManager({
       </div>
 
       {/* MAIN TABS */}
+
       <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-white px-2">
         {attendanceTabs.map((item) => (
           <button
@@ -1044,7 +1143,8 @@ export function DailyStudentAttendanceManager({
 
       {tab === "daily" ? (
         <>
-          {/* STEP 1 */}
+          {/* STEP 1 — SELECT CLASS OR CATEGORY */}
+
           <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
@@ -1053,7 +1153,8 @@ export function DailyStudentAttendanceManager({
                 </h2>
 
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Choose a school class or program category.
+                  Select a school class or program category to view all enrolled
+                  students.
                 </p>
               </div>
 
@@ -1063,7 +1164,8 @@ export function DailyStudentAttendanceManager({
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-              {/* SEVEN SCHOOL TILES */}
+              {/* CLASS 6–12 */}
+
               {schoolClasses.map((item) => {
                 const selected =
                   !selectedCategory && selectedClass === item.label;
@@ -1095,11 +1197,10 @@ export function DailyStudentAttendanceManager({
                 );
               })}
 
-              {/* THREE CATEGORY TILES - NO DROPDOWNS HERE */}
-              {courseGroups.map(({ category, courses }) => {
-                const selected = selectedCategory === category;
+              {/* PROGRAM CATEGORIES — NO COURSE DROPDOWNS */}
 
-                const members = courses.flatMap((course) => course.members);
+              {courseGroups.map(({ category, members }) => {
+                const selected = selectedCategory === category;
 
                 const counts = getCounts(members, entryById);
 
@@ -1130,18 +1231,18 @@ export function DailyStudentAttendanceManager({
             </div>
           </div>
 
-          {/* STEP 2 */}
+          {/* STEP 2 — COMBINED STUDENT LIST */}
+
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
               <div>
                 <h2 className="text-sm font-bold text-[#0A193A]">
-                  Step 2 ·{" "}
-                  {selectedCategory || activeClassName || "Student Attendance"}
+                  Step 2 · {activeClassName || "Student Attendance"}
                 </h2>
 
                 <p className="mt-1 text-[11px] text-slate-500">
                   {selectedCategory
-                    ? `${categoryStudents.length} enrolled students across ${selectedGroup?.courses.length ?? 0} courses`
+                    ? `${categoryStudents.length} unique students across ${selectedGroup?.courses.length ?? 0} identified courses`
                     : `${classStats.total} students in this class`}
                 </p>
               </div>
@@ -1156,13 +1257,14 @@ export function DailyStudentAttendanceManager({
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search name or student ID"
+                  placeholder="Search name, ID or course"
                   className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs outline-none focus:border-[#0A54B7]"
                 />
               </div>
             </div>
 
             {/* FEEDBACK */}
+
             {feedback && (
               <div
                 role="status"
@@ -1184,90 +1286,12 @@ export function DailyStudentAttendanceManager({
               </div>
             )}
 
-            {selectedCategory ? (
-              /* EXAM-WISE ACCORDION IN STEP 2 */
-              <div className="space-y-3 p-4">
-                <p className="text-xs text-slate-500">
-                  Select an exam or skill course below to view its students and
-                  mark attendance.
-                </p>
+            {/* DIRECT TABLE FOR ALL CATEGORIES */}
 
-                {(selectedGroup?.courses ?? []).map((course) => {
-                  const open = expandedCourse === course.label;
-
-                  const counts = getCounts(course.members, entryById);
-
-                  return (
-                    <div
-                      key={course.label}
-                      className="overflow-hidden rounded-xl border border-slate-200"
-                    >
-                      {/* EXAM/COURSE ROW */}
-                      <button
-                        type="button"
-                        aria-expanded={open}
-                        onClick={() => toggleCourse(course.label)}
-                        className={`flex w-full items-center justify-between gap-3 px-4 py-4 text-left transition ${
-                          open
-                            ? "bg-[#EEF5FF] text-[#0A54B7]"
-                            : "bg-white text-[#0A193A] hover:bg-slate-50"
-                        }`}
-                      >
-                        <span className="flex items-center gap-3">
-                          <ChevronDown
-                            size={17}
-                            className={`shrink-0 transition-transform ${
-                              open ? "" : "-rotate-90"
-                            }`}
-                          />
-
-                          <span className="text-xs font-bold sm:text-sm">
-                            {course.label}
-                          </span>
-                        </span>
-
-                        <span className="flex shrink-0 items-center gap-2">
-                          <span className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0A54B7]">
-                            {counts.total - counts.unmarked}/{counts.total}
-                          </span>
-
-                          <span className="hidden text-[11px] text-slate-500 sm:inline">
-                            students marked
-                          </span>
-                        </span>
-                      </button>
-
-                      {/* EXPANDED STUDENT ATTENDANCE */}
-                      {open && (
-                        <div className="border-t border-slate-200 bg-white">
-                          {renderAttendanceDetails()}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {(selectedGroup?.courses.length ?? 0) === 0 && (
-                  <div className="rounded-xl bg-slate-50 px-4 py-8 text-center">
-                    <GraduationCap
-                      size={28}
-                      className="mx-auto mb-3 text-slate-400"
-                    />
-
-                    <p className="text-sm font-semibold text-slate-600">
-                      No enrolled exams or courses found in this category.
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* CLASS 6–12: DIRECT ATTENDANCE TABLE */
-              renderAttendanceDetails()
-            )}
+            {renderAttendanceDetails()}
           </div>
         </>
       ) : (
-        /* EXISTING INFORMATIONAL TABS */
         <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-6 py-10 text-center">
           <CalendarDays size={32} className="text-[#0A54B7]" />
 

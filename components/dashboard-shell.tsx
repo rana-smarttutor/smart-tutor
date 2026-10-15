@@ -715,7 +715,7 @@ const staffMenuSections = [
     items: ["staff-tasks"],
   },
   {
-    label: "6. Reports & Communication",
+    label: "6. Reports & Management",
     items: ["performance", "daily-branch-report", "messages", "complaints"],
   },
   {

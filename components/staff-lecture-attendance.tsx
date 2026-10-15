@@ -66,9 +66,10 @@ function durationLabel(start?: string, end?: string) {
 
   if (!Number.isFinite(minutes)) return "—";
 
-  return `${Math.floor(minutes / 60)}h ${String(
-    minutes % 60,
-  ).padStart(2, "0")}m`;
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(
+    2,
+    "0",
+  )}m`;
 }
 
 function stateOf(lecture: LectureItem): string {
@@ -110,13 +111,9 @@ export function StaffLectureAttendance({
         .filter(
           (lecture) =>
             istDate(lecture.startsAt) === date &&
-            (!selectedTeacherId ||
-              lecture.teacherId === selectedTeacherId),
+            (!selectedTeacherId || lecture.teacherId === selectedTeacherId),
         )
-        .sort(
-          (a, b) =>
-            Date.parse(a.startsAt) - Date.parse(b.startsAt),
-        ),
+        .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)),
     [items, date, selectedTeacherId],
   );
 
@@ -159,9 +156,7 @@ export function StaffLectureAttendance({
       const updated = result.lecture;
 
       setItems((previous) =>
-        previous.map((item) =>
-          item.id === updated.id ? updated : item,
-        ),
+        previous.map((item) => (item.id === updated.id ? updated : item)),
       );
 
       setMessage(result.message || "Lecture updated.");
@@ -179,6 +174,32 @@ export function StaffLectureAttendance({
       setBusyId("");
     }
   }
+
+  const totalDurationMinutes = useMemo(() => {
+    return visible.reduce((total, lecture) => {
+      if (!lecture.lectureCheckInAt || !lecture.lectureCheckOutAt) {
+        return total;
+      }
+
+      const checkIn = Date.parse(lecture.lectureCheckInAt);
+
+      const checkOut = Date.parse(lecture.lectureCheckOutAt);
+
+      if (
+        !Number.isFinite(checkIn) ||
+        !Number.isFinite(checkOut) ||
+        checkOut < checkIn
+      ) {
+        return total;
+      }
+
+      return total + (checkOut - checkIn) / 60000;
+    }, 0);
+  }, [visible]);
+
+  const totalDuration = `${Math.floor(totalDurationMinutes / 60)}h ${String(
+    Math.floor(totalDurationMinutes % 60),
+  ).padStart(2, "0")}m`;
 
   const total = visible.length;
   const completed = visible.filter(
@@ -200,8 +221,8 @@ export function StaffLectureAttendance({
               Lecture-wise Attendance
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              Scheduled by time, with individual lecture check-in,
-              check-out and completion.
+              Scheduled by time, with individual lecture check-in, check-out and
+              completion.
             </p>
           </div>
 
@@ -235,16 +256,14 @@ export function StaffLectureAttendance({
           </select>
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[
             ["Lectures", total],
             ["In Progress", inProgress],
             ["Completed", completed],
+            ["Total Duration", totalDuration],
           ].map(([label, value]) => (
-            <div
-              key={String(label)}
-              className="rounded-lg bg-slate-50 p-3"
-            >
+            <div key={String(label)} className="rounded-lg bg-slate-50 p-3">
               <p className="text-xl font-bold">{value}</p>
               <p className="text-xs text-slate-500">{label}</p>
             </div>
@@ -253,13 +272,19 @@ export function StaffLectureAttendance({
       </div>
 
       {error && (
-        <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <div
+          role="alert"
+          className="rounded-lg bg-red-50 p-3 text-sm text-red-700"
+        >
           {error}
         </div>
       )}
 
       {message && (
-        <div role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+        <div
+          role="status"
+          className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700"
+        >
           {message}
         </div>
       )}
@@ -299,11 +324,7 @@ export function StaffLectureAttendance({
               isToday;
 
             const canComplete =
-              canManage &&
-              scheduled &&
-              !busyId &&
-              checkedIn &&
-              checkedOut;
+              canManage && scheduled && !busyId && checkedIn && checkedOut;
 
             return (
               <article
@@ -334,7 +355,8 @@ export function StaffLectureAttendance({
                     {timeLabel(lecture.startsAt)} – {timeLabel(lecture.endsAt)}
                   </span>
                   <span>
-                    Actual duration: {durationLabel(
+                    Actual duration:{" "}
+                    {durationLabel(
                       lecture.lectureCheckInAt,
                       lecture.lectureCheckOutAt,
                     )}
@@ -352,7 +374,11 @@ export function StaffLectureAttendance({
                       onClick={() => void perform(lecture, "checkin")}
                       className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-3 py-2 text-xs font-bold text-white disabled:bg-slate-200 disabled:text-slate-500"
                     >
-                      {busyId === lecture.id ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
+                      {busyId === lecture.id ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <LogIn size={14} />
+                      )}
                       {checkedIn ? "Checked In" : "Check In"}
                     </button>
                   </div>
@@ -383,7 +409,9 @@ export function StaffLectureAttendance({
                       className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:bg-slate-200 disabled:text-slate-500"
                     >
                       <CheckCircle2 size={14} />
-                      {lecture.status === "completed" ? "Completed" : "Mark Completed"}
+                      {lecture.status === "completed"
+                        ? "Completed"
+                        : "Mark Completed"}
                     </button>
                   </div>
                 </div>
