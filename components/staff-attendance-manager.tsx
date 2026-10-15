@@ -5,12 +5,13 @@ import type { FormEvent } from "react";
 import {
   BookOpen,
   CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Download,
   RefreshCw,
   Save,
   Search,
-  Users,
   XCircle,
 } from "lucide-react";
 import { StaffActivityEditor } from "@/components/staff-activity-editor";
@@ -45,6 +46,123 @@ type EditValue = {
 };
 
 const TIMEZONE = "Asia/Kolkata";
+
+type StaffTimeInputProps = {
+  value: string;
+  disabled?: boolean;
+  label: string;
+  inputId: string;
+  onChange: (nextValue: string) => void;
+  onEnter?: () => void;
+};
+
+// Show 12-hour time and a separate AM/PM dropdown, while storing HH:MM.
+function StaffTimeInput({
+  value,
+  disabled = false,
+  label,
+  inputId,
+  onChange,
+  onEnter,
+}: StaffTimeInputProps) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const [emptyPeriod, setEmptyPeriod] = useState<"AM" | "PM">("AM");
+
+  const parsed = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
+  const hour24 = parsed ? Number(parsed[1]) : null;
+  const period: "AM" | "PM" =
+    hour24 === null ? emptyPeriod : hour24 >= 12 ? "PM" : "AM";
+  const shown =
+    hour24 === null
+      ? ""
+      : `${String(hour24 % 12 || 12).padStart(2, "0")}:${parsed?.[2]}`;
+
+  function as24(text: string, nextPeriod: "AM" | "PM") {
+    const trimmed = text.trim();
+    if (!trimmed) return "";
+
+    // Also accept 0846, 8:46 and 08:46.
+    const found =
+      /^(\d{1,2}):([0-5]\d)$/.exec(trimmed) ??
+      /^(\d{1,2})([0-5]\d)$/.exec(trimmed);
+    if (!found) return null;
+
+    const hour = Number(found[1]);
+    if (hour < 1 || hour > 12) return null;
+
+    const nextHour = (hour % 12) + (nextPeriod === "PM" ? 12 : 0);
+    return `${String(nextHour).padStart(2, "0")}:${found[2]}`;
+  }
+
+  function commit() {
+    if (draft === null) return true;
+    const converted = as24(draft, period);
+    if (converted === null) return false;
+    onChange(converted);
+    setDraft(null);
+    return true;
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 whitespace-nowrap">
+      <input
+        id={inputId}
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        maxLength={5}
+        placeholder="hh:mm"
+        value={draft ?? shown}
+        disabled={disabled}
+        aria-label={`${label} time`}
+        onChange={(event) => {
+          const next = event.target.value.replace(/[^0-9:]/g, "");
+          setDraft(next);
+          event.target.setCustomValidity("");
+          if (!next) onChange("");
+        }}
+        onBlur={() => {
+          if (!commit()) setDraft(null);
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          if (!commit()) {
+            event.currentTarget.setCustomValidity(
+              "Enter a valid time between 01:00 and 12:59.",
+            );
+            event.currentTarget.reportValidity();
+            return;
+          }
+          event.currentTarget.setCustomValidity("");
+          if (onEnter) onEnter();
+          else event.currentTarget.blur();
+        }}
+        className="h-9 w-[70px] rounded-lg border border-slate-200 bg-white px-2 text-center text-xs font-semibold text-[#0A193A] outline-none focus:border-[#0A54B7] disabled:bg-slate-50"
+      />
+      <select
+        aria-label={`${label} AM or PM`}
+        value={period}
+        disabled={disabled}
+        onChange={(event) => {
+          const nextPeriod = event.target.value as "AM" | "PM";
+          setEmptyPeriod(nextPeriod);
+          const text = draft ?? shown;
+          if (!text) return;
+          const converted = as24(text, nextPeriod);
+          if (converted !== null) {
+            onChange(converted);
+            setDraft(null);
+          }
+        }}
+        className="h-9 w-[56px] rounded-lg border border-slate-200 bg-white px-1 text-[11px] font-semibold text-[#0A193A] outline-none focus:border-[#0A54B7] disabled:bg-slate-50"
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+}
 
 function istDate(value: string) {
   const d = new Date(value);
@@ -179,38 +297,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function StatCard({
-  title,
-  value,
-  color = "blue",
-}: {
-  title: string;
-  value: string | number;
-  color?: "blue" | "green" | "red" | "amber" | "violet";
-}) {
-  const colors = {
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-emerald-50 text-emerald-700",
-    red: "bg-red-50 text-red-700",
-    amber: "bg-amber-50 text-amber-700",
-    violet: "bg-violet-50 text-violet-700",
-  };
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <div
-        className={`mb-3 inline-flex rounded-xl px-3 py-2 text-xl font-bold ${colors[color]}`}
-      >
-        {value}
-      </div>
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {title}
-      </p>
-    </div>
-  );
-}
-
-
 function getWorkingMinutes(record: StaffAttendanceRecord): number {
   const value = record.hoursWorked;
 
@@ -224,7 +310,6 @@ function getWorkingMinutes(record: StaffAttendanceRecord): number {
 
   return Math.max(0, value * 60);
 }
-
 
 function csvEscape(value: unknown) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
@@ -285,17 +370,18 @@ export function StaffAttendanceManager({
   const canManage =
     role === "admin" || role === "staff" || role === "counsellor";
 
-  const allStaff = useMemo(
-    () =>
-      managedUsers.filter(
-        (user) =>
-          user.role === "educator" ||
-          user.role === "staff" ||
-          user.role === "admin" ||
-          user.role === "counsellor",
-      ),
-    [managedUsers],
-  );
+
+const allStaff = useMemo(
+  () =>
+    managedUsers.filter(
+      (user) =>
+        user.role === "educator" ||
+        user.role === "staff" ||
+        user.role === "counsellor",
+    ),
+  [managedUsers],
+);
+
 
   const teachers = useMemo(
     () => allStaff.filter((user) => user.role === "educator"),
@@ -530,48 +616,7 @@ export function StaffAttendanceManager({
 
   const getRecord = (id: string) => recordMap.get(id);
 
-  const getStats = (users: ManagedUser[]) => {
-    let present = 0;
-    let absent = 0;
-    let late = 0;
-    let leave = 0;
-    let pending = 0;
-    let minutes = 0;
-
-    for (const user of users) {
-      const record = recordMap.get(user.id);
-
-      if (!record) {
-        pending++;
-        continue;
-      }
-
-      if (record.status === "present") present++;
-      if (record.status === "absent") absent++;
-      if (record.status === "late") late++;
-      if (record.status === "on_leave") leave++;
-
-      minutes += getWorkingMinutes(record);
-    }
-
-    return {
-      present,
-      absent,
-      late,
-      leave,
-      pending,
-      hours: formatMinutes(minutes),
-    };
-  };
-
-  const allStats = getStats(allStaff);
-  const teachingStats = getStats(teachers);
-  const nonTeachingStats = getStats(nonTeachers);
-
   const myRecord = userId ? getRecord(userId) : undefined;
-  const selectedTeacherRecord = selectedTeacher
-    ? getRecord(selectedTeacher.id)
-    : undefined;
 
   function updateEdit(targetId: string, change: Partial<EditValue>) {
     if (!canManage) return;
@@ -862,13 +907,26 @@ export function StaffAttendanceManager({
   async function submitNewLecture(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!selectedTeacher || !canManage || creatingLecture) return;
-    if (!lectureForm.title.trim() || !lectureForm.date || !lectureForm.startTime || !lectureForm.endTime) {
+    if (
+      !lectureForm.title.trim() ||
+      !lectureForm.date ||
+      !lectureForm.startTime ||
+      !lectureForm.endTime
+    ) {
       alert("Enter the lecture title, date and start/end times.");
       return;
     }
-    const startsAt = new Date(`${lectureForm.date}T${lectureForm.startTime}:00+05:30`);
-    const endsAt = new Date(`${lectureForm.date}T${lectureForm.endTime}:00+05:30`);
-    if (!Number.isFinite(startsAt.getTime()) || !Number.isFinite(endsAt.getTime()) || endsAt <= startsAt) {
+    const startsAt = new Date(
+      `${lectureForm.date}T${lectureForm.startTime}:00+05:30`,
+    );
+    const endsAt = new Date(
+      `${lectureForm.date}T${lectureForm.endTime}:00+05:30`,
+    );
+    if (
+      !Number.isFinite(startsAt.getTime()) ||
+      !Number.isFinite(endsAt.getTime()) ||
+      endsAt <= startsAt
+    ) {
       alert("End time must be later than start time on the selected date.");
       return;
     }
@@ -900,7 +958,9 @@ export function StaffAttendanceManager({
       setTeachingTab("today");
       await loadLectures();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Unable to create lecture.");
+      alert(
+        error instanceof Error ? error.message : "Unable to create lecture.",
+      );
     } finally {
       setCreatingLecture(false);
     }
@@ -1061,144 +1121,371 @@ export function StaffAttendanceManager({
     );
   }
 
-  function renderTimeEditor(user: ManagedUser) {
+  const selectClass =
+    "min-w-[112px] rounded-lg border border-transparent px-2 py-2 text-xs font-bold outline-none focus:border-blue-500 disabled:opacity-70";
+
+  function effectiveStatus(user: ManagedUser): StaffAttendanceStatus | "" {
+    return editMap[user.id]?.status ?? getRecord(user.id)?.status ?? "";
+  }
+
+  function effectiveTime(user: ManagedUser, key: "checkIn" | "checkOut") {
+    return editMap[user.id]?.[key] ?? getRecord(user.id)?.[key] ?? "";
+  }
+
+  function duration(user: ManagedUser) {
+    const a = effectiveTime(user, "checkIn");
+    const b = effectiveTime(user, "checkOut");
+    if (a && b) {
+      const [h1, m1] = a.split(":").map(Number);
+      const [h2, m2] = b.split(":").map(Number);
+      const minutes = h2 * 60 + m2 - h1 * 60 - m1;
+      if (Number.isFinite(minutes) && minutes >= 0)
+        return formatMinutes(minutes);
+    }
+    // Only show saved duration when the displayed times match saved data.
     const saved = getRecord(user.id);
-    const edit = editMap[user.id];
+    if (
+      saved &&
+      saved.checkIn === a &&
+      saved.checkOut === b &&
+      saved.hoursWorked != null
+    )
+      return formatMinutes(getWorkingMinutes(saved));
+    return "—";
+  }
 
-    const checkIn = edit?.checkIn ?? saved?.checkIn ?? "";
-    const checkOut = edit?.checkOut ?? saved?.checkOut ?? "";
+  function currentStats(users: ManagedUser[]) {
+    let present = 0,
+      absent = 0,
+      leave = 0,
+      pending = 0,
+      checkedIn = 0,
+      checkedOut = 0;
+    for (const user of users) {
+      const status = effectiveStatus(user);
+      if (status === "present" || status === "late" || status === "half_day")
+        present++;
+      if (status === "absent") absent++;
+      if (status === "on_leave") leave++;
+      if (!status) pending++;
+      if (effectiveTime(user, "checkIn")) checkedIn++;
+      if (effectiveTime(user, "checkOut")) checkedOut++;
+    }
+    return { present, absent, leave, pending, checkedIn, checkedOut };
+  }
 
+  const activeTeachers = currentStats(teachers);
+  const activeNonTeachers = currentStats(nonTeachers);
+  const activeAll = currentStats(allStaff);
+  const searchedTeachers = teachers.filter((user) =>
+    [user.name, user.employeeCode ?? "", user.email, department(user)]
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+
+  function moveDate(days: number) {
+    const [year, month, day] = date.split("-").map(Number);
+    const next = new Date(Date.UTC(year, month - 1, day + days));
+    setDate(next.toISOString().slice(0, 10));
+  }
+
+  function renderStats(
+    items: Array<{ label: string; value: number | string; color?: string }>,
+  ) {
     return (
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-600">
-            Attendance Status
-          </label>
-          <select
-            value={edit?.status ?? saved?.status ?? ""}
-            onChange={(event) =>
-              updateEdit(user.id, {
-                status: event.target.value as StaffAttendanceStatus,
-              })
-            }
-            disabled={!canManage}
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500 disabled:bg-slate-50"
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm"
           >
-            <option value="">Unmarked</option>
-            <option value="present">Present</option>
-            <option value="absent">Absent</option>
-            <option value="late">Late</option>
-            <option value="half_day">Half Day</option>
-            <option value="on_leave">On Leave</option>
-            <option value="holiday">Holiday</option>
-          </select>
-        </div>
+            <p className="text-[11px] font-medium text-slate-500">
+              {item.label}
+            </p>
+            <p
+              className={`mt-1 text-2xl font-bold ${item.color ?? "text-[#0A193A]"}`}
+            >
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-600">
-            Check-In Time
-          </label>
-          <input
-            type="time"
-            value={checkIn}
-            disabled={!canManage}
-            onChange={(event) =>
-              updateEdit(user.id, {
-                checkIn: event.target.value,
-              })
-            }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500 disabled:bg-slate-50"
-          />
-        </div>
+  function renderRegister(
+    users: ManagedUser[],
+    editable: boolean,
+    teaching: boolean,
+  ) {
+    const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name));
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1050px] text-left text-xs">
+          <thead className="bg-[#F2F6FD] text-[10px] font-bold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-3 py-3">SR</th>
+              <th className="min-w-[180px] px-3 py-3">Employee Name</th>
+              <th className="px-3 py-3">Employee ID</th>
+              <th className="px-3 py-3">
+                {teaching ? "Subject / Department" : "Department"}
+              </th>
+              {!teaching && <th className="px-3 py-3">Employment</th>}
+              <th className="px-3 py-3">Check-In</th>
+              <th className="px-3 py-3">Check-Out</th>
+              <th className="px-3 py-3">Total Duration</th>
+              <th className="px-3 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {sorted.map((user, index) => {
+              const status = effectiveStatus(user);
+              const checkIn = effectiveTime(user, "checkIn");
+              const checkOut = effectiveTime(user, "checkOut");
+              const canEdit = editable && canManage && !saving;
+              return (
+                <tr key={user.id} className="hover:bg-[#F6F9FF]">
+                  <td className="px-3 py-3 font-semibold text-slate-500">
+                    {index + 1}
+                  </td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-[#0A54B7]">
+                        {initials(user.name)}
+                      </span>
+                      <span className="font-semibold text-[#0A193A]">
+                        {user.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-slate-600">
+                    {user.employeeCode || user.id}
+                  </td>
+                  <td className="px-3 py-3 text-slate-600">
+                    {department(user)}
+                  </td>
+                  {!teaching && (
+                    <td className="px-3 py-3 text-slate-600">
+                      {employment(user)}
+                    </td>
+                  )}
+                  <td className="px-3 py-3">
+                    {editable ? (
+                      <StaffTimeInput
+                        inputId={`checkin-${user.id}`}
+                        value={checkIn}
+                        disabled={!canEdit}
+                        label={`${user.name} check-in`}
+                        onChange={(nextValue) =>
+                          updateEdit(user.id, { checkIn: nextValue })
+                        }
+                        onEnter={() => {
+                          const checkout = document.getElementById(
+                            `checkout-${user.id}`,
+                          ) as HTMLInputElement | null;
+                          checkout?.focus();
+                        }}
+                      />
+                    ) : (
+                      <span className="font-medium text-slate-600">
+                        {checkIn || "—"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3">
+                    {editable ? (
+                      <StaffTimeInput
+                        inputId={`checkout-${user.id}`}
+                        value={checkOut}
+                        disabled={!canEdit}
+                        label={`${user.name} check-out`}
+                        onChange={(nextValue) =>
+                          updateEdit(user.id, { checkOut: nextValue })
+                        }
+                      />
+                    ) : (
+                      <span className="font-medium text-slate-600">
+                        {checkOut || "—"}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-3 py-3 font-semibold text-[#0A193A]">
+                    {duration(user)}
+                  </td>
+                  <td className="px-3 py-3">
+                    {editable ? (
+                      <select
+                        value={status}
+                        disabled={!canEdit}
+                        onChange={(event) =>
+                          updateEdit(user.id, {
+                            status: event.target.value as StaffAttendanceStatus,
+                          })
+                        }
+                        className={`${selectClass} ${statusColor(status)}`}
+                        aria-label={`${user.name} attendance status`}
+                      >
+                        <option value="">Not marked</option>
+                        <option value="present">Present</option>
+                        <option value="absent">Absent</option>
+                        <option value="late">Late</option>
+                        <option value="half_day">Half Day</option>
+                        <option value="on_leave">Leave</option>
+                        <option value="holiday">Holiday</option>
+                      </select>
+                    ) : (
+                      <StatusBadge status={status || "unmarked"} />
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {!sorted.length && (
+          <p className="p-8 text-center text-sm text-slate-500">
+            No staff records match your search.
+          </p>
+        )}
+      </div>
+    );
+  }
 
-        <div>
-          <label className="mb-2 block text-xs font-bold text-slate-600">
-            Check-Out Time
-          </label>
-          <input
-            type="time"
-            value={checkOut}
-            disabled={!canManage}
-            onChange={(event) =>
-              updateEdit(user.id, {
-                checkOut: event.target.value,
-              })
-            }
-            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-blue-500 disabled:bg-slate-50"
-          />
+  function registerPanel(
+    title: string,
+    users: ManagedUser[],
+    editable: boolean,
+    teaching: boolean,
+  ) {
+    return (
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
+          <h3 className="text-sm font-bold text-[#0A193A]">{title}</h3>
+          {!editable && (
+            <button
+              type="button"
+              onClick={() => {
+                setTab(teaching ? "teaching" : "nonTeaching");
+                setSearch("");
+              }}
+              className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-[#0A54B7]"
+            >
+              Open {teaching ? "teaching" : "non-teaching"} register
+            </button>
+          )}
+          {editable && canManage && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => markAll(users, "present")}
+                className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700 disabled:opacity-50"
+              >
+                Mark All Present
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => void saveAttendance(users)}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#0A54B7] px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+              >
+                <Save size={14} />
+                {saving ? "Saving..." : "Save Attendance"}
+              </button>
+            </div>
+          )}
         </div>
+        {renderRegister(users, editable, teaching)}
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex h-48 items-center justify-center text-slate-500">
-        <RefreshCw className="mr-3 animate-spin" size={20} />
+      <div className="flex h-48 items-center justify-center gap-2 text-sm text-slate-500">
+        <RefreshCw size={19} className="animate-spin" />
         Loading staff attendance...
       </div>
     );
   }
 
   return (
-    <section className="space-y-6 pb-10">
-      {!embedded && (
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#5546E8]">
-              Attendance Management
-            </p>
-            <h1 className="mt-1 text-3xl font-bold text-[#0A193A]">
-              Staff Attendance
-            </h1>
-            <p className="mt-2 text-sm text-slate-500">
-              Teaching and Non-Teaching employee attendance management.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2">
-            <CalendarDays className="text-blue-600" size={18} />
-
+    <section
+      className={embedded ? "min-w-0 space-y-4 pb-6" : "min-w-0 space-y-4 pb-8"}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs text-slate-500">
+            Attendance /{" "}
+            {tab === "teaching"
+              ? "Teaching Staff"
+              : tab === "nonTeaching"
+                ? "Non-Teaching Staff"
+                : tab === "reports"
+                  ? "Reports"
+                  : tab === "history"
+                    ? "History"
+                    : "Staff"}
+          </p>
+          <h1 className="mt-1 text-2xl font-bold text-[#0A193A]">
+            {tab === "teaching"
+              ? "Teaching Staff Attendance"
+              : tab === "nonTeaching"
+                ? "Non-Teaching Staff Attendance"
+                : tab === "reports"
+                  ? "Reports & History"
+                  : tab === "history"
+                    ? "Attendance History"
+                    : "Staff Attendance Overview"}
+          </h1>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white">
+            <button
+              type="button"
+              onClick={() => moveDate(-1)}
+              className="p-2 text-slate-500 hover:bg-slate-50"
+              aria-label="Previous day"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <CalendarDays size={15} className="text-[#0A54B7]" />
             <input
               type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+              className="max-w-[155px] bg-transparent px-2 py-2 text-xs font-semibold text-slate-700"
+              aria-label="Attendance date"
             />
-
             <button
               type="button"
-              onClick={() => {
-                void loadAttendance();
-                void loadLectures();
-              }}
-              className="rounded-lg bg-blue-50 p-2 text-blue-700"
-              title="Refresh"
+              onClick={() => moveDate(1)}
+              className="p-2 text-slate-500 hover:bg-slate-50"
+              aria-label="Next day"
             >
-              <RefreshCw size={18} />
-            </button>
-
-            <button
-              type="button"
-              onClick={exportCsv}
-              className="flex items-center gap-2 rounded-lg bg-[#0A54B7] px-4 py-2 text-sm font-semibold text-white"
-            >
-              <Download size={16} />
-              Export
+              <ChevronRight size={16} />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0A193A]"
+          >
+            <Download size={14} />
+            Export CSV
+          </button>
         </div>
-      )}
+      </div>
 
       {userId && (
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 font-bold text-blue-700">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
               {initials(userName || "Staff")}
-            </div>
-
+            </span>
             <div>
-              <p className="font-bold text-[#0A193A]">
+              <p className="text-sm font-semibold">
                 {userName || "My Attendance"}
               </p>
               <p className="text-xs text-slate-500">
@@ -1207,17 +1494,15 @@ export function StaffAttendanceManager({
               </p>
             </div>
           </div>
-
           <div className="flex gap-2">
             <button
               type="button"
               disabled={checking || date !== todayIST() || !!myRecord?.checkIn}
               onClick={() => void handleCheck("checkin")}
-              className="rounded-lg bg-[#5546E8] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-40"
+              className="rounded-lg bg-[#0A54B7] px-3 py-2 text-xs font-bold text-white disabled:opacity-40"
             >
               Check In
             </button>
-
             <button
               type="button"
               disabled={
@@ -1227,7 +1512,7 @@ export function StaffAttendanceManager({
                 !!myRecord?.checkOut
               }
               onClick={() => void handleCheck("checkout")}
-              className="rounded-lg border border-[#5546E8] px-4 py-2.5 text-sm font-bold text-[#5546E8] disabled:opacity-40"
+              className="rounded-lg border border-blue-300 px-3 py-2 text-xs font-bold text-blue-700 disabled:opacity-40"
             >
               Check Out
             </button>
@@ -1235,20 +1520,7 @@ export function StaffAttendanceManager({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-        <StatCard title="Teaching Staff" value={teachers.length} />
-        <StatCard
-          title="Non-Teaching"
-          value={nonTeachers.length}
-          color="violet"
-        />
-        <StatCard title="Present" value={allStats.present} color="green" />
-        <StatCard title="Absent" value={allStats.absent} color="red" />
-        <StatCard title="On Leave" value={allStats.leave} color="amber" />
-        <StatCard title="Unmarked" value={allStats.pending} />
-      </div>
-
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         {(
           [
             ["overview", "Overview"],
@@ -1259,14 +1531,13 @@ export function StaffAttendanceManager({
           ] as const
         ).map(([key, label]) => (
           <button
-            key={key}
             type="button"
-            onClick={() => setTab(key)}
-            className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${
-              tab === key
-                ? "bg-[#0A193A] text-white"
-                : "bg-white text-slate-600 hover:bg-slate-100"
-            }`}
+            key={key}
+            onClick={() => {
+              setTab(key);
+              setSearch("");
+            }}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold ${tab === key ? "bg-[#0A54B7] text-white" : "border border-slate-200 bg-white text-slate-600"}`}
           >
             {label}
           </button>
@@ -1274,116 +1545,94 @@ export function StaffAttendanceManager({
       </div>
 
       {tab === "overview" && (
-        <div className="grid gap-5 lg:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setTab("teaching")}
-            className="rounded-2xl border border-blue-200 bg-white p-6 text-left shadow-sm hover:border-blue-500"
-          >
-            <BookOpen className="mb-4 text-blue-600" size={26} />
-            <h2 className="text-xl font-bold text-[#0A193A]">Teaching Staff</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Faculty attendance, check-in and check-out, scheduled lectures,
-              weekly timetable and history.
-            </p>
-            <p className="mt-4 font-semibold text-blue-700">
-              {teachers.length} Faculty Members →
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTab("nonTeaching")}
-            className="rounded-2xl border border-violet-200 bg-white p-6 text-left shadow-sm hover:border-violet-500"
-          >
-            <Users className="mb-4 text-violet-600" size={26} />
-            <h2 className="text-xl font-bold text-[#0A193A]">
-              Non-Teaching Staff
-            </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Employee attendance, manual check-in/out, working hours and daily
-              activities.
-            </p>
-            <p className="mt-4 font-semibold text-violet-700">
-              {nonTeachers.length} Employees →
-            </p>
-          </button>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 lg:col-span-2">
-            <h3 className="mb-4 font-bold text-[#0A193A]">
-              Daily Staff Attendance
-            </h3>
-
-            <div className="space-y-2">
-              {allStaff.map((user) => {
-                const record = getRecord(user.id);
-
-                return (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold">{user.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {user.employeeCode || user.id} · {department(user)}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="hidden text-xs text-slate-500 sm:inline">
-                        {record?.checkIn || "—"} / {record?.checkOut || "—"}
-                      </span>
-                      <StatusBadge status={record?.status || "unmarked"} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+        <div className="space-y-4">
+          {renderStats([
+            { label: "Total staff", value: allStaff.length },
+            {
+              label: "Teaching staff",
+              value: teachers.length,
+              color: "text-blue-700",
+            },
+            {
+              label: "Non-teaching staff",
+              value: nonTeachers.length,
+              color: "text-blue-700",
+            },
+            {
+              label: "Checked in",
+              value: activeAll.checkedIn,
+              color: "text-emerald-600",
+            },
+            {
+              label: "Not checked in",
+              value: allStaff.length - activeAll.checkedIn,
+              color: "text-amber-600",
+            },
+            {
+              label: "Absent / leave",
+              value: activeAll.absent + activeAll.leave,
+              color: "text-red-600",
+            },
+          ])}
+          {registerPanel("Teaching staff today", teachers, false, true)}
+          {registerPanel("Non-teaching staff today", nonTeachers, false, false)}
         </div>
       )}
 
       {tab === "teaching" && (
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-xl font-bold text-blue-700">
-                  {initials(selectedTeacher?.name || "TS")}
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-bold text-[#0A193A]">
-                    {selectedTeacher?.name || "Select Faculty"}
-                  </h2>
-
-                  <p className="text-sm text-slate-500">
-                    {selectedTeacher
-                      ? `${department(selectedTeacher)} · ${
-                          selectedTeacher.employeeCode || selectedTeacher.id
-                        }`
-                      : "No faculty available"}
-                  </p>
-
-                  <div className="mt-2">
-                    <StatusBadge
-                      status={selectedTeacherRecord?.status || "unmarked"}
-                    />
-                  </div>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Check-In: {selectedTeacherRecord?.checkIn || "—"} ·
-                    Check-Out: {selectedTeacherRecord?.checkOut || "—"}
-                  </p>
-                </div>
-              </div>
-
+        <div className="space-y-4">
+          {renderStats([
+            { label: "Teaching staff", value: teachers.length },
+            {
+              label: "Checked in",
+              value: activeTeachers.checkedIn,
+              color: "text-emerald-600",
+            },
+            {
+              label: "Lectures today",
+              value: dailyLectures.length,
+              color: "text-blue-700",
+            },
+            {
+              label: "Not checked in",
+              value: teachers.length - activeTeachers.checkedIn,
+              color: "text-amber-600",
+            },
+            {
+              label: "Absent / leave",
+              value: activeTeachers.absent + activeTeachers.leave,
+              color: "text-red-600",
+            },
+          ])}
+          <div className="relative max-w-sm">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search faculty name or employee ID"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs"
+            />
+          </div>
+          {registerPanel(
+            "Teaching Staff Attendance Register",
+            searchedTeachers,
+            true,
+            true,
+          )}
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-sm font-bold text-[#0A193A]">
+                Faculty Lecture Management
+              </h3>
               <select
                 value={selectedTeacherId}
-                disabled={role === "educator" || teachers.length === 0}
+                disabled={role === "educator" || !teachers.length}
                 onChange={(event) => setSelectedTeacherId(event.target.value)}
-                className="min-w-[240px] rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-xs"
               >
                 {teachers.map((teacher) => (
                   <option key={teacher.id} value={teacher.id}>
@@ -1392,436 +1641,181 @@ export function StaffAttendanceManager({
                 ))}
               </select>
             </div>
-
-            <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
-              <StatCard title="Total Lectures" value={lectureStats.total} />
-              <StatCard
-                title="Completed"
-                value={lectureStats.completed}
-                color="green"
-              />
-              <StatCard
-                title="Pending"
-                value={lectureStats.pending}
-                color="amber"
-              />
-              <StatCard
-                title="Cancelled"
-                value={lectureStats.cancelled}
-                color="red"
-              />
-              <StatCard
-                title="Teaching Hours"
-                value={lectureStats.hours}
-                color="violet"
-              />
-            </div>
-
-            {selectedTeacher && (
-              <div className="mt-5 border-t border-slate-100 pt-5">
-                <div className="mb-4">
-                  <h3 className="text-base font-bold text-[#0A193A]">
-                    Manual Faculty Attendance
-                  </h3>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Date: {displayDate(date)} · Enter the selected faculty's
-                    daily attendance, check-in and check-out times.
+            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-5">
+              {[
+                ["Total lectures", lectureStats.total],
+                ["Completed", lectureStats.completed],
+                ["Pending", lectureStats.pending],
+                ["Cancelled", lectureStats.cancelled],
+                ["Teaching hours", lectureStats.hours],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-slate-50 p-3">
+                  <p className="text-[11px] text-slate-500">{label}</p>
+                  <p className="mt-1 text-lg font-bold text-[#0A193A]">
+                    {value}
                   </p>
                 </div>
-
-                {renderTimeEditor(selectedTeacher)}
-
-                {canManage && (
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs text-slate-500">
-                      Staff attendance is separate from lecture completion.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => void saveAttendance([selectedTeacher])}
-                      disabled={saving || !editMap[selectedTeacher.id]?.status}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#0A54B7] px-6 py-3 text-sm font-bold text-white disabled:opacity-50"
-                    >
-                      <Save size={16} />
-                      {saving ? "Saving..." : "Save Faculty Attendance"}
-                    </button>
-                  </div>
-                )}
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <div className="flex gap-2">
+                {(
+                  [
+                    ["today", "Today's Lectures"],
+                    ["timetable", "Weekly Timetable"],
+                    ["lectureHistory", "Lecture History"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    type="button"
+                    key={key}
+                    onClick={() => setTeachingTab(key)}
+                    className={`rounded-lg px-3 py-2 text-xs font-semibold ${teachingTab === key ? "bg-[#0A54B7] text-white" : "bg-slate-100 text-slate-600"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
+              {canManage && selectedTeacher && (
+                <button
+                  type="button"
+                  onClick={openAddLecture}
+                  className="inline-flex items-center gap-1 rounded-lg border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700"
+                >
+                  <Plus size={14} />
+                  Add Lecture
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div className="border-b border-slate-100 px-4 py-3 text-sm font-bold text-[#0A193A]">
+              {teachingTab === "today"
+                ? "Today's Lecture Schedule"
+                : teachingTab === "timetable"
+                  ? "Weekly Timetable"
+                  : "Lecture History"}
+            </div>
+            {renderLectureTable(
+              teachingTab === "today"
+                ? dailyLectures
+                : teachingTab === "timetable"
+                  ? weeklyLectures
+                  : previousLectures,
             )}
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            {(
-              [
-                ["today", "Today's Lectures"],
-                ["timetable", "Weekly Timetable"],
-                ["lectureHistory", "Lecture History"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTeachingTab(key)}
-                className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${
-                  teachingTab === key
-                    ? "bg-[#0A54B7] text-white"
-                    : "bg-white text-slate-600"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {teachingTab === "today" && (
-            <div className="grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                <div className="border-b border-slate-200 p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 className="font-bold text-[#0A193A]">Lecture Schedule</h3>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {displayDate(date)} · Faculty-specific lectures
-                      </p>
-                    </div>
-                    {canManage && selectedTeacher && (
-                      <button
-                        type="button"
-                        onClick={openAddLecture}
-                        className="inline-flex items-center gap-2 rounded-xl bg-[#0A54B7] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#084899]"
-                      >
-                        <Plus size={17} /> Add Lecture
-                      </button>
-                    )}
+          {selectedLecture && teachingTab === "today" && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-bold text-[#0A193A]">
+                {selectedLecture.title}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">
+                {selectedLecture.subject} ·{" "}
+                {displayTime(selectedLecture.startsAt)} –{" "}
+                {displayTime(selectedLecture.endsAt)}
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {(
+                  [
+                    ["Topic Covered", selectedLecture.topicCovered],
+                    ["Homework", selectedLecture.homeworkGiven],
+                    ["Assignment", selectedLecture.assignmentGiven],
+                    ["Revision Task", selectedLecture.revisionTask],
+                    ["Doubts Solved", selectedLecture.doubtsSolved],
+                    ["Next Topic", selectedLecture.nextTopic],
+                    ["Description", selectedLecture.description],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-slate-50 p-3">
+                    <p className="text-[10px] font-semibold uppercase text-slate-500">
+                      {label}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-700">
+                      {value || "Not recorded"}
+                    </p>
                   </div>
-                </div>
-
-                {renderLectureTable(dailyLectures)}
+                ))}
               </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                <h3 className="mb-4 font-bold text-[#0A193A]">
-                  Lecture Details
-                </h3>
-
-                {selectedLecture ? (
-                  <div className="space-y-4">
-                    <div className="rounded-xl bg-slate-50 p-4">
-                      <h4 className="font-bold text-[#0A193A]">
-                        {selectedLecture.title}
-                      </h4>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {selectedLecture.subject || "General"}
-                      </p>
-                      <p className="mt-2 text-xs text-slate-500">
-                        {displayTime(selectedLecture.startsAt)} –{" "}
-                        {displayTime(selectedLecture.endsAt)}
-                      </p>
-                      <div className="mt-3">
-                        <StatusBadge status={selectedLecture.status} />
-                      </div>
-                    </div>
-
-                    {[
-                      ["Topic Covered", selectedLecture.topicCovered],
-                      ["Homework", selectedLecture.homeworkGiven],
-                      ["Assignment", selectedLecture.assignmentGiven],
-                      ["Revision Task", selectedLecture.revisionTask],
-                      ["Doubts Solved", selectedLecture.doubtsSolved],
-                      ["Next Topic", selectedLecture.nextTopic],
-                      ["Description", selectedLecture.description],
-                    ].map(([label, value]) => (
-                      <div key={label}>
-                        <p className="text-xs font-bold uppercase text-slate-500">
-                          {label}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-700">
-                          {value || "Not recorded"}
-                        </p>
-                      </div>
-                    ))}
-
-                    {selectedLecture.materialLink && (
-                      <a
-                        href={selectedLecture.materialLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block rounded-lg bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700"
-                      >
-                        Open Teaching Materials
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">
-                    No lecture selected.
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {teachingTab === "timetable" && (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 p-5">
-                <h3 className="font-bold text-[#0A193A]">Weekly Timetable</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Actual lectures for the selected week
-                </p>
-              </div>
-              {renderLectureTable(weeklyLectures)}
-            </div>
-          )}
-
-          {teachingTab === "lectureHistory" && (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="border-b border-slate-200 p-5">
-                <h3 className="font-bold text-[#0A193A]">Lecture History</h3>
-                <p className="mt-1 text-xs text-slate-500">
-                  Past lectures before {displayDate(date)}
-                </p>
-              </div>
-              {renderLectureTable(previousLectures)}
+              {selectedLecture.materialLink && (
+                <a
+                  href={selectedLecture.materialLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-xs font-bold text-blue-700"
+                >
+                  Open teaching materials
+                </a>
+              )}
             </div>
           )}
         </div>
       )}
 
       {tab === "nonTeaching" && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
-            <StatCard title="Employees" value={nonTeachers.length} />
-            <StatCard
-              title="Present"
-              value={nonTeachingStats.present}
-              color="green"
-            />
-            <StatCard
-              title="Absent"
-              value={nonTeachingStats.absent}
-              color="red"
-            />
-            <StatCard
-              title="Late"
-              value={nonTeachingStats.late}
-              color="amber"
-            />
-            <StatCard
-              title="On Leave"
-              value={nonTeachingStats.leave}
-              color="violet"
-            />
-            <StatCard title="Working Hours" value={nonTeachingStats.hours} />
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+        <div className="space-y-4">
+          {renderStats([
+            { label: "Non-teaching staff", value: nonTeachers.length },
+            {
+              label: "Checked in",
+              value: activeNonTeachers.checkedIn,
+              color: "text-emerald-600",
+            },
+            {
+              label: "Checked out",
+              value: activeNonTeachers.checkedOut,
+              color: "text-blue-700",
+            },
+            {
+              label: "Not checked in",
+              value: nonTeachers.length - activeNonTeachers.checkedIn,
+              color: "text-amber-600",
+            },
+            {
+              label: "Absent / leave",
+              value: activeNonTeachers.absent + activeNonTeachers.leave,
+              color: "text-red-600",
+            },
+          ])}
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setNonTeachingTab("register")}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-                nonTeachingTab === "register"
-                  ? "bg-blue-700 text-white"
-                  : "bg-white text-slate-600"
-              }`}
+              className={`rounded-lg px-3 py-2 text-xs font-bold ${nonTeachingTab === "register" ? "bg-[#0A54B7] text-white" : "bg-white text-slate-600"}`}
             >
               Attendance Register
             </button>
-
             <button
               type="button"
               onClick={() => setNonTeachingTab("activities")}
-              className={`rounded-xl px-4 py-2 text-sm font-semibold ${
-                nonTeachingTab === "activities"
-                  ? "bg-blue-700 text-white"
-                  : "bg-white text-slate-600"
-              }`}
+              className={`rounded-lg px-3 py-2 text-xs font-bold ${nonTeachingTab === "activities" ? "bg-[#0A54B7] text-white" : "bg-white text-slate-600"}`}
             >
               Daily Activities
             </button>
           </div>
-
-          {nonTeachingTab === "register" && (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 p-4">
-                <div className="relative">
-                  <Search
-                    size={16}
-                    className="absolute left-3 top-3 text-slate-400"
-                  />
-
-                  <input
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    placeholder="Search employees"
-                    className="rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm"
-                  />
-                </div>
-
-                {canManage && (
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => markAll(filteredNonTeachers, "present")}
-                      className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"
-                    >
-                      All Present
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => markAll(filteredNonTeachers, "absent")}
-                      className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
-                    >
-                      All Absent
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => void saveAttendance(filteredNonTeachers)}
-                      className="rounded-lg bg-blue-700 px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
-                    >
-                      {saving ? "Saving..." : "Save Attendance"}
-                    </button>
-                  </div>
-                )}
+          {nonTeachingTab === "register" ? (
+            <>
+              <div className="relative max-w-sm">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search name or employee ID"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs"
+                />
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1100px] text-left text-sm">
-                  <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-                    <tr>
-                      {[
-                        "Employee",
-                        "Employee ID",
-                        "Department",
-                        "Employment",
-                        "Check-In",
-                        "Check-Out",
-                        "Hours",
-                        "Status",
-                        "Action",
-                      ].map((heading) => (
-                        <th key={heading} className="px-4 py-3">
-                          {heading}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredNonTeachers.map((user) => {
-                      const record = getRecord(user.id);
-                      const edit = editMap[user.id];
-
-                      return (
-                        <tr key={user.id} className="border-t border-slate-100">
-                          <td className="px-4 py-3">
-                            <p className="font-semibold">{user.name}</p>
-                            <p className="text-xs text-slate-500">
-                              {user.email}
-                            </p>
-                          </td>
-
-                          <td className="px-4 py-3 text-xs">
-                            {user.employeeCode || user.id}
-                          </td>
-
-                          <td className="px-4 py-3">{department(user)}</td>
-
-                          <td className="px-4 py-3">{employment(user)}</td>
-
-                          <td className="px-4 py-3">
-                            <input
-                              type="time"
-                              disabled={!canManage}
-                              value={edit?.checkIn ?? record?.checkIn ?? ""}
-                              onChange={(event) =>
-                                updateEdit(user.id, {
-                                  checkIn: event.target.value,
-                                })
-                              }
-                              className="w-[135px] rounded-lg border border-slate-200 px-2 py-2 text-xs disabled:bg-slate-50"
-                            />
-                          </td>
-
-                          <td className="px-4 py-3">
-                            <input
-                              type="time"
-                              disabled={!canManage}
-                              value={edit?.checkOut ?? record?.checkOut ?? ""}
-                              onChange={(event) =>
-                                updateEdit(user.id, {
-                                  checkOut: event.target.value,
-                                })
-                              }
-                              className="w-[135px] rounded-lg border border-slate-200 px-2 py-2 text-xs disabled:bg-slate-50"
-                            />
-                          </td>
-
-                          <td className="px-4 py-3">
-                            {record?.hoursWorked ?? "—"}
-                          </td>
-
-                          <td className="px-4 py-3">
-                            <select
-                              disabled={!canManage}
-                              value={edit?.status ?? record?.status ?? ""}
-                              onChange={(event) =>
-                                updateEdit(user.id, {
-                                  status: event.target
-                                    .value as StaffAttendanceStatus,
-                                })
-                              }
-                              className="rounded-lg border border-slate-200 px-2 py-2 text-xs disabled:bg-slate-50"
-                            >
-                              <option value="">Unmarked</option>
-                              <option value="present">Present</option>
-                              <option value="absent">Absent</option>
-                              <option value="late">Late</option>
-                              <option value="half_day">Half Day</option>
-                              <option value="on_leave">On Leave</option>
-                              <option value="holiday">Holiday</option>
-                            </select>
-                          </td>
-
-                          <td className="px-4 py-3">
-                            <button
-                              type="button"
-                              disabled={
-                                !canManage ||
-                                saving ||
-                                !editMap[user.id]?.status
-                              }
-                              onClick={() => void saveAttendance([user])}
-                              className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 disabled:opacity-40"
-                            >
-                              Save
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-
-                {!filteredNonTeachers.length && (
-                  <p className="p-8 text-center text-sm text-slate-500">
-                    No employees found.
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {nonTeachingTab === "activities" && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h3 className="mb-4 text-lg font-bold text-[#0A193A]">
-                Daily Activities
-              </h3>
-
+              {registerPanel(
+                "Non-Teaching Staff Attendance Register",
+                filteredNonTeachers,
+                true,
+                false,
+              )}
+            </>
+          ) : (
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
               <StaffActivityEditor
                 role={role}
                 managedUsers={managedUsers}
@@ -1833,101 +1827,103 @@ export function StaffAttendanceManager({
       )}
 
       {tab === "history" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-5">
-          <div className="flex flex-wrap justify-between gap-3">
-            <h3 className="text-xl font-bold text-[#0A193A]">
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-bold text-[#0A193A]">
               My Attendance History
             </h3>
-
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setShowRequests(!showRequests)}
-                className="rounded-lg bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700"
+                onClick={() => setShowRequests((old) => !old)}
+                className="rounded-lg bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700"
               >
                 Requests ({requests.length})
               </button>
-
               <button
                 type="button"
                 onClick={() => {
                   setRegulariseDate(date);
                   setShowRegularise(true);
                 }}
-                className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white"
+                className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700"
               >
                 + Regularise
               </button>
             </div>
           </div>
-
-          <div className="mt-5 space-y-2">
-            {myHistory.map((record) => (
-              <div
-                key={record.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3"
-              >
-                <div>
-                  <p className="font-semibold">{record.date}</p>
-                  <p className="text-xs text-slate-500">
-                    {record.checkIn || "—"} – {record.checkOut || "—"}
-                  </p>
-                </div>
-
-                <StatusBadge status={record.status} />
-              </div>
-            ))}
-
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[550px] text-left text-xs">
+              <thead className="bg-[#F2F6FD] text-slate-500">
+                <tr>
+                  <th className="px-3 py-3">Date</th>
+                  <th className="px-3 py-3">Check-In</th>
+                  <th className="px-3 py-3">Check-Out</th>
+                  <th className="px-3 py-3">Duration</th>
+                  <th className="px-3 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {myHistory.map((record) => (
+                  <tr key={record.id} className="border-b border-slate-100">
+                    <td className="px-3 py-3">{record.date}</td>
+                    <td className="px-3 py-3">{record.checkIn || "—"}</td>
+                    <td className="px-3 py-3">{record.checkOut || "—"}</td>
+                    <td className="px-3 py-3">
+                      {formatMinutes(getWorkingMinutes(record))}
+                    </td>
+                    <td className="px-3 py-3">
+                      <StatusBadge status={record.status} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             {!myHistory.length && (
-              <p className="py-8 text-center text-sm text-slate-500">
-                No attendance history available.
+              <p className="p-6 text-center text-slate-500">
+                No personal attendance history available.
               </p>
             )}
           </div>
-
           {showRequests && (
-            <div className="mt-5 space-y-2">
-              <h4 className="font-bold">Regularisation Requests</h4>
-
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold">Regularisation Requests</h4>
               {requests.map((request) => (
                 <div
                   key={request.id}
-                  className="rounded-xl border border-slate-200 p-4"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3"
                 >
-                  <div className="flex flex-wrap justify-between gap-3">
-                    <div>
-                      <p className="font-semibold">
-                        {request.userName} — {request.date}
-                      </p>
-                      <p className="text-xs text-slate-500">{request.reason}</p>
-                    </div>
-
-                    <StatusBadge status={request.status} />
+                  <div>
+                    <p className="text-xs font-semibold">
+                      {request.userName} — {request.date}
+                    </p>
+                    <p className="text-xs text-slate-500">{request.reason}</p>
                   </div>
-
-                  {role === "admin" && request.status === "pending" && (
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void reviewRequest(request.id, "approved")
-                        }
-                        className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"
-                      >
-                        Approve
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void reviewRequest(request.id, "rejected")
-                        }
-                        className="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={request.status} />
+                    {role === "admin" && request.status === "pending" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void reviewRequest(request.id, "approved")
+                          }
+                          className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void reviewRequest(request.id, "rejected")
+                          }
+                          className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -1936,42 +1932,42 @@ export function StaffAttendanceManager({
       )}
 
       {tab === "reports" && (
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h3 className="font-bold">Teaching Staff</h3>
-            <p className="mt-2 text-3xl font-bold text-blue-700">
-              {teachingStats.present}
-            </p>
-            <p className="text-xs text-slate-500">
-              Present faculty on {displayDate(date)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h3 className="font-bold">Non-Teaching Staff</h3>
-            <p className="mt-2 text-3xl font-bold text-emerald-700">
-              {nonTeachingStats.present}
-            </p>
-            <p className="text-xs text-slate-500">
-              Present employees on {displayDate(date)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-5">
-            <h3 className="font-bold">Completed Lectures</h3>
-            <p className="mt-2 text-3xl font-bold text-violet-700">
-              {
-                lectures.filter(
-                  (lecture) =>
-                    istDate(lecture.startsAt) === date &&
-                    lecture.status === "completed",
-                ).length
-              }
-            </p>
-            <p className="text-xs text-slate-500">
-              Completed lectures visible to your account
+        <div className="space-y-4">
+          {renderStats([
+            { label: "Total staff", value: allStaff.length },
+            {
+              label: "Teaching staff",
+              value: teachers.length,
+              color: "text-blue-700",
+            },
+            {
+              label: "Non-teaching staff",
+              value: nonTeachers.length,
+              color: "text-blue-700",
+            },
+            {
+              label: "Checked in",
+              value: activeAll.checkedIn,
+              color: "text-emerald-600",
+            },
+            {
+              label: "Absent / leave",
+              value: activeAll.absent + activeAll.leave,
+              color: "text-red-600",
+            },
+          ])}
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-bold text-[#0A193A]">
+              Selected Date — {displayDate(date)}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              Figures below use records for the selected date. Historical
+              institution-wide trends require a separate date-range reporting
+              API.
             </p>
           </div>
+          {registerPanel("Teaching staff", teachers, false, true)}
+          {registerPanel("Non-teaching staff", nonTeachers, false, false)}
         </div>
       )}
 
@@ -1986,40 +1982,130 @@ export function StaffAttendanceManager({
           >
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-[#0A193A]">Add Lecture</h3>
-              <button type="button" onClick={() => setShowAddLecture(false)} aria-label="Close"><XCircle size={20} /></button>
+              <button
+                type="button"
+                onClick={() => setShowAddLecture(false)}
+                aria-label="Close"
+              >
+                <XCircle size={20} />
+              </button>
             </div>
             <div className="rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-900">
-              Faculty: <strong>{selectedTeacher.name}</strong> · {selectedTeacher.employeeCode || selectedTeacher.id}
+              Faculty: <strong>{selectedTeacher.name}</strong> ·{" "}
+              {selectedTeacher.employeeCode || selectedTeacher.id}
             </div>
-            <label className="block text-sm font-semibold">Lecture title *
-              <input required value={lectureForm.title} onChange={(e) => setLectureForm((v) => ({ ...v, title: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="e.g. Mathematics - Algebra" />
+            <label className="block text-sm font-semibold">
+              Lecture title *
+              <input
+                required
+                value={lectureForm.title}
+                onChange={(e) =>
+                  setLectureForm((v) => ({ ...v, title: e.target.value }))
+                }
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                placeholder="e.g. Mathematics - Algebra"
+              />
             </label>
-            <label className="block text-sm font-semibold">Subject
-              <input value={lectureForm.subject} onChange={(e) => setLectureForm((v) => ({ ...v, subject: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" />
+            <label className="block text-sm font-semibold">
+              Subject
+              <input
+                value={lectureForm.subject}
+                onChange={(e) =>
+                  setLectureForm((v) => ({ ...v, subject: e.target.value }))
+                }
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+              />
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-sm font-semibold">Date *
-                <input required type="date" value={lectureForm.date} onChange={(e) => setLectureForm((v) => ({ ...v, date: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" />
+              <label className="block text-sm font-semibold">
+                Date *
+                <input
+                  required
+                  type="date"
+                  value={lectureForm.date}
+                  onChange={(e) =>
+                    setLectureForm((v) => ({ ...v, date: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                />
               </label>
-              <label className="block text-sm font-semibold">Start time *
-                <input required type="time" value={lectureForm.startTime} onChange={(e) => setLectureForm((v) => ({ ...v, startTime: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" />
+              <label className="block text-sm font-semibold">
+                Start time *
+                <input
+                  required
+                  type="time"
+                  value={lectureForm.startTime}
+                  onChange={(e) =>
+                    setLectureForm((v) => ({ ...v, startTime: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                />
               </label>
-              <label className="block text-sm font-semibold">End time *
-                <input required type="time" value={lectureForm.endTime} onChange={(e) => setLectureForm((v) => ({ ...v, endTime: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" />
+              <label className="block text-sm font-semibold">
+                End time *
+                <input
+                  required
+                  type="time"
+                  value={lectureForm.endTime}
+                  onChange={(e) =>
+                    setLectureForm((v) => ({ ...v, endTime: e.target.value }))
+                  }
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                />
               </label>
             </div>
-            <label className="block text-sm font-semibold">Description / class or batch details
-              <textarea rows={3} value={lectureForm.description} onChange={(e) => setLectureForm((v) => ({ ...v, description: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" placeholder="Class, batch, room or teaching details" />
+            <label className="block text-sm font-semibold">
+              Description / class or batch details
+              <textarea
+                rows={3}
+                value={lectureForm.description}
+                onChange={(e) =>
+                  setLectureForm((v) => ({ ...v, description: e.target.value }))
+                }
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+                placeholder="Class, batch, room or teaching details"
+              />
             </label>
-            <label className="block text-sm font-semibold">Meeting link
-              <input type="url" value={lectureForm.meetingLink} onChange={(e) => setLectureForm((v) => ({ ...v, meetingLink: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" />
+            <label className="block text-sm font-semibold">
+              Meeting link
+              <input
+                type="url"
+                value={lectureForm.meetingLink}
+                onChange={(e) =>
+                  setLectureForm((v) => ({ ...v, meetingLink: e.target.value }))
+                }
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+              />
             </label>
-            <label className="block text-sm font-semibold">Teaching material link
-              <input type="url" value={lectureForm.materialLink} onChange={(e) => setLectureForm((v) => ({ ...v, materialLink: e.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2" />
+            <label className="block text-sm font-semibold">
+              Teaching material link
+              <input
+                type="url"
+                value={lectureForm.materialLink}
+                onChange={(e) =>
+                  setLectureForm((v) => ({
+                    ...v,
+                    materialLink: e.target.value,
+                  }))
+                }
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2"
+              />
             </label>
             <div className="flex justify-end gap-2 border-t pt-4">
-              <button type="button" onClick={() => setShowAddLecture(false)} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold">Cancel</button>
-              <button type="submit" disabled={creatingLecture} className="rounded-lg bg-[#0A54B7] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50">{creatingLecture ? "Saving..." : "Save Lecture"}</button>
+              <button
+                type="button"
+                onClick={() => setShowAddLecture(false)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creatingLecture}
+                className="rounded-lg bg-[#0A54B7] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {creatingLecture ? "Saving..." : "Save Lecture"}
+              </button>
             </div>
           </form>
         </div>

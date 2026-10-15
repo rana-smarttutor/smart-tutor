@@ -216,7 +216,11 @@ export function AttendanceManager({
 
   embedded = false,
 }: AttendanceManagerProps) {
-  const canEdit = role === "admin" || role === "educator" || (role === "staff" || role === "counsellor");
+  const canEdit =
+    role === "admin" ||
+    role === "educator" ||
+    role === "staff" ||
+    role === "counsellor";
 
   const isAdmin = role === "admin" || role === "educator";
 
@@ -823,9 +827,7 @@ export function AttendanceManager({
 
   if (canEdit) {
     return (
-      <DailyStudentAttendanceManager
-        studentDirectory={studentDirectory}
-      />
+      <DailyStudentAttendanceManager studentDirectory={studentDirectory} />
     );
   }
 
@@ -1134,7 +1136,7 @@ export function AttendanceManager({
         </div>
       ) : null}
 
-            {/* Complete student directory for attendance managers */}
+      {/* Complete student directory for attendance managers */}
       {canEdit ? (
         <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -1146,8 +1148,8 @@ export function AttendanceManager({
                 All Registered Students
               </h3>
               <p className="mt-1 text-sm text-slate-500">
-                {allStudents.length} students in the available directory.
-                Select a course, branch and subject below to mark attendance.
+                {allStudents.length} students in the available directory. Select
+                a course, branch and subject below to mark attendance.
               </p>
             </div>
 
@@ -1183,9 +1185,7 @@ export function AttendanceManager({
                     <p className="text-sm font-bold text-slate-900">
                       {student.name}
                     </p>
-                    <p className="text-xs text-slate-500">
-                      {student.id}
-                    </p>
+                    <p className="text-xs text-slate-500">{student.id}</p>
                   </div>
 
                   <div className="text-left sm:text-right">
@@ -1204,8 +1204,8 @@ export function AttendanceManager({
 
             {allStudents.length === 0 ? (
               <div className="p-8 text-center text-sm text-slate-500">
-                No students were supplied to this dashboard.
-                Student directory access needs to be checked.
+                No students were supplied to this dashboard. Student directory
+                access needs to be checked.
               </div>
             ) : null}
 
@@ -1445,10 +1445,9 @@ export function AttendanceManager({
         </div>
       ) : null}
 
-            {/* Attendance Grid */}
+      {/* Attendance Grid */}
       {localRecords.length > 0 ? (
         <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 px-5 py-4">
             <div className="flex flex-wrap items-center gap-3">
@@ -1536,28 +1535,20 @@ export function AttendanceManager({
             <table className="w-full min-w-[720px] border-collapse text-left text-sm">
               <thead>
                 <tr className="bg-[#F1F5F9] text-slate-500">
-                  <th className="px-5 py-4 font-bold">
-                    Student Name
-                  </th>
+                  <th className="px-5 py-4 font-bold">Student Name</th>
 
-                  <th className="px-5 py-4 font-bold">
-                    Course
-                  </th>
+                  <th className="px-5 py-4 font-bold">Course</th>
 
-                  <th className="px-5 py-4 font-bold">
-                    Batch
-                  </th>
+                  <th className="px-5 py-4 font-bold">Batch</th>
 
-                  <th className="px-5 py-4 font-bold">
-                    Status
-                  </th>
+                  <th className="px-5 py-4 font-bold">Status</th>
                 </tr>
               </thead>
 
               <tbody>
                 {filteredPeople.map((person) => {
                   const record = localRecords.find(
-                    (item) => item.personId === person.id
+                    (item) => item.personId === person.id,
                   );
 
                   const status = record?.status ?? "unmarked";
@@ -1610,14 +1601,16 @@ export function AttendanceManager({
                           value={status}
                           disabled={!canEdit || isSaving}
                           onChange={(event) => {
-                            const nextStatus = event.target.value as AttendanceStatus | "unmarked";
+                            const nextStatus = event.target.value as
+                              | AttendanceStatus
+                              | "unmarked";
 
                             setLocalRecords((current) =>
                               current.map((item) =>
                                 item.personId === person.id
                                   ? { ...item, status: nextStatus }
-                                  : item
-                              )
+                                  : item,
+                              ),
                             );
 
                             setHasUnsaved(true);
@@ -1634,21 +1627,11 @@ export function AttendanceManager({
                                     : "bg-white text-slate-700"
                           }`}
                         >
-                          <option value="unmarked">
-                            Mark attendance
-                          </option>
-                          <option value="present">
-                            Present
-                          </option>
-                          <option value="absent">
-                            Absent
-                          </option>
-                          <option value="late">
-                            Late
-                          </option>
-                          <option value="excused">
-                            On Leave
-                          </option>
+                          <option value="unmarked">Mark attendance</option>
+                          <option value="present">Present</option>
+                          <option value="absent">Absent</option>
+                          <option value="late">Late</option>
+                          <option value="excused">On Leave</option>
                         </select>
                       </td>
                     </tr>
@@ -1684,7 +1667,7 @@ export function AttendanceManager({
           </div>
         </div>
       ) : null}
-{/* Empty state */}
+      {/* Empty state */}
 
       {localRecords.length === 0 && canEdit ? (
         <div className="surface rounded-2xl p-10 text-center">
