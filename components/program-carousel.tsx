@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Program {
   category: string;
@@ -48,8 +49,7 @@ const HOME_PROGRAMS: Program[] = [
     category: "Entrance Exams",
     title: "COMPETITIVE EXAMS",
     duration: "Batch-Based",
-    description:
-      "JEE, NEET, CET, CUET, CLAT, IPMAT, CA Foundation.",
+    description: "JEE, NEET, CET, CUET, CLAT, IPMAT, CA Foundation.",
     focus: ["JEE / NEET", "CET / CUET", "CA / CS / CMA"],
     targetTab: "Class 11-12",
   },
@@ -73,186 +73,247 @@ const HOME_PROGRAMS: Program[] = [
   },
 ];
 
+const DOT_COLORS = [
+  "bg-blue-500",
+  "bg-purple-500",
+  "bg-emerald-500",
+  "bg-orange-500",
+  "bg-rose-500",
+  "bg-indigo-500",
+];
+
+const BORDER_COLORS = [
+  "hover:border-blue-500",
+  "hover:border-purple-500",
+  "hover:border-emerald-500",
+  "hover:border-orange-500",
+  "hover:border-rose-500",
+  "hover:border-indigo-500",
+];
+
+const BUTTON_COLORS = [
+  "bg-blue-600 hover:bg-blue-700",
+  "bg-purple-600 hover:bg-purple-700",
+  "bg-emerald-600 hover:bg-emerald-700",
+  "bg-orange-600 hover:bg-orange-700",
+  "bg-rose-600 hover:bg-rose-700",
+  "bg-indigo-600 hover:bg-indigo-700",
+];
+
 export function ProgramCarousel({ programs }: ProgramCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const visiblePrograms =
-    HOME_PROGRAMS.length > 0 ? HOME_PROGRAMS : programs;
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
-  const scroll = (direction: "left" | "right") => {
-    if (!scrollRef.current) return;
+  // Preserve the existing homepage program selection.
+  const visiblePrograms = HOME_PROGRAMS.length > 0 ? HOME_PROGRAMS : programs;
 
-    const { scrollLeft, clientWidth } = scrollRef.current;
+  function updateScrollState() {
+    const container = scrollRef.current;
 
-    scrollRef.current.scrollTo({
-      left:
-        direction === "left"
-          ? scrollLeft - clientWidth
-          : scrollLeft + clientWidth,
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+
+    setCanScrollLeft(scrollLeft > 2);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+  }
+
+  useEffect(() => {
+    const container = scrollRef.current;
+
+    if (!container) return;
+
+    const frame = requestAnimationFrame(updateScrollState);
+
+    const observer =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateScrollState)
+        : null;
+
+    observer?.observe(container);
+
+    window.addEventListener("resize", updateScrollState);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, []);
+
+  function scroll(direction: "left" | "right") {
+    const container = scrollRef.current;
+
+    if (!container) return;
+
+    const firstCard = container.querySelector<HTMLElement>(
+      "[data-program-card]",
+    );
+
+    const cardWidth = firstCard?.getBoundingClientRect().width ?? 240;
+
+    const containerStyles = getComputedStyle(container);
+    const gap = parseFloat(containerStyles.columnGap) || 16;
+
+    const distance = cardWidth + gap;
+
+    container.scrollBy({
+      left: direction === "left" ? -distance : distance,
       behavior: "smooth",
     });
-  };
-
-  const getBulletColor = (index: number) => {
-    const colors = [
-      "bg-blue-500",
-      "bg-purple-500",
-      "bg-emerald-500",
-      "bg-orange-500",
-      "bg-rose-500",
-      "bg-indigo-500",
-    ];
-
-    return colors[index % colors.length];
-  };
-
-  const getBorderColor = (index: number) => {
-    const colors = [
-      "hover:border-blue-500",
-      "hover:border-purple-500",
-      "hover:border-emerald-500",
-      "hover:border-orange-500",
-      "hover:border-rose-500",
-      "hover:border-indigo-500",
-    ];
-
-    return colors[index % colors.length];
-  };
-
-  const getButtonColor = (index: number) => {
-    const colors = [
-      "bg-blue-600 hover:bg-blue-700",
-      "bg-purple-600 hover:bg-purple-700",
-      "bg-emerald-600 hover:bg-emerald-700",
-      "bg-orange-600 hover:bg-orange-700",
-      "bg-rose-600 hover:bg-rose-700",
-      "bg-indigo-600 hover:bg-indigo-700",
-    ];
-
-    return colors[index % colors.length];
-  };
+  }
 
   return (
-    <div className="group relative w-full max-w-full overflow-hidden">
+    <div className="group relative w-full min-w-0 max-w-full">
+      {/* DESKTOP LEFT ARROW */}
+
       <button
         type="button"
         onClick={() => scroll("left")}
-        className="absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-100 bg-white/90 p-3 opacity-0 shadow-lg backdrop-blur transition-opacity hover:scale-110 active:scale-95 group-hover:opacity-100 lg:block"
-        aria-label="Scroll left"
+        disabled={!canScrollLeft}
+        aria-label="Previous programs"
+        className="absolute left-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-900 shadow-lg transition-all hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-30 lg:flex"
       >
-        <svg
-          className="h-4 w-4 text-slate-900"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="3"
-            d="M15 19l-7-7 7-7"
-          />
-        </svg>
+        <ChevronLeft size={20} strokeWidth={2.5} />
       </button>
+
+      {/* DESKTOP RIGHT ARROW */}
 
       <button
         type="button"
         onClick={() => scroll("right")}
-        className="absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-slate-100 bg-white/90 p-3 opacity-0 shadow-lg backdrop-blur transition-opacity hover:scale-110 active:scale-95 group-hover:opacity-100 lg:block"
-        aria-label="Scroll right"
+        disabled={!canScrollRight}
+        aria-label="Next programs"
+        className="absolute right-0 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-900 shadow-lg transition-all hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-30 lg:flex"
       >
-        <svg
-          className="h-4 w-4 text-slate-900"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="3"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
+        <ChevronRight size={20} strokeWidth={2.5} />
       </button>
+
+      {/* PROGRAM CAROUSEL */}
 
       <div
         ref={scrollRef}
-        className="no-scrollbar flex snap-x gap-4 overflow-x-auto px-2 pb-8 pt-2 scroll-smooth"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        role="region"
+        aria-label="SmartIQ programs"
+        tabIndex={0}
+        onScroll={updateScrollState}
+        className="no-scrollbar flex w-full min-w-0 snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain px-1 pb-5 pt-2 scroll-smooth sm:gap-4 sm:px-2 sm:pb-8"
+        style={{
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          WebkitOverflowScrolling: "touch",
+        }}
       >
         {visiblePrograms.map((program, index) => {
-          const dotColor = getBulletColor(index);
-          const borderHover = getBorderColor(index);
-          const buttonColor = getButtonColor(index);
+          const dotColor = DOT_COLORS[index % DOT_COLORS.length];
+
+          const borderHover = BORDER_COLORS[index % BORDER_COLORS.length];
+
+          const buttonColor = BUTTON_COLORS[index % BUTTON_COLORS.length];
 
           return (
             <div
-              key={program.title}
-              className="w-[220px] flex-shrink-0 snap-start sm:w-[240px]"
+              key={`${program.title}-${index}`}
+              data-program-card
+              className="w-[min(82vw,300px)] min-w-0 shrink-0 snap-start sm:w-[240px]"
             >
               <article
-                className={`surface group/card relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${borderHover}`}
+                className={`surface group/card relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-5 ${borderHover}`}
               >
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                {/* DURATION */}
+
+                <div className="mb-3 flex min-w-0 items-center justify-between gap-2">
+                  <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600 sm:text-[9px]">
                     <span
-                      className={`h-1.5 w-1.5 rounded-full ${dotColor}`}
+                      className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`}
                     />
-                    {program.duration}
+                    <span className="break-words">{program.duration}</span>
                   </span>
 
-                  <span className="text-[9px] font-bold text-slate-400">
+                  <span className="shrink-0 text-[11px] font-bold text-slate-400">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>
 
-                <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                {/* CATEGORY */}
+
+                <p className="mb-2 break-words text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:text-[9px]">
                   {program.category}
                 </p>
 
-                <h3 className="mb-2 line-clamp-2 text-sm font-bold leading-snug text-slate-900">
+                {/* TITLE */}
+
+                <h3 className="mb-3 min-h-[40px] break-words text-[16px] font-extrabold leading-snug text-slate-900 sm:text-sm">
                   {program.title}
                 </h3>
 
-                <p className="mb-3 line-clamp-3 flex-grow text-[11px] font-medium leading-relaxed text-slate-500">
+                {/* DESCRIPTION */}
+
+                <p className="mb-4 flex-grow text-[13px] font-medium leading-6 text-slate-600 sm:text-[12px] sm:leading-5">
                   {program.description}
                 </p>
 
-                <div className="mb-3 flex flex-wrap gap-1">
+                {/* FOCUS TAGS */}
+
+                <div className="mb-4 flex flex-wrap gap-1.5">
                   {program.focus.map((focus) => (
                     <span
                       key={focus}
-                      className="rounded-md bg-slate-50 px-2 py-0.5 text-[9px] font-semibold text-slate-600"
+                      className="max-w-full break-words rounded-md bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-600"
                     >
                       {focus}
                     </span>
                   ))}
                 </div>
 
+                {/* VIEW COURSES */}
+
                 <Link
                   href={`/courses?tab=${encodeURIComponent(program.targetTab)}`}
-                  className={`mt-auto inline-flex items-center justify-center gap-1 rounded-xl px-4 py-2.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${buttonColor}`}
+                  className={`mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-wide text-white shadow-sm transition-all hover:scale-[1.02] active:scale-95 ${buttonColor}`}
                 >
                   View Courses
-                  <svg
-                    className="h-3 w-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
+                  <ChevronRight
+                    className="h-4 w-4 shrink-0"
+                    strokeWidth={2.5}
+                  />
                 </Link>
               </article>
             </div>
           );
         })}
+      </div>
+
+      {/* MOBILE / TABLET NAVIGATION */}
+
+      <div className="mt-2 flex items-center justify-between gap-3 px-1 lg:hidden">
+        <p className="text-[11px] font-semibold text-slate-500">
+          Swipe to explore programs
+        </p>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scroll("left")}
+            disabled={!canScrollLeft}
+            aria-label="Previous programs"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronLeft size={19} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => scroll("right")}
+            disabled={!canScrollRight}
+            aria-label="Next programs"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronRight size={19} />
+          </button>
+        </div>
       </div>
     </div>
   );

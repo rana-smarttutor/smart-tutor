@@ -291,34 +291,57 @@ export const COLLECTIONS = {
   mentorshipRequests: "mentorshipRequests",
 } as const;
 
+
 export async function createEnquiry(input: {
   name: string;
   contact: string;
   email?: string;
   role: string;
-
   courseTitle: string;
   courseKey: string;
-
   branch?: string;
-
   preferredDate?: string;
   preferredTime?: string;
-
   requestType?: "general" | "consultation" | "demo";
   source?: string;
-
   message: string;
-
   suggestedCourses?: {
     standardKey: string;
     title: string;
   }[];
+  submissionId?: string;
 }) {
   const collection = await getCollection(COLLECTIONS.enquiries);
 
+  const submissionId = input.submissionId?.trim() || "";
+
+  if (submissionId) {
+    // The partial index excludes old enquiries
+    // that do not have a submissionId.
+    await collection.createIndex(
+      { submissionId: 1 },
+      {
+        unique: true,
+        name: "unique_enquiry_submission_id",
+        partialFilterExpression: {
+          submissionId: { $type: "string" },
+        },
+      },
+    );
+
+    const existing = await collection.findOne({
+      submissionId,
+    });
+
+    if (existing) {
+      return stripMongoId(existing);
+    }
+  }
+
   const enquiry = {
     id: `enquiry-${randomUUID()}`,
+
+    ...(submissionId ? { submissionId } : {}),
 
     name: input.name.trim(),
     contact: input.contact.trim(),
@@ -332,11 +355,9 @@ export async function createEnquiry(input: {
     branch: input.branch?.trim() || "",
 
     preferredDate: input.preferredDate?.trim() || "",
-
     preferredTime: input.preferredTime?.trim() || "",
 
     requestType: input.requestType ?? "general",
-
     source: input.source?.trim() || "",
 
     message: input.message.trim(),
@@ -349,9 +370,31 @@ export async function createEnquiry(input: {
     status: "new",
   };
 
-  await collection.insertOne(enquiry);
+  try {
+    await collection.insertOne(enquiry);
+    return stripMongoId(enquiry);
+  } catch (error) {
+    // Two identical requests may reach MongoDB
+    // simultaneously. The unique index allows
+    // only one insert.
+    if (
+      submissionId &&
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === 11000
+    ) {
+      const existing = await collection.findOne({
+        submissionId,
+      });
 
-  return stripMongoId(enquiry);
+      if (existing) {
+        return stripMongoId(existing);
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function getAllEnquiries() {

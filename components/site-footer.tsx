@@ -1,6 +1,9 @@
+
 import Link from "next/link";
 import Image from "next/image";
 import { getPublicInstituteData } from "@/lib/data-store";
+
+const OFFICIAL_CONTACT_EMAIL = "info@smartiqinstitute.in";
 
 export async function SiteFooter() {
   const data = await getPublicInstituteData();
@@ -15,10 +18,15 @@ export async function SiteFooter() {
         },
       ];
 
+  const contactPhone = data.profile.phone;
+  const contactHours = data.profile.hours;
+  const affiliatedInstitutes = data.profile.affiliatedInstitutes ?? [];
+
   return (
     <footer className="section-shell pb-8 pt-6">
       <div className="surface graph-paper rounded-[2rem] p-6 sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[0.95fr_0.9fr_1.1fr]">
+          {/* Institute information */}
           <div>
             <Link
               href="/"
@@ -31,7 +39,7 @@ export async function SiteFooter() {
               Admissions, learning, and institute operations in one workspace.
             </p>
 
-            {/* FOUNDER */}
+            {/* Founder */}
             <div className="mt-5 flex items-center gap-5">
               <Image
                 src="/founder-temperory.jpeg"
@@ -56,23 +64,59 @@ export async function SiteFooter() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            {/* Branch addresses */}
+            <div className="mt-5 space-y-2">
               {branches.map((branch) => (
                 <p
                   key={branch.name}
-                  className="font-semibold text-[var(--color-heading)]"
+                  className="text-sm font-semibold leading-6 text-[var(--color-heading)]"
                 >
                   {branch.name}: {branch.address}
                 </p>
               ))}
             </div>
 
-            <p>{data.profile.phone}</p>
-            <p>{data.profile.email}</p>
-            <p>{data.profile.hours}</p>
-            <p>{data.profile.affiliatedInstitutes.join(" | ")}</p>
+            {/* Contact details */}
+            <div className="mt-5 space-y-2 text-sm text-[var(--color-muted)]">
+              {contactPhone ? (
+                <p>
+                  <span className="font-semibold text-[var(--color-heading)]">
+                    Phone:{" "}
+                  </span>
+                  {contactPhone}
+                </p>
+              ) : null}
+
+              <p>
+                <span className="font-semibold text-[var(--color-heading)]">
+                  Email:{" "}
+                </span>
+                <a
+                  href={`mailto:${OFFICIAL_CONTACT_EMAIL}`}
+                  className="break-all text-blue-700 underline-offset-4 transition-colors hover:text-blue-900 hover:underline"
+                >
+                  {OFFICIAL_CONTACT_EMAIL}
+                </a>
+              </p>
+
+              {contactHours ? (
+                <p>
+                  <span className="font-semibold text-[var(--color-heading)]">
+                    Hours:{" "}
+                  </span>
+                  {contactHours}
+                </p>
+              ) : null}
+
+              {affiliatedInstitutes.length > 0 ? (
+                <p className="leading-6">
+                  {affiliatedInstitutes.join(" | ")}
+                </p>
+              ) : null}
+            </div>
           </div>
 
+          {/* Social media */}
           <div>
             <p className="section-label">Social media</p>
 
@@ -82,7 +126,7 @@ export async function SiteFooter() {
                   key={item.label}
                   href={item.href}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="social-tile surface-soft rounded-2xl px-4 py-3 text-sm font-semibold text-[var(--color-heading)]"
                   style={{
                     ["--social-color" as string]: item.color,
@@ -95,6 +139,7 @@ export async function SiteFooter() {
             </div>
           </div>
 
+          {/* Campus map */}
           <div>
             <p className="section-label">Campus map</p>
 
@@ -138,8 +183,8 @@ export async function SiteFooter() {
                       branch.mapQuery || branch.address,
                     )}`}
                     target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-md hover:bg-blue-700"
+                    rel="noopener noreferrer"
+                    className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-md transition-colors hover:bg-blue-700"
                   >
                     {branch.name}
                   </a>
@@ -149,33 +194,37 @@ export async function SiteFooter() {
           </div>
         </div>
 
+        {/* Legal footer */}
         <div className="mt-8 border-t border-[var(--color-border)] pt-8">
           <div className="flex flex-col gap-4 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
             <nav className="flex flex-wrap gap-4">
               <Link
                 href="/privacy"
-                className="hover:text-[var(--color-primary)] transition-colors"
+                className="transition-colors hover:text-[var(--color-primary)]"
               >
                 Privacy Policy
               </Link>
+
               <Link
                 href="/terms"
-                className="hover:text-[var(--color-primary)] transition-colors"
+                className="transition-colors hover:text-[var(--color-primary)]"
               >
                 Terms &amp; Conditions
               </Link>
+
               <Link
                 href="/eula"
-                className="hover:text-[var(--color-primary)] transition-colors"
+                className="transition-colors hover:text-[var(--color-primary)]"
               >
                 EULA
               </Link>
             </nav>
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} SmartIQ Institute Academy. In
-              operations since 2018. All rights reserved. Results may differ
-              between users. Promotional claims may be stylized.
+              © {new Date().getFullYear()} SmartIQ Institute Academy.
+              In operations since 2018. All rights reserved.
+              Results may differ between users.
+              Promotional claims may be stylized.
             </p>
           </div>
         </div>

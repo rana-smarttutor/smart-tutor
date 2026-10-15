@@ -1,6 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
+
 import Script from "next/script";
+
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -13,438 +17,360 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { ConditionalLayout } from "@/components/conditional-layout";
 import { PageLoader } from "@/components/page-loader";
 import { AuthAccessExperience } from "@/components/auth-access-experience";
+
 import "./globals.css";
+
+/* =====================================================
+   FONT CONFIGURATION
+===================================================== */
 
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
+  display: "swap",
 });
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-playfair",
+  display: "swap",
 });
 
+/* =====================================================
+   SITE CONSTANTS
+===================================================== */
+
+const SITE_URL = "https://smartiqinstitute.in";
+
+const SITE_NAME = "SmartIQ Institute";
+
+const SITE_DESCRIPTION =
+  "SmartIQ Institute provides personal tutoring, online learning, school and board exam preparation, competitive and government exam coaching, digital skill development, mock tests, mentorship, and career guidance.";
+
+const SITE_LOGO = `${SITE_URL}/Smart-institue-logo.jpeg`;
+
+const GA_MEASUREMENT_ID = "G-9P82PKFSD9";
+
+/* =====================================================
+   SEO METADATA
+===================================================== */
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://smartiqinstitute.in"),
+  metadataBase: new URL(SITE_URL),
+
   title: {
-    default: "SmartIQ Institute – India’s No.1 Trusted Smart Learning Platform",
+    default: "SmartIQ Institute | Smart Learning & Career Development",
     template: "%s | SmartIQ Institute",
   },
-  description:
-    "Find the best personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — SmartIQ Institute helps students Learn, Grow, Earn & Get Placed for a brighter future.",
+
+  description: SITE_DESCRIPTION,
+
+  applicationName: SITE_NAME,
+
   keywords: [
     "SmartIQ Institute",
-    "smart tutor","home schooling in navi mumbai","personal coaching","cet exam prepration","best coaching in mumbai",
-    "SmartIQ Institute",
     "SmartIQ Institute Vashi",
-    "coaching classes",
-    "Best Coaching Institute Navi Mumbai",
-    "CBSE ICSE SSC Coaching Vashi",
-    "UPSC Foundation Mumbai",
-    "classes near me",
-    "JEE NEET Preparation Vashi",
-    "Competitive Exam Coaching Mumbai",
-    "Academic Mentoring Vashi",
-    "Digital Learning Platform India","coaching","classes in navi mumbai"
+    "SmartIQ Institute Navi Mumbai",
+    "SmartIQ Institute Panvel",
+    "Home Tutors Navi Mumbai",
+    "Personal Coaching",
+    "Online Tuition",
+    "Online Tutors",
+    "School Coaching",
+    "CBSE Coaching",
+    "ICSE Coaching",
+    "SSC Board Coaching",
+    "Class 6 to 12 Coaching",
+    "JEE Preparation",
+    "NEET Preparation",
+    "MHT CET Preparation",
+    "Competitive Exam Coaching",
+    "Government Exam Preparation",
+    "UPSC Preparation",
+    "MPSC Preparation",
+    "Banking Exam Preparation",
+    "SSC CGL Preparation",
+    "Career Counselling",
+    "Academic Mentoring",
+    "Mock Tests",
+    "Digital Learning",
+    "Skill Development",
+    "Artificial Intelligence Courses",
+    "Coding Classes",
+    "Coaching Institute Navi Mumbai",
   ],
-  authors: [{ name: "SmartIQ Institute Academy" }],
-  creator: "SmartIQ Institute Academy",
-  publisher: "SmartIQ Institute Academy",
+
+  authors: [
+    {
+      name: "SmartIQ Institute",
+    },
+  ],
+
+  creator: SITE_NAME,
+
+  publisher: SITE_NAME,
+
+  category: "education",
+
   referrer: "origin-when-cross-origin",
-  applicationName: "SmartIQ Institute",
+
+  alternates: {
+    canonical: SITE_URL,
+  },
+
+  /* ===================================================
+     OPEN GRAPH
+  =================================================== */
+
   openGraph: {
     type: "website",
+
     locale: "en_IN",
-    url: "https://smartiqinstitute.in",
-    siteName: "SmartIQ Institute",
-    title: "SmartIQ Institute – India’s No.1 Trusted Smart Learning Platform",
-    description:
-      "Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform. Whether you want better marks, skill development, career growth, or placement support — SmartIQ Institute helps students Learn, Grow, Earn & Get Placed for a brighter future.",
+
+    url: SITE_URL,
+
+    siteName: SITE_NAME,
+
+    title: "SmartIQ Institute | Smart Learning & Career Development",
+
+    description: SITE_DESCRIPTION,
+
     images: [
       {
         url: "/Smart-institue-logo.jpeg",
         width: 1200,
         height: 630,
-        alt: "SmartIQ Institute Academy Campus",
+        alt: "SmartIQ Institute",
       },
     ],
   },
+
+  /* ===================================================
+     TWITTER / X
+  =================================================== */
+
   twitter: {
     card: "summary_large_image",
-    site: "@smarttutors",
-    creator: "@smarttutors",
-    title: "SmartIQ Institute – India’s No.1 Trusted Smart Learning Platform",
-    description: "Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams, Digital Courses, and Skill Development Programs. Learn with expert teachers through live classes, one-to-one mentoring, recorded lectures, study materials, mock tests, performance analytics, Library Support and complete career guidance — all in one platform.",
+
+    title: "SmartIQ Institute | Smart Learning & Career Development",
+
+    description: SITE_DESCRIPTION,
+
     images: ["/Smart-institue-logo.jpeg"],
   },
+
+  /* ===================================================
+     SEARCH ENGINE ROBOTS
+  =================================================== */
+
   robots: {
     index: true,
+
     follow: true,
+
     googleBot: {
       index: true,
+
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+
+      "max-video-preview": -1,
+
+      "max-image-preview": "large",
+
+      "max-snippet": -1,
     },
   },
-  verification: {
-    google: "add_your_google_search_console_verification_code_here",
-  },
-  category: 'education',
-  manifest: '/site.webmanifest',
+
+  /* ===================================================
+     PWA / APP CONFIGURATION
+  =================================================== */
+
+  manifest: "/site.webmanifest",
+
   appleWebApp: {
-    title: 'SmartIQ Institute',
-    statusBarStyle: 'default',
+    title: SITE_NAME,
+
+    statusBarStyle: "default",
+
     capable: true,
   },
+
   formatDetection: {
     telephone: true,
+
     date: true,
+
     address: true,
+
     email: true,
+
     url: true,
   },
+
   other: {
-    'apple-mobile-web-app-title': 'SmartIQ Institute',
-    'mobile-web-app-capable': 'yes',
-    'og:country-name': 'India',
-    'og:region': 'Maharashtra',
+    "apple-mobile-web-app-title": SITE_NAME,
+
+    "mobile-web-app-capable": "yes",
+
+    "og:country-name": "India",
+
+    "og:region": "Maharashtra",
   },
 };
 
-export const viewport = {
+/* =====================================================
+   VIEWPORT CONFIGURATION
+===================================================== */
+
+export const viewport: Viewport = {
   themeColor: "#2563eb",
+
   width: "device-width",
+
   initialScale: 1,
+
   maximumScale: 5,
 };
+
+/* =====================================================
+   SAFE JSON-LD SERIALIZATION
+===================================================== */
+
+function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+/* =====================================================
+   EDUCATIONAL ORGANIZATION SCHEMA
+===================================================== */
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+
+  "@type": "EducationalOrganization",
+
+  "@id": `${SITE_URL}/#organization`,
+
+  name: SITE_NAME,
+
+  alternateName: ["SmartIQ Institute Academy", "SmartIQ"],
+
+  url: SITE_URL,
+
+  logo: {
+    "@type": "ImageObject",
+
+    "@id": `${SITE_URL}/#logo`,
+
+    url: SITE_LOGO,
+
+    contentUrl: SITE_LOGO,
+  },
+
+  image: SITE_LOGO,
+
+  description: SITE_DESCRIPTION,
+
+  address: {
+    "@type": "PostalAddress",
+
+    streetAddress: "Sector 17, Vashi",
+
+    addressLocality: "Navi Mumbai",
+
+    addressRegion: "Maharashtra",
+
+    postalCode: "400703",
+
+    addressCountry: "IN",
+  },
+
+  contactPoint: {
+    "@type": "ContactPoint",
+
+    telephone: "+91-8850447887",
+
+    email: "info@smartiqinstitute.in",
+
+    contactType: "admissions",
+
+    availableLanguage: ["English", "Hindi", "Marathi"],
+  },
+
+  sameAs: ["https://www.instagram.com/smarttutors_academy/"],
+
+  areaServed: {
+    "@type": "Country",
+
+    name: "India",
+  },
+
+  knowsAbout: [
+    "School Education",
+    "Personal Tutoring",
+    "Online Education",
+    "CBSE Preparation",
+    "ICSE Preparation",
+    "SSC Board Preparation",
+    "JEE Preparation",
+    "NEET Preparation",
+    "MHT CET Preparation",
+    "UPSC Preparation",
+    "Government Exams",
+    "Competitive Exams",
+    "Academic Mentoring",
+    "Career Counselling",
+    "Digital Skills",
+    "Artificial Intelligence",
+    "Skill Development",
+    "Mock Tests",
+  ],
+};
+
+/* =====================================================
+   WEBSITE SCHEMA
+===================================================== */
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+
+  "@type": "WebSite",
+
+  "@id": `${SITE_URL}/#website`,
+
+  name: SITE_NAME,
+
+  url: SITE_URL,
+
+  description: SITE_DESCRIPTION,
+
+  inLanguage: "en-IN",
+
+  publisher: {
+    "@id": `${SITE_URL}/#organization`,
+  },
+};
+
+/* =====================================================
+   ROOT LAYOUT
+===================================================== */
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
-
-  const organizationJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "School",
-    "name": "SmartIQ Institute Academy",
-    "url": "https://smartiqinstitute.in",
-    "logo": "https://smartiqinstitute.in/Smart-institue-logo.jpeg",
-    "description": "SmartIQ Institute \u2013 India\u2019s No.1 Trusted Smart Learning Platform. Find the best Personal Home Tutors & Online Tutors for School, College, Government & Competitive Exams.",
-    "address": [
-      {
-        "@type": "PostalAddress",
-        "streetAddress": "Sector 17, Vashi",
-        "addressLocality": "Navi Mumbai",
-        "addressRegion": "Maharashtra",
-        "postalCode": "400703",
-        "addressCountry": "IN"
-      }
-    ],
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "telephone": "+91-8850447887",
-      "contactType": "admissions",
-      "email": "info@smartiqinstitute.in",
-      "availableLanguage": ["English", "Hindi", "Marathi"]
-    },
-    "sameAs": [
-      "https://www.instagram.com/smarttutors_academy/",
-      "https://wa.me/918850447887"
-    ],
-    "foundingDate": "2018",
-    "numberOfEmployees": { "@type": "QuantitativeValue", "value": "50" },
-    "areaServed": "India",
-    "knowsAbout": [
-      "School Education",
-      "Competitive Exams",
-      "JEE",
-      "NEET",
-      "UPSC",
-      "Digital Skills",
-      "Career Development"
-    ]
-  };
-
-  const websiteJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "SmartIQ Institute",
-    "url": "https://smartiqinstitute.in",
-    "description": "India\u2019s No.1 Trusted Smart Learning Platform for school, college, competitive exams, and skill development.",
-    "inLanguage": "en-IN",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": "https://smartiqinstitute.in/courses?q={search_term_string}"
-      },
-      "query-input": "required name=search_term_string"
-    }
-  };
-
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://smartiqinstitute.in" },
-      { "@type": "ListItem", "position": 2, "name": "Courses", "item": "https://smartiqinstitute.in/courses" },
-      { "@type": "ListItem", "position": 3, "name": "Placements", "item": "https://smartiqinstitute.in/placements" },
-      { "@type": "ListItem", "position": 4, "name": "Mock Tests", "item": "https://smartiqinstitute.in/mock-test" },
-      { "@type": "ListItem", "position": 5, "name": "Contact", "item": "https://smartiqinstitute.in/contact" },
-      { "@type": "ListItem", "position": 6, "name": "Digital Library", "item": "https://smartiqinstitute.in/library" },
-      { "@type": "ListItem", "position": 7, "name": "Quiz Arena", "item": "https://smartiqinstitute.in/quiz-arena" }
-    ]
-  };
-
-  const courseItemListJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    "name": "Courses Offered at SmartIQ Institute",
-    "description": "Complete range of academic and competitive exam programs available at SmartIQ Institute Academy.",
-    "url": "https://smartiqinstitute.in/courses",
-    "numberOfItems": 10,
-    "itemListElement": [
-      {
-        "@type": "ListItem",
-        "position": 1,
-        "item": {
-          "@type": "Course",
-          "name": "School Foundation (Class 6th - 8th)",
-          "description": "Build strong fundamentals in Mathematics, Science, English, and Social Studies.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "School Readiness"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 2,
-        "item": {
-          "@type": "Course",
-          "name": "Board Prep (Class 9th - 10th)",
-          "description": "Comprehensive preparation for CBSE, ICSE, and SSC board examinations.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Secondary School Certificate"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 3,
-        "item": {
-          "@type": "Course",
-          "name": "Science (Class 11th - 12th PCM/PCB)",
-          "description": "In-depth coaching for Physics, Chemistry, Mathematics, and Biology with JEE/NEET preparation.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Higher Secondary Certificate"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 4,
-        "item": {
-          "@type": "Course",
-          "name": "Commerce (Class 11th - 12th)",
-          "description": "Expert guidance in Accountancy, Economics, Business Studies, and Mathematics.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Higher Secondary Certificate"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 5,
-        "item": {
-          "@type": "Course",
-          "name": "Arts / Humanities (Class 11th - 12th)",
-          "description": "Deep learning in History, Political Science, Geography, Psychology, and Sociology.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Higher Secondary Certificate"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 6,
-        "item": {
-          "@type": "Course",
-          "name": "Graduation (UG Degree)",
-          "description": "University-level coaching for B.Sc, B.Com, BA, BBA, BCA, and other undergraduate programs.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Bachelor\u2019s Degree"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 7,
-        "item": {
-          "@type": "Course",
-          "name": "Post Graduation (PG)",
-          "description": "Advanced coaching for M.Sc, M.Com, MA, MBA, and other postgraduate programs.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Master\u2019s Degree"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 8,
-        "item": {
-          "@type": "Course",
-          "name": "Competitive / Govt Exams",
-          "description": "Targeted preparation for UPSC, MPSC, Banking, SSC CGL, Railway, and other government exams.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Government Job Qualification"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 9,
-        "item": {
-          "@type": "Course",
-          "name": "Skill Development",
-          "description": "Career-focused training in digital marketing, programming, data science, and communication skills.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Certificate of Completion"
-        }
-      },
-      {
-        "@type": "ListItem",
-        "position": 10,
-        "item": {
-          "@type": "Course",
-          "name": "Diploma / Polytechnic",
-          "description": "Practical training and theoretical knowledge for diploma and polytechnic programs.",
-          "provider": { "@type": "School", "name": "SmartIQ Institute Academy" },
-          "educationalCredentialAwarded": "Diploma Certificate"
-        }
-      }
-    ]
-  };
-
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "What is SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "SmartIQ Institute is India's No.1 trusted smart learning platform providing personal home tutors and online tutors for school boards (CBSE, ICSE, SSC), competitive exams (JEE, NEET, UPSC, MPSC, Banking, SSC CGL), and digital skill development programs. We combine one-to-one mentorship, interactive whiteboard learning, weekly testing, performance analytics, and 100% job placement support."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Where is SmartIQ Institute located?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "SmartIQ Institute has its main offline campus in Sector 17, Vashi, Navi Mumbai, Maharashtra 400703. We also offer fully online programs accessible from anywhere in India."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What courses does SmartIQ Institute offer?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "We offer School Foundation (1st-10th), Board Prep (9th-10th CBSE/ICSE/SSC), Science (11th-12th PCM/PCB), Commerce (11th-12th), Arts (11th-12th), Graduation (UG), Post Graduation (PG), Diploma/Polytechnic, Competitive/Govt Exams (UPSC, MPSC, Banking, SSC CGL, Railway), and Digital Skill Development programs."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does SmartIQ Institute provide JEE and NEET coaching?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, SmartIQ Institute offers dedicated JEE (Main + Advanced) and NEET coaching as part of our Class 11th-12th Science (PCM/PCB) program. Students receive expert faculty guidance, weekly mock tests, doubt-solving sessions, and personalized performance tracking."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the teaching methodology at SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Our methodology combines one-to-one personal mentorship, 24x7 doubt support, interactive whiteboard learning, weekly test systems, detailed student performance reports, digital learning resources, 100+ mock tests, and interview training for personality development."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does SmartIQ Institute offer online classes?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, SmartIQ Institute provides both online and offline (on-campus) learning options. Online classes include live interactive sessions, recorded lectures, digital study materials, and 24x7 doubt support through our platform."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the 7 Days Replacement Guarantee at SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "If a student is not satisfied with the teaching method or assigned mentor within the first 7 days, we provide a full replacement of the tutor or a suitable alternative at no extra cost."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does SmartIQ Institute provide job placement support?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, SmartIQ Institute offers 100% job placement support. We provide interview training, resume building, personality development sessions, and connect students with hiring partners across various industries."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How can I enroll at SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "You can enroll by visiting our website at smartiqinstitute.in/signup, filling out the registration form, and submitting the required details. Our team will review your application and activate your account upon approval."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the fee structure at SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Our fee structure varies by program, duration, and learning mode (online or on-campus). Please contact us at info@smartiqinstitute.in or call +91-8850447887 for detailed fee information specific to your course of interest."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does SmartIQ Institute have mock tests for competitive exams?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, we offer 100+ mock tests designed to simulate real exam environments for JEE, NEET, UPSC, MPSC, Banking, SSC CGL, and other competitive exams. Each test comes with detailed performance analytics and improvement suggestions."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can parents track student progress at SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Absolutely. We provide detailed student performance reports that are shared with both students and parents. Parents receive regular updates on attendance, test scores, homework completion, and overall academic progress."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What is the qualification of teachers at SmartIQ Institute?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Our educators are highly qualified professionals with subject-matter expertise, teaching experience, and a passion for mentoring. Each faculty member undergoes a rigorous selection process and continuous training to maintain high teaching standards."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Does SmartIQ Institute offer a digital library?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, students get access to a comprehensive digital library with e-books, study notes, worksheets, recorded lectures, and reference materials available anytime through our online platform."
-        }
-      }
-    ]
-  };
-
   return (
     <html
       lang="en"
@@ -452,78 +378,139 @@ export default function RootLayout({
       data-theme="light"
       data-scroll-behavior="smooth"
       className={`light ${geistSans.variable} ${geistMono.variable} ${playfair.variable}`}
-      style={{ colorScheme: "light" }}
+      style={{
+        colorScheme: "light",
+      }}
     >
       <head>
-        <meta name="theme-color" content="#2563eb" />
+        {/* ============================================
+            THEME CONFIGURATION
+        ============================================ */}
+
         <meta name="color-scheme" content="light" />
+
         <meta name="supported-color-schemes" content="light" />
+
+        {/* ============================================
+            EDUCATIONAL ORGANIZATION JSON-LD
+        ============================================ */}
+
         <script
+          id="smartiq-organization-jsonld"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(organizationJsonLd),
+          }}
         />
+
+        {/* ============================================
+            WEBSITE JSON-LD
+        ============================================ */}
+
         <script
+          id="smartiq-website-jsonld"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(courseItemListJsonLd) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(websiteJsonLd),
+          }}
         />
       </head>
+
       <body suppressHydrationWarning>
-<PageLoader />
-<Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-9P82PKFSD9"
-  strategy="lazyOnload"
-/>
+        {/* ============================================
+            GLOBAL PAGE LOADER
+        ============================================ */}
 
-<Script id="google-analytics" strategy="lazyOnload">
-  {`
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-9P82PKFSD9');
-  `}
-</Script>
-<ThemeProvider>
-  <div className="relative z-10">
-  <ConditionalLayout>
-    <div className="no-report-chrome">
-      <SiteHeader />
-    </div>
-  </ConditionalLayout>
+        <PageLoader />
 
-  <AuthAccessExperience />
+        {/* ============================================
+            GOOGLE ANALYTICS
+        ============================================ */}
 
-  {children}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="lazyOnload"
+        />
 
-  <ConditionalLayout>
-    <div className="no-report-chrome">
-      <SiteFooter />
-    </div>
-  </ConditionalLayout>
+        <Script id="google-analytics" strategy="lazyOnload">
+          {`
+            window.dataLayer = window.dataLayer || [];
 
-  <ConditionalLayout>
-    <div className="no-report-chrome">
-      <FloatingWhatsApp />
-      <PWAInstallButton />
-      <SmartTutorsAIChatbot />
-    </div>
-  </ConditionalLayout>
-</div>
-</ThemeProvider>
+            function gtag(){
+              dataLayer.push(arguments);
+            }
 
-<Analytics />
-<SpeedInsights />
+            gtag('js', new Date());
+
+            gtag('config', '${GA_MEASUREMENT_ID}');
+          `}
+        </Script>
+
+        {/* ============================================
+            THEME PROVIDER
+        ============================================ */}
+
+        <ThemeProvider>
+          <div className="relative z-10">
+            {/* ========================================
+                WEBSITE HEADER
+            ======================================== */}
+
+            <ConditionalLayout>
+              <div className="no-report-chrome">
+                <SiteHeader />
+              </div>
+            </ConditionalLayout>
+
+            {/* ========================================
+                AUTHENTICATION EXPERIENCE
+            ======================================== */}
+
+            <AuthAccessExperience />
+
+            {/* ========================================
+                PAGE CONTENT
+            ======================================== */}
+
+            {children}
+
+            {/* ========================================
+                WEBSITE FOOTER
+            ======================================== */}
+
+            <ConditionalLayout>
+              <div className="no-report-chrome">
+                <SiteFooter />
+              </div>
+            </ConditionalLayout>
+
+            {/* ========================================
+                FLOATING ASSISTANCE TOOLS
+            ======================================== */}
+
+            <ConditionalLayout>
+              <div className="no-report-chrome">
+                <FloatingWhatsApp />
+
+                <PWAInstallButton />
+
+                <SmartTutorsAIChatbot />
+              </div>
+            </ConditionalLayout>
+          </div>
+        </ThemeProvider>
+
+        {/* ============================================
+            VERCEL ANALYTICS
+        ============================================ */}
+
+        <Analytics />
+
+        {/* ============================================
+            VERCEL SPEED INSIGHTS
+        ============================================ */}
+
+        <SpeedInsights />
       </body>
     </html>
   );
