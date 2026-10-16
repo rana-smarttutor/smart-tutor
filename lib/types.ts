@@ -539,6 +539,7 @@ export type LectureItem = {
   lectureCheckInAt?: string;
   lectureCheckOutAt?: string;
   lectureCompletedAt?: string;
+  lectureAttendanceStatus?: "present" | "absent" | "late";
   teacherId?: string;
   teacherName?: string;
 };

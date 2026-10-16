@@ -11841,3 +11841,170 @@ export async function recordLectureAttendanceAction(
 
   return updated ? stripMongoId(updated) : null;
 }
+
+
+
+
+export async function saveLectureAttendanceTimes(
+  lectureId: string,
+  input: {
+    checkInAt: string;
+    checkOutAt: string;
+    attendanceStatus: "present" | "absent" | "late";
+  },
+): Promise<LectureItem | null> {
+  const collection = await getCollection<LectureItem>(
+    COLLECTIONS.lectures,
+  );
+
+  const existing = await collection.findOne({
+    id: lectureId,
+  });
+
+  if (!existing) return null;
+
+  if (
+    existing.status !== "scheduled" &&
+    existing.status !== "completed"
+  ) {
+    throw new Error(
+      "Attendance cannot be edited for a cancelled lecture.",
+    );
+  }
+
+  const status = input.attendanceStatus;
+
+  if (
+    status !== "present" &&
+    status !== "absent" &&
+    status !== "late"
+  ) {
+    throw new Error(
+      "Select Present, Absent or Late.",
+    );
+  }
+
+  function parseTimestamp(
+    value: string,
+    label: string,
+  ): number | null {
+    if (!value) return null;
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
+    ) {
+      throw new Error(
+        `${label} must be a valid timestamp.`,
+      );
+    }
+
+    const timestamp = Date.parse(value);
+
+    if (!Number.isFinite(timestamp)) {
+      throw new Error(`${label} is invalid.`);
+    }
+
+    return timestamp;
+  }
+
+  const checkInMs = parseTimestamp(
+    input.checkInAt,
+    "Check-in",
+  );
+
+  const checkOutMs = parseTimestamp(
+    input.checkOutAt,
+    "Check-out",
+  );
+
+  if (status !== "absent") {
+    if (checkInMs === null) {
+      throw new Error(
+        `Enter Check In for ${status === "late" ? "Late" : "Present"} attendance.`,
+      );
+    }
+
+    if (
+      checkOutMs !== null &&
+      checkOutMs <= checkInMs
+    ) {
+      throw new Error(
+        "Check Out must be later than Check In.",
+      );
+    }
+
+    if (
+      checkOutMs !== null &&
+      checkOutMs - checkInMs >
+        24 * 60 * 60 * 1000
+    ) {
+      throw new Error(
+        "Lecture duration cannot exceed 24 hours.",
+      );
+    }
+
+    if (
+      existing.status === "completed" &&
+      checkOutMs === null
+    ) {
+      throw new Error(
+        "Completed lectures must retain both attendance times.",
+      );
+    }
+  }
+
+  const now = new Date().toISOString();
+
+  const setFields: Partial<LectureItem> = {
+    lectureAttendanceStatus: status,
+    updatedAt: now,
+  };
+
+  const unsetFields: Record<string, ""> = {};
+
+  if (status === "absent") {
+    unsetFields.lectureCheckInAt = "";
+    unsetFields.lectureCheckOutAt = "";
+    unsetFields.lectureCompletedAt = "";
+    unsetFields.lectureReportSubmittedAt = "";
+
+    if (existing.status === "completed") {
+      setFields.status = "scheduled";
+    }
+  } else {
+    setFields.lectureCheckInAt = input.checkInAt;
+
+    if (input.checkOutAt) {
+      setFields.lectureCheckOutAt = input.checkOutAt;
+    } else {
+      unsetFields.lectureCheckOutAt = "";
+    }
+  }
+
+  const result = await collection.updateOne(
+    {
+      id: lectureId,
+      status: existing.status,
+      updatedAt:
+        existing.updatedAt ?? { $exists: false },
+    },
+    {
+      $set: setFields,
+      ...(Object.keys(unsetFields).length
+        ? { $unset: unsetFields }
+        : {}),
+    },
+  );
+
+  if (result.matchedCount === 0) {
+    throw new Error(
+      "This lecture was changed by another user. Refresh and try again.",
+    );
+  }
+
+  const updated = await collection.findOne({
+    id: lectureId,
+  });
+
+  return updated ? stripMongoId(updated) : null;
+}

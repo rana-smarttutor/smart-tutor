@@ -1,32 +1,32 @@
-
 "use client";
-import { StaffLectureAttendance } from "@/components/staff-lecture-attendance";
-
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
+
 import {
-  BookOpen,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Download,
+  Loader2,
+  Plus,
   RefreshCw,
   Save,
   Search,
-  XCircle,
+  X,
 } from "lucide-react";
+
 import { StaffActivityEditor } from "@/components/staff-activity-editor";
+import { StaffLectureAttendance } from "@/components/staff-lecture-attendance";
+
 import type {
-  ManagedUser,
-  Role,
+  EmploymentType,
   LectureItem,
+  ManagedUser,
+  RegularisationRequest,
+  Role,
   StaffAttendanceRecord,
   StaffAttendanceStatus,
   StaffCategory,
-  EmploymentType,
-  RegularisationRequest,
 } from "@/lib/types";
 
 type Props = {
@@ -39,146 +39,58 @@ type Props = {
 
 type MainTab = "overview" | "teaching" | "nonTeaching" | "history" | "reports";
 
-type TeachingTab = "today" | "timetable" | "lectureHistory";
-type NonTeachingTab = "register" | "activities";
-
 type EditValue = {
   status: StaffAttendanceStatus | "";
   checkIn: string;
   checkOut: string;
 };
 
-const TIMEZONE = "Asia/Kolkata";
+type Feedback = {
+  type: "success" | "error";
+  message: string;
+} | null;
 
-type StaffTimeInputProps = {
-  value: string;
-  disabled?: boolean;
-  label: string;
-  inputId: string;
-  onChange: (nextValue: string) => void;
-  onEnter?: () => void;
+type LectureWithAttendance = LectureItem & {
+  lectureAttendanceStatus?: "present" | "absent" | "late";
 };
 
-// Show 12-hour time and a separate AM/PM dropdown, while storing HH:MM.
-function StaffTimeInput({
-  value,
-  disabled = false,
-  label,
-  inputId,
-  onChange,
-  onEnter,
-}: StaffTimeInputProps) {
-  const [draft, setDraft] = useState<string | null>(null);
-  const [emptyPeriod, setEmptyPeriod] = useState<"AM" | "PM">("AM");
+type FacultyAttendanceStatus =
+  | "present"
+  | "absent"
+  | "late"
+  | "partially present";
 
-  const parsed = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
-  const hour24 = parsed ? Number(parsed[1]) : null;
-  const period: "AM" | "PM" =
-    hour24 === null ? emptyPeriod : hour24 >= 12 ? "PM" : "AM";
-  const shown =
-    hour24 === null
-      ? ""
-      : `${String(hour24 % 12 || 12).padStart(2, "0")}:${parsed?.[2]}`;
+type RecordedFaculty = {
+  teacher: ManagedUser;
+  lectureCount: number;
+  presentCount: number;
+  absentCount: number;
+  lateCount: number;
+  checkIn: string;
+  checkOut: string;
+  durationMinutes: number;
+  attendanceStatus: FacultyAttendanceStatus;
+  status: string;
+};
 
-  function as24(text: string, nextPeriod: "AM" | "PM") {
-    const trimmed = text.trim();
-    if (!trimmed) return "";
+const TIMEZONE = "Asia/Kolkata";
 
-    // Also accept 0846, 8:46 and 08:46.
-    const found =
-      /^(\d{1,2}):([0-5]\d)$/.exec(trimmed) ??
-      /^(\d{1,2})([0-5]\d)$/.exec(trimmed);
-    if (!found) return null;
+const INPUT_CLASS =
+  "w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-[#0A193A] outline-none focus:border-[#0A54B7]";
 
-    const hour = Number(found[1]);
-    if (hour < 1 || hour > 12) return null;
-
-    const nextHour = (hour % 12) + (nextPeriod === "PM" ? 12 : 0);
-    return `${String(nextHour).padStart(2, "0")}:${found[2]}`;
-  }
-
-  function commit() {
-    if (draft === null) return true;
-    const converted = as24(draft, period);
-    if (converted === null) return false;
-    onChange(converted);
-    setDraft(null);
-    return true;
-  }
-
-  return (
-    <div className="flex items-center gap-1.5 whitespace-nowrap">
-      <input
-        id={inputId}
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        maxLength={5}
-        placeholder="hh:mm"
-        value={draft ?? shown}
-        disabled={disabled}
-        aria-label={`${label} time`}
-        onChange={(event) => {
-          const next = event.target.value.replace(/[^0-9:]/g, "");
-          setDraft(next);
-          event.target.setCustomValidity("");
-          if (!next) onChange("");
-        }}
-        onBlur={() => {
-          if (!commit()) setDraft(null);
-        }}
-        onKeyDown={(event) => {
-          if (event.key !== "Enter") return;
-          event.preventDefault();
-          if (!commit()) {
-            event.currentTarget.setCustomValidity(
-              "Enter a valid time between 01:00 and 12:59.",
-            );
-            event.currentTarget.reportValidity();
-            return;
-          }
-          event.currentTarget.setCustomValidity("");
-          if (onEnter) onEnter();
-          else event.currentTarget.blur();
-        }}
-        className="h-9 w-[70px] rounded-lg border border-slate-200 bg-white px-2 text-center text-xs font-semibold text-[#0A193A] outline-none focus:border-[#0A54B7] disabled:bg-slate-50"
-      />
-      <select
-        aria-label={`${label} AM or PM`}
-        value={period}
-        disabled={disabled}
-        onChange={(event) => {
-          const nextPeriod = event.target.value as "AM" | "PM";
-          setEmptyPeriod(nextPeriod);
-          const text = draft ?? shown;
-          if (!text) return;
-          const converted = as24(text, nextPeriod);
-          if (converted !== null) {
-            onChange(converted);
-            setDraft(null);
-          }
-        }}
-        className="h-9 w-[56px] rounded-lg border border-slate-200 bg-white px-1 text-[11px] font-semibold text-[#0A193A] outline-none focus:border-[#0A54B7] disabled:bg-slate-50"
-      >
-        <option value="AM">AM</option>
-        <option value="PM">PM</option>
-      </select>
-    </div>
-  );
-}
-
-function istDate(value: string) {
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "";
+function istDate(value: string): string {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
 
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: TIMEZONE,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(d);
+  }).formatToParts(date);
 
-  const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? "";
 
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
@@ -190,54 +102,46 @@ function todayIST() {
 function displayDate(value: string) {
   if (!value) return "—";
 
-  const d = new Date(`${value}T12:00:00+05:30`);
+  const date = new Date(`${value}T12:00:00+05:30`);
+  if (!Number.isFinite(date.getTime())) return value;
 
-  return d.toLocaleDateString("en-IN", {
+  return date.toLocaleDateString("en-IN", {
+    timeZone: TIMEZONE,
     day: "numeric",
     month: "short",
     year: "numeric",
-    timeZone: TIMEZONE,
   });
 }
 
 function displayTime(value?: string) {
   if (!value) return "—";
-  const d = new Date(value);
 
-  if (Number.isNaN(d.getTime())) return "—";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "—";
 
-  return d.toLocaleTimeString("en-IN", {
+  return date.toLocaleTimeString("en-IN", {
+    timeZone: TIMEZONE,
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
-    timeZone: TIMEZONE,
   });
 }
 
-function durationMinutes(lecture: LectureItem) {
-  if (!lecture.endsAt) return 0;
+function formatMinutes(value: number) {
+  const minutes = Math.max(0, Math.round(value));
 
-  const start = new Date(lecture.startsAt).getTime();
-  const end = new Date(lecture.endsAt).getTime();
-
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return 0;
-
-  return Math.max(0, (end - start) / 60000);
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(
+    2,
+    "0",
+  )}m`;
 }
 
-function formatMinutes(minutes: number) {
-  const safe = Math.max(0, Math.round(minutes));
+function workingMinutes(record?: StaffAttendanceRecord) {
+  const hours = record?.hoursWorked;
 
-  return `${Math.floor(safe / 60)}h ${String(safe % 60).padStart(2, "0")}m`;
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+  return hours !== undefined && hours !== null && Number.isFinite(hours)
+    ? Math.max(0, hours * 60)
+    : 0;
 }
 
 function department(user: ManagedUser) {
@@ -246,45 +150,50 @@ function department(user: ManagedUser) {
     user.profile?.designation?.trim() ||
     (user.role === "educator"
       ? "Teaching Faculty"
-      : user.role === "admin"
-        ? "Administration"
-        : user.role === "counsellor"
-          ? "Counselling"
-          : "Staff")
+      : user.role === "counsellor"
+        ? "Counselling"
+        : "Staff")
   );
 }
 
-function employment(user: ManagedUser) {
-  switch (user.profile?.employmentType) {
-    case "part_time":
-      return "Part-time";
-    case "contractual":
-      return "Contractual";
-    case "hourly":
-      return "Hourly";
-    default:
-      return "Full-time";
-  }
+function employment(user: ManagedUser): EmploymentType {
+  return user.profile?.employmentType ?? "full_time";
 }
 
-function statusColor(status?: string) {
+function attendanceCategory(role: Role): StaffCategory {
+  if (role === "educator") return "Teacher";
+  if (role === "counsellor") return "Counsellor";
+  if (role === "admin") return "Admin";
+  return "Staff";
+}
+
+function statusStyle(status?: string) {
   switch (status) {
     case "present":
     case "completed":
     case "approved":
       return "bg-emerald-50 text-emerald-700";
+
     case "absent":
     case "cancelled":
     case "rejected":
       return "bg-red-50 text-red-700";
+
     case "late":
+    case "partially present":
+    case "partially completed":
     case "half_day":
     case "pending":
+    case "in progress":
       return "bg-amber-50 text-amber-700";
+
     case "on_leave":
       return "bg-violet-50 text-violet-700";
+
     case "scheduled":
+    case "checked out":
       return "bg-blue-50 text-blue-700";
+
     default:
       return "bg-slate-100 text-slate-600";
   }
@@ -293,29 +202,71 @@ function statusColor(status?: string) {
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusColor(status)}`}
+      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle(
+        status,
+      )}`}
     >
       {status.replace(/_/g, " ")}
     </span>
   );
 }
 
-function getWorkingMinutes(record: StaffAttendanceRecord): number {
-  const value = record.hoursWorked;
-
-  if (value === undefined || value === null) {
-    return 0;
-  }
-
-  if (!Number.isFinite(value)) {
-    return 0;
-  }
-
-  return Math.max(0, value * 60);
-}
-
 function csvEscape(value: unknown) {
   return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function durationFromTimes(checkIn: string, checkOut: string) {
+  if (!checkIn || !checkOut) return "—";
+
+  const [inHours, inMinutes] = checkIn.split(":").map(Number);
+
+  const [outHours, outMinutes] = checkOut.split(":").map(Number);
+
+  const minutes = outHours * 60 + outMinutes - inHours * 60 - inMinutes;
+
+  return Number.isFinite(minutes) && minutes >= 0
+    ? formatMinutes(minutes)
+    : "—";
+}
+
+function lectureStatusOf(
+  lecture: LectureWithAttendance,
+): "present" | "absent" | "late" | null {
+  if (lecture.lectureAttendanceStatus === "absent") {
+    return "absent";
+  }
+
+  if (lecture.lectureAttendanceStatus === "late") {
+    return "late";
+  }
+
+  if (
+    lecture.lectureAttendanceStatus === "present" ||
+    lecture.lectureCheckInAt
+  ) {
+    return "present";
+  }
+
+  return null;
+}
+
+function validLectureDuration(lecture: LectureWithAttendance) {
+  if (
+    lectureStatusOf(lecture) === "absent" ||
+    !lecture.lectureCheckInAt ||
+    !lecture.lectureCheckOutAt
+  ) {
+    return 0;
+  }
+
+  const start = Date.parse(lecture.lectureCheckInAt);
+  const end = Date.parse(lecture.lectureCheckOutAt);
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+    return 0;
+  }
+
+  return (end - start) / 60000;
 }
 
 export function StaffAttendanceManager({
@@ -327,49 +278,57 @@ export function StaffAttendanceManager({
 }: Props) {
   const [date, setDate] = useState(todayIST);
   const [tab, setTab] = useState<MainTab>("overview");
-  const [teachingTab, setTeachingTab] = useState<TeachingTab>("today");
-  const [nonTeachingTab, setNonTeachingTab] =
-    useState<NonTeachingTab>("register");
+
+  const [nonTeachingTab, setNonTeachingTab] = useState<
+    "register" | "activities"
+  >("register");
 
   const [records, setRecords] = useState<StaffAttendanceRecord[]>([]);
-  const [lectures, setLectures] = useState<LectureItem[]>([]);
+
+  const [lectures, setLectures] = useState<LectureWithAttendance[]>([]);
+
   const [myHistory, setMyHistory] = useState<StaffAttendanceRecord[]>([]);
+
   const [requests, setRequests] = useState<RegularisationRequest[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [lectureLoading, setLectureLoading] = useState(false);
   const [lectureError, setLectureError] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [checking, setChecking] = useState(false);
   const [submittingRequest, setSubmittingRequest] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [selectedTeacherId, setSelectedTeacherId] = useState("");
+
+  const [selectedTeacherId, setSelectedTeacherId] = useState(() =>
+    role === "educator" ? (userId ?? "") : "",
+  );
+
   const [selectedLectureId, setSelectedLectureId] = useState("");
-  const [showAddLecture, setShowAddLecture] = useState(false);
-  const [lectureFacultyId, setLectureFacultyId] = useState("");
-  const [creatingLecture, setCreatingLecture] = useState(false);
-  const [lectureForm, setLectureForm] = useState({
-    title: "",
-    subject: "",
-    date: "",
-    startTime: "",
-    endTime: "",
-    description: "",
-    meetingLink: "",
-    materialLink: "",
-  });
+
+  const [showAddAttendance, setShowAddAttendance] = useState(false);
+
+  const [attendanceLectureId, setAttendanceLectureId] = useState("");
 
   const [editMap, setEditMap] = useState<Record<string, EditValue>>({});
 
   const [showRegularise, setShowRegularise] = useState(false);
+
   const [showRequests, setShowRequests] = useState(false);
+
   const [regulariseDate, setRegulariseDate] = useState("");
+
   const [regulariseReason, setRegulariseReason] = useState("");
+
   const [regulariseIn, setRegulariseIn] = useState("");
+
   const [regulariseOut, setRegulariseOut] = useState("");
+
   const [regulariseStatus, setRegulariseStatus] =
     useState<StaffAttendanceStatus>("present");
+
+  const [feedback, setFeedback] = useState<Feedback>(null);
 
   const canManage =
     role === "admin" || role === "staff" || role === "counsellor";
@@ -395,20 +354,20 @@ export function StaffAttendanceManager({
     [allStaff],
   );
 
-  const selectedTeacher = teachers.find(
-    (teacher) => teacher.id === selectedTeacherId,
-  );
-
   useEffect(() => {
     if (role === "educator" && userId) {
       setSelectedTeacherId(userId);
       return;
     }
 
-    if (!teachers.some((teacher) => teacher.id === selectedTeacherId)) {
-      setSelectedTeacherId(teachers[0]?.id || "");
-    }
-  }, [role, userId, teachers, selectedTeacherId]);
+    setSelectedTeacherId((previous) => {
+      if (previous && teachers.some((teacher) => teacher.id === previous)) {
+        return previous;
+      }
+
+      return teachers[0]?.id ?? "";
+    });
+  }, [role, userId, teachers]);
 
   const loadAttendance = useCallback(async () => {
     setLoading(true);
@@ -422,28 +381,39 @@ export function StaffAttendanceManager({
         },
       );
 
+      const result = (await response.json()) as {
+        records?: StaffAttendanceRecord[];
+        error?: string;
+      };
+
       if (!response.ok) {
-        throw new Error("Unable to load staff attendance.");
+        throw new Error(result.error || "Unable to load staff attendance.");
       }
 
-      const data = await response.json();
-      const nextRecords: StaffAttendanceRecord[] = data.records || [];
-
+      const nextRecords = result.records ?? [];
       setRecords(nextRecords);
 
-      const nextEdit: Record<string, EditValue> = {};
+      const edits: Record<string, EditValue> = {};
 
       for (const record of nextRecords) {
-        nextEdit[record.userId] = {
+        edits[record.userId] = {
           status: record.status,
           checkIn: record.checkIn || "",
           checkOut: record.checkOut || "",
         };
       }
 
-      setEditMap(nextEdit);
+      setEditMap(edits);
     } catch (error) {
       console.error("Attendance load failed:", error);
+
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to load staff attendance.",
+      });
     } finally {
       setLoading(false);
     }
@@ -459,20 +429,22 @@ export function StaffAttendanceManager({
         cache: "no-store",
       });
 
-      const data = await response.json();
+      const result = (await response.json()) as {
+        lectures?: LectureWithAttendance[];
+        error?: string;
+      };
 
-      if (!response.ok || !Array.isArray(data.lectures)) {
-        throw new Error(data.error || "Unable to load scheduled lectures.");
+      if (!response.ok || !Array.isArray(result.lectures)) {
+        throw new Error(result.error || "Unable to load scheduled lectures.");
       }
 
-      setLectures(data.lectures as LectureItem[]);
+      setLectures(result.lectures);
     } catch (error) {
       setLectureError(
         error instanceof Error
           ? error.message
           : "Unable to load scheduled lectures.",
       );
-      setLectures([]);
     } finally {
       setLectureLoading(false);
     }
@@ -491,8 +463,11 @@ export function StaffAttendanceManager({
       );
 
       if (response.ok) {
-        const data = await response.json();
-        setMyHistory(data.records || []);
+        const result = (await response.json()) as {
+          records?: StaffAttendanceRecord[];
+        };
+
+        setMyHistory(result.records ?? []);
       }
     } catch (error) {
       console.error("Attendance history load failed:", error);
@@ -503,19 +478,24 @@ export function StaffAttendanceManager({
     try {
       const response = await fetch("/api/staff-attendance", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           action: "list-regularisations",
         }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setRequests(data.requests || []);
+        const result = (await response.json()) as {
+          requests?: RegularisationRequest[];
+        };
+
+        setRequests(result.requests ?? []);
       }
     } catch (error) {
-      console.error("Regularisation requests load failed:", error);
+      console.error("Regularisation load failed:", error);
     }
   }, []);
 
@@ -529,88 +509,6 @@ export function StaffAttendanceManager({
     void loadRequests();
   }, [loadLectures, loadMine, loadRequests]);
 
-  const teacherLectures = useMemo(() => {
-    if (!selectedTeacher) return [];
-
-    return lectures
-      .filter((lecture) => lecture.teacherId === selectedTeacher.id)
-      .sort(
-        (a, b) =>
-          new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-      );
-  }, [lectures, selectedTeacher]);
-
-  const dailyLectures = useMemo(
-    () =>
-      teacherLectures.filter((lecture) => istDate(lecture.startsAt) === date),
-    [teacherLectures, date],
-  );
-
-  const weeklyLectures = useMemo(() => {
-    const [year, month, day] = date.split("-").map(Number);
-
-    const selected = new Date(Date.UTC(year, month - 1, day));
-    const weekday = (selected.getUTCDay() + 6) % 7;
-
-    const monday = new Date(selected);
-    monday.setUTCDate(selected.getUTCDate() - weekday);
-
-    const startKey = monday.toISOString().slice(0, 10);
-
-    const sunday = new Date(monday);
-    sunday.setUTCDate(monday.getUTCDate() + 6);
-
-    const endKey = sunday.toISOString().slice(0, 10);
-
-    return teacherLectures.filter((lecture) => {
-      const lectureDay = istDate(lecture.startsAt);
-      return lectureDay >= startKey && lectureDay <= endKey;
-    });
-  }, [teacherLectures, date]);
-
-  const previousLectures = useMemo(
-    () =>
-      teacherLectures
-        .filter((lecture) => istDate(lecture.startsAt) < date)
-        .sort(
-          (a, b) =>
-            new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime(),
-        ),
-    [teacherLectures, date],
-  );
-
-  useEffect(() => {
-    if (!dailyLectures.some((lecture) => lecture.id === selectedLectureId)) {
-      setSelectedLectureId(dailyLectures[0]?.id || "");
-    }
-  }, [dailyLectures, selectedLectureId]);
-
-  const selectedLecture = dailyLectures.find(
-    (lecture) => lecture.id === selectedLectureId,
-  );
-
-  const lectureStats = useMemo(() => {
-    const completed = dailyLectures.filter(
-      (lecture) => lecture.status === "completed",
-    );
-
-    return {
-      total: dailyLectures.length,
-      completed: completed.length,
-      pending: dailyLectures.filter((lecture) => lecture.status === "scheduled")
-        .length,
-      cancelled: dailyLectures.filter(
-        (lecture) => lecture.status === "cancelled",
-      ).length,
-      hours: formatMinutes(
-        completed.reduce(
-          (total, lecture) => total + durationMinutes(lecture),
-          0,
-        ),
-      ),
-    };
-  }, [dailyLectures]);
-
   const recordMap = useMemo(
     () => new Map(records.map((record) => [record.userId, record])),
     [records],
@@ -620,23 +518,81 @@ export function StaffAttendanceManager({
 
   const myRecord = userId ? getRecord(userId) : undefined;
 
-  function updateEdit(targetId: string, change: Partial<EditValue>) {
+  const dailyLectures = useMemo(
+    () =>
+      lectures.filter(
+        (lecture) =>
+          istDate(lecture.startsAt) === date &&
+          (!selectedTeacherId || lecture.teacherId === selectedTeacherId),
+      ),
+    [lectures, date, selectedTeacherId],
+  );
+
+  const availableAttendanceLectures = useMemo(() => {
+    return lectures
+      .filter(
+        (lecture) =>
+          istDate(lecture.startsAt) === date &&
+          lecture.status === "scheduled" &&
+          !lecture.lectureCheckOutAt &&
+          lecture.lectureAttendanceStatus !== "absent" &&
+          (role !== "educator" || lecture.teacherId === userId),
+      )
+      .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+  }, [lectures, date, role, userId]);
+
+  function openAddAttendance() {
+    const currentTime = Date.now();
+
+    const nextLecture =
+      availableAttendanceLectures.find(
+        (lecture) => !!lecture.lectureCheckInAt && !lecture.lectureCheckOutAt,
+      ) ??
+      availableAttendanceLectures.find(
+        (lecture) => Date.parse(lecture.startsAt) >= currentTime,
+      ) ??
+      availableAttendanceLectures[0];
+
+    setAttendanceLectureId(nextLecture?.id ?? "");
+    setShowAddAttendance(true);
+
+    void loadLectures();
+  }
+
+  function selectLectureForAttendance() {
+    const lecture = availableAttendanceLectures.find(
+      (item) => item.id === attendanceLectureId,
+    );
+
+    if (!lecture) {
+      setFeedback({
+        type: "error",
+        message: "Select an available scheduled lecture.",
+      });
+      return;
+    }
+
+    setSelectedTeacherId(lecture.teacherId ?? "");
+    setSelectedLectureId(lecture.id);
+    setDate(istDate(lecture.startsAt));
+    setTab("teaching");
+    setShowAddAttendance(false);
+  }
+
+  function updateEdit(targetId: string, changes: Partial<EditValue>) {
     if (!canManage) return;
 
     setEditMap((previous) => {
-      const existing = previous[targetId];
-      const saved = recordMap.get(targetId);
+      const saved = getRecord(targetId);
 
       const next: EditValue = {
-        status: existing?.status || saved?.status || "",
-        checkIn: existing?.checkIn ?? saved?.checkIn ?? "",
-        checkOut: existing?.checkOut ?? saved?.checkOut ?? "",
-        ...change,
+        status: previous[targetId]?.status ?? saved?.status ?? "",
+        checkIn: previous[targetId]?.checkIn ?? saved?.checkIn ?? "",
+        checkOut: previous[targetId]?.checkOut ?? saved?.checkOut ?? "",
+        ...changes,
       };
 
-      // Entering a check-in for an unmarked employee
-      // automatically marks the employee present.
-      if (!next.status && (next.checkIn || next.checkOut)) {
+      if (!next.status && next.checkIn) {
         next.status = "present";
       }
 
@@ -647,55 +603,43 @@ export function StaffAttendanceManager({
     });
   }
 
+  function effectiveEdit(user: ManagedUser): EditValue {
+    const saved = getRecord(user.id);
+
+    return (
+      editMap[user.id] ?? {
+        status: saved?.status ?? "",
+        checkIn: saved?.checkIn ?? "",
+        checkOut: saved?.checkOut ?? "",
+      }
+    );
+  }
+
   function markAll(users: ManagedUser[], status: StaffAttendanceStatus) {
     if (!canManage) return;
 
     setEditMap((previous) => {
-      const updated = { ...previous };
+      const next = { ...previous };
 
       for (const user of users) {
-        const saved = recordMap.get(user.id);
+        const old = next[user.id] ?? effectiveEdit(user);
 
-        updated[user.id] = {
+        next[user.id] = {
+          ...old,
           status,
-          checkIn: previous[user.id]?.checkIn ?? saved?.checkIn ?? "",
-          checkOut: previous[user.id]?.checkOut ?? saved?.checkOut ?? "",
+          checkIn:
+            status === "absent" || status === "on_leave" || status === "holiday"
+              ? ""
+              : old.checkIn,
+          checkOut:
+            status === "absent" || status === "on_leave" || status === "holiday"
+              ? ""
+              : old.checkOut,
         };
       }
 
-      return updated;
+      return next;
     });
-  }
-
-  function validateManualTime(edit: EditValue, name: string) {
-    const validTime = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-    if (edit.checkIn && !validTime.test(edit.checkIn)) {
-      return `Invalid check-in time for ${name}.`;
-    }
-
-    if (edit.checkOut && !validTime.test(edit.checkOut)) {
-      return `Invalid check-out time for ${name}.`;
-    }
-
-    if (edit.checkOut && !edit.checkIn) {
-      return `Enter check-in time before check-out for ${name}.`;
-    }
-
-    if (edit.checkIn && edit.checkOut && edit.checkOut < edit.checkIn) {
-      return `Check-out must be after check-in for ${name}.`;
-    }
-
-    if (
-      (edit.status === "absent" ||
-        edit.status === "on_leave" ||
-        edit.status === "holiday") &&
-      (edit.checkIn || edit.checkOut)
-    ) {
-      return `Remove check-in/out times or select a working status for ${name}.`;
-    }
-
-    return "";
   }
 
   async function saveAttendance(users: ManagedUser[]) {
@@ -713,34 +657,51 @@ export function StaffAttendanceManager({
     }> = [];
 
     for (const user of users) {
-      const edit = editMap[user.id];
-      if (!edit?.status) continue;
+      const edit = effectiveEdit(user);
 
-      const error = validateManualTime(edit, user.name);
+      if (!edit.status) continue;
 
-      if (error) {
-        alert(error);
+      const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+      if (
+        (edit.checkIn && !timePattern.test(edit.checkIn)) ||
+        (edit.checkOut && !timePattern.test(edit.checkOut))
+      ) {
+        setFeedback({
+          type: "error",
+          message: `Invalid check-in/out time for ${user.name}.`,
+        });
         return;
       }
 
-      const category: StaffCategory =
-        user.role === "educator"
-          ? "Teacher"
-          : user.role === "admin"
-            ? "Admin"
-            : user.role === "counsellor"
-              ? "Counsellor"
-              : "Staff";
+      if (
+        (edit.checkOut && !edit.checkIn) ||
+        (edit.checkIn && edit.checkOut && edit.checkOut < edit.checkIn)
+      ) {
+        setFeedback({
+          type: "error",
+          message: `Check-out must follow check-in for ${user.name}.`,
+        });
+        return;
+      }
 
-      const employmentType: EmploymentType =
-        user.profile?.employmentType ?? "full_time";
+      if (
+        ["absent", "on_leave", "holiday"].includes(edit.status) &&
+        (edit.checkIn || edit.checkOut)
+      ) {
+        setFeedback({
+          type: "error",
+          message: `Remove working times for ${user.name} or select a working attendance status.`,
+        });
+        return;
+      }
 
       items.push({
         userId: user.id,
         userName: user.name,
         userEmail: user.email,
-        category,
-        employmentType,
+        category: attendanceCategory(user.role),
+        employmentType: employment(user),
         status: edit.status,
         checkIn: edit.checkIn || undefined,
         checkOut: edit.checkOut || undefined,
@@ -748,17 +709,23 @@ export function StaffAttendanceManager({
     }
 
     if (!items.length) {
-      alert("Enter attendance status or check-in time before saving.");
+      setFeedback({
+        type: "error",
+        message: "Mark at least one employee before saving.",
+      });
       return;
     }
 
     setSaving(true);
+    setFeedback(null);
 
     try {
       const response = await fetch("/api/staff-attendance", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           action: "bulk-mark",
           date,
@@ -766,31 +733,39 @@ export function StaffAttendanceManager({
         }),
       });
 
+      const result = (await response.json()) as {
+        error?: string;
+      };
+
       if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || "Attendance save failed.");
+        throw new Error(result.error || "Unable to save attendance.");
       }
 
       await loadAttendance();
-      alert(`Attendance saved for ${items.length} employee(s).`);
+
+      setFeedback({
+        type: "success",
+        message: `Attendance saved for ${items.length} employees.`,
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Save failed.");
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to save attendance.",
+      });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleCheck(action: "checkin" | "checkout") {
-    if (checking) return;
-
-    if (date !== todayIST()) {
-      alert("Self check-in/out is only available for today.");
-      return;
-    }
+    if (checking || date !== todayIST()) return;
 
     if (
       !window.confirm(
-        `Are you sure you want to ${action === "checkin" ? "check in" : "check out"}?`,
+        `Are you sure you want to ${
+          action === "checkin" ? "check in" : "check out"
+        }?`,
       )
     ) {
       return;
@@ -801,20 +776,32 @@ export function StaffAttendanceManager({
     try {
       const response = await fetch("/api/staff-attendance", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ action, date }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action,
+          date,
+        }),
       });
 
+      const result = (await response.json()) as {
+        error?: string;
+      };
+
       if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
         throw new Error(result.error || "Attendance action failed.");
       }
 
       await loadAttendance();
       await loadMine();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Request failed.");
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Attendance action failed.",
+      });
     } finally {
       setChecking(false);
     }
@@ -822,7 +809,10 @@ export function StaffAttendanceManager({
 
   async function submitRegularisation() {
     if (!regulariseDate || !regulariseReason.trim()) {
-      alert("Date and reason are required.");
+      setFeedback({
+        type: "error",
+        message: "Date and reason are required.",
+      });
       return;
     }
 
@@ -831,8 +821,10 @@ export function StaffAttendanceManager({
     try {
       const response = await fetch("/api/staff-attendance", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           action: "regularise",
           date: regulariseDate,
@@ -843,19 +835,33 @@ export function StaffAttendanceManager({
         }),
       });
 
+      const result = (await response.json()) as {
+        error?: string;
+      };
+
       if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
-        throw new Error(result.error || "Request failed.");
+        throw new Error(result.error || "Unable to submit regularisation.");
       }
 
       setShowRegularise(false);
       setRegulariseReason("");
       setRegulariseIn("");
       setRegulariseOut("");
+
       await loadRequests();
-      alert("Regularisation request submitted.");
+
+      setFeedback({
+        type: "success",
+        message: "Regularisation request submitted.",
+      });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Request failed.");
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Regularisation request failed.",
+      });
     } finally {
       setSubmittingRequest(false);
     }
@@ -870,8 +876,10 @@ export function StaffAttendanceManager({
     try {
       const response = await fetch("/api/staff-attendance", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           action: "review",
           requestId,
@@ -879,140 +887,327 @@ export function StaffAttendanceManager({
         }),
       });
 
+      const result = (await response.json()) as {
+        error?: string;
+      };
+
       if (!response.ok) {
-        const result = await response.json().catch(() => ({}));
         throw new Error(result.error || "Unable to review request.");
       }
 
       await loadRequests();
       await loadAttendance();
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Review failed.");
-    }
-  }
-
-  function openAddLecture() {
-    if (!canManage || !teachers.length) return;
-
-    setLectureFacultyId(
-      teachers.some((teacher) => teacher.id === selectedTeacherId)
-        ? selectedTeacherId
-        : teachers[0].id,
-    );
-
-    setLectureForm({
-      title: "",
-      subject: "",
-      date,
-      startTime: "",
-      endTime: "",
-      description: "",
-      meetingLink: "",
-      materialLink: "",
-    });
-
-    setShowAddLecture(true);
-  }
-
-  async function submitNewLecture(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canManage || creatingLecture) return;
-
-    const faculty = teachers.find((teacher) => teacher.id === lectureFacultyId);
-
-    if (!faculty) {
-      alert("Please select a faculty member.");
-      return;
-    }
-    if (
-      !lectureForm.title.trim() ||
-      !lectureForm.date ||
-      !lectureForm.startTime ||
-      !lectureForm.endTime
-    ) {
-      alert("Enter the lecture title, date and start/end times.");
-      return;
-    }
-    const startsAt = new Date(
-      `${lectureForm.date}T${lectureForm.startTime}:00+05:30`,
-    );
-    const endsAt = new Date(
-      `${lectureForm.date}T${lectureForm.endTime}:00+05:30`,
-    );
-    if (
-      !Number.isFinite(startsAt.getTime()) ||
-      !Number.isFinite(endsAt.getTime()) ||
-      endsAt <= startsAt
-    ) {
-      alert("End time must be later than start time on the selected date.");
-      return;
-    }
-    setCreatingLecture(true);
-    try {
-      const response = await fetch("/api/lectures", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({
-          teacherId: faculty.id,
-          title: lectureForm.title.trim(),
-          subject: lectureForm.subject.trim(),
-          description: lectureForm.description.trim(),
-          startsAt: startsAt.toISOString(),
-          endsAt: endsAt.toISOString(),
-          meetingLink: lectureForm.meetingLink.trim(),
-          materialLink: lectureForm.materialLink.trim(),
-          status: "scheduled",
-        }),
+      setFeedback({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to review request.",
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || !result.lecture) {
-        throw new Error(result.error || "Unable to create lecture.");
-      }
-      setShowAddLecture(false);
-      setSelectedTeacherId(faculty.id);
-      setDate(lectureForm.date);
-      setSelectedLectureId(result.lecture.id);
-      setTeachingTab("today");
-      await loadLectures();
-    } catch (error) {
-      alert(
-        error instanceof Error ? error.message : "Unable to create lecture.",
-      );
-    } finally {
-      setCreatingLecture(false);
     }
   }
+
+  function moveDate(days: number) {
+    const [year, month, day] = date.split("-").map(Number);
+
+    const next = new Date(Date.UTC(year, month - 1, day + days));
+
+    setDate(next.toISOString().slice(0, 10));
+  }
+
+  function getStats(users: ManagedUser[]) {
+    let present = 0;
+    let absent = 0;
+    let leave = 0;
+    let checkedIn = 0;
+    let checkedOut = 0;
+
+    for (const user of users) {
+      const entry = effectiveEdit(user);
+
+      if (
+        entry.status === "present" ||
+        entry.status === "late" ||
+        entry.status === "half_day"
+      ) {
+        present++;
+      }
+
+      if (entry.status === "absent") absent++;
+      if (entry.status === "on_leave") leave++;
+      if (entry.checkIn) checkedIn++;
+      if (entry.checkOut) checkedOut++;
+    }
+
+    return {
+      present,
+      absent,
+      leave,
+      checkedIn,
+      checkedOut,
+    };
+  }
+
+  const allStats = getStats(allStaff);
+  const teachingStats = getStats(teachers);
+  const nonTeachingStats = getStats(nonTeachers);
+
+  const filteredNonTeachers = nonTeachers.filter((user) =>
+    [user.name, user.email, user.employeeCode || "", department(user)]
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase()),
+  );
+
+  // ==========================================
+  // RECORDED TEACHING FACULTY ATTENDANCE
+  // ==========================================
+
+  const recordedTeachingAttendance = useMemo<RecordedFaculty[]>(() => {
+    const teacherMap = new Map(
+      teachers.map((teacher) => [teacher.id, teacher]),
+    );
+
+    const grouped = new Map<
+      string,
+      {
+        teacher: ManagedUser;
+        lectures: LectureWithAttendance[];
+      }
+    >();
+
+    for (const lecture of lectures) {
+      if (istDate(lecture.startsAt) !== date || !lecture.teacherId) {
+        continue;
+      }
+
+      const attendanceStatus = lectureStatusOf(lecture);
+
+      if (!attendanceStatus) continue;
+
+      const teacher = teacherMap.get(lecture.teacherId);
+
+      if (!teacher || teacher.role !== "educator") {
+        continue;
+      }
+
+      const existing = grouped.get(teacher.id);
+
+      if (existing) {
+        existing.lectures.push(lecture);
+      } else {
+        grouped.set(teacher.id, {
+          teacher,
+          lectures: [lecture],
+        });
+      }
+    }
+
+    const results: RecordedFaculty[] = [];
+
+    for (const group of grouped.values()) {
+      const presentLectures = group.lectures.filter(
+        (lecture) => lectureStatusOf(lecture) === "present",
+      );
+
+      const lateLectures = group.lectures.filter(
+        (lecture) => lectureStatusOf(lecture) === "late",
+      );
+
+      const absentLectures = group.lectures.filter(
+        (lecture) => lectureStatusOf(lecture) === "absent",
+      );
+
+      const takenLectures = [...presentLectures, ...lateLectures];
+
+      if (!takenLectures.length && !absentLectures.length) {
+        continue;
+      }
+
+      const presentCount = presentLectures.length;
+      const lateCount = lateLectures.length;
+      const absentCount = absentLectures.length;
+
+      let attendanceStatus: FacultyAttendanceStatus;
+
+      if (absentCount > 0 && takenLectures.length > 0) {
+        attendanceStatus = "partially present";
+      } else if (absentCount > 0) {
+        attendanceStatus = "absent";
+      } else if (lateCount > 0) {
+        attendanceStatus = "late";
+      } else {
+        attendanceStatus = "present";
+      }
+
+      const checkIns = takenLectures
+        .map((lecture) => lecture.lectureCheckInAt)
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && Number.isFinite(Date.parse(value)),
+        )
+        .sort((a, b) => Date.parse(a) - Date.parse(b));
+
+      const checkOuts = takenLectures
+        .map((lecture) => lecture.lectureCheckOutAt)
+        .filter(
+          (value): value is string =>
+            typeof value === "string" && Number.isFinite(Date.parse(value)),
+        )
+        .sort((a, b) => Date.parse(a) - Date.parse(b));
+
+      const durationMinutes = takenLectures.reduce(
+        (sum, lecture) => sum + validLectureDuration(lecture),
+        0,
+      );
+
+      const completedCount = takenLectures.filter(
+        (lecture) => lecture.status === "completed",
+      ).length;
+
+      const checkedOutCount = takenLectures.filter((lecture) =>
+        Boolean(lecture.lectureCheckOutAt),
+      ).length;
+
+      let lectureStatus = "in progress";
+
+      if (!takenLectures.length) {
+        lectureStatus = "not taken";
+      } else if (completedCount === takenLectures.length && absentCount === 0) {
+        lectureStatus = "completed";
+      } else if (completedCount > 0 || absentCount > 0) {
+        lectureStatus = "partially completed";
+      } else if (checkedOutCount === takenLectures.length) {
+        lectureStatus = "checked out";
+      }
+
+      results.push({
+        teacher: group.teacher,
+        lectureCount: takenLectures.length,
+        presentCount,
+        absentCount,
+        lateCount,
+        checkIn: checkIns[0] ?? "",
+        checkOut: checkOuts[checkOuts.length - 1] ?? "",
+        durationMinutes: Math.floor(durationMinutes),
+        attendanceStatus,
+        status: lectureStatus,
+      });
+    }
+
+    return results.sort((a, b) => a.teacher.name.localeCompare(b.teacher.name));
+  }, [lectures, teachers, date]);
+
+  const filteredRecordedTeachingAttendance = recordedTeachingAttendance.filter(
+    (entry) => {
+      const query = search.trim().toLowerCase();
+
+      if (!query) return true;
+
+      return [
+        entry.teacher.name,
+        entry.teacher.email,
+        entry.teacher.employeeCode ?? "",
+        department(entry.teacher),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    },
+  );
+
+  const recordedFacultyCount = recordedTeachingAttendance.length;
+
+  const recordedPresentFaculty = recordedTeachingAttendance.filter(
+    (entry) => entry.attendanceStatus === "present",
+  ).length;
+
+  const recordedAbsentFaculty = recordedTeachingAttendance.filter(
+    (entry) => entry.attendanceStatus === "absent",
+  ).length;
+
+  const recordedLateFaculty = recordedTeachingAttendance.filter(
+    (entry) => entry.lateCount > 0,
+  ).length;
+
+  const recordedPartiallyPresentFaculty = recordedTeachingAttendance.filter(
+    (entry) => entry.attendanceStatus === "partially present",
+  ).length;
+
+  const recordedCheckedIn = recordedTeachingAttendance.filter((entry) =>
+    Boolean(entry.checkIn),
+  ).length;
+
+  const recordedTotalDuration = recordedTeachingAttendance.reduce(
+    (total, entry) => total + entry.durationMinutes,
+    0,
+  );
 
   function exportCsv() {
-    const rows = [
-      [
-        "Employee ID",
-        "Name",
-        "Role",
-        "Department",
-        "Date",
-        "Status",
-        "Check In",
-        "Check Out",
-        "Working Hours",
-      ],
-      ...allStaff.map((user) => {
-        const record = getRecord(user.id);
+    let rows: unknown[][];
 
-        return [
-          user.employeeCode || user.id,
-          user.name,
-          user.role,
-          department(user),
+    if (tab === "teaching") {
+      rows = [
+        [
+          "Employee ID",
+          "Employee Name",
+          "Department",
+          "Date",
+          "Lectures Taken",
+          "Present Lectures",
+          "Late Lectures",
+          "Absent Lectures",
+          "First Check In",
+          "Last Check Out",
+          "Total Duration",
+          "Attendance Status",
+          "Lecture Status",
+        ],
+        ...filteredRecordedTeachingAttendance.map((entry) => [
+          entry.teacher.employeeCode || entry.teacher.id,
+          entry.teacher.name,
+          department(entry.teacher),
           date,
-          record?.status || "unmarked",
-          record?.checkIn || "",
-          record?.checkOut || "",
-          record?.hoursWorked ?? "",
-        ];
-      }),
-    ];
+          entry.lectureCount,
+          entry.presentCount,
+          entry.lateCount,
+          entry.absentCount,
+          displayTime(entry.checkIn),
+          displayTime(entry.checkOut),
+          formatMinutes(entry.durationMinutes),
+          entry.attendanceStatus,
+          entry.status,
+        ]),
+      ];
+    } else {
+      rows = [
+        [
+          "Employee ID",
+          "Name",
+          "Role",
+          "Department",
+          "Date",
+          "Status",
+          "Check In",
+          "Check Out",
+          "Working Hours",
+        ],
+        ...allStaff.map((user) => {
+          const record = getRecord(user.id);
+
+          return [
+            user.employeeCode || user.id,
+            user.name,
+            user.role,
+            department(user),
+            date,
+            record?.status || "unmarked",
+            record?.checkIn || "",
+            record?.checkOut || "",
+            record?.hoursWorked ?? "",
+          ];
+        }),
+      ];
+    }
 
     const csv = rows.map((row) => row.map(csvEscape).join(",")).join("\r\n");
 
@@ -1026,194 +1221,24 @@ export function StaffAttendanceManager({
     anchor.href = url;
     anchor.download = `smartiq-staff-attendance-${date}.csv`;
     anchor.click();
+
     URL.revokeObjectURL(url);
   }
 
-  const filteredNonTeachers = nonTeachers.filter((user) =>
-    [user.name, user.email, user.employeeCode || "", department(user)]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
-
-  function renderLectureTable(items: LectureItem[]) {
-    if (lectureLoading) {
-      return (
-        <div className="p-8 text-center text-slate-500">
-          Loading scheduled lectures...
-        </div>
-      );
-    }
-
-    if (lectureError) {
-      return <div className="p-8 text-center text-red-600">{lectureError}</div>;
-    }
-
-    if (!items.length) {
-      return (
-        <div className="p-10 text-center">
-          <BookOpen className="mx-auto mb-3 text-slate-400" size={28} />
-          <p className="font-semibold text-slate-700">
-            No lectures scheduled for this faculty in this period.
-          </p>
-          <p className="mt-1 text-sm text-slate-500">
-            Select another date or faculty member.
-          </p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Time</th>
-              <th className="px-4 py-3">Lecture</th>
-              <th className="px-4 py-3">Subject</th>
-              <th className="px-4 py-3">Faculty</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Details</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {items.map((lecture) => (
-              <tr
-                key={lecture.id}
-                className={`border-t border-slate-100 ${
-                  selectedLectureId === lecture.id
-                    ? "bg-blue-50/50"
-                    : "hover:bg-slate-50"
-                }`}
-              >
-                <td className="whitespace-nowrap px-4 py-4">
-                  <p className="font-semibold text-[#0A193A]">
-                    {displayTime(lecture.startsAt)}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {displayTime(lecture.endsAt)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">
-                    {displayDate(istDate(lecture.startsAt))}
-                  </p>
-                </td>
-
-                <td className="px-4 py-4 font-semibold text-[#0A193A]">
-                  {lecture.title}
-                </td>
-
-                <td className="px-4 py-4 text-slate-600">
-                  {lecture.subject || "General"}
-                </td>
-
-                <td className="px-4 py-4 text-slate-600">
-                  {lecture.teacherName || selectedTeacher?.name || "—"}
-                </td>
-
-                <td className="px-4 py-4">
-                  <StatusBadge status={lecture.status} />
-                </td>
-
-                <td className="px-4 py-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedLectureId(lecture.id);
-
-                      if (teachingTab !== "today") {
-                        setTeachingTab("today");
-                        setDate(istDate(lecture.startsAt));
-                      }
-                    }}
-                    className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-[#0A54B7] hover:bg-blue-50"
-                  >
-                    View Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  const selectClass =
-    "min-w-[112px] rounded-lg border border-transparent px-2 py-2 text-xs font-bold outline-none focus:border-blue-500 disabled:opacity-70";
-
-  function effectiveStatus(user: ManagedUser): StaffAttendanceStatus | "" {
-    return editMap[user.id]?.status ?? getRecord(user.id)?.status ?? "";
-  }
-
-  function effectiveTime(user: ManagedUser, key: "checkIn" | "checkOut") {
-    return editMap[user.id]?.[key] ?? getRecord(user.id)?.[key] ?? "";
-  }
-
-  function duration(user: ManagedUser) {
-    const a = effectiveTime(user, "checkIn");
-    const b = effectiveTime(user, "checkOut");
-    if (a && b) {
-      const [h1, m1] = a.split(":").map(Number);
-      const [h2, m2] = b.split(":").map(Number);
-      const minutes = h2 * 60 + m2 - h1 * 60 - m1;
-      if (Number.isFinite(minutes) && minutes >= 0)
-        return formatMinutes(minutes);
-    }
-    // Only show saved duration when the displayed times match saved data.
-    const saved = getRecord(user.id);
-    if (
-      saved &&
-      saved.checkIn === a &&
-      saved.checkOut === b &&
-      saved.hoursWorked != null
-    )
-      return formatMinutes(getWorkingMinutes(saved));
-    return "—";
-  }
-
-  function currentStats(users: ManagedUser[]) {
-    let present = 0,
-      absent = 0,
-      leave = 0,
-      pending = 0,
-      checkedIn = 0,
-      checkedOut = 0;
-    for (const user of users) {
-      const status = effectiveStatus(user);
-      if (status === "present" || status === "late" || status === "half_day")
-        present++;
-      if (status === "absent") absent++;
-      if (status === "on_leave") leave++;
-      if (!status) pending++;
-      if (effectiveTime(user, "checkIn")) checkedIn++;
-      if (effectiveTime(user, "checkOut")) checkedOut++;
-    }
-    return { present, absent, leave, pending, checkedIn, checkedOut };
-  }
-
-  const activeTeachers = currentStats(teachers);
-  const activeNonTeachers = currentStats(nonTeachers);
-  const activeAll = currentStats(allStaff);
-  const searchedTeachers = teachers.filter((user) =>
-    [user.name, user.employeeCode ?? "", user.email, department(user)]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
-
-  function moveDate(days: number) {
-    const [year, month, day] = date.split("-").map(Number);
-    const next = new Date(Date.UTC(year, month - 1, day + days));
-    setDate(next.toISOString().slice(0, 10));
-  }
+  // ==========================================
+  // SHARED STAFF ATTENDANCE UI
+  // ==========================================
 
   function renderStats(
-    items: Array<{ label: string; value: number | string; color?: string }>,
+    stats: Array<{
+      label: string;
+      value: number | string;
+      color?: string;
+    }>,
   ) {
     return (
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5">
-        {items.map((item) => (
+        {stats.map((item) => (
           <div
             key={item.label}
             className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm"
@@ -1221,8 +1246,11 @@ export function StaffAttendanceManager({
             <p className="text-[11px] font-medium text-slate-500">
               {item.label}
             </p>
+
             <p
-              className={`mt-1 text-2xl font-bold ${item.color ?? "text-[#0A193A]"}`}
+              className={`mt-1 text-2xl font-bold ${
+                item.color ?? "text-[#0A193A]"
+              }`}
             >
               {item.value}
             </p>
@@ -1238,111 +1266,116 @@ export function StaffAttendanceManager({
     teaching: boolean,
   ) {
     const sorted = [...users].sort((a, b) => a.name.localeCompare(b.name));
+
     return (
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1050px] text-left text-xs">
           <thead className="bg-[#F2F6FD] text-[10px] font-bold uppercase tracking-wide text-slate-500">
             <tr>
               <th className="px-3 py-3">SR</th>
-              <th className="min-w-[180px] px-3 py-3">Employee Name</th>
+              <th className="px-3 py-3">Employee Name</th>
               <th className="px-3 py-3">Employee ID</th>
               <th className="px-3 py-3">
                 {teaching ? "Subject / Department" : "Department"}
               </th>
+
               {!teaching && <th className="px-3 py-3">Employment</th>}
+
               <th className="px-3 py-3">Check-In</th>
               <th className="px-3 py-3">Check-Out</th>
               <th className="px-3 py-3">Total Duration</th>
               <th className="px-3 py-3">Status</th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-slate-100">
             {sorted.map((user, index) => {
-              const status = effectiveStatus(user);
-              const checkIn = effectiveTime(user, "checkIn");
-              const checkOut = effectiveTime(user, "checkOut");
-              const canEdit = editable && canManage && !saving;
+              const edit = effectiveEdit(user);
+
+              const editableNow = editable && canManage && !saving;
+
+              const duration =
+                edit.checkIn && edit.checkOut
+                  ? durationFromTimes(edit.checkIn, edit.checkOut)
+                  : formatMinutes(workingMinutes(getRecord(user.id)));
+
               return (
                 <tr key={user.id} className="hover:bg-[#F6F9FF]">
                   <td className="px-3 py-3 font-semibold text-slate-500">
                     {index + 1}
                   </td>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-[#0A54B7]">
-                        {initials(user.name)}
-                      </span>
-                      <span className="font-semibold text-[#0A193A]">
-                        {user.name}
-                      </span>
-                    </div>
+
+                  <td className="px-3 py-3 font-semibold text-[#0A193A]">
+                    {user.name}
                   </td>
+
                   <td className="px-3 py-3 text-slate-600">
                     {user.employeeCode || user.id}
                   </td>
+
                   <td className="px-3 py-3 text-slate-600">
                     {department(user)}
                   </td>
+
                   {!teaching && (
                     <td className="px-3 py-3 text-slate-600">
-                      {employment(user)}
+                      {employment(user).replace(/_/g, " ")}
                     </td>
                   )}
+
                   <td className="px-3 py-3">
-                    {editable ? (
-                      <StaffTimeInput
-                        inputId={`checkin-${user.id}`}
-                        value={checkIn}
-                        disabled={!canEdit}
-                        label={`${user.name} check-in`}
-                        onChange={(nextValue) =>
-                          updateEdit(user.id, { checkIn: nextValue })
-                        }
-                        onEnter={() => {
-                          const checkout = document.getElementById(
-                            `checkout-${user.id}`,
-                          ) as HTMLInputElement | null;
-                          checkout?.focus();
-                        }}
-                      />
-                    ) : (
-                      <span className="font-medium text-slate-600">
-                        {checkIn || "—"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3">
-                    {editable ? (
-                      <StaffTimeInput
-                        inputId={`checkout-${user.id}`}
-                        value={checkOut}
-                        disabled={!canEdit}
-                        label={`${user.name} check-out`}
-                        onChange={(nextValue) =>
-                          updateEdit(user.id, { checkOut: nextValue })
-                        }
-                      />
-                    ) : (
-                      <span className="font-medium text-slate-600">
-                        {checkOut || "—"}
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 font-semibold text-[#0A193A]">
-                    {duration(user)}
-                  </td>
-                  <td className="px-3 py-3">
-                    {editable ? (
-                      <select
-                        value={status}
-                        disabled={!canEdit}
+                    {editableNow ? (
+                      <input
+                        type="time"
+                        value={edit.checkIn}
                         onChange={(event) =>
                           updateEdit(user.id, {
-                            status: event.target.value as StaffAttendanceStatus,
+                            checkIn: event.target.value,
                           })
                         }
-                        className={`${selectClass} ${statusColor(status)}`}
+                        aria-label={`${user.name} check-in time`}
+                        className={INPUT_CLASS}
+                      />
+                    ) : (
+                      <span>{edit.checkIn || "—"}</span>
+                    )}
+                  </td>
+
+                  <td className="px-3 py-3">
+                    {editableNow ? (
+                      <input
+                        type="time"
+                        value={edit.checkOut}
+                        onChange={(event) =>
+                          updateEdit(user.id, {
+                            checkOut: event.target.value,
+                          })
+                        }
+                        aria-label={`${user.name} check-out time`}
+                        className={INPUT_CLASS}
+                      />
+                    ) : (
+                      <span>{edit.checkOut || "—"}</span>
+                    )}
+                  </td>
+
+                  <td className="px-3 py-3 font-semibold text-[#0A193A]">
+                    {duration}
+                  </td>
+
+                  <td className="px-3 py-3">
+                    {editableNow ? (
+                      <select
+                        value={edit.status}
+                        onChange={(event) =>
+                          updateEdit(user.id, {
+                            status: event.target.value as
+                              | StaffAttendanceStatus
+                              | "",
+                          })
+                        }
                         aria-label={`${user.name} attendance status`}
+                        className={`${INPUT_CLASS} ${statusStyle(edit.status)}`}
                       >
                         <option value="">Not marked</option>
                         <option value="present">Present</option>
@@ -1353,7 +1386,7 @@ export function StaffAttendanceManager({
                         <option value="holiday">Holiday</option>
                       </select>
                     ) : (
-                      <StatusBadge status={status || "unmarked"} />
+                      <StatusBadge status={edit.status || "unmarked"} />
                     )}
                   </td>
                 </tr>
@@ -1361,6 +1394,7 @@ export function StaffAttendanceManager({
             })}
           </tbody>
         </table>
+
         {!sorted.length && (
           <p className="p-8 text-center text-sm text-slate-500">
             No staff records match your search.
@@ -1380,20 +1414,9 @@ export function StaffAttendanceManager({
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
           <h3 className="text-sm font-bold text-[#0A193A]">{title}</h3>
-          {!editable && (
-            <button
-              type="button"
-              onClick={() => {
-                setTab(teaching ? "teaching" : "nonTeaching");
-                setSearch("");
-              }}
-              className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-[#0A54B7]"
-            >
-              Open {teaching ? "teaching" : "non-teaching"} register
-            </button>
-          )}
-          {editable && canManage && (
-            <div className="flex items-center gap-2">
+
+          {editable && canManage ? (
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={saving}
@@ -1402,22 +1425,50 @@ export function StaffAttendanceManager({
               >
                 Mark All Present
               </button>
+
               <button
                 type="button"
                 disabled={saving}
                 onClick={() => void saveAttendance(users)}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#0A54B7] px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
               >
-                <Save size={14} />
-                {saving ? "Saving..." : "Save Attendance"}
+                {saving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Save size={14} />
+                )}
+                Save Attendance
               </button>
             </div>
-          )}
+          ) : !editable ? (
+            <button
+              type="button"
+              onClick={() => setTab(teaching ? "teaching" : "nonTeaching")}
+              className="rounded-lg border border-blue-200 px-3 py-2 text-xs font-semibold text-[#0A54B7]"
+            >
+              Open {teaching ? "teaching" : "non-teaching"} register
+            </button>
+          ) : null}
         </div>
+
         {renderRegister(users, editable, teaching)}
       </div>
     );
   }
+
+  const navTabs: Array<{
+    key: MainTab;
+    label: string;
+  }> = [
+    { key: "overview", label: "Overview" },
+    { key: "teaching", label: "Teaching Staff" },
+    {
+      key: "nonTeaching",
+      label: "Non-Teaching Staff",
+    },
+    { key: "history", label: "History" },
+    { key: "reports", label: "Reports" },
+  ];
 
   if (loading) {
     return (
@@ -1432,6 +1483,8 @@ export function StaffAttendanceManager({
     <section
       className={embedded ? "min-w-0 space-y-4 pb-6" : "min-w-0 space-y-4 pb-8"}
     >
+      {/* HEADER */}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs text-slate-500">
@@ -1440,55 +1493,61 @@ export function StaffAttendanceManager({
               ? "Teaching Staff"
               : tab === "nonTeaching"
                 ? "Non-Teaching Staff"
-                : tab === "reports"
-                  ? "Reports"
-                  : tab === "history"
-                    ? "History"
+                : tab === "history"
+                  ? "History"
+                  : tab === "reports"
+                    ? "Reports"
                     : "Staff"}
           </p>
+
           <h1 className="mt-1 text-2xl font-bold text-[#0A193A]">
             {tab === "teaching"
               ? "Teaching Staff Attendance"
               : tab === "nonTeaching"
                 ? "Non-Teaching Staff Attendance"
-                : tab === "reports"
-                  ? "Reports & History"
-                  : tab === "history"
-                    ? "Attendance History"
+                : tab === "history"
+                  ? "Attendance History"
+                  : tab === "reports"
+                    ? "Reports & History"
                     : "Staff Attendance Overview"}
           </h1>
         </div>
+
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center rounded-lg border border-slate-200 bg-white">
             <button
               type="button"
               onClick={() => moveDate(-1)}
-              className="p-2 text-slate-500 hover:bg-slate-50"
               aria-label="Previous day"
+              className="p-2 text-slate-500"
             >
               <ChevronLeft size={16} />
             </button>
+
             <CalendarDays size={15} className="text-[#0A54B7]" />
+
             <input
               type="date"
               value={date}
               onChange={(event) => setDate(event.target.value)}
-              className="max-w-[155px] bg-transparent px-2 py-2 text-xs font-semibold text-slate-700"
               aria-label="Attendance date"
+              className="max-w-[155px] bg-transparent px-2 py-2 text-xs font-semibold text-slate-700"
             />
+
             <button
               type="button"
               onClick={() => moveDate(1)}
-              className="p-2 text-slate-500 hover:bg-slate-50"
               aria-label="Next day"
+              className="p-2 text-slate-500"
             >
               <ChevronRight size={16} />
             </button>
           </div>
+
           <button
             type="button"
             onClick={exportCsv}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0A193A]"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold"
           >
             <Download size={14} />
             Export CSV
@@ -1496,22 +1555,22 @@ export function StaffAttendanceManager({
         </div>
       </div>
 
+      {/* PERSONAL ATTENDANCE */}
+
       {userId && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-sm font-bold text-blue-700">
-              {initials(userName || "Staff")}
-            </span>
-            <div>
-              <p className="text-sm font-semibold">
-                {userName || "My Attendance"}
-              </p>
-              <p className="text-xs text-slate-500">
-                Check-In: {myRecord?.checkIn || "—"} · Check-Out:{" "}
-                {myRecord?.checkOut || "—"}
-              </p>
-            </div>
+          <div>
+            <p className="text-sm font-semibold text-[#0A193A]">
+              {userName || "My Attendance"}
+            </p>
+
+            <p className="mt-1 text-xs text-slate-500">
+              Check-In: {myRecord?.checkIn || "—"}
+              {" · "}
+              Check-Out: {myRecord?.checkOut || "—"}
+            </p>
           </div>
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -1521,6 +1580,7 @@ export function StaffAttendanceManager({
             >
               Check In
             </button>
+
             <button
               type="button"
               disabled={
@@ -1538,54 +1598,75 @@ export function StaffAttendanceManager({
         </div>
       )}
 
+      {/* MAIN NAVIGATION */}
+
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
-        {/* MAIN NAVIGATION TABS */}
         <div className="flex flex-wrap items-center gap-2">
-          {(
-            [
-              ["overview", "Overview"],
-              ["teaching", "Teaching Staff"],
-              ["nonTeaching", "Non-Teaching Staff"],
-              ["history", "History"],
-              ["reports", "Reports"],
-            ] as const
-          ).map(([key, label]) => (
+          {navTabs.map((item) => (
             <button
-              key={key}
+              key={item.key}
               type="button"
               onClick={() => {
-                setTab(key);
+                setTab(item.key);
                 setSearch("");
+                setFeedback(null);
               }}
               className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                tab === key
+                tab === item.key
                   ? "bg-[#0A54B7] text-white"
                   : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {label}
+              {item.label}
             </button>
           ))}
         </div>
 
-        {/* ADD LECTURE BUTTON */}
         {tab === "teaching" && canManage && (
           <button
             type="button"
-            onClick={openAddLecture}
-            disabled={!teachers.length}
-            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-xs font-bold text-[#0A54B7] shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={openAddAttendance}
+            disabled={lectureLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-xs font-bold text-[#0A54B7] shadow-sm hover:bg-blue-50 disabled:opacity-50"
           >
             <Plus size={16} />
-            Add Lecture
+            Add Attendance
           </button>
         )}
       </div>
 
+      {/* NOTIFICATIONS */}
+
+      {feedback && (
+        <div
+          role="status"
+          className={`flex items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm font-medium ${
+            feedback.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+              : "border-red-200 bg-red-50 text-red-700"
+          }`}
+        >
+          <span>{feedback.message}</span>
+
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            aria-label="Dismiss message"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* OVERVIEW */}
+
       {tab === "overview" && (
         <div className="space-y-4">
           {renderStats([
-            { label: "Total staff", value: allStaff.length },
+            {
+              label: "Total staff",
+              value: allStaff.length,
+            },
             {
               label: "Teaching staff",
               value: teachers.length,
@@ -1598,33 +1679,59 @@ export function StaffAttendanceManager({
             },
             {
               label: "Checked in",
-              value: activeAll.checkedIn,
+              value: allStats.checkedIn,
               color: "text-emerald-600",
             },
             {
               label: "Not checked in",
-              value: allStaff.length - activeAll.checkedIn,
+              value: allStaff.length - allStats.checkedIn,
               color: "text-amber-600",
             },
             {
               label: "Absent / leave",
-              value: activeAll.absent + activeAll.leave,
+              value: allStats.absent + allStats.leave,
               color: "text-red-600",
             },
           ])}
+
           {registerPanel("Teaching staff today", teachers, false, true)}
+
           {registerPanel("Non-teaching staff today", nonTeachers, false, false)}
         </div>
       )}
 
+      {/* ==========================================
+          TEACHING STAFF
+          ========================================== */}
+
       {tab === "teaching" && (
-        <div className="space-y-4">
+        <div className="space-y-5">
+          {/* KPIs */}
+
           {renderStats([
-            { label: "Teaching staff", value: teachers.length },
             {
-              label: "Checked in",
-              value: activeTeachers.checkedIn,
+              label: "Teaching staff",
+              value: teachers.length,
+            },
+            {
+              label: "Present",
+              value: recordedPresentFaculty,
               color: "text-emerald-600",
+            },
+            {
+              label: "Absent",
+              value: recordedAbsentFaculty,
+              color: "text-red-600",
+            },
+            {
+              label: "Late",
+              value: recordedLateFaculty,
+              color: "text-amber-600",
+            },
+            {
+              label: "Partially present",
+              value: recordedPartiallyPresentFaculty,
+              color: "text-amber-600",
             },
             {
               label: "Lectures today",
@@ -1632,89 +1739,299 @@ export function StaffAttendanceManager({
               color: "text-blue-700",
             },
             {
-              label: "Not checked in",
-              value: teachers.length - activeTeachers.checkedIn,
-              color: "text-amber-600",
+              label: "Checked in",
+              value: recordedCheckedIn,
+              color: "text-emerald-600",
             },
             {
-              label: "Absent / leave",
-              value: activeTeachers.absent + activeTeachers.leave,
-              color: "text-red-600",
+              label: "Not checked in",
+              value: Math.max(0, teachers.length - recordedCheckedIn),
+              color: "text-amber-600",
             },
           ])}
-          <div className="relative max-w-sm">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search faculty name or employee ID"
-              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs"
-            />
-          </div>
-          {registerPanel(
-            "Teaching Staff Attendance Register",
-            searchedTeachers,
-            true,
-            true,
+
+          {/* LECTURE-WISE ATTENDANCE FIRST */}
+
+          {lectureError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {lectureError}
+            </div>
           )}
+
           <StaffLectureAttendance
             date={date}
             lectures={lectures}
             teachers={teachers}
             selectedTeacherId={selectedTeacherId}
+            selectedLectureId={selectedLectureId}
             onTeacherChange={setSelectedTeacherId}
             onRefresh={loadLectures}
             loading={lectureLoading}
             canManage={canManage}
           />
+
+          {/* RECORDED TEACHING ATTENDANCE TABLE */}
+
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
+              <div>
+                <h3 className="text-sm font-bold text-[#0A193A]">
+                  Recorded Teaching Staff Attendance
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Only teaching faculty with saved lecture attendance on{" "}
+                  {displayDate(date)} appear here.
+                </p>
+              </div>
+
+              <span className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-[#0A54B7]">
+                {recordedFacultyCount} Faculty Recorded
+              </span>
+            </div>
+
+            {/* SEARCH */}
+
+            <div className="border-b border-slate-100 p-4">
+              <div className="relative max-w-sm">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search recorded faculty name or employee ID"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs outline-none focus:border-[#0A54B7]"
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1320px] text-left text-xs">
+                <thead className="bg-[#F2F6FD] text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-3 py-4">SR</th>
+                    <th className="px-3 py-4">Employee Name</th>
+                    <th className="px-3 py-4">Employee ID</th>
+                    <th className="px-3 py-4">Subject / Department</th>
+                    <th className="px-3 py-4">Lectures Taken</th>
+                    <th className="px-3 py-4">First Check In</th>
+                    <th className="px-3 py-4">Last Check Out</th>
+                    <th className="px-3 py-4">Total Duration</th>
+                    <th className="px-3 py-4">Attendance Status</th>
+                    <th className="px-3 py-4">Lecture Status</th>
+                  </tr>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {filteredRecordedTeachingAttendance.map((entry, index) => (
+                    <tr
+                      key={entry.teacher.id}
+                      className="transition hover:bg-[#F6F9FF]"
+                    >
+                      <td className="px-3 py-4 font-semibold text-slate-500">
+                        {index + 1}
+                      </td>
+
+                      <td className="px-3 py-4">
+                        <p className="font-bold text-[#0A193A]">
+                          {entry.teacher.name}
+                        </p>
+                      </td>
+
+                      <td className="px-3 py-4 text-slate-600">
+                        {entry.teacher.employeeCode || entry.teacher.id}
+                      </td>
+
+                      <td className="px-3 py-4 text-slate-600">
+                        {department(entry.teacher)}
+                      </td>
+
+                      <td className="px-3 py-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="inline-flex w-fit rounded-lg bg-blue-50 px-3 py-1.5 font-bold text-blue-700">
+                            {entry.lectureCount}
+                          </span>
+
+                          {entry.lateCount > 0 && (
+                            <span className="text-[10px] font-semibold text-amber-700">
+                              {entry.lateCount} late
+                            </span>
+                          )}
+
+                          {entry.absentCount > 0 && (
+                            <span className="text-[10px] font-semibold text-red-600">
+                              {entry.absentCount} absent
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="px-3 py-4 font-medium text-slate-700">
+                        {displayTime(entry.checkIn)}
+                      </td>
+
+                      <td className="px-3 py-4 font-medium text-slate-700">
+                        {displayTime(entry.checkOut)}
+                      </td>
+
+                      <td className="px-3 py-4">
+                        <span className="font-bold text-[#0A193A]">
+                          {formatMinutes(entry.durationMinutes)}
+                        </span>
+                      </td>
+
+                      {/* ATTENDANCE STATUS */}
+
+                      <td className="px-3 py-4">
+                        <div className="flex flex-col items-start gap-1">
+                          <StatusBadge status={entry.attendanceStatus} />
+
+                          {entry.attendanceStatus === "partially present" && (
+                            <span className="text-[10px] text-slate-500">
+                              {entry.presentCount} present
+                              {" · "}
+                              {entry.lateCount} late
+                              {" · "}
+                              {entry.absentCount} absent
+                            </span>
+                          )}
+
+                          {entry.attendanceStatus === "late" &&
+                            entry.presentCount > 0 && (
+                              <span className="text-[10px] text-slate-500">
+                                {entry.presentCount} present
+                                {" · "}
+                                {entry.lateCount} late
+                              </span>
+                            )}
+                        </div>
+                      </td>
+
+                      {/* LECTURE STATUS */}
+
+                      <td className="px-3 py-4">
+                        <StatusBadge status={entry.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {!filteredRecordedTeachingAttendance.length && (
+                <div className="px-4 py-12 text-center">
+                  <p className="text-sm font-semibold text-[#0A193A]">
+                    {recordedFacultyCount
+                      ? "No recorded faculty matches your search."
+                      : "No teaching staff attendance recorded for this date."}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Save Present, Absent or Late lecture attendance above to
+                    automatically add the faculty to this table.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {filteredRecordedTeachingAttendance.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-4 py-3">
+                <p className="text-xs text-slate-500">
+                  Showing {filteredRecordedTeachingAttendance.length} faculty
+                  attendance records
+                </p>
+
+                <p className="text-xs font-bold text-[#0A193A]">
+                  Total Lecture Duration:{" "}
+                  {formatMinutes(
+                    filteredRecordedTeachingAttendance.reduce(
+                      (total, entry) => total + entry.durationMinutes,
+                      0,
+                    ),
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* TOTAL SAVED TEACHING DURATION */}
+
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs font-semibold text-[#0A193A]">
+                Total Saved Teaching Duration
+              </p>
+
+              <p className="text-lg font-bold text-[#0A54B7]">
+                {formatMinutes(recordedTotalDuration)}
+              </p>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* ==========================================
+          NON-TEACHING STAFF
+          ========================================== */}
 
       {tab === "nonTeaching" && (
         <div className="space-y-4">
           {renderStats([
-            { label: "Non-teaching staff", value: nonTeachers.length },
+            {
+              label: "Non-teaching staff",
+              value: nonTeachers.length,
+            },
             {
               label: "Checked in",
-              value: activeNonTeachers.checkedIn,
+              value: nonTeachingStats.checkedIn,
               color: "text-emerald-600",
             },
             {
               label: "Checked out",
-              value: activeNonTeachers.checkedOut,
+              value: nonTeachingStats.checkedOut,
               color: "text-blue-700",
             },
             {
               label: "Not checked in",
-              value: nonTeachers.length - activeNonTeachers.checkedIn,
+              value: nonTeachers.length - nonTeachingStats.checkedIn,
               color: "text-amber-600",
             },
             {
               label: "Absent / leave",
-              value: activeNonTeachers.absent + activeNonTeachers.leave,
+              value: nonTeachingStats.absent + nonTeachingStats.leave,
               color: "text-red-600",
             },
           ])}
-          <div className="flex gap-2">
+
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setNonTeachingTab("register")}
-              className={`rounded-lg px-3 py-2 text-xs font-bold ${nonTeachingTab === "register" ? "bg-[#0A54B7] text-white" : "bg-white text-slate-600"}`}
+              className={`rounded-lg px-3 py-2 text-xs font-bold ${
+                nonTeachingTab === "register"
+                  ? "bg-[#0A54B7] text-white"
+                  : "border border-slate-200 bg-white text-slate-600"
+              }`}
             >
               Attendance Register
             </button>
+
             <button
               type="button"
               onClick={() => setNonTeachingTab("activities")}
-              className={`rounded-lg px-3 py-2 text-xs font-bold ${nonTeachingTab === "activities" ? "bg-[#0A54B7] text-white" : "bg-white text-slate-600"}`}
+              className={`rounded-lg px-3 py-2 text-xs font-bold ${
+                nonTeachingTab === "activities"
+                  ? "bg-[#0A54B7] text-white"
+                  : "border border-slate-200 bg-white text-slate-600"
+              }`}
             >
               Daily Activities
             </button>
           </div>
+
           {nonTeachingTab === "register" ? (
             <>
               <div className="relative max-w-sm">
@@ -1722,6 +2039,7 @@ export function StaffAttendanceManager({
                   size={15}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 />
+
                 <input
                   type="search"
                   value={search}
@@ -1730,6 +2048,7 @@ export function StaffAttendanceManager({
                   className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs"
                 />
               </div>
+
               {registerPanel(
                 "Non-Teaching Staff Attendance Register",
                 filteredNonTeachers,
@@ -1749,20 +2068,26 @@ export function StaffAttendanceManager({
         </div>
       )}
 
+      {/* ==========================================
+          ATTENDANCE HISTORY
+          ========================================== */}
+
       {tab === "history" && (
         <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-bold text-[#0A193A]">
               My Attendance History
             </h3>
-            <div className="flex gap-2">
+
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setShowRequests((old) => !old)}
+                onClick={() => setShowRequests((previous) => !previous)}
                 className="rounded-lg bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700"
               >
                 Requests ({requests.length})
               </button>
+
               <button
                 type="button"
                 onClick={() => {
@@ -1775,6 +2100,7 @@ export function StaffAttendanceManager({
               </button>
             </div>
           </div>
+
           <div className="overflow-x-auto">
             <table className="w-full min-w-[550px] text-left text-xs">
               <thead className="bg-[#F2F6FD] text-slate-500">
@@ -1786,15 +2112,20 @@ export function StaffAttendanceManager({
                   <th className="px-3 py-3">Status</th>
                 </tr>
               </thead>
+
               <tbody>
                 {myHistory.map((record) => (
                   <tr key={record.id} className="border-b border-slate-100">
                     <td className="px-3 py-3">{record.date}</td>
+
                     <td className="px-3 py-3">{record.checkIn || "—"}</td>
+
                     <td className="px-3 py-3">{record.checkOut || "—"}</td>
+
                     <td className="px-3 py-3">
-                      {formatMinutes(getWorkingMinutes(record))}
+                      {formatMinutes(workingMinutes(record))}
                     </td>
+
                     <td className="px-3 py-3">
                       <StatusBadge status={record.status} />
                     </td>
@@ -1802,15 +2133,18 @@ export function StaffAttendanceManager({
                 ))}
               </tbody>
             </table>
+
             {!myHistory.length && (
-              <p className="p-6 text-center text-slate-500">
+              <p className="p-6 text-center text-sm text-slate-500">
                 No personal attendance history available.
               </p>
             )}
           </div>
+
           {showRequests && (
             <div className="space-y-2">
               <h4 className="text-xs font-bold">Regularisation Requests</h4>
+
               {requests.map((request) => (
                 <div
                   key={request.id}
@@ -1820,10 +2154,15 @@ export function StaffAttendanceManager({
                     <p className="text-xs font-semibold">
                       {request.userName} — {request.date}
                     </p>
-                    <p className="text-xs text-slate-500">{request.reason}</p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      {request.reason}
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge status={request.status} />
+
                     {role === "admin" && request.status === "pending" && (
                       <>
                         <button
@@ -1835,6 +2174,7 @@ export function StaffAttendanceManager({
                         >
                           Approve
                         </button>
+
                         <button
                           type="button"
                           onClick={() =>
@@ -1854,10 +2194,17 @@ export function StaffAttendanceManager({
         </div>
       )}
 
+      {/* ==========================================
+          REPORTS
+          ========================================== */}
+
       {tab === "reports" && (
         <div className="space-y-4">
           {renderStats([
-            { label: "Total staff", value: allStaff.length },
+            {
+              label: "Total staff",
+              value: allStaff.length,
+            },
             {
               label: "Teaching staff",
               value: teachers.length,
@@ -1870,278 +2217,240 @@ export function StaffAttendanceManager({
             },
             {
               label: "Checked in",
-              value: activeAll.checkedIn,
+              value: allStats.checkedIn,
               color: "text-emerald-600",
             },
             {
               label: "Absent / leave",
-              value: activeAll.absent + activeAll.leave,
+              value: allStats.absent + allStats.leave,
               color: "text-red-600",
             },
           ])}
+
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <h3 className="text-sm font-bold text-[#0A193A]">
               Selected Date — {displayDate(date)}
             </h3>
+
             <p className="mt-1 text-xs text-slate-500">
-              Figures below use records for the selected date. Historical
-              institution-wide trends require a separate date-range reporting
-              API.
+              Figures below use attendance records for the selected date.
             </p>
           </div>
+
           {registerPanel("Teaching staff", teachers, false, true)}
+
           {registerPanel("Non-teaching staff", nonTeachers, false, false)}
         </div>
       )}
 
-      {showAddLecture && canManage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4">
-          <form
-            onSubmit={(event) => void submitNewLecture(event)}
+      {/* ==========================================
+          ADD ATTENDANCE MODAL
+          ========================================== */}
+
+      {showAddAttendance && canManage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+          <div
             role="dialog"
             aria-modal="true"
-            aria-label="Add lecture"
-            className="my-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-6 shadow-xl"
+            aria-labelledby="add-attendance-title"
+            className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl"
           >
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-[#0A193A]">Add Lecture</h3>
+            <div className="mb-5 flex items-center justify-between gap-3">
+              <div>
+                <h3
+                  id="add-attendance-title"
+                  className="text-xl font-bold text-[#0A193A]"
+                >
+                  Add Lecture Attendance
+                </h3>
+
+                <p className="mt-1 text-xs text-slate-500">
+                  Select an existing scheduled lecture to record attendance.
+                </p>
+              </div>
 
               <button
                 type="button"
-                onClick={() => setShowAddLecture(false)}
-                aria-label="Close"
+                aria-label="Close Add Attendance"
+                onClick={() => setShowAddAttendance(false)}
+                className="rounded-lg p-2 hover:bg-slate-100"
               >
-                <XCircle size={20} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* FACULTY SELECTOR */}
-            <label className="block text-sm font-semibold text-[#0A193A]">
-              Faculty Name *
-              <select
-                required
-                value={lectureFacultyId}
-                onChange={(event) => setLectureFacultyId(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-              >
-                <option value="">Select Faculty</option>
+            <div className="space-y-4">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-[#0A193A]">
+                  Select Scheduled Lecture
+                </span>
 
-                {teachers.map((teacher) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.name} - {teacher.employeeCode || teacher.id}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {/* SUBJECT */}
-            <label className="block text-sm font-semibold text-[#0A193A]">
-              Subject *
-              <input
-                required
-                value={lectureForm.title}
-                onChange={(event) =>
-                  setLectureForm((previous) => ({
-                    ...previous,
-                    title: event.target.value,
-                  }))
-                }
-                placeholder="e.g. Mathematics"
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-              />
-            </label>
-
-            {/* TOPIC */}
-            <label className="block text-sm font-semibold text-[#0A193A]">
-              Topic
-              <input
-                value={lectureForm.subject}
-                onChange={(event) =>
-                  setLectureForm((previous) => ({
-                    ...previous,
-                    subject: event.target.value,
-                  }))
-                }
-                placeholder="e.g. Algebra - Linear Equations"
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-              />
-            </label>
-
-            {/* DATE AND TIMES */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block text-sm font-semibold text-[#0A193A]">
-                Date *
-                <input
+                <select
                   required
-                  type="date"
-                  value={lectureForm.date}
+                  value={attendanceLectureId}
                   onChange={(event) =>
-                    setLectureForm((previous) => ({
-                      ...previous,
-                      date: event.target.value,
-                    }))
+                    setAttendanceLectureId(event.target.value)
                   }
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-                />
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
+                >
+                  <option value="">Select a scheduled lecture</option>
+
+                  {availableAttendanceLectures.map((lecture) => (
+                    <option key={lecture.id} value={lecture.id}>
+                      {displayTime(lecture.startsAt)}
+                      {" — "}
+                      {lecture.title}
+                      {" — "}
+                      {lecture.teacherName || "Faculty"}
+                      {lecture.lectureCheckInAt ? " (In Progress)" : ""}
+                    </option>
+                  ))}
+                </select>
               </label>
 
-              <label className="block text-sm font-semibold text-[#0A193A]">
-                Start Time *
-                <input
-                  required
-                  type="time"
-                  value={lectureForm.startTime}
-                  onChange={(event) =>
-                    setLectureForm((previous) => ({
-                      ...previous,
-                      startTime: event.target.value,
-                    }))
-                  }
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-                />
-              </label>
+              {!availableAttendanceLectures.length && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                  No available scheduled lectures for {displayDate(date)}.
+                  Create a lecture in Lecture Management first.
+                </div>
+              )}
 
-              <label className="block text-sm font-semibold text-[#0A193A]">
-                End Time *
-                <input
-                  required
-                  type="time"
-                  value={lectureForm.endTime}
-                  onChange={(event) =>
-                    setLectureForm((previous) => ({
-                      ...previous,
-                      endTime: event.target.value,
-                    }))
-                  }
-                  className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-                />
-              </label>
+              {attendanceLectureId &&
+                availableAttendanceLectures.some(
+                  (lecture) => lecture.id === attendanceLectureId,
+                ) && (
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+                    {availableAttendanceLectures
+                      .filter((lecture) => lecture.id === attendanceLectureId)
+                      .map((lecture) => (
+                        <div key={lecture.id}>
+                          <p className="text-sm font-bold text-[#0A193A]">
+                            {lecture.title}
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-600">
+                            {lecture.subject || "General"}
+                          </p>
+
+                          <p className="mt-2 text-xs text-slate-600">
+                            Faculty: {lecture.teacherName || "—"}
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-600">
+                            Time: {displayTime(lecture.startsAt)}
+                            {" – "}
+                            {displayTime(lecture.endsAt)}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+              <div className="flex flex-wrap justify-end gap-3 border-t border-slate-200 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAttendance(false)}
+                  className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  disabled={!attendanceLectureId || lectureLoading}
+                  onClick={selectLectureForAttendance}
+                  className="rounded-lg bg-[#0A54B7] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  Continue to Attendance
+                </button>
+              </div>
             </div>
-
-            {/* HOMEWORK / ASSIGNMENT */}
-            <label className="block text-sm font-semibold text-[#0A193A]">
-              Homework / Assignment
-              <textarea
-                rows={3}
-                value={lectureForm.description}
-                onChange={(event) =>
-                  setLectureForm((previous) => ({
-                    ...previous,
-                    description: event.target.value,
-                  }))
-                }
-                placeholder="Enter homework, assignments or instructions for students"
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-              />
-            </label>
-
-            {/* MEETING LINK */}
-            <label className="block text-sm font-semibold text-[#0A193A]">
-              Meeting Link
-              <input
-                type="url"
-                value={lectureForm.meetingLink}
-                onChange={(event) =>
-                  setLectureForm((previous) => ({
-                    ...previous,
-                    meetingLink: event.target.value,
-                  }))
-                }
-                placeholder="https://..."
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-              />
-            </label>
-
-            {/* TEACHING MATERIAL */}
-            <label className="block text-sm font-semibold text-[#0A193A]">
-              Teaching Material Link
-              <input
-                type="url"
-                value={lectureForm.materialLink}
-                onChange={(event) =>
-                  setLectureForm((previous) => ({
-                    ...previous,
-                    materialLink: event.target.value,
-                  }))
-                }
-                placeholder="https://..."
-                className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#0A54B7]"
-              />
-            </label>
-
-            {/* ACTIONS */}
-            <div className="flex justify-end gap-2 border-t border-slate-200 pt-4">
-              <button
-                type="button"
-                onClick={() => setShowAddLecture(false)}
-                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={creatingLecture || !lectureFacultyId}
-                className="rounded-lg bg-[#0A54B7] px-5 py-2 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {creatingLecture ? "Saving..." : "Save Lecture"}
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
       )}
+
+      {/* ==========================================
+          REGULARISATION MODAL
+          ========================================== */}
 
       {showRegularise && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Attendance regularisation"
+            aria-labelledby="regularisation-title"
             className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold">Request Regularisation</h3>
+              <h3
+                id="regularisation-title"
+                className="text-lg font-bold text-[#0A193A]"
+              >
+                Request Regularisation
+              </h3>
 
               <button
                 type="button"
-                onClick={() => setShowRegularise(false)}
                 aria-label="Close"
+                onClick={() => setShowRegularise(false)}
               >
-                <XCircle size={20} />
+                <X size={20} />
               </button>
             </div>
 
             <div className="space-y-3">
-              <input
-                type="date"
-                value={regulariseDate}
-                max={todayIST()}
-                onChange={(event) => setRegulariseDate(event.target.value)}
-                className="w-full rounded-lg border p-3"
-              />
+              <label className="block space-y-1">
+                <span className="text-xs font-bold text-slate-600">
+                  Attendance Date
+                </span>
 
-              <textarea
-                value={regulariseReason}
-                onChange={(event) => setRegulariseReason(event.target.value)}
-                placeholder="Reason"
-                className="w-full rounded-lg border p-3"
-                rows={3}
-              />
+                <input
+                  type="date"
+                  value={regulariseDate}
+                  max={todayIST()}
+                  onChange={(event) => setRegulariseDate(event.target.value)}
+                  className={INPUT_CLASS}
+                />
+              </label>
+
+              <label className="block space-y-1">
+                <span className="text-xs font-bold text-slate-600">Reason</span>
+
+                <textarea
+                  rows={3}
+                  value={regulariseReason}
+                  onChange={(event) => setRegulariseReason(event.target.value)}
+                  placeholder="Explain the correction request"
+                  className={INPUT_CLASS}
+                />
+              </label>
 
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="time"
-                  value={regulariseIn}
-                  onChange={(event) => setRegulariseIn(event.target.value)}
-                  className="rounded-lg border p-3"
-                />
+                <label className="block space-y-1">
+                  <span className="text-xs font-bold text-slate-600">
+                    Check In
+                  </span>
 
-                <input
-                  type="time"
-                  value={regulariseOut}
-                  onChange={(event) => setRegulariseOut(event.target.value)}
-                  className="rounded-lg border p-3"
-                />
+                  <input
+                    type="time"
+                    value={regulariseIn}
+                    onChange={(event) => setRegulariseIn(event.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                </label>
+
+                <label className="block space-y-1">
+                  <span className="text-xs font-bold text-slate-600">
+                    Check Out
+                  </span>
+
+                  <input
+                    type="time"
+                    value={regulariseOut}
+                    onChange={(event) => setRegulariseOut(event.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                </label>
               </div>
 
               <select
@@ -2151,19 +2460,19 @@ export function StaffAttendanceManager({
                     event.target.value as StaffAttendanceStatus,
                   )
                 }
-                className="w-full rounded-lg border p-3"
+                className={INPUT_CLASS}
               >
                 <option value="present">Present</option>
                 <option value="late">Late</option>
                 <option value="half_day">Half Day</option>
-                <option value="on_leave">On Leave</option>
+                <option value="on_leave">Leave</option>
               </select>
 
               <button
                 type="button"
                 disabled={submittingRequest}
                 onClick={() => void submitRegularisation()}
-                className="w-full rounded-lg bg-blue-700 p-3 font-bold text-white disabled:opacity-50"
+                className="w-full rounded-lg bg-[#0A54B7] p-3 text-sm font-bold text-white disabled:opacity-50"
               >
                 {submittingRequest ? "Submitting..." : "Submit Request"}
               </button>

@@ -1,9 +1,12 @@
 ﻿import { NextResponse } from "next/server";
+
 import { getSessionUser } from "@/lib/auth";
 import { logAction } from "@/lib/audit-log";
+
 import {
   getLecturesForRole,
   recordLectureAttendanceAction,
+  saveLectureAttendanceTimes,
   type LectureAttendanceAction,
 } from "@/lib/data-store";
 
@@ -14,12 +17,23 @@ type Context = {
   params: Promise<{ lectureId: string }>;
 };
 
+type AttendanceStatus = "present" | "absent" | "late";
+
+type AttendanceBody = {
+  action?: unknown;
+  attendanceStatus?: unknown;
+  checkIn?: unknown;
+  checkOut?: unknown;
+};
+
 function errorResponse(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }
 
-function dateInIndia(value: string): string {
+function indiaDate(value: string): string {
   const date = new Date(value);
+
+  if (!Number.isFinite(date.getTime())) return "";
 
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kolkata",
@@ -32,6 +46,39 @@ function dateInIndia(value: string): string {
     parts.find((part) => part.type === type)?.value ?? "";
 
   return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function parseAttendanceTime(
+  lectureDate: string,
+  value: unknown,
+  label: string,
+): string {
+  if (typeof value !== "string") {
+    throw new Error(`${label} must be a time string.`);
+  }
+
+  const time = value.trim();
+
+  if (!time) return "";
+
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    throw new Error(`${label} must use HH:MM format.`);
+  }
+
+  const date = new Date(`${lectureDate}T${time}:00+05:30`);
+
+  if (
+    !Number.isFinite(date.getTime()) ||
+    indiaDate(date.toISOString()) !== lectureDate
+  ) {
+    throw new Error(`${label} is invalid.`);
+  }
+
+  return date.toISOString();
+}
+
+function isAttendanceStatus(value: unknown): value is AttendanceStatus {
+  return value === "present" || value === "absent" || value === "late";
 }
 
 export async function POST(request: Request, context: Context) {
@@ -53,7 +100,11 @@ export async function POST(request: Request, context: Context) {
 
     const { lectureId } = await context.params;
 
-    let body: unknown;
+    if (!lectureId?.trim()) {
+      return errorResponse("Lecture ID is required.", 400);
+    }
+
+    let body: AttendanceBody;
 
     try {
       body = await request.json();
@@ -65,9 +116,10 @@ export async function POST(request: Request, context: Context) {
       return errorResponse("Invalid request body.", 400);
     }
 
-    const action = (body as Record<string, unknown>).action;
+    const action = body.action;
 
     if (
+      action !== "save" &&
       action !== "checkin" &&
       action !== "checkout" &&
       action !== "complete"
@@ -75,13 +127,9 @@ export async function POST(request: Request, context: Context) {
       return errorResponse("Invalid attendance action.", 400);
     }
 
-    const roleForRead =
-      session.role === "counsellor" ? "staff" : session.role;
+    const roleForRead = session.role === "counsellor" ? "staff" : session.role;
 
-    const lectures = await getLecturesForRole(
-      roleForRead,
-      session.id,
-    );
+    const lectures = await getLecturesForRole(roleForRead, session.id);
 
     const lecture = lectures.find((item) => item.id === lectureId);
 
@@ -89,55 +137,150 @@ export async function POST(request: Request, context: Context) {
       return errorResponse("Lecture not found or access denied.", 404);
     }
 
-    if (
-      session.role === "educator" &&
-      lecture.teacherId !== session.id
-    ) {
+    if (session.role === "educator" && lecture.teacherId !== session.id) {
       return errorResponse("You may only update your own lectures.", 403);
     }
 
-    if (lecture.status !== "scheduled") {
-      return errorResponse("Lecture is not scheduled.", 409);
-    }
-
-    const now = new Date();
-
-    if (
-      (action === "checkin" || action === "checkout") &&
-      dateInIndia(lecture.startsAt) !== dateInIndia(now.toISOString())
-    ) {
-      return errorResponse(
-        "Check-in and check-out must happen on the lecture date.",
-        400,
-      );
-    }
-
-    if (action === "checkin") {
-      const startMs = Date.parse(lecture.startsAt);
-
-      if (
-        !Number.isFinite(startMs) ||
-        now.getTime() < startMs - 15 * 60 * 1000
-      ) {
-        return errorResponse(
-          "Check-in opens 15 minutes before the scheduled start.",
-          400,
-        );
-      }
-    }
+    const previous = {
+      attendanceStatus: lecture.lectureAttendanceStatus ?? null,
+      lectureStatus: lecture.status,
+      checkIn: lecture.lectureCheckInAt ?? null,
+      checkOut: lecture.lectureCheckOutAt ?? null,
+    };
 
     let updated;
 
-    try {
-      updated = await recordLectureAttendanceAction(
-        lectureId,
-        action as LectureAttendanceAction,
-      );
-    } catch (error) {
-      return errorResponse(
-        error instanceof Error ? error.message : "Unable to record action.",
-        409,
-      );
+    if (action === "save") {
+      if (lecture.status !== "scheduled" && lecture.status !== "completed") {
+        return errorResponse(
+          "Cannot edit attendance for a cancelled lecture.",
+          409,
+        );
+      }
+
+      if (!isAttendanceStatus(body.attendanceStatus)) {
+        return errorResponse("Select Present, Absent or Late.", 400);
+      }
+
+      const attendanceStatus = body.attendanceStatus;
+
+      const lectureDate = indiaDate(lecture.startsAt);
+
+      if (!lectureDate) {
+        return errorResponse("Invalid lecture date.", 400);
+      }
+
+      let checkInAt = "";
+      let checkOutAt = "";
+
+      // Present and Late have identical time-entry
+      // validation. Their saved attendance status
+      // remains different.
+      if (attendanceStatus !== "absent") {
+        try {
+          checkInAt = parseAttendanceTime(
+            lectureDate,
+            body.checkIn,
+            "Check-in",
+          );
+
+          checkOutAt = parseAttendanceTime(
+            lectureDate,
+            body.checkOut,
+            "Check-out",
+          );
+        } catch (error) {
+          return errorResponse(
+            error instanceof Error ? error.message : "Invalid lecture times.",
+            400,
+          );
+        }
+
+        if (!checkInAt) {
+          return errorResponse(
+            `Enter Check In for ${
+              attendanceStatus === "late" ? "Late" : "Present"
+            } attendance.`,
+            400,
+          );
+        }
+
+        if (checkOutAt && Date.parse(checkOutAt) <= Date.parse(checkInAt)) {
+          return errorResponse("Check Out must be later than Check In.", 400);
+        }
+
+        const now = Date.now();
+
+        if (
+          Date.parse(checkInAt) > now ||
+          (checkOutAt && Date.parse(checkOutAt) > now)
+        ) {
+          return errorResponse("Attendance cannot contain a future time.", 400);
+        }
+      }
+
+      try {
+        updated = await saveLectureAttendanceTimes(lectureId, {
+          attendanceStatus,
+          checkInAt,
+          checkOutAt,
+        });
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error ? error.message : "Unable to save attendance.",
+          409,
+        );
+      }
+    } else {
+      // Existing automatic actions remain available
+      // for integrations that still use them.
+      if (lecture.status !== "scheduled") {
+        return errorResponse("Lecture is not scheduled.", 409);
+      }
+
+      if (lecture.lectureAttendanceStatus === "absent") {
+        return errorResponse(
+          "Change attendance to Present or Late before recording lecture actions.",
+          409,
+        );
+      }
+
+      const now = new Date();
+
+      if (
+        (action === "checkin" || action === "checkout") &&
+        indiaDate(lecture.startsAt) !== indiaDate(now.toISOString())
+      ) {
+        return errorResponse(
+          "Automatic check-in/out is only available on the lecture date.",
+          400,
+        );
+      }
+
+      if (action === "checkin") {
+        const start = Date.parse(lecture.startsAt);
+
+        if (!Number.isFinite(start) || now.getTime() < start - 15 * 60 * 1000) {
+          return errorResponse(
+            "Automatic check-in opens 15 minutes before the scheduled start.",
+            400,
+          );
+        }
+      }
+
+      try {
+        updated = await recordLectureAttendanceAction(
+          lectureId,
+          action as LectureAttendanceAction,
+        );
+      } catch (error) {
+        return errorResponse(
+          error instanceof Error
+            ? error.message
+            : "Unable to record attendance.",
+          409,
+        );
+      }
     }
 
     if (!updated) {
@@ -148,7 +291,7 @@ export async function POST(request: Request, context: Context) {
       await logAction({
         action: "update",
         category: "courses",
-        details: `Lecture ${action}: ${updated.title}`,
+        details: `Lecture attendance ${action}: ${updated.title}`,
         path: `/api/lectures/${lectureId}/attendance`,
         method: "POST",
         request,
@@ -157,9 +300,15 @@ export async function POST(request: Request, context: Context) {
           lectureId,
           attendanceAction: action,
           teacherId: updated.teacherId,
-          lectureCheckInAt: updated.lectureCheckInAt,
-          lectureCheckOutAt: updated.lectureCheckOutAt,
-          lectureCompletedAt: updated.lectureCompletedAt,
+          previousAttendanceStatus: previous.attendanceStatus,
+          attendanceStatus: updated.lectureAttendanceStatus ?? null,
+          previousLectureStatus: previous.lectureStatus,
+          lectureStatus: updated.status,
+          previousCheckInAt: previous.checkIn,
+          previousCheckOutAt: previous.checkOut,
+          lectureCheckInAt: updated.lectureCheckInAt ?? null,
+          lectureCheckOutAt: updated.lectureCheckOutAt ?? null,
+          lectureCompletedAt: updated.lectureCompletedAt ?? null,
         },
       });
     } catch (error) {
@@ -170,18 +319,21 @@ export async function POST(request: Request, context: Context) {
       success: true,
       lecture: updated,
       message:
-        action === "checkin"
-          ? "Lecture check-in recorded."
-          : action === "checkout"
-            ? "Lecture check-out recorded."
-            : "Lecture marked completed.",
+        action === "save"
+          ? updated.lectureAttendanceStatus === "absent"
+            ? "Faculty marked Absent successfully."
+            : updated.lectureAttendanceStatus === "late"
+              ? "Faculty marked Late successfully."
+              : "Faculty Present attendance saved successfully."
+          : action === "checkin"
+            ? "Lecture check-in recorded."
+            : action === "checkout"
+              ? "Lecture check-out recorded."
+              : "Lecture marked completed.",
     });
   } catch (error) {
     console.error("Lecture attendance error:", error);
 
-    return errorResponse(
-      "Unable to process lecture attendance.",
-      500,
-    );
+    return errorResponse("Unable to process lecture attendance.", 500);
   }
 }
