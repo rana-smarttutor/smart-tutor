@@ -167,6 +167,123 @@ function Field({
   );
 }
 
+function Time12HourInput({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+}) {
+  // Convert stored 24-hour HH:MM to displayed 12-hour time.
+  const [hours24 = 0, minutes24 = 0] = value
+    ? value.split(":").map(Number)
+    : [0, 0];
+
+  const hour12 = value ? String(hours24 % 12 || 12).padStart(2, "0") : "";
+
+  const minute = value ? String(minutes24).padStart(2, "0") : "";
+
+  const period: "AM" | "PM" = hours24 >= 12 ? "PM" : "AM";
+
+  const [typedHour, setTypedHour] = useState(hour12);
+  const [typedMinute, setTypedMinute] = useState(minute);
+
+  useEffect(() => {
+    setTypedHour(hour12);
+    setTypedMinute(minute);
+  }, [hour12, minute]);
+
+  function saveTime(hourText: string, minuteText: string, ampm: "AM" | "PM") {
+    const hour = Number(hourText);
+    const minuteValue = Number(minuteText);
+
+    if (
+      !/^\d{1,2}$/.test(hourText) ||
+      !/^\d{1,2}$/.test(minuteText) ||
+      hour < 1 ||
+      hour > 12 ||
+      minuteValue < 0 ||
+      minuteValue > 59
+    ) {
+      // Incomplete typing is allowed.
+      // The value is committed once both fields are valid.
+      onChange("");
+      return;
+    }
+
+    const convertedHour = (hour % 12) + (ampm === "PM" ? 12 : 0);
+
+    onChange(
+      `${String(convertedHour).padStart(2, "0")}:${String(minuteValue).padStart(
+        2,
+        "0",
+      )}`,
+    );
+  }
+
+  const fieldClass =
+    "min-w-0 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center text-sm font-semibold text-[#0A193A] outline-none focus:border-[#0A54B7]";
+  return (
+    <div className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_80px] items-center gap-2">
+      <input
+        type="text"
+        inputMode="numeric"
+        maxLength={2}
+        placeholder="HH"
+        aria-label={`${label} hour`}
+        value={typedHour}
+        onChange={(event) => {
+          const next = event.target.value.replace(/\D/g, "");
+          setTypedHour(next);
+          saveTime(next, typedMinute, period);
+        }}
+        onBlur={() => {
+          if (typedHour) {
+            setTypedHour(typedHour.padStart(2, "0"));
+          }
+        }}
+        className={`${fieldClass} w-full`}
+      />
+
+      <span className="font-bold text-slate-400">:</span>
+
+      <input
+        type="text"
+        inputMode="numeric"
+        maxLength={2}
+        placeholder="MM"
+        aria-label={`${label} minute`}
+        value={typedMinute}
+        onChange={(event) => {
+          const next = event.target.value.replace(/\D/g, "");
+          setTypedMinute(next);
+          saveTime(typedHour, next, period);
+        }}
+        onBlur={() => {
+          if (typedMinute) {
+            setTypedMinute(typedMinute.padStart(2, "0"));
+          }
+        }}
+        className={`${fieldClass} w-full`}
+      />
+
+      <select
+        aria-label={`${label} AM or PM`}
+        value={period}
+        onChange={(event) =>
+          saveTime(typedHour, typedMinute, event.target.value as "AM" | "PM")
+        }
+        className={`${fieldClass} w-full cursor-pointer`}
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+  );
+}
+
 export function StaffLectureOverview({ lectures, faculty }: Props) {
   const [items, setItems] = useState<LectureItem[]>(lectures);
 
@@ -889,29 +1006,22 @@ export function StaffLectureOverview({ lectures, faculty }: Props) {
                   />
                 </Field>
 
-                {/* TIME */}
+                {/* TIME - 12 HOUR AM/PM */}
+
                 <div className="grid gap-4 sm:grid-cols-2">
                   <Field label="Start Time" required>
-                    <input
-                      required
-                      type="time"
+                    <Time12HourInput
+                      label="Start Time"
                       value={form.startTime}
-                      onChange={(event) =>
-                        updateForm("startTime", event.target.value)
-                      }
-                      className={INPUT_CLASS}
+                      onChange={(value) => updateForm("startTime", value)}
                     />
                   </Field>
 
                   <Field label="End Time" required>
-                    <input
-                      required
-                      type="time"
+                    <Time12HourInput
+                      label="End Time"
                       value={form.endTime}
-                      onChange={(event) =>
-                        updateForm("endTime", event.target.value)
-                      }
-                      className={INPUT_CLASS}
+                      onChange={(value) => updateForm("endTime", value)}
                     />
                   </Field>
                 </div>

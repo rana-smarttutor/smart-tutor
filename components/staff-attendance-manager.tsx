@@ -360,13 +360,11 @@ export function StaffAttendanceManager({
       return;
     }
 
-    setSelectedTeacherId((previous) => {
-      if (previous && teachers.some((teacher) => teacher.id === previous)) {
-        return previous;
-      }
-
-      return teachers[0]?.id ?? "";
-    });
+    setSelectedTeacherId((previous) =>
+      previous && teachers.some((teacher) => teacher.id === previous)
+        ? previous
+        : "",
+    );
   }, [role, userId, teachers]);
 
   const loadAttendance = useCallback(async () => {
@@ -1193,6 +1191,13 @@ export function StaffAttendanceManager({
         ],
         ...allStaff.map((user) => {
           const record = getRecord(user.id);
+          const lectureRecord =
+            user.role === "educator"
+              ? recordedTeachingAttendance.find(
+                  (entry) => entry.teacher.id === user.id,
+                )
+              : undefined;
+          const isTeaching = user.role === "educator";
 
           return [
             user.employeeCode || user.id,
@@ -1200,10 +1205,18 @@ export function StaffAttendanceManager({
             user.role,
             department(user),
             date,
-            record?.status || "unmarked",
-            record?.checkIn || "",
-            record?.checkOut || "",
-            record?.hoursWorked ?? "",
+            isTeaching
+              ? lectureRecord?.attendanceStatus || "unmarked"
+              : record?.status || "unmarked",
+            isTeaching
+              ? displayTime(lectureRecord?.checkIn)
+              : record?.checkIn || "",
+            isTeaching
+              ? displayTime(lectureRecord?.checkOut)
+              : record?.checkOut || "",
+            isTeaching
+              ? formatMinutes(lectureRecord?.durationMinutes ?? 0)
+              : record?.hoursWorked ?? "",
           ];
         }),
       ];
@@ -1292,12 +1305,33 @@ export function StaffAttendanceManager({
             {sorted.map((user, index) => {
               const edit = effectiveEdit(user);
 
-              const editableNow = editable && canManage && !saving;
+              // Teaching attendance is sourced from saved lecture records.
+              // Non-teaching attendance retains the original staff records.
+              const lectureRecord = teaching
+                ? recordedTeachingAttendance.find(
+                    (entry) => entry.teacher.id === user.id,
+                  )
+                : undefined;
 
-              const duration =
-                edit.checkIn && edit.checkOut
+              const editableNow = editable && canManage && !saving && !teaching;
+
+              const duration = teaching
+                ? formatMinutes(lectureRecord?.durationMinutes ?? 0)
+                : edit.checkIn && edit.checkOut
                   ? durationFromTimes(edit.checkIn, edit.checkOut)
                   : formatMinutes(workingMinutes(getRecord(user.id)));
+
+              const reportCheckIn = teaching
+                ? displayTime(lectureRecord?.checkIn)
+                : edit.checkIn || "—";
+
+              const reportCheckOut = teaching
+                ? displayTime(lectureRecord?.checkOut)
+                : edit.checkOut || "—";
+
+              const reportStatus = teaching
+                ? lectureRecord?.attendanceStatus || "unmarked"
+                : edit.status || "unmarked";
 
               return (
                 <tr key={user.id} className="hover:bg-[#F6F9FF]">
@@ -1337,7 +1371,7 @@ export function StaffAttendanceManager({
                         className={INPUT_CLASS}
                       />
                     ) : (
-                      <span>{edit.checkIn || "—"}</span>
+                      <span>{reportCheckIn}</span>
                     )}
                   </td>
 
@@ -1355,7 +1389,7 @@ export function StaffAttendanceManager({
                         className={INPUT_CLASS}
                       />
                     ) : (
-                      <span>{edit.checkOut || "—"}</span>
+                      <span>{reportCheckOut}</span>
                     )}
                   </td>
 
@@ -1386,7 +1420,26 @@ export function StaffAttendanceManager({
                         <option value="holiday">Holiday</option>
                       </select>
                     ) : (
-                      <StatusBadge status={edit.status || "unmarked"} />
+                      <div className="flex flex-col items-start gap-1">
+                          <StatusBadge status={reportStatus} />
+                          {teaching && lectureRecord && (
+                            <span className="text-[10px] text-slate-500">
+                              {[
+                                lectureRecord.presentCount > 0
+                                  ? `${lectureRecord.presentCount} present`
+                                  : "",
+                                lectureRecord.lateCount > 0
+                                  ? `${lectureRecord.lateCount} late`
+                                  : "",
+                                lectureRecord.absentCount > 0
+                                  ? `${lectureRecord.absentCount} absent`
+                                  : "",
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          )}
+                        </div>
                     )}
                   </td>
                 </tr>
@@ -1706,50 +1759,6 @@ export function StaffAttendanceManager({
 
       {tab === "teaching" && (
         <div className="space-y-5">
-          {/* KPIs */}
-
-          {renderStats([
-            {
-              label: "Teaching staff",
-              value: teachers.length,
-            },
-            {
-              label: "Present",
-              value: recordedPresentFaculty,
-              color: "text-emerald-600",
-            },
-            {
-              label: "Absent",
-              value: recordedAbsentFaculty,
-              color: "text-red-600",
-            },
-            {
-              label: "Late",
-              value: recordedLateFaculty,
-              color: "text-amber-600",
-            },
-            {
-              label: "Partially present",
-              value: recordedPartiallyPresentFaculty,
-              color: "text-amber-600",
-            },
-            {
-              label: "Lectures today",
-              value: dailyLectures.length,
-              color: "text-blue-700",
-            },
-            {
-              label: "Checked in",
-              value: recordedCheckedIn,
-              color: "text-emerald-600",
-            },
-            {
-              label: "Not checked in",
-              value: Math.max(0, teachers.length - recordedCheckedIn),
-              color: "text-amber-600",
-            },
-          ])}
-
           {/* LECTURE-WISE ATTENDANCE FIRST */}
 
           {lectureError && (
@@ -1810,8 +1819,8 @@ export function StaffAttendanceManager({
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1320px] text-left text-xs">
-                <thead className="bg-[#F2F6FD] text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <table className="w-full min-w-[1320px] border-collapse border border-[#CBD5E1] text-left text-xs [&_th]:border [&_th]:border-[#CBD5E1] [&_td]:border [&_td]:border-[#CBD5E1]">
+                <thead className="bg-[#EEF3FA] text-[10px] font-bold uppercase tracking-wide text-slate-600">
                   <tr>
                     <th className="px-3 py-4">SR</th>
                     <th className="px-3 py-4">Employee Name</th>
@@ -1826,31 +1835,31 @@ export function StaffAttendanceManager({
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100">
+                <tbody>
                   {filteredRecordedTeachingAttendance.map((entry, index) => (
                     <tr
                       key={entry.teacher.id}
-                      className="transition hover:bg-[#F6F9FF]"
+                      className="group transition-colors hover:bg-[#F6F9FF]"
                     >
-                      <td className="px-3 py-4 font-semibold text-slate-500">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4 font-semibold text-slate-500">
                         {index + 1}
                       </td>
 
-                      <td className="px-3 py-4">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4">
                         <p className="font-bold text-[#0A193A]">
                           {entry.teacher.name}
                         </p>
                       </td>
 
-                      <td className="px-3 py-4 text-slate-600">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4 text-slate-600">
                         {entry.teacher.employeeCode || entry.teacher.id}
                       </td>
 
-                      <td className="px-3 py-4 text-slate-600">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4 text-slate-600">
                         {department(entry.teacher)}
                       </td>
 
-                      <td className="px-3 py-4">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4">
                         <div className="flex flex-col gap-1">
                           <span className="inline-flex w-fit rounded-lg bg-blue-50 px-3 py-1.5 font-bold text-blue-700">
                             {entry.lectureCount}
@@ -1870,15 +1879,15 @@ export function StaffAttendanceManager({
                         </div>
                       </td>
 
-                      <td className="px-3 py-4 font-medium text-slate-700">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4 font-medium text-slate-700">
                         {displayTime(entry.checkIn)}
                       </td>
 
-                      <td className="px-3 py-4 font-medium text-slate-700">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4 font-medium text-slate-700">
                         {displayTime(entry.checkOut)}
                       </td>
 
-                      <td className="px-3 py-4">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4">
                         <span className="font-bold text-[#0A193A]">
                           {formatMinutes(entry.durationMinutes)}
                         </span>
@@ -1886,7 +1895,7 @@ export function StaffAttendanceManager({
 
                       {/* ATTENDANCE STATUS */}
 
-                      <td className="px-3 py-4">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4">
                         <div className="flex flex-col items-start gap-1">
                           <StatusBadge status={entry.attendanceStatus} />
 
@@ -1913,7 +1922,7 @@ export function StaffAttendanceManager({
 
                       {/* LECTURE STATUS */}
 
-                      <td className="px-3 py-4">
+                      <td className="border-b border-[#CBD5E1] px-3 py-4">
                         <StatusBadge status={entry.status} />
                       </td>
                     </tr>
