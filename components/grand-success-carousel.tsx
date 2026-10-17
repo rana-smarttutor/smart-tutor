@@ -80,11 +80,7 @@ const RESULT_CATEGORIES = [
     label: "Railway Exam",
     image: "/hof/Railway.png",
   },
-  {
-    id: "ssc-cgl",
-    label: "SSC CGL",
-    image: "/hof/ssc-cgl-new.jpeg",
-  },
+
 ];
 
 export function GrandSuccessCarousel() {
