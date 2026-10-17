@@ -11850,7 +11850,7 @@ export async function saveLectureAttendanceTimes(
   input: {
     checkInAt: string;
     checkOutAt: string;
-    attendanceStatus: "present" | "absent" | "late";
+    attendanceStatus: "present" | "absent" | "late" | "leave";
   },
 ): Promise<LectureItem | null> {
   const collection = await getCollection<LectureItem>(
@@ -11877,11 +11877,10 @@ export async function saveLectureAttendanceTimes(
   if (
     status !== "present" &&
     status !== "absent" &&
-    status !== "late"
+    status !== "late" &&
+    status !== "leave"
   ) {
-    throw new Error(
-      "Select Present, Absent or Late.",
-    );
+    throw new Error("Select a valid attendance status.");
   }
 
   function parseTimestamp(
@@ -11917,7 +11916,7 @@ export async function saveLectureAttendanceTimes(
     "Check-out",
   );
 
-  if (status !== "absent") {
+  if (status !== "absent" && status !== "leave") {
     if (checkInMs === null) {
       throw new Error(
         `Enter Check In for ${status === "late" ? "Late" : "Present"} attendance.`,
@@ -11953,16 +11952,33 @@ export async function saveLectureAttendanceTimes(
     }
   }
 
+  const scheduledStartMs = Date.parse(existing.startsAt);
+
+  if (
+    status !== "absent" &&
+    status !== "leave" &&
+    (!Number.isFinite(scheduledStartMs) || checkInMs === null)
+  ) {
+    throw new Error("Invalid scheduled or actual Check In time.");
+  }
+
+const finalStatus =
+  status === "absent" || status === "leave"
+    ? status
+    : checkInMs !== null && checkInMs > scheduledStartMs
+      ? "late"
+      : "present";
+
   const now = new Date().toISOString();
 
   const setFields: Partial<LectureItem> = {
-    lectureAttendanceStatus: status,
+    lectureAttendanceStatus: finalStatus,
     updatedAt: now,
   };
 
   const unsetFields: Record<string, ""> = {};
 
-  if (status === "absent") {
+  if (status === "absent" || status === "leave") {
     unsetFields.lectureCheckInAt = "";
     unsetFields.lectureCheckOutAt = "";
     unsetFields.lectureCompletedAt = "";

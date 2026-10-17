@@ -26,10 +26,10 @@ import {
 
 import type { LectureItem, ManagedUser } from "@/lib/types";
 
-type AttendanceStatus = "" | "present" | "absent" | "late";
+type AttendanceStatus = "" | "present" | "absent" | "late" | "leave";
 
 type LectureWithAttendance = LectureItem & {
-  lectureAttendanceStatus?: "present" | "absent" | "late";
+  lectureAttendanceStatus?: "present" | "absent" | "late" | "leave";
 };
 
 type Props = {
@@ -52,18 +52,18 @@ type TimeDraft = {
 
 const TIMEZONE = "Asia/Kolkata";
 
+const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
 function istDate(value: string): string {
   const date = new Date(value);
 
-  if (!Number.isFinite(date.getTime())) {
-    return "";
-  }
+  if (!Number.isFinite(date.getTime())) return "";
 
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: TIMEZONE,
-    day: "2-digit",
-    month: "2-digit",
     year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   }).formatToParts(date);
 
   const get = (type: string) =>
@@ -77,9 +77,7 @@ function timeLabel(value?: string): string {
 
   const date = new Date(value);
 
-  if (!Number.isFinite(date.getTime())) {
-    return "—";
-  }
+  if (!Number.isFinite(date.getTime())) return "—";
 
   return date.toLocaleTimeString("en-IN", {
     timeZone: TIMEZONE,
@@ -94,9 +92,7 @@ function timeInputValue(value?: string): string {
 
   const date = new Date(value);
 
-  if (!Number.isFinite(date.getTime())) {
-    return "";
-  }
+  if (!Number.isFinite(date.getTime())) return "";
 
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: TIMEZONE,
@@ -113,12 +109,8 @@ function timeInputValue(value?: string): string {
 }
 
 function minutesBetween(checkIn: string, checkOut: string): number | null {
-  if (!checkIn || !checkOut) return null;
-
-  const pattern = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-  const start = pattern.exec(checkIn);
-  const end = pattern.exec(checkOut);
+  const start = TIME_PATTERN.exec(checkIn);
+  const end = TIME_PATTERN.exec(checkOut);
 
   if (!start || !end) return null;
 
@@ -126,9 +118,7 @@ function minutesBetween(checkIn: string, checkOut: string): number | null {
 
   const endMinutes = Number(end[1]) * 60 + Number(end[2]);
 
-  if (endMinutes <= startMinutes) {
-    return null;
-  }
+  if (endMinutes <= startMinutes) return null;
 
   return endMinutes - startMinutes;
 }
@@ -142,6 +132,10 @@ function durationLabel(minutes: number | null): string {
 }
 
 function stateOf(lecture: LectureWithAttendance) {
+  if (lecture.lectureAttendanceStatus === "leave") {
+    return "On Leave";
+  }
+
   if (lecture.lectureAttendanceStatus === "absent") {
     return "Not Taken";
   }
@@ -166,11 +160,12 @@ function stateOf(lecture: LectureWithAttendance) {
 }
 
 function savedDraft(lecture: LectureWithAttendance): TimeDraft {
+  const checkIn = timeInputValue(lecture.lectureCheckInAt);
+
   return {
     attendanceStatus:
-      lecture.lectureAttendanceStatus ??
-      (lecture.lectureCheckInAt ? "present" : ""),
-    checkIn: timeInputValue(lecture.lectureCheckInAt),
+      lecture.lectureAttendanceStatus ?? (checkIn ? "present" : ""),
+    checkIn,
     checkOut: timeInputValue(lecture.lectureCheckOutAt),
   };
 }
@@ -181,6 +176,32 @@ function sameDraft(a: TimeDraft, b: TimeDraft) {
     a.checkIn === b.checkIn &&
     a.checkOut === b.checkOut
   );
+}
+
+function automaticAttendanceStatus(
+  lecture: LectureWithAttendance,
+  checkIn: string,
+): AttendanceStatus {
+  if (!TIME_PATTERN.test(checkIn)) return "";
+
+  const lectureDate = istDate(lecture.startsAt);
+
+  if (!lectureDate) return "";
+
+  const actualCheckIn = new Date(
+    `${lectureDate}T${checkIn}:00+05:30`,
+  ).getTime();
+
+  const scheduledStart = Date.parse(lecture.startsAt);
+
+  if (!Number.isFinite(actualCheckIn) || !Number.isFinite(scheduledStart)) {
+    return "";
+  }
+
+  // Zero-minute grace period.
+  // Arrival at or before start = Present.
+  // Arrival after start = Late.
+  return actualCheckIn > scheduledStart ? "late" : "present";
 }
 
 function facultyLabel(teacher: ManagedUser) {
@@ -225,9 +246,7 @@ function facultyScore(teacher: ManagedUser, query: string) {
     return 4;
   }
 
-  if (email.includes(search)) {
-    return 5;
-  }
+  if (email.includes(search)) return 5;
 
   return Number.POSITIVE_INFINITY;
 }
@@ -254,7 +273,7 @@ const ATTENDANCE_OPTIONS = [
     label: "Late",
     description: "Faculty came late for the lecture",
     selected: "border-amber-400 bg-amber-50",
-    labelColor: "text-amber-600",
+    labelColor: "text-amber-700",
     radioColor: "accent-amber-600",
   },
 ] as const;
@@ -276,23 +295,32 @@ function AttendanceTimeInput({
   const [minute, setMinute] = useState("");
   const [period, setPeriod] = useState<"AM" | "PM">("AM");
 
+  const lastEmitted = useRef("");
+
   useEffect(() => {
+    if (value === lastEmitted.current) return;
+
     if (!value) {
       setHour("");
       setMinute("");
       setPeriod("AM");
+      lastEmitted.current = "";
       return;
     }
 
-    const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(value);
+    const match = TIME_PATTERN.exec(value);
 
     if (!match) return;
 
     const hours24 = Number(match[1]);
 
     setHour(String(hours24 % 12 || 12).padStart(2, "0"));
+
     setMinute(match[2]);
+
     setPeriod(hours24 >= 12 ? "PM" : "AM");
+
+    lastEmitted.current = value;
   }, [value]);
 
   function updateTime(
@@ -307,22 +335,28 @@ function AttendanceTimeInput({
     const hours = Number(nextHour);
     const minutes = Number(nextMinute);
 
-    if (
-      !/^\d{1,2}$/.test(nextHour) ||
-      !/^\d{1,2}$/.test(nextMinute) ||
-      hours < 1 ||
-      hours > 12 ||
-      minutes < 0 ||
-      minutes > 59
-    ) {
+    const valid =
+      /^\d{1,2}$/.test(nextHour) &&
+      /^\d{1,2}$/.test(nextMinute) &&
+      hours >= 1 &&
+      hours <= 12 &&
+      minutes >= 0 &&
+      minutes <= 59;
+
+    if (!valid) {
+      lastEmitted.current = "";
+      onChange("");
       return;
     }
 
     const hours24 = (hours % 12) + (nextPeriod === "PM" ? 12 : 0);
 
-    onChange(
-      `${String(hours24).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
-    );
+    const nextValue = `${String(hours24).padStart(2, "0")}:${String(
+      minutes,
+    ).padStart(2, "0")}`;
+
+    lastEmitted.current = nextValue;
+    onChange(nextValue);
   }
 
   const inputClass =
@@ -401,6 +435,7 @@ export function StaffLectureAttendance({
   const [message, setMessage] = useState("");
 
   const [facultyQuery, setFacultyQuery] = useState("");
+
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
 
   const [activeSuggestion, setActiveSuggestion] = useState(0);
@@ -472,10 +507,8 @@ export function StaffLectureAttendance({
     setFacultyQuery(facultyLabel(teacher));
     setSuggestionsOpen(false);
     setActiveSuggestion(0);
-
     setError("");
     setMessage("");
-
     onTeacherChange(teacher.id);
   }
 
@@ -493,7 +526,6 @@ export function StaffLectureAttendance({
       setActiveSuggestion((previous) =>
         Math.min(previous + 1, Math.max(0, rankedFaculty.length - 1)),
       );
-
       return;
     }
 
@@ -501,7 +533,6 @@ export function StaffLectureAttendance({
       event.preventDefault();
 
       setActiveSuggestion((previous) => Math.max(0, previous - 1));
-
       return;
     }
 
@@ -562,12 +593,21 @@ export function StaffLectureAttendance({
                 checkOut: "",
               });
 
+        const next: TimeDraft = {
+          ...current,
+          ...changes,
+        };
+
+        if (lecture && changes.checkIn !== undefined) {
+          next.attendanceStatus = automaticAttendanceStatus(
+            lecture,
+            next.checkIn,
+          );
+        }
+
         return {
           ...previous,
-          [lectureId]: {
-            ...current,
-            ...changes,
-          },
+          [lectureId]: next,
         };
       });
 
@@ -577,6 +617,23 @@ export function StaffLectureAttendance({
     [items],
   );
 
+  function selectManualStatus(
+    lecture: LectureWithAttendance,
+    status: "absent" | "leave",
+  ) {
+    if (!canManage || busyId) return;
+
+    const current = drafts[lecture.id] ?? savedDraft(lecture);
+
+    const nextStatus = current.attendanceStatus === status ? "" : status;
+
+    updateDraft(lecture.id, {
+      attendanceStatus: nextStatus,
+      checkIn: "",
+      checkOut: "",
+    });
+  }
+
   async function saveTimes(lecture: LectureWithAttendance) {
     if (!canManage || busyId) return;
 
@@ -584,22 +641,30 @@ export function StaffLectureAttendance({
 
     const attendanceStatus = draft.attendanceStatus;
 
-    if (
-      attendanceStatus !== "present" &&
-      attendanceStatus !== "absent" &&
-      attendanceStatus !== "late"
-    ) {
-      setError("Select Present, Absent or Late before saving.");
+    if (!attendanceStatus) {
+      setError("Enter Actual Check In or select Absent / Leave.");
       return;
     }
 
-    const checkIn = attendanceStatus === "absent" ? "" : draft.checkIn;
+    const isManual =
+      attendanceStatus === "absent" || attendanceStatus === "leave";
 
-    const checkOut = attendanceStatus === "absent" ? "" : draft.checkOut;
+    const checkIn = isManual ? "" : draft.checkIn;
 
-    if (attendanceStatus !== "absent") {
-      if (!checkIn) {
-        setError("Enter the actual Check In time.");
+    const checkOut = isManual ? "" : draft.checkOut;
+
+    if (!isManual) {
+      if (!TIME_PATTERN.test(checkIn)) {
+        setError("Enter a valid Actual Check In time.");
+        return;
+      }
+
+      const calculatedStatus = automaticAttendanceStatus(lecture, checkIn);
+
+      if (calculatedStatus !== attendanceStatus) {
+        setError(
+          "The attendance status does not match the entered Check In. Please re-enter the time.",
+        );
         return;
       }
 
@@ -614,12 +679,14 @@ export function StaffLectureAttendance({
       }
     }
 
-    if (attendanceStatus === "absent" && lecture.status === "completed") {
-      const confirmed = window.confirm(
-        "This lecture is completed. Marking the faculty Absent will clear its saved times and reset completion. Continue?",
-      );
-
-      if (!confirmed) return;
+    if (isManual && lecture.status === "completed") {
+      if (
+        !window.confirm(
+          `This lecture is completed. Marking the faculty ${attendanceStatus === "leave" ? "On Leave" : "Absent"} will clear its saved times and reset completion. Continue?`,
+        )
+      ) {
+        return;
+      }
     }
 
     setBusyId(lecture.id);
@@ -671,7 +738,7 @@ export function StaffLectureAttendance({
       try {
         await onRefresh();
       } catch {
-        // Keep the confirmed saved result visible.
+        // Keep confirmed saved result visible.
       }
     } catch (cause) {
       setError(
@@ -759,13 +826,11 @@ export function StaffLectureAttendance({
       try {
         await onRefresh();
       } catch {
-        // Keep the confirmed saved result visible.
+        // Keep saved result visible.
       }
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "Unable to complete the lecture.",
+        cause instanceof Error ? cause.message : "Unable to complete lecture.",
       );
     } finally {
       setBusyId("");
@@ -784,8 +849,8 @@ export function StaffLectureAttendance({
             </h3>
 
             <p className="mt-1 text-xs text-slate-500">
-              Search teaching faculty, record attendance and manage actual
-              lecture timings.
+              Search teaching faculty, enter actual lecture timings and record
+              attendance.
             </p>
           </div>
 
@@ -799,8 +864,6 @@ export function StaffLectureAttendance({
             Refresh
           </button>
         </div>
-
-        {/* SEARCH INPUT */}
 
         <div ref={searchRef} className="relative mt-3 max-w-xl">
           <label
@@ -976,10 +1039,13 @@ export function StaffLectureAttendance({
 
             const isDirty = !sameDraft(draft, saved);
 
-            const duration =
-              draft.attendanceStatus === "absent"
-                ? 0
-                : minutesBetween(draft.checkIn, draft.checkOut);
+            const isManual =
+              draft.attendanceStatus === "absent" ||
+              draft.attendanceStatus === "leave";
+
+            const duration = isManual
+              ? 0
+              : minutesBetween(draft.checkIn, draft.checkOut);
 
             const cancelled = lecture.status === "cancelled";
 
@@ -989,10 +1055,7 @@ export function StaffLectureAttendance({
 
             const canEdit = canManage && !cancelled && !busyId;
 
-            const canEditTimes =
-              canEdit &&
-              (draft.attendanceStatus === "present" ||
-                draft.attendanceStatus === "late");
+            const canEditTimes = canEdit && !isManual;
 
             const canComplete =
               canManage &&
@@ -1018,7 +1081,7 @@ export function StaffLectureAttendance({
                     : "border-slate-200"
                 }`}
               >
-                {/* COMPACT LECTURE HEADER */}
+                {/* LECTURE HEADER */}
 
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
@@ -1047,9 +1110,11 @@ export function StaffLectureAttendance({
                         ? "bg-emerald-50 text-emerald-700"
                         : state === "Not Taken" || state === "Cancelled"
                           ? "bg-red-50 text-red-700"
-                          : state === "In Progress"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-indigo-50 text-indigo-700"
+                          : state === "On Leave"
+                            ? "bg-violet-50 text-violet-700"
+                            : state === "In Progress"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-indigo-50 text-indigo-700"
                     }`}
                   >
                     <CheckCircle2 size={13} />
@@ -1057,7 +1122,7 @@ export function StaffLectureAttendance({
                   </span>
                 </div>
 
-                {/* FACULTY / SCHEDULE / DURATION */}
+                {/* SCHEDULE AND DURATION */}
 
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600">
                   <span className="hidden h-4 w-px bg-slate-200 sm:block" />
@@ -1083,7 +1148,7 @@ export function StaffLectureAttendance({
                   </span>
                 </div>
 
-                {/* COMPACT ATTENDANCE OPTIONS */}
+                {/* ATTENDANCE STATUS */}
 
                 <div className="mt-4 rounded-xl bg-[#F7F9FD] p-3 sm:p-4">
                   <div className="mb-3 flex items-center gap-2">
@@ -1097,14 +1162,19 @@ export function StaffLectureAttendance({
                       </h4>
 
                       <p className="mt-0.5 text-[11px] text-slate-500">
-                        Mark the attendance status for this lecture
+                        Present or Late is selected automatically from Check In.
                       </p>
                     </div>
                   </div>
 
+                  {/* ORIGINAL THREE CARDS */}
+
                   <div className="grid gap-2 sm:grid-cols-3">
                     {ATTENDANCE_OPTIONS.map((option) => {
                       const checked = draft.attendanceStatus === option.value;
+
+                      const automatic =
+                        option.value === "present" || option.value === "late";
 
                       return (
                         <label
@@ -1112,32 +1182,26 @@ export function StaffLectureAttendance({
                           className={`flex min-h-[60px] items-center gap-3 rounded-lg border px-3 py-2 transition ${
                             checked
                               ? option.selected
-                              : "border-slate-200 bg-white hover:border-slate-300"
+                              : "border-slate-200 bg-white"
                           } ${
-                            canEdit
-                              ? "cursor-pointer"
-                              : "cursor-not-allowed opacity-60"
+                            !canEdit || automatic
+                              ? "cursor-default"
+                              : "cursor-pointer hover:border-slate-300"
                           }`}
                         >
                           <input
                             type="radio"
                             name={`attendance-${lecture.id}`}
                             checked={checked}
+                            readOnly={automatic}
                             disabled={!canEdit}
-                            onChange={() =>
-                              updateDraft(
-                                lecture.id,
-                                option.value === "absent"
-                                  ? {
-                                      attendanceStatus: "absent",
-                                      checkIn: "",
-                                      checkOut: "",
-                                    }
-                                  : {
-                                      attendanceStatus: option.value,
-                                    },
-                              )
-                            }
+                            onChange={() => {
+                              if (automatic) {
+                                return;
+                              }
+
+                              selectManualStatus(lecture, "absent");
+                            }}
                             className={`h-4 w-4 shrink-0 ${option.radioColor}`}
                           />
 
@@ -1159,26 +1223,39 @@ export function StaffLectureAttendance({
                     })}
                   </div>
 
+
                   {draft.attendanceStatus === "absent" && (
                     <p className="mt-2 text-[11px] font-medium text-red-600">
-                      Check In and Check Out are disabled. Teaching duration is
-                      zero.
+                      Faculty marked Absent. Check In and Check Out are
+                      disabled.
+                    </p>
+                  )}
+
+                  {draft.attendanceStatus === "leave" && (
+                    <p className="mt-2 text-[11px] font-medium text-violet-700">
+                      Faculty marked On Leave. Check In and Check Out are
+                      disabled.
                     </p>
                   )}
 
                   {draft.attendanceStatus === "late" && (
                     <p className="mt-2 text-[11px] font-medium text-amber-700">
-                      Enter actual arrival and departure times. Late attendance
-                      counts toward teaching duration.
+                      Late selected automatically because Check In is after the
+                      scheduled start.
+                    </p>
+                  )}
+
+                  {draft.attendanceStatus === "present" && (
+                    <p className="mt-2 text-[11px] font-medium text-emerald-700">
+                      Present selected automatically based on the actual Check
+                      In.
                     </p>
                   )}
                 </div>
 
-                {/* COMPACT TIME PANELS */}
+                {/* ACTUAL TIME INPUTS */}
 
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  {/* CHECK IN */}
-
                   <div className="min-w-0 rounded-xl bg-emerald-50/60 p-3">
                     <div className="mb-2 flex items-center gap-2">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
@@ -1186,12 +1263,9 @@ export function StaffLectureAttendance({
                       </div>
 
                       <div>
-                        <label
-                          htmlFor={`lecture-in-${lecture.id}`}
-                          className="block text-xs font-bold text-[#0A193A]"
-                        >
+                        <p className="text-xs font-bold text-[#0A193A]">
                           Actual Check In
-                        </label>
+                        </p>
 
                         <p className="mt-0.5 text-[11px] text-slate-500">
                           Enter actual check-in time
@@ -1202,9 +1276,7 @@ export function StaffLectureAttendance({
                     <AttendanceTimeInput
                       id={`lecture-in-${lecture.id}`}
                       label="Actual Check In"
-                      value={
-                        draft.attendanceStatus === "absent" ? "" : draft.checkIn
-                      }
+                      value={isManual ? "" : draft.checkIn}
                       disabled={!canEditTimes}
                       onChange={(value) =>
                         updateDraft(lecture.id, {
@@ -1214,8 +1286,6 @@ export function StaffLectureAttendance({
                     />
                   </div>
 
-                  {/* CHECK OUT */}
-
                   <div className="min-w-0 rounded-xl bg-rose-50/60 p-3">
                     <div className="mb-2 flex items-center gap-2">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
@@ -1223,12 +1293,9 @@ export function StaffLectureAttendance({
                       </div>
 
                       <div>
-                        <label
-                          htmlFor={`lecture-out-${lecture.id}`}
-                          className="block text-xs font-bold text-[#0A193A]"
-                        >
+                        <p className="text-xs font-bold text-[#0A193A]">
                           Actual Check Out
-                        </label>
+                        </p>
 
                         <p className="mt-0.5 text-[11px] text-slate-500">
                           Enter actual check-out time
@@ -1239,11 +1306,7 @@ export function StaffLectureAttendance({
                     <AttendanceTimeInput
                       id={`lecture-out-${lecture.id}`}
                       label="Actual Check Out"
-                      value={
-                        draft.attendanceStatus === "absent"
-                          ? ""
-                          : draft.checkOut
-                      }
+                      value={isManual ? "" : draft.checkOut}
                       disabled={!canEditTimes}
                       onChange={(value) =>
                         updateDraft(lecture.id, {
@@ -1254,7 +1317,7 @@ export function StaffLectureAttendance({
                   </div>
                 </div>
 
-                {/* COMPACT FOOTER */}
+                {/* FOOTER */}
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3">
                   <div
@@ -1263,11 +1326,13 @@ export function StaffLectureAttendance({
                         ? "bg-amber-50 text-amber-700"
                         : draft.attendanceStatus === "absent"
                           ? "bg-red-50 text-red-700"
-                          : draft.attendanceStatus === "late"
-                            ? "bg-amber-50 text-amber-700"
-                            : draft.attendanceStatus === "present"
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-slate-100 text-slate-500"
+                          : draft.attendanceStatus === "leave"
+                            ? "bg-violet-50 text-violet-700"
+                            : draft.attendanceStatus === "late"
+                              ? "bg-amber-50 text-amber-700"
+                              : draft.attendanceStatus === "present"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : "bg-slate-100 text-slate-500"
                     }`}
                   >
                     <CheckCircle2 size={15} />
@@ -1276,11 +1341,13 @@ export function StaffLectureAttendance({
                       ? "Unsaved attendance changes"
                       : draft.attendanceStatus === "absent"
                         ? "Faculty marked Absent"
-                        : draft.attendanceStatus === "late"
-                          ? "Late attendance is up to date"
-                          : draft.attendanceStatus === "present"
-                            ? "Present attendance is up to date"
-                            : "Attendance not recorded"}
+                        : draft.attendanceStatus === "leave"
+                          ? "Faculty marked Leave"
+                          : draft.attendanceStatus === "late"
+                            ? "Late attendance is up to date"
+                            : draft.attendanceStatus === "present"
+                              ? "Present attendance is up to date"
+                              : "Attendance not recorded"}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">

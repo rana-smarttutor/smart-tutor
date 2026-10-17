@@ -17,7 +17,7 @@ type Context = {
   params: Promise<{ lectureId: string }>;
 };
 
-type AttendanceStatus = "present" | "absent" | "late";
+type AttendanceStatus = "present" | "absent" | "late" | "leave";
 
 type AttendanceBody = {
   action?: unknown;
@@ -78,7 +78,7 @@ function parseAttendanceTime(
 }
 
 function isAttendanceStatus(value: unknown): value is AttendanceStatus {
-  return value === "present" || value === "absent" || value === "late";
+  return value === "present" || value === "absent" || value === "late" || value === "leave";
 }
 
 export async function POST(request: Request, context: Context) {
@@ -159,7 +159,10 @@ export async function POST(request: Request, context: Context) {
       }
 
       if (!isAttendanceStatus(body.attendanceStatus)) {
-        return errorResponse("Select Present, Absent or Late.", 400);
+        return errorResponse(
+          "Enter lecture times or select Absent / Leave.",
+          400,
+        );
       }
 
       const attendanceStatus = body.attendanceStatus;
@@ -176,7 +179,7 @@ export async function POST(request: Request, context: Context) {
       // Present and Late have identical time-entry
       // validation. Their saved attendance status
       // remains different.
-      if (attendanceStatus !== "absent") {
+      if (attendanceStatus !== "absent" && attendanceStatus !== "leave") {
         try {
           checkInAt = parseAttendanceTime(
             lectureDate,
@@ -219,9 +222,22 @@ export async function POST(request: Request, context: Context) {
         }
       }
 
+      const scheduledStartMs = Date.parse(lecture.startsAt);
+
+      if (!Number.isFinite(scheduledStartMs)) {
+        return errorResponse("Invalid scheduled lecture time.", 400);
+      }
+
+      const finalAttendanceStatus =
+        attendanceStatus === "absent" || attendanceStatus === "leave"
+          ? attendanceStatus
+          : Date.parse(checkInAt) > scheduledStartMs
+            ? "late"
+            : "present";
+
       try {
         updated = await saveLectureAttendanceTimes(lectureId, {
-          attendanceStatus,
+          attendanceStatus: finalAttendanceStatus,
           checkInAt,
           checkOutAt,
         });
@@ -238,7 +254,7 @@ export async function POST(request: Request, context: Context) {
         return errorResponse("Lecture is not scheduled.", 409);
       }
 
-      if (lecture.lectureAttendanceStatus === "absent") {
+      if (lecture.lectureAttendanceStatus === "absent" || lecture.lectureAttendanceStatus === "leave") {
         return errorResponse(
           "Change attendance to Present or Late before recording lecture actions.",
           409,

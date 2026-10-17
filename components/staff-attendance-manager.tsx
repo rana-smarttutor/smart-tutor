@@ -51,13 +51,14 @@ type Feedback = {
 } | null;
 
 type LectureWithAttendance = LectureItem & {
-  lectureAttendanceStatus?: "present" | "absent" | "late";
+  lectureAttendanceStatus?: "present" | "absent" | "late" | "leave";
 };
 
 type FacultyAttendanceStatus =
   | "present"
   | "absent"
   | "late"
+  | "leave"
   | "partially present";
 
 type RecordedFaculty = {
@@ -66,6 +67,7 @@ type RecordedFaculty = {
   presentCount: number;
   absentCount: number;
   lateCount: number;
+  leaveCount: number;
   checkIn: string;
   checkOut: string;
   durationMinutes: number;
@@ -183,6 +185,7 @@ function statusStyle(status?: string) {
     case "partially present":
     case "partially completed":
     case "half_day":
+    case "leave":
     case "pending":
     case "in progress":
       return "bg-amber-50 text-amber-700";
@@ -231,7 +234,10 @@ function durationFromTimes(checkIn: string, checkOut: string) {
 
 function lectureStatusOf(
   lecture: LectureWithAttendance,
-): "present" | "absent" | "late" | null {
+): "present" | "absent" | "late" | "leave" | null {
+  if (lecture.lectureAttendanceStatus === "leave") {
+    return "leave";
+  }
   if (lecture.lectureAttendanceStatus === "absent") {
     return "absent";
   }
@@ -1015,22 +1021,29 @@ export function StaffAttendanceManager({
         (lecture) => lectureStatusOf(lecture) === "absent",
       );
 
+      const leaveLectures = group.lectures.filter(
+        (lecture) => lectureStatusOf(lecture) === "leave",
+      );
+
       const takenLectures = [...presentLectures, ...lateLectures];
 
-      if (!takenLectures.length && !absentLectures.length) {
+      if (!takenLectures.length && !absentLectures.length && !leaveLectures.length) {
         continue;
       }
 
       const presentCount = presentLectures.length;
       const lateCount = lateLectures.length;
       const absentCount = absentLectures.length;
+      const leaveCount = leaveLectures.length;
 
       let attendanceStatus: FacultyAttendanceStatus;
 
-      if (absentCount > 0 && takenLectures.length > 0) {
+      if ((absentCount > 0 || leaveCount > 0) && takenLectures.length > 0) {
         attendanceStatus = "partially present";
       } else if (absentCount > 0) {
         attendanceStatus = "absent";
+      } else if (leaveCount > 0) {
+        attendanceStatus = "leave";
       } else if (lateCount > 0) {
         attendanceStatus = "late";
       } else {
@@ -1069,7 +1082,9 @@ export function StaffAttendanceManager({
       let lectureStatus = "in progress";
 
       if (!takenLectures.length) {
-        lectureStatus = "not taken";
+        lectureStatus = leaveCount > 0 && absentCount === 0
+          ? "on leave"
+          : "not taken";
       } else if (completedCount === takenLectures.length && absentCount === 0) {
         lectureStatus = "completed";
       } else if (completedCount > 0 || absentCount > 0) {
@@ -1084,6 +1099,7 @@ export function StaffAttendanceManager({
         presentCount,
         absentCount,
         lateCount,
+        leaveCount,
         checkIn: checkIns[0] ?? "",
         checkOut: checkOuts[checkOuts.length - 1] ?? "",
         durationMinutes: Math.floor(durationMinutes),
