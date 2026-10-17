@@ -1716,114 +1716,171 @@ export default function QuizArenaClient({
           </div>
         </div>
       )}
+
       {showResumeChoice && unfinishedDraft && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 px-4 py-5 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 px-4 py-3 backdrop-blur-sm"
           role="presentation"
+          onClick={() => setShowResumeChoice(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="resume-quiz-title"
-            className="relative max-h-[calc(100dvh-2.5rem)] w-full max-w-md overflow-y-auto rounded-[26px] border border-white/15 bg-slate-900 p-5 text-center text-white shadow-2xl sm:p-6"
+            aria-describedby="resume-quiz-description"
+            onClick={(event) => event.stopPropagation()}
+            className="relative w-full max-w-[430px] max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[24px] border border-blue-100 bg-white px-6 pb-5 pt-5 text-center text-[#111B33] shadow-[0_24px_80px_rgba(2,20,63,0.30)] sm:px-7"
           >
             {/* CLOSE BUTTON */}
-
             <button
               type="button"
               onClick={() => setShowResumeChoice(false)}
               aria-label="Close unfinished quiz reminder"
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xl text-slate-300 transition hover:border-cyan-300 hover:bg-white/10 hover:text-white"
+              className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-100 bg-white text-slate-500 shadow-sm transition hover:bg-blue-50 hover:text-blue-700"
             >
-              ×
+              <X size={17} />
             </button>
 
             {/* ICON */}
-
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-400/15 text-2xl">
-              📚
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-blue-100 shadow-sm">
+              <GraduationCap
+                size={29}
+                strokeWidth={1.9}
+                className="text-[#1554C5]"
+              />
             </div>
 
             {/* BRAND */}
-
-            <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.22em] text-cyan-300">
+            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.25em] text-[#1554C5]">
               SmartIQ Institute
             </p>
 
             {/* HEADING */}
-
             <h2
               id="resume-quiz-title"
-              className="mt-2 text-[27px] font-black leading-tight"
+              className="mt-2 text-[27px] font-black leading-tight tracking-[-0.04em] text-[#111B33] sm:text-[29px]"
             >
               Welcome Back!
             </h2>
 
             {/* DESCRIPTION */}
-
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-300">
-              You have an unfinished quiz from your previous session.
+            <p
+              id="resume-quiz-description"
+              className="mx-auto mt-2 max-w-[350px] text-xs font-medium leading-5 text-slate-500"
+            >
+              You have an unfinished quiz from your previous session. Continue
+              where you left off and keep up your progress!
             </p>
 
             {/* SAVED QUIZ DETAILS */}
+            <div className="mt-4 rounded-xl border border-blue-100 bg-[#F4F8FF] p-3 text-left">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E1ECFF] text-[#1764E8]">
+                  <GraduationCap size={21} strokeWidth={1.8} />
+                </div>
 
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-left">
-              <p className="text-base font-bold text-white">
-                {unfinishedDraft.subject}
-              </p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words text-sm font-extrabold text-[#111B33]">
+                    {unfinishedDraft.subject}
+                  </h3>
 
-              <p className="mt-2 text-sm text-slate-300">
-                {getExamTitle(unfinishedDraft.exam)}
+                  <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                    {getExamTitle(unfinishedDraft.exam)}
+                    {unfinishedDraft.schoolClass
+                      ? ` • Class ${unfinishedDraft.schoolClass}`
+                      : ""}
+                    {unfinishedDraft.board ? ` • ${unfinishedDraft.board}` : ""}
+                  </p>
 
-                {unfinishedDraft.schoolClass
-                  ? ` • Class ${unfinishedDraft.schoolClass}`
-                  : ""}
-
-                {unfinishedDraft.board ? ` • ${unfinishedDraft.board}` : ""}
-              </p>
-
-              <p className="mt-2 text-sm font-semibold text-cyan-200">
-                Level {unfinishedDraft.progressionLevel}
-                {" • "}
-                Round {unfinishedDraft.round}
-              </p>
+                  <span className="mt-2 inline-flex rounded-full bg-[#DFECFF] px-2.5 py-1 text-[10px] font-bold text-[#1454C5]">
+                    Level {unfinishedDraft.progressionLevel}
+                    {" • "}
+                    Round {unfinishedDraft.round}
+                  </span>
+                </div>
+              </div>
 
               {/* QUESTION PROGRESS */}
+              <div className="mt-3 border-t border-blue-100 pt-3">
+                {(() => {
+                  const total = unfinishedDraft.questions.length;
 
-              <div className="mt-3 rounded-xl bg-cyan-400/10 px-4 py-3 text-sm font-bold text-cyan-200">
-                {Object.keys(unfinishedDraft.answersByIndex).length} of{" "}
-                {unfinishedDraft.questions.length} questions answered
+                  const answered = Math.min(
+                    total,
+                    Object.keys(unfinishedDraft.answersByIndex).filter((key) =>
+                      Boolean(unfinishedDraft.answersByIndex[Number(key)]),
+                    ).length,
+                  );
+
+                  const percentage =
+                    total > 0 ? Math.round((answered / total) * 100) : 0;
+
+                  return (
+                    <>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <p className="text-[11px] font-semibold text-slate-500">
+                          {answered} of {total} questions answered
+                        </p>
+
+                        <span className="text-[11px] font-extrabold text-[#1554C5]">
+                          {percentage}%
+                        </span>
+                      </div>
+
+                      <div
+                        role="progressbar"
+                        aria-label="Saved quiz progress"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={percentage}
+                        className="h-2 w-full overflow-hidden rounded-full bg-[#DFE8F7]"
+                      >
+                        <div
+                          className="h-full rounded-full bg-[#1769F5] transition-all duration-300"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
             {/* ACTION BUTTONS */}
-
-            <div className="mt-5 grid gap-3">
+            <div className="mt-4 grid gap-2.5">
               <button
                 type="button"
                 onClick={resumePreviousQuiz}
-                className="rounded-xl bg-cyan-400 px-5 py-3.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
+                className="group flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#1677FA] to-[#1754EC] px-4 py-3 text-[13px] font-bold text-white shadow-[0_6px_18px_rgba(37,99,235,0.18)] transition hover:from-[#0965E6] hover:to-[#1345D7]"
               >
                 Continue Previous Quiz
+                <ArrowRight
+                  size={16}
+                  className="transition-transform group-hover:translate-x-1"
+                />
               </button>
 
               <button
                 type="button"
                 onClick={startFreshQuiz}
-                className="rounded-xl border border-white/20 bg-white/5 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
+                className="group flex w-full items-center justify-center gap-3 rounded-xl border border-blue-300 bg-white px-4 py-3 text-[13px] font-bold text-[#1554C5] transition hover:bg-blue-50"
               >
                 Start New Quiz
+                <ArrowRight
+                  size={16}
+                  className="transition-transform group-hover:translate-x-1"
+                />
               </button>
             </div>
 
             {/* FOOTER */}
-
-            <p className="mt-4 text-xs leading-5 text-slate-400">
+            <p className="mt-3 text-[10px] font-medium text-slate-400">
               Your saved quiz is associated with your account.
             </p>
           </div>
         </div>
       )}
+
       {step !== "welcome" && step !== "quiz" && (
         <button
           type="button"
