@@ -36,8 +36,9 @@ export type GovernmentQuestionStatus =
 
 export type GovernmentQuestionSource =
   | "gemini"
-  | "manual"
-  | "import";
+  | "groq"
+  | "manual";
+
 
 export type GovernmentQuestion = {
   id: string;

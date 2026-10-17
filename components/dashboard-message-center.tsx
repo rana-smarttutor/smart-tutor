@@ -2,6 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import {
+  AlertCircle,
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  Check,
+  ChevronRight,
+  FileText,
+  GraduationCap,
+  Megaphone,
+  MessageCircle,
+  Pencil,
+  Search,
+  Send,
+  Trash2,
+  UserRound,
+  X,
+} from "lucide-react";
+
 import type { ManagedUser, MessageItem, Role, SessionUser } from "@/lib/types";
 
 type DashboardMessageCenterProps = {
@@ -15,6 +34,261 @@ type DashboardMessageCenterProps = {
   assignedFacultyNames?: string[];
 };
 
+type ViewMode = "board" | "chat";
+
+type NoticeFilter =
+  | "All Notices"
+  | "Academic Update"
+  | "Student Notice"
+  | "Results"
+  | "Admin Board"
+  | "Other";
+
+const NOTICE_FILTERS: NoticeFilter[] = [
+  "All Notices",
+  "Academic Update",
+  "Student Notice",
+  "Results",
+  "Admin Board",
+  "Other",
+];
+
+function formatNoticeDate(value?: string | null) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (!Number.isFinite(date.getTime())) return "";
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatNoticeTime(value?: string | null) {
+  if (!value) return "";
+
+  const date = new Date(value);
+
+  if (!Number.isFinite(date.getTime())) return "";
+
+  return date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function isRecentNotice(value?: string | null) {
+  if (!value) return false;
+
+  const created = new Date(value).getTime();
+
+  if (!Number.isFinite(created)) return false;
+
+  const age = Date.now() - created;
+
+  return age >= 0 && age <= 24 * 60 * 60 * 1000;
+}
+
+function noticeCategory(channel: string): NoticeFilter {
+  if (
+    channel === "Academic Update" ||
+    channel === "Student Notice" ||
+    channel === "Results" ||
+    channel === "Admin Board"
+  ) {
+    return channel;
+  }
+
+  return "Other";
+}
+
+function noticeTheme(channel: string) {
+  const name = channel.toLowerCase();
+
+  if (name.includes("academic")) {
+    return {
+      icon: BookOpen,
+      iconBackground: "bg-blue-50",
+      iconColor: "text-blue-600",
+      badge: "bg-blue-50 text-blue-700",
+    };
+  }
+
+  if (name.includes("result")) {
+    return {
+      icon: GraduationCap,
+      iconBackground: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      badge: "bg-emerald-50 text-emerald-700",
+    };
+  }
+
+  if (name.includes("admin")) {
+    return {
+      icon: Megaphone,
+      iconBackground: "bg-violet-50",
+      iconColor: "text-violet-600",
+      badge: "bg-violet-50 text-violet-700",
+    };
+  }
+
+  return {
+    icon: FileText,
+    iconBackground: "bg-sky-50",
+    iconColor: "text-sky-600",
+    badge: "bg-sky-50 text-sky-700",
+  };
+}
+
+/* CLASS ANNOUNCEMENT PARSER */
+
+function parseClassAnnouncement(body: string) {
+  if (!/a new class has been scheduled/i.test(body)) {
+    return null;
+  }
+
+  const fieldPattern =
+    /\b(Title|Subject|Faculty|Date\s*&\s*Time|Homework)\s*:/gi;
+
+  const matches = Array.from(body.matchAll(fieldPattern));
+
+  if (!matches.length) return null;
+
+  const fields: Record<string, string> = {};
+
+  matches.forEach((match, index) => {
+    const start = (match.index ?? 0) + match[0].length;
+
+    const end =
+      index + 1 < matches.length
+        ? (matches[index + 1].index ?? body.length)
+        : body.length;
+
+    const key = match[1].toLowerCase().replace(/\s+/g, "");
+
+    fields[key] = body.slice(start, end).trim();
+  });
+
+  const dateTime = fields["date&time"] ?? "";
+
+  const timeMatch = dateTime.match(/(\d{1,2}:\d{2}\s*(?:am|pm))$/i);
+
+  const time = timeMatch?.[1]?.trim() ?? "";
+
+  const date = timeMatch
+    ? dateTime.slice(0, timeMatch.index).replace(/,\s*$/, "").trim()
+    : dateTime.trim();
+
+  return {
+    title: fields.title ?? "",
+    subject: fields.subject ?? "",
+    faculty: fields.faculty ?? "",
+    date,
+    time,
+    homework: fields.homework ?? "",
+  };
+}
+
+/* DATE AND WEEKDAY */
+
+function classDateDetails(dateText: string) {
+  const match = dateText.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
+
+  if (!match) {
+    return {
+      dateLabel: dateText,
+      weekday: "",
+    };
+  }
+
+  const months: Record<string, number> = {
+    jan: 0,
+    january: 0,
+    feb: 1,
+    february: 1,
+    mar: 2,
+    march: 2,
+    apr: 3,
+    april: 3,
+    may: 4,
+    jun: 5,
+    june: 5,
+    jul: 6,
+    july: 6,
+    aug: 7,
+    august: 7,
+    sep: 8,
+    sept: 8,
+    september: 8,
+    oct: 9,
+    october: 9,
+    nov: 10,
+    november: 10,
+    dec: 11,
+    december: 11,
+  };
+
+  const month = months[match[2].toLowerCase()];
+
+  if (month === undefined) {
+    return {
+      dateLabel: dateText,
+      weekday: "",
+    };
+  }
+
+  const day = Number(match[1]);
+  const year = Number(match[3]);
+
+  const date = new Date(Date.UTC(year, month, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
+  ) {
+    return {
+      dateLabel: dateText,
+      weekday: "",
+    };
+  }
+
+  return {
+    dateLabel: dateText,
+    weekday: date.toLocaleDateString("en-GB", {
+      weekday: "long",
+      timeZone: "UTC",
+    }),
+  };
+}
+
+function formatClassName(value: string) {
+  const clean = value.replace(/^New Class:\s*/i, "").trim();
+
+  if (!clean) return "Class";
+
+  const names: Record<string, string> = {
+    maths: "Mathematics",
+    math: "Mathematics",
+    mathematics: "Mathematics",
+    english: "English",
+    physics: "Physics",
+    chemistry: "Chemistry",
+    biology: "Biology",
+    science: "Science",
+    reasoning: "Reasoning",
+  };
+
+  return (
+    names[clean.toLowerCase()] ??
+    clean.replace(/^./, (character) => character.toUpperCase())
+  );
+}
+
 export function DashboardMessageCenter({
   session,
   role,
@@ -23,110 +297,182 @@ export function DashboardMessageCenter({
   onMessagesChange,
   managedUsers,
   assignedFacultyIds,
-  assignedFacultyNames,
+  assignedFacultyNames: _assignedFacultyNames,
 }: DashboardMessageCenterProps) {
-  const [viewMode, setViewMode] = useState<"board" | "chat">("board");
+  const [viewMode, setViewMode] = useState<ViewMode>("board");
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+
   const [channel, setChannel] = useState(
     role === "admin" ? "Admin Board" : "Student Notice",
   );
+
   const [targetMode, setTargetMode] = useState<
     "everyone" | "selected-students"
   >("everyone");
+
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+
   const [expiryPreset, setExpiryPreset] = useState<
     "24h" | "7d" | "30d" | "never"
   >("7d");
+
   const [status, setStatus] = useState("");
+
   const [editingId, setEditingId] = useState<string | null>(null);
+
   const [editTitle, setEditTitle] = useState("");
   const [editBody, setEditBody] = useState("");
   const [editChannel, setEditChannel] = useState("");
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [noticeSearch, setNoticeSearch] = useState("");
+
+  const [noticeFilter, setNoticeFilter] = useState<NoticeFilter>("All Notices");
 
   const [studentRecipient, setStudentRecipient] = useState<"faculty" | "admin">(
     "faculty",
   );
+
   const [educatorRecipient, setEducatorRecipient] = useState<
     "admin" | "students" | "selected-students"
   >("admin");
 
-  // Chat state
   const [chatContactId, setChatContactId] = useState<string | null>(null);
+
   const [chatInput, setChatInput] = useState("");
   const [sendingChat, setSendingChat] = useState(false);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const isStudentOrParent = role === "student" || role === "parent";
+
   const boardLabel = isStudentOrParent ? "Application Board" : "Notice Board";
+
   const composeLabel = isStudentOrParent
     ? "Write an application"
     : role === "educator"
       ? "Write message"
       : "Write institute message";
-  const canPost = role === "student" || role === "educator" || role === "admin" || (role === "staff" || role === "counsellor");
-  const canPostToEveryone = role === "admin" || (role === "staff" || role === "counsellor");
+
+  const canPost =
+    role === "student" ||
+    role === "educator" ||
+    role === "admin" ||
+    role === "staff" ||
+    role === "counsellor";
+
+  const canPostToEveryone =
+    role === "admin" || role === "staff" || role === "counsellor";
+
+  function canManageMessage(message: MessageItem) {
+    if (!session) return false;
+
+    if (role === "admin") return true;
+
+    return (
+      Boolean(session.name) &&
+      Boolean(message.author) &&
+      session.name.trim() === (message.author ?? "").trim()
+    );
+  }
+
+  /* DIRECT CHAT CONTACTS */
 
   const studentEducators = useMemo(() => {
-    if (role !== "student" || !managedUsers || !assignedFacultyIds) return [];
+    if (role !== "student" || !managedUsers || !assignedFacultyIds) {
+      return [];
+    }
+
     return managedUsers.filter(
-      (u) => u.role === "educator" && assignedFacultyIds.includes(u.id),
+      (user) =>
+        user.role === "educator" && assignedFacultyIds.includes(user.id),
     );
   }, [role, managedUsers, assignedFacultyIds]);
 
   const adminUsers = useMemo(() => {
-    if (!managedUsers) return [];
-    return managedUsers.filter((u) => u.role === "admin");
+    return (managedUsers ?? []).filter((user) => user.role === "admin");
   }, [managedUsers]);
 
   const chatContacts = useMemo(() => {
     if (role === "admin") {
       const educators = (managedUsers ?? []).filter(
-        (u) => u.role === "educator",
+        (user) => user.role === "educator",
       );
-      const students = studentDirectory.filter((u) => u.role === "student");
+
+      const students = studentDirectory.filter(
+        (user) => user.role === "student",
+      );
+
       return [...educators, ...students];
     }
+
     if (role === "educator") {
-      const admins = (managedUsers ?? []).filter((u) => u.role === "admin");
-      const students = studentDirectory.filter(
-        (u) => u.role === "student" && (u.assignedFacultyIds ?? []).includes(session?.id ?? ""),
+      const admins = (managedUsers ?? []).filter(
+        (user) => user.role === "admin",
       );
+
+      const students = studentDirectory.filter(
+        (user) =>
+          user.role === "student" &&
+          (user.assignedFacultyIds ?? []).includes(session?.id ?? ""),
+      );
+
       return [...admins, ...students];
     }
+
     if (role === "student") {
-      const admins = (managedUsers ?? []).filter((u) => u.role === "admin");
-      const educators = studentEducators;
-      return [...admins, ...educators];
+      const admins = (managedUsers ?? []).filter(
+        (user) => user.role === "admin",
+      );
+
+      return [...admins, ...studentEducators];
     }
+
     return [];
-  }, [role, managedUsers, studentDirectory, studentEducators]);
+  }, [role, managedUsers, studentDirectory, studentEducators, session?.id]);
 
   useEffect(() => {
     if (!chatContactId && chatContacts.length > 0) {
-      const adminContact = chatContacts.find((c) => c.role === "admin");
+      const adminContact = chatContacts.find(
+        (contact) => contact.role === "admin",
+      );
+
       setChatContactId(adminContact?.id ?? chatContacts[0].id);
     }
   }, [chatContacts, chatContactId]);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chatContactId]);
+    if (viewMode === "chat") {
+      chatEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [messages, chatContactId, viewMode]);
 
   const chatMessages = useMemo(() => {
     if (!chatContactId || !session) return [];
+
     const contactName =
-      chatContacts.find((c) => c.id === chatContactId)?.name ?? "";
+      chatContacts.find((contact) => contact.id === chatContactId)?.name ?? "";
+
     return messages
-      .filter((m) => {
-        const isFromContact = m.author === contactName;
+      .filter((message) => {
+        const isFromContact = message.author === contactName;
+
         const isToContact =
-          Array.isArray(m.userIds) && m.userIds.includes(chatContactId);
-        const isFromMe = m.author === session.name;
+          Array.isArray(message.userIds) &&
+          message.userIds.includes(chatContactId);
+
+        const isFromMe = message.author === session.name;
+
         return (
-          m.channel === "Chat" &&
+          message.channel === "Chat" &&
           ((isFromContact && isToContact) ||
             (isFromMe && isToContact) ||
             (isFromContact && isFromMe))
@@ -139,22 +485,66 @@ export function DashboardMessageCenter({
       );
   }, [messages, chatContactId, session, chatContacts]);
 
+  /* NOTICE DATA */
+
+  const boardMessages = useMemo(() => {
+    return messages
+      .filter((message) => message.channel !== "Chat")
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt ?? 0).getTime() -
+          new Date(a.createdAt ?? 0).getTime(),
+      );
+  }, [messages]);
+
+  const filteredNotices = useMemo(() => {
+    const query = noticeSearch.trim().toLowerCase();
+
+    return boardMessages.filter((message) => {
+      const categoryMatches =
+        noticeFilter === "All Notices" ||
+        noticeCategory(message.channel) === noticeFilter;
+
+      if (!categoryMatches) return false;
+
+      if (!query) return true;
+
+      return [
+        message.title,
+        message.body,
+        message.channel,
+        message.author ?? "",
+      ].some((value) => value.toLowerCase().includes(query));
+    });
+  }, [boardMessages, noticeSearch, noticeFilter]);
+
+  /* PUBLISH */
+
   function buildExpiryIso() {
     if (expiryPreset === "never") return null;
+
     const now = new Date();
-    if (expiryPreset === "24h") now.setHours(now.getHours() + 24);
-    else if (expiryPreset === "7d") now.setDate(now.getDate() + 7);
-    else now.setDate(now.getDate() + 30);
+
+    if (expiryPreset === "24h") {
+      now.setHours(now.getHours() + 24);
+    } else if (expiryPreset === "7d") {
+      now.setDate(now.getDate() + 7);
+    } else {
+      now.setDate(now.getDate() + 30);
+    }
+
     return now.toISOString();
   }
 
   function buildAudienceAndUserIds() {
-    if ((role === "staff" || role === "counsellor")) {
+    if (role === "staff" || role === "counsellor") {
       return {
         audience: ["student"] as const,
-        userIds: targetMode === "selected-students" ? selectedStudentIds : undefined,
+        userIds:
+          targetMode === "selected-students" ? selectedStudentIds : undefined,
       };
     }
+
     if (role === "admin") {
       if (targetMode === "selected-students") {
         return {
@@ -162,40 +552,52 @@ export function DashboardMessageCenter({
           userIds: selectedStudentIds,
         };
       }
+
       return {
         audience: ["student", "educator", "admin"] as const,
         userIds: undefined as string[] | undefined,
       };
     }
+
     if (role === "educator") {
       if (educatorRecipient === "admin") {
         return {
           audience: ["admin"] as const,
-          userIds: adminUsers.map((u) => u.id),
+          userIds: adminUsers.map((user) => user.id),
         };
       }
+
       if (educatorRecipient === "selected-students") {
-        return { audience: ["student"] as const, userIds: selectedStudentIds };
+        return {
+          audience: ["student"] as const,
+          userIds: selectedStudentIds,
+        };
       }
+
       return {
         audience: ["student"] as const,
         userIds: studentDirectory
-          .filter((s) => (s.assignedFacultyIds ?? []).includes(session?.id ?? ""))
-          .map((s) => s.id),
+          .filter((student) =>
+            (student.assignedFacultyIds ?? []).includes(session?.id ?? ""),
+          )
+          .map((student) => student.id),
       };
     }
+
     if (role === "student") {
       if (studentRecipient === "admin") {
         return {
           audience: ["admin"] as const,
-          userIds: adminUsers.map((u) => u.id),
+          userIds: adminUsers.map((user) => user.id),
         };
       }
+
       return {
         audience: ["educator"] as const,
         userIds: assignedFacultyIds ?? [],
       };
     }
+
     return {
       audience: ["student", "educator", "admin"] as const,
       userIds: undefined as string[] | undefined,
@@ -203,65 +605,119 @@ export function DashboardMessageCenter({
   }
 
   async function handlePublish() {
-    const { audience, userIds } = buildAudienceAndUserIds();
-    const response = await fetch("/api/messages", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        body,
-        channel,
-        audience,
-        userIds,
-        expiresAt: buildExpiryIso(),
-      }),
-    });
-    if (!response.ok) {
-      const payload = (await response.json()) as { error?: string };
-      setStatus(payload.error ?? "Message could not be published.");
+    if (!session || !canPost) return;
+
+    if (!title.trim() || !body.trim()) {
+      setStatus("Please enter a title and message.");
       return;
     }
-    const data = (await response.json()) as { message: MessageItem };
-    onMessagesChange([data.message, ...messages]);
-    setTitle("");
-    setBody("");
-    setSelectedStudentIds([]);
-    setExpiryPreset("7d");
-    setStatus("Message board updated.");
+
+    const { audience, userIds } = buildAudienceAndUserIds();
+
+    try {
+      const response = await fetch("/api/messages", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: title.trim(),
+          body: body.trim(),
+          channel,
+          audience,
+          userIds,
+          expiresAt: buildExpiryIso(),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json()) as {
+          error?: string;
+        };
+
+        setStatus(payload.error ?? "Message could not be published.");
+
+        return;
+      }
+
+      const data = (await response.json()) as {
+        message: MessageItem;
+      };
+
+      onMessagesChange([data.message, ...messages]);
+
+      setTitle("");
+      setBody("");
+      setSelectedStudentIds([]);
+      setExpiryPreset("7d");
+
+      setStatus("Message board updated.");
+    } catch {
+      setStatus("Unable to publish message. Please try again.");
+    }
   }
 
+  /* DIRECT CHAT SEND */
+
   async function handleSendChat() {
-    if (!chatInput.trim() || !chatContactId || !session) return;
+    if (!chatInput.trim() || !chatContactId || !session || sendingChat) {
+      return;
+    }
+
     setSendingChat(true);
+    setStatus("");
+
     try {
-      const targetUser = chatContacts.find((c) => c.id === chatContactId);
+      const targetUser = chatContacts.find(
+        (contact) => contact.id === chatContactId,
+      );
+
       if (!targetUser) return;
+
       const response = await fetch("/api/chat", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           receiverId: chatContactId,
           receiverRole: targetUser.role,
-          body: chatInput,
+          body: chatInput.trim(),
         }),
       });
+
       if (!response.ok) {
-        const payload = (await response.json()) as { error?: string };
+        const payload = (await response.json()) as {
+          error?: string;
+        };
+
         setStatus(payload.error ?? "Message could not be sent.");
+
         return;
       }
-      const data = (await response.json()) as { message: MessageItem };
+
+      const data = (await response.json()) as {
+        message: MessageItem;
+      };
+
       onMessagesChange([data.message, ...messages]);
+
       setChatInput("");
       setStatus("");
+    } catch {
+      setStatus("Unable to send message. Please try again.");
     } finally {
       setSendingChat(false);
     }
   }
 
+  /* EDIT MESSAGE */
+
   function startEdit(message: MessageItem) {
+    if (!canManageMessage(message)) return;
+
     setEditingId(message.id);
     setEditTitle(message.title);
     setEditBody(message.body);
@@ -278,258 +734,592 @@ export function DashboardMessageCenter({
   }
 
   async function handleEdit(messageId: string) {
+    const original = messages.find((message) => message.id === messageId);
+
+    if (!original || !canManageMessage(original)) {
+      setStatus("You cannot edit this message.");
+      return;
+    }
+
     if (!editTitle.trim() || !editBody.trim() || !editChannel.trim()) {
       setStatus("Title, body, and channel are required.");
       return;
     }
-    const response = await fetch(`/api/messages/${messageId}`, {
-      method: "PATCH",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: editTitle,
-        body: editBody,
-        channel: editChannel,
-      }),
-    });
-    if (!response.ok) {
-      const payload = (await response.json()) as { error?: string };
-      setStatus(payload.error ?? "Message could not be updated.");
-      return;
+
+    try {
+      const response = await fetch(
+        `/api/messages/${encodeURIComponent(messageId)}`,
+        {
+          method: "PATCH",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: editTitle.trim(),
+            body: editBody.trim(),
+            channel: editChannel,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const payload = (await response.json()) as {
+          error?: string;
+        };
+
+        setStatus(payload.error ?? "Message could not be updated.");
+
+        return;
+      }
+
+      const data = (await response.json()) as {
+        message: MessageItem;
+      };
+
+      onMessagesChange(
+        messages.map((message) =>
+          message.id === messageId ? data.message : message,
+        ),
+      );
+
+      cancelEdit();
+      setStatus("Message updated.");
+    } catch {
+      setStatus("Unable to update message. Please try again.");
     }
-    const data = (await response.json()) as { message: MessageItem };
-    onMessagesChange(
-      messages.map((m) => (m.id === messageId ? data.message : m)),
-    );
-    cancelEdit();
-    setStatus("Message updated.");
   }
 
+  /* DELETE MESSAGE */
+
   async function handleDelete(messageId: string) {
-    const response = await fetch(`/api/messages/${messageId}`, {
-      method: "DELETE",
-      credentials: "same-origin",
-    });
-    if (!response.ok) {
-      const payload = (await response.json()) as { error?: string };
-      setStatus(payload.error ?? "Message could not be deleted.");
+    const target = messages.find((message) => message.id === messageId);
+
+    if (!target || !canManageMessage(target)) {
       setDeleteConfirmId(null);
+      setStatus("You cannot delete this message.");
       return;
     }
-    onMessagesChange(messages.filter((m) => m.id !== messageId));
-    setDeleteConfirmId(null);
-    setStatus("Message deleted.");
+
+    if (deletingId) return;
+
+    setDeletingId(messageId);
+
+    try {
+      const response = await fetch(
+        `/api/messages/${encodeURIComponent(messageId)}`,
+        {
+          method: "DELETE",
+          credentials: "same-origin",
+        },
+      );
+
+      if (!response.ok) {
+        const payload = (await response.json()) as {
+          error?: string;
+        };
+
+        setStatus(payload.error ?? "Message could not be deleted.");
+
+        setDeleteConfirmId(null);
+        return;
+      }
+
+      onMessagesChange(messages.filter((message) => message.id !== messageId));
+
+      setDeleteConfirmId(null);
+      setStatus("Message deleted.");
+    } catch {
+      setStatus("Unable to delete message. Please try again.");
+      setDeleteConfirmId(null);
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
-    <section className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-card)] overflow-hidden">
-      {/* Header */}
+    <section className="min-w-0 overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-[var(--color-card)] shadow-sm">
+      {/* MAIN HEADER */}
+
       <div
-        className="px-6 py-5 text-white"
+        className="px-5 py-5 text-white sm:px-7 sm:py-6"
         style={{
           background:
-            "linear-gradient(135deg, #1E1B4B, var(--color-primary), #6D28D9)",
+            "linear-gradient(115deg, #1E1B4B 0%, #4338CA 52%, #6D28D9 100%)",
         }}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-medium text-white/60">Communications</p>
-            <h1 className="mt-1 text-2xl font-black tracking-tight">
-              {viewMode === "board" ? boardLabel : "Direct Chat"}
-            </h1>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setViewMode("board")}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
-                viewMode === "board"
-                  ? "bg-white text-[#0B40A1]"
-                  : "bg-white/15 text-white hover:bg-white/25"
-              }`}
-            >
-              Notice Board
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("chat")}
-              className={`rounded-full px-4 py-1.5 text-xs font-bold transition ${
-                viewMode === "chat"
-                  ? "bg-white text-[#0B40A1]"
-                  : "bg-white/15 text-white hover:bg-white/25"
-              }`}
-            >
-              Direct Chat
-            </button>
+            <p className="text-xs font-medium text-white/75">Communications</p>
+
+
+            <p className="mt-1.5 text-xs text-white/65">
+              {viewMode === "board"
+                ? "Stay informed with your latest institute updates."
+                : "Stay connected with your institute."}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Status */}
-      {status ? (
-        <div className="mx-6 mt-4 rounded-xl bg-[var(--color-panel)] px-4 py-3 text-sm font-semibold text-[var(--color-heading)] border border-[var(--color-border)]">
-          {status}
+      {/* STATUS MESSAGE */}
+
+      {status && (
+        <div
+          role="status"
+          className="mx-5 mt-4 flex items-start justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-semibold text-[#0A54B7] sm:mx-7"
+        >
+          <span>{status}</span>
+
+          <button
+            type="button"
+            onClick={() => setStatus("")}
+            aria-label="Dismiss message"
+          >
+            <X size={15} />
+          </button>
         </div>
-      ) : null}
+      )}
+
+      {/* NOTICE BOARD */}
 
       {viewMode === "board" ? (
-        /* ════ NOTICE BOARD VIEW ════ */
-        <div className="p-6">
-          {/* Messages displayed first */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 mb-6">
-            {messages
-              .filter((m) => m.channel !== "Chat")
-              .map((message) => (
-                <div
-                  key={message.id}
-                  className="min-w-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5"
-                >
-                  {editingId === message.id ? (
-                    <div className="grid gap-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-blue-600">
-                        Editing
-                      </p>
-                      <input
-                        value={editTitle}
-                        onChange={(e) =>
-                          setEditTitle(e.target.value.slice(0, 80))
-                        }
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                      />
-                      <textarea
-                        value={editBody}
-                        onChange={(e) =>
-                          setEditBody(e.target.value.slice(0, 280))
-                        }
-                        rows={3}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                      />
-                      <select
-                        value={editChannel}
-                        onChange={(e) => setEditChannel(e.target.value)}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                      >
-                        <option value="Student Notice">Student Notice</option>
-                        <option value="Academic Update">Academic Update</option>
-                        <option value="Results">Results</option>
-                        <option value="Admin Board">Admin Board</option>
-                      </select>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(message.id)}
-                          className="rounded-xl bg-[var(--color-primary)] px-4 py-2 text-xs font-bold text-white"
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelEdit}
-                          className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-xs font-bold text-[var(--color-heading)]"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="min-w-0 break-words text-base font-bold text-[var(--color-heading)]">
-                          {message.title}
-                        </p>
-                        <span className="shrink-0 rounded-full bg-[var(--color-primary)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-primary)]">
-                          {message.channel}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-muted)]">
-                        {message.author ? (
-                          <span>By {message.author}</span>
-                        ) : null}
-                        {message.createdAt ? (
-                          <span>
-                            {new Date(message.createdAt).toLocaleString()}
-                          </span>
-                        ) : null}
-                        {message.expiresAt ? (
-                          <span>
-                            Expires{" "}
-                            {new Date(message.expiresAt).toLocaleString()}
-                          </span>
-                        ) : (
-                          <span>No expiry</span>
-                        )}
-                      </div>
-                      <p className="mt-3 break-words text-sm leading-6 text-[var(--color-muted)]">
-                        {message.body}
-                      </p>
-                      {canPost ? (
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => startEdit(message)}
-                            className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-bold text-[var(--color-heading)] hover:bg-blue-500/10"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteConfirmId(message.id)}
-                            className="rounded-lg border border-red-400/30 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-500/10"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      ) : null}
-                    </>
-                  )}
+        <div className="min-w-0 bg-[#F6F8FC] p-4 sm:p-6">
+          {/* SEARCH HEADER */}
+
+          <div className="mb-5 rounded-xl border border-slate-200 bg-white p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0A54B7]">
+                  <Megaphone size={19} />
                 </div>
-              ))}
+
+                <div>
+                  <h2 className="text-sm font-bold text-[#0A193A]">
+                    Latest Announcements
+                  </h2>
+
+                  <p className="mt-0.5 text-[11px] text-slate-500">
+                    Notices, class schedules and institute updates
+                  </p>
+                </div>
+              </div>
+
+              <span className="inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-[11px] font-bold text-[#0A54B7]">
+                {boardMessages.length} Notices
+              </span>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <div className="relative min-w-[200px] flex-1">
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+
+                <input
+                  type="search"
+                  aria-label="Search announcements"
+                  value={noticeSearch}
+                  onChange={(event) => setNoticeSearch(event.target.value)}
+                  placeholder="Search notices, subjects or faculty..."
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-xs text-[#0A193A] outline-none focus:border-[#0A54B7]"
+                />
+              </div>
+
+              <select
+                aria-label="Filter notices by category"
+                value={noticeFilter}
+                onChange={(event) =>
+                  setNoticeFilter(event.target.value as NoticeFilter)
+                }
+                className="h-10 min-w-[155px] rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-[#0A193A] outline-none focus:border-[#0A54B7]"
+              >
+                {NOTICE_FILTERS.map((filter) => (
+                  <option key={filter} value={filter}>
+                    {filter}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Compose form below */}
-          {canPost && session ? (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5">
-              <p className="text-sm font-bold text-[var(--color-heading)]">
-                {composeLabel}
+          {/* ANNOUNCEMENT GRID */}
+
+          {filteredNotices.length > 0 ? (
+            <div className="mb-6 grid items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredNotices.map((message) => {
+                const theme = noticeTheme(message.channel);
+                const NoticeIcon = theme.icon;
+
+                const canManage = canManageMessage(message);
+                const editing = editingId === message.id;
+
+                const isNew = isRecentNotice(message.createdAt);
+
+                const classDetails = parseClassAnnouncement(message.body);
+
+                const classDate = classDetails
+                  ? classDateDetails(classDetails.date)
+                  : null;
+
+                const className = classDetails
+                  ? formatClassName(classDetails.title || message.title)
+                  : "";
+
+                return (
+                  <article
+                    key={message.id}
+                    className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-[#C9D6E9] bg-white text-[#101B4C] transition-colors hover:border-[#9CB5DE]"
+                  >
+                    {editing ? (
+                      /* EDIT FORM */
+
+                      <div className="grid gap-3 p-4">
+                        <div className="flex items-center gap-2 text-xs font-bold text-[#0A54B7]">
+                          <Pencil size={15} />
+                          Edit Announcement
+                        </div>
+
+                        <input
+                          value={editTitle}
+                          onChange={(event) =>
+                            setEditTitle(event.target.value.slice(0, 80))
+                          }
+                          placeholder="Title"
+                          className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400"
+                        />
+
+                        <textarea
+                          value={editBody}
+                          onChange={(event) =>
+                            setEditBody(event.target.value.slice(0, 280))
+                          }
+                          rows={4}
+                          placeholder="Announcement details"
+                          className="w-full resize-y rounded-lg border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-blue-400"
+                        />
+
+                        <select
+                          value={editChannel}
+                          onChange={(event) =>
+                            setEditChannel(event.target.value)
+                          }
+                          className="rounded-lg border border-slate-200 px-3 py-2.5 text-sm"
+                        >
+                          <option value="Student Notice">Student Notice</option>
+                          <option value="Academic Update">
+                            Academic Update
+                          </option>
+                          <option value="Results">Results</option>
+                          <option value="Admin Board">Admin Board</option>
+                        </select>
+
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleEdit(message.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0A54B7] px-4 py-2 text-xs font-bold text-white"
+                          >
+                            <Check size={14} />
+                            Save
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={cancelEdit}
+                            className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : classDetails ? (
+                      /* CLASS ANNOUNCEMENT:
+                         EXACT LECTURE UPDATES CARD STYLE */
+
+                      <>
+                        {/* DATE HEADER */}
+
+                        <div className="flex items-center justify-between gap-3 border-b border-[#DCE5F2] px-5 py-3">
+                          <h3 className="text-[17px] font-extrabold text-[#0757EA]">
+                            {classDate?.dateLabel || "Date not specified"}
+                          </h3>
+
+                          <span className="text-[12px] font-medium text-[#64789F]">
+                            {classDate?.weekday}
+                          </span>
+                        </div>
+
+                        {/* CLASS AND TOPIC */}
+
+                        <div className="flex flex-1 flex-col px-5 py-3">
+                          <h4 className="text-[19px] font-extrabold leading-6 text-[#101548]">
+                            {className}
+                          </h4>
+
+                          <p className="mt-1 text-[15px] font-medium text-[#536A98]">
+                            {classDetails.subject || "Topic not specified"}
+                          </p>
+
+                          {/* FACULTY AND TIME */}
+
+                          <div className="mt-auto grid grid-cols-2 border-t border-[#DCE5F2] pt-3 [margin-top:14px]">
+                            <div className="min-w-0 border-r border-[#C9D6E9] pr-3">
+                              <p className="text-[12px] text-[#64789F]">
+                                Faculty
+                              </p>
+
+                              <p className="mt-1 break-words text-[13px] font-semibold text-[#101548]">
+                                {classDetails.faculty || "Not assigned"}
+                              </p>
+                            </div>
+
+                            <div className="min-w-0 pl-4">
+                              <p className="text-[12px] text-[#64789F]">Time</p>
+
+                              <p className="mt-1 break-words text-[13px] font-semibold text-[#101548]">
+                                {classDetails.time || "Not specified"}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* OPTIONAL HOMEWORK */}
+
+                          {classDetails.homework && (
+                            <div className="mt-3 border-t border-[#DCE5F2] pt-2">
+                              <p className="text-[11px] text-[#64789F]">
+                                Homework
+                              </p>
+
+                              <p className="mt-1 break-words text-xs text-[#101548]">
+                                {classDetails.homework}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* MANAGEMENT ACTIONS:
+                            NOT SHOWN TO NORMAL STUDENTS */}
+
+                        {canManage && (
+                          <div className="flex items-center gap-2 border-t border-[#DCE5F2] px-5 py-2.5">
+                            <button
+                              type="button"
+                              onClick={() => startEdit(message)}
+                              className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600 hover:bg-blue-50"
+                            >
+                              <Pencil size={12} />
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setDeleteConfirmId(message.id)}
+                              className="inline-flex items-center gap-1 rounded-md border border-red-100 px-2.5 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                            >
+                              <Trash2 size={12} />
+                              Delete
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      /* NORMAL ANNOUNCEMENTS */
+
+                      <div className="flex h-full flex-col p-4 sm:p-5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${theme.iconBackground} ${theme.iconColor}`}
+                          >
+                            <NoticeIcon size={19} strokeWidth={1.9} />
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            {isNew && (
+                              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                                New
+                              </span>
+                            )}
+
+                            <span
+                              className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${theme.badge}`}
+                            >
+                              {message.channel}
+                            </span>
+                          </div>
+                        </div>
+
+                        <h3 className="mt-4 break-words text-[16px] font-bold text-[#0A193A]">
+                          {message.title}
+                        </h3>
+
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-slate-500">
+                          {message.author && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <UserRound size={13} />
+                              {message.author}
+                            </span>
+                          )}
+
+                          {message.createdAt && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <CalendarDays size={13} />
+                              {formatNoticeDate(message.createdAt)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-4 flex-1">
+                          <p className="whitespace-pre-wrap break-words text-[13px] leading-6 text-slate-600">
+                            {message.body}
+                          </p>
+                        </div>
+
+                        <div className="mt-5 border-t border-slate-100 pt-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+                              {message.createdAt &&
+                                formatNoticeTime(message.createdAt)}
+
+                              {!isStudentOrParent && (
+                                <span>
+                                  {message.expiresAt
+                                    ? `Expires ${formatNoticeDate(
+                                        message.expiresAt,
+                                      )}`
+                                    : "No expiry"}
+                                </span>
+                              )}
+                            </div>
+
+                            {canManage && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => startEdit(message)}
+                                  className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold text-slate-600"
+                                >
+                                  <Pencil size={12} />
+                                  Edit
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteConfirmId(message.id)}
+                                  className="inline-flex items-center gap-1 rounded-md border border-red-100 px-2.5 py-1.5 text-[11px] font-semibold text-red-600"
+                                >
+                                  <Trash2 size={12} />
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mb-6 flex min-h-48 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-6 text-center">
+              <Megaphone size={24} className="text-[#0A54B7]" />
+
+              <h3 className="mt-4 text-sm font-bold text-[#0A193A]">
+                No announcements found
+              </h3>
+
+              <p className="mt-1 text-xs text-slate-500">
+                {noticeSearch || noticeFilter !== "All Notices"
+                  ? "Try another search or category."
+                  : "New announcements will appear here."}
               </p>
-              <div className="mt-4 grid gap-3">
+
+              {(noticeSearch || noticeFilter !== "All Notices") && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNoticeSearch("");
+                    setNoticeFilter("All Notices");
+                  }}
+                  className="mt-4 text-xs font-bold text-[#0A54B7]"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* COMPOSE MESSAGE */}
+
+          {canPost && session && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0A54B7]">
+                  <FileText size={19} />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-[#0A193A]">
+                    {composeLabel}
+                  </h3>
+
+                  <p className="mt-0.5 text-[11px] text-slate-500">
+                    {role === "student"
+                      ? "Send a message or application to your faculty or administration."
+                      : "Publish a message to the relevant recipients."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-3">
                 <input
                   value={title}
-                  onChange={(e) => setTitle(e.target.value.slice(0, 80))}
+                  onChange={(event) =>
+                    setTitle(event.target.value.slice(0, 80))
+                  }
                   placeholder="Message title"
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#0A54B7]"
                 />
+
                 <textarea
                   value={body}
-                  onChange={(e) => setBody(e.target.value.slice(0, 280))}
+                  onChange={(event) =>
+                    setBody(event.target.value.slice(0, 280))
+                  }
                   placeholder={
                     role === "student"
                       ? "Write your message..."
                       : "Write update for student or faculty boards"
                   }
                   rows={4}
-                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                  className="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#0A54B7]"
                 />
+
                 <div className="grid gap-3 sm:grid-cols-2">
                   <select
                     value={channel}
-                    onChange={(e) => setChannel(e.target.value)}
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    onChange={(event) => setChannel(event.target.value)}
+                    className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
                   >
                     <option value="Student Notice">Student Notice</option>
                     <option value="Academic Update">Academic Update</option>
                     <option value="Results">Results</option>
                     <option value="Admin Board">Admin Board</option>
                   </select>
+
                   {canPostToEveryone ? (
                     <select
                       value={targetMode}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         setTargetMode(
-                          e.target.value as "everyone" | "selected-students",
+                          event.target.value as
+                            | "everyone"
+                            | "selected-students",
                         )
                       }
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
                     >
                       <option value="everyone">Send to everyone</option>
                       <option value="selected-students">
@@ -539,15 +1329,15 @@ export function DashboardMessageCenter({
                   ) : role === "educator" ? (
                     <select
                       value={educatorRecipient}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         setEducatorRecipient(
-                          e.target.value as
+                          event.target.value as
                             | "admin"
                             | "students"
                             | "selected-students",
                         )
                       }
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
                     >
                       <option value="admin">Send to Admin</option>
                       <option value="students">Send to all my students</option>
@@ -558,64 +1348,69 @@ export function DashboardMessageCenter({
                   ) : role === "student" ? (
                     <select
                       value={studentRecipient}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         setStudentRecipient(
-                          e.target.value as "faculty" | "admin",
+                          event.target.value as "faculty" | "admin",
                         )
                       }
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      className="rounded-xl border border-slate-200 px-4 py-3 text-sm"
                     >
                       <option value="faculty">Send to my faculty</option>
                       <option value="admin">Send to Admin</option>
                     </select>
                   ) : null}
                 </div>
-                {(targetMode === "selected-students" && canPostToEveryone) ||
-                (educatorRecipient === "selected-students" &&
-                  role === "educator") ? (
-                  <div className="rounded-xl border border-[var(--color-border)] p-4">
-                    <p className="mb-3 text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+
+                {((canPostToEveryone && targetMode === "selected-students") ||
+                  (role === "educator" &&
+                    educatorRecipient === "selected-students")) && (
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="mb-3 text-xs font-bold text-slate-500">
                       Target registered students
                     </p>
-                    <div className="max-h-40 space-y-1.5 overflow-y-auto">
+
+                    <div className="max-h-40 space-y-2 overflow-y-auto">
                       {studentDirectory.map((student) => (
                         <label
                           key={student.id}
-                          className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-[var(--color-primary)]/5"
+                          className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-blue-50"
                         >
                           <input
                             type="checkbox"
                             checked={selectedStudentIds.includes(student.id)}
-                            onChange={(e) =>
-                              setSelectedStudentIds((c) =>
-                                e.target.checked
-                                  ? [...c, student.id]
-                                  : c.filter((id) => id !== student.id),
+                            onChange={(event) =>
+                              setSelectedStudentIds((current) =>
+                                event.target.checked
+                                  ? [...current, student.id]
+                                  : current.filter((id) => id !== student.id),
                               )
                             }
-                            className="h-4 w-4 text-[var(--color-primary)]"
+                            className="h-4 w-4 accent-[#0A54B7]"
                           />
-                          <span className="font-medium text-[var(--color-heading)]">
+
+                          <span className="text-sm text-[#0A193A]">
                             {student.name}
                           </span>
                         </label>
                       ))}
                     </div>
                   </div>
-                ) : null}
+                )}
+
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
+                  <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3">
+                    <p className="text-[11px] font-bold text-slate-500">
                       Expiry
                     </p>
+
                     <select
                       value={expiryPreset}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         setExpiryPreset(
-                          e.target.value as "24h" | "7d" | "30d" | "never",
+                          event.target.value as "24h" | "7d" | "30d" | "never",
                         )
                       }
-                      className="mt-1 w-full bg-transparent text-sm text-[var(--color-heading)] outline-none"
+                      className="mt-1 w-full bg-transparent text-sm outline-none"
                     >
                       <option value="24h">24 hours</option>
                       <option value="7d">7 days</option>
@@ -623,241 +1418,305 @@ export function DashboardMessageCenter({
                       <option value="never">No expiry</option>
                     </select>
                   </div>
-                  <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-muted)]">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-heading)]">
+
+                  <div className="rounded-xl border border-slate-200 bg-[#F8FAFC] px-4 py-3">
+                    <p className="text-[11px] font-bold text-slate-500">
                       Format
                     </p>
-                    <p className="mt-1 leading-6">
-                      Title, channel, audience, expiry, and delivery scope.
+
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
+                      Title, channel, audience, expiry and delivery scope.
                     </p>
                   </div>
                 </div>
+
                 <button
                   type="button"
-                  onClick={handlePublish}
-                  className="w-full rounded-xl bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white hover:opacity-90"
+                  onClick={() => void handlePublish()}
+                  disabled={!title.trim() || !body.trim()}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#0A54B7] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#084899] disabled:opacity-50"
                 >
+                  <Send size={16} />
                   Publish Message to Board
                 </button>
               </div>
             </div>
-          ) : null}
+          )}
         </div>
       ) : (
-        /* ════ CHAT VIEW ════ */
-        <div className="flex flex-col lg:flex-row h-[600px]">
-          {/* Contacts sidebar — hidden on mobile when a contact is selected */}
+        /* DIRECT CHAT */
+
+        <div className="flex h-[600px] flex-col lg:flex-row">
+          {/* CONTACTS */}
+
           <div
-            className={`w-full lg:w-64 shrink-0 border-r border-[var(--color-border)] bg-[var(--color-panel)] flex flex-col ${chatContactId ? "hidden lg:flex" : ""}`}
+            className={`flex w-full shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-panel)] lg:w-64 ${
+              chatContactId ? "hidden lg:flex" : ""
+            }`}
           >
-            <div className="p-4 border-b border-[var(--color-border)]">
+            <div className="border-b border-[var(--color-border)] p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--color-muted)]">
                 Contacts
               </p>
             </div>
-            <div className="flex-1 overflow-y-auto scrollbar-none">
+
+            <div className="flex-1 overflow-y-auto">
               {chatContacts.map((contact) => {
                 const isAdmin = contact.role === "admin";
+
                 const isAssignedFaculty =
                   role === "student" &&
                   assignedFacultyIds?.includes(contact.id);
+
                 return (
                   <button
                     key={contact.id}
                     type="button"
                     onClick={() => setChatContactId(contact.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition ${
+                    className={`flex w-full items-center gap-3 border-l-2 px-4 py-3 text-left transition ${
                       chatContactId === contact.id
-                        ? "bg-[var(--color-primary)]/10 border-l-2 border-[var(--color-primary)]"
-                        : "hover:bg-[var(--color-card)] border-l-2 border-transparent"
+                        ? "border-[#0A54B7] bg-blue-50"
+                        : "border-transparent hover:bg-white"
                     }`}
                   >
-                    <div className="h-9 w-9 shrink-0 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-sm font-bold text-[var(--color-primary)]">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-[#0A54B7]">
                       {contact.name.charAt(0).toUpperCase()}
                     </div>
+
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-bold text-[var(--color-heading)] truncate">
+                      <p className="truncate text-sm font-bold text-[var(--color-heading)]">
                         {contact.name}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <p className="text-[10px] font-semibold text-[var(--color-muted)]">
+
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="text-[10px] font-semibold capitalize text-[var(--color-muted)]">
                           {contact.role}
-                        </p>
-                        {isAdmin ? (
+                        </span>
+
+                        {isAdmin && (
                           <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-700">
                             Admin
                           </span>
-                        ) : null}
-                        {isAssignedFaculty ? (
+                        )}
+
+                        {isAssignedFaculty && (
                           <span className="rounded bg-green-100 px-1.5 py-0.5 text-[9px] font-bold text-green-700">
                             My Faculty
                           </span>
-                        ) : null}
+                        )}
                       </div>
                     </div>
+
+                    {chatContactId === contact.id && (
+                      <ChevronRight size={15} className="text-[#0A54B7]" />
+                    )}
                   </button>
                 );
               })}
-              {chatContacts.length === 0 ? (
+
+              {chatContacts.length === 0 && (
                 <p className="p-4 text-xs text-[var(--color-muted)]">
                   No contacts available.
                 </p>
-              ) : null}
+              )}
             </div>
           </div>
 
-          {/* Chat area — hidden on mobile when no contact selected */}
+          {/* CHAT WINDOW */}
+
           <div
-            className={`flex-1 flex flex-col bg-[var(--color-card)] ${!chatContactId ? "hidden lg:flex" : ""}`}
+            className={`flex min-w-0 flex-1 flex-col bg-[var(--color-card)] ${
+              !chatContactId ? "hidden lg:flex" : ""
+            }`}
           >
             {chatContactId ? (
               <>
-                {/* Chat header with mobile back button */}
-                <div className="flex items-center gap-3 border-b border-[var(--color-border)] px-4 lg:px-5 py-3 bg-[var(--color-panel)]">
+                <div className="flex items-center gap-3 border-b border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-3 lg:px-5">
                   <button
                     type="button"
                     onClick={() => setChatContactId(null)}
-                    className="lg:hidden mr-1 text-lg text-[var(--color-heading)]"
+                    aria-label="Back to contacts"
+                    className="mr-1 lg:hidden"
                   >
-                      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                    <ArrowLeft size={19} />
                   </button>
-                  <div className="h-8 w-8 shrink-0 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center text-sm font-bold text-[var(--color-primary)]">
+
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-[#0A54B7]">
                     {chatContacts
-                      .find((c) => c.id === chatContactId)
+                      .find((contact) => contact.id === chatContactId)
                       ?.name.charAt(0)
                       .toUpperCase() ?? "?"}
                   </div>
+
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-[var(--color-heading)] truncate">
-                      {chatContacts.find((c) => c.id === chatContactId)?.name ??
-                        "Unknown"}
+                    <p className="truncate text-sm font-bold text-[var(--color-heading)]">
+                      {chatContacts.find(
+                        (contact) => contact.id === chatContactId,
+                      )?.name ?? "Unknown"}
                     </p>
-                    <p className="text-[10px] font-semibold text-[var(--color-muted)]">
-                      {chatContacts.find((c) => c.id === chatContactId)?.role ??
-                        ""}
+
+                    <p className="text-[10px] font-semibold capitalize text-[var(--color-muted)]">
+                      {chatContacts.find(
+                        (contact) => contact.id === chatContactId,
+                      )?.role ?? ""}
                     </p>
                   </div>
                 </div>
 
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-5 space-y-3 scrollbar-none">
-                  {chatMessages.map((msg) => {
-                    const isMine = msg.author === session?.name;
+                {/* MESSAGES */}
+
+                <div className="flex-1 space-y-3 overflow-y-auto p-5">
+                  {chatMessages.map((message) => {
+                    const isMine = message.author === session?.name;
+
                     return (
                       <div
-                        key={msg.id}
-                        className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                        key={message.id}
+                        className={`flex ${
+                          isMine ? "justify-end" : "justify-start"
+                        }`}
                       >
                         <div
-                          className={`max-w-[85%] lg:max-w-[75%] break-words rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                          className={`max-w-[85%] break-words rounded-2xl px-4 py-2.5 text-sm leading-relaxed lg:max-w-[75%] ${
                             isMine
-                              ? "bg-[var(--color-primary)] text-white rounded-br-md"
-                              : "bg-[var(--color-panel)] text-[var(--color-heading)] rounded-bl-md border border-[var(--color-border)]"
+                              ? "rounded-br-md bg-[#0A54B7] text-white"
+                              : "rounded-bl-md border border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-heading)]"
                           }`}
                         >
-                          {!isMine && msg.author ? (
-                            <p className="text-[10px] font-bold text-[var(--color-muted)] mb-1">
-                              {msg.author}
+                          {!isMine && message.author && (
+                            <p className="mb-1 text-[10px] font-bold opacity-70">
+                              {message.author}
                             </p>
-                          ) : null}
-                          <p className="break-words">{msg.body}</p>
+                          )}
+
+                          <p className="break-words">{message.body}</p>
+
                           <p
-                            className={`text-[10px] mt-1 ${isMine ? "text-white/60" : "text-[var(--color-muted)]"}`}
+                            className={`mt-1 text-[10px] ${
+                              isMine
+                                ? "text-white/60"
+                                : "text-[var(--color-muted)]"
+                            }`}
                           >
-                            {msg.createdAt
-                              ? new Date(msg.createdAt).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
+                            {message.createdAt
+                              ? new Date(message.createdAt).toLocaleTimeString(
+                                  [],
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  },
+                                )
                               : ""}
                           </p>
                         </div>
                       </div>
                     );
                   })}
-                  {chatMessages.length === 0 ? (
-                    <div className="flex h-full items-center justify-center">
-                      <p className="text-sm text-[var(--color-muted)]">
+
+                  {chatMessages.length === 0 && (
+                    <div className="flex h-full flex-col items-center justify-center text-center">
+                      <MessageCircle size={30} className="text-slate-300" />
+
+                      <p className="mt-3 text-sm text-[var(--color-muted)]">
                         Start a conversation
                       </p>
                     </div>
-                  ) : null}
+                  )}
+
                   <div ref={chatEndRef} />
                 </div>
 
-                {/* Input */}
-                <div className="border-t border-[var(--color-border)] p-4 bg-[var(--color-panel)]">
+                {/* SEND CHAT */}
+
+                <div className="border-t border-[var(--color-border)] bg-[var(--color-panel)] p-4">
                   <div className="flex gap-3">
                     <input
                       value={chatInput}
-                      onChange={(e) =>
-                        setChatInput(e.target.value.slice(0, 500))
+                      onChange={(event) =>
+                        setChatInput(event.target.value.slice(0, 500))
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendChat();
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+                          void handleSendChat();
                         }
                       }}
                       placeholder="Type a message..."
-                      className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] min-w-0"
+                      className="min-w-0 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm outline-none focus:border-[#0A54B7]"
                     />
+
                     <button
                       type="button"
-                      onClick={handleSendChat}
+                      onClick={() => void handleSendChat()}
                       disabled={sendingChat || !chatInput.trim()}
                       aria-label="Send message"
-                      title="Send message"
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-sm transition hover:scale-[1.03] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#0A54B7] text-white disabled:opacity-40"
                     >
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" aria-hidden="true"><path d="M4.5 4.5L20 12L4.5 19.5L7.2 12L4.5 4.5Z" fill="currentColor" /></svg>
+                      <Send size={19} />
                     </button>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="hidden lg:flex h-full items-center justify-center">
-                <div className="text-center">
-                  <svg className="h-10 w-10 text-[var(--color-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                  <p className="mt-3 text-sm font-semibold text-[var(--color-muted)]">
-                    Select a contact to start chatting
-                  </p>
-                </div>
+              <div className="hidden h-full flex-col items-center justify-center lg:flex">
+                <MessageCircle size={40} className="text-slate-300" />
+
+                <p className="mt-3 text-sm text-[var(--color-muted)]">
+                  Select a contact to start chatting
+                </p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Delete confirm */}
-      {deleteConfirmId ? (
+      {/* DELETE CONFIRMATION */}
+
+      {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-[1.5rem] border border-[var(--color-border)] bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-black text-[var(--color-heading)]">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-message-title"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50 text-red-600">
+              <AlertCircle size={22} />
+            </div>
+
+            <h3
+              id="delete-message-title"
+              className="mt-4 text-lg font-black text-[#0A193A]"
+            >
               Delete message?
             </h3>
-            <p className="mt-2 text-sm text-[var(--color-muted)]">
+
+            <p className="mt-2 text-sm text-slate-500">
               This action cannot be undone.
             </p>
+
             <div className="mt-6 flex gap-3">
               <button
                 type="button"
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-bold text-[var(--color-heading)]"
+                disabled={Boolean(deletingId)}
+                className="flex-1 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-bold text-slate-700"
               >
                 Cancel
               </button>
+
               <button
                 type="button"
-                onClick={() => handleDelete(deleteConfirmId)}
-                className="flex-1 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-red-600"
+                onClick={() => void handleDelete(deleteConfirmId)}
+                disabled={Boolean(deletingId)}
+                className="flex-1 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50"
               >
-                Yes, Delete
+                {deletingId ? "Deleting..." : "Yes, Delete"}
               </button>
             </div>
           </div>
         </div>
-      ) : null}
+      )}
     </section>
   );
 }
