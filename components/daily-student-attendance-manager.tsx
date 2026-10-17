@@ -175,7 +175,16 @@ function coursesOf(student: ManagedUser) {
 
     if (!course) continue;
 
-    const key = course.toLowerCase();
+    // Treat different separators and spacing as the same course.
+    // Example:
+    // "Class 6 — State Board / SSC"
+    // "Class 6 | State Board / SSC"
+    // Both generate the same comparison key.
+    const key = course
+      .toLowerCase()
+      .replace(/[|–—-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
     if (!courses.has(key)) {
       courses.set(key, course);
@@ -234,7 +243,6 @@ function isSchoolStudent(student: ManagedUser) {
 
   return rank >= 6 && rank <= 12;
 }
-
 
 function getCounts(students: ManagedUser[], statusMap: Map<string, Mark>) {
   const counts = {
@@ -1149,7 +1157,7 @@ export function DailyStudentAttendanceManager({
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="text-sm font-bold text-[#0A193A]">
-                  Step 1 · Select Class / Program
+                   Select Class / Program
                 </h2>
 
                 <p className="mt-1 text-[11px] text-slate-500">
@@ -1237,7 +1245,7 @@ export function DailyStudentAttendanceManager({
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-4">
               <div>
                 <h2 className="text-sm font-bold text-[#0A193A]">
-                  Step 2 · {activeClassName || "Student Attendance"}
+                  {activeClassName || "Student Attendance"}
                 </h2>
 
                 <p className="mt-1 text-[11px] text-slate-500">
