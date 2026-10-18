@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, GraduationCap, X } from "lucide-react";
@@ -99,6 +106,7 @@ export default function QuizArenaClient({
   mockTestMode?: boolean;
 }) {
   const pathname = usePathname();
+  const quizSectionRef = useRef<HTMLElement | null>(null);
   const isMockTestPage =
     mockTestMode ||
     pathname === "/mock-test" ||
@@ -290,6 +298,34 @@ export default function QuizArenaClient({
 
   const playfulMode =
     selectedExam === "class-6-8" || selectedExam === "class-9-10";
+
+  // Prevent shorter selection screens from leaving the Exam Portal banner
+  // in view after navigation. Move before paint and verify after layout.
+  const previousStepRef = useRef<Step>(step);
+
+  useLayoutEffect(() => {
+    if (previousStepRef.current === step) return;
+    previousStepRef.current = step;
+
+    const scrollToQuiz = () => {
+      const section = quizSectionRef.current;
+      if (!section) return;
+
+      const navbarOffset = 96;
+      const targetTop =
+        window.scrollY + section.getBoundingClientRect().top - navbarOffset;
+
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: "instant",
+      });
+    };
+
+    scrollToQuiz();
+    const frame = window.requestAnimationFrame(scrollToQuiz);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [step]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1135,13 +1171,6 @@ export default function QuizArenaClient({
       setSelectedRound(null);
 
       setStep("journey");
-
-      requestAnimationFrame(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      });
     } catch (error) {
       console.warn("Unable to load Quiz Arena progress:", error);
 
@@ -1448,7 +1477,11 @@ export default function QuizArenaClient({
     }
   }
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white">
+    <main
+      ref={quizSectionRef}
+      className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white"
+      style={{ overflowAnchor: "none" }}
+    >
       {showLoginPrompt && (
         <div
           className="
