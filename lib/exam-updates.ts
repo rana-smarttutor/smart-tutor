@@ -638,23 +638,168 @@ const SOURCES: ExamSource[] = [
   },
 
   // =====================================================
-
-  // RAILWAY
-
+  // INDIAN RAILWAYS — RRB / RRC EXAM UPDATES
   // =====================================================
-
   {
     key: "railway-rrb",
-
-    name: "Railway / RRB",
-
+    name: "Railway Recruitment Board — All Notices",
     category: "Government Exams",
-
-    url: "https://www.rrbcdg.gov.in/",
-
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
     allowedHosts: ["rrbcdg.gov.in"],
-
-    maxItems: 35,
+    maxItems: 60,
+  },
+  {
+    key: "rrb-ntpc-graduate",
+    name: "RRB NTPC Graduate",
+    category: "Government Exams",
+    url: "https://rrbsecunderabad.gov.in/cen-lists/",
+    allowedHosts: ["rrbsecunderabad.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "ntpc-graduate",
+      "ntpc graduate",
+      "ntpc (graduate",
+      "non technical popular categories graduate",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-ntpc-undergraduate",
+    name: "RRB NTPC Undergraduate",
+    category: "Government Exams",
+    url: "https://rrbsecunderabad.gov.in/cen-lists/",
+    allowedHosts: ["rrbsecunderabad.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "ntpc-undergraduate",
+      "ntpc-under graduate",
+      "ntpc ug",
+      "ntpc-ug",
+      "ntpc (under",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-group-d",
+    name: "RRB Group D / Level 1",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "group d",
+      "group-d",
+      "group 'd'",
+      "level-1",
+      "level 1 posts",
+      "pay level-1",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-alp",
+    name: "RRB Assistant Loco Pilot (ALP)",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: ["alp", "assistant loco pilot", "assistant loco-pilot"],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-technician",
+    name: "RRB Technician",
+    category: "Government Exams",
+    url: "https://rrbsecunderabad.gov.in/cen-lists/",
+    allowedHosts: ["rrbsecunderabad.gov.in"],
+    maxItems: 40,
+    includeKeywords: ["technician", "technicians", "technician grade"],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-je",
+    name: "RRB Junior Engineer / DMS / CMA",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "junior engineer",
+      "je / dms",
+      "je, dms",
+      "je & dms",
+      "depot material superintendent",
+      "chemical & metallurgical assistant",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-paramedical",
+    name: "RRB Paramedical",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "paramedical",
+      "nursing superintendent",
+      "health and malaria inspector",
+      "pharmacist",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-ministerial",
+    name: "RRB Ministerial & Isolated Categories",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "ministerial",
+      "isolated category",
+      "isolated categories",
+      "junior translator",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-section-controller",
+    name: "RRB Section Controller",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: ["section controller"],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrb-rpf",
+    name: "RPF Constable / Sub-Inspector",
+    category: "Government Exams",
+    url: "https://www.rrbcdg.gov.in/employment-notices.php",
+    allowedHosts: ["rrbcdg.gov.in"],
+    maxItems: 40,
+    includeKeywords: ["rpf", "railway protection force"],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "rrc-western-railway",
+    name: "Railway Recruitment Cell — Western Railway",
+    category: "Government Exams",
+    url: "https://www.rrc-wr.com/",
+    allowedHosts: ["rrc-wr.com"],
+    maxItems: 40,
+    includeKeywords: [
+      "apprentice",
+      "apprentices",
+      "act apprentice",
+      "level-1",
+      "group d",
+      "recruitment",
+      "document verification",
+    ],
+    sourceKeywordOnly: true,
   },
 
   // =====================================================
@@ -2037,30 +2182,6 @@ const SOURCES: ExamSource[] = [
 
   // =====================================================
 
-  // RAILWAY PROTECTION FORCE
-
-  // =====================================================
-
-  {
-    key: "rpf",
-
-    name: "RPF Constable / Sub-Inspector",
-
-    category: "Government Exams",
-
-    url: "https://rrcb.gov.in/",
-
-    allowedHosts: ["rrcb.gov.in", "rrbcdg.gov.in"],
-
-    maxItems: 35,
-
-    includeKeywords: ["rpf", "constable", "sub inspector", "sub-inspector"],
-
-    sourceKeywordOnly: true,
-  },
-
-  // =====================================================
-
   // DESIGN / FASHION
 
   // =====================================================
@@ -3049,7 +3170,7 @@ const getCachedExamUpdates = unstable_cache(
 
    */
 
-  ["smartiq-exam-updates-v6"],
+  ["smartiq-exam-updates-v7"],
 
   {
     revalidate: 900,
