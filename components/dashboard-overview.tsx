@@ -97,16 +97,16 @@ export function DashboardOverview({
       />
     );
   }
-if (role === "staff" || role === "counsellor") {
-  return (
-    <StaffOperationsOverview
-      session={session}
-      dashboard={dashboard}
-      messages={messages}
-      onSetActiveSection={onSetActiveSection}
-    />
-  );
-}
+  if (role === "staff" || role === "counsellor") {
+    return (
+      <StaffOperationsOverview
+        session={session}
+        dashboard={dashboard}
+        messages={messages}
+        onSetActiveSection={onSetActiveSection}
+      />
+    );
+  }
   if (role === "parent") {
     return (
       <ParentOverview
@@ -247,10 +247,7 @@ function StaffOverview({
     managedUsers?.find((user) => user.id === session?.id) ?? null;
 
   const profile = currentUser?.profile;
-  const isVerified =
-  currentUser?.verified ??
-  session?.verified ??
-  false;
+  const isVerified = currentUser?.verified ?? session?.verified ?? false;
 
   const employeeId =
     currentUser?.employeeCode ??
@@ -586,8 +583,7 @@ function GenericOverview({
   const totalStudents =
     dashboard.analytics?.activeStudents ?? dashboard.stats[0]?.value ?? "—";
   const rawRevenue = dashboard.analytics?.finance?.collected ?? 0;
-  const revenue =
-    rawRevenue > 0 ? `₹${(rawRevenue / 1000).toFixed(1)}K` : "—";
+  const revenue = rawRevenue > 0 ? `₹${(rawRevenue / 1000).toFixed(1)}K` : "—";
   const totalBilled = dashboard.analytics?.finance?.billed ?? 0;
   const feeCollectionPct =
     totalBilled > 0 ? Math.round((rawRevenue / totalBilled) * 100) : 0;
@@ -718,6 +714,22 @@ function GenericOverview({
     partial: "bg-amber-100 text-amber-700",
     overdue: "bg-rose-100 text-rose-700",
   };
+
+  const attendancePresent = dashboard.analytics?.attendance?.present ?? 0;
+  const attendanceAbsent = dashboard.analytics?.attendance?.absent ?? 0;
+  const attendanceTotal = attendancePresent + attendanceAbsent;
+
+  const attendanceRate =
+    dashboard.analytics?.attendance?.rate != null
+      ? Math.max(0, Math.min(100, dashboard.analytics.attendance.rate))
+      : attendanceTotal > 0
+        ? (attendancePresent / attendanceTotal) * 100
+        : null;
+
+  const attendancePercentage =
+    attendanceRate === null ? 0 : Math.round(attendanceRate);
+
+  const attendanceCircumference = 2 * Math.PI * 50;
 
   return (
     <div className="space-y-5">
@@ -1040,50 +1052,95 @@ function GenericOverview({
               </>
             ) : (
               <>
-                <h2 className="text-base font-bold text-slate-900 mb-4">
+                <h2 className="mb-5 text-base font-bold text-slate-900">
                   Attendance Distribution
                 </h2>
-                <div className="flex flex-col items-center">
-                  <svg viewBox="0 0 120 120" className="w-32 h-32 -rotate-90">
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="50"
-                      fill="none"
-                      stroke="#f1f5f9"
-                      strokeWidth="10"
-                    />
-                    <circle
-                      cx="60"
-                      cy="60"
-                      r="50"
-                      fill="none"
-                      stroke="#4F46E5"
-                      strokeWidth="10"
-                      strokeDasharray={`${2 * Math.PI * 50}`}
-                      strokeDashoffset={`${2 * Math.PI * 50 * (1 - (dashboard.analytics?.attendance?.rate ?? 75) / 100)}`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="text-center -mt-4">
-                    <p className="text-2xl font-black text-slate-900">
-                      {dashboard.analytics?.attendance?.rate != null
-                        ? `${Math.round(dashboard.analytics.attendance.rate)}%`
-                        : "—"}
-                    </p>
-                    <p className="text-xs font-medium text-slate-500">
-                      Attendance
-                    </p>
+
+                <div className="flex flex-col items-center justify-center">
+                  {/* Attendance donut */}
+                  <div className="relative h-44 w-44">
+                    <svg
+                      viewBox="0 0 120 120"
+                      className="h-full w-full -rotate-90"
+                      role="img"
+                      aria-label={
+                        attendanceRate === null
+                          ? "Attendance data unavailable"
+                          : `Attendance rate ${attendancePercentage}%`
+                      }
+                    >
+                      {/* Background circle */}
+                      <circle
+                        cx="60"
+                        cy="60"
+                        r="50"
+                        fill="none"
+                        stroke="#F1F5F9"
+                        strokeWidth="10"
+                      />
+
+                      {/* Attendance progress */}
+                      {attendanceRate !== null && attendanceRate > 0 && (
+                        <circle
+                          cx="60"
+                          cy="60"
+                          r="50"
+                          fill="none"
+                          stroke="#4F46E5"
+                          strokeWidth="10"
+                          strokeDasharray={attendanceCircumference}
+                          strokeDashoffset={
+                            attendanceCircumference * (1 - attendanceRate / 100)
+                          }
+                          strokeLinecap={
+                            attendanceRate >= 100 ? "butt" : "round"
+                          }
+                          className="transition-all duration-700 ease-out"
+                        />
+                      )}
+                    </svg>
+
+                    {/* Perfectly centered percentage */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <p className="text-3xl font-extrabold leading-none tracking-tight text-slate-900">
+                        {attendanceRate === null
+                          ? "—"
+                          : `${attendancePercentage}%`}
+                      </p>
+
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        Attendance
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex gap-4 mt-3 text-xs font-medium text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-indigo-500" />{" "}
-                      Present: {dashboard.analytics?.attendance?.present ?? 0}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-red-400" />{" "}
-                      Absent: {dashboard.analytics?.attendance?.absent ?? 0}
-                    </span>
+
+                  {/* Present and absent counts */}
+                  <div className="mt-6 grid w-full grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                        <span className="text-xs font-medium text-slate-600">
+                          Present
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-xl font-bold text-slate-900">
+                        {attendancePresent}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3 text-center">
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                        <span className="text-xs font-medium text-slate-600">
+                          Absent
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-xl font-bold text-slate-900">
+                        {attendanceAbsent}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </>
@@ -1337,9 +1394,8 @@ function StudentOverview({
       ? `${Math.round(100 - dashboard.analytics.learning.homeworkRate)} Pending`
       : "—";
   const feeDueAmount = `₹${
-  String(dashboard.stats[3]?.value ?? "0")
-    .replace(/[^0-9.,-]/g, "") || "0"
-}`;
+    String(dashboard.stats[3]?.value ?? "0").replace(/[^0-9.,-]/g, "") || "0"
+  }`;
 
   const kpiCards = [
     {
@@ -1587,7 +1643,14 @@ function StudentOverview({
 
   return (
     <div className="space-y-5">
-      {/* -- Hero Section -- */}
+      <a
+  href="/dashboard/admissions/review"
+  className="mb-4 flex items-center justify-between rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm font-bold text-[#0A54B7] hover:bg-blue-100"
+>
+  <span>My Admission Application — Review &amp; Approve</span>
+  <span aria-hidden="true">→</span>
+</a>
+{/* -- Hero Section -- */}
       <div
         className="relative overflow-hidden rounded-2xl p-5 sm:p-6 lg:p-8 text-white"
         style={{

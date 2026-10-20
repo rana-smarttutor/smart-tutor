@@ -142,7 +142,6 @@ export async function POST(request: Request) {
       "emergencyName",
       "emergencyRelation",
       "emergencyMobile",
-      "signature",
     ];
 
     if (required.some((key) => !str(app, key))) {
@@ -221,15 +220,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (app.declarationCorrect !== true || app.declarationTerms !== true) {
-      return invalid("Accept both mandatory declarations.");
-    }
-
-    if (
-      str(app, "signature").toLowerCase() !== str(app, "name").toLowerCase()
-    ) {
-      return invalid("The typed signature must match the student's full name.");
-    }
+    // Student signature and consent will be collected during approval.
 
     // School admission: require the immediately previous class.
     if (str(app, "course") === "Schooling") {
@@ -346,21 +337,17 @@ export async function POST(request: Request) {
       }
     }
 
-    const photo = form.get("photo");
-    if (!(photo instanceof File) || photo.size === 0) {
-      return invalid("A student photograph is required.");
-    }
-
-    const signatureImage = form.get("signatureImage");
-    if (!(signatureImage instanceof File) || signatureImage.size === 0) {
-      return invalid("A student signature image is required.");
-    }
-
     const incoming: { key: string; file: File }[] = [];
     let uploadSize = 0;
 
     for (const key of FILE_KEYS) {
       const file = form.get(key);
+
+      if (file instanceof File && file.size > 0) {
+        return invalid(
+          "Student documents must be uploaded during student approval.",
+        );
+      }
 
       if (file === null) continue;
 
@@ -478,7 +465,6 @@ export async function POST(request: Request) {
       "emergencyName",
       "emergencyRelation",
       "emergencyMobile",
-      "signature",
     ];
 
     const clean: Record<string, string | boolean | unknown[]> = {};
@@ -530,6 +516,70 @@ export async function POST(request: Request) {
       "score",
     ]);
 
+    // AUTO STUDENT ADMISSION LINKING
+    let autoLinkedStudentId: string | null = null;
+
+    const admissionEmail = str(app, "email").toLowerCase();
+    const admissionName = str(app, "name").replace(/\s+/g, " ").toLowerCase();
+
+    try {
+      const applications = db.collection("admissionApplications");
+
+      await applications.createIndex(
+        { linkedStudentId: 1 },
+        {
+          name: "admissions_unique_linkedStudentId",
+          unique: true,
+          partialFilterExpression: {
+            linkedStudentId: { $type: "string" },
+          },
+        },
+      );
+
+      const safeEmail = admissionEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      const matchingUsers = await db
+        .collection("users")
+        .find({
+          role: "student",
+          email: {
+            $regex: `^${safeEmail}$`,
+            $options: "i",
+          },
+          status: "active",
+          verified: { $ne: false },
+          deletedAt: { $exists: false },
+        })
+        .limit(100)
+        .toArray();
+
+      const candidates = matchingUsers.filter((user) => {
+        const userName = String(user.name ?? "")
+          .trim()
+          .replace(/\s+/g, " ")
+          .toLowerCase();
+
+        return (
+          userName === admissionName &&
+          typeof user.id === "string" &&
+          user.id.length > 0
+        );
+      });
+
+      if (candidates.length === 1 && matchingUsers.length < 100) {
+        const candidateId = candidates[0].id as string;
+
+        const existingLink = await applications.findOne({
+          linkedStudentId: candidateId,
+        });
+
+        if (!existingLink) {
+          autoLinkedStudentId = candidateId;
+        }
+      }
+    } catch (linkError) {
+      console.error("Admission automatic linking unavailable:", linkError);
+    }
     await db.collection("admissionApplications").insertOne({
       applicationId,
       ...clean,
@@ -539,10 +589,19 @@ export async function POST(request: Request) {
       createdByName: session.name ?? "",
       createdByRole: session.role,
 
+      ...(autoLinkedStudentId
+        ? {
+            linkedStudentId: autoLinkedStudentId,
+            linkedAt: new Date().toISOString(),
+            linkedBy: "system",
+          }
+        : {}),
       dateOfBirth: birthDate,
       documents,
-      status: "submitted",
+      status: "pending_student_approval",
       submittedAt: new Date().toISOString(),
+      approvedAt: null,
+      studentConsent: null,
       reviewedAt: null,
     });
 
@@ -564,7 +623,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         applicationId,
-        status: "submitted",
+        status: "pending_student_approval",
       },
       {
         status: 201,
@@ -639,7 +698,9 @@ export async function GET() {
         collection.countDocuments({}),
 
         collection.countDocuments({
-          status: "submitted",
+          status: {
+            $in: ["submitted", "pending_student_approval"],
+          },
         }),
 
         collection.countDocuments({

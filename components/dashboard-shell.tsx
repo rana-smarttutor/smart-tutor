@@ -388,6 +388,7 @@ const sidebarByRole = {
   student: [
     { id: "overview", label: "Overview" },
     { id: "profile", label: "Profile" },
+    { id: "my-admission", label: "My Admission" },
     { id: "lectures", label: "Recorded Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "complaints", label: "Complaint Box" },
@@ -528,6 +529,7 @@ const sidebarByRole = {
   parent: [
     { id: "overview", label: "Overview" },
     { id: "profile", label: "Profile" },
+    { id: "child-admission", label: "Child's Admission" },
     { id: "lectures", label: "Lectures" },
     { id: "timetable", label: "Timetable" },
     { id: "homework", label: "Homework" },
@@ -666,6 +668,8 @@ const menuSections = [
       "enquiries",
       "career-counselling",
       "new-admission-form",
+      "my-admission",
+      "child-admission",
       "password-reset-requests",
       "sales-crm",
     ],
@@ -1850,6 +1854,16 @@ export function DashboardShell({
 
                         if (isGovExamStudent && item.id === "tests") {
                           window.location.assign("/mock-test");
+                          return;
+                        }
+
+                        if (role === "student" && item.id === "my-admission") {
+                          window.location.assign("/dashboard/admissions/review");
+                          return;
+                        }
+
+                        if (role === "parent" && item.id === "child-admission") {
+                          window.location.assign("/dashboard/admissions/guardian");
                           return;
                         }
 

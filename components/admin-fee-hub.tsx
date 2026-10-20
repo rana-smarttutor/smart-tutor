@@ -18,7 +18,6 @@ import type {
 } from "@/lib/types";
 
 import { InvoiceManager } from "@/components/invoice-manager";
-import { AdmissionStudentLinker } from "@/components/admission-student-linker";
 import { FeeInstallmentManager } from "@/components/fee-installment-manager";
 
 type Props = {
@@ -218,14 +217,7 @@ export function AdminFeeHub({
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {role === "admin" && (
-              <a
-                href="#billing-admissions"
-                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100"
-              >
-                Link Admissions
-              </a>
-            )}
+
             <a
               href="#billing-invoices"
               className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
@@ -245,12 +237,7 @@ export function AdminFeeHub({
         </div>
 
         <div className="space-y-8">
-          {/* ADMISSION APPLICATION TO STUDENT ACCOUNT LINKING */}
-          {role === "admin" ? (
-            <div id="billing-admissions" className="min-w-0 scroll-mt-24">
-              <AdmissionStudentLinker studentDirectory={studentDirectory} />
-            </div>
-          ) : null}
+
 
           {/* INVOICES AND COLLECTIONS */}
           <div id="billing-invoices" className="min-w-0 scroll-mt-24">

@@ -111,3 +111,5 @@ backup-lecture-attendance-20261015-180108/lectures-route.ts
 backup-lecture-attendance-20261015-180108/types.ts
 components/staff-attendance-manager.tsx.backup-20261016-162831
 components/staff-lecture-attendance.tsx.backup-20261016-162831
+app/api/admission/corrections/resolve/route.ts.fix-backup-20261020-152857
+app/api/admission/corrections/resolve/route.ts.ts-error-backup

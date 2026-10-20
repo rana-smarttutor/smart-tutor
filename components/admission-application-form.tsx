@@ -3,18 +3,15 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
   Check,
   ChevronDown,
-  FileText,
-  PenLine,
   Plus,
   Save,
-  UserRound,
 } from "lucide-react";
 
 type Academic = {
@@ -31,8 +28,6 @@ type Achievement = {
   level: string;
   score: string;
 };
-
-type FileKey = "photo" | "signatureImage" | "photoId" | "marksheet";
 
 type Admission = {
   course: string;
@@ -75,10 +70,6 @@ type Admission = {
   emergencyName: string;
   emergencyRelation: string;
   emergencyMobile: string;
-  declarationCorrect: boolean;
-  declarationTerms: boolean;
-  declarationContact: boolean;
-  signature: string;
 };
 
 const examGroups: Record<string, string[]> = {
@@ -339,10 +330,6 @@ const initial: Admission = {
   emergencyName: "",
   emergencyRelation: "",
   emergencyMobile: "",
-  declarationCorrect: false,
-  declarationTerms: false,
-  declarationContact: false,
-  signature: "",
 };
 
 function Field({
@@ -509,20 +496,10 @@ export function AdmissionApplicationForm({
   const [data, setData] = useState<Admission>(initial);
   const [more, setMore] = useState(false);
 
-  const [files, setFiles] = useState<Partial<Record<FileKey, File>>>({});
-
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [signatureUrl, setSignatureUrl] = useState("");
-
   const [draftExists, setDraftExists] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [today, setToday] = useState("");
-
-  const photoRef = useRef<HTMLInputElement>(null);
-  const signatureRef = useRef<HTMLInputElement>(null);
-
   const schooling = data.course === "Schooling";
 
   const prevClass = schooling ? previousClass(data.exam) : "";
@@ -634,39 +611,7 @@ export function AdmissionApplicationForm({
     } catch {
       setDraftExists(false);
     }
-
-    setToday(
-      new Intl.DateTimeFormat("en-GB", {
-        dateStyle: "medium",
-        timeZone: "Asia/Kolkata",
-      }).format(new Date()),
-    );
   }, [storageKey]);
-
-  useEffect(() => {
-    if (!files.photo) {
-      setPhotoUrl("");
-      return;
-    }
-
-    const url = URL.createObjectURL(files.photo);
-    setPhotoUrl(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [files.photo]);
-
-  useEffect(() => {
-    if (!files.signatureImage) {
-      setSignatureUrl("");
-      return;
-    }
-
-    const url = URL.createObjectURL(files.signatureImage);
-
-    setSignatureUrl(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [files.signatureImage]);
 
   function saveDraft() {
     try {
@@ -675,7 +620,7 @@ export function AdmissionApplicationForm({
       setDraftExists(true);
       setError("");
       setMessage(
-        "Draft saved on this device. Please re-upload documents after restoring.",
+        "Draft saved on this device. Student documents will be uploaded after submission.",
       );
     } catch {
       setError("Unable to save draft in this browser.");
@@ -729,44 +674,15 @@ export function AdmissionApplicationForm({
             : academicsForQualification(restored.qualification, records),
       });
 
-      setFiles({});
-
       setStep(Math.max(0, Math.min(4, Number(parsed.step) || 0)));
 
       setError("");
       setMessage(
-        "Draft restored. Re-upload your photograph, signature and documents.",
+        "Draft restored. Student documents will be uploaded after submission.",
       );
     } catch {
       setError("Could not restore the saved draft.");
     }
-  }
-
-  function pickFile(key: FileKey, file?: File) {
-    if (!file) return;
-
-    const allowed =
-      key === "photo" || key === "signatureImage"
-        ? ["image/jpeg", "image/png"]
-        : ["image/jpeg", "image/png", "application/pdf"];
-
-    if (
-      !allowed.includes(file.type) ||
-      file.size === 0 ||
-      file.size > 1024 * 1024
-    ) {
-      setError(
-        "Only JPG/PNG images and PDF documents are allowed. Maximum 1 MB each.",
-      );
-      return;
-    }
-
-    setFiles((old) => ({
-      ...old,
-      [key]: file,
-    }));
-
-    setError("");
   }
 
   function validate(index: number): string {
@@ -820,10 +736,6 @@ export function AdmissionApplicationForm({
 
       if (!/^\d{6}$/.test(data.pin)) {
         return "Enter a valid 6-digit PIN code.";
-      }
-
-      if (!files.photo || !files.signatureImage) {
-        return "Upload the student's photo and handwritten signature.";
       }
     }
 
@@ -921,19 +833,6 @@ export function AdmissionApplicationForm({
       }
     }
 
-    if (index === 4) {
-      if (!data.declarationCorrect || !data.declarationTerms) {
-        return "Accept both mandatory declarations.";
-      }
-
-      if (
-        !data.signature.trim() ||
-        data.signature.trim().toLowerCase() !== data.name.trim().toLowerCase()
-      ) {
-        return "The typed signature must match the student's full name.";
-      }
-    }
-
     return "";
   }
 
@@ -980,13 +879,7 @@ export function AdmissionApplicationForm({
 
       payload.set("application", JSON.stringify(data));
 
-      (Object.keys(files) as FileKey[]).forEach((key) => {
-        const file = files[key];
-
-        if (file) {
-          payload.set(key, file);
-        }
-      });
+      // Student documents are uploaded after admission reaches the student dashboard.
 
       const response = await fetch("/api/admission", {
         method: "POST",
@@ -1312,7 +1205,7 @@ export function AdmissionApplicationForm({
 
           {step === 1 && (
             <div className="mt-6 space-y-5">
-              <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_155px]">
+              <div className="grid gap-5">
                 <div className="space-y-4">
                   <Field
                     title="Name of student"
@@ -1363,88 +1256,6 @@ export function AdmissionApplicationForm({
                       onSelect={(value) => patch("gender", value)}
                       values={["Male", "Female", "Other"]}
                     />
-                  </section>
-                </div>
-
-                {/* STUDENT PHOTO / SIGNATURE */}
-
-                <div className="space-y-5">
-                  <section>
-                    <p className={labelClass}>Photo *</p>
-
-                    <button
-                      type="button"
-                      onClick={() => photoRef.current?.click()}
-                      className="flex h-36 w-full flex-col items-center justify-center gap-2 rounded border border-dashed border-blue-200 bg-slate-50 p-2 text-blue-600"
-                    >
-                      {photoUrl ? (
-                        <img
-                          src={photoUrl}
-                          alt="Student photograph preview"
-                          className="h-20 w-20 rounded object-cover"
-                        />
-                      ) : (
-                        <UserRound size={28} className="text-slate-400" />
-                      )}
-
-                      <span className="rounded border border-blue-300 bg-white px-2 py-1 text-[10px]">
-                        {files.photo ? "Replace photo" : "Upload photo"}
-                      </span>
-                    </button>
-
-                    <input
-                      ref={photoRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/jpeg,image/png"
-                      onChange={(event) =>
-                        pickFile("photo", event.target.files?.[0])
-                      }
-                    />
-
-                    <p className="mt-2 text-[10px] text-slate-500">
-                      JPG/PNG, maximum 1 MB.
-                    </p>
-                  </section>
-
-                  <section>
-                    <p className={labelClass}>Student signature *</p>
-
-                    <button
-                      type="button"
-                      onClick={() => signatureRef.current?.click()}
-                      className="flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded border border-dashed border-blue-200 bg-slate-50 p-3 text-blue-600"
-                    >
-                      {signatureUrl ? (
-                        <img
-                          src={signatureUrl}
-                          alt="Student signature preview"
-                          className="h-16 w-full object-contain"
-                        />
-                      ) : (
-                        <PenLine size={28} className="text-slate-400" />
-                      )}
-
-                      <span className="rounded border border-blue-300 bg-white px-2 py-1 text-[10px]">
-                        {files.signatureImage
-                          ? "Replace signature"
-                          : "Upload signature"}
-                      </span>
-                    </button>
-
-                    <input
-                      ref={signatureRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/jpeg,image/png"
-                      onChange={(event) =>
-                        pickFile("signatureImage", event.target.files?.[0])
-                      }
-                    />
-
-                    <p className="mt-2 text-[10px] text-slate-500">
-                      Sign on white paper, JPG/PNG, maximum 1 MB.
-                    </p>
                   </section>
                 </div>
               </div>
@@ -1994,161 +1805,13 @@ export function AdmissionApplicationForm({
                 />
               </ReviewSection>
 
-              {/* DOCUMENTS */}
-
-              <section className="border-t pt-5">
-                <h3 className="text-sm font-bold">Documents</h3>
-
-                <p className="mt-1 text-[11px] text-slate-500">
-                  Student photo and signature are required. Photo ID and
-                  marksheet are optional. Maximum 1 MB each.
-                </p>
-
-                <div className="mt-3 space-y-2">
-                  {(
-                    [
-                      {
-                        key: "photo",
-                        title: "Passport-size photo",
-                        required: true,
-                      },
-                      {
-                        key: "signatureImage",
-                        title: "Student signature",
-                        required: true,
-                      },
-                      {
-                        key: "photoId",
-                        title: "Photo ID proof",
-                        required: false,
-                      },
-                      {
-                        key: "marksheet",
-                        title: "Latest marksheet",
-                        required: false,
-                      },
-                    ] as const
-                  ).map((doc) => (
-                    <label
-                      key={doc.key}
-                      className="flex cursor-pointer items-center justify-between gap-3 rounded border p-3 text-xs"
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <FileText size={17} className="text-blue-600" />
-
-                        <span>
-                          <strong className="block">
-                            {doc.title}
-                            {doc.required && " *"}
-                          </strong>
-
-                          <small className="block text-slate-500">
-                            {files[doc.key]?.name || "No file selected"}
-                          </small>
-                        </span>
-                      </span>
-
-                      <span className="rounded border px-3 py-1 text-blue-600">
-                        {files[doc.key] ? "Replace" : "Upload"}
-                      </span>
-
-                      <input
-                        type="file"
-                        className="hidden"
-                        accept={
-                          doc.key === "photo" || doc.key === "signatureImage"
-                            ? "image/jpeg,image/png"
-                            : "image/jpeg,image/png,application/pdf"
-                        }
-                        onChange={(event) =>
-                          pickFile(doc.key, event.target.files?.[0])
-                        }
-                      />
-                    </label>
-                  ))}
-                </div>
-              </section>
-
-              {/* DECLARATIONS */}
-
-              <section className="space-y-3 border-t pt-5">
-                <h3 className="text-sm font-bold">Declaration</h3>
-
-                <label className="flex items-start gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={data.declarationCorrect}
-                    onChange={(event) =>
-                      patch("declarationCorrect", event.target.checked)
-                    }
-                  />
-                  I declare that all details are true and correct. *
-                </label>
-
-                <div className="flex items-start gap-2 text-xs">
-                  <input
-                    id="admission-terms"
-                    type="checkbox"
-                    checked={data.declarationTerms}
-                    onChange={(event) =>
-                      patch("declarationTerms", event.target.checked)
-                    }
-                  />
-
-                  <div>
-                    I agree to SmartIQ Institute&apos;s{" "}
-                    <Link
-                      href="/terms"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Terms &amp; Conditions
-                    </Link>{" "}
-                    and{" "}
-                    <Link
-                      href="/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      Privacy Policy
-                    </Link>{" "}
-                    *
-                  </div>
-                </div>
-
-                <label className="flex items-start gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={data.declarationContact}
-                    onChange={(event) =>
-                      patch("declarationContact", event.target.checked)
-                    }
-                  />
-                  I agree to receive admission-related updates.
-                </label>
-
-                <p className="rounded bg-blue-50 p-3 text-xs text-slate-600">
-                  Admission is subject to institute review and confirmation.
-                </p>
-
-                <div className="grid gap-3 sm:grid-cols-[1fr_160px]">
-                  <Field
-                    title="Type full name as signature"
-                    required
-                    value={data.signature}
-                    onChange={(value) => patch("signature", value)}
-                  />
-
-                  <div>
-                    <p className={labelClass}>Date</p>
-
-                    <div className={`${inputClass} flex items-center`}>
-                      {today}
-                    </div>
-                  </div>
-                </div>
+              <section className="rounded border border-blue-200 bg-blue-50 p-4 text-xs leading-6 text-blue-900">
+                <strong>Next step: Student verification.</strong> Staff submits
+                the application details only. After the admission is linked to
+                the student account, the student will review the form, upload
+                their photograph, handwritten signature, photo ID and marksheet,
+                and accept the Privacy Policy and Terms. Applicants under 18
+                also need approval from their linked parent or guardian.
               </section>
             </div>
           )}
@@ -2203,7 +1866,7 @@ export function AdmissionApplicationForm({
                   onClick={() => void submit()}
                   className="inline-flex items-center gap-2 rounded bg-[#2458ef] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-60"
                 >
-                  {submitting ? "Submitting..." : "Submit application"}
+                  {submitting ? "Sending..." : "Send for Student Approval"}
 
                   <ArrowRight size={14} />
                 </button>

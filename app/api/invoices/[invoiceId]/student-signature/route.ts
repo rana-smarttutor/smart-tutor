@@ -1,4 +1,4 @@
-
+﻿
 import { GridFSBucket, ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
 
@@ -76,6 +76,7 @@ export async function GET(
         id: session.id,
         role: "parent",
         linkedStudentId: invoice.studentId,
+        status: "approved",
         deletedAt: { $exists: false },
       });
 
@@ -92,6 +93,7 @@ export async function GET(
       .collection("admissionApplications")
       .find({
         linkedStudentId: invoice.studentId,
+        status: "approved",
         "documents.signatureImage.fileId": {
           $type: "string",
         },
@@ -205,3 +207,4 @@ export async function GET(
     );
   }
 }
+
