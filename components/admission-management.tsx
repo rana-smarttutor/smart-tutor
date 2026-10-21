@@ -41,6 +41,15 @@ type Application = {
   correctionRequest?: { reason?: string; requestedAt?: string };
 };
 
+type DocumentMeta = { available: boolean; name: string; mimeType: string; size: number };
+type DocumentManifest = Record<string, DocumentMeta>;
+const UPLOADED_DOCUMENTS = [
+  ["photo", "Student Photograph"],
+  ["signatureImage", "Student Signature"],
+  ["photoId", "Identity Proof"],
+  ["marksheet", "Marksheet"],
+] as const;
+
 type Stats = {
   total: number;
   submitted: number;
@@ -56,11 +65,11 @@ const EMPTY_STATS: Stats = {
 };
 
 function formatDate(value?: string) {
-  if (!value) return "—";
+  if (!value) return "Ã¢â‚¬â€";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "Ã¢â‚¬â€";
 
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -170,6 +179,10 @@ export function AdmissionManagement() {
   const [linkBusy, setLinkBusy] = useState(false);
   const [linkError, setLinkError] = useState("");
   const [linkNotice, setLinkNotice] = useState("");
+  const [documentManifest, setDocumentManifest] = useState<Record<string, DocumentManifest>>({});
+  const [documentLoading, setDocumentLoading] = useState<string | null>(null);
+  const [documentError, setDocumentError] = useState<Record<string, string>>({});
+
 
   useEffect(() => {
     const controller = new AbortController();
@@ -272,6 +285,28 @@ export function AdmissionManagement() {
       .catch(() => { if (!controller.signal.aborted) setCanEdit(false); });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!expandedId) return;
+    const controller = new AbortController();
+    const applicationId = expandedId;
+    setDocumentLoading(applicationId);
+    setDocumentError((current) => ({ ...current, [applicationId]: "" }));
+    void fetch(`/api/admission/documents?applicationId=${encodeURIComponent(applicationId)}`, {
+      cache: "no-store", credentials: "same-origin", signal: controller.signal,
+    }).then(async (response) => {
+      const result = (await response.json()) as { documents?: DocumentManifest; error?: string };
+      if (!response.ok || !result.documents) throw new Error(result.error || "Unable to load uploaded documents.");
+      if (!controller.signal.aborted) setDocumentManifest((current) => ({ ...current, [applicationId]: result.documents! }));
+    }).catch((error: unknown) => {
+      if (!controller.signal.aborted) setDocumentError((current) => ({
+        ...current, [applicationId]: error instanceof Error ? error.message : "Unable to load documents.",
+      }));
+    }).finally(() => {
+      if (!controller.signal.aborted) setDocumentLoading((current) => current === applicationId ? null : current);
+    });
+    return () => controller.abort();
+  }, [expandedId, refreshKey]);
 
   async function beginEdit(applicationId: string) {
     setEditError("");
@@ -453,7 +488,7 @@ export function AdmissionManagement() {
   ];
   return (
     <div className="space-y-7 pb-8">
-      {/* HERO — MATCHES CAREER COUNSELLING */}
+      {/* HERO Ã¢â‚¬â€ MATCHES CAREER COUNSELLING */}
 
       <section className="overflow-hidden rounded-[22px] bg-gradient-to-r from-[#07173B] via-[#1546A8] to-[#2863EB] px-7 py-9 text-white shadow-lg sm:px-10">
         <div className="flex flex-col justify-between gap-7 lg:flex-row lg:items-center">
@@ -640,7 +675,7 @@ export function AdmissionManagement() {
                           </h3>
 
                           <p className="mt-1 text-xs text-slate-500">
-                            {application.course} ·{" "}
+                            {application.course} Ã‚Â·{" "}
                             {application.exam}
                           </p>
 
@@ -668,7 +703,7 @@ export function AdmissionManagement() {
                         )}
                         {application.status === "approved" && (
                           <a
-                            href={`/api/admission/pdf?applicationId=${encodeURIComponent(application.applicationId)}`}
+                            href={`/admission-form/${encodeURIComponent(application.applicationId)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
@@ -713,7 +748,7 @@ export function AdmissionManagement() {
                               </p>
 
                               <p className="mt-1 break-words font-semibold text-slate-900">
-                                {value || "—"}
+                                {value || "Ã¢â‚¬â€"}
                               </p>
                             </div>
                           ))}
@@ -725,7 +760,7 @@ export function AdmissionManagement() {
                              <p className="mt-2 text-sm font-bold text-emerald-700">Linked to student account</p>
                            ) : (
                              <>
-                               <p className="mt-2 text-sm text-amber-700">Not linked — student cannot view this admission yet.</p>
+                               <p className="mt-2 text-sm text-amber-700">Not linked Ã¢â‚¬â€ student cannot view this admission yet.</p>
                                {canLink && (
                                  <button type="button" disabled={linkBusy} onClick={() => void findLinkCandidate(application.applicationId)}
                                    className="mt-3 rounded-lg bg-[#0B40A1] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
@@ -741,7 +776,7 @@ export function AdmissionManagement() {
                                {linkCandidate && (
                                  <div className="space-y-2">
                                    <p className="text-sm font-semibold">Confirm this is the correct account:</p>
-                                   <p className="break-words text-sm">{linkCandidate.name} · {linkCandidate.email}</p>
+                                   <p className="break-words text-sm">{linkCandidate.name} Ã‚Â· {linkCandidate.email}</p>
                                    <button type="button" disabled={linkBusy}
                                      onClick={() => void confirmStudentLink(application.applicationId, linkCandidate.id)}
                                      className="rounded-lg bg-[#0B40A1] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
@@ -754,6 +789,42 @@ export function AdmissionManagement() {
                              </div>
                            )}
                          </div>
+
+                        <section className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+                          <h4 className="text-sm font-black text-slate-900">Student Uploaded Documents</h4>
+                          <p className="mt-1 text-xs text-slate-500">View or download the four documents uploaded by the student.</p>
+                          {documentLoading === application.applicationId && (
+                            <p className="mt-3 text-sm text-slate-500">Loading documents...</p>
+                          )}
+                          {documentError[application.applicationId] && (
+                            <p role="alert" className="mt-3 text-sm text-red-700">{documentError[application.applicationId]}</p>
+                          )}
+                          <div className="mt-4 overflow-x-auto pb-1">
+                            <div className="grid min-w-[640px] grid-cols-4 gap-3">
+                              {UPLOADED_DOCUMENTS.map(([key, label]) => {
+                                const file = documentManifest[application.applicationId]?.[key];
+                                const url = `/api/admission/documents?applicationId=${encodeURIComponent(application.applicationId)}&key=${encodeURIComponent(key)}`;
+                                return (
+                                  <div key={key} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                    <div className="flex h-14 items-center justify-center rounded-lg bg-blue-50 text-blue-700"><FileText size={26} /></div>
+                                    <p className="mt-2 text-xs font-bold text-slate-900">{label}</p>
+                                    <p className="mt-1 truncate text-[11px] text-slate-500" title={file?.name ?? ""}>
+                                      {file?.available ? file.name : "Not uploaded"}
+                                    </p>
+                                    {file?.available ? (
+                                      <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+                                        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">View</a>
+                                        <a href={`${url}&download=1`} className="text-slate-700 underline">Download</a>
+                                      </div>
+                                    ) : (
+                                      <p className="mt-3 text-[11px] text-slate-400">Unavailable</p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </section>
 
                         {application.status === "correction_requested" && (
                           <div className="mt-5 rounded-xl border border-orange-200 bg-orange-50 p-4">
@@ -866,14 +937,14 @@ export function AdmissionManagement() {
                                     className="rounded-lg bg-white p-3 text-xs text-slate-700"
                                   >
                                     <strong>{record.level}</strong>
-                                    {" · "}
+                                    {" Ã‚Â· "}
                                     {record.institution}
-                                    {" · "}
+                                    {" Ã‚Â· "}
                                     {record.board}
-                                    {" · "}
+                                    {" Ã‚Â· "}
                                     {record.year}
                                     {record.marks
-                                      ? ` · ${record.marks}`
+                                      ? ` Ã‚Â· ${record.marks}`
                                       : ""}
                                   </div>
                                 ),

@@ -1,4 +1,6 @@
+
 "use client";
+import StudentAdmissionReview from "./student-admission-review";
 import { StaffLectureOverview } from "@/components/staff-lecture-overview";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -1446,6 +1448,7 @@ export function DashboardShell({
   const showTimetable = activeSection === "timetable";
   const showWeeklyTests = activeSection === "weekly-tests";
   const showStudentFeedback = activeSection === "student-feedback";
+  const showMyAdmission = role === "student" && activeSection === "my-admission";
   const showDailyActivities = activeSection === "daily-activities";
   const showFeeInstallments = activeSection === "fee-installments";
   const showReceipts = activeSection === "receipts";
@@ -1461,7 +1464,7 @@ export function DashboardShell({
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
     ...(role === "student" || role === "parent"
-      ? [{ label: "Student ID", value: session?.id ?? "—" }]
+      ? [{ label: "Student ID", value: session?.id ?? "Ã¢â‚¬â€" }]
       : []),
     ...(role === "student" || role === "parent"
       ? [
@@ -1478,7 +1481,7 @@ export function DashboardShell({
       ? [
           {
             label: "Faculty ID",
-            value: session?.employeeCode ?? session?.facultyCode ?? "—",
+            value: session?.employeeCode ?? session?.facultyCode ?? "Ã¢â‚¬â€",
           },
           {
             label: "Assigned Students",
@@ -1857,10 +1860,7 @@ export function DashboardShell({
                           return;
                         }
 
-                        if (role === "student" && item.id === "my-admission") {
-                          window.location.assign("/dashboard/admissions/review");
-                          return;
-                        }
+
 
                         if (role === "parent" && item.id === "child-admission") {
                           window.location.assign("/dashboard/admissions/guardian");
@@ -1898,7 +1898,7 @@ export function DashboardShell({
           })}
         </nav>
 
-        {/* Footer — Logout only */}
+        {/* Footer Ã¢â‚¬â€ Logout only */}
         {!sidebarCollapsed && (
           <div className="border-t border-white/5 px-4 py-4">
             <div className="flex w-full justify-center">
@@ -1999,7 +1999,7 @@ export function DashboardShell({
                   <Gift className="h-3.5 w-3.5" />
                 </span>
 
-                <span className="relative whitespace-nowrap">Earn ₹2,000</span>
+                <span className="relative whitespace-nowrap">Earn Ã¢â€šÂ¹2,000</span>
               </button>
             ) : null}
 
@@ -2253,7 +2253,7 @@ export function DashboardShell({
                 <div>
                   <p className="section-label">Course / Program Master</p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Top-level hierarchy: Course → Subject → Topic
+                    Top-level hierarchy: Course Ã¢â€ â€™ Subject Ã¢â€ â€™ Topic
                   </h2>
                 </div>
                 <span className="pill">{dashboard.courses.length} courses</span>
@@ -2372,6 +2372,10 @@ export function DashboardShell({
               role={role}
               studentDirectory={studentDirectory}
             />
+          ) : null}
+
+          {showMyAdmission ? (
+            <StudentAdmissionReview />
           ) : null}
 
           {showDailyActivities ? (
