@@ -13,6 +13,9 @@ import { usePathname } from "next/navigation";
 import { ArrowRight, GraduationCap, X } from "lucide-react";
 
 import {
+  getQuizExamGroupChildren,
+  getQuizExamParent,
+  isQuizExamGroup,
   getDifficultyForJourneyLevel,
   getExamDetails,
   getExamTitle,
@@ -120,6 +123,8 @@ export default function QuizArenaClient({
   const [selectedExam, setSelectedExam] = useState<CompetitiveExam | null>(
     null,
   );
+  const [selectedExamGroup, setSelectedExamGroup] =
+    useState<CompetitiveExam | null>(null);
 
   const [selectedSchoolClass, setSelectedSchoolClass] =
     useState<QuizSchoolClass | null>(null);
@@ -155,6 +160,8 @@ export default function QuizArenaClient({
   const [activeDraft, setActiveDraft] = useState<QuizArenaDraft | null>(null);
 
   const [showResumeChoice, setShowResumeChoice] = useState(false);
+
+  const [showSavedQuizBanner, setShowSavedQuizBanner] = useState(false);
 
   const [confirmedReplacementDraftId, setConfirmedReplacementDraftId] =
     useState<string | null>(null);
@@ -371,6 +378,7 @@ export default function QuizArenaClient({
 
           if (!alreadyShown) {
             setShowResumeChoice(true);
+            setShowSavedQuizBanner(true);
           }
         }
       } catch (error) {
@@ -399,6 +407,8 @@ export default function QuizArenaClient({
     setSelectedLevel(draft.level);
 
     setSelectedExam(draft.exam);
+
+    setSelectedExamGroup(getQuizExamParent(draft.exam));
 
     setSelectedSchoolClass(draft.schoolClass);
 
@@ -462,6 +472,8 @@ export default function QuizArenaClient({
 
     setSelectedExam(null);
 
+    setSelectedExamGroup(null);
+
     setSelectedSchoolClass(null);
 
     setSelectedBoard(null);
@@ -485,6 +497,7 @@ export default function QuizArenaClient({
     setSelectedLevel(level);
 
     setSelectedExam(null);
+    setSelectedExamGroup(null);
     setSelectedSchoolClass(null);
     setSelectedBoard(null);
     setSelectedSubject(null);
@@ -504,6 +517,7 @@ export default function QuizArenaClient({
     setSelectedLevel(null);
 
     setSelectedExam(null);
+    setSelectedExamGroup(null);
     setSelectedSchoolClass(null);
     setSelectedBoard(null);
     setSelectedSubject(null);
@@ -542,6 +556,7 @@ export default function QuizArenaClient({
 
     if (step === "ssc") {
       setSelectedExam(null);
+      setSelectedExamGroup(null);
       setStep("exam");
       return;
     }
@@ -579,7 +594,10 @@ export default function QuizArenaClient({
         return;
       }
 
-      setStep(selectedExam?.startsWith("ssc-") ? "ssc" : "exam");
+      const parentGroup = selectedExam ? getQuizExamParent(selectedExam) : null;
+
+      setSelectedExamGroup(parentGroup);
+      setStep(parentGroup ? "ssc" : "exam");
       return;
     }
 
@@ -1767,7 +1785,10 @@ export default function QuizArenaClient({
             {/* CLOSE BUTTON */}
             <button
               type="button"
-              onClick={() => setShowResumeChoice(false)}
+              onClick={() => {
+                setShowResumeChoice(false);
+                setShowSavedQuizBanner(false);
+              }}
               aria-label="Close unfinished quiz reminder"
               className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-blue-100 bg-white text-slate-500 shadow-sm transition hover:bg-blue-50 hover:text-blue-700"
             >
@@ -2054,7 +2075,7 @@ export default function QuizArenaClient({
 
         {step === "level" && (
           <section>
-            {unfinishedDraft && !showResumeChoice && (
+            {unfinishedDraft && showSavedQuizBanner && !showResumeChoice && (
               <div className="mb-8 rounded-3xl border border-cyan-300/30 bg-cyan-400/10 p-5 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
@@ -2121,13 +2142,13 @@ export default function QuizArenaClient({
             <Header
               title={
                 step === "ssc"
-                  ? "Choose your SSC examination"
+                  ? `${getExamTitle(selectedExamGroup)} - Choose Examination`
                   : "Choose your course or exam"
               }
               subtitle={
                 step === "ssc"
-                  ? "Select SSC CGL, SSC CPO, SSC CHSL or SSC GD."
-                  : "Pick the exact board, stream or entrance exam you want to practise."
+                  ? "Select the individual examination you want to prepare for."
+                  : "Choose an examination group or individual entrance exam."
               }
             />
 
@@ -2142,16 +2163,23 @@ export default function QuizArenaClient({
                 {currentExamOptions
                   .filter((exam) =>
                     step === "ssc"
-                      ? exam.id.startsWith("ssc-")
-                      : !exam.id.startsWith("ssc-"),
+                      ? selectedExamGroup !== null &&
+                        getQuizExamGroupChildren(selectedExamGroup).includes(
+                          exam.id,
+                        )
+                      : getQuizExamParent(exam.id) === null,
                   )
                   .map((exam) => (
                     <button
                       type="button"
                       key={exam.id}
                       onClick={() => {
-                        if (exam.id === "ssc") {
+                        if (isQuizExamGroup(exam.id)) {
                           setSelectedExam(null);
+                          setSelectedExamGroup(exam.id);
+                          setSelectedSubject(null);
+                          setSelectedTopic(null);
+                          setMessage("");
                           setStep("ssc");
                           return;
                         }

@@ -1,4 +1,28 @@
-﻿export type EducationLevel =
+/**
+ * SmartIQ Institute — Quiz Arena Configuration
+ *
+ * Complete examination catalogue.
+ *
+ * Includes:
+ * - School and Junior College
+ * - Competitive Entrance Examinations
+ * - Government Recruitment Examinations
+ * - MBA Entrance Examinations
+ * - Individual examinations under each group
+ *
+ * Existing examination IDs must not be renamed because they
+ * are used in saved quizzes, progress and attempts.
+ *
+ * Note: Newly added examinations use preliminary subject lists.
+ * Dedicated official syllabus and topic-bank configuration is
+ * maintained separately.
+ */
+
+// ============================================================
+// BASIC TYPES
+// ============================================================
+
+export type EducationLevel =
   | "school-junior-college"
   | "competitive-exam"
   | "government-exam"
@@ -17,11 +41,14 @@ export type Stream =
   | "government";
 
 export type CompetitiveExam =
+  // School
   | "class-6-8"
   | "class-9-10"
   | "class-11-12-science"
   | "class-11-12-commerce"
   | "class-11-12-arts"
+
+  // Existing competitive examinations
   | "jee"
   | "neet"
   | "mht-cet"
@@ -38,6 +65,8 @@ export type CompetitiveExam =
   | "cs"
   | "cma"
   | "mht-cet-llb"
+
+  // Existing government examinations
   | "upsc"
   | "mpsc"
   | "ssc"
@@ -54,6 +83,8 @@ export type CompetitiveExam =
   | "ctet-tet"
   | "maharashtra-police-bharti"
   | "maharashtra-state-government"
+
+  // Existing MBA examinations
   | "cat"
   | "mah-mba-cet"
   | "xat"
@@ -63,7 +94,184 @@ export type CompetitiveExam =
   | "mat"
   | "atma"
   | "gmat"
-  | "tissnet-cuet-pg";
+  | "tissnet-cuet-pg"
+
+  // Phase 1 — SSC
+  | "ssc-mts"
+  | "ssc-stenographer"
+  | "ssc-je"
+  | "ssc-selection-post"
+
+  // Phase 1 — Banking
+  | "sbi-po"
+  | "sbi-clerk"
+  | "ibps-po"
+  | "ibps-clerk"
+  | "ibps-rrb-officer"
+  | "ibps-rrb-assistant"
+  | "rbi-grade-b"
+  | "rbi-assistant"
+
+  // Phase 1 — Railways
+  | "rrb-ntpc"
+  | "rrb-group-d"
+  | "rrb-je"
+  | "rrb-alp"
+  | "rpf-si"
+  | "rpf-constable"
+
+  // Phase 1 — UPSC
+  | "upsc-cse"
+  | "upsc-ies"
+  | "upsc-cms"
+
+  // Phase 1 — MPSC
+  | "mpsc-rajyaseva"
+  | "mpsc-group-b"
+  | "mpsc-group-c"
+
+  // Phase 1 — Teaching
+  | "ctet"
+  | "maharashtra-tet"
+  | "ugc-net"
+  | "csir-net"
+
+  // Phase 1 — Maharashtra
+  | "maharashtra-talathi"
+  | "maharashtra-gramsevak"
+
+  // Phase 1 — Engineering and Medical
+  | "jee-main"
+  | "jee-advanced"
+  | "neet-ug"
+  | "neet-pg"
+
+  // Phase 1 — Law
+  | "clat-ug"
+  | "clat-pg"
+  | "ailet-ug"
+  | "ailet-pg"
+
+  // Additional parent groups
+  | "defence-exams"
+  | "other-entrance"
+  | "mba-more"
+
+  // Additional SSC exams
+  | "ssc-jht"
+  | "ssc-delhi-police-constable"
+
+  // Additional banking and financial recruitment
+  | "ibps-so"
+  | "sbi-so"
+  | "ibps-rrb-scale-ii"
+  | "ibps-rrb-scale-iii"
+  | "nabard-grade-a"
+  | "nabard-grade-b"
+  | "sebi-grade-a"
+  | "sidbi-grade-a"
+  | "lic-aao"
+  | "lic-ado"
+  | "niacl-ao"
+
+  // Additional railway recruitment
+  | "rrb-technician"
+  | "rrb-section-controller"
+  | "rrb-paramedical"
+  | "rrb-ministerial-isolated"
+  | "rrb-ntpc-graduate"
+  | "rrb-ntpc-undergraduate"
+
+  // Additional UPSC
+  | "upsc-ifos"
+  | "upsc-economic-service"
+  | "upsc-statistical-service"
+  | "upsc-geoscientist"
+  | "upsc-epfo-eo-ao"
+  | "upsc-epfo-apfc"
+
+  // Additional Maharashtra recruitment
+  | "mpsc-engineering"
+  | "mpsc-agriculture"
+  | "mpsc-forest"
+  | "maharashtra-police-si"
+  | "maharashtra-police-constable"
+  | "maharashtra-excise-constable"
+
+  // Defence recruitment
+  | "army-agniveer-gd"
+  | "army-agniveer-technical"
+  | "army-agniveer-clerk"
+  | "navy-agniveer-ssr"
+  | "navy-agniveer-mr"
+  | "airforce-agniveervayu"
+  | "coast-guard-navik-gd"
+  | "coast-guard-navik-db"
+  | "coast-guard-yantrik"
+
+  // Teaching recruitment
+  | "kvs-prt"
+  | "kvs-tgt"
+  | "kvs-pgt"
+  | "nvs-tgt"
+  | "nvs-pgt"
+  | "dsssb-teaching"
+  | "emrs-tgt"
+  | "emrs-pgt"
+
+  // Engineering entrances
+  | "bitsat"
+  | "viteee"
+  | "srmjeee"
+  | "wbjee"
+  | "comedk-uget"
+  | "kcet"
+  | "ap-eapcet"
+  | "ts-eapcet"
+
+  // Medical and nursing entrances
+  | "ini-cet"
+  | "fmge"
+  | "aiims-bsc-nursing"
+  | "aiims-msc-nursing"
+  | "neet-mds"
+
+  // Law entrances
+  | "slat"
+  | "mh-law-3-year"
+  | "mh-law-5-year"
+
+  // Chartered Accountancy
+  | "ca-foundation"
+  | "ca-intermediate"
+  | "ca-final"
+
+  // Company Secretary
+  | "cseet"
+  | "cs-executive"
+  | "cs-professional"
+
+  // Cost and Management Accountancy
+  | "cma-foundation"
+  | "cma-intermediate"
+  | "cma-final"
+
+  // Other competitive entrances
+  | "cuet-ug"
+  | "cuet-pg"
+  | "nift-entrance"
+  | "nid-dat"
+  | "uceed"
+  | "ceed"
+  | "nata"
+  | "ipmat"
+  | "nimcet"
+  | "mah-mca-cet"
+
+  // Additional MBA examinations
+  | "micat"
+  | "ibsat"
+  | "kiitee-management";
 
 export type Difficulty = "easy" | "medium" | "hard";
 
@@ -71,55 +279,13 @@ export type QuizSchoolClass = "6" | "7" | "8" | "9" | "10" | "11" | "12";
 
 export type QuizBoard = "Maharashtra State Board" | "CBSE";
 
-export const quizBoardOptions: Array<{
-  id: QuizBoard;
-  title: string;
-  description: string;
-}> = [
-  {
-    id: "Maharashtra State Board",
-    title: "Maharashtra State Board",
-    description: "Maharashtra State Board syllabus",
-  },
-  {
-    id: "CBSE",
-    title: "CBSE",
-    description: "CBSE / NCERT-aligned syllabus",
-  },
-];
-
-export const quizSchoolClassOptions: Partial<
-  Record<CompetitiveExam, QuizSchoolClass[]>
-> = {
-  "class-6-8": ["6", "7", "8"],
-  "class-9-10": ["9", "10"],
-  "class-11-12-science": ["11", "12"],
-  "class-11-12-commerce": ["11", "12"],
-  "class-11-12-arts": ["11", "12"],
-};
-
-export function getQuizSchoolClasses(
-  exam: CompetitiveExam | null,
-): QuizSchoolClass[] {
-  if (!exam) {
-    return [];
-  }
-
-  return quizSchoolClassOptions[exam] ?? [];
-}
-
-export function requiresQuizBoard(exam: CompetitiveExam | null): boolean {
-  return (
-    exam === "class-9-10" ||
-    exam === "class-11-12-science" ||
-    exam === "class-11-12-commerce" ||
-    exam === "class-11-12-arts"
-  );
-}
-
 export type QuizJourneyLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 
 export type QuizRound = 1 | 2 | 3 | 4 | 5;
+
+// ============================================================
+// INTERFACES
+// ============================================================
 
 export type LevelOption = {
   id: EducationLevel;
@@ -157,10 +323,60 @@ export type QuizJourneyLevelOption = {
   questionsPerRound: number;
   questionCapacity: number;
 };
+
+// ============================================================
+// SCHOOL BOARDS AND CLASSES
+// ============================================================
+
+export const quizBoardOptions: Array<{
+  id: QuizBoard;
+  title: string;
+  description: string;
+}> = [
+  {
+    id: "Maharashtra State Board",
+    title: "Maharashtra State Board",
+    description: "Maharashtra State Board syllabus",
+  },
+  {
+    id: "CBSE",
+    title: "CBSE",
+    description: "CBSE / NCERT-aligned syllabus",
+  },
+];
+
+export const quizSchoolClassOptions: Partial<
+  Record<CompetitiveExam, QuizSchoolClass[]>
+> = {
+  "class-6-8": ["6", "7", "8"],
+  "class-9-10": ["9", "10"],
+  "class-11-12-science": ["11", "12"],
+  "class-11-12-commerce": ["11", "12"],
+  "class-11-12-arts": ["11", "12"],
+};
+
+export function getQuizSchoolClasses(
+  exam: CompetitiveExam | null,
+): QuizSchoolClass[] {
+  if (!exam) return [];
+  return quizSchoolClassOptions[exam] ?? [];
+}
+
+export function requiresQuizBoard(exam: CompetitiveExam | null): boolean {
+  return (
+    exam === "class-9-10" ||
+    exam === "class-11-12-science" ||
+    exam === "class-11-12-commerce" ||
+    exam === "class-11-12-arts"
+  );
+}
+
+// ============================================================
+// JOURNEY CONFIGURATION
+// ============================================================
+
 export const QUIZ_TOTAL_LEVELS = 10;
-
 export const QUIZ_ROUNDS_PER_LEVEL = 5;
-
 export const QUIZ_QUESTIONS_PER_ROUND = 10;
 
 export const QUIZ_QUESTIONS_PER_LEVEL =
@@ -168,149 +384,42 @@ export const QUIZ_QUESTIONS_PER_LEVEL =
 
 export const QUIZ_MAX_QUESTIONS = QUIZ_TOTAL_LEVELS * QUIZ_QUESTIONS_PER_LEVEL;
 
-export const quizJourneyLevels: QuizJourneyLevelOption[] = [
-  {
-    id: 1,
-    title: "Level 1",
-    subtitle: "Fundamentals",
-    description:
-      "Build confidence with essential concepts and straightforward questions.",
-    icon: "\u{1F331}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
+const journeyDefinitions = [
+  ["Fundamentals", "Build confidence with essential concepts.", "🌱"],
+  ["Core Concepts", "Strengthen important concepts.", "📘"],
+  ["Applied Basics", "Apply foundational knowledge.", "🧠"],
+  ["Intermediate", "Develop stronger reasoning skills.", "⚡"],
+  ["Strong Concepts", "Test deeper conceptual understanding.", "🎯"],
+  ["Application", "Solve demanding application questions.", "🚀"],
+  ["Exam Practice", "Practise examination-style questions.", "📝"],
+  ["Advanced Practice", "Handle advanced problems.", "🔥"],
+  ["Expert Challenge", "Solve high-level questions.", "🏆"],
+  ["Master Challenge", "Complete the toughest stage.", "👑"],
+] as const;
 
-  {
-    id: 2,
-    title: "Level 2",
-    subtitle: "Core Concepts",
-    description:
-      "Strengthen the important concepts required for deeper learning.",
-    icon: "\u{1F4D8}",
+export const quizJourneyLevels: QuizJourneyLevelOption[] =
+  journeyDefinitions.map(([subtitle, description, icon], index) => ({
+    id: (index + 1) as QuizJourneyLevel,
+    title: `Level ${index + 1}`,
+    subtitle,
+    description,
+    icon,
     rounds: QUIZ_ROUNDS_PER_LEVEL,
     questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
     questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 3,
-    title: "Level 3",
-    subtitle: "Applied Basics",
-    description:
-      "Apply foundational knowledge to practical and mixed-concept questions.",
-    icon: "\u{1F9E0}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 4,
-    title: "Level 4",
-    subtitle: "Intermediate",
-    description:
-      "Move beyond the basics with stronger reasoning and application.",
-    icon: "\u26A1",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 5,
-    title: "Level 5",
-    subtitle: "Strong Concepts",
-    description:
-      "Test stronger conceptual understanding across important topics.",
-    icon: "\u{1F3AF}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 6,
-    title: "Level 6",
-    subtitle: "Application",
-    description:
-      "Solve more demanding application-oriented questions and scenarios.",
-    icon: "\u{1F680}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 7,
-    title: "Level 7",
-    subtitle: "Exam Practice",
-    description:
-      "Practise questions closer to real examination standards.",
-    icon: "\u{1F4DD}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 8,
-    title: "Level 8",
-    subtitle: "Advanced Practice",
-    description:
-      "Handle advanced concepts, combinations and exam-style traps.",
-    icon: "\u{1F525}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 9,
-    title: "Level 9",
-    subtitle: "Expert Challenge",
-    description:
-      "Take on high-level questions requiring deeper reasoning and precision.",
-    icon: "\u{1F3C6}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-
-  {
-    id: 10,
-    title: "Level 10",
-    subtitle: "Master Challenge",
-    description:
-      "Complete the toughest stage of the SmartIQ Quiz Arena journey.",
-    icon: "\u{1F451}",
-    rounds: QUIZ_ROUNDS_PER_LEVEL,
-    questionsPerRound: QUIZ_QUESTIONS_PER_ROUND,
-    questionCapacity: QUIZ_QUESTIONS_PER_LEVEL,
-  },
-];
+  }));
 
 export function getDifficultyForJourneyLevel(
   level: QuizJourneyLevel,
 ): Difficulty {
-  if (level <= 3) {
-    return "easy";
-  }
-
-  if (level <= 6) {
-    return "medium";
-  }
-
+  if (level <= 3) return "easy";
+  if (level <= 6) return "medium";
   return "hard";
 }
 
 export function getQuizJourneyLevel(
   level: QuizJourneyLevel | null,
 ): QuizJourneyLevelOption | undefined {
-  if (!level) {
-    return undefined;
-  }
-
   return quizJourneyLevels.find((option) => option.id === level);
 }
 
@@ -318,76 +427,190 @@ export function getQuizJourneyLevelTitle(
   level: QuizJourneyLevel | null,
 ): string {
   const option = getQuizJourneyLevel(level);
-
-  if (!option) {
-    return "";
-  }
-
-  return `${option.title} \u2022 ${option.subtitle}`;
+  return option ? `${option.title} • ${option.subtitle}` : "";
 }
+
+// ============================================================
+// MAIN CATEGORIES
+// ============================================================
 
 export const levelOptions: LevelOption[] = [
   {
     id: "school-junior-college",
     title: "School & Junior College Courses",
-    subtitle: "6th to 12th \u2022 Boards & Streams",
-    description:
-      "State Board, CBSE, Science, Commerce and Arts.",
-    icon: "\u{1F4D8}",
+    subtitle: "6th to 12th • Boards & Streams",
+    description: "State Board, CBSE, Science, Commerce and Arts.",
+    icon: "📘",
   },
   {
     id: "competitive-exam",
     title: "Top Competitive Exam Courses",
-    subtitle: "Engineering, Medical, Law, Hotel, CA/CS/CMA",
+    subtitle: "Engineering, Medical, Law, Commerce & More",
     description:
-      "JEE, NEET, CET, Olympiads, SAT, IELTS, TOEFL, IMU-CET, NCHMCT-JEE, CLAT, AILET, LAW, CA, CS, CMA and MHT CET LLB.",
-    icon: "\u{1F3AF}",
+      "Engineering, medical, law, professional and university entrance examinations.",
+    icon: "🎯",
   },
   {
     id: "government-exam",
     title: "Top Government Exam Courses",
-    subtitle: "UPSC, MPSC, SSC, Banking, Defence",
+    subtitle: "UPSC, MPSC, SSC, Banking, Railways & Defence",
     description:
-      "UPSC, MPSC, SSC, Banking, Railway, NDA, CDS, AFCAT, CAPF, Teaching Exams and Maharashtra State Government Exams.",
-    icon: "\u{1F3DB}\u{FE0F}",
+      "Central, state, railway, teaching, banking and defence recruitment.",
+    icon: "🏛️",
   },
   {
     id: "mba-entrance",
     title: "MBA Entrance Exams",
-    subtitle: "CAT, CET, XAT, SNAP, NMAT and more",
-    description:
-      "CAT, MAH MBA CET, XAT, SNAP, NMAT, CMAT, MAT, ATMA, GMAT and other popular MBA entrance exams.",
-    icon: "\u{1F4CA}",
+    subtitle: "CAT, CET, XAT, SNAP, NMAT & More",
+    description: "Indian and international management entrance preparation.",
+    icon: "📊",
   },
 ];
 
+// ============================================================
+// EXAM SUBJECT DEFAULTS
+// ============================================================
+
+const SCHOOL_BASIC = [
+  "Mathematics",
+  "Science",
+  "English",
+  "Social Science",
+  "Computer Basics",
+  "General Knowledge",
+];
+
+const SCIENCE = ["Physics", "Chemistry", "Mathematics"];
+
+const MEDICAL = ["Physics", "Chemistry", "Biology"];
+
+const SSC_GENERAL = [
+  "Quantitative Aptitude",
+  "Reasoning",
+  "English",
+  "General Awareness",
+];
+
+const BANKING_GENERAL = [
+  "Quantitative Aptitude",
+  "Reasoning",
+  "English",
+  "Banking Awareness",
+  "Computer Knowledge",
+];
+
+const RAILWAY_GENERAL = [
+  "Mathematics",
+  "Reasoning",
+  "General Awareness",
+  "General Science",
+];
+
+const UPSC_GENERAL = [
+  "History",
+  "Geography",
+  "Polity",
+  "Economics",
+  "Environment",
+  "Current Affairs",
+  "CSAT",
+];
+
+const MPSC_GENERAL = [
+  "Maharashtra GK",
+  "History",
+  "Geography",
+  "Polity",
+  "Economics",
+  "Current Affairs",
+  "CSAT",
+];
+
+const TEACHING_GENERAL = [
+  "Child Development",
+  "Pedagogy",
+  "Mathematics",
+  "Environmental Studies",
+  "Language",
+];
+
+const MAHARASHTRA_GENERAL = [
+  "Marathi",
+  "English",
+  "General Knowledge",
+  "Reasoning",
+  "Mathematics",
+  "Current Affairs",
+];
+
+const LAW_GENERAL = [
+  "English",
+  "Current Affairs",
+  "Legal Reasoning",
+  "Logical Reasoning",
+  "Quantitative Techniques",
+];
+
+const DEFENCE_GENERAL = [
+  "English",
+  "General Knowledge",
+  "Mathematics",
+  "Reasoning",
+];
+
+const MBA_GENERAL = [
+  "Quantitative Aptitude",
+  "Verbal Ability",
+  "Logical Reasoning",
+  "Data Interpretation",
+];
+
+// ============================================================
+// ORIGINAL EXAM CATALOGUE
+// ============================================================
+
+function defineExam(
+  id: CompetitiveExam,
+  title: string,
+  category: EducationLevel,
+  stream: Stream,
+  subjects: string[],
+  eligibility: string,
+  trendNote: string,
+): ExamOption {
+  return {
+    id,
+    title,
+    category,
+    stream,
+    subjects: [...subjects],
+    eligibility,
+    trendNote,
+  };
+}
+
+const SCHOOL = "school-junior-college";
+const COMPETITIVE = "competitive-exam";
+const GOVERNMENT = "government-exam";
+const MBA = "mba-entrance";
+
 export const competitiveExams: ExamOption[] = [
-  {
-    id: "class-6-8",
-    title: "6th to 8th",
-    category: "school-junior-college",
-    stream: "school",
-    eligibility:
-      "Students studying in Classes 6, 7 or 8 from State Board, CBSE.",
-    trendNote: "Best for foundation building and Olympiad-style basics.",
-    subjects: [
-      "Mathematics",
-      "Science",
-      "English",
-      "Social Science",
-      "Computer Basics",
-      "General Knowledge",
-    ],
-  },
-  {
-    id: "class-9-10",
-    title: "9th to 10th",
-    category: "school-junior-college",
-    stream: "school",
-    eligibility:
-      "Students studying in Classes 9 or 10 from State Board, CBSE.",
-    trendNote: "Best for board preparation and concept strengthening.",
-    subjects: [
+  // SCHOOL AND JUNIOR COLLEGE
+  defineExam(
+    "class-6-8",
+    "6th to 8th",
+    SCHOOL,
+    "school",
+    SCHOOL_BASIC,
+    "Students studying in Classes 6 to 8.",
+    "Foundation and Olympiad-style preparation.",
+  ),
+  defineExam(
+    "class-9-10",
+    "9th to 10th",
+    SCHOOL,
+    "school",
+    [
       "Mathematics",
       "Science",
       "English",
@@ -395,17 +618,15 @@ export const competitiveExams: ExamOption[] = [
       "Computer Science",
       "General Knowledge",
     ],
-  },
-  {
-    id: "class-11-12-science",
-    title: "11th to 12th Science",
-    category: "school-junior-college",
-    stream: "science",
-    eligibility:
-      "Class 11 and 12 Science students studying under Maharashtra State Board or CBSE boards.",
-    trendNote:
-      "Best for PCM/PCB students preparing for Class 11 and 12 board exams.",
-    subjects: [
+    "Students studying in Classes 9 or 10.",
+    "Board preparation and concept strengthening.",
+  ),
+  defineExam(
+    "class-11-12-science",
+    "11th to 12th Science",
+    SCHOOL,
+    "science",
+    [
       "Physics",
       "Chemistry",
       "Mathematics",
@@ -413,33 +634,24 @@ export const competitiveExams: ExamOption[] = [
       "English",
       "Computer Science",
     ],
-  },
-  {
-    id: "class-11-12-commerce",
-    title: "11th to 12th Commerce",
-    category: "school-junior-college",
-    stream: "commerce",
-    eligibility:
-      "Class 11 and 12 Commerce students studying under Maharashtra State Board or CBSE boards.",
-    trendNote:
-      "Best for Accounts, Economics, Business Studies and Commerce board preparation.",
-    subjects: [
-      "Accountancy",
-      "Business Studies",
-      "Economics",
-      "Mathematics",
-      "English",
-    ],
-  },
-  {
-    id: "class-11-12-arts",
-    title: "11th to 12th Arts",
-    category: "school-junior-college",
-    stream: "arts",
-    eligibility:
-      "Class 11 and 12 Arts/Humanities students studying under Maharashtra State Board or CBSE boards.",
-    trendNote: "Best for Humanities and Arts subjects under Maharashtra State Board or CBSE.",
-    subjects: [
+    "Class 11 and 12 Science students.",
+    "Science stream and board examination preparation.",
+  ),
+  defineExam(
+    "class-11-12-commerce",
+    "11th to 12th Commerce",
+    SCHOOL,
+    "commerce",
+    ["Accountancy", "Business Studies", "Economics", "Mathematics", "English"],
+    "Class 11 and 12 Commerce students.",
+    "Commerce stream and board examination preparation.",
+  ),
+  defineExam(
+    "class-11-12-arts",
+    "11th to 12th Arts",
+    SCHOOL,
+    "arts",
+    [
       "History",
       "Political Science",
       "Geography",
@@ -447,621 +659,1105 @@ export const competitiveExams: ExamOption[] = [
       "English",
       "Sociology",
     ],
-  },
+    "Class 11 and 12 Arts students.",
+    "Humanities and board examination preparation.",
+  ),
 
-  {
-    id: "jee",
-    title: "JEE",
-    category: "competitive-exam",
-    stream: "engineering",
-    eligibility:
-      "Class 11 and 12 Science students with Physics, Chemistry and Mathematics.",
-    trendNote: "Best for engineering aspirants.",
-    subjects: ["Physics", "Chemistry", "Mathematics"],
-  },
-  {
-    id: "neet",
-    title: "NEET",
-    category: "competitive-exam",
-    stream: "medical",
-    eligibility:
-      "Class 11 and 12 Science students with Physics, Chemistry and Biology.",
-    trendNote: "Best for medical aspirants.",
-    subjects: ["Physics", "Chemistry", "Biology"],
-  },
-  {
-    id: "mht-cet",
-    title: "CET",
-    category: "competitive-exam",
-    stream: "science",
-    eligibility:
-      "Class 11 and 12 Science students, usually PCM or PCB depending on course.",
-    trendNote: "Important for Maharashtra professional courses.",
-    subjects: ["Physics", "Chemistry", "Mathematics", "Biology"],
-  },
-  {
-    id: "olympiads",
-    title: "Olympiads",
-    category: "competitive-exam",
-    stream: "school",
-    eligibility:
-      "School students from different classes depending on Olympiad type.",
-    trendNote: "Best for concept depth, speed and academic confidence.",
-    subjects: [
+  // COMPETITIVE EXAMINATIONS
+  defineExam(
+    "jee",
+    "JEE",
+    COMPETITIVE,
+    "engineering",
+    SCIENCE,
+    "Class 11 and 12 Science students with PCM.",
+    "Engineering entrance preparation.",
+  ),
+  defineExam(
+    "neet",
+    "NEET",
+    COMPETITIVE,
+    "medical",
+    MEDICAL,
+    "Medical entrance aspirants.",
+    "Medical examination preparation.",
+  ),
+  defineExam(
+    "mht-cet",
+    "CET",
+    COMPETITIVE,
+    "science",
+    [...SCIENCE, "Biology"],
+    "Students preparing for Maharashtra CET.",
+    "Maharashtra professional entrance preparation.",
+  ),
+  defineExam(
+    "olympiads",
+    "Olympiads",
+    COMPETITIVE,
+    "school",
+    [
       "Mathematics",
       "Science",
       "English",
       "Logical Reasoning",
       "General Knowledge",
     ],
-  },
-  {
-    id: "sat",
-    title: "SAT",
-    category: "competitive-exam",
-    stream: "school",
-    eligibility:
-      "Students aiming for undergraduate admissions abroad or selected Indian universities.",
-    trendNote: "Useful for global admissions profile building.",
-    subjects: ["Reading and Writing", "Mathematics"],
-  },
-  {
-    id: "ielts",
-    title: "IELTS",
-    category: "competitive-exam",
-    stream: "school",
-    eligibility:
-      "Students or professionals planning study, work or migration abroad.",
-    trendNote: "Useful for English proficiency requirements.",
-    subjects: [
-      "Listening",
-      "Reading",
-      "Writing",
-      "Speaking",
-      "Vocabulary",
-      "Grammar",
-    ],
-  },
-  {
-    id: "toefl",
-    title: "TOEFL",
-    category: "competitive-exam",
-    stream: "school",
-    eligibility:
-      "Students planning international education where TOEFL is accepted.",
-    trendNote: "Useful for English academic communication.",
-    subjects: ["Reading", "Listening", "Speaking", "Writing"],
-  },
-  {
-    id: "imu-cet",
-    title: "IMU-CET",
-    category: "competitive-exam",
-    stream: "science",
-    eligibility:
-      "Students aiming for maritime and marine-related undergraduate courses.",
-    trendNote: "Best for merchant navy and maritime career aspirants.",
-    subjects: [
-      "Physics",
-      "Chemistry",
-      "Mathematics",
-      "English",
-      "General Aptitude",
-    ],
-  },
-  {
-    id: "nchmct-jee",
-    title: "NCHMCT-JEE",
-    category: "competitive-exam",
-    stream: "management",
-    eligibility:
-      "Students aiming for hotel management and hospitality courses.",
-    trendNote: "Best for hospitality and hotel management aspirants.",
-    subjects: [
+    "School students eligible for Olympiad examinations.",
+    "Academic Olympiad preparation.",
+  ),
+  defineExam(
+    "sat",
+    "SAT",
+    COMPETITIVE,
+    "school",
+    ["Reading and Writing", "Mathematics"],
+    "Undergraduate admission aspirants.",
+    "SAT preparation.",
+  ),
+  defineExam(
+    "ielts",
+    "IELTS",
+    COMPETITIVE,
+    "school",
+    ["Listening", "Reading", "Writing", "Speaking", "Vocabulary", "Grammar"],
+    "English proficiency test aspirants.",
+    "IELTS preparation.",
+  ),
+  defineExam(
+    "toefl",
+    "TOEFL",
+    COMPETITIVE,
+    "school",
+    ["Reading", "Listening", "Speaking", "Writing"],
+    "International education applicants.",
+    "TOEFL preparation.",
+  ),
+  defineExam(
+    "imu-cet",
+    "IMU-CET",
+    COMPETITIVE,
+    "science",
+    [...SCIENCE, "English", "General Aptitude"],
+    "Maritime course aspirants.",
+    "Maritime entrance preparation.",
+  ),
+  defineExam(
+    "nchmct-jee",
+    "NCHMCT-JEE",
+    COMPETITIVE,
+    "management",
+    [
       "Numerical Ability",
       "Reasoning",
       "English",
       "General Knowledge",
       "Service Aptitude",
     ],
-  },
-  {
-    id: "clat",
-    title: "CLAT",
-    category: "competitive-exam",
-    stream: "law",
-    eligibility:
-      "Class 12 students or graduates depending on UG/PG law admission.",
-    trendNote: "Top law entrance pathway.",
-    subjects: [
-      "English",
-      "Current Affairs",
-      "Legal Reasoning",
-      "Logical Reasoning",
-      "Quantitative Techniques",
-    ],
-  },
-  {
-    id: "ailet",
-    title: "AILET",
-    category: "competitive-exam",
-    stream: "law",
-    eligibility: "Students targeting National Law University Delhi.",
-    trendNote: "Important for top law aspirants.",
-    subjects: [
-      "English",
-      "Current Affairs",
-      "Legal Reasoning",
-      "Logical Reasoning",
-    ],
-  },
-  {
-    id: "law",
-    title: "LAW Entrance",
-    category: "competitive-exam",
-    stream: "law",
-    eligibility:
-      "Students interested in law entrance exams after Class 12 or graduation.",
-    trendNote: "Good for general law entrance preparation.",
-    subjects: [
+    "Hospitality course aspirants.",
+    "Hotel management entrance preparation.",
+  ),
+  defineExam(
+    "clat",
+    "CLAT",
+    COMPETITIVE,
+    "law",
+    LAW_GENERAL,
+    "Law entrance applicants.",
+    "Common Law Admission Test preparation.",
+  ),
+  defineExam(
+    "ailet",
+    "AILET",
+    COMPETITIVE,
+    "law",
+    ["English", "Current Affairs", "Legal Reasoning", "Logical Reasoning"],
+    "NLU Delhi admission aspirants.",
+    "AILET preparation.",
+  ),
+  defineExam(
+    "law",
+    "LAW Entrance",
+    COMPETITIVE,
+    "law",
+    [
       "Legal Aptitude",
       "English",
       "Current Affairs",
       "Logical Reasoning",
       "General Knowledge",
     ],
-  },
-  {
-    id: "mht-cet-llb",
-    title: "MHT CET LLB",
-    category: "competitive-exam",
-    stream: "law",
-    eligibility:
-      "Students preparing for Maharashtra 3-year or 5-year LLB admission.",
-    trendNote: "Important for Maharashtra law admissions.",
-    subjects: [
+    "Law entrance aspirants.",
+    "Law entrance preparation.",
+  ),
+  defineExam(
+    "mht-cet-llb",
+    "MHT CET LLB",
+    COMPETITIVE,
+    "law",
+    [
       "Legal Aptitude",
       "General Knowledge",
       "Logical Reasoning",
       "English",
       "Basic Mathematics",
     ],
-  },
-  {
-    id: "ca",
-    title: "CA",
-    category: "competitive-exam",
-    stream: "commerce",
-    eligibility:
-      "Commerce students or graduates preparing for CA Foundation/Intermediate path.",
-    trendNote: "Best for accounting, audit and finance careers.",
-    subjects: [
-      "Accounting",
-      "Business Laws",
-      "Economics",
-      "Quantitative Aptitude",
-    ],
-  },
-  {
-    id: "cs",
-    title: "CS",
-    category: "competitive-exam",
-    stream: "commerce",
-    eligibility:
-      "Students interested in company law, compliance and corporate governance.",
-    trendNote: "Best for legal-compliance and corporate governance careers.",
-    subjects: [
+    "Maharashtra LLB entrance aspirants.",
+    "MAH Law CET preparation.",
+  ),
+  defineExam(
+    "ca",
+    "CA",
+    COMPETITIVE,
+    "commerce",
+    ["Accounting", "Business Laws", "Economics", "Quantitative Aptitude"],
+    "Chartered Accountancy students.",
+    "CA examination preparation.",
+  ),
+  defineExam(
+    "cs",
+    "CS",
+    COMPETITIVE,
+    "commerce",
+    [
       "Business Communication",
       "Legal Aptitude",
       "Economics",
       "Business Environment",
     ],
-  },
-  {
-    id: "cma",
-    title: "CMA",
-    category: "competitive-exam",
-    stream: "commerce",
-    eligibility:
-      "Students interested in cost accounting, finance and management accounting.",
-    trendNote: "Best for cost accounting and financial management careers.",
-    subjects: [
-      "Accounting",
-      "Economics",
-      "Business Mathematics",
-      "Commercial Laws",
-    ],
-  },
+    "Company Secretary students.",
+    "CS examination preparation.",
+  ),
+  defineExam(
+    "cma",
+    "CMA",
+    COMPETITIVE,
+    "commerce",
+    ["Accounting", "Economics", "Business Mathematics", "Commercial Laws"],
+    "Cost and Management Accountancy students.",
+    "CMA examination preparation.",
+  ),
 
-  {
-    id: "upsc",
-    title: "UPSC",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Graduates from any stream can generally prepare for civil services.",
-    trendNote: "Best for national civil services aspirants.",
-    subjects: [
-      "History",
-      "Geography",
-      "Polity",
-      "Economics",
-      "Environment",
-      "Current Affairs",
-      "CSAT",
-    ],
-  },
-  {
-    id: "mpsc",
-    title: "MPSC",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Graduates from any stream can generally prepare for Maharashtra civil services.",
-    trendNote: "Best for Maharashtra state services aspirants.",
-    subjects: [
-      "Maharashtra GK",
-      "History",
-      "Geography",
-      "Polity",
-      "Economics",
-      "Current Affairs",
-      "CSAT",
-    ],
-  },
-  {
-    id: "ssc",
-    title: "SSC",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Eligibility varies by post; many exams are open to 10th, 12th or graduates.",
-    trendNote: "Popular for central government jobs.",
-    subjects: [
-      "Quantitative Aptitude",
-      "Reasoning",
-      "English",
-      "General Awareness",
-    ],
-  },
-  {
-    id: "ssc-cgl",
-    title: "SSC CGL",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Combined Graduate Level preparation. Check the applicable SSC notification for post-specific eligibility.",
-    trendNote:
-      "Exam-specific practice for SSC Combined Graduate Level.",
-    subjects: [
+  // GOVERNMENT EXAMINATIONS
+  defineExam(
+    "upsc",
+    "UPSC",
+    GOVERNMENT,
+    "government",
+    UPSC_GENERAL,
+    "Eligibility depends on the examination.",
+    "UPSC recruitment preparation.",
+  ),
+  defineExam(
+    "mpsc",
+    "MPSC",
+    GOVERNMENT,
+    "government",
+    MPSC_GENERAL,
+    "Maharashtra Public Service Commission aspirants.",
+    "Maharashtra government recruitment preparation.",
+  ),
+  defineExam(
+    "ssc",
+    "SSC",
+    GOVERNMENT,
+    "government",
+    SSC_GENERAL,
+    "Eligibility varies by examination and post.",
+    "Staff Selection Commission preparation.",
+  ),
+  defineExam(
+    "ssc-cgl",
+    "SSC CGL",
+    GOVERNMENT,
+    "government",
+    [
       "Quantitative Aptitude",
       "General Intelligence and Reasoning",
       "English Language",
       "General Awareness",
       "Computer Knowledge",
     ],
-  },
-  {
-    id: "ssc-cpo",
-    title: "SSC CPO",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Sub-Inspector recruitment preparation. Check the official notification for educational and physical standards.",
-    trendNote:
-      "Exam-specific practice for SSC CPO recruitment.",
-    subjects: [
+    "Combined Graduate Level applicants.",
+    "SSC CGL-specific preparation.",
+  ),
+  defineExam(
+    "ssc-cpo",
+    "SSC CPO",
+    GOVERNMENT,
+    "government",
+    [
       "Quantitative Aptitude",
       "General Intelligence and Reasoning",
       "English Language",
       "General Knowledge and General Awareness",
     ],
-  },
-  {
-    id: "ssc-chsl",
-    title: "SSC CHSL",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Combined Higher Secondary Level preparation. Check the official notification for post-specific eligibility.",
-    trendNote:
-      "Exam-specific practice for SSC Combined Higher Secondary Level.",
-    subjects: [
+    "Sub-Inspector recruitment aspirants.",
+    "SSC CPO-specific preparation.",
+  ),
+  defineExam(
+    "ssc-chsl",
+    "SSC CHSL",
+    GOVERNMENT,
+    "government",
+    [
       "Quantitative Aptitude",
       "General Intelligence",
       "English Language",
       "General Awareness",
       "Computer Knowledge",
     ],
-  },
-  {
-    id: "ssc-gd",
-    title: "SSC GD",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Constable General Duty recruitment preparation. Check the official notification for educational and physical standards.",
-    trendNote:
-      "Exam-specific practice for SSC General Duty Constable.",
-    subjects: [
+    "Combined Higher Secondary Level applicants.",
+    "SSC CHSL-specific preparation.",
+  ),
+  defineExam(
+    "ssc-gd",
+    "SSC GD",
+    GOVERNMENT,
+    "government",
+    [
       "Elementary Mathematics",
       "General Intelligence and Reasoning",
       "English",
       "Hindi",
       "General Knowledge and General Awareness",
     ],
-  },  {
-    id: "banking",
-    title: "Banking",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Usually graduates from any stream, depending on the banking exam.",
-    trendNote: "Popular for bank PO, clerk and officer roles.",
-    subjects: [
-      "Quantitative Aptitude",
-      "Reasoning",
-      "English",
-      "Banking Awareness",
-      "Computer Knowledge",
-    ],
-  },
-  {
-    id: "railway",
-    title: "Railway",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Eligibility varies by post; many railway exams accept 10th, 12th, ITI, diploma or graduates.",
-    trendNote:
-      "Popular for technical and non-technical government railway posts.",
-    subjects: [
-      "Mathematics",
-      "Reasoning",
-      "General Awareness",
-      "General Science",
-    ],
-  },
-  {
-    id: "nda",
-    title: "NDA",
-    category: "government-exam",
-    stream: "defence",
-    eligibility:
-      "Class 12 students; Air Force and Navy generally require Physics and Mathematics.",
-    trendNote: "Best for defence aspirants after Class 12.",
-    subjects: [
-      "Mathematics",
-      "General Ability Test",
-      "English",
-      "General Knowledge",
-    ],
-  },
-  {
-    id: "cds",
-    title: "CDS",
-    category: "government-exam",
-    stream: "defence",
-    eligibility:
-      "Graduates; technical branches may need specific qualifications.",
-    trendNote: "Best for graduate defence aspirants.",
-    subjects: ["English", "General Knowledge", "Elementary Mathematics"],
-  },
-  {
-    id: "afcat",
-    title: "AFCAT",
-    category: "government-exam",
-    stream: "defence",
-    eligibility:
-      "Graduates; flying/technical branches may require specific subjects and eligibility.",
-    trendNote: "Best for Indian Air Force officer aspirants.",
-    subjects: [
+    "Constable GD applicants.",
+    "SSC GD-specific preparation.",
+  ),
+  defineExam(
+    "banking",
+    "Banking",
+    GOVERNMENT,
+    "government",
+    BANKING_GENERAL,
+    "Bank recruitment examination aspirants.",
+    "Banking examinations preparation.",
+  ),
+  defineExam(
+    "railway",
+    "Railway",
+    GOVERNMENT,
+    "government",
+    RAILWAY_GENERAL,
+    "Railway recruitment aspirants.",
+    "Railway recruitment examination preparation.",
+  ),
+  defineExam(
+    "nda",
+    "NDA",
+    GOVERNMENT,
+    "defence",
+    ["Mathematics", "General Ability Test", "English", "General Knowledge"],
+    "National Defence Academy applicants.",
+    "NDA examination preparation.",
+  ),
+  defineExam(
+    "cds",
+    "CDS",
+    GOVERNMENT,
+    "defence",
+    ["English", "General Knowledge", "Elementary Mathematics"],
+    "Combined Defence Services applicants.",
+    "CDS examination preparation.",
+  ),
+  defineExam(
+    "afcat",
+    "AFCAT",
+    GOVERNMENT,
+    "defence",
+    [
       "English",
       "General Awareness",
       "Numerical Ability",
       "Reasoning",
       "Military Aptitude",
     ],
-  },
-  {
-    id: "capf",
-    title: "CAPF",
-    category: "government-exam",
-    stream: "defence",
-    eligibility:
-      "Graduates from any stream can generally prepare for CAPF Assistant Commandant.",
-    trendNote: "Best for paramilitary officer aspirants.",
-    subjects: [
-      "General Ability",
-      "General Studies",
-      "Essay",
-      "Current Affairs",
-    ],
-  },
-  {
-    id: "ctet-tet",
-    title: "Teaching Exams (CTET/TET)",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Teacher eligibility depends on class level and required teaching qualification.",
-    trendNote: "Best for teaching career aspirants.",
-    subjects: [
-      "Child Development",
-      "Pedagogy",
-      "Mathematics",
-      "Environmental Studies",
-      "Language",
-    ],
-  },
-  {
-    id: "maharashtra-police-bharti",
-    title: "Maharashtra Police Bharti",
-    category: "government-exam",
-    stream: "government",
-    eligibility:
-      "Eligibility depends on Maharashtra police recruitment post and official notification.",
-    trendNote: "Popular Maharashtra state recruitment exam.",
-    subjects: [
+    "Air Force Common Admission Test aspirants.",
+    "AFCAT preparation.",
+  ),
+  defineExam(
+    "capf",
+    "CAPF",
+    GOVERNMENT,
+    "defence",
+    ["General Ability", "General Studies", "Essay", "Current Affairs"],
+    "CAPF Assistant Commandant aspirants.",
+    "CAPF examination preparation.",
+  ),
+  defineExam(
+    "ctet-tet",
+    "Teaching Exams (CTET/TET)",
+    GOVERNMENT,
+    "government",
+    TEACHING_GENERAL,
+    "Teaching eligibility examination aspirants.",
+    "Teacher eligibility and recruitment preparation.",
+  ),
+  defineExam(
+    "maharashtra-police-bharti",
+    "Maharashtra Police Bharti",
+    GOVERNMENT,
+    "government",
+    [
       "Marathi",
       "General Knowledge",
       "Mathematics",
       "Reasoning",
       "Current Affairs",
     ],
-  },
-  {
-    id: "maharashtra-state-government",
-    title: "Maharashtra State Government Exams",
-    category: "government-exam",
-    stream: "government",
-    eligibility: "Eligibility varies by department and post.",
-    trendNote: "Best for Maharashtra state-level government exam preparation.",
-    subjects: [
-      "Marathi",
-      "English",
-      "General Knowledge",
-      "Reasoning",
-      "Mathematics",
-      "Current Affairs",
-    ],
-  },
+    "Maharashtra Police recruitment applicants.",
+    "Maharashtra Police recruitment preparation.",
+  ),
+  defineExam(
+    "maharashtra-state-government",
+    "Maharashtra State Government Exams",
+    GOVERNMENT,
+    "government",
+    MAHARASHTRA_GENERAL,
+    "Maharashtra government recruitment aspirants.",
+    "State recruitment examinations preparation.",
+  ),
 
-  {
-    id: "cat",
-    title: "CAT",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility: "Graduates and final-year students usually prepare for CAT.",
-    trendNote: "Top MBA entrance for IIMs and many leading B-schools.",
-    subjects: ["VARC", "DILR", "Quantitative Aptitude"],
-  },
-  {
-    id: "mah-mba-cet",
-    title: "MAH MBA CET",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting MBA/MMS colleges in Maharashtra.",
-    trendNote: "Important for Maharashtra MBA/MMS admissions.",
-    subjects: [
+  // MBA EXAMINATIONS
+  defineExam(
+    "cat",
+    "CAT",
+    MBA,
+    "management",
+    ["VARC", "DILR", "Quantitative Aptitude"],
+    "MBA admission aspirants.",
+    "CAT preparation.",
+  ),
+  defineExam(
+    "mah-mba-cet",
+    "MAH MBA CET",
+    MBA,
+    "management",
+    [
       "Logical Reasoning",
       "Abstract Reasoning",
       "Quantitative Aptitude",
       "Verbal Ability",
       "Reading Comprehension",
     ],
-  },
-  {
-    id: "xat",
-    title: "XAT",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting XLRI and other XAT-accepting institutes.",
-    trendNote: "Known for decision-making and management aptitude.",
-    subjects: [
+    "Maharashtra MBA/MMS admission aspirants.",
+    "MAH MBA CET preparation.",
+  ),
+  defineExam(
+    "xat",
+    "XAT",
+    MBA,
+    "management",
+    [
       "Verbal Ability",
       "Decision Making",
       "Quantitative Aptitude",
       "General Knowledge",
     ],
-  },
-{
-  id: "snap",
-  title: "SNAP",
-  category: "mba-entrance",
-  stream: "management",
-  eligibility:
-    "Graduates and final-year students targeting Symbiosis institutes.",
-  trendNote:
-    "SNAP 2026 includes the new Ethics, Morality and Values section.",
-  subjects: [
-    "General English",
-    "Analytical Reasoning",
-    "Quantitative Aptitude",
-    "Data Interpretation",
-    "Ethics, Morality and Values",
-  ],
-},
-  {
-    id: "nmat",
-    title: "NMAT",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting NMIMS and other NMAT-accepting institutes.",
-    trendNote: "Known for speed, adaptive style and multiple-attempt strategy.",
-    subjects: ["Language Skills", "Logical Reasoning", "Quantitative Skills"],
-  },
-  {
-    id: "cmat",
-    title: "CMAT",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting AICTE-approved management institutes.",
-    trendNote: "Popular national-level MBA entrance option.",
-    subjects: [
+    "XAT admission aspirants.",
+    "XAT preparation.",
+  ),
+  defineExam(
+    "snap",
+    "SNAP",
+    MBA,
+    "management",
+    [
+      "General English",
+      "Analytical Reasoning",
+      "Quantitative Aptitude",
+      "Data Interpretation",
+      "Ethics, Morality and Values",
+    ],
+    "Symbiosis MBA admission aspirants.",
+    "SNAP preparation.",
+  ),
+  defineExam(
+    "nmat",
+    "NMAT",
+    MBA,
+    "management",
+    ["Language Skills", "Logical Reasoning", "Quantitative Skills"],
+    "NMAT admission aspirants.",
+    "NMAT preparation.",
+  ),
+  defineExam(
+    "cmat",
+    "CMAT",
+    MBA,
+    "management",
+    [
       "Quantitative Technique",
       "Logical Reasoning",
       "Language Comprehension",
       "General Awareness",
       "Innovation and Entrepreneurship",
     ],
-  },
-  {
-    id: "mat",
-    title: "MAT",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting MAT-accepting B-schools.",
-    trendNote: "Popular because it is conducted multiple times a year.",
-    subjects: [
+    "CMAT admission aspirants.",
+    "CMAT preparation.",
+  ),
+  defineExam(
+    "mat",
+    "MAT",
+    MBA,
+    "management",
+    [
       "Language Comprehension",
       "Mathematical Skills",
       "Data Analysis",
       "Intelligence and Critical Reasoning",
       "Indian and Global Environment",
     ],
-  },
-  {
-    id: "atma",
-    title: "ATMA",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates and final-year students targeting ATMA-accepting management institutes.",
-    trendNote: "Useful additional MBA entrance option.",
-    subjects: ["Analytical Reasoning", "Verbal Skills", "Quantitative Skills"],
-  },
-  {
-    id: "gmat",
-    title: "GMAT",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Students and professionals targeting selected Indian and global business schools.",
-    trendNote: "Useful for global MBA and some Indian B-school admissions.",
-    subjects: ["Quantitative Reasoning", "Verbal Reasoning", "Data Insights"],
-  },
-  {
-    id: "tissnet-cuet-pg",
-    title: "TISS / CUET PG Management Prep",
-    category: "mba-entrance",
-    stream: "management",
-    eligibility:
-      "Graduates targeting selected postgraduate management or social-sector programmes.",
-    trendNote:
-      "Good additional option for management and social-sector aspirants.",
-    subjects: [
+    "MAT admission aspirants.",
+    "MAT preparation.",
+  ),
+  defineExam(
+    "atma",
+    "ATMA",
+    MBA,
+    "management",
+    ["Analytical Reasoning", "Verbal Skills", "Quantitative Skills"],
+    "ATMA admission aspirants.",
+    "ATMA preparation.",
+  ),
+  defineExam(
+    "gmat",
+    "GMAT",
+    MBA,
+    "management",
+    ["Quantitative Reasoning", "Verbal Reasoning", "Data Insights"],
+    "Graduate management admission aspirants.",
+    "GMAT preparation.",
+  ),
+  defineExam(
+    "tissnet-cuet-pg",
+    "TISS / CUET PG Management Prep",
+    MBA,
+    "management",
+    [
       "English",
       "Quantitative Aptitude",
       "Logical Reasoning",
       "General Awareness",
     ],
+    "Relevant postgraduate admission applicants.",
+    "Management and social-sector entrance preparation.",
+  ),
+];
+
+// ============================================================
+// INDIVIDUAL EXAM DEFINITIONS
+// ============================================================
+//
+// Each entry uses:
+// ID | Display Name | Parent Group
+//
+// The parent group determines the display category.
+// Existing exam records are never replaced.
+//
+// ============================================================
+
+type ExamDefinition = {
+  id: CompetitiveExam;
+  title: string;
+  parent: CompetitiveExam;
+};
+
+const examRows = [
+  // SSC — Phase 1
+  "ssc-mts|SSC MTS|ssc",
+  "ssc-stenographer|SSC Stenographer|ssc",
+  "ssc-je|SSC Junior Engineer|ssc",
+  "ssc-selection-post|SSC Selection Post|ssc",
+
+  // Banking — Phase 1
+  "sbi-po|SBI PO|banking",
+  "sbi-clerk|SBI Clerk|banking",
+  "ibps-po|IBPS PO|banking",
+  "ibps-clerk|IBPS Clerk|banking",
+  "ibps-rrb-officer|IBPS RRB Officer Scale I|banking",
+  "ibps-rrb-assistant|IBPS RRB Office Assistant|banking",
+  "rbi-grade-b|RBI Grade B|banking",
+  "rbi-assistant|RBI Assistant|banking",
+
+  // Railway — Phase 1
+  "rrb-ntpc|RRB NTPC|railway",
+  "rrb-group-d|RRB Group D|railway",
+  "rrb-je|RRB Junior Engineer|railway",
+  "rrb-alp|RRB Assistant Loco Pilot|railway",
+  "rpf-si|RPF Sub-Inspector|railway",
+  "rpf-constable|RPF Constable|railway",
+
+  // UPSC — Phase 1
+  "upsc-cse|UPSC Civil Services|upsc",
+  "upsc-ies|UPSC Engineering Services|upsc",
+  "upsc-cms|UPSC Combined Medical Services|upsc",
+
+  // MPSC — Phase 1
+  "mpsc-rajyaseva|MPSC Rajyaseva|mpsc",
+  "mpsc-group-b|MPSC Group B|mpsc",
+  "mpsc-group-c|MPSC Group C|mpsc",
+
+  // Teaching — Phase 1
+  "ctet|CTET|ctet-tet",
+  "maharashtra-tet|Maharashtra TET|ctet-tet",
+  "ugc-net|UGC NET|ctet-tet",
+  "csir-net|CSIR UGC NET|ctet-tet",
+
+  // Maharashtra — Phase 1
+  "maharashtra-talathi|Maharashtra Talathi|maharashtra-state-government",
+  "maharashtra-gramsevak|Maharashtra Gramsevak|maharashtra-state-government",
+
+  // Engineering — Phase 1
+  "jee-main|JEE Main|jee",
+  "jee-advanced|JEE Advanced|jee",
+
+  // Medical — Phase 1
+  "neet-ug|NEET UG|neet",
+  "neet-pg|NEET PG|neet",
+
+  // Law — Phase 1
+  "clat-ug|CLAT UG|clat",
+  "clat-pg|CLAT PG|clat",
+  "ailet-ug|AILET UG|ailet",
+  "ailet-pg|AILET PG|ailet",
+
+  // Additional SSC
+  "ssc-jht|SSC Junior Hindi Translator / Translator|ssc",
+  "ssc-delhi-police-constable|SSC Delhi Police Constable|ssc",
+
+  // Additional Banking and Regulatory
+  "ibps-so|IBPS Specialist Officer|banking",
+  "sbi-so|SBI Specialist Officer|banking",
+  "ibps-rrb-scale-ii|IBPS RRB Officer Scale II|banking",
+  "ibps-rrb-scale-iii|IBPS RRB Officer Scale III|banking",
+  "nabard-grade-a|NABARD Grade A|banking",
+  "nabard-grade-b|NABARD Grade B|banking",
+  "sebi-grade-a|SEBI Grade A|banking",
+  "sidbi-grade-a|SIDBI Grade A|banking",
+  "lic-aao|LIC AAO|banking",
+  "lic-ado|LIC ADO|banking",
+  "niacl-ao|NIACL Administrative Officer|banking",
+
+  // Additional Railways
+  "rrb-technician|RRB Technician|railway",
+  "rrb-section-controller|RRB Section Controller|railway",
+  "rrb-paramedical|RRB Paramedical|railway",
+  "rrb-ministerial-isolated|RRB Ministerial and Isolated Categories|railway",
+  "rrb-ntpc-graduate|RRB NTPC Graduate|railway",
+  "rrb-ntpc-undergraduate|RRB NTPC Undergraduate|railway",
+
+  // Additional UPSC
+  "upsc-ifos|UPSC Indian Forest Service|upsc",
+  "upsc-economic-service|UPSC Indian Economic Service|upsc",
+  "upsc-statistical-service|UPSC Indian Statistical Service|upsc",
+  "upsc-geoscientist|UPSC Combined Geo-Scientist|upsc",
+  "upsc-epfo-eo-ao|UPSC EPFO EO/AO|upsc",
+  "upsc-epfo-apfc|UPSC EPFO APFC|upsc",
+
+  // Additional MPSC and Maharashtra
+  "mpsc-engineering|MPSC Engineering Services|mpsc",
+  "mpsc-agriculture|MPSC Agriculture Services|mpsc",
+  "mpsc-forest|MPSC Forest Services|mpsc",
+  "maharashtra-police-si|Maharashtra Police Sub-Inspector|maharashtra-state-government",
+  "maharashtra-police-constable|Maharashtra Police Constable|maharashtra-state-government",
+  "maharashtra-excise-constable|Maharashtra Excise Constable|maharashtra-state-government",
+
+  // Defence
+  "army-agniveer-gd|Army Agniveer General Duty|defence-exams",
+  "army-agniveer-technical|Army Agniveer Technical|defence-exams",
+  "army-agniveer-clerk|Army Agniveer Clerk / Store Keeper|defence-exams",
+  "navy-agniveer-ssr|Navy Agniveer SSR|defence-exams",
+  "navy-agniveer-mr|Navy Agniveer MR|defence-exams",
+  "airforce-agniveervayu|Air Force Agniveervayu|defence-exams",
+  "coast-guard-navik-gd|Coast Guard Navik GD|defence-exams",
+  "coast-guard-navik-db|Coast Guard Navik DB|defence-exams",
+  "coast-guard-yantrik|Coast Guard Yantrik|defence-exams",
+
+  // Teaching Recruitment
+  "kvs-prt|KVS Primary Teacher|ctet-tet",
+  "kvs-tgt|KVS Trained Graduate Teacher|ctet-tet",
+  "kvs-pgt|KVS Post Graduate Teacher|ctet-tet",
+  "nvs-tgt|NVS Trained Graduate Teacher|ctet-tet",
+  "nvs-pgt|NVS Post Graduate Teacher|ctet-tet",
+  "dsssb-teaching|DSSSB Teaching Recruitment|ctet-tet",
+  "emrs-tgt|EMRS Trained Graduate Teacher|ctet-tet",
+  "emrs-pgt|EMRS Post Graduate Teacher|ctet-tet",
+
+  // Engineering Entrances
+  "bitsat|BITSAT|jee",
+  "viteee|VITEEE|jee",
+  "srmjeee|SRMJEEE|jee",
+  "wbjee|WBJEE|jee",
+  "comedk-uget|COMEDK UGET|jee",
+  "kcet|KCET|jee",
+  "ap-eapcet|AP EAPCET|jee",
+  "ts-eapcet|TG EAPCET|jee",
+
+  // Medical and Nursing
+  "ini-cet|INI-CET|neet",
+  "fmge|FMGE|neet",
+  "aiims-bsc-nursing|AIIMS BSc Nursing Entrance|neet",
+  "aiims-msc-nursing|AIIMS MSc Nursing Entrance|neet",
+  "neet-mds|NEET MDS|neet",
+
+  // Law
+  "slat|Symbiosis Law Admission Test|law",
+  "mh-law-3-year|MAH LLB CET 3-Year|mht-cet-llb",
+  "mh-law-5-year|MAH LLB CET 5-Year|mht-cet-llb",
+
+  // Chartered Accountancy
+  "ca-foundation|CA Foundation|ca",
+  "ca-intermediate|CA Intermediate|ca",
+  "ca-final|CA Final|ca",
+
+  // Company Secretary
+  "cseet|CSEET|cs",
+  "cs-executive|CS Executive|cs",
+  "cs-professional|CS Professional|cs",
+
+  // Cost and Management Accountancy
+  "cma-foundation|CMA Foundation|cma",
+  "cma-intermediate|CMA Intermediate|cma",
+  "cma-final|CMA Final|cma",
+
+  // Other Competitive Entrances
+  "cuet-ug|CUET UG|other-entrance",
+  "cuet-pg|CUET PG|other-entrance",
+  "nift-entrance|NIFT Entrance Examination|other-entrance",
+  "nid-dat|NID Design Aptitude Test|other-entrance",
+  "uceed|UCEED|other-entrance",
+  "ceed|CEED|other-entrance",
+  "nata|NATA|other-entrance",
+  "ipmat|IPMAT|other-entrance",
+  "nimcet|NIMCET|other-entrance",
+  "mah-mca-cet|MAH MCA CET|other-entrance",
+
+  // Additional MBA Entrances
+  "micat|MICAT|mba-more",
+  "ibsat|IBSAT|mba-more",
+  "kiitee-management|KIITEE Management|mba-more",
+];
+
+// ============================================================
+// EXAM-SPECIFIC SUBJECT OVERRIDES
+// ============================================================
+//
+// These are preliminary subject menus, not a certified
+// reproduction of every stage of each official examination.
+//
+
+const examSubjectOverrides: Partial<Record<CompetitiveExam, string[]>> = {
+  "ssc-mts": [
+    "Numerical and Mathematical Ability",
+    "Reasoning Ability and Problem Solving",
+    "General Awareness",
+    "English Language",
+  ],
+  "ssc-stenographer": [
+    "General Intelligence and Reasoning",
+    "General Awareness",
+    "English Language and Comprehension",
+  ],
+  "ssc-je": [
+    "General Intelligence and Reasoning",
+    "General Awareness",
+    "Civil Engineering",
+    "Electrical Engineering",
+    "Mechanical Engineering",
+  ],
+  "ssc-jht": [
+    "General Hindi",
+    "General English",
+    "Translation",
+    "Essay Writing",
+  ],
+
+  "sbi-po": [
+    "English Language",
+    "Quantitative Aptitude",
+    "Reasoning Ability",
+    "Data Analysis and Interpretation",
+    "General and Banking Awareness",
+    "Descriptive English",
+  ],
+  "sbi-clerk": [
+    "English Language",
+    "Numerical Ability",
+    "Reasoning Ability",
+    "General and Financial Awareness",
+  ],
+  "ibps-po": [
+    "English Language",
+    "Quantitative Aptitude",
+    "Reasoning Ability",
+    "Data Analysis and Interpretation",
+    "General and Banking Awareness",
+  ],
+  "ibps-clerk": [
+    "English Language",
+    "Numerical Ability",
+    "Reasoning Ability",
+    "General and Financial Awareness",
+  ],
+  "rbi-grade-b": [
+    "General Awareness",
+    "Quantitative Aptitude",
+    "Reasoning",
+    "English",
+    "Economic and Social Issues",
+    "Finance and Management",
+  ],
+  "nabard-grade-a": [
+    "Reasoning",
+    "English",
+    "Computer Knowledge",
+    "Quantitative Aptitude",
+    "General Awareness",
+    "Economic and Social Issues",
+    "Agriculture and Rural Development",
+  ],
+  "sebi-grade-a": [
+    "General Awareness",
+    "English Language",
+    "Quantitative Aptitude",
+    "Reasoning",
+    "Commerce and Accountancy",
+    "Economics",
+    "Finance",
+    "Management",
+  ],
+
+  "rrb-alp": [
+    "Mathematics",
+    "Mental Ability",
+    "General Science",
+    "General Awareness",
+    "Basic Science and Engineering",
+    "Trade Knowledge",
+  ],
+  "rrb-je": [
+    "Mathematics",
+    "General Intelligence and Reasoning",
+    "General Awareness",
+    "General Science",
+    "Technical Ability",
+  ],
+  "rrb-technician": [
+    "Mathematics",
+    "General Intelligence and Reasoning",
+    "General Science",
+    "General Awareness",
+    "Computer Applications",
+  ],
+  "rrb-ntpc": RAILWAY_GENERAL,
+
+  "upsc-ies": [
+    "General Studies",
+    "Civil Engineering",
+    "Mechanical Engineering",
+    "Electrical Engineering",
+    "Electronics and Telecommunication Engineering",
+  ],
+  "upsc-cms": [
+    "General Medicine",
+    "Paediatrics",
+    "Surgery",
+    "Gynaecology and Obstetrics",
+    "Preventive and Social Medicine",
+  ],
+  "upsc-economic-service": [
+    "General English",
+    "General Studies",
+    "General Economics",
+    "Indian Economics",
+  ],
+  "upsc-statistical-service": [
+    "General English",
+    "General Studies",
+    "Statistics",
+    "Probability",
+    "Statistical Inference",
+  ],
+
+  ctet: [
+    "Child Development and Pedagogy",
+    "Language I",
+    "Language II",
+    "Mathematics",
+    "Environmental Studies",
+    "Science",
+    "Social Studies",
+  ],
+  "maharashtra-tet": [
+    "Child Development and Pedagogy",
+    "Language I",
+    "Language II",
+    "Mathematics",
+    "Environmental Studies",
+    "Science",
+    "Social Studies",
+  ],
+  "ugc-net": [
+    "Teaching Aptitude",
+    "Research Aptitude",
+    "Comprehension",
+    "Communication",
+    "Reasoning",
+    "Data Interpretation",
+    "Information and Communication Technology",
+    "People and Environment",
+    "Higher Education System",
+    "Subject Knowledge",
+  ],
+  "csir-net": [
+    "General Aptitude",
+    "Life Sciences",
+    "Chemical Sciences",
+    "Physical Sciences",
+    "Mathematical Sciences",
+    "Earth Sciences",
+  ],
+
+  "jee-main": SCIENCE,
+  "jee-advanced": SCIENCE,
+  "neet-ug": MEDICAL,
+  "neet-pg": [
+    "Anatomy",
+    "Physiology",
+    "Biochemistry",
+    "Pathology",
+    "Pharmacology",
+    "Microbiology",
+    "Medicine",
+    "Surgery",
+    "Obstetrics and Gynaecology",
+    "Community Medicine",
+  ],
+  "neet-mds": [
+    "Dental Anatomy",
+    "Oral Pathology",
+    "Oral Medicine",
+    "Oral Surgery",
+    "Periodontology",
+    "Orthodontics",
+    "Prosthodontics",
+    "Conservative Dentistry",
+    "Pedodontics",
+  ],
+  fmge: [
+    "Anatomy",
+    "Physiology",
+    "Biochemistry",
+    "Pathology",
+    "Pharmacology",
+    "Microbiology",
+    "Medicine",
+    "Surgery",
+    "Community Medicine",
+  ],
+
+  "clat-ug": LAW_GENERAL,
+  "clat-pg": [
+    "Constitutional Law",
+    "Jurisprudence",
+    "Contract Law",
+    "Criminal Law",
+    "Administrative Law",
+    "Family Law",
+  ],
+  "ailet-ug": [
+    "English Language",
+    "Current Affairs",
+    "General Knowledge",
+    "Logical Reasoning",
+  ],
+  "ailet-pg": [
+    "Constitutional Law",
+    "Jurisprudence",
+    "Contract Law",
+    "Criminal Law",
+    "International Law",
+  ],
+
+  "ca-foundation": [
+    "Accounting",
+    "Business Laws",
+    "Quantitative Aptitude",
+    "Business Economics",
+  ],
+  cseet: [
+    "Business Communication",
+    "Fundamentals of Accounting",
+    "Economic and Business Environment",
+    "Business Laws and Management",
+  ],
+  "cma-foundation": [
+    "Business Laws and Business Communication",
+    "Financial and Cost Accounting",
+    "Business Mathematics and Statistics",
+    "Business Economics and Management",
+  ],
+};
+
+// ============================================================
+// GROUP REGISTRY
+// ============================================================
+//
+// The existing client uses these functions to show:
+// Category -> Group -> Individual Exam -> Subject.
+//
+// Do not rename these exported functions.
+// ============================================================
+
+export const quizExamGroups: Partial<
+  Record<CompetitiveExam, CompetitiveExam[]>
+> = {
+  ssc: ["ssc-cgl", "ssc-cpo", "ssc-chsl", "ssc-gd"],
+  banking: [],
+  railway: [],
+  upsc: [],
+  mpsc: [],
+  "ctet-tet": [],
+  "maharashtra-state-government": [],
+  jee: [],
+  neet: [],
+  clat: [],
+  ailet: [],
+  law: [],
+  "mht-cet-llb": [],
+  ca: [],
+  cs: [],
+  cma: [],
+  "defence-exams": ["nda", "cds", "afcat", "capf"],
+  "other-entrance": [],
+  "mba-more": [],
+};
+
+// Three additional groups.
+
+const additionalRoots: Array<{
+  id: CompetitiveExam;
+  title: string;
+  category: EducationLevel;
+  stream: Stream;
+  subjects: string[];
+}> = [
+  {
+    id: "defence-exams",
+    title: "Defence Recruitment Exams",
+    category: GOVERNMENT,
+    stream: "defence",
+    subjects: DEFENCE_GENERAL,
+  },
+  {
+    id: "other-entrance",
+    title: "Other Entrance Examinations",
+    category: COMPETITIVE,
+    stream: "school",
+    subjects: ["General Aptitude", "English", "Reasoning"],
+  },
+  {
+    id: "mba-more",
+    title: "Additional MBA Entrance Exams",
+    category: MBA,
+    stream: "management",
+    subjects: MBA_GENERAL,
   },
 ];
+
+for (const root of additionalRoots) {
+  if (!competitiveExams.some((exam) => exam.id === root.id)) {
+    competitiveExams.push(
+      defineExam(
+        root.id,
+        root.title,
+        root.category,
+        root.stream,
+        root.subjects,
+        "Eligibility depends on the selected examination.",
+        "Choose an individual examination.",
+      ),
+    );
+  }
+}
+
+// Parse and register all individual exams.
+
+const examDefinitions: ExamDefinition[] = examRows.map((row) => {
+  const [id, title, parent] = row.split("|");
+
+  return {
+    id: id as CompetitiveExam,
+    title,
+    parent: parent as CompetitiveExam,
+  };
+});
+
+for (const definition of examDefinitions) {
+  const parent = competitiveExams.find((exam) => exam.id === definition.parent);
+
+  if (!parent) {
+    throw new Error(`Quiz Arena parent missing: ${definition.parent}`);
+  }
+
+  const existing = competitiveExams.find((exam) => exam.id === definition.id);
+
+  if (!existing) {
+    competitiveExams.push(
+      defineExam(
+        definition.id,
+        definition.title,
+        parent.category,
+        parent.stream,
+        examSubjectOverrides[definition.id] ?? parent.subjects,
+        `Check official eligibility for ${definition.title}.`,
+        `Individual exam preparation for ${definition.title}.`,
+      ),
+    );
+  }
+
+  const children = quizExamGroups[definition.parent];
+
+  if (!children) {
+    throw new Error(`Quiz Arena group missing: ${definition.parent}`);
+  }
+
+  if (!children.includes(definition.id)) {
+    children.push(definition.id);
+  }
+}
+
+// ============================================================
+// GROUP HELPER FUNCTIONS
+// ============================================================
+
+export function isQuizExamGroup(exam: CompetitiveExam): boolean {
+  return Object.prototype.hasOwnProperty.call(quizExamGroups, exam);
+}
+
+export function getQuizExamGroupChildren(
+  group: CompetitiveExam,
+): CompetitiveExam[] {
+  return quizExamGroups[group] ?? [];
+}
+
+export function getQuizExamParent(
+  exam: CompetitiveExam,
+): CompetitiveExam | null {
+  for (const [parent, children] of Object.entries(quizExamGroups)) {
+    if (children.includes(exam)) {
+      return parent as CompetitiveExam;
+    }
+  }
+
+  return null;
+}
+
+// ============================================================
+// DIFFICULTY OPTIONS
+// ============================================================
 
 export const difficultyOptions: DifficultyOption[] = [
   {
@@ -1069,25 +1765,27 @@ export const difficultyOptions: DifficultyOption[] = [
     title: "Easy",
     questions: 10,
     description: "Warm up and build confidence",
-    icon: "\u{1F331}",
+    icon: "🌱",
   },
-
   {
     id: "medium",
     title: "Medium",
     questions: 10,
     description: "Test your preparation level",
-    icon: "\u26A1",
+    icon: "⚡",
   },
-
   {
     id: "hard",
     title: "Hard",
     questions: 10,
     description: "Take the serious exam challenge",
-    icon: "\u{1F525}",
+    icon: "🔥",
   },
 ];
+
+// ============================================================
+// LOOKUP HELPERS
+// ============================================================
 
 export function getLevelTitle(level: EducationLevel | null): string {
   return levelOptions.find((option) => option.id === level)?.title ?? "";
