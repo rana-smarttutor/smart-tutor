@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
+import { isLibraryLockdownBypass } from "@/lib/digital-library-lockdown";
 import {
   DIGITAL_LIBRARY_BOOK_PREFIX,
   DIGITAL_LIBRARY_METADATA_PREFIX,
@@ -53,7 +54,7 @@ function normalizeStoredPrice(value: string) {
 function formatDisplayPrice(value: string) {
   return value === "free"
     ? "Free"
-    : `₹${Number(value).toLocaleString("en-IN")}`;
+    : `â‚¹${Number(value).toLocaleString("en-IN")}`;
 }
 
 async function authorizeManager() {
@@ -193,6 +194,23 @@ function createMetadataRecord(
 }
 
 export async function GET() {
+  // TEMPORARY DIGITAL LIBRARY LOCKDOWN
+  const lockdownSession = await getSessionUser();
+
+  if (!isLibraryLockdownBypass(lockdownSession?.role)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Digital Library temporarily unavailable during subscription upgrade.",
+        code: "LIBRARY_TEMPORARILY_LOCKED",
+      },
+      {
+        status: 403,
+        headers: { "Cache-Control": "no-store" },
+      }
+    );
+  }
+
   try {
     const session = await getSessionUser();
 

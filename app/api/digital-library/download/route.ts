@@ -2,6 +2,7 @@ import { list } from "@vercel/blob";
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
+import { isLibraryLockdownBypass } from "@/lib/digital-library-lockdown";
 import { getMetadataPathForBook, type MegaBookMetadata } from "@/lib/digital-library-storage";
 
 export const runtime = "nodejs";
@@ -71,6 +72,23 @@ async function resolveBookDownload(pathname: string, token: string) {
 }
 
 export async function GET(request: Request) {
+  // TEMPORARY DIGITAL LIBRARY LOCKDOWN
+  const lockdownSession = await getSessionUser();
+
+  if (!isLibraryLockdownBypass(lockdownSession?.role)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Digital Library temporarily unavailable during subscription upgrade.",
+        code: "LIBRARY_TEMPORARILY_LOCKED",
+      },
+      {
+        status: 403,
+        headers: { "Cache-Control": "no-store" },
+      }
+    );
+  }
+
   try {
     const session = await getSessionUser();
 
