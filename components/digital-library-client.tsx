@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { upload } from "@vercel/blob/client";
 
@@ -475,7 +475,7 @@ function getAcademicBookInfo(book: Book) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase()
-    .replace(/[_–—-]/g, " ")
+    .replace(/[_â€“â€”-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -687,7 +687,7 @@ function BookThumbnail({ book }: { book: Book }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#102d5b] via-[#164477] to-[#081e3c]">
       <div className="text-center text-white">
-        <p className="text-4xl">📘</p>
+        <p className="text-4xl">ðŸ“˜</p>
 
         <p className="mt-2 text-xl font-black">PDF</p>
       </div>
@@ -1642,6 +1642,13 @@ export function DigitalLibraryClient({
   // ===================================================
 
   async function downloadBook(book: Book) {
+    if (!allowedToManage) {
+      alert(
+        "Full PDF downloads are temporarily unavailable while subscriptions are being prepared.",
+      );
+      return;
+    }
+
     const canDownload = await requestLoginIfNeeded("/library");
 
     if (!canDownload) {
@@ -1683,7 +1690,10 @@ export function DigitalLibraryClient({
   // PREVIEW BOOK
   // ===================================================
 
-  function previewBook(book: Book) {
+  async function previewBook(book: Book) {
+    const canPreview = await requestLoginIfNeeded("/library");
+    if (!canPreview) return;
+
     if (!book.pathname) {
       alert("Preview is not available for this material.");
 
@@ -2004,6 +2014,14 @@ export function DigitalLibraryClient({
               </div>
             </div>
           )}
+          <div
+            className="mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800"
+            role="status"
+          >
+            You can browse all library books. Full PDF downloads are temporarily
+            unavailable while secure subscriptions are being finalized.
+            Logged-in users may preview up to five pages.
+          </div>
 
           {/* =====================================
               PDF STUDY MATERIALS
@@ -2130,9 +2148,12 @@ export function DigitalLibraryClient({
                         <button
                           type="button"
                           onClick={() => void downloadBook(book)}
-                          className="rounded-xl bg-blue-600 px-2 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
+                          disabled={!allowedToManage}
+                          className="rounded-xl bg-blue-600 px-2 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700"
                         >
-                          {isFree ? "Download ↓" : "Buy & Download"}
+                          {allowedToManage
+                            ? "Download PDF"
+                            : "Downloads Locked"}
                         </button>
 
                         <button
@@ -2322,7 +2343,7 @@ export function DigitalLibraryClient({
             >
               Are you sure you want to delete{" "}
               <span className="font-black text-slate-950">
-                “{bookToDelete.title}”
+                "{bookToDelete.title}"
               </span>
               ? This action cannot be undone.
             </p>
@@ -2393,7 +2414,7 @@ export function DigitalLibraryClient({
                 disabled={isSaving}
                 className="rounded-full border border-slate-200 px-3 py-2 text-sm font-black"
               >
-                ✕
+                âœ•
               </button>
             </div>
 

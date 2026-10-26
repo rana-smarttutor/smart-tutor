@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
-import { isLibraryLockdownBypass } from "@/lib/digital-library-lockdown";
 import {
   DIGITAL_LIBRARY_BOOK_PREFIX,
   DIGITAL_LIBRARY_METADATA_PREFIX,
@@ -46,9 +45,7 @@ function safeBookName(name: string) {
 function normalizeStoredPrice(value: string) {
   const digits = value.replace(/[^\d]/g, "");
 
-  return !digits || Number(digits) <= 0
-    ? "free"
-    : String(Number(digits));
+  return !digits || Number(digits) <= 0 ? "free" : String(Number(digits));
 }
 
 function formatDisplayPrice(value: string) {
@@ -194,30 +191,13 @@ function createMetadataRecord(
 }
 
 export async function GET() {
-  // TEMPORARY DIGITAL LIBRARY LOCKDOWN
-  const lockdownSession = await getSessionUser();
-
-  if (!isLibraryLockdownBypass(lockdownSession?.role)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Digital Library temporarily unavailable during subscription upgrade.",
-        code: "LIBRARY_TEMPORARILY_LOCKED",
-      },
-      {
-        status: 403,
-        headers: { "Cache-Control": "no-store" },
-      }
-    );
-  }
-
   try {
     const session = await getSessionUser();
 
     const role = String(session?.role || "student").toLowerCase();
     const canManage = role === "admin" || role === "educator";
     const isLoggedIn = Boolean(session);
-    const canAccessPdf = canManage || isLoggedIn;
+    const canAccessPdf = canManage;
 
     const books = await getDigitalLibraryBooks(canAccessPdf);
 
@@ -226,7 +206,22 @@ export async function GET() {
       canManage,
       isLoggedIn,
       role,
-      books,
+      books: canManage
+        ? books
+        : books.map((book) => {
+            const entry = book as Record<string, unknown>;
+            return {
+              id: entry.id,
+              title: entry.title,
+              description: entry.description,
+              price: entry.price,
+              fileName: entry.fileName,
+              pathname: entry.pathname,
+              categoryId: entry.categoryId,
+              categoryLabel: entry.categoryLabel,
+              thumbnailUrl: entry.thumbnailUrl,
+            };
+          }),
     });
   } catch (error) {
     console.error("Digital library list error:", error);
@@ -362,9 +357,7 @@ export async function POST(request: Request) {
       {
         success: false,
         message:
-          error instanceof Error
-            ? error.message
-            : "Failed to save material.",
+          error instanceof Error ? error.message : "Failed to save material.",
       },
       { status: 500 },
     );

@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 import { logAction } from "@/lib/audit-log";
 import { getSessionUser } from "@/lib/auth";
-import { isLibraryLockdownBypass } from "@/lib/digital-library-lockdown";
 import { sanitizeTextInput } from "@/lib/validation";
 
 export const runtime = "nodejs";
@@ -53,23 +52,6 @@ async function readCustomSections(token: string): Promise<LibrarySection[]> {
 }
 
 export async function GET() {
-  // TEMPORARY DIGITAL LIBRARY LOCKDOWN
-  const lockdownSession = await getSessionUser();
-
-  if (!isLibraryLockdownBypass(lockdownSession?.role)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Digital Library temporarily unavailable during subscription upgrade.",
-        code: "LIBRARY_TEMPORARILY_LOCKED",
-      },
-      {
-        status: 403,
-        headers: { "Cache-Control": "no-store" },
-      }
-    );
-  }
-
   try {
     const token = process.env.BLOB_READ_WRITE_TOKEN;
 
@@ -169,7 +151,9 @@ export async function POST(request: Request) {
     const existingSections = await readCustomSections(token);
 
     const alreadyExists = existingSections.some(
-      (section) => section.id === id || section.label.toLowerCase() === label.toLowerCase(),
+      (section) =>
+        section.id === id ||
+        section.label.toLowerCase() === label.toLowerCase(),
     );
 
     if (alreadyExists) {

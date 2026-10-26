@@ -80,6 +80,11 @@ const RESULT_CATEGORIES = [
     label: "Railway Exam",
     image: "/hof/Railway.png",
   },
+    {
+    id: "ssc cgl",
+    label: "SSC CGL",
+    image: "/hof/ssc-clg-new-2.png",
+  },
 
 ];
 

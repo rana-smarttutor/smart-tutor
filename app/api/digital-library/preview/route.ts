@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { PDFDocument } from "pdf-lib";
 
 import { getSessionUser } from "@/lib/auth";
-import { isLibraryLockdownBypass } from "@/lib/digital-library-lockdown";
 import {
   getMetadataPathForBook,
   getBookAssetKey,
@@ -156,23 +155,6 @@ function createPreviewResponse(pdfBytes: Uint8Array) {
 }
 
 export async function GET(request: Request) {
-  // TEMPORARY DIGITAL LIBRARY LOCKDOWN
-  const lockdownSession = await getSessionUser();
-
-  if (!isLibraryLockdownBypass(lockdownSession?.role)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Digital Library temporarily unavailable during subscription upgrade.",
-        code: "LIBRARY_TEMPORARILY_LOCKED",
-      },
-      {
-        status: 403,
-        headers: { "Cache-Control": "no-store" },
-      }
-    );
-  }
-
   try {
     const session = await getSessionUser();
 
@@ -203,23 +185,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  // TEMPORARY DIGITAL LIBRARY LOCKDOWN
-  const lockdownSession = await getSessionUser();
-
-  if (!isLibraryLockdownBypass(lockdownSession?.role)) {
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Digital Library temporarily unavailable during subscription upgrade.",
-        code: "LIBRARY_TEMPORARILY_LOCKED",
-      },
-      {
-        status: 403,
-        headers: { "Cache-Control": "no-store" },
-      }
-    );
-  }
-
   try {
     const session = await getSessionUser();
 
