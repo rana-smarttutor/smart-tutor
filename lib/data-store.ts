@@ -277,7 +277,7 @@ export const COLLECTIONS = {
   // Staff Payout Audit Logs
   staffPayoutAuditLogs: "staffPayoutAuditLogs",
 
-// ===== Fee Transaction Log =====
+  // ===== Fee Transaction Log =====
   feeTransactionLogs: "feeTransactionLogs",
 
   // Action Logs
@@ -290,7 +290,6 @@ export const COLLECTIONS = {
   mentorshipProfiles: "mentorshipProfiles",
   mentorshipRequests: "mentorshipRequests",
 } as const;
-
 
 export async function createEnquiry(input: {
   name: string;
@@ -1261,6 +1260,7 @@ function normalizePublicInstituteData(
       ...template.profile,
       ...document.profile,
       name: template.profile.name,
+      email: "info@smartiqinstitute.in",
       phone: template.profile.phone,
       directorName: template.profile.directorName,
       directorTitle: template.profile.directorTitle,
@@ -5124,7 +5124,12 @@ export async function getAttendanceSheetsForRole(role: Role, userId?: string) {
    * Admin, Educator and Counsellor
    * need institution-level attendance.
    */
-  if (role === "admin" || role === "educator" || role === "counsellor" || role === "staff") {
+  if (
+    role === "admin" ||
+    role === "educator" ||
+    role === "counsellor" ||
+    role === "staff"
+  ) {
     return stripMongoIds(
       await collection
         .find({})
@@ -10542,7 +10547,10 @@ export async function getStaffPayoutsForRole(role: Role, userId?: string) {
       await collection.find({}).sort({ createdAt: -1 }).toArray(),
     );
   }
-  if ((role === "educator" || role === "staff" || role === "counsellor") && userId) {
+  if (
+    (role === "educator" || role === "staff" || role === "counsellor") &&
+    userId
+  ) {
     return stripMongoIds(
       await collection
         .find({ staffId: userId })
@@ -11645,13 +11653,18 @@ export async function getActionLogs(filters: {
   if (filters.userId) query.userId = filters.userId;
   if (filters.action) query.action = filters.action;
   if (filters.category) query.category = filters.category;
-  if (filters.ip) query.ip = { $regex: escapeAuditSearch(filters.ip), $options: "i" };
+  if (filters.ip)
+    query.ip = { $regex: escapeAuditSearch(filters.ip), $options: "i" };
 
   if (filters.search) {
     query.$or = [
       { details: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
-      { userEmail: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
-      { userName: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
+      {
+        userEmail: { $regex: escapeAuditSearch(filters.search), $options: "i" },
+      },
+      {
+        userName: { $regex: escapeAuditSearch(filters.search), $options: "i" },
+      },
       { ip: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
       { path: { $regex: escapeAuditSearch(filters.search), $options: "i" } },
     ];
@@ -11736,16 +11749,13 @@ export async function getActionLogStats() {
   };
 }
 
-
 export type LectureAttendanceAction = "checkin" | "checkout" | "complete";
 
 export async function recordLectureAttendanceAction(
   lectureId: string,
   action: LectureAttendanceAction,
 ): Promise<LectureItem | null> {
-  const collection = await getCollection<LectureItem>(
-    COLLECTIONS.lectures,
-  );
+  const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
 
   const existing = await collection.findOne({ id: lectureId });
 
@@ -11842,9 +11852,6 @@ export async function recordLectureAttendanceAction(
   return updated ? stripMongoId(updated) : null;
 }
 
-
-
-
 export async function saveLectureAttendanceTimes(
   lectureId: string,
   input: {
@@ -11853,9 +11860,7 @@ export async function saveLectureAttendanceTimes(
     attendanceStatus: "present" | "absent" | "late" | "leave";
   },
 ): Promise<LectureItem | null> {
-  const collection = await getCollection<LectureItem>(
-    COLLECTIONS.lectures,
-  );
+  const collection = await getCollection<LectureItem>(COLLECTIONS.lectures);
 
   const existing = await collection.findOne({
     id: lectureId,
@@ -11863,13 +11868,8 @@ export async function saveLectureAttendanceTimes(
 
   if (!existing) return null;
 
-  if (
-    existing.status !== "scheduled" &&
-    existing.status !== "completed"
-  ) {
-    throw new Error(
-      "Attendance cannot be edited for a cancelled lecture.",
-    );
+  if (existing.status !== "scheduled" && existing.status !== "completed") {
+    throw new Error("Attendance cannot be edited for a cancelled lecture.");
   }
 
   const status = input.attendanceStatus;
@@ -11883,18 +11883,11 @@ export async function saveLectureAttendanceTimes(
     throw new Error("Select a valid attendance status.");
   }
 
-  function parseTimestamp(
-    value: string,
-    label: string,
-  ): number | null {
+  function parseTimestamp(value: string, label: string): number | null {
     if (!value) return null;
 
-    if (
-      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)
-    ) {
-      throw new Error(
-        `${label} must be a valid timestamp.`,
-      );
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
+      throw new Error(`${label} must be a valid timestamp.`);
     }
 
     const timestamp = Date.parse(value);
@@ -11906,15 +11899,9 @@ export async function saveLectureAttendanceTimes(
     return timestamp;
   }
 
-  const checkInMs = parseTimestamp(
-    input.checkInAt,
-    "Check-in",
-  );
+  const checkInMs = parseTimestamp(input.checkInAt, "Check-in");
 
-  const checkOutMs = parseTimestamp(
-    input.checkOutAt,
-    "Check-out",
-  );
+  const checkOutMs = parseTimestamp(input.checkOutAt, "Check-out");
 
   if (status !== "absent" && status !== "leave") {
     if (checkInMs === null) {
@@ -11923,32 +11910,16 @@ export async function saveLectureAttendanceTimes(
       );
     }
 
-    if (
-      checkOutMs !== null &&
-      checkOutMs <= checkInMs
-    ) {
-      throw new Error(
-        "Check Out must be later than Check In.",
-      );
+    if (checkOutMs !== null && checkOutMs <= checkInMs) {
+      throw new Error("Check Out must be later than Check In.");
     }
 
-    if (
-      checkOutMs !== null &&
-      checkOutMs - checkInMs >
-        24 * 60 * 60 * 1000
-    ) {
-      throw new Error(
-        "Lecture duration cannot exceed 24 hours.",
-      );
+    if (checkOutMs !== null && checkOutMs - checkInMs > 24 * 60 * 60 * 1000) {
+      throw new Error("Lecture duration cannot exceed 24 hours.");
     }
 
-    if (
-      existing.status === "completed" &&
-      checkOutMs === null
-    ) {
-      throw new Error(
-        "Completed lectures must retain both attendance times.",
-      );
+    if (existing.status === "completed" && checkOutMs === null) {
+      throw new Error("Completed lectures must retain both attendance times.");
     }
   }
 
@@ -11962,12 +11933,12 @@ export async function saveLectureAttendanceTimes(
     throw new Error("Invalid scheduled or actual Check In time.");
   }
 
-const finalStatus =
-  status === "absent" || status === "leave"
-    ? status
-    : checkInMs !== null && checkInMs > scheduledStartMs
-      ? "late"
-      : "present";
+  const finalStatus =
+    status === "absent" || status === "leave"
+      ? status
+      : checkInMs !== null && checkInMs > scheduledStartMs
+        ? "late"
+        : "present";
 
   const now = new Date().toISOString();
 
@@ -12001,14 +11972,11 @@ const finalStatus =
     {
       id: lectureId,
       status: existing.status,
-      updatedAt:
-        existing.updatedAt ?? { $exists: false },
+      updatedAt: existing.updatedAt ?? { $exists: false },
     },
     {
       $set: setFields,
-      ...(Object.keys(unsetFields).length
-        ? { $unset: unsetFields }
-        : {}),
+      ...(Object.keys(unsetFields).length ? { $unset: unsetFields } : {}),
     },
   );
 

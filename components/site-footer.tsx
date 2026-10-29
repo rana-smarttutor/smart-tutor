@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import Image from "next/image";
 import { getPublicInstituteData } from "@/lib/data-store";
@@ -109,9 +108,7 @@ export async function SiteFooter() {
               ) : null}
 
               {affiliatedInstitutes.length > 0 ? (
-                <p className="leading-6">
-                  {affiliatedInstitutes.join(" | ")}
-                </p>
+                <p className="leading-6">{affiliatedInstitutes.join(" | ")}</p>
               ) : null}
             </div>
           </div>
@@ -197,7 +194,17 @@ export async function SiteFooter() {
         {/* Legal footer */}
         <div className="mt-8 border-t border-[var(--color-border)] pt-8">
           <div className="flex flex-col gap-4 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
-            <nav className="flex flex-wrap gap-4">
+            <nav
+              aria-label="Footer navigation"
+              className="flex flex-wrap items-center gap-x-5 gap-y-3"
+            >
+              <Link
+                href="/contact"
+                className="font-bold text-blue-700 transition-colors hover:text-blue-900"
+              >
+                Contact Us
+              </Link>
+
               <Link
                 href="/privacy"
                 className="transition-colors hover:text-[var(--color-primary)]"
@@ -221,10 +228,9 @@ export async function SiteFooter() {
             </nav>
 
             <p className="max-w-2xl leading-relaxed sm:text-right">
-              © {new Date().getFullYear()} SmartIQ Institute Academy.
-              In operations since 2018. All rights reserved.
-              Results may differ between users.
-              Promotional claims may be stylized.
+              © {new Date().getFullYear()} SmartIQ Institute Academy. In
+              operations since 2018. All rights reserved. Results may differ
+              between users. Promotional claims may be stylized.
             </p>
           </div>
         </div>

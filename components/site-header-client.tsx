@@ -20,6 +20,7 @@ const links = [
   { href: "/mock-test", label: "Mock Test" },
   { href: "/digital-library", label: "Library" },
   { href: "/exam-updates", label: "Exam Updates" },
+  { href: "/contact", label: "Contact Us" },
 ];
 
 const staffOnlyLinks = [{ href: "/student-performance", label: "Performance" }];
@@ -128,23 +129,20 @@ export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
   const canSeeStudentPerformance =
     userRole === "admin" || userRole === "educator";
 
-const filteredLinks = links.filter((link) => {
-  if (link.label !== "Mock Test") {
-    return true;
-  }
+  const filteredLinks = links.filter((link) => {
+    if (link.label !== "Mock Test") {
+      return true;
+    }
 
-  // Logged-out visitors can see the link,
-  // but clicking it requires login.
-  if (!session) {
-    return true;
-  }
+    // Logged-out visitors can see the link,
+    // but clicking it requires login.
+    if (!session) {
+      return true;
+    }
 
-  // Only students and admins see Mock Test.
-  return (
-    userRole === "student" ||
-    userRole === "admin"
-  );
-});
+    // Only students and admins see Mock Test.
+    return userRole === "student" || userRole === "admin";
+  });
 
   const visibleLinks = canSeeStudentPerformance
     ? [...filteredLinks, ...staffOnlyLinks]

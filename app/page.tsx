@@ -463,15 +463,16 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* WHY CHOOSE SMARTIQ IMAGE */}
+          {/* WHY CHOOSE SMARTIQ IMAGE - RESPONSIVE */}
 
-          <div className="relative h-[520px] w-full overflow-hidden rounded-[2rem]">
+          <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:rounded-[2rem]">
             <Image
               src="/WCSIOI.jpeg"
-              alt="Why Choose SmartIQ Institute"
-              fill
-              className="object-cover object-top"
-              priority
+              alt="Why Choose SmartIQ Institute - Personal Mentorship, 24/7 Doubt Support, Weekly Tests, Student Performance Reports and Replacement Guarantee"
+              width={1200}
+              height={1600}
+              sizes="(max-width: 1024px) 100vw, 45vw"
+              className="block h-auto w-full object-contain"
             />
           </div>
         </RevealOnScroll>
@@ -559,44 +560,65 @@ export default async function Home() {
           STUDENT / EDUCATOR / PARENT ROLE CARDS
       ================================================= */}
 
-      <RevealOnScroll className="section-shell py-16" delayMs={40}>
-        <div className="mb-10 max-w-5xl text-left">
-          <p className="section-label mb-3 !text-sm sm:!text-base">Roles</p>
+      <RevealOnScroll
+        className="section-shell min-w-0 py-10 sm:py-14 lg:py-16"
+        delayMs={40}
+      >
+        <div className="mb-7 max-w-3xl text-center sm:mb-10 lg:text-left">
+          <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.16em] text-blue-700">
+            One Connected Learning Platform
+          </p>
 
-          <h2 className="section-title leading-[1.12]">
-            One system for Students, Educators, Parents.
+          <h2 className="text-2xl font-black leading-[1.2] tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+            One System for{" "}
+            <span className="text-blue-600">
+              Students, Educators &amp; Parents
+            </span>
           </h2>
+
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base lg:mx-0">
+            Dedicated learning and management experiences for every member of
+            the SmartIQ community.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3">
           {homeRoles.map((role) => (
             <article
               key={role.role}
-              className={`surface flex h-full min-w-0 flex-col rounded-2xl border border-blue-100/50 bg-gradient-to-br ${
+              className={`surface group flex h-full min-w-0 flex-col rounded-2xl border border-blue-100 bg-gradient-to-br ${
                 roleAccentMap[role.role as keyof typeof roleAccentMap]
-              } p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-6`}
+              } p-5 text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-6`}
             >
-              <p className="keyword-line text-[10px] font-black uppercase tracking-widest">
+              <span className="mb-4 inline-flex w-fit rounded-lg border border-blue-100 bg-white/80 px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wider text-blue-700">
                 {role.role}
-              </p>
+              </span>
 
-              <h3 className="mt-3 break-words text-xl font-bold leading-snug tracking-tight text-[var(--color-heading)] sm:text-2xl">
+              <h3 className="break-words text-xl font-black leading-snug tracking-tight text-slate-900 sm:text-2xl">
                 {role.title}
               </h3>
 
-              <p className="mt-3 flex-grow break-words text-sm font-medium leading-6 text-[var(--color-muted)] sm:leading-7">
+              <p className="mt-3 flex-grow break-words text-sm font-medium leading-6 text-slate-600">
                 {role.summary}
               </p>
 
-              <ul className="mt-5 space-y-3 text-sm font-bold text-[var(--color-heading)]">
-                {role.features.map((feature) => (
-                  <li key={feature} className="flex min-w-0 items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+              <div className="mt-5 border-t border-slate-200/70 pt-4">
+                <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Key Features
+                </p>
 
-                    <span className="min-w-0 break-words">{feature}</span>
-                  </li>
-                ))}
-              </ul>
+                <ul className="space-y-3">
+                  {role.features.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex min-w-0 items-start gap-3 text-sm font-semibold leading-5 text-slate-800"
+                    >
+                      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                      <span className="min-w-0 break-words">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </article>
           ))}
         </div>

@@ -21,8 +21,7 @@ import { generatedPlacedStudents } from "./placed-students-data";
 
 const CONTACT_PHONE =
   process.env.NEXT_PUBLIC_CONTACT_PHONE || "+91 88504 47887";
-const CONTACT_EMAIL =
-  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "info@smartiqinstitute.in";
+const CONTACT_EMAIL = "info@smartiqinstitute.in";
 const CONTACT_ADDRESS =
   process.env.NEXT_PUBLIC_CONTACT_ADDRESS || "Sector 17, Vashi, Navi Mumbai";
 const WHATSAPP_LINK =

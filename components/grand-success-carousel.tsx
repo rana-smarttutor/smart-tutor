@@ -25,12 +25,12 @@ const RESULT_CATEGORIES = [
     label: "12TH HSC COMMERCE",
     image: "/hof/12th-commerce-new.png",
   },
-    {
+  {
     id: "12-hsc Arts",
     label: "12TH HSC ARTS",
     image: "/hof/12th-arts-new.jpeg",
   },
-   {
+  {
     id: "12-CBSE Science",
     label: "12TH CBSE SCIENCE",
     image: "/hof/12th-CBSE-sci-new.jpeg",
@@ -40,7 +40,7 @@ const RESULT_CATEGORIES = [
     label: "JEE Main",
     image: "/hof/JEE 2.jpg",
   },
-   {
+  {
     id: "NEET",
     label: "NEEt",
     image: "/hof/neet-new.jpeg",
@@ -50,17 +50,17 @@ const RESULT_CATEGORIES = [
     label: "CET",
     image: "/hof/CET.png",
   },
-   {
+  {
     id: "MBA",
     label: "MBA",
     image: "/hof/MBA.jpg",
   },
-    {
+  {
     id: "NCHMCT",
     label: "NCHMCT",
     image: "/hof/NCHMCT.jpg",
   },
-   {
+  {
     id: "IMU CET",
     label: "IMU CET",
     image: "/hof/IMU CET new.jpg",
@@ -80,12 +80,11 @@ const RESULT_CATEGORIES = [
     label: "Railway Exam",
     image: "/hof/Railway.png",
   },
-    {
+  {
     id: "ssc cgl",
     label: "SSC CGL",
     image: "/hof/ssc-clg-new-2.png",
   },
-
 ];
 
 export function GrandSuccessCarousel() {
@@ -109,17 +108,18 @@ export function GrandSuccessCarousel() {
   return (
     <RevealOnScroll>
       <div className="flex w-full flex-col items-center px-4 sm:px-6">
-        <div className="mb-8 flex flex-wrap justify-center gap-2 sm:mb-12">
+        <div className="mb-7 flex w-full max-w-5xl flex-wrap items-center justify-center gap-2 sm:mb-10 sm:gap-2.5">
           {RESULT_CATEGORIES.map((category) => (
             <button
               key={category.id}
               type="button"
               onClick={() => setActiveCategory(category)}
-              className={`rounded-full border-2 px-5 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300 sm:text-xs ${
+              className={`inline-flex min-h-10 max-w-full items-center justify-center rounded-full border px-4 py-2.5 text-center text-xs font-bold leading-5 tracking-normal transition-all duration-200 sm:min-h-11 sm:px-5 sm:text-sm ${
                 activeCategory.id === category.id
-                  ? "scale-105 border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200"
-                  : "border-slate-100 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
+                  ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200/60"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
               }`}
+              aria-pressed={activeCategory.id === category.id}
             >
               {category.label}
             </button>
@@ -127,8 +127,8 @@ export function GrandSuccessCarousel() {
         </div>
 
         <div className="flex w-full flex-col items-center">
-          <div className="w-full max-w-5xl overflow-hidden rounded-2xl border-2 border-white bg-white shadow-2xl transition-all duration-500 sm:rounded-3xl sm:border-4">
-            <div className="relative mx-auto aspect-video w-full max-w-5xl bg-white">
+          <div className="w-full max-w-5xl overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-lg sm:rounded-3xl">
+            <div className="relative mx-auto aspect-video w-full bg-white">
               <Image
                 key={activeCategory.image}
                 src={activeCategory.image}
