@@ -7,12 +7,12 @@ import { RevealOnScroll } from "@/components/reveal-on-scroll";
 const RESULT_CATEGORIES = [
   {
     id: "10-ssc",
-    label: "10th SSC",
+    label: "10TH SSC",
     image: "/hof/10 th SSC.png",
   },
   {
     id: "10-cbsc",
-    label: "10th CBSE",
+    label: "10TH CBSE",
     image: "/hof/10th-CBSE-new.jpeg",
   },
   {
@@ -42,7 +42,7 @@ const RESULT_CATEGORIES = [
   },
   {
     id: "NEET",
-    label: "NEEt",
+    label: "NEET",
     image: "/hof/neet-new.jpeg",
   },
   {
@@ -54,11 +54,6 @@ const RESULT_CATEGORIES = [
     id: "MBA",
     label: "MBA",
     image: "/hof/MBA.jpg",
-  },
-  {
-    id: "NCHMCT",
-    label: "NCHMCT",
-    image: "/hof/NCHMCT.jpg",
   },
   {
     id: "IMU CET",
