@@ -1,4 +1,8 @@
-import { clearSessionResponse, getSessionUser } from "@/lib/auth";
+import {
+  clearSessionResponse,
+  getSessionUser,
+  revokeCurrentAdminSession,
+} from "@/lib/auth";
 import { logAction } from "@/lib/audit-log";
 
 export async function POST(request: Request) {
@@ -15,6 +19,6 @@ export async function POST(request: Request) {
       session,
     });
   }
-
+  await revokeCurrentAdminSession();
   return clearSessionResponse();
 }

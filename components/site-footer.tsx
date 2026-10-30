@@ -42,7 +42,7 @@ export async function SiteFooter() {
             <div className="mt-5 flex items-center gap-5">
               <Image
                 src="/founder-temperory.jpeg"
-                alt="Adv. Reena Kumari"
+                alt="Adv. Reena Ma'am"
                 width={120}
                 height={120}
                 className="h-[120px] w-[120px] shrink-0 rounded-2xl border border-slate-200 bg-white object-cover object-top shadow-sm"
@@ -54,7 +54,7 @@ export async function SiteFooter() {
                 </p>
 
                 <h3 className="mt-2 text-xl font-black leading-tight tracking-tight text-[var(--color-heading)]">
-                  Adv. Reena Kumari
+                  Adv. Reena Ma'am
                 </h3>
 
                 <p className="mt-1 text-xs font-bold text-blue-600">

@@ -44,6 +44,14 @@ export function DashboardAccountDirectory({
   const [searchQuery, setSearchQuery] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [securityAction, setSecurityAction] = useState<{
+    type: "delete" | "edit";
+    userId: string;
+  } | null>(null);
+  const [securityPassword, setSecurityPassword] = useState("");
+  const [securityPending, setSecurityPending] = useState(false);
+  const [securityError, setSecurityError] = useState("");
+  const [adminCreatePassword, setAdminCreatePassword] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [createForm, setCreateForm] = useState<CreateAccountForm>({
     name: "",
@@ -68,9 +76,9 @@ export function DashboardAccountDirectory({
     "students" | "staff" | "parents" | "other"
   >("students");
 
-  const [employeeSubTab, setEmployeeSubTab] = useState<
-    "faculty" | "staff"
-  >("faculty");
+  const [employeeSubTab, setEmployeeSubTab] = useState<"faculty" | "staff">(
+    "faculty",
+  );
 
   const accountCounts = useMemo(
     () => ({
@@ -149,17 +157,16 @@ export function DashboardAccountDirectory({
     let list = users.filter((u) => u.role === "educator");
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-list = list.filter(
-  (u) =>
-    u.name.toLowerCase().includes(q) ||
-    u.email.toLowerCase().includes(q) ||
-    u.program.toLowerCase().includes(q) ||
-    (u.employeeCode ?? u.facultyCode)?.toLowerCase().includes(q),
-);
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.program.toLowerCase().includes(q) ||
+          (u.employeeCode ?? u.facultyCode)?.toLowerCase().includes(q),
+      );
     }
     return list;
   }, [users, searchQuery]);
-
 
   const tabStaff = useMemo(() => {
     let list = users.filter((u) => u.role === "staff");
@@ -172,18 +179,10 @@ list = list.filter(
           u.name.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
           u.program.toLowerCase().includes(q) ||
-          (u.employeeCode ?? u.facultyCode)
-            ?.toLowerCase()
-            .includes(q) ||
-          u.profile?.designation
-            ?.toLowerCase()
-            .includes(q) ||
-          u.profile?.department
-            ?.toLowerCase()
-            .includes(q) ||
-          u.profile?.branch
-            ?.toLowerCase()
-            .includes(q),
+          (u.employeeCode ?? u.facultyCode)?.toLowerCase().includes(q) ||
+          u.profile?.designation?.toLowerCase().includes(q) ||
+          u.profile?.department?.toLowerCase().includes(q) ||
+          u.profile?.branch?.toLowerCase().includes(q),
       );
     }
 
@@ -235,11 +234,19 @@ list = list.filter(
   }, [activeTab]);
 
   async function handleCreate() {
+    if (createForm.role === "admin" && !adminCreatePassword.trim()) {
+      setStatus("Confirm your administrator password to create an admin.");
+      return;
+    }
     const response = await fetch("/api/users", {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(createForm),
+      body: JSON.stringify({
+        ...createForm,
+        currentPassword:
+          createForm.role === "admin" ? adminCreatePassword : undefined,
+      }),
     });
     const payload = (await response.json()) as {
       user?: ManagedUser;
@@ -264,22 +271,24 @@ list = list.filter(
       parentEmail: "",
       parentMobile: "",
       assignedFacultyIds: [],
-    designation: "",
-    department: "",
-    branch: "",
-    employmentType: "full_time",
-    joiningDate: "",
+      designation: "",
+      department: "",
+      branch: "",
+      employmentType: "full_time",
+      joiningDate: "",
     });
+    setAdminCreatePassword("");
     setActiveTab(null);
     setMainTab("students");
     setStatus("New registered account draft created.");
   }
 
-  async function handleSave(userId: string) {
+  async function handleSave(userId: string, currentPassword: string) {
     const draft = drafts[userId];
     if (!draft) return;
     const payloadData: Record<string, unknown> = {
       id: draft.id,
+      currentPassword,
       name: draft.name,
       email: draft.email,
       role: draft.role,
@@ -308,8 +317,9 @@ list = list.filter(
       error?: string;
     };
     if (!response.ok || !payload.user) {
-      setStatus(payload.error ?? "Account update could not be prepared.");
-      return;
+      const message = payload.error ?? "Account update could not be prepared.";
+      setStatus(message);
+      throw new Error(message);
     }
     const updatedUsers = (prev: ManagedUser[]) =>
       prev.map((item) =>
@@ -321,30 +331,51 @@ list = list.filter(
     setStatus("Editable account draft prepared.");
   }
 
-  async function handleDelete(userId: string) {
-    if (
-      !confirm("Delete this account permanently? This action cannot be undone.")
-    )
-      return;
+  async function handleDelete(userId: string, currentPassword: string) {
+    if (userId === "admin-1") {
+      throw new Error("The primary administrator cannot be deleted.");
+    }
     setDeletingId(userId);
     try {
       const res = await fetch("/api/users", {
         method: "DELETE",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: userId, mode: "delete" }),
+        body: JSON.stringify({ id: userId, mode: "delete", currentPassword }),
       });
-      if (res.ok) {
-        const updatedUsers = users.filter((u) => u.id !== userId);
-        setUsers(updatedUsers);
-        onUsersChange?.(updatedUsers);
-        setStatus("Account deleted.");
-      } else {
-        const data = await res.json();
-        setStatus(data.error ?? "Delete failed.");
+      const data = await res.json();
+      if (!res.ok) {
+        const message = data.error ?? "Delete failed.";
+        setStatus(message);
+        throw new Error(message);
       }
+      const updatedUsers = users.filter((u) => u.id !== userId);
+      setUsers(updatedUsers);
+      onUsersChange?.(updatedUsers);
+      setStatus("Account moved to the Account Bin.");
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function confirmSecurityAction() {
+    if (!securityAction || !securityPassword || securityPending) return;
+    setSecurityPending(true);
+    setSecurityError("");
+    try {
+      if (securityAction.type === "delete") {
+        await handleDelete(securityAction.userId, securityPassword);
+      } else {
+        await handleSave(securityAction.userId, securityPassword);
+      }
+      setSecurityAction(null);
+      setSecurityPassword("");
+    } catch (error) {
+      setSecurityError(
+        error instanceof Error ? error.message : "Verification failed.",
+      );
+    } finally {
+      setSecurityPending(false);
     }
   }
 
@@ -385,7 +416,7 @@ list = list.filter(
         return "bi-person-fill";
     }
   }
-function getRoleColor(role: Role): { bg: string; color: string } {
+  function getRoleColor(role: Role): { bg: string; color: string } {
     switch (role) {
       case "admin":
         return { bg: "#EEF2FF", color: "#4F46E5" };
@@ -403,7 +434,7 @@ function getRoleColor(role: Role): { bg: string; color: string } {
         return { bg: "#F1F5F9", color: "#64748B" };
     }
   }
-const isEditing = (userId: string) => editingUserId === userId;
+  const isEditing = (userId: string) => editingUserId === userId;
 
   const renderUserGrid = (userList: ManagedUser[]) =>
     userList.length === 0 ? (
@@ -442,15 +473,15 @@ const isEditing = (userId: string) => editingUserId === userId;
                     <p className="text-base font-bold text-[var(--color-heading)] truncate">
                       {user.name}
                     </p>
-  <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">
-  {user.role === "educator" || user.role === "staff"
+                    <p className="text-[10px] font-mono font-semibold text-[var(--color-muted)] mt-0.5">
+                      {user.role === "educator" || user.role === "staff"
                         ? `Employee ID: ${
                             user.employeeCode ??
                             user.facultyCode ??
                             "Not assigned"
                           }`
                         : `ID: ${user.id.slice(0, 8).toUpperCase()}`}
-</p>
+                    </p>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
                       <span
                         className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold"
@@ -582,9 +613,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                                 <p className="text-[var(--color-heading)]">
                                   {p.employmentType
                                     .replaceAll("_", " ")
-                                    .replace(/\b\w/g, (c) =>
-                                      c.toUpperCase(),
-                                    )}
+                                    .replace(/\b\w/g, (c) => c.toUpperCase())}
                                 </p>
                               </div>
                             ) : null}
@@ -827,14 +856,20 @@ const isEditing = (userId: string) => editingUserId === userId;
                     <i className="bi bi-pencil" />
                     Edit
                   </button>
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    disabled={deletingId === user.id}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                  >
-                    <i className="bi bi-trash" />
-                    {deletingId === user.id ? "Deleting..." : "Delete"}
-                  </button>
+                  {user.id !== "admin-1" && (
+                    <button
+                      onClick={() => {
+                        setSecurityAction({ type: "delete", userId: user.id });
+                        setSecurityPassword("");
+                        setSecurityError("");
+                      }}
+                      disabled={deletingId === user.id}
+                      className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-400/30 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                    >
+                      <i className="bi bi-trash" />
+                      {deletingId === user.id ? "Deleting..." : "Delete"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1116,7 +1151,13 @@ const isEditing = (userId: string) => editingUserId === userId;
               Cancel
             </button>
             <button
-              onClick={() => editingUserId && handleSave(editingUserId)}
+              onClick={() => {
+                if (editingUserId) {
+                  setSecurityAction({ type: "edit", userId: editingUserId });
+                  setSecurityPassword("");
+                  setSecurityError("");
+                }
+              }}
               className="rounded-xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-bold text-white hover:opacity-90"
             >
               <i className="bi bi-check-circle-fill me-2" />
@@ -1207,6 +1248,7 @@ const isEditing = (userId: string) => editingUserId === userId;
               (u) =>
                 u.role !== "student" &&
                 u.role !== "educator" &&
+                u.role !== "staff" &&
                 u.role !== "parent",
             ).length,
           },
@@ -1290,7 +1332,6 @@ const isEditing = (userId: string) => editingUserId === userId;
                   Add a new registered person
                 </p>
                 <div className="grid gap-3">
-
                   {mainTab === "staff" ? (
                     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
                       <p className="mb-3 text-xs font-black uppercase tracking-wider text-[var(--color-muted)]">
@@ -1319,9 +1360,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                         >
                           <div className="flex items-center gap-2">
                             <i className="bi bi-person-workspace" />
-                            <span className="font-bold">
-                              Faculty
-                            </span>
+                            <span className="font-bold">Faculty</span>
                           </div>
 
                           <p
@@ -1361,9 +1400,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                         >
                           <div className="flex items-center gap-2">
                             <i className="bi bi-person-badge-fill" />
-                            <span className="font-bold">
-                              Staff
-                            </span>
+                            <span className="font-bold">Staff</span>
                           </div>
 
                           <p
@@ -1410,14 +1447,14 @@ const isEditing = (userId: string) => editingUserId === userId;
                           role: e.target.value as Role,
                           password:
                             e.target.value === "admin"
-                              ? "Admin@123"
+                              ? ""
                               : e.target.value === "educator"
                                 ? "Educator@123"
                                 : e.target.value === "staff"
                                   ? "Staff@123"
                                   : e.target.value === "parent"
-                                  ? "Parent@123"
-                                  : "Student@123",
+                                    ? "Parent@123"
+                                    : "Student@123",
                         }))
                       }
                       className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] px-4 py-3 text-sm text-[var(--color-heading)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -1551,7 +1588,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                       <option value="">Select student to link...</option>
                       {studentOptions.map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} — {s.email}
+                          {s.name} â€” {s.email}
                         </option>
                       ))}
                     </select>
@@ -1656,6 +1693,17 @@ const isEditing = (userId: string) => editingUserId === userId;
                     />
                     Confirm and finalize this new entry
                   </label>
+                  {createForm.role === "admin" && (
+                    <input
+                      type="password"
+                      autoComplete="current-password"
+                      value={adminCreatePassword}
+                      onChange={(e) => setAdminCreatePassword(e.target.value)}
+                      placeholder="Current admin password (required)"
+                      maxLength={256}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+                    />
+                  )}
                   <button
                     type="button"
                     onClick={handleCreate}
@@ -1814,7 +1862,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                   <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                   <input
                     type="text"
-                    placeholder="Search name, email, program…"
+                    placeholder="Search name, email, programâ€¦"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2020,7 +2068,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID — Front
+                                Photo ID â€” Front
                               </a>
                             )}
                             {req.profile.photoIdBackUrl && (
@@ -2031,7 +2079,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID — Back
+                                Photo ID â€” Back
                               </a>
                             )}
                           </div>
@@ -2081,7 +2129,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search students by name, email, program…"
+                  placeholder="Search students by name, email, programâ€¦"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2109,7 +2157,7 @@ const isEditing = (userId: string) => editingUserId === userId;
             {renderUserGrid(tabStudents)}
           </>
         ) : mainTab === "staff" ? (
-          /* ── STAFF TAB: FACULTY + NON-TEACHING STAFF ── */
+          /* â”€â”€ STAFF TAB: FACULTY + NON-TEACHING STAFF â”€â”€ */
           <>
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <button
@@ -2146,23 +2194,18 @@ const isEditing = (userId: string) => editingUserId === userId;
             </div>
 
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <div
-                className="relative flex-1"
-                style={{ minWidth: 200 }}
-              >
+              <div className="relative flex-1" style={{ minWidth: 200 }}>
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
 
                 <input
                   type="text"
                   placeholder={
                     employeeSubTab === "faculty"
-                      ? "Search faculty by name, email, Employee ID…"
-                      : "Search staff by name, email, Employee ID, designation…"
+                      ? "Search faculty by name, email, Employee IDâ€¦"
+                      : "Search staff by name, email, Employee ID, designationâ€¦"
                   }
                   value={searchQuery}
-                  onChange={(e) =>
-                    setSearchQuery(e.target.value)
-                  }
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                 />
               </div>
@@ -2170,21 +2213,14 @@ const isEditing = (userId: string) => editingUserId === userId;
               <button
                 onClick={() => {
                   const role =
-                    employeeSubTab === "faculty"
-                      ? "educator"
-                      : "staff";
+                    employeeSubTab === "faculty" ? "educator" : "staff";
 
                   setCreateForm((c) => ({
                     ...c,
                     role,
-                    program:
-                      role === "educator"
-                        ? "Faculty"
-                        : "Staff",
+                    program: role === "educator" ? "Faculty" : "Staff",
                     password:
-                      role === "educator"
-                        ? "Educator@123"
-                        : "Staff@123",
+                      role === "educator" ? "Educator@123" : "Staff@123",
                     confirm: false,
                   }));
 
@@ -2207,9 +2243,7 @@ const isEditing = (userId: string) => editingUserId === userId;
             </div>
 
             {renderUserGrid(
-              employeeSubTab === "faculty"
-                ? tabEducators
-                : tabStaff,
+              employeeSubTab === "faculty" ? tabEducators : tabStaff,
             )}
           </>
         ) : mainTab === "parents" ? (
@@ -2220,7 +2254,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search parents by name, email…"
+                  placeholder="Search parents by name, emailâ€¦"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2255,7 +2289,7 @@ const isEditing = (userId: string) => editingUserId === userId;
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search by name, email, role…"
+                  placeholder="Search by name, email, roleâ€¦"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2286,12 +2320,67 @@ const isEditing = (userId: string) => editingUserId === userId;
       </div>
 
       {editModal}
+      {securityAction && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900">
+              Administrator Verification
+            </h3>
+            <p className="mt-2 text-sm text-slate-600">
+              Enter your current admin password to{" "}
+              {securityAction.type === "delete"
+                ? "delete this account"
+                : "save these account changes"}
+              .
+            </p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void confirmSecurityAction();
+              }}
+              className="mt-5 space-y-4"
+            >
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={securityPassword}
+                onChange={(event) => setSecurityPassword(event.target.value)}
+                placeholder="Current admin password"
+                maxLength={256}
+                autoFocus
+                required
+                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-600"
+              />
+              {securityError && (
+                <p role="alert" className="text-sm text-red-600">
+                  {securityError}
+                </p>
+              )}
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={securityPending}
+                  onClick={() => {
+                    setSecurityAction(null);
+                    setSecurityPassword("");
+                    setSecurityError("");
+                  }}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={securityPending || !securityPassword}
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {securityPending ? "Verifying..." : "Verify & Continue"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
-
-
-
-
-
-

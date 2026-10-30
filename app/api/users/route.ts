@@ -9,10 +9,19 @@ import {
   getStudentDirectory,
   getUsersForAdmin,
   updateUserRecord,
+  getCollection,
+  COLLECTIONS,
 } from "@/lib/data-store";
-import { sanitizeEmailInput, sanitizePasswordInput, sanitizeRoleInput, sanitizeTextInput, validateEmailFormat } from "@/lib/validation";
+import {
+  sanitizeEmailInput,
+  sanitizePasswordInput,
+  sanitizeRoleInput,
+  sanitizeTextInput,
+  validateEmailFormat,
+} from "@/lib/validation";
 import type { UserProfile } from "@/lib/types";
 import { logAction } from "@/lib/audit-log";
+import { verifySensitiveAdminAction } from "@/lib/admin-action-verification";
 
 export async function GET() {
   const session = await getSessionUser();
@@ -45,6 +54,7 @@ export async function POST(request: Request) {
     email?: string;
     role?: string;
     password?: string;
+    currentPassword?: string;
     program?: string;
     status?: "active" | "pending";
     confirm?: boolean;
@@ -59,7 +69,7 @@ export async function POST(request: Request) {
     branch?: string;
     employmentType?: string;
     joiningDate?: string;
-profile?: Record<string, unknown>;
+    profile?: Record<string, unknown>;
   };
 
   try {
@@ -77,15 +87,18 @@ profile?: Record<string, unknown>;
       parentMobile?: string;
       assignedFacultyIds?: string[];
       gender?: string;
-    designation?: string;
-    department?: string;
-    branch?: string;
-    employmentType?: string;
-    joiningDate?: string;
-profile?: Record<string, unknown>;
+      designation?: string;
+      department?: string;
+      branch?: string;
+      employmentType?: string;
+      joiningDate?: string;
+      profile?: Record<string, unknown>;
     };
   } catch {
-    return NextResponse.json({ error: "Invalid user payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid user payload." },
+      { status: 400 },
+    );
   }
 
   const name = sanitizeTextInput(body.name, 60);
@@ -94,16 +107,14 @@ profile?: Record<string, unknown>;
   const password = sanitizePasswordInput(body.password);
   const requestedProgram = sanitizeTextInput(body.program, 60);
   const submittedGender =
-  typeof body.profile?.gender === "string"
-    ? body.profile.gender
-    : body.gender;
+    typeof body.profile?.gender === "string"
+      ? body.profile.gender
+      : body.gender;
 
-const gender = sanitizeTextInput(submittedGender, 20)
-  .trim()
-  .toLowerCase();
+  const gender = sanitizeTextInput(submittedGender, 20).trim().toLowerCase();
 
-const program =
-  requestedProgram || (role === "counsellor" ? "CRM Counsellor" : "");
+  const program =
+    requestedProgram || (role === "counsellor" ? "CRM Counsellor" : "");
 
   console.log("[STAFF CREATE DEBUG]", {
     rawRole: body.role,
@@ -131,7 +142,11 @@ const program =
   }
 
   if (
-    !name || !email || !role || !password || !validateEmailFormat(email) ||
+    !name ||
+    !email ||
+    !role ||
+    !password ||
+    !validateEmailFormat(email) ||
     (role !== "parent" && !program)
   ) {
     return NextResponse.json(
@@ -160,31 +175,15 @@ const program =
 
   // Staff employment profile
   if (role === "staff") {
-    const designation = sanitizeTextInput(
-      body.designation,
-      80,
-    );
+    const designation = sanitizeTextInput(body.designation, 80);
 
-    const department = sanitizeTextInput(
-      body.department,
-      80,
-    );
+    const department = sanitizeTextInput(body.department, 80);
 
-    const branch = sanitizeTextInput(
-      body.branch,
-      80,
-    );
+    const branch = sanitizeTextInput(body.branch, 80);
 
-    const joiningDate = sanitizeTextInput(
-      body.joiningDate,
-      10,
-    );
+    const joiningDate = sanitizeTextInput(body.joiningDate, 10);
 
-    const submittedEmploymentType =
-      sanitizeTextInput(
-        body.employmentType,
-        30,
-      );
+    const submittedEmploymentType = sanitizeTextInput(body.employmentType, 30);
 
     const allowedEmploymentTypes = [
       "full_time",
@@ -211,14 +210,11 @@ const program =
       );
     }
 
-    const employmentType =
-      allowedEmploymentTypes.includes(
-        submittedEmploymentType as
-          (typeof allowedEmploymentTypes)[number],
-      )
-        ? (submittedEmploymentType as
-            (typeof allowedEmploymentTypes)[number])
-        : "full_time";
+    const employmentType = allowedEmploymentTypes.includes(
+      submittedEmploymentType as (typeof allowedEmploymentTypes)[number],
+    )
+      ? (submittedEmploymentType as (typeof allowedEmploymentTypes)[number])
+      : "full_time";
 
     profile.designation = designation;
     profile.department = department;
@@ -230,15 +226,15 @@ const program =
     }
   }
   if (role === "educator") {
-  if (gender !== "male" && gender !== "female") {
-    return NextResponse.json(
-      { error: "Select the educator's gender." },
-      { status: 400 },
-    );
-  }
+    if (gender !== "male" && gender !== "female") {
+      return NextResponse.json(
+        { error: "Select the educator's gender." },
+        { status: 400 },
+      );
+    }
 
-  profile.gender = gender as UserProfile["gender"];
-}
+    profile.gender = gender as UserProfile["gender"];
+  }
 
   if (role === "student") {
     const parentName = sanitizeTextInput(body.parentName, 100);
@@ -247,6 +243,28 @@ const program =
     if (parentName) profile.parentName = parentName;
     if (parentEmail) profile.parentEmail = parentEmail;
     if (parentMobile) profile.parentMobile = parentMobile;
+  }
+
+  if (role === "admin") {
+    const verified = await verifySensitiveAdminAction(
+      session,
+      body.currentPassword,
+    );
+    if (!verified) {
+      return NextResponse.json(
+        { error: "Administrator password verification required." },
+        { status: 403, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+    if (
+      password.length < 12 ||
+      ["Admin@123", "Student@123", "Staff@123"].includes(password)
+    ) {
+      return NextResponse.json(
+        { error: "Choose a unique admin password of at least 12 characters." },
+        { status: 400 },
+      );
+    }
   }
 
   const user = await createUserRecord({
@@ -258,24 +276,33 @@ const program =
     status: body.status,
     linkedStudentId: role === "parent" ? body.linkedStudentId : undefined,
     profile: Object.keys(profile).length > 0 ? profile : undefined,
-    assignedFacultyIds: role === "student" && body.assignedFacultyIds ? body.assignedFacultyIds : undefined,
+    assignedFacultyIds:
+      role === "student" && body.assignedFacultyIds
+        ? body.assignedFacultyIds
+        : undefined,
   });
 
-if (role === "counsellor") {
-  await createOrLinkCrmCounsellor({
-    userId: user.id,
-    name: user.name,
-    email: user.email,
-  });
-}
+  if (role === "counsellor") {
+    await createOrLinkCrmCounsellor({
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+    });
+  }
 
   if (role === "student" && body.parentEmail) {
     const parentEmail = sanitizeEmailInput(body.parentEmail);
     const existingParentEmail = await findUserDocumentByEmail(parentEmail);
 
     if (!existingParentEmail && parentEmail) {
-      const parentName = sanitizeTextInput(body.parentName, 100) || `Parent of ${name}`;
-      const parentPassword = "Parent@" + Math.random().toString(36).substring(2, 8).replace(/[^a-zA-Z0-9]/g, "");
+      const parentName =
+        sanitizeTextInput(body.parentName, 100) || `Parent of ${name}`;
+      const parentPassword =
+        "Parent@" +
+        Math.random()
+          .toString(36)
+          .substring(2, 8)
+          .replace(/[^a-zA-Z0-9]/g, "");
 
       await createUserRecord({
         name: parentName,
@@ -319,6 +346,7 @@ export async function PATCH(request: Request) {
     email?: string;
     role?: string;
     password?: string;
+    currentPassword?: string;
     program?: string;
     status?: "active" | "pending";
     verified?: boolean;
@@ -342,7 +370,10 @@ export async function PATCH(request: Request) {
       profile?: Record<string, unknown>;
     };
   } catch {
-    return NextResponse.json({ error: "Invalid update payload." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid update payload." },
+      { status: 400 },
+    );
   }
 
   const name = sanitizeTextInput(body.name, 60);
@@ -368,7 +399,37 @@ export async function PATCH(request: Request) {
   }
 
   if (!body.id) {
-    return NextResponse.json({ error: "User id is required for updates." }, { status: 400 });
+    return NextResponse.json(
+      { error: "User id is required for updates." },
+      { status: 400 },
+    );
+  }
+
+  const targetCollection = await getCollection(COLLECTIONS.users);
+  const targetUser = await targetCollection.findOne({
+    id: body.id,
+    deletedAt: { $exists: false },
+  });
+  if (!targetUser) {
+    return NextResponse.json({ error: "Account not found." }, { status: 404 });
+  }
+
+  // Every Account Directory update requires a fresh password confirmation.
+  if (!(await verifySensitiveAdminAction(session, body.currentPassword))) {
+    return NextResponse.json(
+      { error: "Administrator password verification required." },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
+  if (body.id === "admin-1" && password) {
+    return NextResponse.json(
+      {
+        error:
+          "Change the primary administrator password through Account Security.",
+      },
+      { status: 403 },
+    );
   }
 
   const updatedUser = await updateUserRecord({
@@ -380,18 +441,21 @@ export async function PATCH(request: Request) {
     program,
     status: body.status,
     verified: body.verified,
-    assignedFacultyIds: body.assignedFacultyIds === null ? null : (body.assignedFacultyIds ?? undefined),
+    assignedFacultyIds:
+      body.assignedFacultyIds === null
+        ? null
+        : (body.assignedFacultyIds ?? undefined),
     profilePhoto: body.profilePhoto,
     profile: body.profile as any,
   });
 
-if (role === "counsellor") {
-  await createOrLinkCrmCounsellor({
-    userId: updatedUser.id,
-    name: updatedUser.name,
-    email: updatedUser.email,
-  });
-}
+  if (role === "counsellor") {
+    await createOrLinkCrmCounsellor({
+      userId: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+    });
+  }
 
   await logAction({
     action: "update",
@@ -422,28 +486,54 @@ export async function DELETE(request: Request) {
     );
   }
 
-  let body: { id?: string; mode?: string };
+  let body: { id?: string; mode?: string; currentPassword?: string };
 
   try {
-    body = (await request.json()) as { id?: string; mode?: string };
+    body = (await request.json()) as {
+      id?: string;
+      mode?: string;
+      currentPassword?: string;
+    };
   } catch {
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   }
 
   if (!body.id) {
-    return NextResponse.json({ error: "User id is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "User id is required." },
+      { status: 400 },
+    );
   }
 
   if (body.mode !== "delete") {
     return NextResponse.json({ error: "Unknown mode." }, { status: 400 });
   }
 
+  if (body.id === "admin-1") {
+    return NextResponse.json(
+      { error: "The primary admin account is protected." },
+      { status: 403 },
+    );
+  }
+
+  if (!(await verifySensitiveAdminAction(session, body.currentPassword))) {
+    return NextResponse.json(
+      { error: "Administrator password verification required." },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+
   try {
     const deleted = await deleteUserRecord(body.id);
     if (!deleted) {
-      console.error(`DELETE /api/users: No document found with id "${body.id}"`);
+      console.error(
+        `DELETE /api/users: No document found with id "${body.id}"`,
+      );
       return NextResponse.json(
-        { error: "User not found in database. It may have already been deleted." },
+        {
+          error:
+            "User not found in database. It may have already been deleted.",
+        },
         { status: 404 },
       );
     }
@@ -467,5 +557,3 @@ export async function DELETE(request: Request) {
     );
   }
 }
-
-

@@ -274,7 +274,7 @@ export default function FeeReceipt() {
                     "'Brush Script MT', 'Caveat', 'Great Vibes', cursive",
                 }}
               >
-                Adv. Reena Kumari
+                Adv. Reena Ma'am
               </div>
               <div className="w-48 border-t-[1.5px] border-slate-800 mb-1"></div>
             </div>

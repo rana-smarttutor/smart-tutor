@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { createSessionResponse } from "@/lib/auth";
+import { createSessionResponse, createAdminSessionResponse } from "@/lib/auth";
 import { findUserByCredentials } from "@/lib/data-store";
-import {
-  sanitizePasswordInput,
-  sanitizeTextInput,
-} from "@/lib/validation";
+import { sanitizePasswordInput, sanitizeTextInput } from "@/lib/validation";
 import { logAction } from "@/lib/audit-log";
+import { checkLoginRateLimit } from "@/lib/login-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,46 +31,45 @@ export async function POST(request: Request) {
     );
   }
 
-  const login = sanitizeTextInput(
-    body.login ?? body.email,
-    120,
-  )
+  const login = sanitizeTextInput(body.login ?? body.email, 120)
     .trim()
     .toLowerCase();
 
-  const password = sanitizePasswordInput(
-    body.password,
-  );
+  const password = sanitizePasswordInput(body.password);
 
   if (!login || !password) {
     return NextResponse.json(
       {
-        error:
-          "Email or mobile number and password are required.",
+        error: "Email or mobile number and password are required.",
       },
       {
         status: 400,
       },
     );
   }
-
+if (!login || !password) {
+  return NextResponse.json(
+    {
+      error:
+        "Email or mobile number and password are required.",
+    },
+    {
+      status: 400,
+    },
+  );
+}
   /*
    * Authenticate using credentials only.
    *
    * Student, Parent and Faculty cards on the login page
    * are decorative and do not decide the account role.
    */
-  const user = await findUserByCredentials(
-    login,
-    password,
-    undefined as any,
-  );
+  const user = await findUserByCredentials(login, password, undefined as any);
 
   if (!user) {
     return NextResponse.json(
       {
-        error:
-          "The email/mobile number or password is incorrect.",
+        error: "The email/mobile number or password is incorrect.",
       },
       {
         status: 401,
@@ -81,13 +78,10 @@ export async function POST(request: Request) {
   }
 
   if (user.status && user.status !== "active") {
-    const isRejected =
-      user.status === "rejected";
+    const isRejected = user.status === "rejected";
 
     const accountLabel =
-      user.role === "educator"
-        ? "faculty account"
-        : "account";
+      user.role === "educator" ? "faculty account" : "account";
 
     return NextResponse.json(
       {
@@ -97,9 +91,7 @@ export async function POST(request: Request) {
 
         pendingApproval: !isRejected,
 
-        redirectTo: isRejected
-          ? "/login"
-          : "/application-submitted",
+        redirectTo: isRejected ? "/login" : "/application-submitted",
       },
       {
         status: isRejected ? 403 : 200,
@@ -125,5 +117,9 @@ export async function POST(request: Request) {
     session: user,
   });
 
-  return createSessionResponse(user);
+  if (user.role === "admin") {
+  return await createAdminSessionResponse(user);
+}
+
+return createSessionResponse(user);
 }

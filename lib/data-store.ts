@@ -3143,7 +3143,19 @@ export async function updateUserRecord(input: {
   if (!existingUser) {
     throw new Error("User could not be found in MongoDB.");
   }
-
+  if (existingUser.id === "admin-1") {
+    if (
+      input.role !== "admin" ||
+      input.status === "pending" ||
+      input.status === "rejected" ||
+      input.email.trim().toLowerCase() !==
+        existingUser.email.trim().toLowerCase()
+    ) {
+      throw new Error(
+        "The primary administrator's role, status and email are protected.",
+      );
+    }
+  }
   const nextStatus = input.status ?? existingUser.status ?? "active";
 
   const now = new Date().toISOString();
@@ -3586,9 +3598,19 @@ export async function bulkUpdateStudentsFromCsv(
 }
 
 export async function deleteUserRecord(userId: string): Promise<boolean> {
+  // The primary admin account cannot be deleted.
+  if (userId === "admin-1") {
+    return false;
+  }
+
   const collection = await getUsersCollection();
+
   const result = await collection.updateOne(
-    { id: userId, deletedAt: { $exists: false } },
+    {
+      id: userId,
+      role: { $ne: "admin" },
+      deletedAt: { $exists: false },
+    },
     {
       $set: {
         deletedAt: new Date().toISOString(),
@@ -3596,7 +3618,8 @@ export async function deleteUserRecord(userId: string): Promise<boolean> {
       },
     },
   );
-  return result.matchedCount > 0;
+
+  return result.modifiedCount === 1;
 }
 
 export async function restoreUserRecord(userId: string): Promise<boolean> {
@@ -3623,12 +3646,19 @@ export async function getDeletedUsers() {
 export async function permanentDeleteUserRecord(
   userId: string,
 ): Promise<boolean> {
+  if (userId === "admin-1") {
+    return false;
+  }
+
   const collection = await getUsersCollection();
+
   const result = await collection.deleteOne({
     id: userId,
+    role: { $ne: "admin" },
     deletedAt: { $exists: true },
-  } as any);
-  return result.deletedCount > 0;
+  });
+
+  return result.deletedCount === 1;
 }
 
 export async function findUserDocumentByEmail(email: string) {

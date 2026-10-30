@@ -132,6 +132,17 @@ export function RolesManager({ managedUsers }: Props) {
   >({});
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  type PendingSecurityAction =
+    | { type: "assign"; userId: string; roleId: string }
+    | { type: "remove"; userId: string; roleId: string }
+    | { type: "permissions"; userId: string };
+
+  const [pendingSecurityAction, setPendingSecurityAction] =
+    useState<PendingSecurityAction | null>(null);
+
+  const [adminPassword, setAdminPassword] = useState("");
+  const [securityError, setSecurityError] = useState("");
+  const [securityBusy, setSecurityBusy] = useState(false);
 
   const [userDirectModules, setUserDirectModules] = useState<
     Record<string, AvailableModule[]>
@@ -194,7 +205,9 @@ export function RolesManager({ managedUsers }: Props) {
   const customUsers = managedUsers.filter((u) => isUserCustomAccess(u.id));
 
   const filteredRoles = roleSearch
-    ? roles.filter((r) => r.name.toLowerCase().includes(roleSearch.toLowerCase()))
+    ? roles.filter((r) =>
+        r.name.toLowerCase().includes(roleSearch.toLowerCase()),
+      )
     : roles;
   const staffFilter = (u: { name: string; email: string }) =>
     !staffSearch
@@ -308,75 +321,147 @@ export function RolesManager({ managedUsers }: Props) {
     setEditAccess(role.moduleAccess || {});
   }
 
-  async function handleAssignRole(userId: string, roleId: string) {
-    if (!roleId) return;
-    const role = roles.find((r) => r.id === roleId);
-    if (!role) return;
-    try {
-      const res = await fetch("/api/admin/roles/assign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ userId, roleId, roleName: role.name }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        showStatus("error", data.error || "Failed to assign.", false);
-        return;
-      }
-      void fetchAll();
-    } catch {
-      showStatus("error", "Network error.", false);
+  async function handleAssignRole(
+    userId: string,
+    roleId: string,
+    currentPassword: string,
+  ) {
+    const role = roles.find((item) => item.id === roleId);
+
+    if (!role) {
+      throw new Error("Selected role was not found.");
     }
+
+    const response = await fetch("/api/admin/roles/assign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        userId,
+        roleId,
+        roleName: role.name,
+        currentPassword,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to assign role.");
+    }
+
+    showStatus("success", "Role assigned successfully.");
+    await fetchAll();
   }
 
-  async function handleRemoveRole(userId: string, roleId: string) {
-    try {
-      const res = await fetch("/api/admin/roles/assign", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ userId, roleId }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        showStatus("error", data.error || "Failed to remove.", false);
-        return;
-      }
-      void fetchAll();
-    } catch {
-      showStatus("error", "Network error.", false);
+  async function handleRemoveRole(
+    userId: string,
+    roleId: string,
+    currentPassword: string,
+  ) {
+    const response = await fetch("/api/admin/roles/assign", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        userId,
+        roleId,
+        currentPassword,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to remove role.");
     }
+
+    showStatus("success", "Role removed successfully.");
+    await fetchAll();
   }
 
-  async function handleSaveUserPermissions(userId: string) {
+  async function handleSaveUserPermissions(
+    userId: string,
+    currentPassword: string,
+  ) {
     const modules = userModuleEdits[userId] || [];
     const moduleAccess = userAccessEdits[userId] || {};
+
     setSavingUserId(userId);
+
     try {
-      const res = await fetch("/api/admin/users/permissions", {
+      const response = await fetch("/api/admin/users/permissions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ userId, modules, moduleAccess }),
+        body: JSON.stringify({
+          userId,
+          modules,
+          moduleAccess,
+          currentPassword,
+        }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        showStatus(
-          "error",
-          data.error || "Failed to save permissions.",
-          false,
-        );
-        return;
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save permissions.");
       }
+
       setEditingUserId(null);
       showStatus("success", "User permissions saved.");
-      void fetchAll();
-    } catch {
-      showStatus("error", "Network error.", false);
+      await fetchAll();
     } finally {
       setSavingUserId(null);
     }
+  }
+
+  async function confirmAdminSecurityAction() {
+    if (!pendingSecurityAction || !adminPassword || securityBusy) {
+      return;
+    }
+
+    setSecurityBusy(true);
+    setSecurityError("");
+
+    try {
+      const action = pendingSecurityAction;
+
+      if (action.type === "assign") {
+        await handleAssignRole(action.userId, action.roleId, adminPassword);
+      } else if (action.type === "remove") {
+        await handleRemoveRole(action.userId, action.roleId, adminPassword);
+      } else {
+        await handleSaveUserPermissions(action.userId, adminPassword);
+      }
+
+      setPendingSecurityAction(null);
+      setAdminPassword("");
+    } catch (error) {
+      setSecurityError(
+        error instanceof Error
+          ? error.message
+          : "Administrator verification failed.",
+      );
+      setAdminPassword("");
+    } finally {
+      setSecurityBusy(false);
+    }
+  }
+
+  function requestAdminSecurityAction(action: PendingSecurityAction) {
+    if (action.userId === "admin-1") {
+      showStatus(
+        "error",
+        "Primary administrator permissions are protected.",
+        false,
+      );
+      return;
+    }
+
+    setPendingSecurityAction(action);
+    setAdminPassword("");
+    setSecurityError("");
   }
 
   function toggleModule(
@@ -459,13 +544,9 @@ export function RolesManager({ managedUsers }: Props) {
             / {AVAILABLE_MODULES.length} modules
             {mods.length > 0 && (
               <>
-                <span className="text-emerald-600">
-                  {writeCount}W
-                </span>
+                <span className="text-emerald-600">{writeCount}W</span>
                 {readOnlyCount > 0 && (
-                  <span className="text-amber-600">
-                    {readOnlyCount}R
-                  </span>
+                  <span className="text-amber-600">{readOnlyCount}R</span>
                 )}
               </>
             )}
@@ -512,8 +593,7 @@ export function RolesManager({ managedUsers }: Props) {
                         onClick={() => {
                           const next = {
                             ...accessMap,
-                            [mod.id]:
-                              level === "write" ? "read" : "write",
+                            [mod.id]: level === "write" ? "read" : "write",
                           };
                           accessSetter(next);
                         }}
@@ -741,7 +821,7 @@ export function RolesManager({ managedUsers }: Props) {
       {/* ======================== ROLES TAB ======================== */}
       {activeTab === "roles" && (
         <div className="grid gap-6 lg:grid-cols-2">
-            <div className="surface rounded-[2rem] p-6">
+          <div className="surface rounded-[2rem] p-6">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-[var(--color-heading)]">
                 Custom Roles
@@ -749,8 +829,18 @@ export function RolesManager({ managedUsers }: Props) {
             </div>
             <div className="mb-4">
               <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-[var(--color-muted)]">
-                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="h-4 w-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
                   type="text"
@@ -760,9 +850,23 @@ export function RolesManager({ managedUsers }: Props) {
                   className="w-full bg-transparent text-sm text-[var(--color-heading)] placeholder-[var(--color-muted)] outline-none"
                 />
                 {roleSearch && (
-                  <button type="button" onClick={() => setRoleSearch("")} className="text-[var(--color-muted)] hover:text-[var(--color-heading)]">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <button
+                    type="button"
+                    onClick={() => setRoleSearch("")}
+                    className="text-[var(--color-muted)] hover:text-[var(--color-heading)]"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -770,7 +874,9 @@ export function RolesManager({ managedUsers }: Props) {
             </div>
             {filteredRoles.length === 0 ? (
               <p className="text-sm text-[var(--color-muted)]">
-                {roleSearch ? "No roles match your search." : "No custom roles created yet."}
+                {roleSearch
+                  ? "No roles match your search."
+                  : "No custom roles created yet."}
               </p>
             ) : (
               <div className="space-y-4">
@@ -1040,8 +1146,18 @@ export function RolesManager({ managedUsers }: Props) {
       {activeTab === "staff" && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-[var(--color-muted)]">
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               type="text"
@@ -1051,9 +1167,23 @@ export function RolesManager({ managedUsers }: Props) {
               className="w-full bg-transparent text-sm text-[var(--color-heading)] placeholder-[var(--color-muted)] outline-none"
             />
             {staffSearch && (
-              <button type="button" onClick={() => setStaffSearch("")} className="text-[var(--color-muted)] hover:text-[var(--color-heading)]">
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <button
+                type="button"
+                onClick={() => setStaffSearch("")}
+                className="text-[var(--color-muted)] hover:text-[var(--color-heading)]"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             )}
@@ -1113,8 +1243,7 @@ export function RolesManager({ managedUsers }: Props) {
                         (a) => a.userId === user.id,
                       );
                       const availableRoles = roles.filter(
-                        (r) =>
-                          !userAssignments.some((a) => a.roleId === r.id),
+                        (r) => !userAssignments.some((a) => a.roleId === r.id),
                       );
                       const directMods = userDirectModules[user.id] || [];
                       return (
@@ -1163,7 +1292,11 @@ export function RolesManager({ managedUsers }: Props) {
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        handleRemoveRole(user.id, a.roleId)
+                                        requestAdminSecurityAction({
+                                          type: "remove",
+                                          userId: user.id,
+                                          roleId: a.roleId,
+                                        })
                                       }
                                       className="ml-0.5 text-[#818CF8] hover:text-[#EF4444]"
                                       title="Remove"
@@ -1206,7 +1339,11 @@ export function RolesManager({ managedUsers }: Props) {
                                 const roleId = e.target.value;
                                 e.target.value = "";
                                 if (roleId)
-                                  handleAssignRole(user.id, roleId);
+                                  requestAdminSecurityAction({
+                                    type: "assign",
+                                    userId: user.id,
+                                    roleId,
+                                  });
                               }}
                             >
                               <option value="">+ Assign role...</option>
@@ -1245,9 +1382,9 @@ export function RolesManager({ managedUsers }: Props) {
                 <span className="text-sm font-bold text-[var(--color-heading)]">
                   Default Access Accounts
                 </span>
-                  <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                    {filteredDefaultUsers.length}
-                  </span>
+                <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                  {filteredDefaultUsers.length}
+                </span>
               </div>
               <span className="text-xs text-[var(--color-muted)]">
                 Follow system role permissions — no overrides
@@ -1282,8 +1419,7 @@ export function RolesManager({ managedUsers }: Props) {
                         (a) => a.userId === user.id,
                       );
                       const availableRoles = roles.filter(
-                        (r) =>
-                          !userAssignments.some((a) => a.roleId === r.id),
+                        (r) => !userAssignments.some((a) => a.roleId === r.id),
                       );
                       return (
                         <tr
@@ -1331,7 +1467,11 @@ export function RolesManager({ managedUsers }: Props) {
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        handleRemoveRole(user.id, a.roleId)
+                                        requestAdminSecurityAction({
+                                          type: "remove",
+                                          userId: user.id,
+                                          roleId: a.roleId,
+                                        })
                                       }
                                       className="ml-0.5 text-[#818CF8] hover:text-[#EF4444]"
                                       title="Remove"
@@ -1350,8 +1490,13 @@ export function RolesManager({ managedUsers }: Props) {
                               onChange={(e) => {
                                 const roleId = e.target.value;
                                 e.target.value = "";
-                                if (roleId)
-                                  handleAssignRole(user.id, roleId);
+                                if (roleId) {
+                                  requestAdminSecurityAction({
+                                    type: "assign",
+                                    userId: user.id,
+                                    roleId,
+                                  });
+                                }
                               }}
                             >
                               <option value="">+ Assign role...</option>
@@ -1401,8 +1546,18 @@ export function RolesManager({ managedUsers }: Props) {
           </div>
           <div className="border-b border-[var(--color-border)] px-6 py-3">
             <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-[var(--color-muted)]">
-              <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="h-4 w-4 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
               <input
                 type="text"
@@ -1412,9 +1567,23 @@ export function RolesManager({ managedUsers }: Props) {
                 className="w-full bg-transparent text-sm text-[var(--color-heading)] placeholder-[var(--color-muted)] outline-none"
               />
               {userSearch && (
-                <button type="button" onClick={() => setUserSearch("")} className="text-[var(--color-muted)] hover:text-[var(--color-heading)]">
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <button
+                  type="button"
+                  onClick={() => setUserSearch("")}
+                  className="text-[var(--color-muted)] hover:text-[var(--color-heading)]"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               )}
@@ -1501,8 +1670,8 @@ export function RolesManager({ managedUsers }: Props) {
                         <td className="px-4 py-3">
                           {isEditing ? (
                             <span className="text-[11px] font-bold text-[var(--color-primary)]">
-                              Editing... ({editCount}/
-                              {AVAILABLE_MODULES.length} modules)
+                              Editing... ({editCount}/{AVAILABLE_MODULES.length}{" "}
+                              modules)
                             </span>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -1594,7 +1763,10 @@ export function RolesManager({ managedUsers }: Props) {
                                 <button
                                   type="button"
                                   onClick={() =>
-                                    handleSaveUserPermissions(user.id)
+                                    requestAdminSecurityAction({
+                                      type: "permissions",
+                                      userId: user.id,
+                                    })
                                   }
                                   disabled={isSaving}
                                   className="rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50"
@@ -1632,9 +1804,7 @@ export function RolesManager({ managedUsers }: Props) {
             </div>
             <div className="space-y-4 p-6">
               <div>
-                <label className="mb-1 block text-sm font-semibold">
-                  Name
-                </label>
+                <label className="mb-1 block text-sm font-semibold">Name</label>
                 <input
                   type="text"
                   value={editName}
@@ -1672,7 +1842,12 @@ export function RolesManager({ managedUsers }: Props) {
                   Click the badge to toggle between Read+Write and Read-Only.
                 </p>
                 <div className="max-h-48 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-3">
-                  {renderModuleToggles(editMod, setEditMod, editAccess, setEditAccess)}
+                  {renderModuleToggles(
+                    editMod,
+                    setEditMod,
+                    editAccess,
+                    setEditAccess,
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -1736,6 +1911,105 @@ export function RolesManager({ managedUsers }: Props) {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {pendingSecurityAction && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-security-title"
+            className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
+          >
+            <div className="mb-4 flex items-center gap-3">
+              <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+                <i className="bi bi-shield-lock-fill text-xl" />
+              </div>
+              <div>
+                <h3
+                  id="admin-security-title"
+                  className="text-lg font-bold text-slate-900"
+                >
+                  Administrator Verification
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Security confirmation required
+                </p>
+              </div>
+            </div>
+
+            <p className="mb-4 text-sm text-slate-600">
+              {pendingSecurityAction.type === "assign"
+                ? "Confirm your password to assign this role."
+                : pendingSecurityAction.type === "remove"
+                  ? "Confirm your password to remove this role."
+                  : "Confirm your password to save user permissions."}
+            </p>
+
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                void confirmAdminSecurityAction();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label
+                  htmlFor="roles-admin-password"
+                  className="mb-2 block text-sm font-semibold text-slate-700"
+                >
+                  Current Administrator Password
+                </label>
+
+                <input
+                  id="roles-admin-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={adminPassword}
+                  onChange={(event) => setAdminPassword(event.target.value)}
+                  maxLength={256}
+                  autoFocus
+                  required
+                  disabled={securityBusy}
+                  placeholder="Enter your current password"
+                  className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              {securityError && (
+                <p
+                  role="alert"
+                  className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600"
+                >
+                  {securityError}
+                </p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={securityBusy}
+                  onClick={() => {
+                    setPendingSecurityAction(null);
+                    setAdminPassword("");
+                    setSecurityError("");
+                  }}
+                  className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={securityBusy || !adminPassword}
+                  className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {securityBusy ? "Verifying..." : "Verify & Continue"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

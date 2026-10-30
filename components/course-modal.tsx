@@ -1,21 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
 import {
-  X,
-  Clock,
-  Laptop,
-  CheckCircle,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  ArrowLeft,
+  ArrowRight,
   BookOpen,
-  Calendar,
-  Send,
-  Sparkles,
+  CalendarClock,
+  Check,
+  CheckCircle2,
+  Clock3,
+  GraduationCap,
+  House,
+  MapPin,
+  Monitor,
   Phone,
-  User,
-  ChevronRight,
-} from "@/components/ui-icons";
-import { motion, AnimatePresence } from "motion/react";
+  Send,
+  ShieldCheck,
+  UserRound,
+  X,
+} from "lucide-react";
+
 import type { CourseItem } from "@/lib/types";
 import { requestLoginIfNeeded } from "@/lib/request-login";
 
@@ -25,6 +36,8 @@ interface CourseModalProps {
   initialAdditionalCourse?: string;
   programTopics?: string[];
 }
+
+type Step = 1 | 2 | 3;
 
 const MHT_CET_EXAMS = [
   "Engineering (B.E./B.Tech)",
@@ -52,16 +65,19 @@ const TUITION_MODES = [
     value: "Home Tutor",
     title: "Home Tutor",
     description: "In-person classes at your home",
+    icon: House,
   },
   {
     value: "Online Tutor",
     title: "Online Tutor",
     description: "Live interactive online classes",
+    icon: Monitor,
   },
-    {
+  {
     value: "Offline Campus",
     title: "Offline Campus",
     description: "In-person classes at our campus",
+    icon: GraduationCap,
   },
 ] as const;
 
@@ -144,6 +160,7 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       ],
     },
   },
+
   CBSE: {
     middle: [
       "English",
@@ -201,6 +218,7 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       ],
     },
   },
+
   "CISCE (ICSE / ISC)": {
     middle: [
       "English",
@@ -259,6 +277,7 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       ],
     },
   },
+
   "Cambridge (IGCSE / A Level)": {
     middle: [
       "English",
@@ -316,6 +335,7 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       ],
     },
   },
+
   IB: {
     middle: [
       "Language & Literature",
@@ -494,33 +514,145 @@ function getRegularSubjectOptions(
 ) {
   const boardSubjects = SUBJECTS_BY_BOARD[selectedBoard as BoardName];
 
-  if (!boardSubjects) {
-    return [];
-  }
+  if (!boardSubjects) return [];
 
   const classNumber = getClassNumber(standardKey);
-  const isSeniorSecondary = classNumber >= 11;
 
-  const subjectOptions = isSeniorSecondary
-    ? (boardSubjects.senior[selectedStream as SeniorSecondaryStream] ?? [])
-    : classNumber >= 9
-      ? boardSubjects.secondary
-      : boardSubjects.middle;
+  const subjectOptions =
+    classNumber >= 11
+      ? (boardSubjects.senior[selectedStream as SeniorSecondaryStream] ?? [])
+      : classNumber >= 9
+        ? boardSubjects.secondary
+        : boardSubjects.middle;
 
   return [...subjectOptions, OTHER_SUBJECT_OPTION];
 }
+
+const inputClass =
+  "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
+
+const labelClass =
+  "mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600";
+
+function SelectionCard({
+  selected,
+  children,
+  onClick,
+  icon,
+  description,
+  tone = "blue",
+}: {
+  selected: boolean;
+  children: ReactNode;
+  onClick: () => void;
+  icon?: ReactNode;
+  description?: string;
+  tone?: "blue" | "green";
+}) {
+  const selectedStyle =
+    tone === "green"
+      ? "border-emerald-500 bg-emerald-50"
+      : "border-blue-600 bg-blue-50";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`flex min-h-12 min-w-0 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+        selected
+          ? selectedStyle
+          : "border-slate-200 bg-white hover:border-blue-300"
+      }`}
+    >
+      {icon && (
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
+            selected
+              ? "bg-blue-100 text-blue-700"
+              : "bg-slate-100 text-slate-500"
+          }`}
+        >
+          {icon}
+        </div>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <span
+          className={`block break-words text-sm font-semibold leading-5 ${
+            selected ? "text-blue-900" : "text-slate-800"
+          }`}
+        >
+          {children}
+        </span>
+
+        {description && (
+          <span className="mt-1 block text-xs leading-5 text-slate-500">
+            {description}
+          </span>
+        )}
+      </div>
+
+      <span
+        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+          selected
+            ? "border-blue-600 bg-blue-600 text-white"
+            : "border-slate-300 bg-white"
+        }`}
+      >
+        {selected && <Check className="h-3 w-3" />}
+      </span>
+    </button>
+  );
+}
+
+function SectionHeading({
+  number,
+  title,
+  description,
+}: {
+  number: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="mb-4 flex items-start gap-3">
+      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-bold text-blue-700">
+        {number}
+      </div>
+
+      <div className="min-w-0">
+        <h3 className="text-base font-bold text-slate-900">{title}</h3>
+
+        {description && (
+          <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const STEP_DETAILS = [
+  { number: 1, label: "Programme" },
+  { number: 2, label: "Schedule" },
+  { number: 3, label: "Your Details" },
+] as const;
 
 export default function CourseModal({
   course,
   onClose,
   initialAdditionalCourse,
-  programTopics = [],
 }: CourseModalProps) {
+  const [step, setStep] = useState<Step>(1);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
+  const [address, setAddress] = useState("");
   const [role, setRole] = useState("student");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+
   const [selectedCourseName, setSelectedCourseName] = useState("");
   const [mhtCetSubExam, setMhtCetSubExam] = useState("");
   const [selectedBoard, setSelectedBoard] = useState("");
@@ -532,96 +664,102 @@ export default function CourseModal({
   >([]);
   const [selectedLearningMode, setSelectedLearningMode] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
-  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({
-    whatYoullLearn: true,
-    skillsYoullGain: false,
-    topicsCovered: false,
-  });
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const submissionIdRef = useRef("");
+
   useEffect(() => {
-    const isAcademicCourse = course
+    const isAcademic = course
       ? REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey)
       : false;
 
-    const preselectedCourse =
-      !isAcademicCourse &&
+    const preselected =
+      !isAcademic &&
       initialAdditionalCourse &&
       course?.courseNamesIncluded.includes(initialAdditionalCourse)
         ? initialAdditionalCourse
         : "";
 
+    setStep(1);
     setIsSuccess(false);
-
-    setSelectedCourseName(preselectedCourse);
-
+    setIsSubmitting(false);
+    setError("");
+    setName("");
+    setContact("");
+    setAddress("");
+    setRole("student");
+    setSelectedCourseName(preselected);
     setMhtCetSubExam("");
     setSelectedBoard("");
     setSelectedStream("");
     setSelectedSubjects([]);
     setOtherSubject("");
-
     setSelectedAdditionalCourses(
-      isAcademicCourse && initialAdditionalCourse
-        ? [initialAdditionalCourse]
-        : [],
+      isAcademic && initialAdditionalCourse ? [initialAdditionalCourse] : [],
     );
-
     setSelectedLearningMode("");
     setSelectedSlot("");
-
-    setOpenAccordions({
-      whatYoullLearn: true,
-      skillsYoullGain: false,
-      topicsCovered: false,
-    });
+    submissionIdRef.current = "";
   }, [course?.id, course?.standardKey, initialAdditionalCourse]);
 
-  if (!course) {
-    return null;
-  }
+  useEffect(() => {
+    if (!course) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isSubmitting) {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [course, onClose, isSubmitting]);
+
+  if (!course) return null;
+
+  const activeCourse: CourseItem = course;
 
   const isRegularAcademic = REGULAR_ACADEMIC_COURSE_KEYS.has(
-    course.standardKey,
+    activeCourse.standardKey,
   );
-  const hasCourseOptions = course.courseNamesIncluded.length > 0;
-  const isSeniorSecondary = isSeniorSecondaryCourse(course.standardKey);
+
+  const isSeniorSecondary = isSeniorSecondaryCourse(activeCourse.standardKey);
+
+  const hasCourseOptions = activeCourse.courseNamesIncluded.length > 0;
+
   const hasSelectedBoard = Boolean(selectedBoard);
   const hasSelectedStream = !isSeniorSecondary || Boolean(selectedStream);
   const canShowSubjects = hasSelectedBoard && hasSelectedStream;
 
   const regularSubjectOptions = getRegularSubjectOptions(
-    course.standardKey,
+    activeCourse.standardKey,
     selectedBoard,
     selectedStream,
   );
 
   const additionalCourseOptions =
-    ADDITIONAL_COURSES_BY_CLASS[course.standardKey] ?? [];
+    ADDITIONAL_COURSES_BY_CLASS[activeCourse.standardKey] ?? [];
+
   const visibleAdditionalCourseOptions = initialAdditionalCourse
-    ? additionalCourseOptions.filter(
-        (additionalCourse) => additionalCourse === initialAdditionalCourse,
-      )
+    ? additionalCourseOptions.filter((item) => item === initialAdditionalCourse)
     : additionalCourseOptions;
 
   const isMhtCet =
     !isRegularAcademic && selectedCourseName === "All MHT CET Exam";
+
   const hasMhtCetAddOn = selectedAdditionalCourses.includes("All MHT CET Exam");
+
   const shouldShowMhtCetCategory = isMhtCet || hasMhtCetAddOn;
 
   const requiresOtherSubjectName =
     selectedSubjects.includes(OTHER_SUBJECT_OPTION) && !otherSubject.trim();
-
-  const hasRequiredAcademicSelection = Boolean(
-    selectedBoard &&
-    selectedSubjects.length > 0 &&
-    hasSelectedStream &&
-    !requiresOtherSubjectName,
-  );
-
-  const canSelectSlot = isRegularAcademic
-    ? hasRequiredAcademicSelection
-    : hasCourseOptions
-      ? Boolean(selectedCourseName)
-      : true;
 
   const selectedSubjectText = selectedSubjects
     .map((subject) =>
@@ -640,881 +778,1063 @@ export default function CourseModal({
     .join(", ");
 
   const readableCourseDetail = isRegularAcademic
-    ? `${course.title} — ${selectedBoard}${
+    ? `${activeCourse.title} — ${selectedBoard}${
         isSeniorSecondary ? ` — ${selectedStream}` : ""
       } — ${selectedSubjectText}`
     : isMhtCet
       ? `${selectedCourseName}${mhtCetSubExam ? ` – ${mhtCetSubExam}` : ""}`
-      : selectedCourseName || course.title;
+      : selectedCourseName || activeCourse.title;
+
+  function scrollToTop() {
+    scrollRef.current?.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }
+
+  function changeStep(nextStep: Step) {
+    setError("");
+    setStep(nextStep);
+    scrollToTop();
+  }
 
   function toggleSubject(subject: string) {
-    const isRemoving = selectedSubjects.includes(subject);
-
-    if (isRemoving && subject === OTHER_SUBJECT_OPTION) {
+    if (
+      subject === OTHER_SUBJECT_OPTION &&
+      selectedSubjects.includes(subject)
+    ) {
       setOtherSubject("");
     }
 
-    setSelectedSubjects((currentSubjects) =>
-      currentSubjects.includes(subject)
-        ? currentSubjects.filter((item) => item !== subject)
-        : [...currentSubjects, subject],
+    setSelectedSubjects((current) =>
+      current.includes(subject)
+        ? current.filter((item) => item !== subject)
+        : [...current, subject],
     );
+
     setSelectedSlot("");
   }
 
   function toggleAdditionalCourse(additionalCourse: string) {
-    const isRemoving = selectedAdditionalCourses.includes(additionalCourse);
-
-    if (isRemoving && additionalCourse === "All MHT CET Exam") {
+    if (
+      additionalCourse === "All MHT CET Exam" &&
+      selectedAdditionalCourses.includes(additionalCourse)
+    ) {
       setMhtCetSubExam("");
     }
 
-    setSelectedAdditionalCourses((currentCourses) =>
-      currentCourses.includes(additionalCourse)
-        ? currentCourses.filter((item) => item !== additionalCourse)
-        : [...currentCourses, additionalCourse],
+    setSelectedAdditionalCourses((current) =>
+      current.includes(additionalCourse)
+        ? current.filter((item) => item !== additionalCourse)
+        : [...current, additionalCourse],
     );
+
     setSelectedSlot("");
   }
 
+  function validateStepOne(): boolean {
+    if (isRegularAcademic) {
+      if (!selectedBoard) {
+        setError("Please select your education board.");
+        return false;
+      }
+
+      if (isSeniorSecondary && !selectedStream) {
+        setError("Please select your academic stream.");
+        return false;
+      }
+
+      if (selectedSubjects.length === 0) {
+        setError("Please select at least one academic subject.");
+        return false;
+      }
+
+      if (requiresOtherSubjectName) {
+        setError("Please enter your school-specific subject.");
+        return false;
+      }
+    } else if (hasCourseOptions && !selectedCourseName) {
+      setError("Please select a programme.");
+      return false;
+    }
+
+    if (shouldShowMhtCetCategory && !mhtCetSubExam) {
+      setError("Please select your MHT CET exam category.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateStepTwo(): boolean {
+    if (!selectedLearningMode) {
+      setError("Please select your preferred learning mode.");
+      return false;
+    }
+
+    if (!selectedSlot) {
+      setError("Please select your preferred session slot.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function validateStepThree(): boolean {
+    if (!name.trim()) {
+      setError("Please enter your full name.");
+      return false;
+    }
+
+    const trimmedContact = contact.trim();
+
+    if (!trimmedContact) {
+      setError("Please enter your phone number or email address.");
+      return false;
+    }
+
+    if (trimmedContact.includes("@")) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedContact)) {
+        setError("Please enter a valid email address.");
+        return false;
+      }
+    } else {
+      const digits = trimmedContact.replace(/\D/g, "");
+
+      if (digits.length < 10 || digits.length > 15) {
+        setError("Please enter a valid phone number.");
+        return false;
+      }
+    }
+
+    if (address.trim().length < 10) {
+      setError("Please enter your complete address including area and city.");
+      return false;
+    }
+
+    return true;
+  }
+
+  function handleContinue() {
+    setError("");
+
+    if (step === 1) {
+      if (!validateStepOne()) {
+        scrollToTop();
+        return;
+      }
+      changeStep(2);
+      return;
+    }
+
+    if (step === 2) {
+      if (!validateStepTwo()) {
+        scrollToTop();
+        return;
+      }
+      changeStep(3);
+    }
+  }
+
+  function handleBack() {
+    if (step === 1) return;
+    changeStep((step - 1) as Step);
+  }
+
   function resetForm() {
+    setStep(1);
     setIsSuccess(false);
+    setIsSubmitting(false);
+    setError("");
     setName("");
     setContact("");
+    setAddress("");
     setRole("student");
-
-    setSelectedCourseName(
-      course &&
-        !REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey) &&
-        initialAdditionalCourse &&
-        course.courseNamesIncluded.includes(initialAdditionalCourse)
-        ? initialAdditionalCourse
-        : "",
-    );
-
-    setMhtCetSubExam("");
     setSelectedBoard("");
     setSelectedStream("");
     setSelectedSubjects([]);
     setOtherSubject("");
+    setMhtCetSubExam("");
+
+    setSelectedCourseName(
+      !isRegularAcademic &&
+        initialAdditionalCourse &&
+        activeCourse.courseNamesIncluded.includes(initialAdditionalCourse)
+        ? initialAdditionalCourse
+        : "",
+    );
 
     setSelectedAdditionalCourses(
-      course &&
-        REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey) &&
-        initialAdditionalCourse
+      isRegularAcademic && initialAdditionalCourse
         ? [initialAdditionalCourse]
         : [],
     );
 
     setSelectedLearningMode("");
     setSelectedSlot("");
+    submissionIdRef.current = "";
+    scrollToTop();
   }
 
-  const handleFormSubmit = async (event: FormEvent) => {
+  async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!name.trim() || !contact.trim()) {
-      alert("Please fill out your name and phone/email to continue.");
+    if (isSubmitting || isSuccess) return;
+
+    setError("");
+
+    if (!validateStepOne()) {
+      changeStep(1);
       return;
     }
 
-    if (isRegularAcademic && !selectedBoard) {
-      alert("Please select your education board.");
+    if (!validateStepTwo()) {
+      changeStep(2);
       return;
     }
 
-    if (isRegularAcademic && isSeniorSecondary && !selectedStream) {
-      alert("Please select your stream.");
-      return;
-    }
-
-    if (isRegularAcademic && !selectedSubjects.length) {
-      alert("Please select at least one regular academic subject.");
-      return;
-    }
-
-    if (isRegularAcademic && requiresOtherSubjectName) {
-      alert("Please type the name of the other school subject.");
-      return;
-    }
-
-    if (!isRegularAcademic && hasCourseOptions && !selectedCourseName) {
-      alert("Please select a course to enroll in.");
-      return;
-    }
-
-    if (shouldShowMhtCetCategory && !mhtCetSubExam) {
-      alert("Please select the MHT CET exam category.");
-      return;
-    }
-
-    if (!selectedLearningMode) {
-      alert("Please select Home Tutor or Online Tutor.");
-      return;
-    }
-
-    if (!selectedSlot) {
-      alert("Please select your preferred session slot.");
+    if (!validateStepThree()) {
+      scrollToTop();
       return;
     }
 
     const canEnroll = await requestLoginIfNeeded("/courses");
 
-    if (!canEnroll) {
-      return;
-    }
+    if (!canEnroll) return;
 
     const message = isRegularAcademic
-      ? `Hi SmartIQ Institute, I am interested in enrolling for **${course.title}**. Board: **${selectedBoard}**.${
-          isSeniorSecondary ? ` Stream: **${selectedStream}**.` : ""
-        } Regular subjects: **${selectedSubjectText}**. Optional additional courses: **${
+      ? `Hi SmartIQ Institute, I am interested in enrolling for ${activeCourse.title}. Board: ${selectedBoard}.${
+          isSeniorSecondary ? ` Stream: ${selectedStream}.` : ""
+        } Regular subjects: ${selectedSubjectText}. Optional additional courses: ${
           selectedAdditionalCourseText || "None selected"
-        }**. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Enrolling as a ${role}. Let's set up a counselling demo.`
-      : `Hi SmartIQ Institute, I am interested in enrolling for: **${readableCourseDetail}** as a ${role}. Preferred tuition mode: **${selectedLearningMode}**. Preferred session slot: **${selectedSlot}**. Let's set up a counselling demo.`;
+        }. Preferred tuition mode: ${selectedLearningMode}. Preferred session slot: ${selectedSlot}. Enrolling as a ${role}. Full Address: ${address.trim()}. Let's set up a counselling demo.`
+      : `Hi SmartIQ Institute, I am interested in enrolling for ${readableCourseDetail} as a ${role}. Preferred tuition mode: ${selectedLearningMode}. Preferred session slot: ${selectedSlot}. Full Address: ${address.trim()}. Let's set up a counselling demo.`;
+
+    if (!submissionIdRef.current) {
+      submissionIdRef.current = crypto.randomUUID();
+    }
+
     setIsSubmitting(true);
 
     try {
       const response = await fetch("/api/enquiries", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          name,
-          contact,
+          name: name.trim(),
+          contact: contact.trim(),
+          address: address.trim(),
           role,
-          courseTitle: course.title,
-          courseKey: course.standardKey,
+          courseTitle: activeCourse.title,
+          courseKey: activeCourse.standardKey,
           message,
+          requestType: "general",
+          source: "course-modal",
+          submissionId: submissionIdRef.current,
         }),
       });
 
-      if (response.ok) {
-        setIsSuccess(true);
-      } else {
-        alert(
-          "Failed to submit enquiry. Please try again or contact us through WhatsApp.",
-        );
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || result?.success === false) {
+        throw new Error(result?.error || "Unable to submit your enquiry.");
       }
-    } catch (error) {
-      console.error("Enquiry submission error:", error);
-      alert("An error occurred. Please try again later.");
+
+      setIsSuccess(true);
+      scrollToTop();
+    } catch (cause) {
+      console.error("Course enquiry submission failed:", cause);
+
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Submission failed. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+      <div className="fixed inset-0 z-[150] flex items-center justify-center p-2 sm:p-4">
+        {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
+          onClick={() => {
+            if (!isSubmitting) onClose();
+          }}
+          className="absolute inset-0 bg-slate-900/50"
         />
 
+        {/* Modal */}
         <motion.div
-          initial={{ scale: 0.97, y: 10, opacity: 0 }}
-          animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.97, y: 10, opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className="relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+          initial={{
+            opacity: 0,
+            scale: 0.98,
+            y: 10,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0,
+          }}
+          exit={{
+            opacity: 0,
+            scale: 0.98,
+            y: 10,
+          }}
+          transition={{ duration: 0.18 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Course enquiry for ${activeCourse.title}`}
+          className="relative z-10 flex max-h-[96dvh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:max-h-[94dvh]"
         >
-          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 p-4 text-slate-950">
-            <div className="flex items-center space-x-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded border border-blue-100 bg-blue-50 text-blue-600">
-                <BookOpen className="h-4 w-4" />
+          {/* Header */}
+          <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 py-4 sm:px-8 sm:py-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600">
+                  <GraduationCap className="h-5 w-5" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 sm:text-xs">
+                    SmartIQ Institute Admissions
+                  </p>
+
+                  <h2 className="mt-1 break-words text-lg font-bold leading-tight text-slate-900 sm:text-xl">
+                    {initialAdditionalCourse || activeCourse.title}
+                  </h2>
+
+                  <p className="mt-1 hidden text-xs text-slate-500 sm:block">
+                    Course Enquiry Form
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700">
-                  {course.category}
-                </span>
-                <h4 className="mt-0.5 font-display text-xs font-bold tracking-tight">
-                  {initialAdditionalCourse || course.title}
-                </h4>
-              </div>
+
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                aria-label="Close course enquiry"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded bg-slate-200/60 text-slate-500 transition-all hover:bg-slate-200 hover:text-slate-900"
-              aria-label="Close enrollment form"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+            {!isSuccess && (
+              <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-100 pt-4 sm:gap-4">
+                {STEP_DETAILS.map((item, index) => {
+                  const completed = step > item.number;
+                  const active = step === item.number;
 
-          <div className="grid flex-1 grid-cols-1 gap-6 overflow-y-auto p-6 sm:p-8 md:grid-cols-12">
-            <div className="space-y-6 md:col-span-7">
-              <div className="space-y-1.5">
-                <span className="block text-xs font-semibold uppercase tracking-wider text-blue-600">
-                  {initialAdditionalCourse || course.tagline}
-                </span>
-                <h3 className="font-display text-xl font-bold leading-tight tracking-tight text-slate-900">
-                  {initialAdditionalCourse || course.title}
-                </h3>
-                <p className="text-xs font-medium leading-relaxed text-slate-500">
-                  {course.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
-                  <Clock className="mx-auto h-4 w-4 text-blue-600" />
-                  <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
-                    Duration
-                  </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-700">
-                    {course.duration}
-                  </span>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
-                  <Laptop className="mx-auto h-4 w-4 text-emerald-600" />
-                  <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
-                    Mode
-                  </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-700">
-                    {course.mode}
-                  </span>
-                </div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-center">
-                  <Calendar className="mx-auto h-4 w-4 text-amber-600" />
-                  <span className="mt-2 block text-[10px] font-bold uppercase text-slate-400">
-                    Schedule
-                  </span>
-                  <span className="mt-0.5 block text-xs font-bold text-slate-700">
-                    {course.schedule}
-                  </span>
-                </div>
-              </div>
-
-              {/* ── Coursera-style Accordion Sections ── */}
-              <div className="space-y-3 border-t border-slate-200 pt-4">
-                {/* What You'll Learn */}
-                {course.points.length > 0 && (
-                  <div className="rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setOpenAccordions((prev) => ({ ...prev, whatYoullLearn: !prev.whatYoullLearn }))}
-                      className="flex w-full items-center justify-between gap-3 rounded-t-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                          <CheckCircle className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <h5 className="text-xs font-bold text-slate-900">What you'll learn</h5>
-                          <p className="text-[10px] text-slate-500">{course.points.length} outcomes</p>
-                        </div>
-                      </div>
-                      <ChevronRight
-                        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
-                          openAccordions.whatYoullLearn ? "rotate-90" : ""
-                        }`}
-                      />
-                    </button>
+                  return (
                     <div
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        openAccordions.whatYoullLearn ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
-                      }`}
+                      key={item.number}
+                      aria-current={active ? "step" : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-2"
                     >
-                      <div className="border-t border-slate-100 bg-white px-4 py-3">
-                        <ul className="space-y-2">
-                          {course.points.map((point, index) => (
-                            <li
-                              key={`${point}-${index}`}
-                              className="flex items-start gap-2.5 text-xs font-medium text-slate-600"
-                            >
-                              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
-                              <span>{point}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Skills You'll Gain */}
-                {course.subjectsCovered.length > 0 && (
-                  <div className="rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setOpenAccordions((prev) => ({ ...prev, skillsYoullGain: !prev.skillsYoullGain }))}
-                      className="flex w-full items-center justify-between gap-3 rounded-t-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                          <BookOpen className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <h5 className="text-xs font-bold text-slate-900">Skills you'll gain</h5>
-                          <p className="text-[10px] text-slate-500">{course.subjectsCovered.length} domains</p>
-                        </div>
-                      </div>
-                      <ChevronRight
-                        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
-                          openAccordions.skillsYoullGain ? "rotate-90" : ""
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          completed
+                            ? "bg-emerald-600 text-white"
+                            : active
+                              ? "bg-blue-600 text-white"
+                              : "border border-slate-200 bg-slate-100 text-slate-500"
                         }`}
-                      />
-                    </button>
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        openAccordions.skillsYoullGain ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
-                      }`}
-                    >
-                      <div className="border-t border-slate-100 bg-white px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          {course.subjectsCovered.map((subject) => (
-                            <span
-                              key={subject}
-                              className="inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-blue-700"
-                            >
-                              {subject}
-                            </span>
-                          ))}
-                        </div>
+                      >
+                        {completed ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          item.number
+                        )}
                       </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Topics Covered */}
-                {programTopics.length > 0 && (
-                  <div className="rounded-lg border border-slate-200">
-                    <button
-                      type="button"
-                      onClick={() => setOpenAccordions((prev) => ({ ...prev, topicsCovered: !prev.topicsCovered }))}
-                      className="flex w-full items-center justify-between gap-3 rounded-t-lg bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                          <Sparkles className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <h5 className="text-xs font-bold text-slate-900">Topics Covered</h5>
-                          <p className="text-[10px] text-slate-500">{programTopics.length} detailed topics</p>
-                        </div>
-                      </div>
-                      <ChevronRight
-                        className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ${
-                          openAccordions.topicsCovered ? "rotate-90" : ""
+                      <span
+                        className={`min-w-0 text-[11px] font-semibold leading-tight sm:text-sm ${
+                          active
+                            ? "text-blue-700"
+                            : completed
+                              ? "text-slate-700"
+                              : "text-slate-400"
                         }`}
-                      />
-                    </button>
-                    <div
-                      className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                        openAccordions.topicsCovered ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
-                      }`}
-                    >
-                      <div className="border-t border-slate-100 bg-white px-4 py-3">
-                        <div className="space-y-2.5">
-                          {programTopics.map((topic, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start gap-3 rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5 transition-colors hover:border-blue-100 hover:bg-blue-50/30"
-                            >
-                              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-600">
-                                {index + 1}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-[11px] font-bold leading-snug text-slate-800">
-                                  {topic}
-                                </p>
-                                <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">
-                                  {index === 0
-                                    ? "Foundational concepts and practical exercises included"
-                                    : index === 1
-                                      ? "Hands-on projects with real-world applications"
-                                      : index === 2
-                                        ? "Industry-aligned curriculum with assessment modules"
-                                        : index === 3
-                                          ? "Interactive sessions with expert-led demonstrations"
-                                          : "Comprehensive coverage with step-by-step learning path"}
-                                </p>
-                              </div>
-                              <CheckCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-400" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      >
+                        {item.label}
+                      </span>
+
+                      {index < STEP_DETAILS.length - 1 && (
+                        <div className="ml-auto hidden h-px flex-1 bg-slate-200 sm:block" />
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            </div>
+            )}
+          </header>
 
-            <div className="self-start rounded-lg border border-slate-200 bg-slate-50 p-5 md:col-span-5">
+          {/* Scrollable content */}
+          <div
+            ref={scrollRef}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-5 sm:px-8 sm:py-6"
+          >
+            <div className="mx-auto w-full max-w-4xl">
               <AnimatePresence mode="wait">
-                {!isSuccess ? (
-                  <motion.form
-                    key="enquiry-form"
-                    onSubmit={handleFormSubmit}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="space-y-4"
+                {isSuccess ? (
+                  <motion.div
+                    key="success"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    role="status"
+                    className="px-4 py-10 text-center"
                   >
-                    <div className="space-y-1 border-b border-slate-200/60 pb-3">
-                      <h4 className="font-display text-sm font-bold text-slate-900">
-                        Submit your details
-                      </h4>
-                      <p className="text-xs font-medium leading-relaxed text-slate-500">
-                        {isRegularAcademic
-                          ? "Select your board, subjects, optional add-ons, and preferred class slot."
-                          : "Choose your course and preferred learning session. Our counsellor will contact you for confirmation."}
-                      </p>
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+                      <CheckCircle2 className="h-9 w-9" />
                     </div>
 
-                    <div className="space-y-3">
-                      {isRegularAcademic ? (
-                        <>
-                          <div className="space-y-2">
-                            <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                              Select Your Board
-                            </label>
-                            <div className="flex flex-wrap gap-2.5">
-                              {BOARD_OPTIONS.map((board) => (
-                                <button
-                                  key={board}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedBoard(board);
-                                    setSelectedStream("");
-                                    setSelectedSubjects([]);
-                                    setOtherSubject("");
-                                    setSelectedSlot("");
-                                  }}
-                                  className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
-                                    selectedBoard === board
-                                      ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
-                                      : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
-                                  }`}
-                                >
-                                  {selectedBoard === board ? (
-                                    <span className="mr-1">✓</span>
-                                  ) : null}
-                                  {board}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                    <h3 className="mt-5 text-xl font-bold text-slate-900">
+                      Enquiry Submitted Successfully
+                    </h3>
 
-                          {isSeniorSecondary && hasSelectedBoard ? (
-                            <div className="space-y-2">
-                              <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                                Select Stream
-                              </label>
-                              <div className="flex flex-wrap gap-2.5">
-                                {SENIOR_SECONDARY_STREAMS.map((stream) => (
-                                  <button
-                                    key={stream}
-                                    type="button"
+                    <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-slate-600">
+                      Thank you, <strong>{name}</strong>. Your enquiry for{" "}
+                      <strong>{readableCourseDetail}</strong> has been
+                      submitted. Our admissions team will contact you regarding
+                      the next steps.
+                    </p>
+
+                    <div className="mx-auto mt-5 flex max-w-xs items-center justify-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                      <ShieldCheck className="h-4 w-4" />
+                      Enquiry Received
+                    </div>
+
+                    <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={resetForm}
+                        className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-slate-50"
+                      >
+                        Submit Another Enquiry
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key={step}
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={{ duration: 0.15 }}
+                    className="rounded-xl bg-white p-2 sm:p-4"
+                  >
+                    {/* STEP 1 */}
+                    {step === 1 && (
+                      <div className="space-y-7">
+                        <div className="border-b border-slate-100 pb-4">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+                            Step 1 of 3
+                          </p>
+
+                          <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
+                            Course Selection
+                          </h3>
+
+                          <p className="mt-2 text-sm text-slate-500">
+                            {isRegularAcademic
+                              ? "Select your board and required subjects."
+                              : "Select the course you wish to enquire about."}
+                          </p>
+                        </div>
+
+                        {isRegularAcademic ? (
+                          <>
+                            <section>
+                              <SectionHeading
+                                number="01"
+                                title="Select Your Education Board"
+                                description="Choose your current school board."
+                              />
+
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {BOARD_OPTIONS.map((board) => (
+                                  <SelectionCard
+                                    key={board}
+                                    selected={selectedBoard === board}
+                                    icon={<BookOpen className="h-4 w-4" />}
                                     onClick={() => {
-                                      setSelectedStream(stream);
+                                      setSelectedBoard(board);
+                                      setSelectedStream("");
                                       setSelectedSubjects([]);
                                       setOtherSubject("");
                                       setSelectedSlot("");
+                                      setError("");
                                     }}
-                                    className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
-                                      selectedStream === stream
-                                        ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
-                                        : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
-                                    }`}
                                   >
-                                    {selectedStream === stream ? (
-                                      <span className="mr-1">✓</span>
-                                    ) : null}
-                                    {stream}
-                                  </button>
+                                    {board}
+                                  </SelectionCard>
                                 ))}
                               </div>
-                            </div>
-                          ) : null}
+                            </section>
 
-                          {canShowSubjects ? (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between gap-3">
-                                <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                                  Select Regular Subjects
-                                </label>
-                                <span className="text-[10px] font-bold text-blue-600">
-                                  Multiple selection allowed
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-2.5">
-                                {regularSubjectOptions.map((subject) => {
-                                  const isSelected =
-                                    selectedSubjects.includes(subject);
-
-                                  return (
-                                    <button
-                                      key={subject}
-                                      type="button"
-                                      onClick={() => toggleSubject(subject)}
-                                      className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
-                                        isSelected
-                                          ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
-                                          : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
-                                      }`}
-                                    >
-                                      {isSelected ? (
-                                        <span className="mr-1">✓</span>
-                                      ) : null}
-                                      {subject}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-
-                              {selectedSubjects.includes(
-                                OTHER_SUBJECT_OPTION,
-                              ) ? (
-                                <input
-                                  type="text"
-                                  value={otherSubject}
-                                  onChange={(event) => {
-                                    setOtherSubject(event.target.value);
-                                    setSelectedSlot("");
-                                  }}
-                                  placeholder="Type the school subject name"
-                                  className="w-full rounded border border-blue-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                            {isSeniorSecondary && hasSelectedBoard && (
+                              <section>
+                                <SectionHeading
+                                  number="02"
+                                  title="Select Academic Stream"
+                                  description="Select your Class 11 or 12 stream."
                                 />
-                              ) : null}
-                            </div>
-                          ) : (
-                            <div className="rounded border border-dashed border-slate-200 bg-white p-3 text-[10px] font-medium text-slate-400">
-                              {isSeniorSecondary && hasSelectedBoard
-                                ? "Select your stream to view board-specific subjects."
-                                : "Select your board to view board-specific subjects."}
-                            </div>
-                          )}
 
-                          {canShowSubjects ? (
-                            <div className="space-y-2 border-t border-slate-200/70 pt-3">
-                              <div className="flex items-center justify-between gap-3">
-                                <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                                  Optional Additional Courses
-                                </label>
-                                <span className="text-[10px] font-bold text-slate-400">
-                                  Optional
-                                </span>
-                              </div>
-                              <div className="flex flex-wrap gap-2.5">
-                                {visibleAdditionalCourseOptions.map(
-                                  (additionalCourse: string) => {
-                                    const isSelected =
-                                      selectedAdditionalCourses.includes(
-                                        additionalCourse,
-                                      );
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                  {SENIOR_SECONDARY_STREAMS.map((stream) => (
+                                    <SelectionCard
+                                      key={stream}
+                                      selected={selectedStream === stream}
+                                      onClick={() => {
+                                        setSelectedStream(stream);
+                                        setSelectedSubjects([]);
+                                        setOtherSubject("");
+                                        setSelectedSlot("");
+                                        setError("");
+                                      }}
+                                    >
+                                      {stream}
+                                    </SelectionCard>
+                                  ))}
+                                </div>
+                              </section>
+                            )}
 
-                                    return (
-                                      <button
-                                        key={additionalCourse}
-                                        type="button"
-                                        onClick={() =>
-                                          toggleAdditionalCourse(
+                            {canShowSubjects && (
+                              <section>
+                                <SectionHeading
+                                  number={isSeniorSecondary ? "03" : "02"}
+                                  title="Select Subjects"
+                                  description="You may select multiple subjects."
+                                />
+
+                                <div className="grid gap-2.5 sm:grid-cols-2">
+                                  {regularSubjectOptions.map((subject) => (
+                                    <SelectionCard
+                                      key={subject}
+                                      selected={selectedSubjects.includes(
+                                        subject,
+                                      )}
+                                      onClick={() => {
+                                        toggleSubject(subject);
+                                        setError("");
+                                      }}
+                                    >
+                                      {subject}
+                                    </SelectionCard>
+                                  ))}
+                                </div>
+
+                                {selectedSubjects.includes(
+                                  OTHER_SUBJECT_OPTION,
+                                ) && (
+                                  <div className="mt-4">
+                                    <label
+                                      htmlFor="other-subject"
+                                      className={labelClass}
+                                    >
+                                      Other Subject *
+                                    </label>
+
+                                    <input
+                                      id="other-subject"
+                                      type="text"
+                                      value={otherSubject}
+                                      maxLength={150}
+                                      onChange={(event) => {
+                                        setOtherSubject(event.target.value);
+                                        setSelectedSlot("");
+                                      }}
+                                      placeholder="Enter subject name"
+                                      className={inputClass}
+                                    />
+                                  </div>
+                                )}
+                              </section>
+                            )}
+
+                            {canShowSubjects && (
+                              <section className="border-t border-slate-100 pt-6">
+                                <SectionHeading
+                                  number={isSeniorSecondary ? "04" : "03"}
+                                  title="Optional Additional Courses"
+                                  description="Select any additional programmes you are interested in."
+                                />
+
+                                {visibleAdditionalCourseOptions.length > 0 ? (
+                                  <div className="grid gap-2.5 sm:grid-cols-2">
+                                    {visibleAdditionalCourseOptions.map(
+                                      (additionalCourse) => (
+                                        <SelectionCard
+                                          key={additionalCourse}
+                                          tone="green"
+                                          selected={selectedAdditionalCourses.includes(
                                             additionalCourse,
-                                          )
-                                        }
-                                        className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
-                                          isSelected
-                                            ? "border-emerald-300 bg-emerald-50 text-emerald-800 shadow-xs"
-                                            : "border-slate-200 bg-white text-slate-500 hover:border-emerald-200 hover:text-emerald-700"
-                                        }`}
-                                      >
-                                        {isSelected ? (
-                                          <span className="mr-1">✓</span>
-                                        ) : null}
-                                        {additionalCourse}
-                                      </button>
-                                    );
-                                  },
+                                          )}
+                                          onClick={() => {
+                                            toggleAdditionalCourse(
+                                              additionalCourse,
+                                            );
+                                            setError("");
+                                          }}
+                                        >
+                                          {additionalCourse}
+                                        </SelectionCard>
+                                      ),
+                                    )}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-slate-500">
+                                    No additional courses listed.
+                                  </p>
+                                )}
+                              </section>
+                            )}
+                          </>
+                        ) : (
+                          <section>
+                            <SectionHeading
+                              number="01"
+                              title="Select Course"
+                              description="Choose the programme you wish to join."
+                            />
+
+                            {hasCourseOptions ? (
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {activeCourse.courseNamesIncluded.map(
+                                  (courseName) => (
+                                    <SelectionCard
+                                      key={courseName}
+                                      selected={
+                                        selectedCourseName === courseName
+                                      }
+                                      icon={
+                                        <GraduationCap className="h-4 w-4" />
+                                      }
+                                      onClick={() => {
+                                        setSelectedCourseName(courseName);
+                                        setMhtCetSubExam("");
+                                        setSelectedSlot("");
+                                        setError("");
+                                      }}
+                                    >
+                                      {courseName}
+                                    </SelectionCard>
+                                  ),
                                 )}
                               </div>
-                            </div>
-                          ) : null}
-                        </>
-                      ) : hasCourseOptions ? (
-                        <div className="space-y-2">
-                          <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                            Select Course
-                          </label>
-                          <div className="flex flex-wrap gap-2.5">
-                            {course.courseNamesIncluded.map((courseName) => (
-                              <button
-                                key={courseName}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedCourseName(courseName);
-                                  setMhtCetSubExam("");
-                                  setSelectedSlot("");
-                                }}
-                                className={`cursor-pointer rounded-full border px-4 py-2.5 text-[12px] font-bold leading-tight transition-all ${
-                                  selectedCourseName === courseName
-                                    ? "border-blue-300 bg-blue-100 text-blue-800 shadow-xs"
-                                    : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:text-blue-600"
-                                }`}
-                              >
-                                {selectedCourseName === courseName ? (
-                                  <span className="mr-1">✓</span>
-                                ) : null}
-                                {courseName}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
+                            ) : (
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {activeCourse.title}
+                                </p>
+                                <p className="mt-2 text-sm text-slate-600">
+                                  {activeCourse.description}
+                                </p>
+                              </div>
+                            )}
+                          </section>
+                        )}
 
-                      {shouldShowMhtCetCategory ? (
-                        <div className="space-y-1">
-                          <label className="block text-[10px] font-bold uppercase leading-none text-blue-600">
-                            MHT CET Exam Category
-                          </label>
-                          <select
-                            value={mhtCetSubExam}
-                            onChange={(event) =>
-                              setMhtCetSubExam(event.target.value)
-                            }
-                            className="w-full rounded border border-blue-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
-                          >
-                            <option value="">-- Select your exam --</option>
-                            {MHT_CET_EXAMS.map((exam) => (
-                              <option key={exam} value={exam}>
-                                {exam}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      ) : null}
-                      {canSelectSlot ? (
-                        <div className="space-y-2 border-t border-slate-200/70 pt-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                              Preferred Tuition Mode
-                            </label>
+                        {shouldShowMhtCetCategory && (
+                          <section>
+                            <SectionHeading
+                              number="05"
+                              title="MHT CET Exam Category"
+                              description="Select your entrance examination."
+                            />
 
-                            <span className="text-[10px] font-bold text-blue-600">
-                              Select one
-                            </span>
-                          </div>
+                            <select
+                              value={mhtCetSubExam}
+                              onChange={(event) =>
+                                setMhtCetSubExam(event.target.value)
+                              }
+                              className={inputClass}
+                            >
+                              <option value="">Select Examination</option>
 
-                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                            {TUITION_MODES.map((mode) => {
-                              const isSelected =
-                                selectedLearningMode === mode.value;
+                              {MHT_CET_EXAMS.map((exam) => (
+                                <option key={exam} value={exam}>
+                                  {exam}
+                                </option>
+                              ))}
+                            </select>
+                          </section>
+                        )}
+                      </div>
+                    )}
 
-                              return (
-                                <button
-                                  key={mode.value}
-                                  type="button"
-                                  onClick={() => {
-                                    setSelectedLearningMode(mode.value);
-                                    setSelectedSlot("");
-                                  }}
-                                  className={`cursor-pointer rounded-lg border px-4 py-3 text-left transition-all ${
-                                    isSelected
-                                      ? "border-emerald-400 bg-emerald-50 text-emerald-800 shadow-xs"
-                                      : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
-                                  }`}
-                                >
-                                  <span className="flex items-center gap-2 text-[12px] font-bold">
-                                    {isSelected ? <span>✓</span> : null}
-                                    {mode.title}
-                                  </span>
+                    {/* STEP 2 */}
+                    {step === 2 && (
+                      <div className="space-y-7">
+                        <div className="border-b border-slate-100 pb-4">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+                            Step 2 of 3
+                          </p>
 
-                                  <span className="mt-1 block text-[9px] font-medium leading-relaxed opacity-75">
-                                    {mode.description}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ) : null}
-                      {canSelectSlot && selectedLearningMode ? (
-                        <div className="space-y-2 border-t border-slate-200/70 pt-3">
-                          <div className="flex items-center justify-between gap-3">
-                            <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                              Preferred Session Slot
-                            </label>
-                            <span className="text-[10px] font-bold text-blue-600">
-                              1 hr 30 min
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                            {SESSION_SLOTS.map((slot, index) => (
-                              <button
-                                key={slot}
-                                type="button"
-                                onClick={() => setSelectedSlot(slot)}
-                                className={`cursor-pointer rounded-lg border px-4 py-3 text-left transition-all ${
-                                  selectedSlot === slot
-                                    ? "border-blue-400 bg-blue-100 text-blue-800 shadow-xs"
-                                    : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700"
-                                }`}
-                              >
-                                <span className="block text-[10px] font-bold uppercase tracking-wide opacity-70">
-                                  Slot {index + 1}
-                                </span>
-                                <span className="mt-1 flex items-center gap-2 text-[12px] font-bold leading-snug">
-                                  {selectedSlot === slot ? (
-                                    <span>✓</span>
-                                  ) : null}
-                                  {slot}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                          <p className="text-[9px] font-medium leading-relaxed text-slate-400">
-                            Every session is 1 hour 30 minutes. There is a
-                            30-minute break between sessions.
+                          <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
+                            Class Preferences
+                          </h3>
+
+                          <p className="mt-2 text-sm text-slate-500">
+                            Select your preferred class mode and session time.
                           </p>
                         </div>
-                      ) : (
-                        <div className="rounded border border-dashed border-slate-200 bg-white p-3 text-[10px] font-medium text-slate-400">
-                          {isRegularAcademic
-                            ? isSeniorSecondary
-                              ? "Select your board, stream, and at least one subject to view session slots."
-                              : "Select your board and at least one subject to view session slots."
-                            : "Select a course first to view available session slots."}
-                        </div>
-                      )}
 
-                      <div className="space-y-1">
-                        <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                          Your Full Name
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Ankit"
-                            value={name}
-                            onChange={(event) => setName(event.target.value)}
-                            className="w-full rounded border border-slate-200 bg-white p-2.5 pl-10 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                        <section>
+                          <SectionHeading
+                            number="01"
+                            title="Preferred Tuition Mode"
+                            description="Select how you would like to attend classes."
                           />
-                          <User className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                        </div>
-                      </div>
 
-                      <div className="space-y-1">
-                        <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                          Phone / Email Address
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            required
-                            placeholder="+91 9876543210"
-                            value={contact}
-                            onChange={(event) => setContact(event.target.value)}
-                            className="w-full rounded border border-slate-200 bg-white p-2.5 pl-10 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            {TUITION_MODES.map((mode) => (
+                              <SelectionCard
+                                key={mode.value}
+                                selected={selectedLearningMode === mode.value}
+                                icon={<mode.icon className="h-4 w-4" />}
+                                description={mode.description}
+                                onClick={() => {
+                                  setSelectedLearningMode(mode.value);
+                                  setSelectedSlot("");
+                                  setError("");
+                                }}
+                              >
+                                {mode.title}
+                              </SelectionCard>
+                            ))}
+                          </div>
+                        </section>
+
+                        {selectedLearningMode && (
+                          <section>
+                            <SectionHeading
+                              number="02"
+                              title="Preferred Session Time"
+                              description="Select a 90-minute session slot."
+                            />
+
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                              {SESSION_SLOTS.map((slot, index) => (
+                                <SelectionCard
+                                  key={slot}
+                                  selected={selectedSlot === slot}
+                                  icon={<Clock3 className="h-4 w-4" />}
+                                  onClick={() => {
+                                    setSelectedSlot(slot);
+                                    setError("");
+                                  }}
+                                >
+                                  <span className="block text-[10px] font-medium text-slate-500">
+                                    Slot {index + 1}
+                                  </span>
+                                  <span className="mt-1 block">{slot}</span>
+                                </SelectionCard>
+                              ))}
+                            </div>
+
+                            <div className="mt-4 flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+
+                              <p className="text-xs leading-5 text-slate-600">
+                                Each session is 1 hour 30 minutes, with a
+                                30-minute break between sessions. Timings are
+                                subject to confirmation.
+                              </p>
+                            </div>
+                          </section>
+                        )}
+                      </div>
+                    )}
+
+                    {/* STEP 3 */}
+                    {step === 3 && (
+                      <div className="space-y-7">
+                        <div className="border-b border-slate-100 pb-4">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+                            Step 3 of 3
+                          </p>
+
+                          <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
+                            Personal Details
+                          </h3>
+
+                          <p className="mt-2 text-sm text-slate-500">
+                            Enter your contact information and review your
+                            enquiry.
+                          </p>
+                        </div>
+
+                        <section>
+                          <SectionHeading
+                            number="01"
+                            title="Applicant Information"
+                            description="Please provide accurate contact details."
                           />
-                          <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                        </div>
+
+                          <div className="grid gap-5 sm:grid-cols-2">
+                            <div>
+                              <label
+                                htmlFor="enquiry-name"
+                                className={labelClass}
+                              >
+                                Full Name *
+                              </label>
+
+                              <div className="relative">
+                                <UserRound className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+
+                                <input
+                                  id="enquiry-name"
+                                  type="text"
+                                  required
+                                  maxLength={100}
+                                  autoComplete="name"
+                                  value={name}
+                                  onChange={(event) =>
+                                    setName(event.target.value)
+                                  }
+                                  placeholder="Enter your full name"
+                                  className={`${inputClass} pl-11`}
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <label
+                                htmlFor="enquiry-contact"
+                                className={labelClass}
+                              >
+                                Phone / Email *
+                              </label>
+
+                              <div className="relative">
+                                <Phone className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+
+                                <input
+                                  id="enquiry-contact"
+                                  type="text"
+                                  required
+                                  maxLength={150}
+                                  value={contact}
+                                  onChange={(event) =>
+                                    setContact(event.target.value)
+                                  }
+                                  placeholder="+91 9876543210"
+                                  className={`${inputClass} pl-11`}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="sm:col-span-2">
+                              <label
+                                htmlFor="enquiry-address"
+                                className={labelClass}
+                              >
+                                Full Address *
+                              </label>
+
+                              <div className="relative">
+                                <MapPin className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+
+                                <textarea
+                                  id="enquiry-address"
+                                  name="address"
+                                  required
+                                  rows={3}
+                                  minLength={10}
+                                  maxLength={500}
+                                  autoComplete="street-address"
+                                  value={address}
+                                  onChange={(event) =>
+                                    setAddress(event.target.value)
+                                  }
+                                  placeholder="House / Flat No., Building, Street, Area, City, State and PIN Code"
+                                  className={`${inputClass} resize-y pl-11`}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="sm:col-span-2">
+                              <label
+                                htmlFor="enquiry-role"
+                                className={labelClass}
+                              >
+                                Enrolling As *
+                              </label>
+
+                              <select
+                                id="enquiry-role"
+                                value={role}
+                                onChange={(event) =>
+                                  setRole(event.target.value)
+                                }
+                                className={inputClass}
+                              >
+                                <option value="student">Student</option>
+                                <option value="parent">
+                                  Parent / Guardian
+                                </option>
+                                <option value="corporate">
+                                  Working Professional
+                                </option>
+                              </select>
+                            </div>
+                          </div>
+                        </section>
+
+                        {/* Review */}
+                        <section className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                          <h4 className="text-base font-bold text-slate-900">
+                            Review Your Enquiry
+                          </h4>
+
+                          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                            <div>
+                              <p className="text-xs text-slate-500">
+                                Programme
+                              </p>
+                              <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+                                {readableCourseDetail}
+                              </p>
+                            </div>
+
+                            {isRegularAcademic && (
+                              <div>
+                                <p className="text-xs text-slate-500">
+                                  Additional Courses
+                                </p>
+                                <p className="mt-1 break-words text-sm font-semibold text-slate-900">
+                                  {selectedAdditionalCourseText ||
+                                    "None selected"}
+                                </p>
+                              </div>
+                            )}
+
+                            <div>
+                              <p className="text-xs text-slate-500">
+                                Tuition Mode
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-slate-900">
+                                {selectedLearningMode}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-xs text-slate-500">
+                                Preferred Session
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-slate-900">
+                                {selectedSlot}
+                              </p>
+                            </div>
+                          </div>
+                        </section>
+
+                        <p className="text-xs leading-5 text-slate-500">
+                          By submitting this enquiry, you agree to be contacted
+                          by SmartIQ Institute regarding your selected
+                          programme. Submission does not confirm admission.
+                        </p>
                       </div>
+                    )}
 
-                      <div className="space-y-1">
-                        <label className="block text-[10px] font-bold uppercase leading-none text-slate-400">
-                          Enrolling As:
-                        </label>
-                        <select
-                          value={role}
-                          onChange={(event) => setRole(event.target.value)}
-                          className="w-full rounded border border-slate-200 bg-white p-3 font-sans text-sm font-semibold text-slate-800 transition-all focus:border-blue-500 focus:outline-hidden"
-                        >
-                          <option value="student">Student</option>
-                          <option value="parent">Parent / Guardian</option>
-                          <option value="corporate">
-                            Working Professional
-                          </option>
-                        </select>
+                    {error && (
+                      <div
+                        role="alert"
+                        className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+                      >
+                        {error}
                       </div>
-                    </div>
-
-                    <div className="space-y-1 rounded border border-slate-200/50 bg-slate-100 p-2.5">
-                      <span className="block text-[9px] font-bold leading-none text-slate-400">
-                        Auto-generated message:
-                      </span>
-                      <p className="text-xs font-medium leading-relaxed italic text-slate-500">
-                        {isRegularAcademic
-                          ? `"Hi SmartIQ Institute, I am interested in ${course.title}. Board: ${
-                              selectedBoard || "..."
-                            }.${
-                              isSeniorSecondary
-                                ? ` Stream: ${selectedStream || "..."}.`
-                                : ""
-                            } Regular subjects: ${
-                              selectedSubjectText || "..."
-                            }. Optional additional courses: ${
-                              selectedAdditionalCourseText || "None selected"
-                            }. Preferred tuition mode: ${
-                              selectedLearningMode || "..."
-                            }. Preferred session slot: ${selectedSlot || "..."}."`
-                          : `"Hi SmartIQ Institute, I am interested in ${readableCourseDetail}. Preferred tuition mode: ${
-                              selectedLearningMode || "..."
-                            }. Preferred session slot: ${selectedSlot || "..."}."`}
-                      </p>
-                    </div>
-
-                    <motion.button
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex w-full cursor-pointer items-center justify-center space-x-2 rounded bg-blue-600 py-2.5 text-xs font-medium text-white shadow-sm hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <Send className="h-3.5 w-3.5" />
-                      <span>
-                        {isSubmitting ? "Submitting..." : "Enroll Now"}
-                      </span>
-                    </motion.button>
-                  </motion.form>
-                ) : (
-                  <motion.div
-                    key="success-box"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="space-y-4 px-4 py-6 text-center"
-                  >
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm">
-                      <CheckCircle className="h-6 w-6" />
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-display text-sm font-bold text-slate-950">
-                        Enquiry Submitted Successfully!
-                      </h4>
-                      <p className="text-[11px] font-semibold leading-relaxed text-slate-500">
-                        Thank you, <span className="text-blue-600">{name}</span>
-                        ! Our counsellor will call you within 24 hours on{" "}
-                        <span className="text-blue-600">{contact}</span> to
-                        confirm your preferred{" "}
-                        <span className="text-blue-600">{selectedSlot}</span>{" "}
-                        session for{" "}
-                        <span className="text-blue-600">
-                          {readableCourseDetail}
-                        </span>
-                        .
-                      </p>
-                    </div>
-                    <div className="inline-flex items-center gap-1 rounded border border-emerald-100/50 bg-emerald-50 p-2 text-[10px] font-bold uppercase text-emerald-700">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      Reference: {Math.floor(100000 + Math.random() * 900000)}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="mt-2 text-[10px] font-bold uppercase tracking-wide text-slate-400 transition-colors hover:text-blue-600"
-                    >
-                      Reset / Register another
-                    </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           </div>
+
+          {/* Footer */}
+          {!isSuccess && (
+            <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-8 sm:py-4">
+              <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
+                <div className="hidden text-xs font-medium text-slate-500 sm:block">
+                  Step {step} of 3
+                  <span className="ml-2 text-slate-400">• Course Enquiry</span>
+                </div>
+
+                <div className="flex w-full items-center justify-between gap-3 sm:w-auto">
+                  {step > 1 ? (
+                    <button
+                      type="button"
+                      onClick={handleBack}
+                      disabled={isSubmitting}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Back
+                    </button>
+                  ) : (
+                    <span className="text-xs text-slate-500 sm:hidden">
+                      Step 1 of 3
+                    </span>
+                  )}
+
+                  {step < 3 ? (
+                    <button
+                      type="button"
+                      onClick={handleContinue}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                      Continue
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        const form = document.getElementById(
+                          "smartiq-course-final-form",
+                        ) as HTMLFormElement | null;
+
+                        form?.requestSubmit();
+                      }}
+                      className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                    >
+                      <Send className="h-4 w-4" />
+                      {isSubmitting ? "Submitting..." : "Submit Enquiry"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </footer>
+          )}
+
+          {!isSuccess && (
+            <form
+              id="smartiq-course-final-form"
+              onSubmit={handleFormSubmit}
+              className="hidden"
+            />
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

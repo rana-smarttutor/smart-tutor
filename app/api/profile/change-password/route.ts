@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { findUserByCredentials, updateUserRecord } from "@/lib/data-store";
 import { logAction } from "@/lib/audit-log";
+import { revokeAllAdminSessions } from "@/lib/admin-sessions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,20 +22,29 @@ export async function POST(request: Request) {
 
   const { currentPassword, newPassword } = body;
   if (!currentPassword || !newPassword) {
-    return NextResponse.json({ error: "Both current and new password are required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Both current and new password are required." },
+      { status: 400 },
+    );
   }
 
   if (newPassword.length < 8) {
-    return NextResponse.json({ error: "New password must be at least 8 characters." }, { status: 400 });
+    return NextResponse.json(
+      { error: "New password must be at least 8 characters." },
+      { status: 400 },
+    );
   }
 
-const user = await findUserByCredentials(
-  session.email,
-  currentPassword,
-  session.role,
-);
+  const user = await findUserByCredentials(
+    session.email,
+    currentPassword,
+    session.role,
+  );
   if (!user) {
-    return NextResponse.json({ error: "Current password is incorrect." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Current password is incorrect." },
+      { status: 403 },
+    );
   }
 
   await updateUserRecord({
@@ -45,7 +55,9 @@ const user = await findUserByCredentials(
     password: newPassword,
     program: (user as any).program ?? "",
   });
-
+  if (session.role === "admin") {
+    await revokeAllAdminSessions(session.id);
+  }
   await logAction({
     action: "update",
     category: "auth",
