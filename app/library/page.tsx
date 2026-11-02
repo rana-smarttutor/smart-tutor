@@ -1,6 +1,7 @@
-import { Metadata } from "next";
+import type { Metadata } from "next";
 import DigitalLibraryClient from "@/components/digital-library-client";
 import { getSessionUser } from "@/lib/auth";
+
 import { getDigitalLibraryBooks } from "@/lib/digital-library-data";
 
 export const metadata: Metadata = {
@@ -21,12 +22,11 @@ export default async function LibraryPage() {
   const role = String(session?.role || "guest").toLowerCase();
 
   const canManage = role === "admin" || role === "educator";
-
+  const canDelete = role === "admin";
   const isLoggedIn = Boolean(session);
 
-  // Everyone can browse the Digital Library.
-  // Only admins and educators receive full PDF source details.
-  // Student downloads remain restricted during the upgrade.
+  // Use the MongoDB catalogue when the migration is complete.
+  // Retain legacy compatibility until then.
   const books = await getDigitalLibraryBooks(canManage);
 
   const breadcrumbJsonLd = {
@@ -60,6 +60,7 @@ export default async function LibraryPage() {
       <DigitalLibraryClient
         initialBooks={books}
         canManage={canManage}
+        canDelete={canDelete}
         isLoggedIn={isLoggedIn}
       />
     </>

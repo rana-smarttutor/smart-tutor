@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { upload } from "@vercel/blob/client";
 
 import { useEffect, useMemo, useState } from "react";
 
 import { requestLoginIfNeeded } from "@/lib/request-login";
+
 
 import {
   BookOpen,
@@ -17,6 +18,8 @@ import {
   Search,
   Sparkles,
   Trophy,
+  Trash2,
+  X,
 } from "lucide-react";
 
 // =====================================================
@@ -475,7 +478,7 @@ function getAcademicBookInfo(book: Book) {
     .filter(Boolean)
     .join(" ")
     .toLowerCase()
-    .replace(/[_â€“â€”-]/g, " ")
+    .replace(/[_–—-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -671,25 +674,12 @@ async function readJsonResponse<
 // BOOK THUMBNAIL
 // =====================================================
 
-function BookThumbnail({ book }: { book: Book }) {
-  if (book.thumbnailUrl) {
-    return (
-      <img
-        src={book.thumbnailUrl}
-        alt={`${book.title} thumbnail`}
-        loading="lazy"
-        decoding="async"
-        className="h-full w-full object-cover"
-      />
-    );
-  }
-
+function BookThumbnail({ book: _book }: { book: Book }) {
   return (
     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#102d5b] via-[#164477] to-[#081e3c]">
-      <div className="text-center text-white">
-        <p className="text-4xl">ðŸ“˜</p>
-
-        <p className="mt-2 text-xl font-black">PDF</p>
+      <div className="flex flex-col items-center gap-2 text-white">
+        <BookOpen size={42} strokeWidth={1.8} />
+        <span className="text-xl font-black">PDF</span>
       </div>
     </div>
   );
@@ -1259,50 +1249,47 @@ export function DigitalLibraryClient({
     pathname: string,
     file: File,
   ): Promise<UploadedBlobInfo> {
+    const maxSize = 20 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      throw new Error("PDF must be 20 MB or smaller for private uploads.");
+    }
+
     setTransferState({
-      label: "Uploading PDF...",
+      label: "Uploading PDF to secure private storage...",
       progress: 0,
       visible: true,
     });
 
-    const blob = await upload(pathname, file, {
-      access: "public",
+    const formData = new FormData();
+    formData.append("file", file);
 
-      contentType: "application/pdf",
-
-      handleUploadUrl: "/api/digital-library/upload",
-
-      clientPayload: JSON.stringify({
-        assetType: "book",
-      }),
-
-      onUploadProgress: ({ percentage }) => {
-        setTransferState((current) => ({
-          ...current,
-
-          label: "Uploading PDF...",
-
-          progress: Math.round(percentage),
-
-          visible: true,
-        }));
-      },
+    const response = await fetch("/api/digital-library/upload-private", {
+      method: "POST",
+      body: formData,
+      credentials: "same-origin",
+      cache: "no-store",
     });
 
+    const result = await readJsonResponse<{
+      success?: boolean;
+      message?: string;
+      pathname?: string;
+    }>(response);
+
+    if (!response.ok || !result.success || !result.pathname) {
+      throw new Error(result.message || "Private PDF upload failed.");
+    }
+
     setTransferState({
-      label: "PDF uploaded successfully.",
-
+      label: "PDF securely uploaded.",
       progress: 100,
-
       visible: true,
     });
 
     return {
-      pathname: blob.pathname,
-
-      url: blob.url,
-
-      downloadUrl: blob.downloadUrl || blob.url,
+      pathname: result.pathname,
+      url: "",
     };
   }
 
@@ -1430,6 +1417,14 @@ export function DigitalLibraryClient({
     });
 
     try {
+      // Existing book PDF replacement will be enabled
+      // after the private-storage edit API is upgraded.
+      if (editingBook && pdfFile) {
+        throw new Error(
+          "Replacing an existing PDF is temporarily unavailable during the private storage upgrade. You can still edit its details or thumbnail without selecting a new PDF.",
+        );
+      }
+
       let uploadedPdf: UploadedBlobInfo | null = null;
 
       let uploadedThumbnail: UploadedBlobInfo | null = null;
@@ -1474,15 +1469,10 @@ export function DigitalLibraryClient({
             title,
             price,
             description,
-
             categoryId: safeSectionId,
-
             categoryLabel: selectedLibrarySection.label,
-
             assetKey,
-
-            uploadedPdf,
-
+            privatePdfPathname: uploadedPdf?.pathname,
             uploadedThumbnail,
           }),
         });
@@ -1642,47 +1632,67 @@ export function DigitalLibraryClient({
   // ===================================================
 
   async function downloadBook(book: Book) {
-    if (!allowedToManage) {
-      alert(
-        "Full PDF downloads are temporarily unavailable while subscriptions are being prepared.",
-      );
-      return;
-    }
-
     const canDownload = await requestLoginIfNeeded("/library");
 
     if (!canDownload) {
       return;
     }
 
-    const url = book.downloadUrl;
-
-    if (!url) {
-      alert("Download is not available for this material.");
-
+    if (!book.pathname) {
+      alert("This book is not available for download.");
       return;
     }
 
     try {
-      const response = await fetch(url, {
-        cache: "no-store",
-      });
+      const response = await fetch(
+        `/api/digital-library/download?pathname=${encodeURIComponent(
+          book.pathname,
+        )}`,
+        {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
 
-      const result = await readJsonResponse<{
-        success?: boolean;
-        message?: string;
-        redirectUrl?: string;
-      }>(response);
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
 
-      if (!response.ok || !result.success || !result.redirectUrl) {
-        throw new Error(
-          result.message || "Download is not available for this material.",
-        );
+        if (response.status === 403) {
+          throw new Error(
+            "An active Digital Library subscription is required to download this book.",
+          );
+        }
+
+        throw new Error(result?.message || "Unable to download this book.");
       }
 
-      window.location.href = result.redirectUrl;
+      const contentType = response.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/pdf")) {
+        throw new Error("The server did not return a valid PDF.");
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = book.fileName || "smartiq-library-book.pdf";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+      }, 1000);
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Download failed.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to download this book.",
+      );
     }
   }
 
@@ -1690,10 +1700,7 @@ export function DigitalLibraryClient({
   // PREVIEW BOOK
   // ===================================================
 
-  async function previewBook(book: Book) {
-    const canPreview = await requestLoginIfNeeded("/library");
-    if (!canPreview) return;
-
+  function previewBook(book: Book) {
     if (!book.pathname) {
       alert("Preview is not available for this material.");
 
@@ -1952,11 +1959,6 @@ export function DigitalLibraryClient({
 
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div>
-              <p className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                <LibraryBig size={15} />
-                Library
-              </p>
-
               <h1 className="mt-3 text-3xl font-black tracking-tight text-[#0f1e3d] sm:text-4xl">
                 Digital <span className="text-blue-600">Library</span>
               </h1>
@@ -2014,14 +2016,7 @@ export function DigitalLibraryClient({
               </div>
             </div>
           )}
-          <div
-            className="mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800"
-            role="status"
-          >
-            You can browse all library books. Full PDF downloads are temporarily
-            unavailable while secure subscriptions are being finalized.
-            Logged-in users may preview up to five pages.
-          </div>
+
 
           {/* =====================================
               PDF STUDY MATERIALS
@@ -2090,115 +2085,74 @@ export function DigitalLibraryClient({
             ) : (
               /* BOOK COLLECTION */
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {filteredBooks.map((book) => {
-                  const priceText = displayPrice(book.price);
-
-                  const isFree = priceText === "Free";
+                  const categoryName = book.categoryLabel || "Study Material";
 
                   return (
                     <article
                       key={book.pathname || book.id || book._id || book.title}
-                      className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                      className="group flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/10"
                     >
-                      {/* THUMBNAIL */}
-
-                      <div className="h-44 overflow-hidden rounded-xl bg-slate-100">
+                      <div className="relative m-3 mb-0 h-48 overflow-hidden rounded-2xl bg-[#102d5b]">
                         <BookThumbnail book={book} />
-                      </div>
-
-                      {/* PRICE BADGES */}
-
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-md bg-blue-600 px-2.5 py-1 text-[11px] font-bold text-white">
-                          PDF
-                        </span>
-
-                        <span
-                          className={`
-                              rounded-md
-                              px-2.5 py-1
-                              text-[11px]
-                              font-bold
-                              text-white
-
-                              ${isFree ? "bg-emerald-500" : "bg-blue-600"}
-                            `}
-                        >
-                          {priceText}
+                        <span className="absolute left-3 top-3 rounded-lg border border-white/20 bg-white/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-blue-700 shadow-sm">
+                          PDF Library
                         </span>
                       </div>
 
-                      {/* BOOK TITLE */}
-
-                      <h3 className="mt-3 line-clamp-2 min-h-10 break-words text-base font-extrabold leading-5">
-                        {book.title}
-                      </h3>
-
-                      {/* DESCRIPTION */}
-
-                      <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-slate-600">
-                        {book.description ||
-                          "Access this PDF study material for focused learning and revision."}
-                      </p>
-
-                      {/* DOWNLOAD AND PREVIEW */}
-
-                      <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
-                        <button
-                          type="button"
-                          onClick={() => void downloadBook(book)}
-                          disabled={!allowedToManage}
-                          className="rounded-xl bg-blue-600 px-2 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-700"
+                      <div className="flex flex-1 flex-col p-4 pt-4">
+                        <div className="mb-3 flex items-center gap-2">
+                          <span className="max-w-full truncate rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-bold text-blue-700">
+                            {categoryName}
+                          </span>
+                        </div>
+                        <h3
+                          title={book.title}
+                          className="line-clamp-2 min-h-12 break-words text-[17px] font-extrabold leading-6 tracking-tight text-slate-900"
                         >
-                          {allowedToManage
-                            ? "Download PDF"
-                            : "Downloads Locked"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => void previewBook(book)}
-                          className="rounded-xl border border-slate-200 px-2 py-2.5 text-xs font-bold hover:bg-slate-50"
-                        >
-                          Preview 👁
-                        </button>
-                      </div>
-
-                      {/* MANAGEMENT ACTIONS */}
-
-                      {allowedToManage && (
-                        <div
-                          className={`
-                              mt-2 grid
-                              gap-2
-
-                              ${canDeleteBooks ? "grid-cols-2" : "grid-cols-1"}
-                            `}
-                        >
-                          {/* EDIT */}
-
+                          {book.title}
+                        </h3>
+                        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-slate-500">
+                          {book.description ||
+                            "Explore this study material and strengthen your understanding of the subject."}
+                        </p>
+                        <div className="mt-auto pt-5">
                           <button
                             type="button"
-                            onClick={() => openEdit(book)}
-                            className="rounded-xl border border-blue-200 px-2 py-2 text-xs font-bold text-blue-700"
+                            onClick={() => previewBook(book)}
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                           >
-                            Edit
+                            <BookOpen aria-hidden="true" size={17} />
+                            Read Book
+                            <ChevronRight aria-hidden="true" size={16} />
                           </button>
-
-                          {/* DELETE */}
-
-                          {canDeleteBooks && (
+                        </div>
+                        {allowedToManage && (
+                          <div
+                            className={`mt-3 grid gap-2 border-t border-slate-100 pt-3 ${
+                              canDeleteBooks ? "grid-cols-2" : "grid-cols-1"
+                            }`}
+                          >
                             <button
                               type="button"
-                              onClick={() => requestDeleteBook(book)}
-                              className="rounded-xl border border-red-200 px-2 py-2 text-xs font-bold text-red-600"
+                              onClick={() => openEdit(book)}
+                              className="rounded-xl border border-blue-200 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
                             >
-                              Delete
+                              Edit
                             </button>
-                          )}
-                        </div>
-                      )}
+                            {canDeleteBooks && (
+                              <button
+                                type="button"
+                                onClick={() => requestDeleteBook(book)}
+                                className="rounded-xl border border-red-200 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </article>
                   );
                 })}
@@ -2323,7 +2277,7 @@ export function DigitalLibraryClient({
             {/* DELETE ICON */}
 
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-3xl">
-              🗑️
+              <Trash2 aria-hidden="true" className="h-8 w-8 text-red-500" />
             </div>
 
             {/* TITLE */}
@@ -2343,7 +2297,7 @@ export function DigitalLibraryClient({
             >
               Are you sure you want to delete{" "}
               <span className="font-black text-slate-950">
-                "{bookToDelete.title}"
+                “{bookToDelete.title}”
               </span>
               ? This action cannot be undone.
             </p>
@@ -2414,7 +2368,7 @@ export function DigitalLibraryClient({
                 disabled={isSaving}
                 className="rounded-full border border-slate-200 px-3 py-2 text-sm font-black"
               >
-                âœ•
+                <X aria-hidden="true" size={16} />
               </button>
             </div>
 
