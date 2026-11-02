@@ -13,27 +13,27 @@ const RESULT_CATEGORIES = [
   {
     id: "10-cbsc",
     label: "10TH CBSE",
-    image: "/hof/10th-CBSE-new.jpeg",
+    image: "/hof/10th-cbse-new2.jpeg",
   },
   {
     id: "12-hsc Science",
     label: "12TH HSC SCIENCE",
-    image: "/hof/12th-Sci-new.jpeg",
+    image: "/hof/12th-science-hsc- new2.jpeg",
   },
   {
     id: "12-hsc Commerce",
     label: "12TH HSC COMMERCE",
-    image: "/hof/12th-commerce-new.png",
+    image: "/hof/12th-commerce-hsc-new2.jpeg",
   },
   {
     id: "12-hsc Arts",
     label: "12TH HSC ARTS",
-    image: "/hof/12th-arts-new.jpeg",
+    image: "/hof/12th-arts-hsc-new2.jpeg",
   },
   {
     id: "12-CBSE Science",
     label: "12TH CBSE SCIENCE",
-    image: "/hof/12th-CBSE-sci-new.jpeg",
+    image: "/hof/12th-cbse-science-new2.jpeg",
   },
   {
     id: "jee",
@@ -43,7 +43,7 @@ const RESULT_CATEGORIES = [
   {
     id: "NEET",
     label: "NEET",
-    image: "/hof/neet-new.jpeg",
+    image: "/hof/neet-new-1.jpeg",
   },
   {
     id: "cet",
