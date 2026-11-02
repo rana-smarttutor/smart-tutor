@@ -39,16 +39,12 @@ interface CourseModalProps {
 
 type Step = 1 | 2 | 3;
 
-const MHT_CET_EXAMS = [
-  "Engineering (B.E./B.Tech)",
-  "Pharmacy (B.Pharm)",
-  "BBA / BCA / BMS",
-  "Law (LLB - 3 year / 5 year)",
-  "Design (B.Des)",
-  "Hotel Management (B.HMCT)",
-  "Nursing",
-  "B.Ed / B.P.Ed",
+const COURSE_BUDGET_OPTIONS = [
+  5000, 10000, 15000, 25000, 35000, 50000, 75000, 100000, 125000, 150000,
+  175000, 200000, 225000, 250000,
 ];
+
+const formatMoney = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
 const SESSION_SLOTS = [
   "8:00 AM – 9:30 AM",
@@ -91,19 +87,49 @@ const BOARD_OPTIONS = [
 
 type BoardName = (typeof BOARD_OPTIONS)[number];
 
-const SENIOR_SECONDARY_STREAMS = ["Science", "Commerce", "Arts"] as const;
+const STREAMS = ["Science", "Commerce", "Arts"] as const;
+type StreamName = (typeof STREAMS)[number];
 
-type SeniorSecondaryStream = (typeof SENIOR_SECONDARY_STREAMS)[number];
-
-type BoardSubjectGroups = {
+type SubjectGroups = {
   middle: string[];
   secondary: string[];
-  senior: Record<SeniorSecondaryStream, string[]>;
+  senior: Record<StreamName, string[]>;
 };
 
-const OTHER_SUBJECT_OPTION = "Other / School-specific subject";
+const COMMON_SENIOR: Record<StreamName, string[]> = {
+  Science: [
+    "English",
+    "Physics",
+    "Chemistry",
+    "Mathematics",
+    "Biology",
+    "Computer Science",
+    "Information Technology",
+    "Physical Education",
+  ],
+  Commerce: [
+    "English",
+    "Accountancy",
+    "Business Studies",
+    "Economics",
+    "Mathematics",
+    "Entrepreneurship",
+    "Information Technology",
+  ],
+  Arts: [
+    "English",
+    "History",
+    "Political Science",
+    "Geography",
+    "Psychology",
+    "Sociology",
+    "Economics",
+    "Mathematics",
+    "Fine Arts",
+  ],
+};
 
-const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
+const SUBJECTS_BY_BOARD: Record<BoardName, SubjectGroups> = {
   "Maharashtra State Board": {
     middle: [
       "English",
@@ -160,7 +186,6 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       ],
     },
   },
-
   CBSE: {
     middle: [
       "English",
@@ -181,44 +206,8 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       "Information Technology / Artificial Intelligence",
       "Skill Subject",
     ],
-    senior: {
-      Science: [
-        "English Core",
-        "Physics",
-        "Chemistry",
-        "Mathematics",
-        "Biology",
-        "Computer Science",
-        "Informatics Practices",
-        "Physical Education",
-        "Economics",
-      ],
-      Commerce: [
-        "English Core",
-        "Accountancy",
-        "Business Studies",
-        "Economics",
-        "Mathematics / Applied Mathematics",
-        "Entrepreneurship",
-        "Informatics Practices",
-        "Computer Science",
-        "Physical Education",
-      ],
-      Arts: [
-        "English Core",
-        "History",
-        "Political Science",
-        "Geography",
-        "Psychology",
-        "Sociology",
-        "Economics",
-        "Mathematics / Applied Mathematics",
-        "Fine Arts",
-        "Physical Education",
-      ],
-    },
+    senior: COMMON_SENIOR,
   },
-
   "CISCE (ICSE / ISC)": {
     middle: [
       "English",
@@ -242,42 +231,8 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       "Computer Applications",
       "Commercial Studies",
     ],
-    senior: {
-      Science: [
-        "English",
-        "Physics",
-        "Chemistry",
-        "Mathematics",
-        "Biology",
-        "Computer Science",
-        "Environmental Science",
-        "Physical Education",
-      ],
-      Commerce: [
-        "English",
-        "Accounts",
-        "Business Studies",
-        "Economics",
-        "Mathematics",
-        "Commerce",
-        "Entrepreneurship",
-        "Computer Science",
-      ],
-      Arts: [
-        "English",
-        "History",
-        "Political Science",
-        "Geography",
-        "Psychology",
-        "Sociology",
-        "Economics",
-        "Mathematics",
-        "Computer Science",
-        "Fine Arts",
-      ],
-    },
+    senior: COMMON_SENIOR,
   },
-
   "Cambridge (IGCSE / A Level)": {
     middle: [
       "English",
@@ -303,39 +258,8 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       "Computer Science / ICT",
       "Foreign Language",
     ],
-    senior: {
-      Science: [
-        "English Language / Literature",
-        "Mathematics",
-        "Further Mathematics",
-        "Physics",
-        "Chemistry",
-        "Biology",
-        "Computer Science",
-        "Information Technology",
-      ],
-      Commerce: [
-        "Accounting",
-        "Business",
-        "Economics",
-        "Mathematics",
-        "Computer Science",
-        "Information Technology",
-        "English Language",
-      ],
-      Arts: [
-        "English Language / Literature",
-        "History",
-        "Geography",
-        "Psychology",
-        "Sociology",
-        "Economics",
-        "Global Perspectives & Research",
-        "Art & Design",
-      ],
-    },
+    senior: COMMON_SENIOR,
   },
-
   IB: {
     middle: [
       "Language & Literature",
@@ -357,51 +281,26 @@ const SUBJECTS_BY_BOARD: Record<BoardName, BoardSubjectGroups> = {
       "Arts",
       "Physical & Health Education",
     ],
-    senior: {
-      Science: [
-        "English A",
-        "Mathematics",
-        "Physics",
-        "Chemistry",
-        "Biology",
-        "Computer Science",
-        "Environmental Systems & Societies",
-        "Sports, Exercise & Health Science",
-      ],
-      Commerce: [
-        "English A",
-        "Economics",
-        "Business Management",
-        "Mathematics",
-        "Computer Science",
-        "Digital Society",
-        "Environmental Systems & Societies",
-      ],
-      Arts: [
-        "English A",
-        "History",
-        "Geography",
-        "Psychology",
-        "Global Politics",
-        "Economics",
-        "Visual Arts",
-        "Mathematics",
-      ],
-    },
+    senior: COMMON_SENIOR,
   },
 };
 
-const REGULAR_ACADEMIC_COURSE_KEYS = new Set([
-  "class-6-additional",
-  "class-7-additional",
-  "class-8-additional",
-  "class-9-additional",
-  "class-10-additional",
-  "class-11-additional",
-  "class-12-additional",
-]);
+const MHT_CET_EXAMS = [
+  "Engineering (B.E./B.Tech)",
+  "Pharmacy (B.Pharm)",
+  "BBA / BCA / BMS",
+  "Law (LLB - 3 year / 5 year)",
+  "Design (B.Des)",
+  "Hotel Management (B.HMCT)",
+  "Nursing",
+  "B.Ed / B.P.Ed",
+];
 
-const ADDITIONAL_COURSES_BY_CLASS: Record<string, string[]> = {
+const REGULAR_ACADEMIC_KEYS = new Set(
+  Array.from({ length: 7 }, (_, i) => `class-${i + 6}-additional`),
+);
+
+const ADDITIONAL_BY_CLASS: Record<string, string[]> = {
   "class-6-additional": [
     "Spoken English",
     "Abacus",
@@ -488,45 +387,15 @@ const ADDITIONAL_COURSES_BY_CLASS: Record<string, string[]> = {
     "IPMAT",
     "NPAT",
     "UPSC Foundation",
-    "Railway",
     "SSC",
+    "Railway",
     "Video Editing",
     "Spoken English",
     "Interview & Personality Development",
   ],
 };
 
-function isSeniorSecondaryCourse(standardKey: string) {
-  return (
-    standardKey === "class-11-additional" ||
-    standardKey === "class-12-additional"
-  );
-}
-
-function getClassNumber(standardKey: string) {
-  return Number(standardKey.match(/class-(\d+)-additional/)?.[1] ?? "0");
-}
-
-function getRegularSubjectOptions(
-  standardKey: string,
-  selectedBoard: string,
-  selectedStream: string,
-) {
-  const boardSubjects = SUBJECTS_BY_BOARD[selectedBoard as BoardName];
-
-  if (!boardSubjects) return [];
-
-  const classNumber = getClassNumber(standardKey);
-
-  const subjectOptions =
-    classNumber >= 11
-      ? (boardSubjects.senior[selectedStream as SeniorSecondaryStream] ?? [])
-      : classNumber >= 9
-        ? boardSubjects.secondary
-        : boardSubjects.middle;
-
-  return [...subjectOptions, OTHER_SUBJECT_OPTION];
-}
+const OTHER_SUBJECT = "Other / School-specific subject";
 
 const inputClass =
   "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
@@ -549,50 +418,34 @@ function SelectionCard({
   description?: string;
   tone?: "blue" | "green";
 }) {
-  const selectedStyle =
-    tone === "green"
-      ? "border-emerald-500 bg-emerald-50"
-      : "border-blue-600 bg-blue-50";
-
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`flex min-h-12 min-w-0 items-center gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+      className={`flex min-h-12 min-w-0 items-center gap-3 rounded-lg border px-4 py-3 text-left transition ${
         selected
-          ? selectedStyle
+          ? tone === "green"
+            ? "border-emerald-500 bg-emerald-50"
+            : "border-blue-600 bg-blue-50"
           : "border-slate-200 bg-white hover:border-blue-300"
       }`}
     >
       {icon && (
-        <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${
-            selected
-              ? "bg-blue-100 text-blue-700"
-              : "bg-slate-100 text-slate-500"
-          }`}
-        >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 text-blue-600">
           {icon}
         </div>
       )}
-
       <div className="min-w-0 flex-1">
-        <span
-          className={`block break-words text-sm font-semibold leading-5 ${
-            selected ? "text-blue-900" : "text-slate-800"
-          }`}
-        >
+        <span className="block break-words text-sm font-semibold text-slate-900">
           {children}
         </span>
-
         {description && (
           <span className="mt-1 block text-xs leading-5 text-slate-500">
             {description}
           </span>
         )}
       </div>
-
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
           selected
@@ -620,23 +473,15 @@ function SectionHeading({
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-xs font-bold text-blue-700">
         {number}
       </div>
-
-      <div className="min-w-0">
-        <h3 className="text-base font-bold text-slate-900">{title}</h3>
-
+      <div>
+        <h3 className="font-bold text-slate-900">{title}</h3>
         {description && (
-          <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
         )}
       </div>
     </div>
   );
 }
-
-const STEP_DETAILS = [
-  { number: 1, label: "Programme" },
-  { number: 2, label: "Schedule" },
-  { number: 3, label: "Your Details" },
-] as const;
 
 export default function CourseModal({
   course,
@@ -653,6 +498,9 @@ export default function CourseModal({
   const [address, setAddress] = useState("");
   const [role, setRole] = useState("student");
 
+  const [budgetFrom, setBudgetFrom] = useState("");
+  const [budgetTo, setBudgetTo] = useState("");
+
   const [selectedCourseName, setSelectedCourseName] = useState("");
   const [mhtCetSubExam, setMhtCetSubExam] = useState("");
   const [selectedBoard, setSelectedBoard] = useState("");
@@ -668,13 +516,16 @@ export default function CourseModal({
   const scrollRef = useRef<HTMLDivElement>(null);
   const submissionIdRef = useRef("");
 
-  useEffect(() => {
-    const isAcademic = course
-      ? REGULAR_ACADEMIC_COURSE_KEYS.has(course.standardKey)
-      : false;
+  const isAcademic = Boolean(
+    course && REGULAR_ACADEMIC_KEYS.has(course.standardKey),
+  );
 
+  useEffect(() => {
+    const academic = course
+      ? REGULAR_ACADEMIC_KEYS.has(course.standardKey)
+      : false;
     const preselected =
-      !isAcademic &&
+      !academic &&
       initialAdditionalCourse &&
       course?.courseNamesIncluded.includes(initialAdditionalCourse)
         ? initialAdditionalCourse
@@ -688,6 +539,8 @@ export default function CourseModal({
     setContact("");
     setAddress("");
     setRole("student");
+    setBudgetFrom("");
+    setBudgetTo("");
     setSelectedCourseName(preselected);
     setMhtCetSubExam("");
     setSelectedBoard("");
@@ -695,7 +548,7 @@ export default function CourseModal({
     setSelectedSubjects([]);
     setOtherSubject("");
     setSelectedAdditionalCourses(
-      isAcademic && initialAdditionalCourse ? [initialAdditionalCourse] : [],
+      academic && initialAdditionalCourse ? [initialAdditionalCourse] : [],
     );
     setSelectedLearningMode("");
     setSelectedSlot("");
@@ -705,85 +558,85 @@ export default function CourseModal({
   useEffect(() => {
     if (!course) return;
 
-    const previousOverflow = document.body.style.overflow;
+    const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isSubmitting) {
-        onClose();
-      }
-    }
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) onClose();
+    };
 
-    window.addEventListener("keydown", handleEscape);
+    window.addEventListener("keydown", onEscape);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = oldOverflow;
+      window.removeEventListener("keydown", onEscape);
     };
   }, [course, onClose, isSubmitting]);
 
   if (!course) return null;
 
   const activeCourse: CourseItem = course;
-
-  const isRegularAcademic = REGULAR_ACADEMIC_COURSE_KEYS.has(
-    activeCourse.standardKey,
+  const standardKey = activeCourse.standardKey;
+  const classNumber = Number(
+    standardKey.match(/class-(\d+)-additional/)?.[1] || 0,
   );
 
-  const isSeniorSecondary = isSeniorSecondaryCourse(activeCourse.standardKey);
+  const isSenior = classNumber >= 11;
+  const hasOptions = activeCourse.courseNamesIncluded.length > 0;
+  const canShowSubjects =
+    Boolean(selectedBoard) && (!isSenior || Boolean(selectedStream));
 
-  const hasCourseOptions = activeCourse.courseNamesIncluded.length > 0;
+  const boardSubjects = SUBJECTS_BY_BOARD[selectedBoard as BoardName];
 
-  const hasSelectedBoard = Boolean(selectedBoard);
-  const hasSelectedStream = !isSeniorSecondary || Boolean(selectedStream);
-  const canShowSubjects = hasSelectedBoard && hasSelectedStream;
+  const subjectOptions = !boardSubjects
+    ? []
+    : [
+        ...(isSenior
+          ? boardSubjects.senior[selectedStream as StreamName] || []
+          : classNumber >= 9
+            ? boardSubjects.secondary
+            : boardSubjects.middle),
+        OTHER_SUBJECT,
+      ];
 
-  const regularSubjectOptions = getRegularSubjectOptions(
-    activeCourse.standardKey,
-    selectedBoard,
-    selectedStream,
-  );
+  const additionalOptions = ADDITIONAL_BY_CLASS[standardKey] || [];
 
-  const additionalCourseOptions =
-    ADDITIONAL_COURSES_BY_CLASS[activeCourse.standardKey] ?? [];
+  const visibleAdditionalOptions = initialAdditionalCourse
+    ? additionalOptions.filter((item) => item === initialAdditionalCourse)
+    : additionalOptions;
 
-  const visibleAdditionalCourseOptions = initialAdditionalCourse
-    ? additionalCourseOptions.filter((item) => item === initialAdditionalCourse)
-    : additionalCourseOptions;
-
-  const isMhtCet =
-    !isRegularAcademic && selectedCourseName === "All MHT CET Exam";
-
-  const hasMhtCetAddOn = selectedAdditionalCourses.includes("All MHT CET Exam");
-
-  const shouldShowMhtCetCategory = isMhtCet || hasMhtCetAddOn;
-
-  const requiresOtherSubjectName =
-    selectedSubjects.includes(OTHER_SUBJECT_OPTION) && !otherSubject.trim();
+  const requiresMhtCet =
+    selectedCourseName === "All MHT CET Exam" ||
+    selectedAdditionalCourses.includes("All MHT CET Exam");
 
   const selectedSubjectText = selectedSubjects
     .map((subject) =>
-      subject === OTHER_SUBJECT_OPTION && otherSubject.trim()
+      subject === OTHER_SUBJECT && otherSubject.trim()
         ? otherSubject.trim()
         : subject,
     )
     .join(", ");
 
-  const selectedAdditionalCourseText = selectedAdditionalCourses
-    .map((additionalCourse) =>
-      additionalCourse === "All MHT CET Exam" && mhtCetSubExam
-        ? `${additionalCourse} – ${mhtCetSubExam}`
-        : additionalCourse,
+  const selectedAdditionalText = selectedAdditionalCourses
+    .map((item) =>
+      item === "All MHT CET Exam" && mhtCetSubExam
+        ? `${item} – ${mhtCetSubExam}`
+        : item,
     )
     .join(", ");
 
-  const readableCourseDetail = isRegularAcademic
+  const readableCourseDetail = isAcademic
     ? `${activeCourse.title} — ${selectedBoard}${
-        isSeniorSecondary ? ` — ${selectedStream}` : ""
+        isSenior ? ` — ${selectedStream}` : ""
       } — ${selectedSubjectText}`
-    : isMhtCet
+    : selectedCourseName === "All MHT CET Exam"
       ? `${selectedCourseName}${mhtCetSubExam ? ` – ${mhtCetSubExam}` : ""}`
       : selectedCourseName || activeCourse.title;
+
+  const courseBudgetText =
+    budgetFrom && budgetTo
+      ? `${formatMoney(Number(budgetFrom))} – ${formatMoney(Number(budgetTo))}`
+      : "Not selected";
 
   function scrollToTop() {
     scrollRef.current?.scrollTo({
@@ -798,68 +651,43 @@ export default function CourseModal({
     scrollToTop();
   }
 
-  function toggleSubject(subject: string) {
-    if (
-      subject === OTHER_SUBJECT_OPTION &&
-      selectedSubjects.includes(subject)
-    ) {
-      setOtherSubject("");
-    }
-
-    setSelectedSubjects((current) =>
-      current.includes(subject)
-        ? current.filter((item) => item !== subject)
-        : [...current, subject],
+  function toggleItem(
+    value: string,
+    current: string[],
+    setter: (values: string[]) => void,
+  ) {
+    setter(
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
     );
-
-    setSelectedSlot("");
-  }
-
-  function toggleAdditionalCourse(additionalCourse: string) {
-    if (
-      additionalCourse === "All MHT CET Exam" &&
-      selectedAdditionalCourses.includes(additionalCourse)
-    ) {
-      setMhtCetSubExam("");
-    }
-
-    setSelectedAdditionalCourses((current) =>
-      current.includes(additionalCourse)
-        ? current.filter((item) => item !== additionalCourse)
-        : [...current, additionalCourse],
-    );
-
-    setSelectedSlot("");
   }
 
   function validateStepOne(): boolean {
-    if (isRegularAcademic) {
+    if (isAcademic) {
       if (!selectedBoard) {
         setError("Please select your education board.");
         return false;
       }
-
-      if (isSeniorSecondary && !selectedStream) {
+      if (isSenior && !selectedStream) {
         setError("Please select your academic stream.");
         return false;
       }
-
-      if (selectedSubjects.length === 0) {
-        setError("Please select at least one academic subject.");
+      if (!selectedSubjects.length) {
+        setError("Please select at least one subject.");
         return false;
       }
-
-      if (requiresOtherSubjectName) {
+      if (selectedSubjects.includes(OTHER_SUBJECT) && !otherSubject.trim()) {
         setError("Please enter your school-specific subject.");
         return false;
       }
-    } else if (hasCourseOptions && !selectedCourseName) {
+    } else if (hasOptions && !selectedCourseName) {
       setError("Please select a programme.");
       return false;
     }
 
-    if (shouldShowMhtCetCategory && !mhtCetSubExam) {
-      setError("Please select your MHT CET exam category.");
+    if (requiresMhtCet && !mhtCetSubExam) {
+      setError("Please select your MHT CET examination.");
       return false;
     }
 
@@ -868,15 +696,13 @@ export default function CourseModal({
 
   function validateStepTwo(): boolean {
     if (!selectedLearningMode) {
-      setError("Please select your preferred learning mode.");
+      setError("Please select your preferred tuition mode.");
       return false;
     }
-
-    if (!selectedSlot) {
+    if (selectedLearningMode === "Home Tutor" && !selectedSlot) {
       setError("Please select your preferred session slot.");
       return false;
     }
-
     return true;
   }
 
@@ -887,9 +713,8 @@ export default function CourseModal({
     }
 
     const trimmedContact = contact.trim();
-
     if (!trimmedContact) {
-      setError("Please enter your phone number or email address.");
+      setError("Please enter your phone number or email.");
       return false;
     }
 
@@ -900,7 +725,6 @@ export default function CourseModal({
       }
     } else {
       const digits = trimmedContact.replace(/\D/g, "");
-
       if (digits.length < 10 || digits.length > 15) {
         setError("Please enter a valid phone number.");
         return false;
@@ -908,7 +732,21 @@ export default function CourseModal({
     }
 
     if (address.trim().length < 10) {
-      setError("Please enter your complete address including area and city.");
+      setError("Please enter your full address.");
+      return false;
+    }
+
+    const from = Number(budgetFrom);
+    const to = Number(budgetTo);
+
+    if (
+      !budgetFrom ||
+      !budgetTo ||
+      !COURSE_BUDGET_OPTIONS.includes(from) ||
+      !COURSE_BUDGET_OPTIONS.includes(to) ||
+      from > to
+    ) {
+      setError("Please select a valid total course budget range.");
       return false;
     }
 
@@ -917,28 +755,19 @@ export default function CourseModal({
 
   function handleContinue() {
     setError("");
-
     if (step === 1) {
       if (!validateStepOne()) {
         scrollToTop();
         return;
       }
       changeStep(2);
-      return;
-    }
-
-    if (step === 2) {
+    } else if (step === 2) {
       if (!validateStepTwo()) {
         scrollToTop();
         return;
       }
       changeStep(3);
     }
-  }
-
-  function handleBack() {
-    if (step === 1) return;
-    changeStep((step - 1) as Step);
   }
 
   function resetForm() {
@@ -950,26 +779,23 @@ export default function CourseModal({
     setContact("");
     setAddress("");
     setRole("student");
+    setBudgetFrom("");
+    setBudgetTo("");
     setSelectedBoard("");
     setSelectedStream("");
     setSelectedSubjects([]);
     setOtherSubject("");
     setMhtCetSubExam("");
-
     setSelectedCourseName(
-      !isRegularAcademic &&
+      !isAcademic &&
         initialAdditionalCourse &&
         activeCourse.courseNamesIncluded.includes(initialAdditionalCourse)
         ? initialAdditionalCourse
         : "",
     );
-
     setSelectedAdditionalCourses(
-      isRegularAcademic && initialAdditionalCourse
-        ? [initialAdditionalCourse]
-        : [],
+      isAcademic && initialAdditionalCourse ? [initialAdditionalCourse] : [],
     );
-
     setSelectedLearningMode("");
     setSelectedSlot("");
     submissionIdRef.current = "";
@@ -978,7 +804,6 @@ export default function CourseModal({
 
   async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     if (isSubmitting || isSuccess) return;
 
     setError("");
@@ -987,28 +812,26 @@ export default function CourseModal({
       changeStep(1);
       return;
     }
-
     if (!validateStepTwo()) {
       changeStep(2);
       return;
     }
-
     if (!validateStepThree()) {
       scrollToTop();
       return;
     }
 
     const canEnroll = await requestLoginIfNeeded("/courses");
-
     if (!canEnroll) return;
 
-    const message = isRegularAcademic
-      ? `Hi SmartIQ Institute, I am interested in enrolling for ${activeCourse.title}. Board: ${selectedBoard}.${
-          isSeniorSecondary ? ` Stream: ${selectedStream}.` : ""
-        } Regular subjects: ${selectedSubjectText}. Optional additional courses: ${
-          selectedAdditionalCourseText || "None selected"
-        }. Preferred tuition mode: ${selectedLearningMode}. Preferred session slot: ${selectedSlot}. Enrolling as a ${role}. Full Address: ${address.trim()}. Let's set up a counselling demo.`
-      : `Hi SmartIQ Institute, I am interested in enrolling for ${readableCourseDetail} as a ${role}. Preferred tuition mode: ${selectedLearningMode}. Preferred session slot: ${selectedSlot}. Full Address: ${address.trim()}. Let's set up a counselling demo.`;
+    const sessionSlotText =
+      selectedLearningMode === "Home Tutor"
+        ? ` Preferred session slot: ${selectedSlot}.`
+        : "";
+
+    const message = isAcademic
+      ? `Hi SmartIQ Institute, I am interested in enrolling for ${activeCourse.title}. Board: ${selectedBoard}.${isSenior ? ` Stream: ${selectedStream}.` : ""} Regular subjects: ${selectedSubjectText}. Optional additional courses: ${selectedAdditionalText || "None selected"}. Preferred tuition mode: ${selectedLearningMode}.${sessionSlotText} Total course budget: ${courseBudgetText}. Enrolling as a ${role}. Full Address: ${address.trim()}. Let's set up a counselling demo.`
+      : `Hi SmartIQ Institute, I am interested in enrolling for ${readableCourseDetail} as a ${role}. Preferred tuition mode: ${selectedLearningMode}.${sessionSlotText} Total course budget: ${courseBudgetText}. Full Address: ${address.trim()}. Let's set up a counselling demo.`;
 
     if (!submissionIdRef.current) {
       submissionIdRef.current = crypto.randomUUID();
@@ -1037,7 +860,6 @@ export default function CourseModal({
       });
 
       const result = await response.json().catch(() => null);
-
       if (!response.ok || result?.success === false) {
         throw new Error(result?.error || "Unable to submit your enquiry.");
       }
@@ -1045,8 +867,6 @@ export default function CourseModal({
       setIsSuccess(true);
       scrollToTop();
     } catch (cause) {
-      console.error("Course enquiry submission failed:", cause);
-
       setError(
         cause instanceof Error
           ? cause.message
@@ -1060,7 +880,6 @@ export default function CourseModal({
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[150] flex items-center justify-center p-2 sm:p-4">
-        {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1071,737 +890,686 @@ export default function CourseModal({
           className="absolute inset-0 bg-slate-900/50"
         />
 
-        {/* Modal */}
         <motion.div
-          initial={{
-            opacity: 0,
-            scale: 0.98,
-            y: 10,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            y: 0,
-          }}
-          exit={{
-            opacity: 0,
-            scale: 0.98,
-            y: 10,
-          }}
+          initial={{ opacity: 0, scale: 0.98, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 10 }}
           transition={{ duration: 0.18 }}
           role="dialog"
           aria-modal="true"
           aria-label={`Course enquiry for ${activeCourse.title}`}
           className="relative z-10 flex max-h-[96dvh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:max-h-[94dvh]"
         >
-          {/* Header */}
-          <header className="relative shrink-0 border-b border-slate-200 bg-white px-4 py-4 sm:px-8 sm:py-5">
+          <header className="shrink-0 border-b border-slate-200 px-4 py-4 sm:px-8 sm:py-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
                   <GraduationCap className="h-5 w-5" />
                 </div>
-
-                <div className="min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-blue-600 sm:text-xs">
+                <div>
+                  <p className="text-xs font-bold uppercase text-blue-600">
                     SmartIQ Institute Admissions
                   </p>
-
-                  <h2 className="mt-1 break-words text-lg font-bold leading-tight text-slate-900 sm:text-xl">
+                  <h2 className="mt-1 text-lg font-bold text-slate-900">
                     {initialAdditionalCourse || activeCourse.title}
                   </h2>
-
-                  <p className="mt-1 hidden text-xs text-slate-500 sm:block">
-                    Course Enquiry Form
-                  </p>
+                  <p className="text-xs text-slate-500">Course Enquiry Form</p>
                 </div>
               </div>
-
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
                 aria-label="Close course enquiry"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-lg border border-slate-200 p-3"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {!isSuccess && (
-              <div className="mt-5 flex items-center justify-between gap-2 border-t border-slate-100 pt-4 sm:gap-4">
-                {STEP_DETAILS.map((item, index) => {
-                  const completed = step > item.number;
-                  const active = step === item.number;
-
-                  return (
+              <div className="mt-5 flex justify-between border-t border-slate-100 pt-4">
+                {["Programme", "Schedule", "Your Details"].map(
+                  (label, index) => (
                     <div
-                      key={item.number}
-                      aria-current={active ? "step" : undefined}
-                      className="flex min-w-0 flex-1 items-center gap-2"
+                      key={label}
+                      className={`flex items-center gap-2 text-xs font-semibold sm:text-sm ${
+                        step === index + 1 ? "text-blue-700" : "text-slate-400"
+                      }`}
                     >
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                          completed
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                          step > index + 1
                             ? "bg-emerald-600 text-white"
-                            : active
+                            : step === index + 1
                               ? "bg-blue-600 text-white"
-                              : "border border-slate-200 bg-slate-100 text-slate-500"
+                              : "bg-slate-100"
                         }`}
                       >
-                        {completed ? (
+                        {step > index + 1 ? (
                           <Check className="h-4 w-4" />
                         ) : (
-                          item.number
+                          index + 1
                         )}
-                      </div>
-
-                      <span
-                        className={`min-w-0 text-[11px] font-semibold leading-tight sm:text-sm ${
-                          active
-                            ? "text-blue-700"
-                            : completed
-                              ? "text-slate-700"
-                              : "text-slate-400"
-                        }`}
-                      >
-                        {item.label}
                       </span>
-
-                      {index < STEP_DETAILS.length - 1 && (
-                        <div className="ml-auto hidden h-px flex-1 bg-slate-200 sm:block" />
-                      )}
+                      {label}
                     </div>
-                  );
-                })}
+                  ),
+                )}
               </div>
             )}
           </header>
 
-          {/* Scrollable content */}
           <div
             ref={scrollRef}
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white px-4 py-5 sm:px-8 sm:py-6"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8"
           >
-            <div className="mx-auto w-full max-w-4xl">
-              <AnimatePresence mode="wait">
-                {isSuccess ? (
-                  <motion.div
-                    key="success"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    role="status"
-                    className="px-4 py-10 text-center"
-                  >
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                      <CheckCircle2 className="h-9 w-9" />
-                    </div>
+            <div className="mx-auto max-w-4xl">
+              {isSuccess ? (
+                <div className="py-12 text-center">
+                  <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-600" />
+                  <h3 className="mt-5 text-xl font-bold">
+                    Enquiry Submitted Successfully
+                  </h3>
+                  <p className="mt-3 text-sm text-slate-600">
+                    Thank you, {name}. Our admissions team will contact you.
+                  </p>
+                  <div className="mt-6 flex justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="rounded-lg border px-5 py-3 font-semibold"
+                    >
+                      Submit Another Enquiry
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-7">
+                  {step === 1 && (
+                    <>
+                      <div className="border-b pb-4">
+                        <h3 className="text-xl font-bold">Course Selection</h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                          Select your programme and subjects.
+                        </p>
+                      </div>
 
-                    <h3 className="mt-5 text-xl font-bold text-slate-900">
-                      Enquiry Submitted Successfully
-                    </h3>
+                      {isAcademic ? (
+                        <>
+                          <section>
+                            <SectionHeading
+                              number="01"
+                              title="Select Your Education Board"
+                            />
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {BOARD_OPTIONS.map((board) => (
+                                <SelectionCard
+                                  key={board}
+                                  selected={selectedBoard === board}
+                                  icon={<BookOpen className="h-4 w-4" />}
+                                  onClick={() => {
+                                    setSelectedBoard(board);
+                                    setSelectedStream("");
+                                    setSelectedSubjects([]);
+                                    setOtherSubject("");
+                                    setSelectedSlot("");
+                                    setError("");
+                                  }}
+                                >
+                                  {board}
+                                </SelectionCard>
+                              ))}
+                            </div>
+                          </section>
 
-                    <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-slate-600">
-                      Thank you, <strong>{name}</strong>. Your enquiry for{" "}
-                      <strong>{readableCourseDetail}</strong> has been
-                      submitted. Our admissions team will contact you regarding
-                      the next steps.
-                    </p>
-
-                    <div className="mx-auto mt-5 flex max-w-xs items-center justify-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                      <ShieldCheck className="h-4 w-4" />
-                      Enquiry Received
-                    </div>
-
-                    <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-                      <button
-                        type="button"
-                        onClick={resetForm}
-                        className="rounded-lg border border-slate-200 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-slate-50"
-                      >
-                        Submit Another Enquiry
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-                      >
-                        Close
-                      </button>
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key={step}
-                    initial={{ opacity: 0, x: 8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
-                    transition={{ duration: 0.15 }}
-                    className="rounded-xl bg-white p-2 sm:p-4"
-                  >
-                    {/* STEP 1 */}
-                    {step === 1 && (
-                      <div className="space-y-7">
-                        <div className="border-b border-slate-100 pb-4">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-                            Step 1 of 3
-                          </p>
-
-                          <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
-                            Course Selection
-                          </h3>
-
-                          <p className="mt-2 text-sm text-slate-500">
-                            {isRegularAcademic
-                              ? "Select your board and required subjects."
-                              : "Select the course you wish to enquire about."}
-                          </p>
-                        </div>
-
-                        {isRegularAcademic ? (
-                          <>
+                          {isSenior && selectedBoard && (
                             <section>
                               <SectionHeading
-                                number="01"
-                                title="Select Your Education Board"
-                                description="Choose your current school board."
+                                number="02"
+                                title="Select Academic Stream"
                               />
-
-                              <div className="grid gap-3 sm:grid-cols-2">
-                                {BOARD_OPTIONS.map((board) => (
+                              <div className="grid gap-3 sm:grid-cols-3">
+                                {STREAMS.map((stream) => (
                                   <SelectionCard
-                                    key={board}
-                                    selected={selectedBoard === board}
-                                    icon={<BookOpen className="h-4 w-4" />}
+                                    key={stream}
+                                    selected={selectedStream === stream}
                                     onClick={() => {
-                                      setSelectedBoard(board);
-                                      setSelectedStream("");
+                                      setSelectedStream(stream);
                                       setSelectedSubjects([]);
                                       setOtherSubject("");
                                       setSelectedSlot("");
-                                      setError("");
                                     }}
                                   >
-                                    {board}
+                                    {stream}
                                   </SelectionCard>
                                 ))}
                               </div>
                             </section>
+                          )}
 
-                            {isSeniorSecondary && hasSelectedBoard && (
-                              <section>
-                                <SectionHeading
-                                  number="02"
-                                  title="Select Academic Stream"
-                                  description="Select your Class 11 or 12 stream."
-                                />
-
-                                <div className="grid gap-3 sm:grid-cols-3">
-                                  {SENIOR_SECONDARY_STREAMS.map((stream) => (
-                                    <SelectionCard
-                                      key={stream}
-                                      selected={selectedStream === stream}
-                                      onClick={() => {
-                                        setSelectedStream(stream);
-                                        setSelectedSubjects([]);
-                                        setOtherSubject("");
-                                        setSelectedSlot("");
-                                        setError("");
-                                      }}
-                                    >
-                                      {stream}
-                                    </SelectionCard>
-                                  ))}
-                                </div>
-                              </section>
-                            )}
-
-                            {canShowSubjects && (
-                              <section>
-                                <SectionHeading
-                                  number={isSeniorSecondary ? "03" : "02"}
-                                  title="Select Subjects"
-                                  description="You may select multiple subjects."
-                                />
-
-                                <div className="grid gap-2.5 sm:grid-cols-2">
-                                  {regularSubjectOptions.map((subject) => (
-                                    <SelectionCard
-                                      key={subject}
-                                      selected={selectedSubjects.includes(
-                                        subject,
-                                      )}
-                                      onClick={() => {
-                                        toggleSubject(subject);
-                                        setError("");
-                                      }}
-                                    >
-                                      {subject}
-                                    </SelectionCard>
-                                  ))}
-                                </div>
-
-                                {selectedSubjects.includes(
-                                  OTHER_SUBJECT_OPTION,
-                                ) && (
-                                  <div className="mt-4">
-                                    <label
-                                      htmlFor="other-subject"
-                                      className={labelClass}
-                                    >
-                                      Other Subject *
-                                    </label>
-
-                                    <input
-                                      id="other-subject"
-                                      type="text"
-                                      value={otherSubject}
-                                      maxLength={150}
-                                      onChange={(event) => {
-                                        setOtherSubject(event.target.value);
-                                        setSelectedSlot("");
-                                      }}
-                                      placeholder="Enter subject name"
-                                      className={inputClass}
-                                    />
-                                  </div>
-                                )}
-                              </section>
-                            )}
-
-                            {canShowSubjects && (
-                              <section className="border-t border-slate-100 pt-6">
-                                <SectionHeading
-                                  number={isSeniorSecondary ? "04" : "03"}
-                                  title="Optional Additional Courses"
-                                  description="Select any additional programmes you are interested in."
-                                />
-
-                                {visibleAdditionalCourseOptions.length > 0 ? (
-                                  <div className="grid gap-2.5 sm:grid-cols-2">
-                                    {visibleAdditionalCourseOptions.map(
-                                      (additionalCourse) => (
-                                        <SelectionCard
-                                          key={additionalCourse}
-                                          tone="green"
-                                          selected={selectedAdditionalCourses.includes(
-                                            additionalCourse,
-                                          )}
-                                          onClick={() => {
-                                            toggleAdditionalCourse(
-                                              additionalCourse,
-                                            );
-                                            setError("");
-                                          }}
-                                        >
-                                          {additionalCourse}
-                                        </SelectionCard>
-                                      ),
-                                    )}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-slate-500">
-                                    No additional courses listed.
-                                  </p>
-                                )}
-                              </section>
-                            )}
-                          </>
-                        ) : (
-                          <section>
-                            <SectionHeading
-                              number="01"
-                              title="Select Course"
-                              description="Choose the programme you wish to join."
-                            />
-
-                            {hasCourseOptions ? (
+                          {canShowSubjects && (
+                            <section>
+                              <SectionHeading
+                                number={isSenior ? "03" : "02"}
+                                title="Select Subjects"
+                                description="You can select multiple subjects."
+                              />
                               <div className="grid gap-3 sm:grid-cols-2">
-                                {activeCourse.courseNamesIncluded.map(
-                                  (courseName) => (
-                                    <SelectionCard
-                                      key={courseName}
-                                      selected={
-                                        selectedCourseName === courseName
+                                {subjectOptions.map((subject) => (
+                                  <SelectionCard
+                                    key={subject}
+                                    selected={selectedSubjects.includes(
+                                      subject,
+                                    )}
+                                    onClick={() => {
+                                      toggleItem(
+                                        subject,
+                                        selectedSubjects,
+                                        setSelectedSubjects,
+                                      );
+                                      if (
+                                        subject === OTHER_SUBJECT &&
+                                        selectedSubjects.includes(subject)
+                                      ) {
+                                        setOtherSubject("");
                                       }
-                                      icon={
-                                        <GraduationCap className="h-4 w-4" />
-                                      }
-                                      onClick={() => {
-                                        setSelectedCourseName(courseName);
+                                      setSelectedSlot("");
+                                    }}
+                                  >
+                                    {subject}
+                                  </SelectionCard>
+                                ))}
+                              </div>
+
+                              {selectedSubjects.includes(OTHER_SUBJECT) && (
+                                <div className="mt-4">
+                                  <label
+                                    htmlFor="other-subject"
+                                    className={labelClass}
+                                  >
+                                    Other Subject *
+                                  </label>
+                                  <input
+                                    id="other-subject"
+                                    value={otherSubject}
+                                    onChange={(e) =>
+                                      setOtherSubject(e.target.value)
+                                    }
+                                    className={inputClass}
+                                  />
+                                </div>
+                              )}
+                            </section>
+                          )}
+
+                          {canShowSubjects && (
+                            <section className="border-t pt-6">
+                              <SectionHeading
+                                number={isSenior ? "04" : "03"}
+                                title="Optional Additional Courses"
+                              />
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {visibleAdditionalOptions.map((item) => (
+                                  <SelectionCard
+                                    key={item}
+                                    tone="green"
+                                    selected={selectedAdditionalCourses.includes(
+                                      item,
+                                    )}
+                                    onClick={() => {
+                                      toggleItem(
+                                        item,
+                                        selectedAdditionalCourses,
+                                        setSelectedAdditionalCourses,
+                                      );
+                                      if (
+                                        item === "All MHT CET Exam" &&
+                                        selectedAdditionalCourses.includes(item)
+                                      ) {
                                         setMhtCetSubExam("");
-                                        setSelectedSlot("");
-                                        setError("");
-                                      }}
-                                    >
-                                      {courseName}
-                                    </SelectionCard>
-                                  ),
-                                )}
+                                      }
+                                      setSelectedSlot("");
+                                    }}
+                                  >
+                                    {item}
+                                  </SelectionCard>
+                                ))}
                               </div>
-                            ) : (
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                                <p className="text-sm font-semibold text-slate-900">
-                                  {activeCourse.title}
-                                </p>
-                                <p className="mt-2 text-sm text-slate-600">
-                                  {activeCourse.description}
-                                </p>
-                              </div>
-                            )}
-                          </section>
-                        )}
-
-                        {shouldShowMhtCetCategory && (
-                          <section>
-                            <SectionHeading
-                              number="05"
-                              title="MHT CET Exam Category"
-                              description="Select your entrance examination."
-                            />
-
-                            <select
-                              value={mhtCetSubExam}
-                              onChange={(event) =>
-                                setMhtCetSubExam(event.target.value)
-                              }
-                              className={inputClass}
-                            >
-                              <option value="">Select Examination</option>
-
-                              {MHT_CET_EXAMS.map((exam) => (
-                                <option key={exam} value={exam}>
-                                  {exam}
-                                </option>
-                              ))}
-                            </select>
-                          </section>
-                        )}
-                      </div>
-                    )}
-
-                    {/* STEP 2 */}
-                    {step === 2 && (
-                      <div className="space-y-7">
-                        <div className="border-b border-slate-100 pb-4">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-                            Step 2 of 3
-                          </p>
-
-                          <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
-                            Class Preferences
-                          </h3>
-
-                          <p className="mt-2 text-sm text-slate-500">
-                            Select your preferred class mode and session time.
-                          </p>
-                        </div>
-
+                            </section>
+                          )}
+                        </>
+                      ) : (
                         <section>
-                          <SectionHeading
-                            number="01"
-                            title="Preferred Tuition Mode"
-                            description="Select how you would like to attend classes."
-                          />
-
-                          <div className="grid gap-3 sm:grid-cols-3">
-                            {TUITION_MODES.map((mode) => (
-                              <SelectionCard
-                                key={mode.value}
-                                selected={selectedLearningMode === mode.value}
-                                icon={<mode.icon className="h-4 w-4" />}
-                                description={mode.description}
-                                onClick={() => {
-                                  setSelectedLearningMode(mode.value);
-                                  setSelectedSlot("");
-                                  setError("");
-                                }}
-                              >
-                                {mode.title}
-                              </SelectionCard>
-                            ))}
-                          </div>
-                        </section>
-
-                        {selectedLearningMode && (
-                          <section>
-                            <SectionHeading
-                              number="02"
-                              title="Preferred Session Time"
-                              description="Select a 90-minute session slot."
-                            />
-
-                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                              {SESSION_SLOTS.map((slot, index) => (
+                          <SectionHeading number="01" title="Select Course" />
+                          {hasOptions ? (
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {activeCourse.courseNamesIncluded.map((item) => (
                                 <SelectionCard
-                                  key={slot}
-                                  selected={selectedSlot === slot}
-                                  icon={<Clock3 className="h-4 w-4" />}
+                                  key={item}
+                                  selected={selectedCourseName === item}
+                                  icon={<GraduationCap className="h-4 w-4" />}
                                   onClick={() => {
-                                    setSelectedSlot(slot);
-                                    setError("");
+                                    setSelectedCourseName(item);
+                                    setMhtCetSubExam("");
+                                    setSelectedSlot("");
                                   }}
                                 >
-                                  <span className="block text-[10px] font-medium text-slate-500">
-                                    Slot {index + 1}
-                                  </span>
-                                  <span className="mt-1 block">{slot}</span>
+                                  {item}
                                 </SelectionCard>
                               ))}
                             </div>
-
-                            <div className="mt-4 flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                              <CalendarClock className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
-
-                              <p className="text-xs leading-5 text-slate-600">
-                                Each session is 1 hour 30 minutes, with a
-                                30-minute break between sessions. Timings are
-                                subject to confirmation.
+                          ) : (
+                            <div className="rounded-lg border bg-slate-50 p-4">
+                              <p className="font-semibold">
+                                {activeCourse.title}
+                              </p>
+                              <p className="mt-2 text-sm text-slate-600">
+                                {activeCourse.description}
                               </p>
                             </div>
-                          </section>
-                        )}
-                      </div>
-                    )}
+                          )}
+                        </section>
+                      )}
 
-                    {/* STEP 3 */}
-                    {step === 3 && (
-                      <div className="space-y-7">
-                        <div className="border-b border-slate-100 pb-4">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
-                            Step 3 of 3
-                          </p>
-
-                          <h3 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
-                            Personal Details
-                          </h3>
-
-                          <p className="mt-2 text-sm text-slate-500">
-                            Enter your contact information and review your
-                            enquiry.
-                          </p>
-                        </div>
-
+                      {requiresMhtCet && (
                         <section>
                           <SectionHeading
-                            number="01"
-                            title="Applicant Information"
-                            description="Please provide accurate contact details."
+                            number="05"
+                            title="MHT CET Exam Category"
                           />
+                          <select
+                            value={mhtCetSubExam}
+                            onChange={(e) => setMhtCetSubExam(e.target.value)}
+                            className={inputClass}
+                          >
+                            <option value="">Select Examination</option>
+                            {MHT_CET_EXAMS.map((exam) => (
+                              <option key={exam} value={exam}>
+                                {exam}
+                              </option>
+                            ))}
+                          </select>
+                        </section>
+                      )}
+                    </>
+                  )}
 
-                          <div className="grid gap-5 sm:grid-cols-2">
-                            <div>
-                              <label
-                                htmlFor="enquiry-name"
-                                className={labelClass}
+                  {step === 2 && (
+                    <>
+                      <div className="border-b pb-4">
+                        <h3 className="text-xl font-bold">Class Preferences</h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                          Select your preferred tuition mode.
+                        </p>
+                      </div>
+                      <section>
+                        <SectionHeading
+                          number="01"
+                          title="Preferred Tuition Mode"
+                          description="Select how you would like to attend classes."
+                        />
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          {TUITION_MODES.map((mode) => (
+                            <SelectionCard
+                              key={mode.value}
+                              selected={selectedLearningMode === mode.value}
+                              icon={<mode.icon className="h-4 w-4" />}
+                              description={mode.description}
+                              onClick={() => {
+                                setSelectedLearningMode(mode.value);
+                                setSelectedSlot("");
+                                setError("");
+                              }}
+                            >
+                              {mode.title}
+                            </SelectionCard>
+                          ))}
+                        </div>
+                      </section>
+
+                      {selectedLearningMode === "Home Tutor" && (
+                        <section>
+                          <SectionHeading
+                            number="02"
+                            title="Preferred Session Time"
+                            description="Select a 90-minute session slot."
+                          />
+                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {SESSION_SLOTS.map((slot, index) => (
+                              <SelectionCard
+                                key={slot}
+                                selected={selectedSlot === slot}
+                                icon={<Clock3 className="h-4 w-4" />}
+                                onClick={() => {
+                                  setSelectedSlot(slot);
+                                  setError("");
+                                }}
                               >
-                                Full Name *
-                              </label>
-
-                              <div className="relative">
-                                <UserRound className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
-
-                                <input
-                                  id="enquiry-name"
-                                  type="text"
-                                  required
-                                  maxLength={100}
-                                  autoComplete="name"
-                                  value={name}
-                                  onChange={(event) =>
-                                    setName(event.target.value)
-                                  }
-                                  placeholder="Enter your full name"
-                                  className={`${inputClass} pl-11`}
-                                />
-                              </div>
-                            </div>
-
-                            <div>
-                              <label
-                                htmlFor="enquiry-contact"
-                                className={labelClass}
-                              >
-                                Phone / Email *
-                              </label>
-
-                              <div className="relative">
-                                <Phone className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
-
-                                <input
-                                  id="enquiry-contact"
-                                  type="text"
-                                  required
-                                  maxLength={150}
-                                  value={contact}
-                                  onChange={(event) =>
-                                    setContact(event.target.value)
-                                  }
-                                  placeholder="+91 9876543210"
-                                  className={`${inputClass} pl-11`}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="sm:col-span-2">
-                              <label
-                                htmlFor="enquiry-address"
-                                className={labelClass}
-                              >
-                                Full Address *
-                              </label>
-
-                              <div className="relative">
-                                <MapPin className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
-
-                                <textarea
-                                  id="enquiry-address"
-                                  name="address"
-                                  required
-                                  rows={3}
-                                  minLength={10}
-                                  maxLength={500}
-                                  autoComplete="street-address"
-                                  value={address}
-                                  onChange={(event) =>
-                                    setAddress(event.target.value)
-                                  }
-                                  placeholder="House / Flat No., Building, Street, Area, City, State and PIN Code"
-                                  className={`${inputClass} resize-y pl-11`}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="sm:col-span-2">
-                              <label
-                                htmlFor="enquiry-role"
-                                className={labelClass}
-                              >
-                                Enrolling As *
-                              </label>
-
-                              <select
-                                id="enquiry-role"
-                                value={role}
-                                onChange={(event) =>
-                                  setRole(event.target.value)
-                                }
-                                className={inputClass}
-                              >
-                                <option value="student">Student</option>
-                                <option value="parent">
-                                  Parent / Guardian
-                                </option>
-                                <option value="corporate">
-                                  Working Professional
-                                </option>
-                              </select>
-                            </div>
+                                <span className="block text-xs text-slate-500">
+                                  Slot {index + 1}
+                                </span>
+                                <span>{slot}</span>
+                              </SelectionCard>
+                            ))}
+                          </div>
+                          <div className="mt-4 flex gap-3 rounded-lg border bg-slate-50 p-4">
+                            <CalendarClock className="h-4 w-4 shrink-0" />
+                            <p className="text-xs text-slate-600">
+                              Each session is 90 minutes. Timings are subject to
+                              confirmation.
+                            </p>
                           </div>
                         </section>
+                      )}
+                    </>
+                  )}
 
-                        {/* Review */}
-                        <section className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
-                          <h4 className="text-base font-bold text-slate-900">
-                            Review Your Enquiry
-                          </h4>
+                  {step === 3 && (
+                    <>
+                      <div className="border-b pb-4">
+                        <h3 className="text-xl font-bold">Personal Details</h3>
+                        <p className="mt-2 text-sm text-slate-500">
+                          Enter your details and total course budget.
+                        </p>
+                      </div>
 
-                          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                            <div>
-                              <p className="text-xs text-slate-500">
-                                Programme
-                              </p>
-                              <p className="mt-1 break-words text-sm font-semibold text-slate-900">
-                                {readableCourseDetail}
-                              </p>
+                      <section>
+                        <SectionHeading
+                          number="01"
+                          title="Applicant Information"
+                        />
+
+                        <div className="grid gap-5 sm:grid-cols-2">
+                          <div>
+                            <label
+                              htmlFor="enquiry-name"
+                              className={labelClass}
+                            >
+                              Full Name *
+                            </label>
+                            <div className="relative">
+                              <UserRound className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+                              <input
+                                id="enquiry-name"
+                                required
+                                maxLength={100}
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder="Enter your full name"
+                                className={`${inputClass} pl-11`}
+                              />
                             </div>
+                          </div>
 
-                            {isRegularAcademic && (
-                              <div>
-                                <p className="text-xs text-slate-500">
-                                  Additional Courses
-                                </p>
-                                <p className="mt-1 break-words text-sm font-semibold text-slate-900">
-                                  {selectedAdditionalCourseText ||
-                                    "None selected"}
-                                </p>
+                          <div>
+                            <label
+                              htmlFor="enquiry-contact"
+                              className={labelClass}
+                            >
+                              Phone / Email *
+                            </label>
+                            <div className="relative">
+                              <Phone className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+                              <input
+                                id="enquiry-contact"
+                                required
+                                value={contact}
+                                onChange={(e) => setContact(e.target.value)}
+                                placeholder="+91 9876543210"
+                                className={`${inputClass} pl-11`}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label
+                              htmlFor="enquiry-address"
+                              className={labelClass}
+                            >
+                              Full Address *
+                            </label>
+                            <div className="relative">
+                              <MapPin className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
+                              <textarea
+                                id="enquiry-address"
+                                required
+                                minLength={10}
+                                maxLength={500}
+                                rows={3}
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                                placeholder="House / Flat No., Street, Area, City, State and PIN Code"
+                                className={`${inputClass} resize-y pl-11`}
+                              />
+                            </div>
+                          </div>
+
+                          {/* FROM–TO TOTAL COURSE BUDGET */}
+                          <div className="sm:col-span-2">
+                            <label className={labelClass}>
+                              Total Course Budget *
+                            </label>
+
+                            <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-3">
+                              <div className="min-w-0">
+                                <label
+                                  htmlFor="enquiry-budget-from"
+                                  className="mb-2 block text-xs text-slate-500"
+                                >
+                                  From
+                                </label>
+                                <select
+                                  id="enquiry-budget-from"
+                                  required
+                                  value={budgetFrom}
+                                  onChange={(event) => {
+                                    const value = event.target.value;
+                                    setBudgetFrom(value);
+                                    if (
+                                      budgetTo &&
+                                      Number(value) > Number(budgetTo)
+                                    ) {
+                                      setBudgetTo("");
+                                    }
+                                    setError("");
+                                  }}
+                                  className={inputClass}
+                                >
+                                  <option value="">Min budget</option>
+                                  {COURSE_BUDGET_OPTIONS.map((amount) => (
+                                    <option
+                                      key={amount}
+                                      value={amount}
+                                      disabled={
+                                        Boolean(budgetTo) &&
+                                        amount > Number(budgetTo)
+                                      }
+                                    >
+                                      {formatMoney(amount)}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
-                            )}
 
-                            <div>
-                              <p className="text-xs text-slate-500">
-                                Tuition Mode
-                              </p>
-                              <p className="mt-1 text-sm font-semibold text-slate-900">
-                                {selectedLearningMode}
-                              </p>
+                              <span className="pb-3 text-sm font-semibold text-slate-500">
+                                to
+                              </span>
+
+                              <div className="min-w-0">
+                                <label
+                                  htmlFor="enquiry-budget-to"
+                                  className="mb-2 block text-xs text-slate-500"
+                                >
+                                  To
+                                </label>
+                                <select
+                                  id="enquiry-budget-to"
+                                  required
+                                  value={budgetTo}
+                                  onChange={(event) => {
+                                    setBudgetTo(event.target.value);
+                                    setError("");
+                                  }}
+                                  className={inputClass}
+                                >
+                                  <option value="">Max budget</option>
+                                  {COURSE_BUDGET_OPTIONS.map((amount) => (
+                                    <option
+                                      key={amount}
+                                      value={amount}
+                                      disabled={
+                                        Boolean(budgetFrom) &&
+                                        amount < Number(budgetFrom)
+                                      }
+                                    >
+                                      {formatMoney(amount)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
                             </div>
 
+                            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-blue-50 px-4 py-3">
+                              <span className="text-xs text-slate-600">
+                                Estimated budget for the entire course
+                              </span>
+                              <span className="text-sm font-bold text-blue-700">
+                                {courseBudgetText}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label
+                              htmlFor="enquiry-role"
+                              className={labelClass}
+                            >
+                              Enrolling As *
+                            </label>
+                            <select
+                              id="enquiry-role"
+                              value={role}
+                              onChange={(e) => setRole(e.target.value)}
+                              className={inputClass}
+                            >
+                              <option value="student">Student</option>
+                              <option value="parent">Parent / Guardian</option>
+                              <option value="corporate">
+                                Working Professional
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section className="rounded-lg border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                        <h4 className="font-bold text-slate-900">
+                          Review Your Enquiry
+                        </h4>
+                        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                          <div>
+                            <p className="text-xs text-slate-500">Programme</p>
+                            <p className="mt-1 text-sm font-semibold">
+                              {readableCourseDetail}
+                            </p>
+                          </div>
+
+                          {isAcademic && (
+                            <div>
+                              <p className="text-xs text-slate-500">
+                                Additional Courses
+                              </p>
+                              <p className="mt-1 text-sm font-semibold">
+                                {selectedAdditionalText || "None selected"}
+                              </p>
+                            </div>
+                          )}
+
+                          <div>
+                            <p className="text-xs text-slate-500">
+                              Total Course Budget
+                            </p>
+                            <p className="mt-1 text-sm font-semibold">
+                              {courseBudgetText}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-xs text-slate-500">
+                              Tuition Mode
+                            </p>
+                            <p className="mt-1 text-sm font-semibold">
+                              {selectedLearningMode}
+                            </p>
+                          </div>
+
+                          {selectedLearningMode === "Home Tutor" && (
                             <div>
                               <p className="text-xs text-slate-500">
                                 Preferred Session
                               </p>
-                              <p className="mt-1 text-sm font-semibold text-slate-900">
+                              <p className="mt-1 text-sm font-semibold">
                                 {selectedSlot}
                               </p>
                             </div>
-                          </div>
-                        </section>
+                          )}
+                        </div>
+                      </section>
 
-                        <p className="text-xs leading-5 text-slate-500">
-                          By submitting this enquiry, you agree to be contacted
-                          by SmartIQ Institute regarding your selected
-                          programme. Submission does not confirm admission.
-                        </p>
-                      </div>
-                    )}
+                      <p className="text-xs leading-5 text-slate-500">
+                        By submitting this enquiry, you agree to be contacted by
+                        SmartIQ Institute. Submission does not confirm
+                        admission.
+                      </p>
+                    </>
+                  )}
 
-                    {error && (
-                      <div
-                        role="alert"
-                        className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
-                      >
-                        {error}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  {error && (
+                    <div
+                      role="alert"
+                      className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+                    >
+                      {error}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Footer */}
           {!isSuccess && (
-            <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-8 sm:py-4">
-              <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3">
-                <div className="hidden text-xs font-medium text-slate-500 sm:block">
-                  Step {step} of 3
-                  <span className="ml-2 text-slate-400">• Course Enquiry</span>
-                </div>
-
-                <div className="flex w-full items-center justify-between gap-3 sm:w-auto">
+            <footer className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 sm:px-8">
+              <div className="flex items-center justify-between gap-3">
+                <span className="hidden text-xs text-slate-500 sm:block">
+                  Step {step} of 3 • Course Enquiry
+                </span>
+                <div className="flex w-full justify-between gap-3 sm:w-auto">
                   {step > 1 ? (
                     <button
                       type="button"
-                      onClick={handleBack}
-                      disabled={isSubmitting}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      onClick={() => changeStep((step - 1) as Step)}
+                      className="inline-flex items-center gap-2 rounded-lg border px-5 py-3 text-sm font-semibold"
                     >
                       <ArrowLeft className="h-4 w-4" />
                       Back
                     </button>
                   ) : (
-                    <span className="text-xs text-slate-500 sm:hidden">
-                      Step 1 of 3
-                    </span>
+                    <span />
                   )}
 
                   {step < 3 ? (
                     <button
                       type="button"
                       onClick={handleContinue}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white"
                     >
                       Continue
                       <ArrowRight className="h-4 w-4" />
@@ -1814,10 +1582,9 @@ export default function CourseModal({
                         const form = document.getElementById(
                           "smartiq-course-final-form",
                         ) as HTMLFormElement | null;
-
                         form?.requestSubmit();
                       }}
-                      className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
                     >
                       <Send className="h-4 w-4" />
                       {isSubmitting ? "Submitting..." : "Submit Enquiry"}

@@ -21,16 +21,6 @@ const RESULT_CATEGORIES = [
     image: "/hof/12th-science-hsc- new2.jpeg",
   },
   {
-    id: "12-hsc Commerce",
-    label: "12TH HSC COMMERCE",
-    image: "/hof/12th-commerce-hsc-new2.jpeg",
-  },
-  {
-    id: "12-hsc Arts",
-    label: "12TH HSC ARTS",
-    image: "/hof/12th-arts-hsc-new2.jpeg",
-  },
-  {
     id: "12-CBSE Science",
     label: "12TH CBSE SCIENCE",
     image: "/hof/12th-cbse-science-new2.jpeg",
@@ -38,7 +28,7 @@ const RESULT_CATEGORIES = [
   {
     id: "jee",
     label: "JEE Main",
-    image: "/hof/JEE 2.jpg",
+    image: "/hof/jee-new-1.png",
   },
   {
     id: "NEET",
