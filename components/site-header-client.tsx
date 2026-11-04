@@ -10,9 +10,6 @@ import { LogoutButton } from "@/components/logout-button";
 import { UserMenu } from "@/components/user-menu";
 import type { SessionUser } from "@/lib/types";
 
-type SiteHeaderClientProps = {
-  session: SessionUser | null;
-};
 
 const links = [
   { href: "/", label: "Home" },
@@ -25,12 +22,56 @@ const links = [
 
 const staffOnlyLinks = [{ href: "/student-performance", label: "Performance" }];
 
-export function SiteHeaderClient({ session }: SiteHeaderClientProps) {
+export function SiteHeaderClient() {
   const pathname = usePathname();
+  const [session, setSession] = useState<SessionUser | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+
+
+  // Load the current user session in the browser.
+  // This avoids making public pages depend on
+  // server-side session checks.
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadSession() {
+      try {
+        const response = await fetch("/api/auth/session", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load session");
+        }
+
+        const payload = (await response.json()) as {
+          user?: SessionUser | null;
+        };
+
+        if (!controller.signal.aborted) {
+          setSession(payload.user ?? null);
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setSession(null);
+        }
+      }
+    }
+
+    void loadSession();
+
+    return () => {
+      controller.abort();
+    };
+  }, [pathname]);
+
 
   useEffect(() => {
     setMounted(true);
