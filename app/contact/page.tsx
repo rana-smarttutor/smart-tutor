@@ -138,14 +138,6 @@ export default async function ContactPage() {
                     Send an Enquiry
                     <ArrowRight className="h-4 w-4" />
                   </a>
-
-                  <a
-                    href="#visit-campus"
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-white/35 bg-white/10 px-6 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
-                  >
-                    <MapPin className="h-4 w-4" />
-                    Visit Our Campus
-                  </a>
                 </div>
               </div>
 
@@ -233,22 +225,7 @@ export default async function ContactPage() {
             <div
               id="admission-enquiry"
               className="min-w-0 scroll-mt-28 overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(20,45,90,0.06)] sm:p-7"
-            >
-              <div className="mb-6 flex items-start gap-4 border-b border-slate-100 pb-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4D9] text-[#B88717]">
-                  <Mail className="h-6 w-6" />
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-black tracking-tight text-[#112D59] sm:text-2xl">
-                    Send Us an Enquiry
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Fill in the form and our team will get back to you.
-                  </p>
-                </div>
-              </div>
+             >
 
               <ContactEnquiryForm />
             </div>
@@ -273,33 +250,6 @@ export default async function ContactPage() {
               </div>
 
               <div className="divide-y divide-slate-100">
-                {/* ADDRESS */}
-                <div className="flex items-start gap-4 pb-6">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4D9] text-[#B88717]">
-                    <MapPin className="h-5 w-5" />
-                  </div>
-
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-black text-[#102A52]">
-                      Campus Address
-                    </h3>
-
-                    <p className="mt-2 break-words text-sm leading-7 text-slate-600">
-                      {data.profile.address}
-                    </p>
-
-                    <a
-                      href={mapLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-blue-700 hover:underline"
-                    >
-                      Get Directions
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  </div>
-                </div>
-
                 {/* HOURS */}
                 <div className="flex items-start gap-4 py-6">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4D9] text-[#B88717]">
@@ -378,85 +328,9 @@ export default async function ContactPage() {
                   </div>
                 </div>
               </div>
-
-              {/* SOCIAL LINKS */}
-              {data.socialLinks.length > 0 && (
-                <div className="mt-8 rounded-2xl bg-[#F3F7FD] p-5">
-                  <h3 className="text-sm font-black text-[#112D59]">
-                    Connect With Us
-                  </h3>
-
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
-                    Follow our official channels for updates and announcements.
-                  </p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {data.socialLinks.map((item) => (
-                      <a
-                        key={item.label}
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-50"
-                      >
-                        {item.label}
-                        <ExternalLink className="h-3.5 w-3.5" />
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </section>
 
-          {/* MAP SECTION */}
-          <section id="visit-campus" className="mt-8 scroll-mt-28">
-            <div className="grid min-w-0 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(20,45,90,0.06)] lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)]">
-              <div className="flex min-w-0 flex-col justify-center p-6 sm:p-8">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF4D9] text-[#B88717]">
-                  <MapPin className="h-6 w-6" />
-                </div>
-
-                <h2 className="mt-5 text-2xl font-black text-[#112D59]">
-                  Find Us on the Map
-                </h2>
-
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Visit SmartIQ Institute for personalised guidance, admission
-                  assistance and course information.
-                </p>
-
-                <p className="mt-4 break-words text-sm leading-6 text-slate-500">
-                  {data.profile.address}
-                </p>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  {branches.map((branch) => (
-                    <a
-                      key={branch.name}
-                      href={`https://maps.google.com/?q=${encodeURIComponent(
-                        branch.mapQuery || branch.address,
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0A3F85] to-[#075CAD] px-5 py-3 text-xs font-black text-white shadow-sm transition hover:opacity-90"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      Get Directions
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-
-              <div className="min-h-[300px] min-w-0 overflow-hidden border-t border-slate-100 lg:min-h-[360px] lg:border-l lg:border-t-0">
-                <LazyCampusMap
-                  mapLink={mapLink}
-                  address={data.profile.address}
-                />
-              </div>
-            </div>
-          </section>
 
           {/* FINAL CTA */}
           <section className="relative mt-8 overflow-hidden rounded-3xl bg-gradient-to-r from-[#092F67] via-[#0B4B92] to-[#0A65B1] px-6 py-8 text-white sm:px-10 sm:py-10">
