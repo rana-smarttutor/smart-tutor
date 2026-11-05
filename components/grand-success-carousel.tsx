@@ -38,7 +38,7 @@ const RESULT_CATEGORIES = [
   {
     id: "cet",
     label: "CET",
-    image: "/hof/CET.png",
+    image: "/hof/cet-new.png",
   },
   {
     id: "MBA",
@@ -68,7 +68,7 @@ const RESULT_CATEGORIES = [
   {
     id: "ssc cgl",
     label: "SSC CGL",
-    image: "/hof/ssc-clg-new-2.png",
+    image: "/hof/ssc-clg-new-3.png",
   },
 ];
 

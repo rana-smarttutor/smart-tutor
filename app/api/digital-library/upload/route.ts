@@ -1,47 +1,68 @@
-import {
-  handleUpload,
-  type HandleUploadBody,
-} from '@vercel/blob/client';
-import { NextResponse } from 'next/server';
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 
-import { getSessionUser } from '@/lib/auth';
+import { NextResponse } from "next/server";
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+import { getSessionUser } from "@/lib/auth";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 type UploadPayload = {
-  assetType?: 'book' | 'thumbnail';
+  assetType?: "book" | "thumbnail";
   description?: string;
 };
+
+const MAX_THUMBNAIL_BYTES = 5 * 1024 * 1024;
+
+function isValidThumbnailPath(pathname: string): boolean {
+  return (
+    pathname.length <= 600 &&
+    /^digital-library\/thumbnails\/[a-zA-Z0-9_-]+\.(png|jpg|jpeg|webp)$/i.test(
+      pathname,
+    )
+  );
+}
+
+function fail(message: string, status: number) {
+  return NextResponse.json(
+    {
+      success: false,
+      message,
+    },
+    {
+      status,
+      headers: {
+        "Cache-Control": "private, no-store",
+      },
+    },
+  );
+}
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
     const session = await getSessionUser();
-    const role = String(session?.role || 'student').toLowerCase();
 
-    if (role !== 'admin' && role !== 'educator') {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Only admins and educators can upload library materials.',
-        },
-        { status: 403 }
+    const role = String(session?.role || "").toLowerCase();
+
+    if (role !== "admin" && role !== "educator") {
+      return fail(
+        "Only admins and educators can upload library materials.",
+        403,
       );
     }
 
+    // Client uploads to Vercel Blob are retained
+    // temporarily for legacy thumbnail support.
+    //
+    // All PDF uploads through this route are
+    // disabled during the Cloudflare R2 migration.
     if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'BLOB_READ_WRITE_TOKEN is missing.',
-        },
-        { status: 500 }
-      );
+      return fail("Library thumbnail storage is not configured.", 503);
     }
 
     const body = (await request.json()) as HandleUploadBody;
 
-    const jsonResponse = await handleUpload({
+    const response = await handleUpload({
       request,
       body,
 
@@ -53,58 +74,64 @@ export async function POST(request: Request): Promise<NextResponse> {
             ? (JSON.parse(clientPayload) as UploadPayload)
             : {};
         } catch {
-          throw new Error('Invalid upload information.');
+          throw new Error("Invalid upload information.");
         }
 
-        const isBookUpload =
-          payload.assetType === 'book' &&
-          pathname.startsWith('digital-library/books/') &&
-          pathname.toLowerCase().endsWith('.pdf');
+        if (
+          payload.assetType === "book" ||
+          pathname.toLowerCase().endsWith(".pdf")
+        ) {
+          throw new Error(
+            "Digital Library PDF uploads are paused during Cloudflare R2 migration.",
+          );
+        }
 
-        const isThumbnailUpload =
-          payload.assetType === 'thumbnail' &&
-          pathname.startsWith('digital-library/thumbnails/') &&
-          /\.(png|jpg|jpeg|webp)$/i.test(pathname);
-
-        if (!isBookUpload && !isThumbnailUpload) {
-          throw new Error('Invalid digital library file type.');
+        if (
+          payload.assetType !== "thumbnail" ||
+          !isValidThumbnailPath(pathname)
+        ) {
+          throw new Error(
+            "Only valid library thumbnail uploads are supported.",
+          );
         }
 
         return {
-          access: 'public',
+          access: "public",
           addRandomSuffix: false,
-          allowedContentTypes: isBookUpload
-            ? ['application/pdf']
-            : ['image/png', 'image/jpeg', 'image/webp'],
-          maximumSizeInBytes: isBookUpload
-            ? 200 * 1024 * 1024
-            : 5 * 1024 * 1024,
+
+          allowedContentTypes: ["image/png", "image/jpeg", "image/webp"],
+
+          maximumSizeInBytes: MAX_THUMBNAIL_BYTES,
+
           tokenPayload: JSON.stringify({
-            assetType: payload.assetType,
-            description: payload.description,
+            assetType: "thumbnail",
             pathname,
           }),
         };
       },
 
-      onUploadCompleted: async ({ blob, tokenPayload }) => {
-        // Upload completed
+      onUploadCompleted: async () => {
+        // This callback does not create or
+        // modify MongoDB book records.
       },
     });
 
-    return NextResponse.json(jsonResponse);
-  } catch (error) {
-    console.error('Digital library client upload error:', error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to prepare digital library upload.',
+    return NextResponse.json(response, {
+      headers: {
+        "Cache-Control": "private, no-store",
       },
-      { status: 400 }
+    });
+  } catch (error) {
+    console.error(
+      "Library upload API error:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+
+    return fail(
+      error instanceof Error
+        ? error.message
+        : "Unable to prepare library upload.",
+      400,
     );
   }
 }

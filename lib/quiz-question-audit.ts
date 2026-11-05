@@ -1,6 +1,11 @@
 import "server-only";
 
-import { generateGroqQuizJson } from "@/lib/groq-quiz";
+
+import {
+  generateGroqQuizJson,
+  GroqRateLimitError,
+} from "@/lib/groq-quiz";
+
 
 /**
  * Additional best-effort academic checks.
@@ -216,14 +221,25 @@ export async function auditSchoolBoardQuiz(input: AuditInput): Promise<{
     };
 
     reviews = result?.reviews;
-  } catch (error) {
-    console.warn("Groq school-board academic audit unavailable:", error);
 
-    return {
-      ok: false,
-      reason: "Independent academic audit unavailable",
-    };
+} catch (error) {
+  if (error instanceof GroqRateLimitError) {
+    // Temporary API throttling is not an academic rejection.
+    // The generation route will return a retryable response.
+    throw error;
   }
+
+  console.warn(
+    "Groq school-board academic audit unavailable:",
+    error,
+  );
+
+  return {
+    ok: false,
+    reason: "Independent academic audit unavailable",
+  };
+}
+
 
   if (!Array.isArray(reviews) || reviews.length !== input.questions.length) {
     return {

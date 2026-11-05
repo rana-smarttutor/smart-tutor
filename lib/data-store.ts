@@ -1325,9 +1325,47 @@ export type QuizArenaProgress = {
   createdAt: string;
 
   updatedAt: string;
+
+  revision?: number;
 };
 
 type QuizArenaProgressDocument = Document & QuizArenaProgress;
+
+let quizProgressIndexPromise: Promise<void> | null = null;
+
+async function getQuizProgressCollection() {
+  const collection = await getCollection<QuizArenaProgressDocument>(
+    COLLECTIONS.quizArenaProgress,
+  );
+
+  if (!quizProgressIndexPromise) {
+    quizProgressIndexPromise = collection
+      .createIndex(
+        {
+          userId: 1,
+          learningCategory: 1,
+          exam: 1,
+          schoolClass: 1,
+          board: 1,
+          subject: 1,
+          topicId: 1,
+          difficulty: 1,
+        },
+        {
+          unique: true,
+          name: "quiz_progress_unique_scope",
+        },
+      )
+      .then(() => undefined)
+      .catch((error) => {
+        quizProgressIndexPromise = null;
+        throw error;
+      });
+  }
+
+  await quizProgressIndexPromise;
+  return collection;
+}
 
 function normalizeQuizArenaCompletedRounds(
   value: unknown,
@@ -1441,181 +1479,169 @@ export async function getQuizArenaProgress(input: {
 
 export async function saveQuizArenaRoundProgress(input: {
   userId: string;
-
   learningCategory: EducationLevel;
-
   exam: CompetitiveExam;
-
   schoolClass: QuizSchoolClass | null;
-
   board: QuizBoard | null;
-
   subject: string;
-
   topicId?: string | null;
-
   difficulty: Difficulty;
-
   progressionLevel: QuizJourneyLevel;
-
   round: QuizRound;
-
   correctAnswers: number;
-
   incorrectAnswers: number;
-
   score: number;
 }): Promise<QuizArenaProgress> {
-  const collection = await getCollection<QuizArenaProgressDocument>(
-    COLLECTIONS.quizArenaProgress,
-  );
+  const collection = await getQuizProgressCollection();
 
-  const existing = await getQuizArenaProgress({
+  const scope = {
     userId: input.userId,
-
     learningCategory: input.learningCategory,
-
     exam: input.exam,
-
     schoolClass: input.schoolClass,
-
     board: input.board,
-
     subject: input.subject,
-
     topicId: input.topicId ?? null,
-
     difficulty: input.difficulty,
-  });
-
-  const now = new Date().toISOString();
-
-  const completedRounds = normalizeQuizArenaCompletedRounds(
-    existing?.completedRounds,
-  );
-
-  const existingLevelRounds = completedRounds[input.progressionLevel] ?? [];
-
-  const roundAlreadyCompleted = existingLevelRounds.includes(input.round);
-
-  if (!roundAlreadyCompleted) {
-    completedRounds[input.progressionLevel] = [
-      ...existingLevelRounds,
-      input.round,
-    ].sort((left, right) => left - right) as QuizRound[];
-  }
-
-  const completedCurrentLevel =
-    (completedRounds[input.progressionLevel]?.length ?? 0) >=
-    QUIZ_ROUNDS_PER_LEVEL;
-
-  let unlockedLevel = Math.max(
-    existing?.unlockedLevel ?? 1,
-    input.progressionLevel,
-  ) as QuizJourneyLevel;
-
-  if (completedCurrentLevel && input.progressionLevel < 10) {
-    unlockedLevel = Math.max(
-      unlockedLevel,
-      input.progressionLevel + 1,
-    ) as QuizJourneyLevel;
-  }
-
-  const questionsToAdd = roundAlreadyCompleted ? 0 : QUIZ_QUESTIONS_PER_ROUND;
-
-  const correctToAdd = roundAlreadyCompleted
-    ? 0
-    : Math.max(
-        0,
-        Math.min(
-          QUIZ_QUESTIONS_PER_ROUND,
-          Math.floor(Number(input.correctAnswers) || 0),
-        ),
-      );
-
-  const incorrectToAdd = roundAlreadyCompleted
-    ? 0
-    : Math.max(
-        0,
-        Math.min(
-          QUIZ_QUESTIONS_PER_ROUND,
-          Math.floor(Number(input.incorrectAnswers) || 0),
-        ),
-      );
-
-  const scoreToAdd = roundAlreadyCompleted
-    ? 0
-    : Math.max(0, Math.floor(Number(input.score) || 0));
-
-  const progress: QuizArenaProgress = {
-    id: existing?.id ?? `quiz-progress-${randomUUID()}`,
-
-    userId: input.userId,
-
-    learningCategory: input.learningCategory,
-
-    exam: input.exam,
-
-    schoolClass: input.schoolClass,
-
-    board: input.board,
-
-    subject: input.subject,
-
-    topicId: input.topicId ?? null,
-
-    difficulty: input.difficulty,
-
-    unlockedLevel,
-
-    completedRounds,
-
-    totalQuestionsCompleted: Math.min(
-      500,
-      (existing?.totalQuestionsCompleted ?? 0) + questionsToAdd,
-    ),
-
-    totalCorrectAnswers: (existing?.totalCorrectAnswers ?? 0) + correctToAdd,
-
-    totalIncorrectAnswers:
-      (existing?.totalIncorrectAnswers ?? 0) + incorrectToAdd,
-
-    totalScore: (existing?.totalScore ?? 0) + scoreToAdd,
-
-    createdAt: existing?.createdAt ?? now,
-
-    updatedAt: now,
   };
 
-  await collection.updateOne(
-    {
-      userId: input.userId,
+  // Optimistic concurrency control:
+  // Retry when another request updates the record first.
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const existing = await collection.findOne(scope);
 
-      learningCategory: input.learningCategory,
+    const completedRounds = normalizeQuizArenaCompletedRounds(
+      existing?.completedRounds,
+    );
 
-      exam: input.exam,
+    const previousRounds = completedRounds[input.progressionLevel] ?? [];
 
-      schoolClass: input.schoolClass,
+    const roundAlreadyCompleted = previousRounds.includes(input.round);
 
-      board: input.board,
+    if (!roundAlreadyCompleted) {
+      completedRounds[input.progressionLevel] = [
+        ...previousRounds,
+        input.round,
+      ].sort((a, b) => a - b) as QuizRound[];
+    }
 
-      subject: input.subject,
+    const completedCurrentLevel =
+      (completedRounds[input.progressionLevel]?.length ?? 0) >=
+      QUIZ_ROUNDS_PER_LEVEL;
 
-      topicId: input.topicId ?? null,
+    let unlockedLevel = Math.max(
+      existing?.unlockedLevel ?? 1,
+      input.progressionLevel,
+    ) as QuizJourneyLevel;
 
-      difficulty: input.difficulty,
-    },
+    if (completedCurrentLevel && input.progressionLevel < 10) {
+      unlockedLevel = Math.max(
+        unlockedLevel,
+        input.progressionLevel + 1,
+      ) as QuizJourneyLevel;
+    }
 
-    {
-      $set: progress,
-    },
+    const questionsToAdd = roundAlreadyCompleted ? 0 : QUIZ_QUESTIONS_PER_ROUND;
 
-    {
-      upsert: true,
-    },
+    const correctToAdd = roundAlreadyCompleted
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            QUIZ_QUESTIONS_PER_ROUND,
+            Math.floor(Number(input.correctAnswers) || 0),
+          ),
+        );
+
+    const incorrectToAdd = roundAlreadyCompleted
+      ? 0
+      : Math.max(
+          0,
+          Math.min(
+            QUIZ_QUESTIONS_PER_ROUND,
+            Math.floor(Number(input.incorrectAnswers) || 0),
+          ),
+        );
+
+    const scoreToAdd = roundAlreadyCompleted
+      ? 0
+      : Math.max(0, Math.floor(Number(input.score) || 0));
+
+    const now = new Date().toISOString();
+
+    const progress: QuizArenaProgress = {
+      id: existing?.id ?? `quiz-progress-${randomUUID()}`,
+      ...scope,
+      unlockedLevel,
+      completedRounds,
+      totalQuestionsCompleted: Math.min(
+        500,
+        (existing?.totalQuestionsCompleted ?? 0) + questionsToAdd,
+      ),
+      totalCorrectAnswers: (existing?.totalCorrectAnswers ?? 0) + correctToAdd,
+      totalIncorrectAnswers:
+        (existing?.totalIncorrectAnswers ?? 0) + incorrectToAdd,
+      totalScore: (existing?.totalScore ?? 0) + scoreToAdd,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      revision: (existing?.revision ?? 0) + 1,
+    };
+
+    if (existing) {
+      const previousRevision = existing.revision;
+
+      const revisionFilter =
+        typeof previousRevision === "number"
+          ? { revision: previousRevision }
+          : { revision: { $exists: false } };
+
+      const result = await collection.updateOne(
+        {
+          _id: existing._id,
+          ...revisionFilter,
+        } as any,
+        {
+          $set: progress,
+        },
+      );
+
+      if (result.modifiedCount !== 1) {
+        // Another request won the race.
+        // Read fresh state and retry.
+        continue;
+      }
+    } else {
+      try {
+        await collection.insertOne(progress as QuizArenaProgressDocument);
+      } catch (error) {
+        const duplicateKey =
+          error !== null &&
+          typeof error === "object" &&
+          "code" in error &&
+          error.code === 11000;
+
+        if (duplicateKey) {
+          // Another request created the record.
+          // Retry against that record.
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    const saved = await getQuizArenaProgress(scope);
+
+    if (!saved) {
+      throw new Error("Quiz progress was saved but could not be retrieved.");
+    }
+
+    return saved;
+  }
+
+  throw new Error(
+    "Quiz progress is being updated by another request. Please retry.",
   );
-
-  return progress;
 }
 
 // =========================

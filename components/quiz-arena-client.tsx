@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, GraduationCap, X } from "lucide-react";
+import QuizArenaSubscriptionPlans from "@/components/quiz-arena-subscription-plans";
 
 import {
   getQuizExamGroupChildren,
@@ -175,6 +176,8 @@ export default function QuizArenaClient({
 
   const [exitSaveError, setExitSaveError] = useState("");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
+  const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
 
   /*
    * Used by the Mock Test browser-back integration.
@@ -397,12 +400,134 @@ export default function QuizArenaClient({
     };
   }, []);
 
-  function resumePreviousQuiz() {
+  function openSubscriptionPrompt() {
+    setMessage("");
+    setShowSubscriptionPlans(false);
+    setShowSubscriptionPrompt(true);
+  }
+
+  async function checkQuizSubscriptionAccess(
+    progressionLevel: QuizJourneyLevel,
+    round: QuizRound,
+  ): Promise<boolean> {
+    const response = await fetch("/api/quiz-arena/access", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+
+    if (response.status === 401) {
+      setShowLoginPrompt(true);
+      return false;
+    }
+
+    if (!response.ok) {
+      setMessage("Unable to check Quiz Arena access. Please try again.");
+      return false;
+    }
+
+    const data = (await response.json()) as {
+      allowed?: boolean;
+      unlimitedAccess?: boolean;
+      requiresSubscription?: boolean;
+      canStartFreeQuiz?: boolean;
+      mustResumeFreeQuiz?: boolean;
+      freeTrial?: {
+        consumed?: boolean;
+        draftId?: string | null;
+      };
+      subscription?: {
+        active?: boolean;
+      };
+    };
+
+    // Admins and subscribed students have unrestricted access.
+    if (data.unlimitedAccess || data.subscription?.active) {
+      return true;
+    }
+
+    if (data.requiresSubscription || data.freeTrial?.consumed) {
+      openSubscriptionPrompt();
+      return false;
+    }
+
+    // A free quiz has already started and must be resumed.
+    if (data.mustResumeFreeQuiz || data.freeTrial?.draftId) {
+      setMessage(
+        "Your free quiz is already in progress. Continue your saved quiz.",
+      );
+
+      if (unfinishedDraft) {
+        setShowResumeChoice(true);
+      }
+
+      return false;
+    }
+
+    // One free quiz only: Level 1, Round 1.
+    if (
+      data.allowed &&
+      data.canStartFreeQuiz &&
+      progressionLevel === 1 &&
+      round === 1
+    ) {
+      return true;
+    }
+
+    // Any other round requires a subscription.
+    if (
+      data.allowed &&
+      data.canStartFreeQuiz &&
+      (progressionLevel !== 1 || round !== 1)
+    ) {
+      openSubscriptionPrompt();
+      return false;
+    }
+
+    setMessage("Quiz Arena access is unavailable for this account.");
+    return false;
+  }
+
+  async function resumePreviousQuiz() {
     if (!unfinishedDraft) {
       return;
     }
 
     const draft = unfinishedDraft;
+
+    try {
+      const response = await fetch("/api/quiz-arena/access", {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+      if (response.status === 401) {
+        setShowLoginPrompt(true);
+        return;
+      }
+      if (!response.ok) {
+        setMessage("Unable to verify your quiz access.");
+        return;
+      }
+      const access = (await response.json()) as {
+        unlimitedAccess?: boolean;
+        freeTrial?: { draftId?: string | null; consumed?: boolean };
+        subscription?: { active?: boolean };
+      };
+      const unlimited =
+        access.unlimitedAccess === true || access.subscription?.active === true;
+      const freeDraft =
+        access.freeTrial?.consumed !== true &&
+        access.freeTrial?.draftId === draft.id &&
+        draft.progressionLevel === 1 &&
+        draft.round === 1;
+      if (!unlimited && !freeDraft) {
+        openSubscriptionPrompt();
+        return;
+      }
+    } catch {
+      setMessage("Unable to verify your quiz access.");
+      return;
+    }
 
     setSelectedLevel(draft.level);
 
@@ -933,7 +1058,19 @@ export default function QuizArenaClient({
       const data = (await response.json()) as {
         questions?: QuizQuestion[];
         error?: string;
+        code?: string;
+        requiresSubscription?: boolean;
       };
+
+      if (
+        data.requiresSubscription === true ||
+        data.code === "QUIZ_SUBSCRIPTION_REQUIRED" ||
+        data.code === "FREE_TRIAL_USED" ||
+        data.code === "FREE_TRIAL_ROUND_RESTRICTED"
+      ) {
+        openSubscriptionPrompt();
+        return;
+      }
 
       if (!response.ok || !data.questions || data.questions.length === 0) {
         throw new Error(
@@ -977,9 +1114,20 @@ export default function QuizArenaClient({
 
       const draftData = (await draftResponse.json()) as {
         draft?: QuizArenaDraft;
-
         error?: string;
+        code?: string;
+        requiresSubscription?: boolean;
       };
+
+      if (
+        draftData.requiresSubscription === true ||
+        draftData.code === "QUIZ_SUBSCRIPTION_REQUIRED" ||
+        draftData.code === "FREE_TRIAL_USED" ||
+        draftData.code === "FREE_TRIAL_ROUND_RESTRICTED"
+      ) {
+        openSubscriptionPrompt();
+        return;
+      }
 
       if (!draftResponse.ok || !draftData.draft) {
         if (draftResponse.status === 409) {
@@ -1049,9 +1197,40 @@ export default function QuizArenaClient({
         cache: "no-store",
       });
 
-      if (authCheck.status === 401 || authCheck.status === 403) {
+      if (authCheck.status === 401) {
         setShowLoginPrompt(true);
+        return;
+      }
 
+      if (authCheck.status === 403) {
+        const payload = (await authCheck.json().catch(() => null)) as {
+          code?: string;
+          requiresSubscription?: boolean;
+          error?: string;
+        } | null;
+
+        if (
+          payload?.requiresSubscription === true ||
+          payload?.code === "QUIZ_SUBSCRIPTION_REQUIRED" ||
+          payload?.code === "FREE_TRIAL_ROUND_RESTRICTED"
+        ) {
+          openSubscriptionPrompt();
+          return;
+        }
+
+        setMessage(payload?.error ?? "Your account cannot access this quiz.");
+        return;
+      }
+
+      if (authCheck.status === 403) {
+        const issue = (await authCheck.json().catch(() => null)) as {
+          requiresSubscription?: boolean;
+        } | null;
+        if (issue?.requiresSubscription) {
+          openSubscriptionPrompt();
+          return;
+        }
+        setMessage("Access to this quiz is restricted.");
         return;
       }
 
@@ -1061,8 +1240,14 @@ export default function QuizArenaClient({
         return;
       }
 
-      setSelectedRound(roundToStart);
+      const hasAccess = await checkQuizSubscriptionAccess(
+        selectedJourneyLevel,
+        roundToStart,
+      );
 
+      if (!hasAccess) return;
+
+      setSelectedRound(roundToStart);
       await generateChallenge(selectedJourneyLevel, roundToStart);
     } catch (error) {
       console.warn("Login verification failed:", error);
@@ -1366,6 +1551,25 @@ export default function QuizArenaClient({
       return;
     }
 
+    try {
+      const nextLevel =
+        selectedRound < QUIZ_ROUNDS_PER_LEVEL
+          ? selectedJourneyLevel
+          : (Math.min(10, selectedJourneyLevel + 1) as QuizJourneyLevel);
+
+      const nextRound =
+        selectedRound < QUIZ_ROUNDS_PER_LEVEL
+          ? ((selectedRound + 1) as QuizRound)
+          : (1 as QuizRound);
+
+      const hasAccess = await checkQuizSubscriptionAccess(nextLevel, nextRound);
+
+      if (!hasAccess) return;
+    } catch {
+      setMessage("Unable to verify Quiz Arena access. Please try again.");
+      return;
+    }
+
     // Round 1-4 -> immediately start next round
     if (selectedRound < QUIZ_ROUNDS_PER_LEVEL) {
       const nextRound = (selectedRound + 1) as QuizRound;
@@ -1500,6 +1704,84 @@ export default function QuizArenaClient({
       className="relative min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 px-5 py-8 text-white"
       style={{ overflowAnchor: "none" }}
     >
+      {showSubscriptionPrompt && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-slate-950/80 px-4 py-6 backdrop-blur-md"
+          role="presentation"
+          onClick={() => {
+            setShowSubscriptionPrompt(false);
+            setShowSubscriptionPlans(false);
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-subscription-title"
+            onClick={(event) => event.stopPropagation()}
+            className={`max-h-[92dvh] w-full overflow-y-auto rounded-3xl bg-white text-slate-900 shadow-2xl transition-all ${
+              showSubscriptionPlans
+                ? "max-w-6xl p-4 text-left sm:p-6 lg:p-8"
+                : "max-w-lg p-6 text-center sm:p-8"
+            }`}
+          >
+            {showSubscriptionPlans ? (
+              <QuizArenaSubscriptionPlans
+                onClose={() => setShowSubscriptionPlans(false)}
+                onSubscribed={() => {
+                  setShowSubscriptionPrompt(false);
+                  setShowSubscriptionPlans(false);
+                  setMessage(
+                    "Your Quiz Arena subscription is active. Select a round to continue.",
+                  );
+                }}
+              />
+            ) : (
+              <>
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl">
+                  🎓
+                </div>
+                <p className="mt-5 text-xs font-black uppercase tracking-[0.2em] text-blue-700">
+                  SmartIQ Institute
+                </p>
+                <h2
+                  id="quiz-subscription-title"
+                  className="mt-4 text-2xl font-black text-slate-900 sm:text-3xl"
+                >
+                  Unlock Quiz Arena Access
+                </h2>
+                <p className="mt-4 text-sm leading-6 text-slate-600">
+                  Your one-time free access covers Level 1, Round 1 only. Unlock
+                  practice across all categories, levels and rounds.
+                </p>
+                <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+                  <p className="text-4xl font-black text-blue-800">₹49</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    Full access for 30 days
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSubscriptionPlans(true)}
+                  className="mt-6 w-full rounded-xl bg-blue-700 px-5 py-3.5 font-bold text-white transition hover:bg-blue-800"
+                >
+                  View Subscription Plans
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSubscriptionPrompt(false);
+                    setShowSubscriptionPlans(false);
+                  }}
+                  className="mt-4 w-full rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Maybe Later
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {showLoginPrompt && (
         <div
           className="
@@ -2632,13 +2914,26 @@ export default function QuizArenaClient({
                       type="button"
                       key={round}
                       disabled={locked || isGenerating}
-                      onClick={() => {
-                        if (locked || isGenerating) {
+                      onClick={async () => {
+                        if (locked || isGenerating || !selectedJourneyLevel) {
                           return;
                         }
 
-                        setSelectedRound(round);
-                        setMessage("");
+                        try {
+                          const hasAccess = await checkQuizSubscriptionAccess(
+                            selectedJourneyLevel,
+                            round,
+                          );
+                          if (!hasAccess) return;
+
+                          setSelectedRound(round);
+                          setMessage("");
+                        } catch (error) {
+                          console.warn("Unable to check round access:", error);
+                          setMessage(
+                            "Unable to verify Quiz Arena access. Please try again.",
+                          );
+                        }
                       }}
                       className={`rounded-2xl border p-5 text-center transition ${
                         locked

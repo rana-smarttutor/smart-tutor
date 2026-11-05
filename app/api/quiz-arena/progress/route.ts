@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 
 import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
+import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import { getQuizArenaFreeTrialState } from "@/lib/quiz-arena-free-trial";
 
 import {
   getGovernmentExamSyllabus,
@@ -157,14 +159,11 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
 
-    if (
-      session.role === "admin" &&
-      searchParams.get("source") !== "mock-test"
-    ) {
+    const source = searchParams.get("source") ?? "quiz-arena";
+    if (source !== "quiz-arena" && source !== "mock-test") {
       return NextResponse.json(
-        { error: "Admins may load Mock Test progress only." },
-
-        { status: 403 },
+        { error: "Invalid quiz source." },
+        { status: 400 },
       );
     }
 
@@ -419,25 +418,11 @@ export async function POST(request: NextRequest) {
       score?: number;
     };
 
-    if (session.role === "admin") {
-      const draft = await getActiveQuizArenaDraft(session.id);
-
-      if (
-        body.source !== "mock-test" ||
-        !draft ||
-        draft.source !== "mock-test" ||
-        draft.level !== body.level ||
-        draft.exam !== body.exam ||
-        draft.subject !== body.subject ||
-        draft.progressionLevel !== body.progressionLevel ||
-        draft.round !== body.round
-      ) {
-        return NextResponse.json(
-          { error: "Admin progress must match an active Mock Test." },
-
-          { status: 403 },
-        );
-      }
+    if (body.source !== "quiz-arena" && body.source !== "mock-test") {
+      return NextResponse.json(
+        { error: "Invalid quiz source." },
+        { status: 400 },
+      );
     }
 
     if (!isEducationLevel(body.level)) {
@@ -605,28 +590,97 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (requiresTopic) {
-      const draft = await getActiveQuizArenaDraft(session.id);
+    // Progression must match an existing, saved quiz. Never allow a
+    // direct POST to unlock levels or rounds without a corresponding draft.
+    const draft = await getActiveQuizArenaDraft(session.id);
+    if (
+      !draft ||
+      draft.source !== body.source ||
+      draft.level !== body.level ||
+      draft.exam !== body.exam ||
+      draft.schoolClass !== schoolContext.schoolClass ||
+      draft.board !== schoolContext.board ||
+      draft.subject !== subject ||
+      (draft.topicId ?? null) !== topicId ||
+      draft.progressionLevel !== body.progressionLevel ||
+      draft.round !== body.round
+    ) {
+      return NextResponse.json(
+        { error: "Progress does not match the active saved quiz." },
+        { status: 409 },
+      );
+    }
 
-      if (
-        !draft ||
-        draft.source !== "mock-test" ||
-        draft.level !== body.level ||
-        draft.exam !== body.exam ||
-        draft.subject !== subject ||
-        (draft.topicId ?? null) !== topicId ||
-        draft.progressionLevel !== body.progressionLevel ||
-        draft.round !== body.round
-      ) {
+    if (session.role === "student") {
+      const access = await getQuizArenaAccess(session.id, session.role);
+      if (!access.unlimitedAccess) {
+        const trial = await getQuizArenaFreeTrialState(session.id);
+        // The attempts endpoint consumes the free trial after writing
+        // the verified attempt. Only that same reserved draft may progress.
+        if (
+          trial?.consumed !== true ||
+          trial.draftId !== draft.id ||
+          !trial.completedAttemptId
+        ) {
+          return NextResponse.json(
+            {
+              error: "Your quiz attempt must be saved before progression.",
+              code: "VERIFIED_ATTEMPT_REQUIRED",
+            },
+            { status: 409 },
+          );
+        }
+      }
+    }
+
+    // Recalculate results from the saved server-side question and answer
+    // state rather than trusting scores supplied by the browser.
+    const allQuestions = draft.questions;
+    if (
+      allQuestions.length === 0 ||
+      Object.keys(draft.answersByIndex).some((key) => {
+        const index = Number(key);
+        return (
+          !Number.isInteger(index) || index < 0 || index >= allQuestions.length
+        );
+      })
+    ) {
+      return NextResponse.json(
+        { error: "Invalid saved quiz answers." },
+        { status: 409 },
+      );
+    }
+
+    let verifiedCorrect = 0;
+    let verifiedScore = 0;
+    let streak = 0;
+    for (let index = 0; index < allQuestions.length; index += 1) {
+      const question = allQuestions[index];
+      const selected = draft.answersByIndex[index] ?? "";
+      if (selected && !question.options.includes(selected)) {
         return NextResponse.json(
-          {
-            error:
-              "The topic progress does not match the active saved mock test.",
-          },
-
+          { error: "Invalid saved quiz answer." },
           { status: 409 },
         );
       }
+      if (selected === question.correctAnswer) {
+        verifiedCorrect += 1;
+        streak += 1;
+        verifiedScore += 10 + (streak % 3 === 0 ? 5 : 0);
+      } else {
+        streak = 0;
+      }
+    }
+    const verifiedIncorrect = allQuestions.length - verifiedCorrect;
+    if (
+      body.correctAnswers !== verifiedCorrect ||
+      body.incorrectAnswers !== verifiedIncorrect ||
+      body.score !== verifiedScore
+    ) {
+      return NextResponse.json(
+        { error: "Quiz scores do not match the saved answers." },
+        { status: 409 },
+      );
     }
 
     const progress = await saveQuizArenaRoundProgress({
@@ -650,23 +704,11 @@ export async function POST(request: NextRequest) {
 
       round: body.round,
 
-      correctAnswers: Math.max(
-        0,
+      correctAnswers: verifiedCorrect,
 
-        Number(body.correctAnswers) || 0,
-      ),
+      incorrectAnswers: verifiedIncorrect,
 
-      incorrectAnswers: Math.max(
-        0,
-
-        Number(body.incorrectAnswers) || 0,
-      ),
-
-      score: Math.max(
-        0,
-
-        Number(body.score) || 0,
-      ),
+      score: verifiedScore,
     });
 
     return NextResponse.json({

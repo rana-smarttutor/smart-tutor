@@ -5,7 +5,7 @@ import { upload } from "@vercel/blob/client";
 import { useEffect, useMemo, useState } from "react";
 
 import { requestLoginIfNeeded } from "@/lib/request-login";
-
+import LibrarySubscriptionPlans from "@/components/library-subscription-plans";
 
 import {
   BookOpen,
@@ -674,7 +674,23 @@ async function readJsonResponse<
 // BOOK THUMBNAIL
 // =====================================================
 
-function BookThumbnail({ book: _book }: { book: Book }) {
+function BookThumbnail({ book }: { book: Book }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (book.thumbnailUrl && !imageFailed) {
+    return (
+      <img
+        key={book.thumbnailUrl}
+        src={book.thumbnailUrl}
+        alt={`${book.title} book cover`}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+        onError={() => setImageFailed(true)}
+        className="h-full w-auto max-w-full bg-white object-contain"
+      />
+    );
+  }
+
   return (
     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#102d5b] via-[#164477] to-[#081e3c]">
       <div className="flex flex-col items-center gap-2 text-white">
@@ -706,6 +722,41 @@ export function DigitalLibraryClient({
   const [allowedToManage, setAllowedToManage] = useState(canManage);
 
   const [loggedIn, setLoggedIn] = useState(isLoggedIn);
+
+  // Membership appears when a visitor enters the library,
+  // and again when they request a preview or download.
+  // Admins and educators are exempt from the arrival popup.
+  const [isMembershipOpen, setIsMembershipOpen] = useState(!canManage);
+  const [membershipAction, setMembershipAction] = useState<
+    "arrival" | "preview" | "download"
+  >("arrival");
+  const [membershipBook, setMembershipBook] = useState<Book | null>(null);
+
+  function openMembership(action: "preview" | "download", book: Book) {
+    setMembershipBook(book);
+    setMembershipAction(action);
+    setIsMembershipOpen(true);
+  }
+
+  function closeMembership() {
+    setIsMembershipOpen(false);
+    setMembershipBook(null);
+    setMembershipAction("arrival");
+  }
+
+  function proceedAfterMembership() {
+    const book = membershipBook;
+    const action = membershipAction;
+    closeMembership();
+
+    if (!book) return;
+
+    if (action === "preview") {
+      void previewBook(book);
+    } else if (action === "download") {
+      void downloadBook(book);
+    }
+  }
 
   // ===================================================
   // FILTER STATES
@@ -1195,12 +1246,6 @@ export function DigitalLibraryClient({
   // ===================================================
   // OPEN UPLOAD MODAL
   // ===================================================
-
-  function openUpload() {
-    resetModal();
-
-    setIsModalOpen(true);
-  }
 
   // ===================================================
   // OPEN EDIT MODAL
@@ -1700,10 +1745,17 @@ export function DigitalLibraryClient({
   // PREVIEW BOOK
   // ===================================================
 
-  function previewBook(book: Book) {
+  async function previewBook(book: Book) {
     if (!book.pathname) {
       alert("Preview is not available for this material.");
+      return;
+    }
 
+    // Guests should see the login experience
+    // instead of opening an API error in a new tab.
+    const canPreview = await requestLoginIfNeeded("/library");
+
+    if (!canPreview) {
       return;
     }
 
@@ -1711,7 +1763,61 @@ export function DigitalLibraryClient({
       book.pathname,
     )}`;
 
-    window.open(previewUrl, "_blank");
+    try {
+      const response = await fetch(previewUrl, {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert("Please log in to preview this book.");
+          return;
+        }
+
+        if (response.status === 403) {
+          alert("You do not have permission to preview this book.");
+          return;
+        }
+
+        const result = await response.json().catch(() => null);
+
+        throw new Error(result?.message || "Unable to load the book preview.");
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+
+      if (!contentType.includes("application/pdf")) {
+        throw new Error("The server did not return a valid PDF preview.");
+      }
+
+      // Only a successful PDF response is opened.
+      // Authentication errors remain on the library page.
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      const newTab = window.open(objectUrl, "_blank", "noopener,noreferrer");
+
+      if (!newTab) {
+        // Popup blockers can prevent a new tab.
+        // Open the verified preview in the current tab.
+        window.location.assign(objectUrl);
+        return;
+      }
+
+      // Give the PDF viewer time to load before
+      // releasing the temporary browser object URL.
+      window.setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+      }, 120000);
+    } catch (error) {
+      console.error("Book preview error:", error);
+
+      alert(
+        error instanceof Error ? error.message : "Unable to preview this book.",
+      );
+    }
   }
 
   // ===================================================
@@ -2017,7 +2123,6 @@ export function DigitalLibraryClient({
             </div>
           )}
 
-
           {/* =====================================
               PDF STUDY MATERIALS
           ===================================== */}
@@ -2045,7 +2150,11 @@ export function DigitalLibraryClient({
                 {allowedToManage && (
                   <button
                     type="button"
-                    onClick={openUpload}
+                    onClick={() =>
+                      alert(
+                        "New PDF uploads are paused during the Cloudflare R2 migration.",
+                      )
+                    }
                     className="rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
                   >
                     + Upload Material
@@ -2085,49 +2194,98 @@ export function DigitalLibraryClient({
             ) : (
               /* BOOK COLLECTION */
 
-              <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              <div className="mt-6 grid items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {filteredBooks.map((book) => {
                   const categoryName = book.categoryLabel || "Study Material";
 
                   return (
                     <article
                       key={book.pathname || book.id || book._id || book.title}
-                      className="group flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/10"
+                      className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#e2e9f4] bg-white shadow-[0_6px_24px_rgba(20,48,94,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-[0_16px_42px_rgba(22,70,150,0.13)]"
                     >
-                      <div className="relative m-3 mb-0 h-48 overflow-hidden rounded-2xl bg-[#102d5b]">
-                        <BookThumbnail book={book} />
-                        <span className="absolute left-3 top-3 rounded-lg border border-white/20 bg-white/95 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wider text-blue-700 shadow-sm">
-                          PDF Library
+                      {/* A consistent cover gallery gives differently sized PDFs the same visual weight. */}
+                      <div className="relative m-3 mb-0 flex h-[218px] items-center justify-center overflow-hidden rounded-[18px] border border-[#e9eef7] bg-gradient-to-br from-[#f7faff] via-[#eef4fd] to-[#e5eefb] p-4 sm:h-[225px]">
+                        <div className="h-full max-w-full overflow-hidden rounded-md shadow-[0_8px_24px_rgba(15,39,80,0.12)]">
+                          <BookThumbnail book={book} />
+                        </div>
+                        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full border border-white bg-white/95 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#1f52b7] shadow-sm">
+                          <BookOpen size={12} aria-hidden="true" />
+                          Digital book
+                        </span>
+                        <span className="absolute bottom-3 right-3 rounded-lg border border-white/90 bg-white/95 px-2.5 py-1 text-[10px] font-bold text-slate-600 shadow-sm">
+                          PDF
                         </span>
                       </div>
 
-                      <div className="flex flex-1 flex-col p-4 pt-4">
-                        <div className="mb-3 flex items-center gap-2">
-                          <span className="max-w-full truncate rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-bold text-blue-700">
+                      <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          <span className="max-w-full truncate rounded-full bg-[#edf4ff] px-3 py-1.5 text-[11px] font-bold text-[#1c55ae]">
                             {categoryName}
                           </span>
                         </div>
+
                         <h3
                           title={book.title}
-                          className="line-clamp-2 min-h-12 break-words text-[17px] font-extrabold leading-6 tracking-tight text-slate-900"
+                          className="line-clamp-2 min-h-[52px] break-words text-[17px] font-extrabold leading-[26px] tracking-[-0.02em] text-[#14243e]"
                         >
                           {book.title}
                         </h3>
-                        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-slate-500">
+
+                        <p className="mt-2 line-clamp-2 min-h-[42px] text-[12px] leading-[21px] text-[#697991]">
                           {book.description ||
                             "Explore this study material and strengthen your understanding of the subject."}
                         </p>
+
                         <div className="mt-auto pt-5">
+                          <div className="mb-3 flex items-center gap-2 border-t border-[#edf1f7] pt-4 text-xs font-medium text-[#64748b]">
+                            <BookOpen
+                              size={15}
+                              className="text-[#2563eb]"
+                              aria-hidden="true"
+                            />
+                            Free 5-page preview
+                          </div>
+
                           <button
                             type="button"
-                            onClick={() => previewBook(book)}
-                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                            onClick={() => {
+                              if (allowedToManage) {
+                                void previewBook(book);
+                              } else {
+                                openMembership("preview", book);
+                              }
+                            }}
+                            className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#215cf3] px-3 py-3 text-[13px] font-bold text-white shadow-[0_5px_12px_rgba(37,99,235,0.16)] transition hover:bg-[#174bd1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                           >
-                            <BookOpen aria-hidden="true" size={17} />
-                            Read Book
-                            <ChevronRight aria-hidden="true" size={16} />
+                            <BookOpen
+                              size={16}
+                              className="shrink-0"
+                              aria-hidden="true"
+                            />
+                            <span>Preview 5 Pages</span>
+                            <ChevronRight
+                              size={16}
+                              className="shrink-0"
+                              aria-hidden="true"
+                            />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (allowedToManage) {
+                                void downloadBook(book);
+                              } else {
+                                openMembership("download", book);
+                              }
+                            }}
+                            className="mt-2.5 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[#d7e3fb] bg-[#f6f9ff] px-3 py-3 text-[13px] font-bold text-[#2457bf] transition hover:border-[#a9c2f6] hover:bg-[#eaf2ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                          >
+                            <Download size={16} aria-hidden="true" />
+                            Full PDF / Membership
                           </button>
                         </div>
+
                         {allowedToManage && (
                           <div
                             className={`mt-3 grid gap-2 border-t border-slate-100 pt-3 ${
@@ -2161,6 +2319,74 @@ export function DigitalLibraryClient({
           </section>
         </div>
       </div>
+
+      {/* =========================================
+          DIGITAL LIBRARY MEMBERSHIP POPUP
+      ========================================= */}
+      {isMembershipOpen && !allowedToManage && (
+        <div
+          className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/70 px-3 py-5 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeMembership();
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="library-membership-title"
+            className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[24px] bg-white p-4 shadow-2xl sm:p-6"
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h2
+                  id="library-membership-title"
+                  className="text-lg font-extrabold text-slate-900"
+                >
+                  Digital Library Membership
+                </h2>
+                <p className="text-sm text-slate-600">
+                  {membershipAction === "preview"
+                    ? "Explore the membership plans, or continue to your free five-page preview."
+                    : membershipAction === "download"
+                      ? "Choose a membership for full-book downloads."
+                      : "Browse the library and choose a plan whenever you are ready."}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={closeMembership}
+                aria-label="Close membership popup"
+                className="rounded-full p-2 text-slate-600 hover:bg-slate-100"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <LibrarySubscriptionPlans isLoggedIn={loggedIn} canManage={false} />
+
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeMembership}
+                className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+              >
+                Continue Browsing
+              </button>
+              {membershipBook && (
+                <button
+                  type="button"
+                  onClick={proceedAfterMembership}
+                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
+                >
+                  {membershipAction === "preview"
+                    ? "Continue to 5-Page Preview"
+                    : "Try Full PDF Download"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* =========================================
           CREATE SECTION MODAL
@@ -2299,7 +2525,8 @@ export function DigitalLibraryClient({
               <span className="font-black text-slate-950">
                 “{bookToDelete.title}”
               </span>
-              ? This action cannot be undone.
+              ? The book will be archived from the library. Its original PDF and
+              thumbnail will be preserved.
             </p>
 
             {/* ERROR */}

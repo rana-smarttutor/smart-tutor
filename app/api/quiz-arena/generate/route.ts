@@ -2,7 +2,8 @@ import { randomUUID, randomInt } from "crypto";
 import type { Document } from "mongodb";
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { generateGroqQuizJson } from "@/lib/groq-quiz";
+
+import { generateGroqQuizJson, GroqRateLimitError } from "@/lib/groq-quiz";
 
 import {
   competitiveExams,
@@ -59,6 +60,10 @@ import {
   questionHash,
   reserveQuizQuestions,
 } from "@/lib/quiz-seen-questions";
+
+import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
+import { registerQuizArenaGeneratedSet } from "@/lib/quiz-arena-generated-question-sets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -329,7 +334,9 @@ async function askGovernmentGroq(
         maxTokens: 8192,
       });
     } catch (error) {
-      if (attempt === 3) throw error;
+      if (error instanceof GroqRateLimitError || attempt === 3) {
+        throw error;
+      }
       console.warn(
         `Groq question-generation attempt ${attempt} failed:`,
         error,
@@ -552,6 +559,10 @@ Return JSON ONLY: {"checks":[{"index":0,"pass":true,"reason":"short mathematical
         }
       }
     } catch (error) {
+      if (error instanceof GroqRateLimitError) {
+        throw error;
+      }
+
       // Malformed JSON and temporary Groq errors must not poison the bank.
       console.warn("Government round AI batch failed:", error);
     }
@@ -579,10 +590,16 @@ export async function POST(request: Request) {
     }
     const body = (await request.json()) as GenerateQuizRequest;
 
-    if (session.role === "admin" && body.source !== "mock-test") {
+    // Quiz Arena administrators may generate quizzes for testing.
+    // Both Quiz Arena and Mock Test remain authenticated and role-limited.
+    if (
+      body.source !== undefined &&
+      body.source !== "quiz-arena" &&
+      body.source !== "mock-test"
+    ) {
       return NextResponse.json(
-        { error: "Admins may generate Mock Tests only." },
-        { status: 403 },
+        { error: "Invalid quiz source." },
+        { status: 400 },
       );
     }
 
@@ -623,6 +640,68 @@ export async function POST(request: Request) {
         { error: "Please select a valid Quiz Arena round." },
         { status: 400 },
       );
+    }
+
+    // Shared subscription/free-trial gate for both page sources.
+    {
+      const access = await getQuizArenaAccess(session.id, String(session.role));
+
+      if (access.requiresSubscription) {
+        return NextResponse.json(
+          {
+            error:
+              "Your free Quiz Arena trial has ended. Subscribe for ₹49 to continue.",
+            code: "QUIZ_SUBSCRIPTION_REQUIRED",
+            requiresSubscription: true,
+          },
+          { status: 403 },
+        );
+      }
+
+      if (!access.allowed) {
+        return NextResponse.json(
+          { error: "Quiz Arena access is not permitted." },
+          { status: 403 },
+        );
+      }
+
+      if (!access.unlimitedAccess) {
+        if (access.mustResumeFreeQuiz) {
+          return NextResponse.json(
+            {
+              error: "Your free quiz is in progress. Continue your saved quiz.",
+              code: "FREE_QUIZ_IN_PROGRESS",
+              mustResumeFreeQuiz: true,
+              draftId: access.freeTrial.draftId,
+            },
+            { status: 409 },
+          );
+        }
+
+        // A pre-existing draft cannot be replaced to obtain another free quiz.
+        const existingDraft = await getActiveQuizArenaDraft(session.id);
+        if (existingDraft) {
+          return NextResponse.json(
+            {
+              error: "An unfinished quiz exists. Continue it first.",
+              code: "QUIZ_DRAFT_EXISTS",
+            },
+            { status: 409 },
+          );
+        }
+
+        if (!access.canStartFreeQuiz || progressionLevel !== 1 || round !== 1) {
+          return NextResponse.json(
+            {
+              error:
+                "Your free quiz access is limited to Level 1, Round 1. Subscribe for ₹49 to unlock other rounds.",
+              code: "FREE_TRIAL_ROUND_RESTRICTED",
+              requiresSubscription: true,
+            },
+            { status: 403 },
+          );
+        }
+      }
     }
 
     if (!isCompetitiveExam(exam)) {
@@ -846,6 +925,11 @@ export async function POST(request: Request) {
           { status: 409 },
         );
       }
+      await registerQuizArenaGeneratedSet({
+        userId: session.id,
+        source: "mock-test",
+        questions,
+      });
       return NextResponse.json({
         questions,
         generatedByAI: newlyGenerated > 0,
@@ -1076,7 +1160,25 @@ Strict rules:
         }
         parsed = generated as { questions?: GeneratedQuestion[] };
       } catch (error) {
+        if (error instanceof GroqRateLimitError) {
+          return NextResponse.json(
+            {
+              error:
+                "The AI question service is currently busy. Please try again shortly.",
+              code: "GROQ_RATE_LIMITED",
+              retryAfterSeconds: error.retryAfterSeconds,
+            },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": String(error.retryAfterSeconds),
+              },
+            },
+          );
+        }
+
         console.error("Quiz Arena Groq generation failed:", error);
+
         return NextResponse.json(
           {
             error:
@@ -1314,6 +1416,10 @@ Return JSON ONLY:
             continue;
           }
         } catch (error) {
+          if (error instanceof GroqRateLimitError) {
+            throw error;
+          }
+
           console.warn(
             "Topic-wise entrance exam independent review failed:",
             error,
@@ -1362,6 +1468,11 @@ Return JSON ONLY:
         continue;
       }
 
+      await registerQuizArenaGeneratedSet({
+        userId: session.id,
+        source: body.source === "mock-test" ? "mock-test" : "quiz-arena",
+        questions,
+      });
       return NextResponse.json({
         questions,
         generatedByAI: true,
@@ -1379,6 +1490,23 @@ Return JSON ONLY:
       { status: academicAuditRejected ? 422 : 409 },
     );
   } catch (error) {
+    if (error instanceof GroqRateLimitError) {
+      return NextResponse.json(
+        {
+          error:
+            "The AI question service is currently busy. Please try again shortly.",
+          code: "GROQ_RATE_LIMITED",
+          retryAfterSeconds: error.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(error.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     console.error("Quiz Arena generation route error:", error);
 
     return NextResponse.json(

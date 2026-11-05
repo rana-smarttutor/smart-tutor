@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { uploadBufferToMega } from "@/lib/mega";
@@ -49,6 +49,17 @@ export async function POST(request: Request) {
           message: "Only admins and educators can upload library materials.",
         },
         { status: 403 },
+      );
+    }
+
+    if (process.env.LIBRARY_ALLOW_LEGACY_PDF_UPLOADS !== "true") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "MEGA PDF uploads are paused until private storage is ready.",
+          code: "LIBRARY_PDF_UPLOAD_PAUSED",
+        },
+        { status: 503 }
       );
     }
 
@@ -154,3 +165,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

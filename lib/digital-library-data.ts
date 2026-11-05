@@ -321,6 +321,36 @@ function normalizeLegacyBook(
 export async function getDigitalLibraryBooks(
   canAccessPdf: boolean,
 ): Promise<DigitalLibraryBook[]> {
+  // SMARTIQ_MONGODB_CATALOG_FIX
+  // Read the book catalogue from MongoDB, never public Blob metadata.
+  const { listStoredLibraryBooks } = await import(
+    "@/lib/library-book-repository"
+  );
+
+  const storedBooks = await listStoredLibraryBooks();
+
+  if (storedBooks.length !== 110) {
+    throw new Error(
+      `Library catalogue incomplete: ${storedBooks.length}/110 books.`
+    );
+  }
+
+  return storedBooks.map((book) => ({
+    id: encodeURIComponent(book.pathname),
+    title: book.title,
+    description: book.description || "",
+    price: displayPrice(String(book.price || "free")),
+    fileName: book.fileName,
+    pathname: book.pathname,
+    categoryId: book.categoryId,
+    categoryLabel: book.categoryLabel,
+    url: undefined,
+    downloadUrl: getLibraryDownloadRoute(book.pathname),
+    thumbnailUrl: book.thumbnailUrl || undefined,
+    uploadedAt: new Date(book.updatedAt || book.uploadedAt).toISOString(),
+    storageType: "blob" as const,
+  }));
+
   const token = process.env.BLOB_READ_WRITE_TOKEN;
 
   if (!token) {

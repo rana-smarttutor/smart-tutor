@@ -1,4 +1,3 @@
-
 "use client";
 import StudentAdmissionReview from "./student-admission-review";
 import { StaffLectureOverview } from "@/components/staff-lecture-overview";
@@ -12,6 +11,7 @@ import {
   ArrowUpRight,
   BarChart3,
   CalendarDays,
+  CreditCard,
   FileBarChart2,
   Gift,
   Menu,
@@ -155,6 +155,16 @@ const DashboardComplaintBox = dynamic(
     ssr: false,
   },
 );
+const StudentLibrarySubscriptions = dynamic(
+  () => import("@/components/student-library-subscriptions"),
+  { loading: () => <SectionLoading />, ssr: false },
+);
+
+const AdminLibrarySubscriptions = dynamic(
+  () => import("@/components/admin-library-subscriptions"),
+  { loading: () => <SectionLoading />, ssr: false },
+);
+
 const DigitalLibraryClient = dynamic(
   () =>
     import("@/components/digital-library-client").then(
@@ -410,6 +420,7 @@ const sidebarByRole = {
     { id: "certificates", label: "Certificates" },
     { id: "receipts", label: "My Fees" },
     { id: "library", label: "Library" },
+    { id: "my-library-subscription", label: "My Library Subscription" },
     { id: "attendance", label: "Attendance" },
     { id: "leave", label: "Leave" },
   ],
@@ -510,6 +521,7 @@ const sidebarByRole = {
     { id: "timetable", label: "Timetable" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
+    { id: "library-subscriptions", label: "Library Subscriptions" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "chat-monitor", label: "Chat Monitor" },
@@ -649,6 +661,8 @@ const menuSections = [
     label: "Academics",
     items: [
       "library",
+      "library-subscriptions",
+      "my-library-subscription",
       "lectures",
       "timetable",
       "performance",
@@ -761,6 +775,8 @@ const navIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   rewards: <Gift className="h-4 w-4 shrink-0" />,
+  "library-subscriptions": <CreditCard className="h-4 w-4 shrink-0" />,
+  "my-library-subscription": <CreditCard className="h-4 w-4 shrink-0" />,
   lectures: (
     <svg
       className="h-4 w-4 shrink-0"
@@ -1448,7 +1464,8 @@ export function DashboardShell({
   const showTimetable = activeSection === "timetable";
   const showWeeklyTests = activeSection === "weekly-tests";
   const showStudentFeedback = activeSection === "student-feedback";
-  const showMyAdmission = role === "student" && activeSection === "my-admission";
+  const showMyAdmission =
+    role === "student" && activeSection === "my-admission";
   const showDailyActivities = activeSection === "daily-activities";
   const showFeeInstallments = activeSection === "fee-installments";
   const showReceipts = activeSection === "receipts";
@@ -1860,10 +1877,13 @@ export function DashboardShell({
                           return;
                         }
 
-
-
-                        if (role === "parent" && item.id === "child-admission") {
-                          window.location.assign("/dashboard/admissions/guardian");
+                        if (
+                          role === "parent" &&
+                          item.id === "child-admission"
+                        ) {
+                          window.location.assign(
+                            "/dashboard/admissions/guardian",
+                          );
                           return;
                         }
 
@@ -1999,7 +2019,9 @@ export function DashboardShell({
                   <Gift className="h-3.5 w-3.5" />
                 </span>
 
-                <span className="relative whitespace-nowrap">Earn Ã¢â€šÂ¹2,000</span>
+                <span className="relative whitespace-nowrap">
+                  Earn Ã¢â€šÂ¹2,000
+                </span>
               </button>
             ) : null}
 
@@ -2374,9 +2396,7 @@ export function DashboardShell({
             />
           ) : null}
 
-          {showMyAdmission ? (
-            <StudentAdmissionReview />
-          ) : null}
+          {showMyAdmission ? <StudentAdmissionReview /> : null}
 
           {showDailyActivities ? (
             <DailyLearningActivityManager
@@ -2568,6 +2588,14 @@ export function DashboardShell({
                 canManage={role === "admin" || role === "educator"}
               />
             )
+          ) : null}
+
+          {activeSection === "my-library-subscription" && role === "student" ? (
+            <StudentLibrarySubscriptions />
+          ) : null}
+
+          {activeSection === "library-subscriptions" && role === "admin" ? (
+            <AdminLibrarySubscriptions />
           ) : null}
 
           {showPerformance ? (

@@ -1,11 +1,6 @@
-import {
-  NextRequest,
-  NextResponse,
-} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-import {
-  getSessionUser,
-} from "@/lib/auth";
+import { getSessionUser } from "@/lib/auth";
 
 import {
   createQuizArenaRoundAttempt,
@@ -27,48 +22,28 @@ import {
   type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 
-
 import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
+import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import {
+  consumeQuizArenaFreeTrial,
+  getQuizArenaFreeTrialState,
+} from "@/lib/quiz-arena-free-trial";
 
-const validDifficulties: Difficulty[] = [
-  "easy",
-  "medium",
-  "hard",
-];
+const validDifficulties: Difficulty[] = ["easy", "medium", "hard"];
 
-
-function isEducationLevel(
-  value: unknown,
-): value is EducationLevel {
-  return levelOptions.some(
-    (option) =>
-      option.id === value,
-  );
+function isEducationLevel(value: unknown): value is EducationLevel {
+  return levelOptions.some((option) => option.id === value);
 }
 
-
-function isCompetitiveExam(
-  value: unknown,
-): value is CompetitiveExam {
-  return competitiveExams.some(
-    (option) =>
-      option.id === value,
-  );
+function isCompetitiveExam(value: unknown): value is CompetitiveExam {
+  return competitiveExams.some((option) => option.id === value);
 }
 
-
-function isDifficulty(
-  value: unknown,
-): value is Difficulty {
-  return validDifficulties.includes(
-    value as Difficulty,
-  );
+function isDifficulty(value: unknown): value is Difficulty {
+  return validDifficulties.includes(value as Difficulty);
 }
 
-
-function isQuizJourneyLevel(
-  value: unknown,
-): value is QuizJourneyLevel {
+function isQuizJourneyLevel(value: unknown): value is QuizJourneyLevel {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -77,10 +52,7 @@ function isQuizJourneyLevel(
   );
 }
 
-
-function isQuizRound(
-  value: unknown,
-): value is QuizRound {
+function isQuizRound(value: unknown): value is QuizRound {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -89,15 +61,9 @@ function isQuizRound(
   );
 }
 
-
-function isQuizBoard(
-  value: unknown,
-): value is QuizBoard {
-  return quizBoardOptions.some(
-    (board) => board.id === value,
-  );
+function isQuizBoard(value: unknown): value is QuizBoard {
+  return quizBoardOptions.some((board) => board.id === value);
 }
-
 
 type SchoolContext =
   | {
@@ -110,45 +76,36 @@ type SchoolContext =
       error: string;
     };
 
-
 function parseSchoolContext(
   exam: CompetitiveExam,
   schoolClassValue: unknown,
   boardValue: unknown,
 ): SchoolContext {
-  const allowedClasses =
-    getQuizSchoolClasses(exam);
+  const allowedClasses = getQuizSchoolClasses(exam);
 
-  let schoolClass:
-    QuizSchoolClass | null = null;
+  let schoolClass: QuizSchoolClass | null = null;
 
-  let board:
-    QuizBoard | null = null;
+  let board: QuizBoard | null = null;
 
   if (allowedClasses.length > 0) {
     if (
       typeof schoolClassValue !== "string" ||
-      !allowedClasses.includes(
-        schoolClassValue as QuizSchoolClass,
-      )
+      !allowedClasses.includes(schoolClassValue as QuizSchoolClass)
     ) {
       return {
         ok: false,
-        error:
-          "Please select a valid class.",
+        error: "Please select a valid class.",
       };
     }
 
-    schoolClass =
-      schoolClassValue as QuizSchoolClass;
+    schoolClass = schoolClassValue as QuizSchoolClass;
   }
 
   if (requiresQuizBoard(exam)) {
     if (!isQuizBoard(boardValue)) {
       return {
         ok: false,
-        error:
-          "Please select HSC or CBSE.",
+        error: "Please select HSC or CBSE.",
       };
     }
 
@@ -162,89 +119,51 @@ function parseSchoolContext(
   };
 }
 
-
 function normalizeAttemptQuestion(
   value: unknown,
-):
-  | QuizArenaAttemptQuestion
-  | null {
-  if (
-    !value ||
-    typeof value !== "object"
-  ) {
+): QuizArenaAttemptQuestion | null {
+  if (!value || typeof value !== "object") {
     return null;
   }
 
-  const question =
-    value as Partial<
-      QuizArenaAttemptQuestion
-    >;
+  const question = value as Partial<QuizArenaAttemptQuestion>;
 
   if (
-    typeof question.questionId !==
-      "string" ||
-    typeof question.question !==
-      "string" ||
-    !Array.isArray(
-      question.options,
-    ) ||
-    typeof question.selectedAnswer !==
-      "string" ||
-    typeof question.correctAnswer !==
-      "string" ||
-    typeof question.isCorrect !==
-      "boolean" ||
-    typeof question.explanation !==
-      "string"
+    typeof question.questionId !== "string" ||
+    typeof question.question !== "string" ||
+    !Array.isArray(question.options) ||
+    typeof question.selectedAnswer !== "string" ||
+    typeof question.correctAnswer !== "string" ||
+    typeof question.isCorrect !== "boolean" ||
+    typeof question.explanation !== "string"
   ) {
     return null;
   }
 
   return {
-    questionId:
-      question.questionId,
+    questionId: question.questionId,
 
-    question:
-      question.question,
+    question: question.question,
 
-    options:
-      question.options.filter(
-        (
-          option,
-        ): option is string =>
-          typeof option ===
-          "string",
-      ),
+    options: question.options.filter(
+      (option): option is string => typeof option === "string",
+    ),
 
-    selectedAnswer:
-      question.selectedAnswer,
+    selectedAnswer: question.selectedAnswer,
 
-    correctAnswer:
-      question.correctAnswer,
+    correctAnswer: question.correctAnswer,
 
-    isCorrect:
-      question.isCorrect,
+    isCorrect: question.isCorrect,
 
-    explanation:
-      question.explanation,
+    explanation: question.explanation,
 
-    timeTakenMs:
-      Math.max(
-        0,
-        Number(
-          question.timeTakenMs,
-        ) || 0,
-      ),
+    timeTakenMs: Math.max(0, Number(question.timeTakenMs) || 0),
   };
 }
 
-
-export async function POST(
-  request: NextRequest,
-) {
+export async function POST(request: NextRequest) {
   try {
-    const session =
-      await getSessionUser();
+    const session = await getSessionUser();
 
     if (
       !session ||
@@ -253,8 +172,7 @@ export async function POST(
     ) {
       return NextResponse.json(
         {
-          error:
-            "An active student or admin account is required.",
+          error: "An active student or admin account is required.",
         },
         {
           status: 401,
@@ -262,53 +180,44 @@ export async function POST(
       );
     }
 
-    const body =
-      (await request.json()) as {
-        draftId?: string;
+    const body = (await request.json()) as {
+      draftId?: string;
 
-        level?: EducationLevel;
+      level?: EducationLevel;
 
-        exam?: CompetitiveExam;
+      exam?: CompetitiveExam;
 
-        schoolClass?:
-          QuizSchoolClass | null;
+      schoolClass?: QuizSchoolClass | null;
 
-        board?:
-          QuizBoard | null;
+      board?: QuizBoard | null;
 
-        subject?: string;
+      subject?: string;
 
-        topicId?: string | null;
+      topicId?: string | null;
 
-        progressionLevel?:
-          QuizJourneyLevel;
+      progressionLevel?: QuizJourneyLevel;
 
-        round?: QuizRound;
+      round?: QuizRound;
 
-        difficulty?: Difficulty;
+      difficulty?: Difficulty;
 
-        score?: number;
+      score?: number;
 
-        correctAnswers?: number;
+      correctAnswers?: number;
 
-        incorrectAnswers?: number;
+      incorrectAnswers?: number;
 
-        totalTimeMs?: number;
+      totalTimeMs?: number;
 
-        averageQuestionTimeMs?: number;
+      averageQuestionTimeMs?: number;
 
-        questions?: unknown[];
-      };
+      questions?: unknown[];
+    };
 
-    if (
-      !isEducationLevel(
-        body.level,
-      )
-    ) {
+    if (!isEducationLevel(body.level)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid Quiz Arena category.",
+          error: "Invalid Quiz Arena category.",
         },
         {
           status: 400,
@@ -316,15 +225,10 @@ export async function POST(
       );
     }
 
-    if (
-      !isCompetitiveExam(
-        body.exam,
-      )
-    ) {
+    if (!isCompetitiveExam(body.exam)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid Quiz Arena exam.",
+          error: "Invalid Quiz Arena exam.",
         },
         {
           status: 400,
@@ -332,18 +236,16 @@ export async function POST(
       );
     }
 
-    const schoolContext =
-      parseSchoolContext(
-        body.exam,
-        body.schoolClass,
-        body.board,
-      );
+    const schoolContext = parseSchoolContext(
+      body.exam,
+      body.schoolClass,
+      body.board,
+    );
 
     if (!schoolContext.ok) {
       return NextResponse.json(
         {
-          error:
-            schoolContext.error,
+          error: schoolContext.error,
         },
         {
           status: 400,
@@ -351,14 +253,12 @@ export async function POST(
       );
     }
 
-    const subject =
-      body.subject?.trim();
+    const subject = body.subject?.trim();
 
     if (!subject) {
       return NextResponse.json(
         {
-          error:
-            "Quiz subject is required.",
+          error: "Quiz subject is required.",
         },
         {
           status: 400,
@@ -366,15 +266,10 @@ export async function POST(
       );
     }
 
-    if (
-      !isQuizJourneyLevel(
-        body.progressionLevel,
-      )
-    ) {
+    if (!isQuizJourneyLevel(body.progressionLevel)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid progression level.",
+          error: "Invalid progression level.",
         },
         {
           status: 400,
@@ -382,15 +277,10 @@ export async function POST(
       );
     }
 
-    if (
-      !isQuizRound(
-        body.round,
-      )
-    ) {
+    if (!isQuizRound(body.round)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid round.",
+          error: "Invalid round.",
         },
         {
           status: 400,
@@ -398,15 +288,10 @@ export async function POST(
       );
     }
 
-    if (
-      !isDifficulty(
-        body.difficulty,
-      )
-    ) {
+    if (!isDifficulty(body.difficulty)) {
       return NextResponse.json(
         {
-          error:
-            "Invalid difficulty.",
+          error: "Invalid difficulty.",
         },
         {
           status: 400,
@@ -414,25 +299,16 @@ export async function POST(
       );
     }
 
-    const questions =
-      (body.questions ?? [])
-        .map(
-          normalizeAttemptQuestion,
-        )
-        .filter(
-          (
-            question,
-          ): question is QuizArenaAttemptQuestion =>
-            question !== null,
-        );
+    const questions = (body.questions ?? [])
+      .map(normalizeAttemptQuestion)
+      .filter(
+        (question): question is QuizArenaAttemptQuestion => question !== null,
+      );
 
-    if (
-      questions.length === 0
-    ) {
+    if (questions.length === 0) {
       return NextResponse.json(
         {
-          error:
-            "Question timing data is required.",
+          error: "Question timing data is required.",
         },
         {
           status: 400,
@@ -440,15 +316,12 @@ export async function POST(
       );
     }
 
-        /*
+    /*
      * Validate that the completed quiz belongs
      * to the logged-in student's saved draft.
      */
 
-    if (
-      typeof body.draftId !== "string" ||
-      !body.draftId
-    ) {
+    if (typeof body.draftId !== "string" || !body.draftId) {
       return NextResponse.json(
         {
           error: "Quiz draft ID is required.",
@@ -457,9 +330,7 @@ export async function POST(
       );
     }
 
-    const draft = await getActiveQuizArenaDraft(
-      session.id,
-    );
+    const draft = await getActiveQuizArenaDraft(session.id);
 
     if (!draft || draft.id !== body.draftId) {
       return NextResponse.json(
@@ -467,13 +338,6 @@ export async function POST(
           error: "The unfinished quiz could not be found.",
         },
         { status: 409 },
-      );
-    }
-
-    if (session.role === "admin" && draft.source !== "mock-test") {
-      return NextResponse.json(
-        { error: "Admins may save Mock Test attempts only." },
-        { status: 403 },
       );
     }
 
@@ -490,11 +354,57 @@ export async function POST(
     ) {
       return NextResponse.json(
         {
-          error:
-            "The completed quiz does not match the saved draft.",
+          error: "The completed quiz does not match the saved draft.",
         },
         { status: 400 },
       );
+    }
+
+    // Both source labels share one permanent free trial.
+    // A previously completed attempt on the *same* reserved draft can
+    // be safely retried when a later progress/status request failed.
+    let mustConsumeFreeTrial = false;
+    if (session.role === "student") {
+      const access = await getQuizArenaAccess(session.id, session.role);
+      if (access.subscription.active !== true && !access.unlimitedAccess) {
+        const trial = await getQuizArenaFreeTrialState(session.id);
+        const expectedAttemptId = `quiz-attempt-${draft.id}`;
+        const isSameCompletedAttempt =
+          trial?.consumed === true &&
+          trial.draftId === draft.id &&
+          trial.completedAttemptId === expectedAttemptId;
+
+        if (trial?.consumed && !isSameCompletedAttempt) {
+          return NextResponse.json(
+            {
+              error:
+                "Your free Quiz Arena trial has ended. Subscribe for ₹49 to continue.",
+              code: "QUIZ_SUBSCRIPTION_REQUIRED",
+              requiresSubscription: true,
+            },
+            { status: 403 },
+          );
+        }
+
+        if (trial?.draftId !== draft.id) {
+          return NextResponse.json(
+            {
+              error: "This attempt does not match your reserved free quiz.",
+              code: "FREE_TRIAL_DRAFT_MISMATCH",
+            },
+            { status: 409 },
+          );
+        }
+
+        if (draft.progressionLevel !== 1 || draft.round !== 1) {
+          return NextResponse.json(
+            { error: "The free trial allows Level 1, Round 1 only." },
+            { status: 403 },
+          );
+        }
+
+        mustConsumeFreeTrial = !isSameCompletedAttempt;
+      }
     }
 
     const questionsMatchDraft =
@@ -502,8 +412,7 @@ export async function POST(
       questions.every((question, index) => {
         const original = draft.questions[index];
 
-        const savedAnswer =
-          draft.answersByIndex[index] ?? "";
+        const savedAnswer = draft.answersByIndex[index] ?? "";
 
         return (
           question.questionId === original.id &&
@@ -512,8 +421,7 @@ export async function POST(
             JSON.stringify(original.options) &&
           question.correctAnswer === original.correctAnswer &&
           question.selectedAnswer === savedAnswer &&
-          question.isCorrect ===
-            (savedAnswer === original.correctAnswer)
+          question.isCorrect === (savedAnswer === original.correctAnswer)
         );
       });
 
@@ -526,95 +434,104 @@ export async function POST(
         { status: 409 },
       );
     }
-const attempt =
-      await createQuizArenaRoundAttempt({
-        userId:
-          session.id,
+    // Derive results from the persisted draft, not the caller's totals.
+    let verifiedCorrect = 0;
+    let verifiedScore = 0;
+    let correctStreak = 0;
+    for (let index = 0; index < draft.questions.length; index += 1) {
+      const original = draft.questions[index];
+      const selected = draft.answersByIndex[index] ?? "";
+      if (selected === original.correctAnswer) {
+        verifiedCorrect += 1;
+        correctStreak += 1;
+        verifiedScore += 10 + (correctStreak % 3 === 0 ? 5 : 0);
+      } else {
+        correctStreak = 0;
+      }
+    }
+    const verifiedIncorrect = draft.questions.length - verifiedCorrect;
 
+    if (
+      body.correctAnswers !== verifiedCorrect ||
+      body.incorrectAnswers !== verifiedIncorrect ||
+      body.score !== verifiedScore
+    ) {
+      return NextResponse.json(
+        { error: "Quiz scores do not match the saved answers." },
+        { status: 409 },
+      );
+    }
+
+    const verifiedQuestions: QuizArenaAttemptQuestion[] = questions.map(
+      (question, index) => ({
+        ...question,
+        correctAnswer: draft.questions[index].correctAnswer,
+        isCorrect:
+          (draft.answersByIndex[index] ?? "") ===
+          draft.questions[index].correctAnswer,
+        explanation: draft.questions[index].explanation,
+        selectedAnswer: draft.answersByIndex[index] ?? "",
+      }),
+    );
+
+    const attempt = await createQuizArenaRoundAttempt({
+      userId: session.id,
+
+      draftId: draft.id,
+
+      learningCategory: body.level,
+
+      exam: body.exam,
+
+      schoolClass: schoolContext.schoolClass,
+
+      board: schoolContext.board,
+
+      subject,
+
+      topicId: draft.topicId ?? null,
+
+      progressionLevel: body.progressionLevel,
+
+      round: body.round,
+
+      difficulty: body.difficulty,
+
+      score: verifiedScore,
+
+      correctAnswers: verifiedCorrect,
+
+      incorrectAnswers: verifiedIncorrect,
+
+      totalTimeMs: Math.max(0, Number(body.totalTimeMs) || 0),
+
+      averageQuestionTimeMs: Math.max(
+        0,
+        Number(body.averageQuestionTimeMs) || 0,
+      ),
+
+      questions: verifiedQuestions,
+    });
+
+    // Saving an attempt is idempotent per draft in data-store.
+    // Consume the one-time trial only AFTER the verified attempt exists.
+    if (mustConsumeFreeTrial) {
+      await consumeQuizArenaFreeTrial({
+        userId: session.id,
         draftId: draft.id,
-
-        learningCategory:
-          body.level,
-
-        exam:
-          body.exam,
-
-        schoolClass:
-          schoolContext.schoolClass,
-
-        board:
-          schoolContext.board,
-
-        subject,
-
-        topicId: draft.topicId ?? null,
-
-        progressionLevel:
-          body.progressionLevel,
-
-        round:
-          body.round,
-
-        difficulty:
-          body.difficulty,
-
-        score:
-          Math.max(
-            0,
-            Number(
-              body.score,
-            ) || 0,
-          ),
-
-        correctAnswers:
-          Math.max(
-            0,
-            Number(
-              body.correctAnswers,
-            ) || 0,
-          ),
-
-        incorrectAnswers:
-          Math.max(
-            0,
-            Number(
-              body.incorrectAnswers,
-            ) || 0,
-          ),
-
-        totalTimeMs:
-          Math.max(
-            0,
-            Number(
-              body.totalTimeMs,
-            ) || 0,
-          ),
-
-        averageQuestionTimeMs:
-          Math.max(
-            0,
-            Number(
-              body.averageQuestionTimeMs,
-            ) || 0,
-          ),
-
-        questions,
+        completedAttemptId: attempt.id,
       });
+    }
 
     return NextResponse.json({
       attempt,
     });
-  }
-  catch (error) {
-    console.error(
-      "Quiz Arena attempt POST error:",
-      error,
-    );
+  } catch (error) {
+    console.error("Quiz Arena attempt POST error:", error);
 
     return NextResponse.json(
       {
-        error:
-          "Unable to save Quiz Arena attempt.",
+        error: "Unable to save Quiz Arena attempt.",
       },
       {
         status: 500,

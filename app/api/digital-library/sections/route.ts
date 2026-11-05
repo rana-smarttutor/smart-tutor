@@ -43,13 +43,42 @@ async function readCustomSections(token: string): Promise<LibrarySection[]> {
   });
 
   if (!response.ok) {
-    return [];
+    throw new Error("Unable to load library section metadata.");
   }
 
-  const data = (await response.json()) as { sections?: LibrarySection[] };
+  const data = (await response.json()) as {
+    sections?: LibrarySection[];
+  };
 
   return Array.isArray(data.sections) ? data.sections : [];
 }
+
+function fail(message: string, status: number) {
+  return NextResponse.json(
+    {
+      success: false,
+      message,
+    },
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    },
+  );
+}
+
+// =====================================================
+// GET - READ LIBRARY SECTIONS
+// =====================================================
+
+// Browsing library sections is allowed.
+//
+// The Digital Library download lockdown is
+// enforced separately by the download API.
+//
+// Do not use the download lockdown to prevent
+// users from browsing course sections.
 
 export async function GET() {
   try {
@@ -59,61 +88,78 @@ export async function GET() {
       return NextResponse.json(
         {
           success: false,
-          message: "BLOB_READ_WRITE_TOKEN is missing.",
+          message: "Library section storage is not configured.",
           sections: [],
         },
-        { status: 500 },
+        {
+          status: 503,
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        },
       );
     }
 
     const sections = await readCustomSections(token);
 
-    return NextResponse.json({
-      success: true,
-      sections,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        sections,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
+    );
   } catch (error) {
-    console.error("Digital library sections load error:", error);
+    console.error(
+      "Digital Library sections load error:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to load library sections.",
+        message: "Unable to load library sections.",
         sections: [],
       },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
     );
   }
 }
 
+// =====================================================
+// POST - CREATE LIBRARY SECTION
+// =====================================================
+
+// Only admins and educators can create sections.
+// Existing Vercel section metadata is preserved
+// during the R2 migration.
+
 export async function POST(request: Request) {
   try {
     const session = await getSessionUser();
-    const role = String(session?.role || "student").toLowerCase();
+
+    const role = String(session?.role || "").toLowerCase();
 
     if (role !== "admin" && role !== "educator") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Only admins and educators can create library sections.",
-        },
-        { status: 403 },
+      return fail(
+        "Only admins and educators can create library sections.",
+        403,
       );
     }
 
     const token = process.env.BLOB_READ_WRITE_TOKEN;
 
     if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "BLOB_READ_WRITE_TOKEN is missing.",
-        },
-        { status: 500 },
-      );
+      return fail("Library section storage is not configured.", 503);
     }
 
     const body = (await request.json()) as {
@@ -122,30 +168,19 @@ export async function POST(request: Request) {
     };
 
     const label = sanitizeTextInput(body.label, 80);
+
     const description =
       sanitizeTextInput(body.description, 180) ||
       "Custom digital library section.";
 
     if (!label) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Section name is required.",
-        },
-        { status: 400 },
-      );
+      return fail("Section name is required.", 400);
     }
 
     const id = slugify(label);
 
     if (!id) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid section name.",
-        },
-        { status: 400 },
-      );
+      return fail("Invalid section name.", 400);
     }
 
     const existingSections = await readCustomSections(token);
@@ -157,13 +192,7 @@ export async function POST(request: Request) {
     );
 
     if (alreadyExists) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "This section already exists.",
-        },
-        { status: 409 },
-      );
+      return fail("This section already exists.", 409);
     }
 
     const sections = [
@@ -201,30 +230,34 @@ export async function POST(request: Request) {
       method: "POST",
       request,
       session,
-      metadata: { sectionId: id, label },
-    });
-
-    return NextResponse.json({
-      success: true,
-      sections,
-      section: {
-        id,
+      metadata: {
+        sectionId: id,
         label,
-        description,
       },
     });
-  } catch (error) {
-    console.error("Digital library section create error:", error);
 
     return NextResponse.json(
       {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to create library section.",
+        success: true,
+        sections,
+        section: {
+          id,
+          label,
+          description,
+        },
       },
-      { status: 500 },
+      {
+        headers: {
+          "Cache-Control": "no-store",
+        },
+      },
     );
+  } catch (error) {
+    console.error(
+      "Digital Library section create error:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+
+    return fail("Unable to create library section.", 500);
   }
 }

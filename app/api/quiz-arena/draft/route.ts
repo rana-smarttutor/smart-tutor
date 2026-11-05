@@ -13,14 +13,9 @@ import {
   isValidCompetitiveExamTopic,
 } from "@/lib/competitive-exam-topics";
 
-import {
-  getMbaExamSyllabus,
-  isValidMbaExamTopic,
-} from "@/lib/mba-exam-topics";
+import { getMbaExamSyllabus, isValidMbaExamTopic } from "@/lib/mba-exam-topics";
 
-import {
-  getGovernmentTopicQuestions,
-} from "@/lib/government-question-bank";
+import { getGovernmentTopicQuestions } from "@/lib/government-question-bank";
 
 import {
   competitiveExams,
@@ -52,56 +47,38 @@ import {
   type SaveQuizArenaDraftInput,
 } from "@/lib/quiz-arena-drafts";
 
+import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import { isServerGeneratedQuizArenaSet } from "@/lib/quiz-arena-generated-question-sets";
+import {
+  reserveQuizArenaFreeTrial,
+  getQuizArenaFreeTrialState,
+  QuizArenaTrialError,
+} from "@/lib/quiz-arena-free-trial";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function errorResponse(
-  message: string,
-  status: number,
-) {
-  return NextResponse.json(
-    { error: message },
-    { status },
-  );
+function errorResponse(message: string, status: number) {
+  return NextResponse.json({ error: message }, { status });
 }
 
-function isEducationLevel(
-  value: unknown,
-): value is EducationLevel {
-  return levelOptions.some(
-    (option) => option.id === value,
-  );
+function isEducationLevel(value: unknown): value is EducationLevel {
+  return levelOptions.some((option) => option.id === value);
 }
 
-function isCompetitiveExam(
-  value: unknown,
-): value is CompetitiveExam {
-  return competitiveExams.some(
-    (option) => option.id === value,
-  );
+function isCompetitiveExam(value: unknown): value is CompetitiveExam {
+  return competitiveExams.some((option) => option.id === value);
 }
 
-function isQuizBoard(
-  value: unknown,
-): value is QuizBoard {
-  return quizBoardOptions.some(
-    (option) => option.id === value,
-  );
+function isQuizBoard(value: unknown): value is QuizBoard {
+  return quizBoardOptions.some((option) => option.id === value);
 }
 
-function isDifficulty(
-  value: unknown,
-): value is Difficulty {
-  return (
-    value === "easy" ||
-    value === "medium" ||
-    value === "hard"
-  );
+function isDifficulty(value: unknown): value is Difficulty {
+  return value === "easy" || value === "medium" || value === "hard";
 }
 
-function isJourneyLevel(
-  value: unknown,
-): value is QuizJourneyLevel {
+function isJourneyLevel(value: unknown): value is QuizJourneyLevel {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -110,9 +87,7 @@ function isJourneyLevel(
   );
 }
 
-function isRound(
-  value: unknown,
-): value is QuizRound {
+function isRound(value: unknown): value is QuizRound {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -121,18 +96,11 @@ function isRound(
   );
 }
 
-function isSource(
-  value: unknown,
-): value is QuizArenaDraftSource {
-  return (
-    value === "quiz-arena" ||
-    value === "mock-test"
-  );
+function isSource(value: unknown): value is QuizArenaDraftSource {
+  return value === "quiz-arena" || value === "mock-test";
 }
 
-function isValidQuestion(
-  value: unknown,
-): value is QuizQuestion {
+function isValidQuestion(value: unknown): value is QuizQuestion {
   if (!value || typeof value !== "object") {
     return false;
   }
@@ -146,14 +114,10 @@ function isValidQuestion(
     question.question.length > 0 &&
     Array.isArray(question.options) &&
     question.options.length === 4 &&
-    question.options.every(
-      (option) => typeof option === "string",
-    ) &&
+    question.options.every((option) => typeof option === "string") &&
     new Set(question.options).size === 4 &&
     typeof question.correctAnswer === "string" &&
-    question.options.includes(
-      question.correctAnswer,
-    ) &&
+    question.options.includes(question.correctAnswer) &&
     typeof question.explanation === "string" &&
     typeof question.subject === "string"
   );
@@ -182,12 +146,28 @@ export async function GET() {
       return errorResponse("This quiz is not available for your account.", 403);
     }
 
-    const draft = await getActiveQuizArenaDraft(
-      session.id,
-    );
+    const draft = await getActiveQuizArenaDraft(session.id);
+    if (draft && session.role === "student") {
+      const access = await getQuizArenaAccess(session.id, session.role);
+      const freeDraft =
+        !access.freeTrial.consumed &&
+        access.freeTrial.draftId === draft.id &&
+        draft.progressionLevel === 1 &&
+        draft.round === 1;
+      if (!access.unlimitedAccess && !freeDraft) {
+        return NextResponse.json(
+          {
+            error: "Subscription required to resume this round.",
+            code: "QUIZ_SUBSCRIPTION_REQUIRED",
+            requiresSubscription: true,
+          },
+          { status: 403 },
+        );
+      }
+    }
 
     return NextResponse.json(
-      { draft: session.role === "admin" && draft?.source !== "mock-test" ? null : draft },
+      { draft },
       {
         headers: {
           "Cache-Control": "no-store",
@@ -195,15 +175,9 @@ export async function GET() {
       },
     );
   } catch (error) {
-    console.error(
-      "Quiz draft GET error:",
-      error,
-    );
+    console.error("Quiz draft GET error:", error);
 
-    return errorResponse(
-      "Unable to load unfinished quiz.",
-      500,
-    );
+    return errorResponse("Unable to load unfinished quiz.", 500);
   }
 }
 
@@ -216,9 +190,7 @@ export async function GET() {
  * the caller must explicitly supply its
  * ID as replaceDraftId.
  */
-export async function POST(
-  request: Request,
-) {
+export async function POST(request: Request) {
   try {
     const session = await getSessionUser();
 
@@ -235,71 +207,40 @@ export async function POST(
 
     const body = (await request
       .json()
-      .catch(() => null)) as
-      | Partial<StartQuizArenaDraftInput>
-      | null;
+      .catch(() => null)) as Partial<StartQuizArenaDraftInput> | null;
 
     if (!body) {
-      return errorResponse(
-        "Invalid quiz draft payload.",
-        400,
-      );
+      return errorResponse("Invalid quiz draft payload.", 400);
     }
 
     if (!isSource(body.source)) {
-      return errorResponse(
-        "Invalid quiz source.",
-        400,
-      );
-    }
-
-    if (session.role === "admin" && body.source !== "mock-test") {
-      return errorResponse("Admins may start Mock Tests only.", 403);
+      return errorResponse("Invalid quiz source.", 400);
     }
 
     if (!isEducationLevel(body.level)) {
-      return errorResponse(
-        "Invalid course category.",
-        400,
-      );
+      return errorResponse("Invalid course category.", 400);
     }
 
     if (!isCompetitiveExam(body.exam)) {
-      return errorResponse(
-        "Invalid course or exam.",
-        400,
-      );
+      return errorResponse("Invalid course or exam.", 400);
     }
 
     const examDetails = getExamDetails(body.exam);
 
-    if (
-      !examDetails ||
-      examDetails.category !== body.level
-    ) {
+    if (!examDetails || examDetails.category !== body.level) {
       return errorResponse(
         "The selected course does not belong to this category.",
         400,
       );
     }
 
-    const allowedClasses =
-      getQuizSchoolClasses(body.exam);
+    const allowedClasses = getQuizSchoolClasses(body.exam);
 
-    let schoolClass: QuizSchoolClass | null =
-      null;
+    let schoolClass: QuizSchoolClass | null = null;
 
     if (allowedClasses.length > 0) {
-      if (
-        !body.schoolClass ||
-        !allowedClasses.includes(
-          body.schoolClass,
-        )
-      ) {
-        return errorResponse(
-          "Please select a valid class.",
-          400,
-        );
+      if (!body.schoolClass || !allowedClasses.includes(body.schoolClass)) {
+        return errorResponse("Please select a valid class.", 400);
       }
 
       schoolClass = body.schoolClass;
@@ -318,132 +259,134 @@ export async function POST(
       board = body.board;
     }
 
-    const subject =
-      typeof body.subject === "string"
-        ? body.subject.trim()
-        : "";
+    const subject = typeof body.subject === "string" ? body.subject.trim() : "";
 
     if (
       !subject ||
-      !(requiresQuizBoard(body.exam)
-        ? getBoardSubjects(body.exam, schoolClass, board)
-        : examDetails.subjects).includes(subject)
+      !(
+        requiresQuizBoard(body.exam)
+          ? getBoardSubjects(body.exam, schoolClass, board)
+          : examDetails.subjects
+      ).includes(subject)
     ) {
-      return errorResponse(
-        "Invalid quiz subject.",
-        400,
-      );
+      return errorResponse("Invalid quiz subject.", 400);
     }
 
-    const topicId =
-      typeof body.topicId === "string"
-        ? body.topicId.trim()
-        : "";
+    const topicId = typeof body.topicId === "string" ? body.topicId.trim() : "";
 
     const requiresGovernmentTopic =
       body.source === "mock-test" &&
       body.level === "government-exam" &&
-      Boolean(
-        getGovernmentExamSyllabus(
-          body.exam,
-        ),
-      );
+      Boolean(getGovernmentExamSyllabus(body.exam));
 
     const requiresCompetitiveTopic =
       body.source === "mock-test" &&
       body.level === "competitive-exam" &&
-      Boolean(
-        getCompetitiveExamSyllabus(
-          body.exam,
-        ),
-      );
+      Boolean(getCompetitiveExamSyllabus(body.exam));
 
     const requiresMbaTopic =
       body.source === "mock-test" &&
       body.level === "mba-entrance" &&
-      Boolean(
-        getMbaExamSyllabus(
-          body.exam,
-        ),
-      );
+      Boolean(getMbaExamSyllabus(body.exam));
 
     const requiresTopic =
-      requiresGovernmentTopic ||
-      requiresCompetitiveTopic ||
-      requiresMbaTopic;
+      requiresGovernmentTopic || requiresCompetitiveTopic || requiresMbaTopic;
 
-    const validTopic =
-      requiresGovernmentTopic
-        ? isValidGovernmentExamTopic(
-            body.exam,
-            subject,
-            topicId,
-          )
-        : requiresCompetitiveTopic
-          ? isValidCompetitiveExamTopic(
-              body.exam,
-              subject,
-              topicId,
-            )
-          : requiresMbaTopic
-            ? isValidMbaExamTopic(
-                body.exam,
-                subject,
-                topicId,
-              )
-            : false;
+    const validTopic = requiresGovernmentTopic
+      ? isValidGovernmentExamTopic(body.exam, subject, topicId)
+      : requiresCompetitiveTopic
+        ? isValidCompetitiveExamTopic(body.exam, subject, topicId)
+        : requiresMbaTopic
+          ? isValidMbaExamTopic(body.exam, subject, topicId)
+          : false;
 
-    if (
-      requiresTopic &&
-      (
-        !topicId ||
-        !validTopic
-      )
-    ) {
-      return errorResponse(
-        "Please select a valid Mock Test topic.",
-        400,
-      );
+    if (requiresTopic && (!topicId || !validTopic)) {
+      return errorResponse("Please select a valid Mock Test topic.", 400);
     }
 
-    if (
-      !requiresTopic &&
-      topicId
-    ) {
+    if (!requiresTopic && topicId) {
       return errorResponse(
         "Topic selection is not available for this quiz.",
         400,
       );
     }
 
-    if (
-      !isJourneyLevel(body.progressionLevel)
-    ) {
-      return errorResponse(
-        "Invalid Quiz Arena level.",
-        400,
-      );
+    if (!isJourneyLevel(body.progressionLevel)) {
+      return errorResponse("Invalid Quiz Arena level.", 400);
     }
 
     if (!isRound(body.round)) {
-      return errorResponse(
-        "Invalid Quiz Arena round.",
-        400,
-      );
+      return errorResponse("Invalid Quiz Arena round.", 400);
+    }
+
+    // Both sources share the same student subscription and trial.
+    const quizAccess = await getQuizArenaAccess(
+      session.id,
+      String(session.role),
+    );
+
+    if (quizAccess && !quizAccess.allowed) {
+      if (quizAccess.requiresSubscription) {
+        return NextResponse.json(
+          {
+            error:
+              "Your free Quiz Arena trial has ended. Subscribe for ₹49 to continue.",
+            code: "QUIZ_SUBSCRIPTION_REQUIRED",
+            requiresSubscription: true,
+          },
+          { status: 403 },
+        );
+      }
+      return errorResponse("Quiz Arena access is not permitted.", 403);
+    }
+
+    if (quizAccess && !quizAccess.unlimitedAccess) {
+      if (quizAccess.mustResumeFreeQuiz) {
+        return NextResponse.json(
+          {
+            error:
+              "Your free quiz is in progress. Resume that quiz to continue.",
+            code: "FREE_QUIZ_IN_PROGRESS",
+            mustResumeFreeQuiz: true,
+            draftId: quizAccess.freeTrial.draftId,
+          },
+          { status: 409 },
+        );
+      }
+
+      if (
+        !quizAccess.canStartFreeQuiz ||
+        body.progressionLevel !== 1 ||
+        body.round !== 1
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "The free trial allows Level 1, Round 1 only. Subscribe for ₹49 to continue.",
+            code: "FREE_TRIAL_ROUND_RESTRICTED",
+            requiresSubscription: true,
+          },
+          { status: 403 },
+        );
+      }
+
+      if (body.replaceDraftId) {
+        return NextResponse.json(
+          {
+            error: "Resume your existing free quiz instead of replacing it.",
+            code: "FREE_QUIZ_IN_PROGRESS",
+          },
+          { status: 409 },
+        );
+      }
     }
 
     if (!isDifficulty(body.difficulty)) {
-      return errorResponse(
-        "Invalid quiz difficulty.",
-        400,
-      );
+      return errorResponse("Invalid quiz difficulty.", 400);
     }
 
     if (
-      body.difficulty !==
-      getDifficultyForJourneyLevel(
-        body.progressionLevel,
-      )
+      body.difficulty !== getDifficultyForJourneyLevel(body.progressionLevel)
     ) {
       return errorResponse(
         "Difficulty does not match the selected level.",
@@ -453,8 +396,7 @@ export async function POST(
 
     if (
       !Array.isArray(body.questions) ||
-      body.questions.length !==
-        QUIZ_QUESTIONS_PER_ROUND ||
+      body.questions.length !== QUIZ_QUESTIONS_PER_ROUND ||
       !body.questions.every(isValidQuestion)
     ) {
       return errorResponse(
@@ -465,28 +407,21 @@ export async function POST(
 
     const questions = body.questions;
 
-    const validQuestionContext =
-      questions.every((question) => {
-        return (
-          question.level === body.level &&
-          question.exam === body.exam &&
-          question.subject === subject &&
-          (question.topicId ?? "") === topicId &&
-          question.difficulty ===
-            body.difficulty &&
-          question.progressionLevel ===
-            body.progressionLevel &&
-          question.round === body.round &&
-          question.stream ===
-            examDetails.stream
-        );
-      });
+    const validQuestionContext = questions.every((question) => {
+      return (
+        question.level === body.level &&
+        question.exam === body.exam &&
+        question.subject === subject &&
+        (question.topicId ?? "") === topicId &&
+        question.difficulty === body.difficulty &&
+        question.progressionLevel === body.progressionLevel &&
+        question.round === body.round &&
+        question.stream === examDetails.stream
+      );
+    });
 
     if (!validQuestionContext) {
-      return errorResponse(
-        "Questions do not match the selected quiz.",
-        400,
-      );
+      return errorResponse("Questions do not match the selected quiz.", 400);
     }
 
     if (requiresGovernmentTopic) {
@@ -507,26 +442,46 @@ export async function POST(
       const byId = new Map(approved.map((item) => [item.id, item]));
       const allApproved = questions.every((question) => {
         const stored = byId.get(question.id);
-        return stored &&
+        return (
+          stored &&
           stored.question === question.question &&
           JSON.stringify(stored.options) === JSON.stringify(question.options) &&
           stored.correctAnswer === question.correctAnswer &&
-          stored.explanation === question.explanation;
+          stored.explanation === question.explanation
+        );
       });
-      if (!allApproved || new Set(questions.map((item) => item.id)).size !== questions.length) {
-        return errorResponse("This round contains questions that are not approved for the selected topic and level.", 400);
+      if (
+        !allApproved ||
+        new Set(questions.map((item) => item.id)).size !== questions.length
+      ) {
+        return errorResponse(
+          "This round contains questions that are not approved for the selected topic and level.",
+          400,
+        );
       }
     }
 
-    const existing =
-      await getActiveQuizArenaDraft(
-        session.id,
+    // Authorise the exact set issued to this account by question generation.
+    // Context and shape validation alone cannot prevent a forged answer key.
+    const serverGenerated = await isServerGeneratedQuizArenaSet({
+      userId: session.id,
+      source: body.source,
+      questions,
+    });
+    if (!serverGenerated) {
+      return NextResponse.json(
+        {
+          error:
+            "This quiz does not match a valid server-generated question set. Generate a new quiz.",
+          code: "QUIZ_QUESTION_SET_UNVERIFIED",
+        },
+        { status: 409 },
       );
+    }
 
-    if (
-      existing &&
-      existing.id !== body.replaceDraftId
-    ) {
+    const existing = await getActiveQuizArenaDraft(session.id);
+
+    if (existing && existing.id !== body.replaceDraftId) {
       return errorResponse(
         "An unfinished quiz already exists. Continue it or confirm that you want to start a new quiz.",
         409,
@@ -550,8 +505,7 @@ export async function POST(
 
       topicId: topicId || null,
 
-      progressionLevel:
-        body.progressionLevel,
+      progressionLevel: body.progressionLevel,
 
       round: body.round,
 
@@ -570,26 +524,49 @@ export async function POST(
       elapsedMs: 0,
 
       replaceDraftId:
-        typeof body.replaceDraftId ===
-        "string"
+        typeof body.replaceDraftId === "string"
           ? body.replaceDraftId
           : undefined,
     });
 
-    return NextResponse.json(
-      { draft },
-      { status: 201 },
-    );
-  } catch (error) {
-    console.error(
-      "Quiz draft POST error:",
-      error,
-    );
+    if (quizAccess?.canStartFreeQuiz && !quizAccess.unlimitedAccess) {
+      // Reserve against the ACTUAL saved draft ID using the same permanent
+      // MongoDB collection that the access checker and attempt API read.
+      try {
+        await reserveQuizArenaFreeTrial({
+          userId: session.id,
+          draftId: draft.id,
+          progressionLevel: body.progressionLevel,
+          round: body.round,
+        });
+      } catch (error) {
+        // Do not return a playable draft if its trial reservation failed.
+        await setQuizArenaDraftStatus({
+          id: draft.id,
+          userId: session.id,
+          status: "abandoned",
+        }).catch(() => undefined);
 
-    return errorResponse(
-      "Unable to create quiz draft.",
-      500,
-    );
+        console.error("Quiz free-trial reservation failed:", error);
+        const trialError = error instanceof QuizArenaTrialError ? error : null;
+        return NextResponse.json(
+          {
+            error:
+              trialError?.message ??
+              "Unable to reserve your free quiz. Please retry.",
+            code: trialError?.code ?? "FREE_TRIAL_RESERVATION_FAILED",
+            requiresSubscription: trialError?.code === "FREE_TRIAL_USED",
+          },
+          { status: trialError?.code === "FREE_TRIAL_USED" ? 403 : 409 },
+        );
+      }
+    }
+
+    return NextResponse.json({ draft }, { status: 201 });
+  } catch (error) {
+    console.error("Quiz draft POST error:", error);
+
+    return errorResponse("Unable to create quiz draft.", 500);
   }
 }
 
@@ -603,9 +580,7 @@ export async function POST(
  * autosave requests from overwriting
  * newer answers.
  */
-export async function PATCH(
-  request: Request,
-) {
+export async function PATCH(request: Request) {
   try {
     const session = await getSessionUser();
 
@@ -622,37 +597,34 @@ export async function PATCH(
 
     const body = (await request
       .json()
-      .catch(() => null)) as
-      | Partial<SaveQuizArenaDraftInput>
-      | null;
+      .catch(() => null)) as Partial<SaveQuizArenaDraftInput> | null;
 
-    if (
-      !body ||
-      typeof body.id !== "string"
-    ) {
-      return errorResponse(
-        "Invalid quiz draft ID.",
-        400,
-      );
+    if (!body || typeof body.id !== "string") {
+      return errorResponse("Invalid quiz draft ID.", 400);
     }
 
-    const draft =
-      await getActiveQuizArenaDraft(
-        session.id,
-      );
+    const draft = await getActiveQuizArenaDraft(session.id);
 
-    if (
-      !draft ||
-      draft.id !== body.id
-    ) {
-      return errorResponse(
-        "This unfinished quiz could not be found.",
-        404,
-      );
+    if (!draft || draft.id !== body.id) {
+      return errorResponse("This unfinished quiz could not be found.", 404);
     }
-
-    if (session.role === "admin" && draft.source !== "mock-test") {
-      return errorResponse("Admins may save Mock Tests only.", 403);
+    if (session.role === "student") {
+      const access = await getQuizArenaAccess(session.id, session.role);
+      const freeDraft =
+        !access.freeTrial.consumed &&
+        access.freeTrial.draftId === draft.id &&
+        draft.progressionLevel === 1 &&
+        draft.round === 1;
+      if (!access.unlimitedAccess && !freeDraft) {
+        return NextResponse.json(
+          {
+            error: "Subscription required to continue this round.",
+            code: "QUIZ_SUBSCRIPTION_REQUIRED",
+            requiresSubscription: true,
+          },
+          { status: 403 },
+        );
+      }
     }
 
     if (
@@ -667,19 +639,12 @@ export async function PATCH(
     }
 
     if (
-      typeof body.questionIndex !==
-        "number" ||
-      !Number.isInteger(
-        body.questionIndex,
-      ) ||
+      typeof body.questionIndex !== "number" ||
+      !Number.isInteger(body.questionIndex) ||
       body.questionIndex < 0 ||
-      body.questionIndex >=
-        draft.questions.length
+      body.questionIndex >= draft.questions.length
     ) {
-      return errorResponse(
-        "Invalid question position.",
-        400,
-      );
+      return errorResponse("Invalid question position.", 400);
     }
 
     if (
@@ -687,30 +652,19 @@ export async function PATCH(
       !Number.isFinite(body.elapsedMs) ||
       body.elapsedMs < 0
     ) {
-      return errorResponse(
-        "Invalid quiz timing.",
-        400,
-      );
+      return errorResponse("Invalid quiz timing.", 400);
     }
 
     if (
       !body.answersByIndex ||
-      typeof body.answersByIndex !==
-        "object" ||
-      Array.isArray(
-        body.answersByIndex,
-      )
+      typeof body.answersByIndex !== "object" ||
+      Array.isArray(body.answersByIndex)
     ) {
-      return errorResponse(
-        "Invalid saved answers.",
-        400,
-      );
+      return errorResponse("Invalid saved answers.", 400);
     }
 
-    const answersAreValid =
-      Object.entries(
-        body.answersByIndex,
-      ).every(([key, answer]) => {
+    const answersAreValid = Object.entries(body.answersByIndex).every(
+      ([key, answer]) => {
         const index = Number(key);
 
         return (
@@ -719,37 +673,25 @@ export async function PATCH(
           index >= 0 &&
           index < draft.questions.length &&
           typeof answer === "string" &&
-          draft.questions[
-            index
-          ].options.includes(answer)
+          draft.questions[index].options.includes(answer)
         );
-      });
+      },
+    );
 
     if (!answersAreValid) {
-      return errorResponse(
-        "One or more saved answers are invalid.",
-        400,
-      );
+      return errorResponse("One or more saved answers are invalid.", 400);
     }
 
     if (
       !body.timeByIndex ||
-      typeof body.timeByIndex !==
-        "object" ||
-      Array.isArray(
-        body.timeByIndex,
-      )
+      typeof body.timeByIndex !== "object" ||
+      Array.isArray(body.timeByIndex)
     ) {
-      return errorResponse(
-        "Invalid question timing data.",
-        400,
-      );
+      return errorResponse("Invalid question timing data.", 400);
     }
 
-    const timesAreValid =
-      Object.entries(
-        body.timeByIndex,
-      ).every(([key, time]) => {
+    const timesAreValid = Object.entries(body.timeByIndex).every(
+      ([key, time]) => {
         const index = Number(key);
 
         return (
@@ -761,67 +703,46 @@ export async function PATCH(
           Number.isFinite(time) &&
           time >= 0
         );
-      });
+      },
+    );
 
     if (!timesAreValid) {
-      return errorResponse(
-        "Invalid question timing data.",
-        400,
-      );
+      return errorResponse("Invalid question timing data.", 400);
     }
 
     if (
-      !Array.isArray(
-        body.markedForReview,
-      ) ||
+      !Array.isArray(body.markedForReview) ||
       !body.markedForReview.every(
         (index) =>
           typeof index === "number" &&
           Number.isInteger(index) &&
           index >= 0 &&
-          index <
-            draft.questions.length,
+          index < draft.questions.length,
       )
     ) {
-      return errorResponse(
-        "Invalid review markings.",
-        400,
-      );
+      return errorResponse("Invalid review markings.", 400);
     }
 
-    const saved =
-      await saveQuizArenaDraft({
-        id: draft.id,
+    const saved = await saveQuizArenaDraft({
+      id: draft.id,
 
-        userId: session.id,
+      userId: session.id,
 
-        answersByIndex:
-          body.answersByIndex,
+      answersByIndex: body.answersByIndex,
 
-        timeByIndex:
-          body.timeByIndex,
+      timeByIndex: body.timeByIndex,
 
-        markedForReview: [
-          ...new Set(
-            body.markedForReview,
-          ),
-        ],
+      markedForReview: [...new Set(body.markedForReview)],
 
-        questionIndex:
-          body.questionIndex,
+      questionIndex: body.questionIndex,
 
-        elapsedMs:
-          body.elapsedMs,
+      elapsedMs: body.elapsedMs,
 
-        revision:
-          body.revision,
-      });
+      revision: body.revision,
+    });
 
     if (!saved) {
-      return errorResponse(
-        "This save was superseded by another update.",
-        409,
-      );
+      return errorResponse("This save was superseded by another update.", 409);
     }
 
     return NextResponse.json({
@@ -830,15 +751,9 @@ export async function PATCH(
       revision: body.revision,
     });
   } catch (error) {
-    console.error(
-      "Quiz draft PATCH error:",
-      error,
-    );
+    console.error("Quiz draft PATCH error:", error);
 
-    return errorResponse(
-      "Unable to save quiz progress.",
-      500,
-    );
+    return errorResponse("Unable to save quiz progress.", 500);
   }
 }
 
@@ -851,9 +766,7 @@ export async function PATCH(
  * the database record is retained
  * with a completed or abandoned status.
  */
-export async function DELETE(
-  request: Request,
-) {
+export async function DELETE(request: Request) {
   try {
     const session = await getSessionUser();
 
@@ -868,56 +781,72 @@ export async function DELETE(
       return errorResponse("This quiz is not available for your account.", 403);
     }
 
-    const body = (await request
-      .json()
-      .catch(() => null)) as
-      | {
-          id?: string;
+    const body = (await request.json().catch(() => null)) as {
+      id?: string;
 
-          status?:
-            | "completed"
-            | "abandoned";
-        }
-      | null;
+      status?: "completed" | "abandoned";
+    } | null;
 
     if (
       !body ||
       typeof body.id !== "string" ||
-      (
-        body.status !== "completed" &&
-        body.status !== "abandoned"
-      )
+      (body.status !== "completed" && body.status !== "abandoned")
     ) {
-      return errorResponse(
-        "Invalid quiz completion request.",
-        400,
-      );
+      return errorResponse("Invalid quiz completion request.", 400);
     }
 
     const draft = await getActiveQuizArenaDraft(session.id);
 
-    if (
-      !draft ||
-      draft.id !== body.id ||
-      (session.role === "admin" && draft.source !== "mock-test")
-    ) {
-      return errorResponse("This unfinished Mock Test could not be found.", 404);
+    if (!draft || draft.id !== body.id) {
+      return errorResponse("This unfinished quiz could not be found.", 404);
     }
 
-    const updated =
-      await setQuizArenaDraftStatus({
-        id: body.id,
+    if (session.role === "student") {
+      const access = await getQuizArenaAccess(session.id, session.role);
+      // A free-trial draft cannot be abandoned or marked completed
+      // without the matching attempt having consumed its trial.
+      // A completed free trial is consumed by the attempts API.
+      const trial = await getQuizArenaFreeTrialState(session.id);
+      if (
+        trial?.draftId === draft.id &&
+        !trial.consumed &&
+        !access.unlimitedAccess &&
+        body.status === "completed"
+      ) {
+        return NextResponse.json(
+          {
+            error: "Finish and save your free quiz before closing it.",
+            code: "FREE_TRIAL_NOT_COMPLETED",
+          },
+          { status: 409 },
+        );
+      }
+      if (
+        !access.unlimitedAccess &&
+        access.freeTrial.draftId === draft.id &&
+        body.status === "abandoned"
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Your free quiz is reserved. Save and resume it instead of abandoning it.",
+            code: "FREE_QUIZ_IN_PROGRESS",
+          },
+          { status: 409 },
+        );
+      }
+    }
 
-        userId: session.id,
+    const updated = await setQuizArenaDraftStatus({
+      id: body.id,
 
-        status: body.status,
-      });
+      userId: session.id,
+
+      status: body.status,
+    });
 
     if (!updated) {
-      return errorResponse(
-        "This unfinished quiz could not be found.",
-        404,
-      );
+      return errorResponse("This unfinished quiz could not be found.", 404);
     }
 
     return NextResponse.json({
@@ -926,14 +855,8 @@ export async function DELETE(
       status: body.status,
     });
   } catch (error) {
-    console.error(
-      "Quiz draft DELETE error:",
-      error,
-    );
+    console.error("Quiz draft DELETE error:", error);
 
-    return errorResponse(
-      "Unable to update quiz status.",
-      500,
-    );
+    return errorResponse("Unable to update quiz status.", 500);
   }
 }
