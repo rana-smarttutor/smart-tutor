@@ -47,7 +47,7 @@ export function PromotionalPopup() {
         <div className="flex flex-col items-center text-center">
           <div className="mb-6 flex justify-center">
             <Image
-              src="/Smart-institue-logo.jpeg"
+              src="/smartiq-new-logo.png"
               alt="SmartIQ Institute Logo"
               width={160}
               height={42}

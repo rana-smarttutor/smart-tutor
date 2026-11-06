@@ -467,7 +467,7 @@ export default async function Home() {
 
           <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:rounded-[2rem]">
             <Image
-              src="/WCSIOI.jpeg"
+              src="/smartiq-why-choose-poster.png"
               alt="Why Choose SmartIQ Institute - Personal Mentorship, 24/7 Doubt Support, Weekly Tests, Student Performance Reports and Replacement Guarantee"
               width={1200}
               height={1600}

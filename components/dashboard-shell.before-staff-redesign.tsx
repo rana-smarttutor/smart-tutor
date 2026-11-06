@@ -1629,7 +1629,7 @@ export function DashboardShell({
               /* Compact logo for collapsed sidebar */
               <div className="flex h-11 w-11 items-center overflow-hidden rounded-xl bg-white px-1 shadow-sm">
                 <Image
-                  src="/logoSIQ.png"
+                  src="/SmartIQ Institute Logo.png"
                   alt="SmartIQ Institute"
                   width={1332}
                   height={299}
@@ -1641,7 +1641,7 @@ export function DashboardShell({
               /* Full logo for expanded sidebar */
               <div className="flex h-12 w-full max-w-[205px] items-center justify-center rounded-xl bg-white px-2 shadow-sm">
                 <Image
-                  src="/logoSIQ.png"
+                  src="/SmartIQ Institute Logo.png"
                   alt="SmartIQ Institute"
                   width={1332}
                   height={299}

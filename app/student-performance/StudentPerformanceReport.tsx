@@ -2428,7 +2428,7 @@ export default function StudentPerformanceReport({
           <div className="sprx-header">
             <div className="sprx-logo-card">
               <img
-                src="/logoSIQ.png"
+                src="/SmartIQ Institute Logo.png"
                 alt="SmartIQ Institute"
               />
             </div>

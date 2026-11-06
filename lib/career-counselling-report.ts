@@ -1449,7 +1449,7 @@ table tr {
 
     <div class="brand-logo">
       <img
-        src="/logoSIQ.png"
+        src="/SmartIQ Institute Logo.png"
         alt="SmartIQ Institute Logo"
         class="smartiq-logo"
       >

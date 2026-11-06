@@ -925,7 +925,7 @@ export function AdmissionApplicationForm({
         <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-3">
             <Image
-              src="/logoSIQ.png"
+              src="/SmartIQ Institute Logo.png"
               alt="SmartIQ Institute"
               width={220}
               height={60}

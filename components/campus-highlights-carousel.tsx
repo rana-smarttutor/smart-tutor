@@ -10,7 +10,7 @@ const HIGHLIGHTS = [
     name: "SmartIQ Institute",
     result: "",
     exam: "",
-    image: "/Smart-institue-logo.jpeg",
+    image: "/smartiq-new-logo.png",
     type: "branding",
   },
   ...generatedPlacedStudents.map((student) => ({
@@ -80,7 +80,7 @@ export function CampusHighlightsCarousel() {
               }`}
             >
               <Image
-                src={highlight.image || "/Smart-institue-logo.jpeg"}
+                src={highlight.image || "/smartiq-new-logo.png"}
                 alt={highlight.name}
                 fill
                 sizes="250px"

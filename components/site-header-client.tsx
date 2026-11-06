@@ -256,7 +256,7 @@ export function SiteHeaderClient() {
                 className="flex flex-shrink-0 items-center"
               >
                 <Image
-                  src="/logoSIQ.png"
+                  src="/SmartIQ Institute Logo.png"
                   alt="SmartIQ Institute Logo"
                   width={400}
                   height={100}

@@ -220,7 +220,7 @@ export function PerformanceDashboard({ reports, heuristics, studentName }: Props
           <div>
             <div className="mb-6">
               <img
-                src="/Smart-institue-logo.jpeg"
+                src="/smartiq-new-logo.png"
                 alt="SmartIQ Institute Logo"
                 className="h-4 w-64 object-contain mb-2"
               />

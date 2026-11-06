@@ -53,7 +53,7 @@ const SITE_NAME = "SmartIQ Institute";
 const SITE_DESCRIPTION =
   "SmartIQ Institute provides personal tutoring, online learning, school and board exam preparation, competitive and government exam coaching, digital skill development, mock tests, mentorship, and career guidance.";
 
-const SITE_LOGO = `${SITE_URL}/Smart-institue-logo.jpeg`;
+const SITE_LOGO = `${SITE_URL}/smartiq-new-logo.png`;
 
 const GA_MEASUREMENT_ID = "G-9P82PKFSD9";
 
@@ -143,7 +143,7 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: "/Smart-institue-logo.jpeg",
+        url: "/smartiq-new-logo.png",
         width: 1200,
         height: 630,
         alt: "SmartIQ Institute",
@@ -162,7 +162,7 @@ export const metadata: Metadata = {
 
     description: SITE_DESCRIPTION,
 
-    images: ["/Smart-institue-logo.jpeg"],
+    images: ["/smartiq-new-logo.png"],
   },
 
   /* ===================================================

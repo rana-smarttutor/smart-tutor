@@ -39,7 +39,7 @@ export function PageLoader() {
     >
       <div style={styles.container}>
         <div style={styles.logoWrapper}>
-          <img src="/Smart-institue-logo.jpeg" alt="SmartIQ Institute" style={styles.logo} />
+          <img src="/smartiq-new-logo.png" alt="SmartIQ Institute" style={styles.logo} />
         </div>
         <div style={styles.dotsRow}>
           <span style={{ ...styles.dot, animationDelay: "0s" }} />
