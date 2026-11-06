@@ -179,7 +179,8 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
+
   /* Use clip where supported, fallback to hidden */
   overflow-x: hidden;
   overflow-x: clip;

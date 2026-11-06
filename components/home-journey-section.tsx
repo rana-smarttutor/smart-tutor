@@ -100,7 +100,10 @@ export function HomeJourneySection() {
   }
 
   return (
-    <section className="section-shell py-7 sm:py-9 lg:py-10">
+    <section
+      className="section-shell py-7 sm:py-9 lg:py-10"
+      style={{ overflowAnchor: "none" }}
+    >
       <div className="relative overflow-hidden rounded-[2.4rem] border border-blue-100 bg-gradient-to-br from-white via-[#fafdff] to-blue-50/60 shadow-[0_28px_90px_-48px_rgba(37,99,235,0.35)]">
         {/* BACKGROUND DECORATION */}
 

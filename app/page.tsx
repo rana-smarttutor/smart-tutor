@@ -26,7 +26,7 @@ import HomeToppers from "@/components/home-toppers";
 
 import { courseLibrary } from "@/lib/course-library";
 import { ProgramCarousel } from "@/components/program-carousel";
-import { ExamPortalBanner } from "@/components/exam-portal-banner";
+import HomeCounsellingFeature from "@/components/home-counselling-feature";
 import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
 import { HomeJourneySection } from "@/components/home-journey-section";
 
@@ -281,7 +281,6 @@ export default async function Home() {
       {/* =================================================
           HERO SECTION
       ================================================= */}
-
       <section className="section-shell grid gap-10 pt-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(340px,0.88fr)] lg:items-start xl:gap-14">
         {/* LEFT SIDE */}
 
@@ -463,21 +462,25 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* WHY CHOOSE SMARTIQ IMAGE - RESPONSIVE */}
+          {/* =================================================
+    WHY CHOOSE SMARTIQ IMAGE
+    STABLE RESPONSIVE DIMENSIONS
+================================================= */}
 
-          <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:rounded-[2rem]">
-            <Image
-              src="/smartiq-why-choose-poster.png"
-              alt="Why Choose SmartIQ Institute - Personal Mentorship, 24/7 Doubt Support, Weekly Tests, Student Performance Reports and Replacement Guarantee"
-              width={1200}
-              height={1600}
-              sizes="(max-width: 1024px) 100vw, 45vw"
-              className="block h-auto w-full object-contain"
-            />
+          <div className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:rounded-[2rem]">
+            <div className="relative w-full aspect-[3/4]">
+              <Image
+                src="/smartiq-why-choose-poster.png"
+                alt="Why Choose SmartIQ Institute - Personal Mentorship, 24/7 Doubt Support, Weekly Tests, Student Performance Reports and Replacement Guarantee"
+                fill
+                sizes="(max-width: 1024px) 100vw, 45vw"
+                className="object-contain"
+                priority={false}
+              />
+            </div>
           </div>
         </RevealOnScroll>
       </section>
-
       {/* =================================================
           JOURNEY + ADMISSIONS + SMARTIQ VIDEO
       ================================================= */}
@@ -485,17 +488,18 @@ export default async function Home() {
       <HomeJourneySection />
 
       {/* =================================================
-          EXAM PORTAL BANNER
+          SMARTIQ COUNSELLING FEATURE
       ================================================= */}
-
-      <section className="w-full px-0 py-10 sm:py-14">
-        <ExamPortalBanner />
+      <section
+        id="smartiq-counselling"
+        className="relative w-full px-0 py-6 sm:py-8"
+        style={{ overflowAnchor: "none" }}
+      >
+        <HomeCounsellingFeature />
       </section>
-
       {/* =================================================
           RECENT STUDENT RESULTS
       ================================================= */}
-
       <section className="pb-0 pt-14 sm:pt-20">
         <div className="container mx-auto px-4">
           <div className="mb-10 text-center sm:mb-16">
@@ -521,11 +525,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
       {/* =================================================
           OUR METHODOLOGY
       ================================================= */}
-
       <RevealOnScroll className="section-shell py-10 lg:py-16" delayMs={100}>
         <div className="container mx-auto px-3 sm:px-6">
           <div className="mx-auto mb-10 max-w-3xl text-center sm:mb-16">
@@ -555,11 +557,9 @@ export default async function Home() {
           </div>
         </div>
       </RevealOnScroll>
-
       {/* =================================================
           STUDENT / EDUCATOR / PARENT ROLE CARDS
       ================================================= */}
-
       <RevealOnScroll
         className="section-shell min-w-0 py-10 sm:py-14 lg:py-16"
         delayMs={40}
@@ -623,11 +623,9 @@ export default async function Home() {
           ))}
         </div>
       </RevealOnScroll>
-
       {/* =================================================
           EXAM UPDATES + PROMOTIONAL OFFER
       ================================================= */}
-
       <RevealOnScroll className="section-shell py-14" delayMs={80}>
         <div className="grid items-stretch gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           {/* LEFT: DYNAMIC EXAM UPDATES */}
