@@ -1859,10 +1859,7 @@ export function DigitalLibraryClient({
 
           {/* COLLAPSIBLE FILTER SECTIONS */}
           <div className="mt-5 space-y-3 px-2">
-            <details
-              className="group rounded-xl border border-blue-100 bg-white"
-              open
-            >
+            <details className="group rounded-xl border border-blue-100 bg-white">
               <summary className="flex cursor-pointer list-none items-center gap-2 rounded-xl px-3 py-3 text-sm font-extrabold text-slate-900 hover:bg-blue-50 [&::-webkit-details-marker]:hidden">
                 <BookOpen size={18} className="text-blue-600" />
                 <span className="flex-1">School Books</span>

@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import Link from "next/link";
+import {
+  getCoursePageHref,
+  getCoursePageBySlug,
+} from "@/lib/course-page-registry";
+
 import { HelpingHand } from "@/components/ui-icons";
 import { motion } from "motion/react";
 
 import ToppersSection from "@/components/toppers-section";
-import SpotlightSection from "@/components/spotlight-section";
-import WhyChooseSmartTutors from "@/components/why-choose-smart-tutors";
+import CoursesWhyChooseSection from "@/components/why-choose-smart-tutors";
 import CourseModal from "@/components/course-modal";
 import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
 import SmartTutorsAIChatbot from "@/components/SmartTutorsAIChatbot";
@@ -1346,6 +1352,17 @@ function AdditionalProgramsSection({
                     {program.mode}
                   </span>
 
+                  {getCoursePageHref(group.standardKey, program.title) && (
+                    <Link
+                      href={
+                        getCoursePageHref(group.standardKey, program.title)!
+                      }
+                      className="text-[11px] font-black text-blue-600 hover:text-blue-800"
+                    >
+                      View Course
+                    </Link>
+                  )}
+
                   <button
                     type="button"
                     onClick={() =>
@@ -1376,6 +1393,8 @@ export default function CoursesRedesignClient({
   allCourses,
 }: CoursesRedesignClientProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const requestedEnquiry = searchParams.get("enquire");
   const requestedTab = searchParams.get("tab");
 
   const [activeTab, setActiveTab] = useState("Class 6");
@@ -1421,6 +1440,42 @@ export default function CoursesRedesignClient({
     ];
   }, [allCourses]);
 
+  useEffect(() => {
+    if (!requestedEnquiry) {
+      return;
+    }
+
+    const coursePage = getCoursePageBySlug(requestedEnquiry);
+
+    if (!coursePage) {
+      return;
+    }
+
+    const matchingCourse = coursesWithRequiredSkills.find(
+      (course) => course.standardKey === coursePage.sourceKey,
+    );
+
+    if (!matchingCourse) {
+      return;
+    }
+
+    setSelectedCourse(matchingCourse);
+    setSelectedAdditionalProgram(coursePage.programme ?? "");
+    setSelectedProgramTopics([]);
+
+    // Remove the enquiry query after opening the modal.
+    // This prevents reopening it after closing or refreshing.
+    const nextParams = new URLSearchParams(searchParams.toString());
+
+    nextParams.delete("enquire");
+
+    const queryString = nextParams.toString();
+
+    router.replace(queryString ? `/courses?${queryString}` : "/courses", {
+      scroll: false,
+    });
+  }, [requestedEnquiry, coursesWithRequiredSkills, router, searchParams]);
+
   const filteredCourses = useMemo<CourseItem[]>(() => {
     if (!searchQuery.trim()) {
       return coursesWithRequiredSkills;
@@ -1449,30 +1504,8 @@ export default function CoursesRedesignClient({
       className="flex min-h-screen flex-col bg-slate-50/50 font-sans selection:bg-blue-100 selection:text-blue-950"
     >
       <main className="mx-auto flex-1 w-full max-w-7xl space-y-12 px-4 pb-8 pt-4 sm:space-y-16 sm:px-6 sm:pb-12 sm:pt-6 lg:px-8">
-        <SpotlightSection
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onSelectCourse={(course, selectedProgram) => {
-            setSelectedAdditionalProgram(selectedProgram ?? "");
-            setSelectedProgramTopics([]);
-            setSelectedCourse(course);
-          }}
-          allCourses={filteredCourses}
-        />
-
-        <AdditionalProgramsSection
-          activeTab={activeTab}
-          searchQuery={searchQuery}
-          allCourses={coursesWithRequiredSkills}
-          onSelectCourse={(course, additionalProgram, topics) => {
-            setSelectedAdditionalProgram(additionalProgram ?? "");
-            setSelectedProgramTopics(topics ?? []);
-            setSelectedCourse(course);
-          }}
-        />
-
         <section>
-          <WhyChooseSmartTutors />
+          <CoursesWhyChooseSection />
         </section>
 
         <section className="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-900 p-8 text-center text-white shadow-sm sm:p-10">

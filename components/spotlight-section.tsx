@@ -2,24 +2,23 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { AnimatePresence, motion } from "motion/react";
+
 import {
   ArrowRight,
   BookOpen,
   Brain,
   ChevronLeft,
   ChevronRight,
-  Coins,
   FileText,
   FlaskConical,
-  History,
   School,
   Sparkles,
-  TrendingUp,
 } from "@/components/ui-icons";
-import { AnimatePresence, motion } from "motion/react";
 
 import type { CourseItem } from "@/lib/types";
-import LocalGraphic from "@/components/local-graphic";
+import { getCoursePageHref } from "@/lib/course-page-registry";
 
 type SeniorClassSelection = "Class 11" | "Class 12";
 
@@ -43,9 +42,11 @@ function normaliseValue(value?: string) {
 function matchesActiveTab(course: CourseItem, activeTab: string) {
   const activeTabKey = normaliseValue(activeTab);
   const sections = course.sections ?? [];
-  const hasSkillsSection = sections.some((s) => normaliseValue(s) === "skills");
 
-  // Skills courses only show under the "Skills" tab, not under class tabs
+  const hasSkillsSection = sections.some(
+    (section) => normaliseValue(section) === "skills",
+  );
+
   if (hasSkillsSection && activeTabKey !== "skills") {
     return false;
   }
@@ -62,22 +63,16 @@ function matchesActiveTab(course: CourseItem, activeTab: string) {
 
   const allowedSections = TAB_SECTION_MAP[activeTabKey] ?? [activeTabKey];
 
-  return sections.some((section) => {
-    const sectionKey = normaliseValue(section);
-    return allowedSections.includes(sectionKey);
-  });
+  return sections.some((section) =>
+    allowedSections.includes(normaliseValue(section)),
+  );
 }
 
 function matchesSelectedStream(course: CourseItem, stream: StreamFilter) {
   if (stream === "All") {
     return true;
   }
-  function isPreferredCommerceSpotlight(course: CourseItem) {
-    const title = normaliseValue(course.title);
-    const stream = normaliseValue(course.stream);
 
-    return stream === "commerce" && title.includes("foundationforcacscma");
-  }
   const selectedStreamKey = normaliseValue(stream);
   const courseStreamKey = normaliseValue(course.stream);
 
@@ -160,6 +155,102 @@ const SECTION_SPOTLIGHT_IMAGES: Record<string, string> = {
   "Govt Exams": "/spotlight/govt-exams.jpeg",
 };
 
+const TABS = [
+  { id: "Class 6", label: "Class 6", icon: BookOpen },
+  { id: "Class 7", label: "Class 7", icon: BookOpen },
+  { id: "Class 8", label: "Class 8", icon: BookOpen },
+  { id: "Class 9", label: "Class 9", icon: School },
+  { id: "Class 10", label: "Class 10", icon: School },
+  { id: "Class 11", label: "Class 11", icon: FlaskConical },
+  { id: "Class 12", label: "Class 12", icon: FlaskConical },
+  {
+    id: "Govt Exams",
+    label: "Govt Exams",
+    icon: FileText,
+  },
+  {
+    id: "Skills",
+    label: "Skills Section",
+    icon: Brain,
+  },
+];
+
+function getSectionMetadata(activeTab: string) {
+  switch (activeTab) {
+    case "Class 6":
+      return {
+        title: "Class 6 Programs",
+        desc: "Build a strong foundation for future success.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: BookOpen,
+      };
+
+    case "Class 7":
+      return {
+        title: "Class 7 Programs",
+        desc: "Build a strong foundation for future success.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: BookOpen,
+      };
+
+    case "Class 8":
+      return {
+        title: "Class 8 Programs",
+        desc: "Build a strong foundation for future success.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: BookOpen,
+      };
+
+    case "Class 9":
+      return {
+        title: "Class 9 Programs",
+        desc: "Master key concepts and excel in board exams.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: School,
+      };
+
+    case "Class 10":
+      return {
+        title: "Class 10 Programs",
+        desc: "Master key concepts and excel in board exams.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: School,
+      };
+
+    case "Class 11":
+      return {
+        title: "Class 11 Programs",
+        desc: "Build a strong foundation for Class 11 board exams and competitive entrances.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: FlaskConical,
+      };
+
+    case "Class 12":
+      return {
+        title: "Class 12 Programs",
+        desc: "Final year prep for boards, entrances, and career pathways.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: FlaskConical,
+      };
+
+    case "Govt Exams":
+      return {
+        title: "Government Exam Targets",
+        desc: "Your secure and rewarding path to public service roles.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: FileText,
+      };
+
+    default:
+      return {
+        title: "Professional Skills Development",
+        desc: "Learn from top corporate experts and earn valid certifications.",
+        logoBg: "bg-blue-50 text-blue-600",
+        logo: Brain,
+      };
+  }
+}
+
 export default function SpotlightSection({
   activeTab,
   setActiveTab,
@@ -167,21 +258,12 @@ export default function SpotlightSection({
   allCourses,
   onSeniorClassChange,
 }: SpotlightSectionProps) {
-  const tabs = [
-    { id: "Class 6", label: "Class 6", icon: BookOpen },
-    { id: "Class 7", label: "Class 7", icon: BookOpen },
-    { id: "Class 8", label: "Class 8", icon: BookOpen },
-    { id: "Class 9", label: "Class 9", icon: School },
-    { id: "Class 10", label: "Class 10", icon: School },
-    { id: "Class 11", label: "Class 11", icon: FlaskConical },
-    { id: "Class 12", label: "Class 12", icon: FlaskConical },
-    { id: "Govt Exams", label: "Govt Exams", icon: FileText },
-    { id: "Skills", label: "Skills Section", icon: Brain },
-  ];
-
   const [tabCourses, setTabCourses] = useState<CourseItem[]>([]);
+
   const [spotlightIndex, setSpotlightIndex] = useState(0);
+
   const [activeStream, setActiveStream] = useState<StreamFilter>("All");
+
   const [showAllCourses, setShowAllCourses] = useState(false);
 
   useEffect(() => {
@@ -214,17 +296,16 @@ export default function SpotlightSection({
     const priorityStandardKey = priorityKeys[activeTab] ?? null;
 
     if (priorityStandardKey) {
-      filteredCourses.sort((firstCourse, secondCourse) => {
-        const isFirstPriority = firstCourse.standardKey === priorityStandardKey;
+      filteredCourses.sort((first, second) => {
+        const firstPriority = first.standardKey === priorityStandardKey;
 
-        const isSecondPriority =
-          secondCourse.standardKey === priorityStandardKey;
+        const secondPriority = second.standardKey === priorityStandardKey;
 
-        if (isFirstPriority && !isSecondPriority) {
+        if (firstPriority && !secondPriority) {
           return -1;
         }
 
-        if (!isFirstPriority && isSecondPriority) {
+        if (!firstPriority && secondPriority) {
           return 1;
         }
 
@@ -236,16 +317,16 @@ export default function SpotlightSection({
       (activeTab === "Class 11" || activeTab === "Class 12") &&
       activeStream === "Commerce"
     ) {
-      filteredCourses.sort((firstCourse, secondCourse) => {
-        const firstIsPreferred = isPreferredCommerceSpotlight(firstCourse);
+      filteredCourses.sort((first, second) => {
+        const firstPreferred = isPreferredCommerceSpotlight(first);
 
-        const secondIsPreferred = isPreferredCommerceSpotlight(secondCourse);
+        const secondPreferred = isPreferredCommerceSpotlight(second);
 
-        if (firstIsPreferred && !secondIsPreferred) {
+        if (firstPreferred && !secondPreferred) {
           return -1;
         }
 
-        if (!firstIsPreferred && secondIsPreferred) {
+        if (!firstPreferred && secondPreferred) {
           return 1;
         }
 
@@ -257,13 +338,8 @@ export default function SpotlightSection({
     setSpotlightIndex(0);
   }, [activeTab, activeStream, allCourses]);
 
-  const handleStreamClick = (stream: Exclude<StreamFilter, "All">) => {
-    setActiveStream((currentStream) =>
-      currentStream === stream ? "All" : stream,
-    );
-  };
-
   const currentSpotlight = tabCourses[spotlightIndex];
+
   useEffect(() => {
     if (activeTab !== "Class 11-12" || !currentSpotlight) {
       return;
@@ -304,142 +380,21 @@ export default function SpotlightSection({
     }
   };
 
-  const getSectionMetadata = () => {
-    switch (activeTab) {
-      case "Class 6":
-        return {
-          title: "Class 6 Programs",
-          desc: "Build a strong foundation for future success.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: BookOpen,
-        };
-
-      case "Class 7":
-        return {
-          title: "Class 7 Programs",
-          desc: "Build a strong foundation for future success.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: BookOpen,
-        };
-
-      case "Class 8":
-        return {
-          title: "Class 8 Programs",
-          desc: "Build a strong foundation for future success.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: BookOpen,
-        };
-
-      case "Class 9":
-        return {
-          title: "Class 9 Programs",
-          desc: "Master key concepts and excel in board exams.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: School,
-        };
-
-      case "Class 10":
-        return {
-          title: "Class 10 Programs",
-          desc: "Master key concepts and excel in board exams.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: School,
-        };
-
-      case "Class 11":
-        return {
-          title: "Class 11 Programs",
-          desc: "Build a strong foundation for Class 11 board exams and competitive entrances.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: FlaskConical,
-        };
-
-      case "Class 12":
-        return {
-          title: "Class 12 Programs",
-          desc: "Final year prep for boards, entrances, and career pathways.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: FlaskConical,
-        };
-
-      case "Govt Exams":
-        return {
-          title: "Government Exam Targets",
-          desc: "Your secure and rewarding path to public service roles.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: FileText,
-        };
-
-      default:
-        return {
-          title: "Professional Skills Development",
-          desc: "Learn from top corporate experts and earn valid certifications.",
-          logoBg: "bg-blue-50 text-blue-600",
-          logo: Brain,
-        };
-    }
+  const handleStreamClick = (stream: Exclude<StreamFilter, "All">) => {
+    setActiveStream((currentStream) =>
+      currentStream === stream ? "All" : stream,
+    );
   };
 
-  const sectionMeta = getSectionMetadata();
+  const sectionMeta = getSectionMetadata(activeTab);
+
   const SectionLogo = sectionMeta.logo;
-
-  const getSuggestedImage = (course: CourseItem) => {
-    if (!course) {
-      return "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=600";
-    }
-
-    const title = course.title.toLowerCase();
-
-    if (
-      title.includes("scientist") ||
-      title.includes("robotics") ||
-      title.includes("coding") ||
-      title.includes("tech")
-    ) {
-      return "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600";
-    }
-
-    if (
-      title.includes("financial") ||
-      title.includes("accounting") ||
-      title.includes("ledger") ||
-      title.includes("budgeting")
-    ) {
-      return "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&q=80&w=600";
-    }
-
-    if (
-      title.includes("chemistry") ||
-      title.includes("science") ||
-      title.includes("boards") ||
-      title.includes("neet")
-    ) {
-      return "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=600";
-    }
-
-    if (
-      title.includes("upsc") ||
-      title.includes("govt") ||
-      title.includes("mpsc")
-    ) {
-      return "https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&q=80&w=600";
-    }
-
-    if (
-      title.includes("speaking") ||
-      title.includes("personality") ||
-      title.includes("english")
-    ) {
-      return "https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&q=80&w=600";
-    }
-
-    return "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&q=80&w=600";
-  };
 
   return (
     <div className="space-y-8">
+      {/* COURSE CATEGORY TABS */}
       <div className="no-scrollbar flex space-x-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
-        {tabs.map((tab) => {
+        {TABS.map((tab) => {
           const TabIcon = tab.icon;
           const isActive = activeTab === tab.id;
 
@@ -465,6 +420,7 @@ export default function SpotlightSection({
         })}
       </div>
 
+      {/* SECTION HEADING */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center space-x-4">
           <div
@@ -498,8 +454,11 @@ export default function SpotlightSection({
               type="button"
               onClick={prevSpotlight}
               disabled={tabCourses.length <= 1}
-              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white transition-all hover:bg-slate-50 hover:text-blue-600 ${
-                tabCourses.length <= 1 ? "cursor-not-allowed opacity-45" : ""
+              aria-label="Previous course"
+              className={`flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white transition-all hover:bg-slate-50 hover:text-blue-600 ${
+                tabCourses.length <= 1
+                  ? "cursor-not-allowed opacity-45"
+                  : "cursor-pointer"
               }`}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -509,8 +468,11 @@ export default function SpotlightSection({
               type="button"
               onClick={nextSpotlight}
               disabled={tabCourses.length <= 1}
-              className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-white transition-all hover:bg-slate-50 hover:text-blue-600 ${
-                tabCourses.length <= 1 ? "cursor-not-allowed opacity-45" : ""
+              aria-label="Next course"
+              className={`flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white transition-all hover:bg-slate-50 hover:text-blue-600 ${
+                tabCourses.length <= 1
+                  ? "cursor-not-allowed opacity-45"
+                  : "cursor-pointer"
               }`}
             >
               <ChevronRight className="h-4 w-4" />
@@ -519,6 +481,7 @@ export default function SpotlightSection({
         </div>
       </div>
 
+      {/* MAIN FEATURED COURSE */}
       <AnimatePresence mode="wait">
         {currentSpotlight ? (
           <motion.div
@@ -529,7 +492,7 @@ export default function SpotlightSection({
             transition={{ duration: 0.25 }}
             className="grid grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:grid-cols-12"
           >
-            <div className="relative min-h-[280px] h-64 bg-slate-50 md:col-span-5 md:h-full">
+            <div className="relative h-64 min-h-[280px] bg-slate-50 md:col-span-5 md:h-full">
               <Image
                 src={
                   SECTION_SPOTLIGHT_IMAGES[activeTab] ||
@@ -564,31 +527,61 @@ export default function SpotlightSection({
                   </span>
                 </div>
 
-                <h3 className="font-display text-xl font-bold leading-tight text-slate-900">
-                  {currentSpotlight.title}
-                </h3>
+                {/* COURSE TITLE */}
+                {(() => {
+                  const href = getCoursePageHref(
+                    currentSpotlight.standardKey,
+                    currentSpotlight.title,
+                  );
+
+                  return href ? (
+                    <Link
+                      href={href}
+                      className="block font-display text-xl font-bold leading-tight text-slate-900 transition-colors hover:text-blue-600"
+                    >
+                      {currentSpotlight.title}
+                    </Link>
+                  ) : (
+                    <h3 className="font-display text-xl font-bold leading-tight text-slate-900">
+                      {currentSpotlight.title}
+                    </h3>
+                  );
+                })()}
 
                 <p className="text-xs font-semibold leading-relaxed text-slate-500">
                   {currentSpotlight.summary}
                 </p>
 
-                {/* Course names as clickable buttons */}
+                {/* INDIVIDUAL COURSE LINKS */}
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {currentSpotlight.courseNamesIncluded.map((name) => (
-                    <motion.button
-                      key={name}
-                      type="button"
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => onSelectCourse(currentSpotlight, name)}
-                      className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all shadow-sm"
-                    >
-                      {name}
-                    </motion.button>
-                  ))}
+                  {currentSpotlight.courseNamesIncluded.map((name) => {
+                    const href = getCoursePageHref(
+                      currentSpotlight.standardKey,
+                      name,
+                    );
+
+                    const className =
+                      "rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 hover:border-blue-300 hover:bg-blue-100 transition-all shadow-sm";
+
+                    return href ? (
+                      <Link key={name} href={href} className={className}>
+                        {name}
+                      </Link>
+                    ) : (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => onSelectCourse(currentSpotlight, name)}
+                        className={className}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* FOOTER + ENROLMENT */}
               <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200/80 pt-4 sm:flex-row">
                 <div className="w-full text-left sm:w-auto">
                   <span className="block text-[9px] font-bold uppercase leading-none text-slate-400">
@@ -596,12 +589,12 @@ export default function SpotlightSection({
                   </span>
 
                   <div className="mt-1 flex flex-wrap gap-1.5">
-                    {currentSpotlight.mode.split("/").map((m) => (
+                    {currentSpotlight.mode.split("/").map((mode) => (
                       <span
-                        key={m.trim()}
+                        key={mode.trim()}
                         className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-bold text-slate-600"
                       >
-                        {m.trim()}
+                        {mode.trim()}
                       </span>
                     ))}
                   </div>
@@ -631,6 +624,7 @@ export default function SpotlightSection({
         )}
       </AnimatePresence>
 
+      {/* SKILLS COURSE CARDS */}
       {activeTab === "Skills" && tabCourses.length > 0 && (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {tabCourses.map((course) => (
@@ -640,41 +634,69 @@ export default function SpotlightSection({
               className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-blue-200 hover:shadow-md"
             >
               <div className="mb-3 flex items-center gap-2">
-                <span className="rounded bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
+                <span className="rounded bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-700">
                   {course.duration}
                 </span>
-                <span className="rounded bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+
+                <span className="rounded bg-slate-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                   {course.mode.split("/")[0]}
                 </span>
               </div>
 
-              <h5 className="font-display text-sm font-bold leading-snug text-slate-900">
-                {course.title}
-              </h5>
+              {/* SKILLS COURSE TITLE */}
+              {(() => {
+                const href = getCoursePageHref(
+                  course.standardKey,
+                  course.title,
+                );
+
+                return href ? (
+                  <Link
+                    href={href}
+                    className="font-display text-sm font-bold leading-snug text-slate-900 hover:text-blue-600"
+                  >
+                    {course.title}
+                  </Link>
+                ) : (
+                  <h5 className="font-display text-sm font-bold leading-snug text-slate-900">
+                    {course.title}
+                  </h5>
+                );
+              })()}
 
               <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
                 {course.summary}
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {course.courseNamesIncluded.map((name) => (
-                  <motion.button
-                    key={name}
-                    type="button"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => onSelectCourse(course, name)}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 shadow-sm transition-all hover:bg-blue-100 hover:border-blue-300"
-                  >
-                    {name}
-                  </motion.button>
-                ))}
+                {course.courseNamesIncluded.map((name) => {
+                  const href = getCoursePageHref(course.standardKey, name);
+
+                  const className =
+                    "rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-bold text-blue-700 shadow-sm transition-all hover:border-blue-300 hover:bg-blue-100";
+
+                  return href ? (
+                    <Link key={name} href={href} className={className}>
+                      {name}
+                    </Link>
+                  ) : (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => onSelectCourse(course, name)}
+                      className={className}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
               </div>
 
               <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
                 <span className="rounded bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
                   {course.mode}
                 </span>
+
                 <button
                   type="button"
                   onClick={() => onSelectCourse(course)}
@@ -689,6 +711,7 @@ export default function SpotlightSection({
         </div>
       )}
 
+      {/* ADDITIONAL COURSE CARDS */}
       {activeTab !== "Class 11-12" &&
         activeTab !== "Skills" &&
         tabCourses.length > 1 && (
@@ -699,79 +722,116 @@ export default function SpotlightSection({
 
             {(() => {
               const threshold = activeTab === "Skills" ? 4 : 6;
+
               const otherCourses = tabCourses.filter(
-                (_, i) => i !== spotlightIndex,
+                (_, index) => index !== spotlightIndex,
               );
+
               const visibleCourses = showAllCourses
                 ? otherCourses
                 : otherCourses.slice(0, threshold);
+
               const hiddenCount = otherCourses.length - visibleCourses.length;
 
               return (
                 <>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {visibleCourses.map((course) => {
-                      return (
-                        <motion.div
-                          key={course.id}
-                          whileHover={{
-                            y: -3,
-                            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
-                          }}
-                          className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-                        >
-                          <div className="space-y-2">
-                            <span className="inline-block rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
-                              {course.duration}
-                            </span>
+                    {visibleCourses.map((course) => (
+                      <motion.div
+                        key={course.id}
+                        whileHover={{
+                          y: -3,
+                          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.04)",
+                        }}
+                        className="flex flex-col justify-between space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+                      >
+                        <div className="space-y-2">
+                          <span className="inline-block rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                            {course.duration}
+                          </span>
 
-                            <h5 className="font-display text-[14px] font-bold leading-tight text-slate-800">
-                              {course.title}
-                            </h5>
+                          {/* COURSE TITLE */}
+                          {(() => {
+                            const href = getCoursePageHref(
+                              course.standardKey,
+                              course.title,
+                            );
 
-                            <p className="line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500">
-                              {course.summary}
-                            </p>
+                            return href ? (
+                              <Link
+                                href={href}
+                                className="block font-display text-[14px] font-bold leading-tight text-slate-800 hover:text-blue-600"
+                              >
+                                {course.title}
+                              </Link>
+                            ) : (
+                              <h5 className="font-display text-[14px] font-bold leading-tight text-slate-800">
+                                {course.title}
+                              </h5>
+                            );
+                          })()}
 
-                            {/* Course names as buttons */}
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {course.courseNamesIncluded.map((name) => (
+                          <p className="line-clamp-2 text-[11px] font-medium leading-relaxed text-slate-500">
+                            {course.summary}
+                          </p>
+
+                          {/* INDIVIDUAL PROGRAM LINKS */}
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {course.courseNamesIncluded.map((name) => {
+                              const href = getCoursePageHref(
+                                course.standardKey,
+                                name,
+                              );
+
+                              const className =
+                                "rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-[10px] font-semibold text-blue-600 transition-colors hover:bg-blue-100";
+
+                              return href ? (
+                                <Link
+                                  key={name}
+                                  href={href}
+                                  className={className}
+                                >
+                                  {name}
+                                </Link>
+                              ) : (
                                 <button
                                   key={name}
                                   type="button"
                                   onClick={() => onSelectCourse(course, name)}
-                                  className="rounded-md border border-blue-100 bg-blue-50/50 px-2.5 py-1 text-[10px] font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
+                                  className={className}
                                 >
                                   {name}
                                 </button>
-                              ))}
-                            </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* ENROLMENT */}
+                        <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                          <div className="flex flex-wrap gap-1">
+                            {course.mode.split("/").map((mode) => (
+                              <span
+                                key={mode.trim()}
+                                className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[9px] font-bold text-slate-500"
+                              >
+                                {mode.trim()}
+                              </span>
+                            ))}
                           </div>
 
-                          <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                            <div className="flex flex-wrap gap-1">
-                              {course.mode.split("/").map((m) => (
-                                <span
-                                  key={m.trim()}
-                                  className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[9px] font-bold text-slate-500"
-                                >
-                                  {m.trim()}
-                                </span>
-                              ))}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => onSelectCourse(course)}
-                              className="flex cursor-pointer items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-700"
-                            >
-                              <span>Enroll</span>
-                              <ChevronRight className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
+                          <button
+                            type="button"
+                            onClick={() => onSelectCourse(course)}
+                            className="flex cursor-pointer items-center space-x-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                          >
+                            <span>Enroll</span>
+                            <ChevronRight className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
 
                   {hiddenCount > 0 && activeTab !== "Skills" && (
@@ -779,13 +839,12 @@ export default function SpotlightSection({
                       <button
                         type="button"
                         onClick={() => setShowAllCourses(!showAllCourses)}
-                        className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-blue-600 shadow-sm transition-all hover:bg-blue-50 hover:border-blue-200"
+                        className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2 text-xs font-bold text-blue-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50"
                       >
-                        {showAllCourses ? (
-                          <>Show Less</>
-                        ) : (
-                          <>Show All {otherCourses.length} Courses</>
-                        )}
+                        {showAllCourses
+                          ? "Show Less"
+                          : `Show All ${otherCourses.length} Courses`}
+
                         <ChevronRight
                           className={`h-3.5 w-3.5 transition-transform ${
                             showAllCourses ? "rotate-90" : ""

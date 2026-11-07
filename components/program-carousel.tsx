@@ -49,8 +49,8 @@ const HOME_PROGRAMS: Program[] = [
     category: "Entrance Exams",
     title: "COMPETITIVE EXAMS",
     duration: "Batch-Based",
-    description: "JEE, NEET, CET, CUET, CLAT, IPMAT, CA Foundation.",
-    focus: ["JEE / NEET", "CET / CUET", "CA / CS / CMA"],
+    description: "JEE, NEET, CET, , CLAT, IPMAT, CA Foundation.",
+    focus: ["JEE / NEET", "CET ", "CA Foundation"],
     targetTab: "Class 11-12",
   },
   {

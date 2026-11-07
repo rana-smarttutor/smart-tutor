@@ -27,6 +27,10 @@ const STATUS_OPTIONS: {
 ];
 
 function requestTypeLabel(enquiry: Enquiry) {
+  if (enquiry.source === "homepage-counselling") {
+    return "Counselling Enquiry";
+  }
+
   switch (enquiry.requestType) {
     case "consultation":
       return "Consultation";
@@ -281,6 +285,7 @@ export function DashboardEnquiryManager() {
         enquiry.branch,
         enquiry.source,
         enquiry.requestType,
+        enquiry.message,
       ].some((value) =>
         String(value ?? "")
           .toLowerCase()
@@ -608,7 +613,9 @@ export function DashboardEnquiryManager() {
                       <div className="flex items-center gap-2 text-blue-700">
                         <BookOpen className="h-4 w-4" />
                         <p className="text-[10px] font-black uppercase tracking-wider">
-                          Course Interest
+                          {enquiry.source === "homepage-counselling"
+                            ? "Counselling Request"
+                            : "Course Interest"}
                         </p>
                       </div>
 

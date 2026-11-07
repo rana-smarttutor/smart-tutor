@@ -1,4 +1,4 @@
-import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
+import { HomeCounsellingBooking } from "@/components/home-counselling-booking";
 
 import {
   ArrowUpRight,
@@ -164,12 +164,7 @@ export default function HomeCounsellingFeature({
     BOOK NOW — OPEN EXISTING ENQUIRY FORM POPUP
 ===================================================== */}
 
-          <ConsultationEnquiryButton
-            label="Book Now ↗"
-            requestType="consultation"
-            source="homepage"
-            className="group inline-flex min-h-[60px] w-full shrink-0 items-center justify-center gap-4 rounded-[16px] border-[3px] border-white/20 bg-white px-6 py-3 text-xl font-black text-[#17459B] shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-cyan-300 sm:text-2xl lg:w-[320px]"
-          />
+          <HomeCounsellingBooking className="group inline-flex min-h-[60px] w-full shrink-0 items-center justify-center gap-4 rounded-[16px] border-[3px] border-white/20 bg-white px-6 py-3 text-xl font-black text-[#17459B] shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-cyan-300 sm:text-2xl lg:w-[320px]" />
         </div>
       </div>
     </section>
