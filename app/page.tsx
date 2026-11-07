@@ -470,7 +470,7 @@ export default async function Home() {
           <div className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:rounded-[2rem]">
             <div className="relative w-full aspect-[3/4]">
               <Image
-                src="/smartiq-why-choose-poster.png"
+                src="/wisiq.png"
                 alt="Why Choose SmartIQ Institute - Personal Mentorship, 24/7 Doubt Support, Weekly Tests, Student Performance Reports and Replacement Guarantee"
                 fill
                 sizes="(max-width: 1024px) 100vw, 45vw"
