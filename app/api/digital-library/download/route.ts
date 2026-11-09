@@ -146,7 +146,7 @@ export async function GET(request: Request): Promise<Response> {
     // existing bypass for subscription
     // and migration lockdown.
     //
-    // The 52-book allowlist still applies
+    // The 47-book allowlist still applies
     // to everyone.
 
     // ==============================================

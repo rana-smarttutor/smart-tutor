@@ -1,8 +1,5 @@
-import Image from "next/image";
 import {
   Award,
-  BookMarked,
-  BookOpen,
   ChartNoAxesCombined,
   ClipboardCheck,
   Fingerprint,
@@ -15,6 +12,7 @@ import {
   Layers3,
   Video,
   BadgeCheck,
+  BookOpen,
 } from "lucide-react";
 
 const benefits = [
@@ -152,85 +150,81 @@ export default function CoursesWhyChooseSection() {
       aria-labelledby="courses-why-title"
       className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1840px] -translate-x-1/2 overflow-hidden rounded-[30px] border border-[#D9E7FF] bg-gradient-to-br from-[#F2F7FF] via-white to-[#EAF3FF] p-4 shadow-sm sm:w-[calc(100vw-3rem)] sm:p-7 xl:p-9"
     >
+      {/* SOFT BACKGROUND GLOW */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-16 -top-20 h-80 w-80 rounded-full bg-blue-200/40 blur-[75px]"
       />
 
-      {/* On wide screens, the picture takes only the left third of the TOP section. */}
-      <div className="relative grid items-center gap-6 lg:grid-cols-[32%_minmax(0,1fr)] xl:gap-9">
-        <div className="relative mx-auto w-full max-w-[580px] lg:mx-0">
-          <div
-            aria-hidden="true"
-            className="absolute -inset-2 rotate-[3deg] rounded-[36px] bg-blue-200/70"
-          />
-          <div className="relative overflow-hidden rounded-[28px] border-[5px] border-white bg-blue-100 shadow-xl shadow-blue-200/40">
-            <div className="relative aspect-[5/4] sm:aspect-[16/11] lg:aspect-[5/4]">
-              <Image
-                src="/images/smartiq-students-learning.jpg"
-                alt="Students studying together"
-                fill
-                sizes="(max-width: 1024px) 100vw, 32vw"
-                className="object-cover object-center"
-              />
-            </div>
-            <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 rounded-2xl bg-gradient-to-r from-blue-700 to-blue-600 p-3 text-white shadow-lg sm:bottom-4 sm:left-5 sm:right-5">
-              <ChartNoAxesCombined
-                size={25}
-                className="shrink-0 text-yellow-300"
-                aria-hidden="true"
-              />
-              <p className="text-sm font-extrabold leading-snug sm:text-base">
-                Personalised Learning.
-                <span className="block">Measurable Progress.</span>
-              </p>
-            </div>
-          </div>
-        </div>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-violet-200/20 blur-[75px]"
+      />
 
-        <div className="text-center lg:text-left">
-          <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100 px-4 py-2 text-[11px] font-extrabold uppercase tracking-wide text-blue-800">
-            <Award size={17} aria-hidden="true" /> Why Choose SmartIQ Institute
-          </span>
-          <h2
-            id="courses-why-title"
-            className="mt-4 text-3xl font-black leading-tight tracking-tight text-[#101F40] sm:text-4xl xl:text-[clamp(2.2rem,3vw,3.4rem)]"
-          >
-            A Legacy of <span className="text-[#235CE9]">Academic Growth</span>
-          </h2>
-          <p className="mx-auto mt-4 max-w-[760px] text-sm leading-7 text-slate-600 sm:text-base lg:mx-0">
-            From classrooms to career goals — we combine proven teaching methods
-            with personalised guidance to help every learner achieve their
-            goals.
-          </p>
-          <div className="mt-6 hidden h-1.5 w-20 rounded-full bg-yellow-400 lg:block" />
-        </div>
+      {/* ================================================
+          CENTRED WHY CHOOSE SMARTIQ HEADING
+      ================================================= */}
+      <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center py-5 text-center sm:py-8">
+        {/* SECTION BADGE */}
+        <span className="inline-flex max-w-full items-center justify-center gap-2 rounded-full border border-blue-200 bg-blue-100 px-5 py-2.5 text-center text-[11px] font-extrabold uppercase tracking-wide text-blue-800 sm:text-xs">
+          <Award size={17} className="shrink-0" aria-hidden="true" />
+          Why Choose SmartIQ Institute
+        </span>
+
+        {/* MAIN TITLE */}
+        <h2
+          id="courses-why-title"
+          className="mt-6 max-w-4xl text-3xl font-black leading-[1.15] tracking-tight text-[#101F40] sm:text-4xl lg:text-5xl"
+        >
+          A Legacy of <span className="text-[#235CE9]">Academic Growth</span>
+        </h2>
+
+        {/* DESCRIPTION */}
+        <p className="mx-auto mt-5 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base lg:text-lg lg:leading-8">
+          From classrooms to career goals — we combine proven teaching methods
+          with personalised guidance to help every learner achieve their goals.
+        </p>
+
+        {/* DECORATIVE UNDERLINE */}
+        <div
+          aria-hidden="true"
+          className="mt-7 h-1.5 w-24 rounded-full bg-yellow-400"
+        />
       </div>
 
-      {/* FULL-WIDTH compact benefit grid: never stretches the photo's height. */}
-      <div className="relative mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      {/* ================================================
+          FULL-WIDTH BENEFIT GRID
+      ================================================= */}
+      <div className="relative mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {benefits.map((benefit, index) => {
           const Icon = benefit.icon;
+
           return (
             <article
               key={benefit.title}
-              className={`group relative flex min-h-[170px] flex-col rounded-[20px] border ${benefit.border} bg-white/95 p-4 shadow-[0_4px_12px_rgba(18,35,68,0.05)] transition hover:-translate-y-1 hover:shadow-lg xl:min-h-[195px]`}
+              className={`group relative flex min-h-[170px] flex-col rounded-[20px] border ${benefit.border} bg-white/95 p-4 shadow-[0_4px_12px_rgba(18,35,68,0.05)] transition duration-200 hover:-translate-y-1 hover:shadow-lg xl:min-h-[195px]`}
             >
+              {/* NUMBER AND ICON */}
               <div className="flex items-center justify-between">
                 <span
                   className={`rounded-full px-3 py-1 text-sm font-black ${benefit.numberBg} ${benefit.tone}`}
                 >
                   {String(index + 1).padStart(2, "0")}
                 </span>
+
                 <span
                   className={`flex h-11 w-11 items-center justify-center rounded-2xl ${benefit.iconBg} ${benefit.tone}`}
                 >
                   <Icon size={24} aria-hidden="true" />
                 </span>
               </div>
+
+              {/* BENEFIT TITLE */}
               <h3 className="mt-3 text-sm font-extrabold leading-snug text-[#112348] sm:text-[15px]">
                 {benefit.title}
               </h3>
+
+              {/* BENEFIT DESCRIPTION */}
               <p className="mt-2 text-[12px] leading-[1.55] text-slate-600 sm:text-[13px]">
                 {benefit.description}
               </p>
@@ -239,6 +233,9 @@ export default function CoursesWhyChooseSection() {
         })}
       </div>
 
+      {/* ================================================
+          ACHIEVEMENT STATISTICS
+      ================================================= */}
       <div
         aria-label="SmartIQ Institute achievements"
         className="relative mt-7 grid grid-cols-2 overflow-hidden rounded-[26px] bg-gradient-to-r from-[#E6F0FF] via-[#F1F6FF] to-[#DCEAFF] px-4 py-5 sm:px-6 lg:grid-cols-4 lg:py-6"

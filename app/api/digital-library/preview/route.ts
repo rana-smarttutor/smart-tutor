@@ -237,7 +237,7 @@ async function buildPreviewBytes(pathname: string): Promise<Uint8Array> {
 
   // IMPORTANT:
   // findLibraryBook() now enforces the verified
-  // 52-book MongoDB allowlist.
+  // 47-book MongoDB allowlist.
   //
   // Hidden, archived and nonexistent books
   // are rejected BEFORE any PDF is downloaded.

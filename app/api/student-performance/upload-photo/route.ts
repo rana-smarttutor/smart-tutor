@@ -1,29 +1,29 @@
 import { put } from "@vercel/blob";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 
 import { getSessionUser } from "@/lib/auth";
+import { uploadR2Asset } from "@/lib/r2-asset-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
-function getExtension(fileName: string, contentType: string) {
-  const extensionFromName = fileName.split(".").pop()?.toLowerCase();
+const MIME_EXTENSIONS: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+};
 
-  if (
-    extensionFromName &&
-    ["png", "jpg", "jpeg", "webp"].includes(extensionFromName)
-  ) {
-    return extensionFromName === "jpeg" ? "jpg" : extensionFromName;
-  }
-
-  if (contentType === "image/png") return "png";
-  if (contentType === "image/jpeg") return "jpg";
-  if (contentType === "image/webp") return "webp";
-
-  return "";
+function fail(message: string, status: number) {
+  return NextResponse.json(
+    { success: false, message },
+    {
+      status,
+      headers: { "Cache-Control": "private, no-store" },
+    },
+  );
 }
 
 export async function POST(request: Request) {
@@ -31,36 +31,15 @@ export async function POST(request: Request) {
     const session = await getSessionUser();
 
     if (!session) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Unauthorized.",
-        },
-        { status: 401 },
-      );
+      return fail("Unauthorized.", 401);
     }
 
     const role = String(session.role || "").toLowerCase();
 
     if (role !== "admin" && role !== "educator") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Only admin and educator users can upload student photos.",
-        },
-        { status: 403 },
-      );
-    }
-
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-
-    if (!token) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "BLOB_READ_WRITE_TOKEN is missing.",
-        },
-        { status: 500 },
+      return fail(
+        "Only admins and educators can upload student photos.",
+        403,
       );
     }
 
@@ -68,74 +47,92 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "No photo file was uploaded.",
-        },
-        { status: 400 },
-      );
+      return fail("No photo file was uploaded.", 400);
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Student photo must be smaller than 2 MB.",
-        },
-        { status: 400 },
-      );
+    if (file.size <= 0 || file.size > MAX_FILE_SIZE) {
+      return fail("Student photo must be 2 MB or smaller.", 400);
     }
 
-    const validTypes = ["image/png", "image/jpeg", "image/webp"];
-
-    if (!validTypes.includes(file.type)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Only PNG, JPG and WEBP images are allowed.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const extension = getExtension(file.name, file.type);
+    const extension = MIME_EXTENSIONS[file.type];
 
     if (!extension) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid photo file extension.",
-        },
-        { status: 400 },
+      return fail(
+        "Only PNG, JPG and WEBP images are allowed.",
+        400,
       );
     }
 
-    const blobPath = `student-performance/photos/${randomUUID()}.${extension}`;
+    const suppliedExtension =
+      file.name.split(".").pop()?.toLowerCase();
 
-    const blob = await put(blobPath, file, {
+    const validExtensions =
+      file.type === "image/jpeg"
+        ? ["jpg", "jpeg"]
+        : [extension];
+
+    if (!validExtensions.includes(suppliedExtension || "")) {
+      return fail("Invalid photo file extension.", 400);
+    }
+
+    const pathname =
+      `student-performance/photos/${randomUUID()}.${extension}`;
+
+    // R2 rollout is opt-in. The existing Vercel
+    // workflow remains active until explicitly enabled.
+    if (process.env.R2_STUDENT_PHOTO_UPLOADS === "true") {
+      const uploaded = await uploadR2Asset(pathname, file);
+
+      // No public bucket URL is returned.
+      const url =
+        `/api/r2/student-performance/photo?pathname=${encodeURIComponent(uploaded.pathname)}`;
+
+      return NextResponse.json(
+        {
+          success: true,
+          url,
+          pathname: uploaded.pathname,
+          storageProvider: "r2",
+        },
+        {
+          headers: {
+            "Cache-Control": "private, no-store",
+          },
+        },
+      );
+    }
+
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+
+    if (!token) {
+      return fail("Photo storage is not configured.", 503);
+    }
+
+    const blob = await put(pathname, file, {
       access: "public",
       token,
       contentType: file.type,
     });
 
-    return NextResponse.json({
-      success: true,
-      url: blob.url,
-      pathname: blob.pathname,
-    });
-  } catch (error) {
-    console.error("Student photo upload error:", error);
-
     return NextResponse.json(
       {
-        success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to upload student photo.",
+        success: true,
+        url: blob.url,
+        pathname: blob.pathname,
+        storageProvider: "vercel",
       },
-      { status: 500 },
+      {
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      },
     );
+  } catch (error) {
+    console.error(
+      "Student Performance photo upload error:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+
+    return fail("Unable to upload student photo.", 500);
   }
 }

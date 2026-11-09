@@ -27,7 +27,7 @@ import HomeToppers from "@/components/home-toppers";
 import { courseLibrary } from "@/lib/course-library";
 import { ProgramCarousel } from "@/components/program-carousel";
 import HomeCounsellingFeature from "@/components/home-counselling-feature";
-import { ConsultationEnquiryButton } from "@/components/consultation-enquiry-button";
+import { HomeCounsellingBooking } from "@/components/home-counselling-booking";
 import { HomeJourneySection } from "@/components/home-journey-section";
 
 /* =====================================================
@@ -470,7 +470,7 @@ export default async function Home() {
           <div className="relative w-full min-w-0 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm sm:rounded-[2rem]">
             <div className="relative w-full aspect-[3/4]">
               <Image
-                src="/wisiq.png"
+                src="/smartiq-why-choose-poster.png"
                 alt="Why Choose SmartIQ Institute - Personal Mentorship, 24/7 Doubt Support, Weekly Tests, Student Performance Reports and Replacement Guarantee"
                 fill
                 sizes="(max-width: 1024px) 100vw, 45vw"
@@ -750,12 +750,7 @@ export default async function Home() {
 
               {/* CONSULTATION BUTTON */}
 
-              <ConsultationEnquiryButton
-                label="Book a Consultation"
-                requestType="consultation"
-                source="homepage"
-                className="relative z-10 mt-auto inline-flex min-h-14 w-full items-center justify-center rounded-xl bg-white px-4 py-4 text-center text-base font-black text-blue-800 shadow-xl transition-all hover:scale-[1.02] hover:bg-blue-50 sm:py-5 sm:text-lg"
-              />
+              <HomeCounsellingBooking className="group inline-flex min-h-[60px] w-full shrink-0 items-center justify-center gap-4 rounded-[16px] border-[3px] border-white/20 bg-white px-6 py-3 text-xl font-black text-[#17459B] shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-cyan-300 sm:text-2xl lg:w-[320px]" />
             </article>
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { type FormEvent, useState } from "react";
@@ -61,16 +60,6 @@ const categories = [
     iconBg: "bg-[#DCFCE7]",
     color: "text-green-600",
     border: "border-green-200",
-  },
-  {
-    title: "Skill Courses",
-    subtitle: "English, Robotics, AI",
-    href: "/courses/skill-courses",
-    icon: Laptop,
-    bg: "bg-[#EFFBFF]",
-    iconBg: "bg-[#DDF6FF]",
-    color: "text-cyan-600",
-    border: "border-cyan-200",
   },
 ];
 
@@ -140,11 +129,7 @@ function FloatingEducationIllustration() {
         {...float(12, 4.6)}
         className="absolute left-[2%] top-[11%] z-30 flex h-[75px] w-[85px] -rotate-12 items-center justify-center rounded-2xl border border-white/60 bg-gradient-to-br from-[#F8F3FF] to-[#BBA2FF] shadow-[0_16px_30px_rgba(9,13,60,0.26)] sm:left-[7%]"
       >
-        <BookOpen
-          size={44}
-          strokeWidth={1.7}
-          className="text-violet-700"
-        />
+        <BookOpen size={44} strokeWidth={1.7} className="text-violet-700" />
       </motion.div>
 
       {/* Atom - upper right */}
@@ -152,11 +137,7 @@ function FloatingEducationIllustration() {
         {...float(10, 4.2)}
         className="absolute right-[4%] top-[16%] z-30 flex h-[76px] w-[76px] rotate-12 items-center justify-center rounded-2xl border border-white/50 bg-gradient-to-br from-[#E6FAFF] to-[#80DFFF] shadow-[0_16px_30px_rgba(0,25,80,0.25)] sm:right-[7%]"
       >
-        <Atom
-          size={43}
-          strokeWidth={1.8}
-          className="text-cyan-700"
-        />
+        <Atom size={43} strokeWidth={1.8} className="text-cyan-700" />
       </motion.div>
 
       {/* Coding - bottom left */}
@@ -164,11 +145,7 @@ function FloatingEducationIllustration() {
         {...float(9, 5.4)}
         className="absolute bottom-[11%] left-[5%] z-30 flex h-[72px] w-[82px] rotate-6 items-center justify-center rounded-2xl border border-white/60 bg-gradient-to-br from-[#EEFFF7] to-[#8DE6B7] shadow-[0_16px_30px_rgba(0,25,55,0.23)] sm:left-[9%]"
       >
-        <Code2
-          size={43}
-          strokeWidth={1.9}
-          className="text-emerald-700"
-        />
+        <Code2 size={43} strokeWidth={1.9} className="text-emerald-700" />
       </motion.div>
 
       {/* Laptop - bottom right */}
@@ -176,11 +153,7 @@ function FloatingEducationIllustration() {
         {...float(13, 4.8)}
         className="absolute bottom-[9%] right-[3%] z-30 flex h-[75px] w-[90px] -rotate-9 items-center justify-center rounded-2xl border border-white/60 bg-gradient-to-br from-[#FFF8E9] to-[#FFD18D] shadow-[0_16px_30px_rgba(0,25,70,0.25)] sm:right-[8%]"
       >
-        <Laptop
-          size={46}
-          strokeWidth={1.8}
-          className="text-orange-700"
-        />
+        <Laptop size={46} strokeWidth={1.8} className="text-orange-700" />
       </motion.div>
 
       {/* Mini AI badge */}
@@ -198,9 +171,7 @@ function FloatingEducationIllustration() {
         className="absolute bottom-[5%] left-[35%] z-30 flex items-center gap-2 rounded-full border border-white/30 bg-white/20 px-3 py-2 shadow-lg backdrop-blur-md"
       >
         <Lightbulb size={18} className="text-yellow-300" />
-        <span className="text-xs font-bold text-white">
-          Bright Futures
-        </span>
+        <span className="text-xs font-bold text-white">Bright Futures</span>
       </motion.div>
     </div>
   );
@@ -210,9 +181,7 @@ export default function CourseArtifactHero() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [search, setSearch] = useState(
-    () => searchParams.get("search") ?? "",
-  );
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -256,10 +225,7 @@ export default function CourseArtifactHero() {
             </div>
 
             <h1 className="mt-6 text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-[58px] lg:leading-[1.12]">
-              Courses{" "}
-              <span className="text-white">
-                Offered
-              </span>
+              Courses <span className="text-white">Offered</span>
             </h1>
 
             <p className="mt-5 max-w-xl text-sm leading-7 text-blue-100 sm:text-base">
@@ -303,10 +269,10 @@ export default function CourseArtifactHero() {
         </div>
       </section>
 
-      {/* FIVE CATEGORY CARDS */}
+      {/* FOUR CATEGORY CARDS — 2 × 2 GRID */}
       <nav
         aria-label="Course categories"
-        className="relative left-1/2 grid w-[calc(100vw-2rem)] max-w-[1840px] -translate-x-1/2 grid-cols-1 gap-3 px-0 pt-7 sm:w-[calc(100vw-3rem)] sm:grid-cols-2 lg:grid-cols-5"
+        className="relative left-1/2 grid w-[calc(100vw-2rem)] max-w-[1200px] -translate-x-1/2 grid-cols-2 gap-3 px-0 pt-7 sm:w-[calc(100vw-3rem)] sm:gap-4"
       >
         {categories.map((category) => {
           const Icon = category.icon;
@@ -320,11 +286,7 @@ export default function CourseArtifactHero() {
               <span
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${category.iconBg} ${category.color}`}
               >
-                <Icon
-                  aria-hidden="true"
-                  size={26}
-                  strokeWidth={2.2}
-                />
+                <Icon aria-hidden="true" size={26} strokeWidth={2.2} />
               </span>
 
               <span className="min-w-0">

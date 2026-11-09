@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
+import { uploadR2Asset } from "@/lib/r2-asset-storage";
 import { getSessionUser } from "@/lib/auth";
 
 export async function POST(request: Request) {
@@ -28,13 +29,29 @@ export async function POST(request: Request) {
     const ext = file.name.split(".").pop() || "bin";
     const fileName = `chat-uploads/${session.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const blob = await put(fileName, file, {
-      access: "public",
-      contentType: file.type,
-    });
+    const useR2 = process.env.R2_CHAT_UPLOADS === "true";
+    let url: string;
+
+    if (useR2) {
+      if (!/^[a-zA-Z0-9]+$/.test(ext)) {
+        return NextResponse.json(
+          { error: "Invalid attachment extension." },
+          { status: 400 },
+        );
+      }
+
+      const uploaded = await uploadR2Asset(fileName, file);
+      url = `/api/r2/chat/file?pathname=${encodeURIComponent(uploaded.pathname)}`;
+    } else {
+      const blob = await put(fileName, file, {
+        access: "public",
+        contentType: file.type,
+      });
+      url = blob.url;
+    }
 
     return NextResponse.json({
-      url: blob.url,
+      url,
       name: file.name,
       type: file.type,
       size: file.size,

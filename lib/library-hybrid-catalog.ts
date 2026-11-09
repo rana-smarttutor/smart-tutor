@@ -13,7 +13,7 @@ import {
 import { isValidR2BookKey, isValidR2ThumbnailKey } from "@/lib/cloudflare-r2";
 
 export const EXPECTED_LIBRARY_BOOK_COUNT = 110;
-export const TARGET_RETAINED_BOOK_COUNT = 52;
+export const TARGET_RETAINED_BOOK_COUNT = 47;
 
 export type LibraryCatalogStatus = {
   total: number;

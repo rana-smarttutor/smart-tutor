@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+
 import {
   ArrowRight,
   BookOpen,
   Clock3,
-  ExternalLink,
   GraduationCap,
   Mail,
-  MapPin,
   MessageCircle,
-  Phone,
   Send,
 } from "lucide-react";
 
 import ContactEnquiryForm from "@/components/contact-enquiry-form";
-import { LazyCampusMap } from "@/components/lazy-campus-map";
 import { getPublicInstituteData } from "@/lib/data-store";
 
 export const metadata: Metadata = {
@@ -34,22 +31,8 @@ const OFFICIAL_EMAIL = "info@smartiqinstitute.in";
 export default async function ContactPage() {
   const data = await getPublicInstituteData();
 
-  const mapLink = `https://maps.google.com/?q=${encodeURIComponent(
-    data.profile.address,
-  )}`;
-
-  const branches = data.profile.branches?.length
-    ? data.profile.branches
-    : [
-        {
-          name: "SmartIQ Institute Campus",
-          address: data.profile.address,
-          mapQuery: data.profile.address,
-        },
-      ];
-
   const contactMethods = data.contactMethods
-    .filter((item) => ["Phone", "WhatsApp", "Email"].includes(item.icon ?? ""))
+    .filter((item) => ["WhatsApp", "Email"].includes(item.icon ?? ""))
     .map((item) =>
       item.icon === "Email"
         ? {
@@ -84,13 +67,16 @@ export default async function ContactPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(breadcrumbJsonLd),
+          __html: JSON.stringify(breadcrumbJsonLd).replace(/</g, "\\u003c"),
         }}
       />
 
       <main className="min-w-0 overflow-x-clip bg-[#F7F9FD] pb-16">
-        {/* COMPACT HERO SECTION */}
+        {/* ==============================================
+            CONTACT HERO
+        ============================================== */}
         <section className="relative isolate overflow-hidden bg-gradient-to-r from-[#082B62] via-[#0A4B96] to-[#1674C5]">
+          {/* Background decoration */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full border-[36px] border-white/5"
@@ -108,7 +94,7 @@ export default async function ContactPage() {
 
           <div className="section-shell relative z-10 py-8 sm:py-10 lg:py-9">
             <div className="grid items-center gap-5 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:gap-6">
-              {/* HERO TEXT */}
+              {/* Hero text */}
               <div className="min-w-0">
                 <div className="mb-3 flex items-center gap-3">
                   <span className="text-xs font-extrabold uppercase tracking-[0.24em] text-blue-100">
@@ -124,7 +110,7 @@ export default async function ContactPage() {
                   <span className="text-[#F6D77E]">Conversation</span>
                 </h1>
 
-                <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-blue-50 sm:text-base sm:leading-7">
+                <p className="mt-4 max-w-2xl text-sm font-medium leading-7 text-blue-50 sm:text-base">
                   Have a question about our courses, admissions, career guidance
                   or campus? We&apos;re here to help you take the next step with
                   confidence.
@@ -141,7 +127,7 @@ export default async function ContactPage() {
                 </div>
               </div>
 
-              {/* ENLARGED TRANSPARENT ILLUSTRATION */}
+              {/* Hero illustration */}
               <div className="relative mx-auto flex h-[260px] w-full items-center justify-center overflow-visible sm:h-[320px] lg:h-[390px]">
                 <Image
                   src="/images/c-s-i-2.png"
@@ -158,28 +144,47 @@ export default async function ContactPage() {
         </section>
 
         <div className="section-shell">
-          {/* QUICK CONTACT CARDS */}
+          {/* ==============================================
+              QUICK CONTACT CARDS
+          ============================================== */}
           <section
             aria-label="Quick contact information"
             className="relative z-20 -mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
           >
+            {/* Operating Hours */}
+            <div className="flex min-w-0 items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_10px_30px_rgba(10,37,76,0.09)]">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <Clock3 className="h-6 w-6" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-black text-[#102A52]">
+                  Operating Hours
+                </h2>
+
+                <p className="mt-1 whitespace-pre-line text-sm font-bold leading-6 text-slate-800">
+                  {data.profile.hours}
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  Our institute&apos;s working hours
+                </p>
+              </div>
+            </div>
+
+            {/* WhatsApp and Email */}
             {contactMethods.map((item) => {
-              const isPhone = item.icon === "Phone";
               const isWhatsApp = item.icon === "WhatsApp";
 
-              const Icon = isPhone ? Phone : isWhatsApp ? MessageCircle : Mail;
+              const Icon = isWhatsApp ? MessageCircle : Mail;
 
-              const iconBackground = isPhone
-                ? "bg-blue-50 text-blue-700"
-                : isWhatsApp
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-indigo-50 text-indigo-700";
+              const iconBackground = isWhatsApp
+                ? "bg-emerald-50 text-emerald-600"
+                : "bg-indigo-50 text-indigo-700";
 
-              const description = isPhone
-                ? "Speak with our admissions team"
-                : isWhatsApp
-                  ? "Chat with us for quick support"
-                  : "Send us your questions anytime";
+              const description = isWhatsApp
+                ? "Chat with us for quick support"
+                : "Send us your questions anytime";
 
               return (
                 <a
@@ -219,121 +224,25 @@ export default async function ContactPage() {
             })}
           </section>
 
-          {/* ENQUIRY FORM AND CAMPUS DETAILS */}
-          <section className="mt-9 grid min-w-0 items-stretch gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-            {/* ENQUIRY FORM */}
+          {/* ==============================================
+              CENTRED ENQUIRY FORM
+          ============================================== */}
+          <section
+            aria-label="Admission and support enquiry"
+            className="mx-auto mt-10 w-full max-w-[900px] sm:mt-12"
+          >
             <div
               id="admission-enquiry"
-              className="min-w-0 scroll-mt-28 overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(20,45,90,0.06)] sm:p-7"
-             >
-
+              className="scroll-mt-28 overflow-hidden rounded-[28px] border border-slate-200 bg-white p-3 shadow-[0_15px_50px_rgba(20,45,90,0.08)] sm:p-6 lg:p-8"
+            >
               <ContactEnquiryForm />
-            </div>
-
-            {/* CAMPUS CONTACT INFORMATION */}
-            <div className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_8px_30px_rgba(20,45,90,0.06)] sm:p-7">
-              <div className="mb-7 flex items-start gap-4 border-b border-slate-100 pb-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4D9] text-[#B88717]">
-                  <GraduationCap className="h-6 w-6" />
-                </div>
-
-                <div>
-                  <h2 className="text-xl font-black tracking-tight text-[#112D59] sm:text-2xl">
-                    Campus Contact Information
-                  </h2>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Visit us, call us or reach out online. We&apos;d love to
-                    hear from you.
-                  </p>
-                </div>
-              </div>
-
-              <div className="divide-y divide-slate-100">
-                {/* HOURS */}
-                <div className="flex items-start gap-4 py-6">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4D9] text-[#B88717]">
-                    <Clock3 className="h-5 w-5" />
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-black text-[#102A52]">
-                      Operating Hours
-                    </h3>
-
-                    <p className="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600">
-                      {data.profile.hours}
-                    </p>
-                  </div>
-                </div>
-
-                {/* PHONE AND WHATSAPP */}
-                {contactMethods
-                  .filter(
-                    (item) => item.icon === "Phone" || item.icon === "WhatsApp",
-                  )
-                  .map((item) => {
-                    const Icon = item.icon === "Phone" ? Phone : MessageCircle;
-
-                    return (
-                      <div
-                        key={item.label}
-                        className="flex items-start gap-4 py-6"
-                      >
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4D9] text-[#B88717]">
-                          <Icon className="h-5 w-5" />
-                        </div>
-
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-black text-[#102A52]">
-                            {item.label}
-                          </h3>
-
-                          <a
-                            href={item.href}
-                            target={
-                              item.href.startsWith("http")
-                                ? "_blank"
-                                : undefined
-                            }
-                            rel={
-                              item.href.startsWith("http")
-                                ? "noopener noreferrer"
-                                : undefined
-                            }
-                            className="mt-2 block break-all text-sm font-semibold text-slate-600 hover:text-blue-700"
-                          >
-                            {item.value}
-                          </a>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                {/* EMAIL */}
-                <div className="flex items-start gap-4 pt-6">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FFF4D9] text-[#B88717]">
-                    <Mail className="h-5 w-5" />
-                  </div>
-
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-black text-[#102A52]">Email</h3>
-
-                    <a
-                      href={`mailto:${OFFICIAL_EMAIL}`}
-                      className="mt-2 block break-all text-sm font-semibold text-slate-600 hover:text-blue-700"
-                    >
-                      {OFFICIAL_EMAIL}
-                    </a>
-                  </div>
-                </div>
-              </div>
             </div>
           </section>
 
-
-          {/* FINAL CTA */}
-          <section className="relative mt-8 overflow-hidden rounded-3xl bg-gradient-to-r from-[#092F67] via-[#0B4B92] to-[#0A65B1] px-6 py-8 text-white sm:px-10 sm:py-10">
+          {/* ==============================================
+              FINAL CALL TO ACTION
+          ============================================== */}
+          <section className="relative mt-10 overflow-hidden rounded-3xl bg-gradient-to-r from-[#092F67] via-[#0B4B92] to-[#0A65B1] px-6 py-8 text-white sm:px-10 sm:py-10">
             <div
               aria-hidden="true"
               className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border-[35px] border-white/5"

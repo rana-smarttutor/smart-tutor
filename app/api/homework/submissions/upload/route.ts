@@ -1,4 +1,5 @@
 import { put } from "@vercel/blob";
+import { uploadR2Asset } from "@/lib/r2-asset-storage";
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
@@ -44,9 +45,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const useR2 = process.env.R2_HOMEWORK_UPLOADS === "true";
     const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-    if (!token) {
+    if (!useR2 && !token) {
       return NextResponse.json(
         {
           success: false,
@@ -90,17 +92,29 @@ export async function POST(request: Request) {
     const fileName = safeFileName(uploadedFile.name);
     const pathname = `homework-submissions/${session.id}/${Date.now()}-${fileName}`;
 
-    const blob = await put(pathname, uploadedFile, {
-      access: "public",
-      addRandomSuffix: true,
-      token,
-    });
+    let url: string;
+    let storedPathname: string;
+
+    if (useR2) {
+      const uploaded = await uploadR2Asset(pathname, uploadedFile);
+      storedPathname = uploaded.pathname;
+      url = `/api/r2/homework/file?pathname=${encodeURIComponent(storedPathname)}`;
+    } else {
+      const blob = await put(pathname, uploadedFile, {
+        access: "public",
+        addRandomSuffix: true,
+        token,
+      });
+      url = blob.url;
+      storedPathname = blob.pathname;
+    }
 
     return NextResponse.json({
       success: true,
-      url: blob.url,
-      pathname: blob.pathname,
+      url,
+      pathname: storedPathname,
       fileName: uploadedFile.name,
+      storageProvider: useR2 ? "r2" : "vercel",
     });
   } catch (error) {
     console.error("Homework submission upload error:", error);

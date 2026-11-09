@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 type Step = 1 | 2 | 3;
-type CounsellorId = "male" | "female";
+type CounsellorId = "female";
 
 type Counsellor = {
   id: CounsellorId;
@@ -30,13 +30,6 @@ type Counsellor = {
 };
 
 const COUNSELLORS: Counsellor[] = [
-  {
-    id: "male",
-    name: "Male Counsellor",
-    gender: "Male",
-    experience: " years of experience in counselling and student guidance",
-    image: "/images/counsellors/male-counsellor.jpg",
-  },
   {
     id: "female",
     name: "Mrs.Usha Mam",
@@ -726,7 +719,7 @@ function CounsellingModal({ onClose }: { onClose: () => void }) {
                       </p>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="mx-auto w-full max-w-[350px]">
                       {COUNSELLORS.map((counsellor) => (
                         <CounsellorProfile
                           key={counsellor.id}

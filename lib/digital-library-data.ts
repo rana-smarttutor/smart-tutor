@@ -329,9 +329,9 @@ export async function getDigitalLibraryBooks(
 
   const storedBooks = await listStoredLibraryBooks();
 
-  if (storedBooks.length !== 110) {
-    throw new Error(
-      `Library catalogue incomplete: ${storedBooks.length}/110 books.`
+  if (storedBooks.length !== 47) {
+    console.warn(
+      `Digital Library: ${storedBooks.length}/47 retained books currently available.`,
     );
   }
 
@@ -346,9 +346,17 @@ export async function getDigitalLibraryBooks(
     categoryLabel: book.categoryLabel,
     url: undefined,
     downloadUrl: getLibraryDownloadRoute(book.pathname),
-    thumbnailUrl: book.thumbnailUrl || undefined,
+    thumbnailUrl:
+      book.storageProvider === "r2" && book.r2ThumbnailKey
+        ? `/api/digital-library/thumbnail?pathname=${encodeURIComponent(book.pathname)}`
+        : book.thumbnailUrl || undefined,
     uploadedAt: new Date(book.updatedAt || book.uploadedAt).toISOString(),
-    storageType: "blob" as const,
+    storageType:
+      book.storageProvider === "r2"
+        ? ("r2" as const)
+        : book.storageProvider === "mega"
+          ? ("mega" as const)
+          : ("blob" as const),
   }));
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
