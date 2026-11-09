@@ -663,6 +663,11 @@ export default function QuizArenaClient({
     setShowExitModal(false);
 
     if (step === "level") {
+      if (startAtCategory && isMockTestPage) {
+        window.location.assign("/mock-test");
+        return;
+      }
+
       setStep("welcome");
       return;
     }

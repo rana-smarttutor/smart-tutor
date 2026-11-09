@@ -104,16 +104,7 @@ export default async function MockTestPage({
       />
 
       {showQuizArena ? (
-        /*
-         * Keep the existing Quiz Arena application.
-         *
-         * Default starting step is "welcome".
-         * The visitor sees Start Quiz, then category selection.
-         *
-         * Subscription, login, level unlocking, draft saving
-         * and question-generation logic remain untouched.
-         */
-        <QuizArenaClient mockTestMode />
+        <QuizArenaClient mockTestMode startAtCategory />
       ) : (
         <main className="min-h-screen w-full overflow-hidden bg-gradient-to-br from-[#050C23] via-[#17113D] to-[#07142D] px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
           <div className="mx-auto flex w-full max-w-[1350px] flex-col gap-7">

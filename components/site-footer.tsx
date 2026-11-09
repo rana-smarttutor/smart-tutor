@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+
 import { getPublicInstituteData } from "@/lib/data-store";
+import { LazyCampusMap } from "@/components/lazy-campus-map";
 
 const OFFICIAL_CONTACT_EMAIL = "info@smartiqinstitute.in";
 
@@ -19,13 +21,20 @@ export async function SiteFooter() {
 
   const contactPhone = data.profile.phone;
   const contactHours = data.profile.hours;
+
   const affiliatedInstitutes = data.profile.affiliatedInstitutes ?? [];
+
+  const primaryMapLink = `https://maps.google.com/?q=${encodeURIComponent(
+    branches[0]?.mapQuery || branches[0]?.address || data.profile.address,
+  )}`;
 
   return (
     <footer className="section-shell pb-8 pt-6">
       <div className="surface graph-paper rounded-[2rem] p-6 sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[0.95fr_0.9fr_1.1fr]">
-          {/* Institute information */}
+          {/* =========================================
+              INSTITUTE INFORMATION
+          ========================================= */}
           <div>
             <Link
               href="/"
@@ -38,7 +47,7 @@ export async function SiteFooter() {
               Admissions, learning, and institute operations in one workspace.
             </p>
 
-            {/* Founder */}
+            {/* FOUNDER */}
             <div className="mt-5 flex items-center gap-5">
               <Image
                 src="/founder-temperory.jpeg"
@@ -54,7 +63,7 @@ export async function SiteFooter() {
                 </p>
 
                 <h3 className="mt-2 text-xl font-black leading-tight tracking-tight text-[var(--color-heading)]">
-                  Adv. Reena Ma'am
+                  Adv. Reena Ma&apos;am
                 </h3>
 
                 <p className="mt-1 text-xs font-bold text-blue-600">
@@ -63,7 +72,7 @@ export async function SiteFooter() {
               </div>
             </div>
 
-            {/* Branch addresses */}
+            {/* BRANCH ADDRESSES */}
             <div className="mt-5 space-y-2">
               {branches.map((branch) => (
                 <p
@@ -75,7 +84,7 @@ export async function SiteFooter() {
               ))}
             </div>
 
-            {/* Contact details */}
+            {/* CONTACT DETAILS */}
             <div className="mt-5 space-y-2 text-sm text-[var(--color-muted)]">
               {contactPhone ? (
                 <p>
@@ -90,6 +99,7 @@ export async function SiteFooter() {
                 <span className="font-semibold text-[var(--color-heading)]">
                   Email:{" "}
                 </span>
+
                 <a
                   href={`mailto:${OFFICIAL_CONTACT_EMAIL}`}
                   className="break-all text-blue-700 underline-offset-4 transition-colors hover:text-blue-900 hover:underline"
@@ -113,7 +123,9 @@ export async function SiteFooter() {
             </div>
           </div>
 
-          {/* Social media */}
+          {/* =========================================
+              SOCIAL MEDIA
+          ========================================= */}
           <div>
             <p className="section-label">Social media</p>
 
@@ -136,62 +148,26 @@ export async function SiteFooter() {
             </div>
           </div>
 
-          {/* Campus map */}
-          <div>
+          {/* =========================================
+              REUSABLE ANIMATED CAMPUS MAP
+          ========================================= */}
+          <div className="min-w-0">
             <p className="section-label">Campus map</p>
 
-            <div className="mt-4 flex min-h-[220px] flex-col items-center justify-center rounded-[1.6rem] border border-[var(--color-border)] bg-[var(--color-background-strong)] px-6 py-8 text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 text-white shadow-md">
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </div>
-
-              <p className="text-sm font-semibold text-[var(--color-heading)]">
-                SmartIQ Institute Campus
-              </p>
-
-              <p className="mt-2 max-w-xs text-xs font-medium leading-6 text-[var(--color-muted)]">
-                Open our campus locations directly in Google Maps for
-                directions.
-              </p>
-
-              <div className="mt-5 flex flex-wrap justify-center gap-3">
-                {branches.map((branch) => (
-                  <a
-                    key={branch.name}
-                    href={`https://maps.google.com/?q=${encodeURIComponent(
-                      branch.mapQuery || branch.address,
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex rounded-xl bg-blue-600 px-5 py-3 text-xs font-black text-white shadow-md transition-colors hover:bg-blue-700"
-                  >
-                    {branch.name}
-                  </a>
-                ))}
-              </div>
+            <div className="mt-4">
+              <LazyCampusMap
+                compact
+                mapLink={primaryMapLink}
+                address={data.profile.address}
+                branches={branches}
+              />
             </div>
           </div>
         </div>
 
-        {/* Legal footer */}
+        {/* =========================================
+            LEGAL FOOTER
+        ========================================= */}
         <div className="mt-8 border-t border-[var(--color-border)] pt-8">
           <div className="flex flex-col gap-4 text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-muted)] sm:flex-row sm:items-center sm:justify-between">
             <nav

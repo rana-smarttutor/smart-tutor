@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import CourseCategoryHub from "@/components/course-category-hub";
 import CourseBoardSyllabus from "@/components/course-board-syllabus";
+import GovernmentExamSelection from "@/components/government-exam-selection";
+import JeeExamSelection from "@/components/jee-exam-selection";
 import {
   COURSE_SITE_URL,
   coursePageRegistry,
@@ -90,6 +92,40 @@ export default async function CourseDetailPage({ params }: Props) {
         getCoursePageBySlug(item.slug) !== null,
     )
     .slice(0, 4);
+
+  // GOVERNMENT EXAM SELECTION
+  const governmentExamSelections: Record<
+    string,
+    { title: string; slugs: string[] }
+  > = {
+    "banking-exams": {
+      title: "Banking Exam",
+      slugs: ["ibps-po", "ibps-clerk", "sbi-po", "sbi-clerk", "rbi-grade-b"],
+    },
+    "ssc-coaching": {
+      title: "SSC Exam",
+      slugs: ["ssc-cgl", "ssc-chsl", "ssc-mts", "ssc-cpo"],
+    },
+  };
+
+  const selectionConfig = governmentExamSelections[slug];
+
+  const selectableExams = selectionConfig
+    ? selectionConfig.slugs.flatMap((examSlug) => {
+        const exam = getCoursePageBySlug(examSlug);
+
+        return exam
+          ? [
+              {
+                slug: exam.slug,
+                name: exam.name,
+                description: exam.introduction,
+              },
+            ]
+          : [];
+      })
+    : [];
+
   const subjects =
     seoContent?.syllabus ??
     (course.programme
@@ -299,6 +335,17 @@ export default async function CourseDetailPage({ params }: Props) {
             </aside>
           </div>
         </section>
+
+        {/* GOVERNMENT EXAM SELECTION */}
+        {selectionConfig && selectableExams.length > 0 && (
+          <GovernmentExamSelection
+            title={selectionConfig.title}
+            exams={selectableExams}
+          />
+        )}
+
+        {/* JEE MAIN / JEE ADVANCED SELECTION */}
+        {slug === "jee-coaching" && <JeeExamSelection />}
 
         {/* BOARD-SPECIFIC SCHOOL SYLLABUS / STANDARD COURSE SYLLABUS */}
         {/^class-(6|7|8|9|10|11|12)-tuition$/.test(slug) ? (
