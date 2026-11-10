@@ -63,7 +63,7 @@ package.json                               — added bcryptjs
 ```
 
 ## DB Info
-- MongoDB Atlas: `mongodb://ankit:Prodpass69@ac-fffxkjk-shard-00-{0,1,2}.hexnnuf.mongodb.net:27017/smart_tutor`
+- MongoDB Atlas: 
 - 40 users total
 - bcrypt hashes came from external Atlas trigger (not in this codebase)
 - `supriya@smarttutors.co.in` had bcrypt hash; all others plaintext

@@ -6,6 +6,7 @@ import CourseCategoryHub from "@/components/course-category-hub";
 import CourseBoardSyllabus from "@/components/course-board-syllabus";
 import GovernmentExamSelection from "@/components/government-exam-selection";
 import JeeExamSelection from "@/components/jee-exam-selection";
+import EntranceExamSelection from "@/components/entrance-exam-selection";
 import {
   COURSE_SITE_URL,
   coursePageRegistry,
@@ -343,6 +344,14 @@ export default async function CourseDetailPage({ params }: Props) {
             exams={selectableExams}
           />
         )}
+
+
+{/* MBA AND LAW ENTRANCE EXAM SELECTION */}
+{(slug === "mba-entrance-exams" ||
+  slug === "law-entrance-exams") && (
+  <EntranceExamSelection group={slug} />
+)}
+
 
         {/* JEE MAIN / JEE ADVANCED SELECTION */}
         {slug === "jee-coaching" && <JeeExamSelection />}

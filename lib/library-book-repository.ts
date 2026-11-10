@@ -1,4 +1,5 @@
 import "server-only";
+import { getLibraryBookPrice } from "@/lib/library-book-pricing";
 
 import { getMongoDatabase } from "@/lib/mongodb";
 
@@ -357,7 +358,7 @@ export function toPublicLibraryBook(
     pathname: record.pathname,
     title: record.title,
     description: record.description,
-    price: record.price,
+    price: getLibraryBookPrice(record.categoryId),
     fileName: record.fileName,
     categoryId: record.categoryId,
     categoryLabel: record.categoryLabel,

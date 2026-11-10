@@ -1,11 +1,12 @@
 "use client";
 
+import { isPaidLibraryBook } from "@/lib/library-book-pricing";
+
 import { upload } from "@vercel/blob/client";
 
 import { useEffect, useMemo, useState } from "react";
 
 import { requestLoginIfNeeded } from "@/lib/request-login";
-import LibrarySubscriptionPlans from "@/components/library-subscription-plans";
 
 import {
   BookOpen,
@@ -19,8 +20,8 @@ import {
   Sparkles,
   Trophy,
   Trash2,
-  X,
 } from "lucide-react";
+import { X } from "lucide-react";
 
 // =====================================================
 // TYPES
@@ -709,7 +710,6 @@ export function DigitalLibraryClient({
   initialBooks = [],
   canManage = false,
   canDelete = false,
-  isLoggedIn = false,
 }: DigitalLibraryClientProps) {
   const canDeleteBooks = canDelete;
 
@@ -721,42 +721,54 @@ export function DigitalLibraryClient({
 
   const [allowedToManage, setAllowedToManage] = useState(canManage);
 
-  const [loggedIn, setLoggedIn] = useState(isLoggedIn);
+  const [ownedLibraryBooks, setOwnedLibraryBooks] = useState<Record<string, boolean>>({});
+  const [purchasingLibraryBook, setPurchasingLibraryBook] = useState<string | null>(null);
 
-  // Membership appears when a visitor enters the library,
-  // and again when they request a preview or download.
-  // Admins and educators are exempt from the arrival popup.
-  const [isMembershipOpen, setIsMembershipOpen] = useState(!canManage);
-  const [membershipAction, setMembershipAction] = useState<
-    "arrival" | "preview" | "download"
-  >("arrival");
-  const [membershipBook, setMembershipBook] = useState<Book | null>(null);
+  useEffect(() => {
+    let cancelled = false;
 
-  function openMembership(action: "preview" | "download", book: Book) {
-    setMembershipBook(book);
-    setMembershipAction(action);
-    setIsMembershipOpen(true);
-  }
+    async function checkBookOwnership() {
+      const paidBooks = books.filter(
+        (book) =>
+          book.pathname &&
+          (isPaidLibraryBook(book.categoryId)),
+      );
 
-  function closeMembership() {
-    setIsMembershipOpen(false);
-    setMembershipBook(null);
-    setMembershipAction("arrival");
-  }
+      await Promise.all(
+        paidBooks.map(async (book) => {
+          if (!book.pathname) return;
 
-  function proceedAfterMembership() {
-    const book = membershipBook;
-    const action = membershipAction;
-    closeMembership();
+          try {
+            const response = await fetch(
+              `/api/digital-library/book-payments/status?pathname=${encodeURIComponent(book.pathname)}`,
+              { cache: "no-store" },
+            );
 
-    if (!book) return;
+            if (!response.ok) return;
 
-    if (action === "preview") {
-      void previewBook(book);
-    } else if (action === "download") {
-      void downloadBook(book);
+            const result = await response.json();
+
+            if (!cancelled && result.success) {
+              setOwnedLibraryBooks((previous) => ({
+                ...previous,
+                [book.pathname!]: result.purchased === true,
+              }));
+            }
+          } catch {
+            // An unavailable status does not grant access.
+          }
+        }),
+      );
     }
-  }
+
+    void checkBookOwnership();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [books]);
+
+
 
   // ===================================================
   // FILTER STATES
@@ -1198,10 +1210,6 @@ export function DigitalLibraryClient({
 
       if (typeof data.canManage === "boolean") {
         setAllowedToManage(data.canManage);
-      }
-
-      if (typeof data.isLoggedIn === "boolean") {
-        setLoggedIn(data.isLoggedIn);
       }
     } catch (error) {
       console.error("Library loading error:", error);
@@ -1676,6 +1684,202 @@ export function DigitalLibraryClient({
   // DOWNLOAD BOOK
   // ===================================================
 
+  async function loadLibraryRazorpay(): Promise<void> {
+    const existing = (
+      window as unknown as {
+        Razorpay?: new (options: Record<string, unknown>) => {
+          open: () => void;
+        };
+      }
+    ).Razorpay;
+
+    if (existing) return;
+
+    await new Promise<void>((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error("Razorpay checkout could not be loaded."));
+      document.body.appendChild(script);
+    });
+  }
+
+  async function handleLibraryBookAction(book: Book) {
+    if (!book.pathname) {
+      alert("Book information is unavailable.");
+      return;
+    }
+
+    const isPaid =
+      isPaidLibraryBook(book.categoryId);
+
+    if (!isPaid || allowedToManage) {
+      await downloadBook(book);
+      return;
+    }
+
+    if (purchasingLibraryBook) return;
+
+    const canContinue = await requestLoginIfNeeded("/library");
+    if (!canContinue) return;
+
+    setPurchasingLibraryBook(book.pathname);
+
+    try {
+      const recoveryResponse = await fetch(
+        "/api/digital-library/book-payments/reconcile",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
+
+      const recovery = await recoveryResponse.json().catch(() => null);
+
+      if (!recoveryResponse.ok || !recovery?.success) {
+        throw new Error(
+          recovery?.message ||
+            "Unable to verify previous payments. Please try again before paying.",
+        );
+      }
+
+      if (recovery.reviewRequired > 0 || recovery.unresolved > 0) {
+        throw new Error(
+          "A previous payment requires checking. Please do not pay again until it is resolved.",
+        );
+      }
+
+      const statusResponse = await fetch(
+        `/api/digital-library/book-payments/status?pathname=${encodeURIComponent(book.pathname)}`,
+        { credentials: "same-origin", cache: "no-store" },
+      );
+
+      const status = await statusResponse.json();
+
+      if (!statusResponse.ok || !status.success) {
+        throw new Error(status.message || "Unable to check book access.");
+      }
+
+      if (status.hasAccess === true) {
+        setOwnedLibraryBooks((previous) => ({
+          ...previous,
+          [book.pathname!]: true,
+        }));
+        await downloadBook(book);
+        return;
+      }
+
+      const orderResponse = await fetch(
+        "/api/digital-library/book-payments/create-order",
+        {
+          method: "POST",
+          credentials: "same-origin",
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pathname: book.pathname }),
+        },
+      );
+
+      const order = await orderResponse.json();
+
+      if (!orderResponse.ok || !order.success) {
+        throw new Error(order.message || "Unable to start payment.");
+      }
+
+      if (
+        order.amount !== 4900 ||
+        order.currency !== "INR" ||
+        order.bookPathname !== book.pathname
+      ) {
+        throw new Error("Payment order details do not match this book.");
+      }
+
+      await loadLibraryRazorpay();
+
+      const Razorpay = (
+        window as unknown as {
+          Razorpay?: new (options: Record<string, unknown>) => {
+            open: () => void;
+          };
+        }
+      ).Razorpay;
+
+      if (!Razorpay) {
+        throw new Error("Razorpay checkout unavailable.");
+      }
+
+      const checkout = new Razorpay({
+        key: order.keyId,
+        amount: order.amount,
+        currency: "INR",
+        name: "SmartIQ Institute",
+        description: `Digital Library: ${book.title}`,
+        order_id: order.orderId,
+        theme: { color: "#215cf3" },
+        handler: async (payment: {
+          razorpay_order_id: string;
+          razorpay_payment_id: string;
+          razorpay_signature: string;
+        }) => {
+          try {
+            const response = await fetch(
+              "/api/digital-library/book-payments/verify",
+              {
+                method: "POST",
+                credentials: "same-origin",
+                cache: "no-store",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payment),
+              },
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+              throw new Error(
+                result.message ||
+                  "Payment confirmation is pending. Please do not pay again.",
+              );
+            }
+
+            if (result.bookPathname !== book.pathname) {
+              throw new Error("Verified book identity mismatch.");
+            }
+
+            setOwnedLibraryBooks((previous) => ({
+              ...previous,
+              [book.pathname!]: true,
+            }));
+
+            alert("Payment verified. This book is now in your library.");
+          } catch (error) {
+            alert(
+              error instanceof Error
+                ? error.message
+                : "Payment verification is pending. Do not pay again.",
+            );
+          } finally {
+            setPurchasingLibraryBook(null);
+          }
+        },
+        modal: {
+          ondismiss: () => setPurchasingLibraryBook(null),
+        },
+      });
+
+      checkout.open();
+    } catch (error) {
+      setPurchasingLibraryBook(null);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Unable to prepare this book purchase.",
+      );
+    }
+  }
+
   async function downloadBook(book: Book) {
     const canDownload = await requestLoginIfNeeded("/library");
 
@@ -1705,7 +1909,7 @@ export function DigitalLibraryClient({
 
         if (response.status === 403) {
           throw new Error(
-            "An active Digital Library subscription is required to download this book.",
+            "Full-book access is currently restricted. Please try again when individual book purchases are available.",
           );
         }
 
@@ -2245,13 +2449,7 @@ export function DigitalLibraryClient({
 
                           <button
                             type="button"
-                            onClick={() => {
-                              if (allowedToManage) {
-                                void previewBook(book);
-                              } else {
-                                openMembership("preview", book);
-                              }
-                            }}
+                            onClick={() => void previewBook(book)}
                             className="flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#215cf3] px-3 py-3 text-[13px] font-bold text-white shadow-[0_5px_12px_rgba(37,99,235,0.16)] transition hover:bg-[#174bd1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                           >
                             <BookOpen
@@ -2269,17 +2467,17 @@ export function DigitalLibraryClient({
 
                           <button
                             type="button"
-                            onClick={() => {
-                              if (allowedToManage) {
-                                void downloadBook(book);
-                              } else {
-                                openMembership("download", book);
-                              }
-                            }}
+                            onClick={() => void handleLibraryBookAction(book)}
                             className="mt-2.5 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-[#d7e3fb] bg-[#f6f9ff] px-3 py-3 text-[13px] font-bold text-[#2457bf] transition hover:border-[#a9c2f6] hover:bg-[#eaf2ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                           >
                             <Download size={16} aria-hidden="true" />
-                            Full PDF / Membership
+                            {purchasingLibraryBook === book.pathname
+  ? "Preparing purchase..."
+  : allowedToManage ||
+      !isPaidLibraryBook(book.categoryId) ||
+      (book.pathname ? ownedLibraryBooks[book.pathname] : false)
+    ? "Download Full PDF"
+    : "Buy for ₹49"}
                           </button>
                         </div>
 
@@ -2317,73 +2515,7 @@ export function DigitalLibraryClient({
         </div>
       </div>
 
-      {/* =========================================
-          DIGITAL LIBRARY MEMBERSHIP POPUP
-      ========================================= */}
-      {isMembershipOpen && !allowedToManage && (
-        <div
-          className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/70 px-3 py-5 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeMembership();
-          }}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="library-membership-title"
-            className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[24px] bg-white p-4 shadow-2xl sm:p-6"
-          >
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <h2
-                  id="library-membership-title"
-                  className="text-lg font-extrabold text-slate-900"
-                >
-                  Digital Library Membership
-                </h2>
-                <p className="text-sm text-slate-600">
-                  {membershipAction === "preview"
-                    ? "Explore the membership plans, or continue to your free five-page preview."
-                    : membershipAction === "download"
-                      ? "Choose a membership for full-book downloads."
-                      : "Browse the library and choose a plan whenever you are ready."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={closeMembership}
-                aria-label="Close membership popup"
-                className="rounded-full p-2 text-slate-600 hover:bg-slate-100"
-              >
-                <X size={22} />
-              </button>
-            </div>
 
-            <LibrarySubscriptionPlans isLoggedIn={loggedIn} canManage={false} />
-
-            <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={closeMembership}
-                className="rounded-xl border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
-              >
-                Continue Browsing
-              </button>
-              {membershipBook && (
-                <button
-                  type="button"
-                  onClick={proceedAfterMembership}
-                  className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700"
-                >
-                  {membershipAction === "preview"
-                    ? "Continue to 5-Page Preview"
-                    : "Try Full PDF Download"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* =========================================
           CREATE SECTION MODAL

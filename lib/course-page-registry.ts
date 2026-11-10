@@ -293,6 +293,26 @@ export const coursePageRegistry: CoursePageDefinition[] = [
       "Prepare for UGC NET with teaching and research aptitude, reasoning, comprehension, general awareness and subject-specific studies.",
   },
 
+
+// ENTRANCE EXAM GROUP COURSE PAGES
+{
+  slug: "mba-entrance-exams",
+  sourceKey: "mba-exams",
+  name: "MBA Entrance Exams",
+  category: "Entrance Exams",
+  introduction:
+    "Prepare for management entrance examinations including CAT, CMAT and MBA CET, with quantitative aptitude, logical reasoning, data interpretation, verbal ability and examination practice.",
+},
+{
+  slug: "law-entrance-exams",
+  sourceKey: "llb-exams",
+  name: "Law Entrance Exams",
+  category: "Entrance Exams",
+  introduction:
+    "Explore preparation for law entrance examinations including CLAT and AILET, covering English, current affairs, legal reasoning, logical reasoning and examination practice.",
+},
+
+
   // Law and management entrance examinations
   {
     slug: "clat",

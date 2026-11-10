@@ -155,15 +155,6 @@ const DashboardComplaintBox = dynamic(
     ssr: false,
   },
 );
-const StudentLibrarySubscriptions = dynamic(
-  () => import("@/components/student-library-subscriptions"),
-  { loading: () => <SectionLoading />, ssr: false },
-);
-
-const AdminLibrarySubscriptions = dynamic(
-  () => import("@/components/admin-library-subscriptions"),
-  { loading: () => <SectionLoading />, ssr: false },
-);
 
 const DigitalLibraryClient = dynamic(
   () =>
@@ -174,6 +165,14 @@ const DigitalLibraryClient = dynamic(
     loading: () => <SectionLoading />,
     ssr: false,
   },
+);
+
+const AdminLibraryBookOrders = dynamic(
+  () =>
+    import("@/components/admin-library-book-orders").then(
+      (module) => module.AdminLibraryBookOrders,
+    ),
+  { loading: () => <SectionLoading /> },
 );
 
 const PerformanceReportCreator = dynamic(
@@ -420,7 +419,6 @@ const sidebarByRole = {
     { id: "certificates", label: "Certificates" },
     { id: "receipts", label: "My Fees" },
     { id: "library", label: "Library" },
-    { id: "my-library-subscription", label: "My Library Subscription" },
     { id: "attendance", label: "Attendance" },
     { id: "leave", label: "Leave" },
   ],
@@ -521,7 +519,7 @@ const sidebarByRole = {
     { id: "timetable", label: "Timetable" },
     { id: "complaints", label: "Complaint Box" },
     { id: "library", label: "Library" },
-    { id: "library-subscriptions", label: "Library Subscriptions" },
+    { id: "library-book-orders", label: "Book Purchase Orders" },
     { id: "messages", label: "Notice Board" },
     { id: "chat", label: "Chat" },
     { id: "chat-monitor", label: "Chat Monitor" },
@@ -657,12 +655,12 @@ const menuSections = [
       "staff-approvals",
     ],
   },
+
   {
     label: "Academics",
     items: [
       "library",
-      "library-subscriptions",
-      "my-library-subscription",
+      "library-book-orders",
       "lectures",
       "timetable",
       "performance",
@@ -672,6 +670,7 @@ const menuSections = [
       "batches",
     ],
   },
+
   {
     label: "Support & Communication",
     items: [
@@ -775,8 +774,6 @@ const navIcons: Record<string, React.ReactNode> = {
     </svg>
   ),
   rewards: <Gift className="h-4 w-4 shrink-0" />,
-  "library-subscriptions": <CreditCard className="h-4 w-4 shrink-0" />,
-  "my-library-subscription": <CreditCard className="h-4 w-4 shrink-0" />,
   lectures: (
     <svg
       className="h-4 w-4 shrink-0"
@@ -2577,6 +2574,10 @@ export function DashboardShell({
             />
           ) : null}
 
+          {activeSection === "library-book-orders" && role === "admin" ? (
+            <AdminLibraryBookOrders />
+          ) : null}
+
           {showLibrary ? (
             isLibraryLoading ? (
               <div className="surface flex min-h-[28rem] items-center justify-center rounded-[2rem]">
@@ -2588,14 +2589,6 @@ export function DashboardShell({
                 canManage={role === "admin" || role === "educator"}
               />
             )
-          ) : null}
-
-          {activeSection === "my-library-subscription" && role === "student" ? (
-            <StudentLibrarySubscriptions />
-          ) : null}
-
-          {activeSection === "library-subscriptions" && role === "admin" ? (
-            <AdminLibrarySubscriptions />
           ) : null}
 
           {showPerformance ? (

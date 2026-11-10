@@ -7,7 +7,8 @@ import { findLibraryBook } from "@/lib/library-book-repository";
 
 import { isPrivateLibraryBookPath } from "@/lib/library-private-storage";
 
-import { hasActiveLibrarySubscription } from "@/lib/library-subscriptions";
+import { isPaidLibraryBook } from "@/lib/library-book-pricing";
+import { hasPurchasedLibraryBook } from "@/lib/library-book-purchases";
 
 import { DIGITAL_LIBRARY_LOCKED } from "@/lib/digital-library-lockdown";
 
@@ -133,12 +134,19 @@ export async function GET(request: Request): Promise<Response> {
         );
       }
 
-      // After the migration lockdown ends,
-      // students require a valid subscription.
-      const active = await hasActiveLibrarySubscription(String(session.id));
+      // After migration, only paid-category books require ownership.
+      if (isPaidLibraryBook(book.categoryId)) {
+        const hasPurchased = await hasPurchasedLibraryBook(
+          String(session.id),
+          book.pathname,
+        );
 
-      if (!active) {
-        return fail("An active Digital Library subscription is required.", 403);
+        if (!hasPurchased) {
+          return fail(
+            "Purchase this book for ₹49 to access the full PDF.",
+            403,
+          );
+        }
       }
     }
 
