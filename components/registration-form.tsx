@@ -7,7 +7,11 @@ import {
   useState,
   type ChangeEvent,
   type FormEvent,
+  type ReactNode,
 } from "react";
+
+type Role = "student" | "educator";
+type EmployeeType = "educator" | "staff";
 
 type CourseGroup =
   | "School / Board"
@@ -28,44 +32,43 @@ type SignupFormData = {
   confirmPassword: string;
   mobile: string;
   dob: string;
-
   parentName: string;
   parentEmail: string;
   parentMobile: string;
   parentPassword: string;
   parentConfirmPassword: string;
-
   courseWanted: string;
   courseWantedTitle: string;
   studentType: string;
   campusLocation: string;
   referralCode: string;
-
   weakSubjects: string;
   strongSubjects: string;
   latestQualification: string;
   latestAcademicScore: string;
-
   addressLine1: string;
   addressLine2: string;
   city: string;
   state: string;
   pincode: string;
-
   qualification: string;
   experience: string;
   subjects: string;
-
   designation: string;
   department: string;
   branch: string;
   employmentType: string;
   joiningDate: string;
-
   profilePhotoUrl: string;
   cvUrl: string;
   photoIdFrontUrl: string;
   photoIdBackUrl: string;
+};
+
+type ExamQualification = {
+  examName: string;
+  score: string;
+  year: string;
 };
 
 const JUNIOR_CLASSES = ["Class 6", "Class 7", "Class 8", "Class 9", "Class 10"];
@@ -89,448 +92,141 @@ const SENIOR_BOARDS = [
   "IB Diploma Programme",
 ];
 
-const GOVT_EXAM_OPTIONS = [
-  // UPSC
-  {
-    key: "UPSC-COMPLETE",
-    label: "UPSC Civil Services — Complete Preparation",
-  },
-
-  // State PSC
-  {
-    key: "ALL-STATE-PSC",
-    label: "All State PSC Exams",
-  },
-  {
-    key: "MPSC",
-    label: "MPSC",
-  },
-  {
-    key: "UPPSC",
-    label: "UPPSC",
-  },
-  {
-    key: "BPSC",
-    label: "BPSC",
-  },
-  {
-    key: "RPSC",
-    label: "RPSC",
-  },
-  {
-    key: "MPPSC",
-    label: "MPPSC",
-  },
-  {
-    key: "GPSC",
-    label: "GPSC",
-  },
-  {
-    key: "WBPSC",
-    label: "WBPSC",
-  },
-  {
-    key: "KPSC",
-    label: "KPSC",
-  },
-  {
-    key: "TNPSC",
-    label: "TNPSC",
-  },
-  {
-    key: "OTHER-STATE-PSC",
-    label: "Other State PSC Exams",
-  },
-
-  // Banking
-  {
-    key: "ALL-BANKING",
-    label: "All Banking Exams",
-  },
-  {
-    key: "IBPS-PO",
-    label: "IBPS PO",
-  },
-  {
-    key: "IBPS-CLERK",
-    label: "IBPS Clerk",
-  },
-  {
-    key: "IBPS-SO",
-    label: "IBPS Specialist Officer",
-  },
-  {
-    key: "SBI-PO",
-    label: "SBI PO",
-  },
-  {
-    key: "SBI-CLERK",
-    label: "SBI Clerk",
-  },
-  {
-    key: "RRB-PO",
-    label: "RRB PO",
-  },
-  {
-    key: "RRB-CLERK",
-    label: "RRB Clerk",
-  },
-
-  // Regulatory and Insurance
-  {
-    key: "ALL-REGULATORY-INSURANCE",
-    label: "All Regulatory & Insurance Exams",
-  },
-  {
-    key: "RBI-GRADE-B",
-    label: "RBI Grade B",
-  },
-  {
-    key: "RBI-ASSISTANT",
-    label: "RBI Assistant",
-  },
-  {
-    key: "NABARD-GRADE-A",
-    label: "NABARD Grade A",
-  },
-  {
-    key: "SEBI-GRADE-A",
-    label: "SEBI Grade A",
-  },
-  {
-    key: "IRDAI-ASSISTANT-MANAGER",
-    label: "IRDAI Assistant Manager",
-  },
-  {
-    key: "LIC-AAO",
-    label: "LIC AAO",
-  },
-  {
-    key: "LIC-ADO",
-    label: "LIC ADO",
-  },
-  {
-    key: "NIACL-AO",
-    label: "NIACL AO",
-  },
-  {
-    key: "GIC-ASSISTANT-MANAGER",
-    label: "GIC Assistant Manager",
-  },
-
-  // SSC
-  {
-    key: "ALL-SSC",
-    label: "All SSC Exams",
-  },
-  {
-    key: "SSC-CGL",
-    label: "SSC CGL",
-  },
-  {
-    key: "SSC-CHSL",
-    label: "SSC CHSL",
-  },
-  {
-    key: "SSC-MTS",
-    label: "SSC MTS",
-  },
-  {
-    key: "SSC-CPO",
-    label: "SSC CPO / Sub Inspector",
-  },
-  {
-    key: "SSC-GD",
-    label: "SSC GD Constable",
-  },
-  {
-    key: "SSC-STENOGRAPHER",
-    label: "SSC Stenographer",
-  },
-  {
-    key: "SSC-JE",
-    label: "SSC Junior Engineer",
-  },
-  {
-    key: "SSC-SELECTION-POST",
-    label: "SSC Selection Post",
-  },
-
-  // Teaching and Academic Eligibility
-  {
-    key: "ALL-TEACHING-ACADEMIC",
-    label: "All Teaching & Academic Eligibility Exams",
-  },
-  {
-    key: "CTET",
-    label: "CTET",
-  },
-  {
-    key: "STATE-TET",
-    label: "State TET",
-  },
-  {
-    key: "DSSSB",
-    label: "DSSSB",
-  },
-  {
-    key: "KVS",
-    label: "KVS",
-  },
-  {
-    key: "NVS",
-    label: "NVS",
-  },
-  {
-    key: "UGC-NET",
-    label: "UGC NET",
-  },
-  {
-    key: "CSIR-NET",
-    label: "CSIR NET",
-  },
-  {
-    key: "SET",
-    label: "SET",
-  },
-
-  // Police and Army Bharti
-  {
-    key: "ALL-POLICE-ARMY-BHARTI",
-    label: "All Police / Army Bharti Exams",
-  },
-  {
-    key: "POLICE-BHARTI",
-    label: "Police Bharti",
-  },
-  {
-    key: "ARMY-BHARTI",
-    label: "Army Bharti",
-  },
-  {
-    key: "POLICE-SI",
-    label: "Police Sub Inspector",
-  },
-  {
-    key: "POLICE-CONSTABLE",
-    label: "Police Constable",
-  },
-
-  // Railways
-  {
-    key: "ALL-RAILWAY",
-    label: "All Railway Exams",
-  },
-  {
-    key: "RRB-NTPC",
-    label: "RRB NTPC",
-  },
-  {
-    key: "RRB-GROUP-D",
-    label: "RRB Group D",
-  },
-  {
-    key: "RRB-ALP",
-    label: "RRB ALP",
-  },
-  {
-    key: "RRB-TECHNICIAN",
-    label: "RRB Technician",
-  },
-  {
-    key: "RRB-JE",
-    label: "RRB Junior Engineer",
-  },
-  {
-    key: "RPF-CONSTABLE",
-    label: "RPF Constable",
-  },
-  {
-    key: "RPF-SUB-INSPECTOR",
-    label: "RPF Sub Inspector",
-  },
-
-  // Defence and Paramilitary
-  {
-    key: "ALL-DEFENCE-PARAMILITARY",
-    label: "All Defence & Paramilitary Exams",
-  },
-  {
-    key: "NDA",
-    label: "NDA",
-  },
-  {
-    key: "CDS",
-    label: "CDS",
-  },
-  {
-    key: "AFCAT",
-    label: "AFCAT",
-  },
-  {
-    key: "CAPF-AC",
-    label: "CAPF Assistant Commandant",
-  },
-  {
-    key: "ARMY-AGNIVEER",
-    label: "Army Agniveer",
-  },
-  {
-    key: "NAVY-AGNIVEER",
-    label: "Navy Agniveer",
-  },
-  {
-    key: "AIRFORCE-AGNIVEER",
-    label: "Air Force Agniveer",
-  },
-  {
-    key: "INDIAN-COAST-GUARD",
-    label: "Indian Coast Guard",
-  },
-  {
-    key: "SSB-INTERVIEW",
-    label: "SSB Interview Preparation",
-  },
+const GOVERNMENT_EXAM_GROUPS = [
+  [["UPSC-COMPLETE", "UPSC Civil Services — Complete Preparation"]],
+  [
+    ["ALL-STATE-PSC", "All State PSC Exams"],
+    ["MPSC", "MPSC"],
+    ["UPPSC", "UPPSC"],
+    ["BPSC", "BPSC"],
+    ["RPSC", "RPSC"],
+    ["MPPSC", "MPPSC"],
+    ["GPSC", "GPSC"],
+    ["WBPSC", "WBPSC"],
+    ["KPSC", "KPSC"],
+    ["TNPSC", "TNPSC"],
+    ["OTHER-STATE-PSC", "Other State PSC Exams"],
+  ],
+  [
+    ["ALL-BANKING", "All Banking Exams"],
+    ["IBPS-PO", "IBPS PO"],
+    ["IBPS-CLERK", "IBPS Clerk"],
+    ["IBPS-SO", "IBPS Specialist Officer"],
+    ["SBI-PO", "SBI PO"],
+    ["SBI-CLERK", "SBI Clerk"],
+    ["RRB-PO", "RRB PO"],
+    ["RRB-CLERK", "RRB Clerk"],
+  ],
+  [
+    ["ALL-REGULATORY-INSURANCE", "All Regulatory & Insurance Exams"],
+    ["RBI-GRADE-B", "RBI Grade B"],
+    ["RBI-ASSISTANT", "RBI Assistant"],
+    ["NABARD-GRADE-A", "NABARD Grade A"],
+    ["SEBI-GRADE-A", "SEBI Grade A"],
+    ["IRDAI-ASSISTANT-MANAGER", "IRDAI Assistant Manager"],
+    ["LIC-AAO", "LIC AAO"],
+    ["LIC-ADO", "LIC ADO"],
+    ["NIACL-AO", "NIACL AO"],
+    ["GIC-ASSISTANT-MANAGER", "GIC Assistant Manager"],
+  ],
+  [
+    ["ALL-SSC", "All SSC Exams"],
+    ["SSC-CGL", "SSC CGL"],
+    ["SSC-CHSL", "SSC CHSL"],
+    ["SSC-MTS", "SSC MTS"],
+    ["SSC-CPO", "SSC CPO / Sub Inspector"],
+    ["SSC-GD", "SSC GD Constable"],
+    ["SSC-STENOGRAPHER", "SSC Stenographer"],
+    ["SSC-JE", "SSC Junior Engineer"],
+    ["SSC-SELECTION-POST", "SSC Selection Post"],
+  ],
+  [
+    ["ALL-TEACHING-ACADEMIC", "All Teaching & Academic Eligibility Exams"],
+    ["CTET", "CTET"],
+    ["STATE-TET", "State TET"],
+    ["DSSSB", "DSSSB"],
+    ["KVS", "KVS"],
+    ["NVS", "NVS"],
+    ["UGC-NET", "UGC NET"],
+    ["CSIR-NET", "CSIR NET"],
+    ["SET", "SET"],
+  ],
+  [
+    ["ALL-POLICE-ARMY-BHARTI", "All Police / Army Bharti Exams"],
+    ["POLICE-BHARTI", "Police Bharti"],
+    ["ARMY-BHARTI", "Army Bharti"],
+    ["POLICE-SI", "Police Sub Inspector"],
+    ["POLICE-CONSTABLE", "Police Constable"],
+  ],
+  [
+    ["ALL-RAILWAY", "All Railway Exams"],
+    ["RRB-NTPC", "RRB NTPC"],
+    ["RRB-GROUP-D", "RRB Group D"],
+    ["RRB-ALP", "RRB ALP"],
+    ["RRB-TECHNICIAN", "RRB Technician"],
+    ["RRB-JE", "RRB Junior Engineer"],
+    ["RPF-CONSTABLE", "RPF Constable"],
+    ["RPF-SUB-INSPECTOR", "RPF Sub Inspector"],
+  ],
+  [
+    ["ALL-DEFENCE-PARAMILITARY", "All Defence & Paramilitary Exams"],
+    ["NDA", "NDA"],
+    ["CDS", "CDS"],
+    ["AFCAT", "AFCAT"],
+    ["CAPF-AC", "CAPF Assistant Commandant"],
+    ["ARMY-AGNIVEER", "Army Agniveer"],
+    ["NAVY-AGNIVEER", "Navy Agniveer"],
+    ["AIRFORCE-AGNIVEER", "Air Force Agniveer"],
+    ["INDIAN-COAST-GUARD", "Indian Coast Guard"],
+    ["SSB-INTERVIEW", "SSB Interview Preparation"],
+  ],
 ];
-const COMPETITIVE_EXAM_OPTIONS = [
-  // Engineering and Medical Entrance Exams
-  {
-    key: "JEE",
-    label: "JEE Main & Advanced Preparation",
-  },
-  {
-    key: "NEET",
-    label: "NEET UG Preparation",
-  },
-  {
-    key: "MHT-CET",
-    label: "MHT CET Preparation",
-  },
 
-  // LLB and Law Entrance Exams
-  {
-    key: "ALL-LAW-ENTRANCE",
-    label: "All LLB & Law Entrance Exams",
-  },
-  {
-    key: "MH-CET-LAW-3-YEAR",
-    label: "MH CET Law 3 Year",
-  },
-  {
-    key: "MH-CET-LAW-5-YEAR",
-    label: "MH CET Law 5 Year",
-  },
-  {
-    key: "CLAT",
-    label: "CLAT",
-  },
-  {
-    key: "AILET",
-    label: "AILET",
-  },
-  {
-    key: "LSAT-INDIA",
-    label: "LSAT India",
-  },
-
-  // MBA Entrance Exams
-  {
-    key: "ALL-MBA-ENTRANCE",
-    label: "All MBA Entrance Exams",
-  },
-  {
-    key: "MBA-CET",
-    label: "MBA CET",
-  },
-  {
-    key: "CAT",
-    label: "CAT",
-  },
-  {
-    key: "CMAT",
-    label: "CMAT",
-  },
-  {
-    key: "MAT",
-    label: "MAT",
-  },
-  {
-    key: "XAT",
-    label: "XAT",
-  },
-  {
-    key: "SNAP",
-    label: "SNAP",
-  },
-  {
-    key: "NMAT",
-    label: "NMAT",
-  },
-  {
-    key: "ATMA",
-    label: "ATMA",
-  },
-
-  // GATE and Postgraduate Technical Exams
-  {
-    key: "ALL-GATE-PG-TECHNICAL",
-    label: "All GATE & Postgraduate Technical Exams",
-  },
-  {
-    key: "GATE",
-    label: "GATE",
-  },
-  {
-    key: "IIT-JAM",
-    label: "IIT JAM",
-  },
-  {
-    key: "CEED",
-    label: "CEED",
-  },
-  {
-    key: "PGCET",
-    label: "PGCET",
-  },
-  {
-    key: "PSU-THROUGH-GATE",
-    label: "PSU Recruitment through GATE",
-  },
-
-  // MHT CET Categories
-  {
-    key: "ALL-MHT-CET",
-    label: "All MHT CET Exam Categories",
-  },
-  {
-    key: "MHT-CET-ENGINEERING",
-    label: "MHT CET Engineering",
-  },
-  {
-    key: "MHT-CET-PHARMACY",
-    label: "MHT CET Pharmacy",
-  },
-  {
-    key: "MHT-CET-BBA-BCA-BMS",
-    label: "MHT CET BBA / BCA / BMS",
-  },
-  {
-    key: "MHT-CET-DESIGN",
-    label: "MHT CET Design",
-  },
-  {
-    key: "MHT-CET-HOTEL-MANAGEMENT",
-    label: "MHT CET Hotel Management",
-  },
-  {
-    key: "MHT-CET-NURSING",
-    label: "MHT CET Nursing",
-  },
-  {
-    key: "MHT-CET-EDUCATION",
-    label: "MHT CET B.Ed / B.P.Ed",
-  },
+const COMPETITIVE_EXAM_GROUPS = [
+  [
+    ["JEE", "JEE Main & Advanced Preparation"],
+    ["NEET", "NEET UG Preparation"],
+    ["MHT-CET", "MHT CET Preparation"],
+  ],
+  [
+    ["ALL-LAW-ENTRANCE", "All LLB & Law Entrance Exams"],
+    ["MH-CET-LAW-3-YEAR", "MH CET Law 3 Year"],
+    ["MH-CET-LAW-5-YEAR", "MH CET Law 5 Year"],
+    ["CLAT", "CLAT"],
+    ["AILET", "AILET"],
+    ["LSAT-INDIA", "LSAT India"],
+  ],
+  [
+    ["ALL-MBA-ENTRANCE", "All MBA Entrance Exams"],
+    ["MBA-CET", "MBA CET"],
+    ["CAT", "CAT"],
+    ["CMAT", "CMAT"],
+    ["MAT", "MAT"],
+    ["XAT", "XAT"],
+    ["SNAP", "SNAP"],
+    ["NMAT", "NMAT"],
+    ["ATMA", "ATMA"],
+  ],
+  [
+    ["ALL-GATE-PG-TECHNICAL", "All GATE & Postgraduate Technical Exams"],
+    ["GATE", "GATE"],
+    ["IIT-JAM", "IIT JAM"],
+    ["CEED", "CEED"],
+    ["PGCET", "PGCET"],
+    ["PSU-THROUGH-GATE", "PSU Recruitment through GATE"],
+  ],
+  [
+    ["ALL-MHT-CET", "All MHT CET Exam Categories"],
+    ["MHT-CET-ENGINEERING", "MHT CET Engineering"],
+    ["MHT-CET-PHARMACY", "MHT CET Pharmacy"],
+    ["MHT-CET-BBA-BCA-BMS", "MHT CET BBA / BCA / BMS"],
+    ["MHT-CET-DESIGN", "MHT CET Design"],
+    ["MHT-CET-HOTEL-MANAGEMENT", "MHT CET Hotel Management"],
+    ["MHT-CET-NURSING", "MHT CET Nursing"],
+    ["MHT-CET-EDUCATION", "MHT CET B.Ed / B.P.Ed"],
+  ],
 ];
+
 const SKILL_PROGRAMS = [
   "Coding & Robotics",
   "AI & Data Science",
@@ -550,7 +246,6 @@ const COURSE_SECTIONS: CourseOption[] = [
       group: "School / Board" as const,
     })),
   ),
-
   ...SENIOR_CLASSES.flatMap((academicClass) =>
     SENIOR_BOARDS.map((board) => ({
       key: `${academicClass.key} | ${board}`,
@@ -558,25 +253,30 @@ const COURSE_SECTIONS: CourseOption[] = [
       group: "School / Board" as const,
     })),
   ),
-
-  ...GOVT_EXAM_OPTIONS.map((exam) => ({
-    key: `Govt Exams | ${exam.key}`,
-    label: exam.label,
+  ...GOVERNMENT_EXAM_GROUPS.flat(1).map(([key, label]) => ({
+    key: `Govt Exams | ${key}`,
+    label,
     group: "Government Exams" as const,
   })),
-
-  ...COMPETITIVE_EXAM_OPTIONS.map((exam) => ({
-    key: `Competitive Exams | ${exam.key}`,
-    label: exam.label,
+  ...COMPETITIVE_EXAM_GROUPS.flat(1).map(([key, label]) => ({
+    key: `Competitive Exams | ${key}`,
+    label,
     group: "Competitive Exams" as const,
   })),
-
   ...SKILL_PROGRAMS.map((skill) => ({
     key: `Skills | ${skill}`,
     label: skill,
     group: "Skill Development" as const,
   })),
 ];
+
+const FIELD_CLASS =
+  "w-full min-w-0 rounded-lg border border-[#D6DFED] bg-white px-3.5 py-2.5 text-sm text-[#14264A] outline-none transition-colors placeholder:text-[#94A3B8] focus:border-[#2563EB] focus:ring-2 focus:ring-blue-500/10";
+
+const LABEL_CLASS = "mb-1.5 block text-xs font-semibold text-[#253757]";
+
+const BUTTON_CLASS =
+  "inline-flex items-center justify-center rounded-lg border border-[#D6DFED] bg-white px-4 py-2.5 text-sm font-semibold text-[#1956D8] transition-colors hover:border-[#2563EB] hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50";
 
 function getInitialFormData(): SignupFormData {
   return {
@@ -586,13 +286,11 @@ function getInitialFormData(): SignupFormData {
     confirmPassword: "",
     mobile: "",
     dob: "",
-
     parentName: "",
     parentEmail: "",
     parentMobile: "",
     parentPassword: "",
     parentConfirmPassword: "",
-
     courseWanted: "",
     courseWantedTitle: "",
     studentType: "",
@@ -602,23 +300,19 @@ function getInitialFormData(): SignupFormData {
     strongSubjects: "",
     latestQualification: "",
     latestAcademicScore: "",
-
     addressLine1: "",
     addressLine2: "",
     city: "",
     state: "",
     pincode: "",
-
     qualification: "",
     experience: "",
     subjects: "",
-
     designation: "",
     department: "",
     branch: "",
     employmentType: "full_time",
     joiningDate: "",
-
     profilePhotoUrl: "",
     cvUrl: "",
     photoIdFrontUrl: "",
@@ -626,13 +320,202 @@ function getInitialFormData(): SignupFormData {
   };
 }
 
+type SectionProps = {
+  id: string;
+  number: number;
+  title: string;
+  description?: string;
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+};
+
+function RegistrationSection({
+  id,
+  number,
+  title,
+  description,
+  open,
+  onToggle,
+  children,
+}: SectionProps) {
+  return (
+    <section className="overflow-hidden rounded-xl border border-[#DDE5F1] bg-white">
+      <h3>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`signup-panel-${id}`}
+          onClick={onToggle}
+          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition-colors hover:bg-slate-50 sm:px-5"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EAF1FF] text-sm font-bold text-[#1955CE]">
+              {number}
+            </span>
+
+            <span className="min-w-0">
+              <span className="block text-[15px] font-semibold text-[#102348]">
+                {title}
+              </span>
+
+              {description && (
+                <span className="mt-0.5 block text-xs font-normal text-slate-500">
+                  {description}
+                </span>
+              )}
+            </span>
+          </span>
+
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            aria-hidden="true"
+            className={`h-5 w-5 shrink-0 text-slate-500 transition-transform ${
+              open ? "rotate-180" : ""
+            }`}
+          >
+            <path
+              d="m6 9 6 6 6-6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      </h3>
+
+      <div
+        id={`signup-panel-${id}`}
+        hidden={!open}
+        className="border-t border-[#E8EDF5] px-4 py-5 sm:px-5"
+      >
+        {children}
+      </div>
+    </section>
+  );
+}
+
+type InputFieldProps = {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  hint?: string;
+  isTextarea?: boolean;
+};
+
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  placeholder = "",
+  hint,
+  isTextarea = false,
+}: InputFieldProps) {
+  return (
+    <div className="min-w-0">
+      <label className={LABEL_CLASS}>
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </label>
+
+      {isTextarea ? (
+        <textarea
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          rows={3}
+          className={`${FIELD_CLASS} resize-y`}
+        />
+      ) : (
+        <input
+          type={type}
+          value={value ?? ""}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          className={FIELD_CLASS}
+        />
+      )}
+
+      {hint && <p className="mt-1.5 text-xs text-slate-500">{hint}</p>}
+    </div>
+  );
+}
+
+function FileUpload({
+  label,
+  buttonText,
+  uploading,
+  uploaded,
+  onClick,
+  inputRef,
+  accept,
+  onChange,
+  hint,
+}: {
+  label: string;
+  buttonText: string;
+  uploading: boolean;
+  uploaded: boolean;
+  onClick: () => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+  accept: string;
+  onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  hint: string;
+}) {
+  return (
+    <div>
+      <label className={LABEL_CLASS}>
+        {label} <span className="text-red-500">*</span>
+      </label>
+
+      <div className="flex min-h-[44px] flex-wrap items-center gap-3 rounded-lg border border-[#D6DFED] bg-white px-3 py-2">
+        <button
+          type="button"
+          onClick={onClick}
+          disabled={uploading}
+          className="rounded-md bg-[#EDF3FF] px-3 py-2 text-xs font-semibold text-[#1956D8] transition hover:bg-[#E1EBFF] disabled:opacity-50"
+        >
+          {uploading ? "Uploading..." : buttonText}
+        </button>
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept={accept}
+          onChange={onChange}
+          className="hidden"
+        />
+
+        <span
+          className={`text-xs ${
+            uploaded ? "font-medium text-emerald-700" : "text-slate-500"
+          }`}
+        >
+          {uploaded ? "Uploaded successfully" : hint}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function RegistrationForm() {
-  const [activeTab, setActiveTab] = useState<"student" | "educator">("student");
-  const [employeeType, setEmployeeType] = useState<"educator" | "staff">("educator");
+  const [activeTab, setActiveTab] = useState<Role>("student");
+  const [employeeType, setEmployeeType] = useState<EmployeeType>("educator");
+
   const [form, setForm] = useState<SignupFormData>(getInitialFormData());
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
+
   const [referralStatus, setReferralStatus] = useState<
     "idle" | "checking" | "valid" | "invalid"
   >("idle");
@@ -642,41 +525,63 @@ export function RegistrationForm() {
   const [showCourseDropdown, setShowCourseDropdown] = useState(false);
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   const [uploadingCv, setUploadingCv] = useState(false);
+
   const [uploadingPhotoIdFront, setUploadingPhotoIdFront] = useState(false);
+
   const [uploadingPhotoIdBack, setUploadingPhotoIdBack] = useState(false);
-  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const [examQualifications, setExamQualifications] = useState<
-    { examName: string; score: string; year: string }[]
+    ExamQualification[]
   >([]);
 
-  function addExamQualification() {
-    setExamQualifications((prev) => [
-      ...prev,
-      { examName: "", score: "", year: "" },
-    ]);
-  }
-
-  function removeExamQualification(index: number) {
-    setExamQualifications((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateExamQualification(
-    index: number,
-    field: "examName" | "score" | "year",
-    value: string,
-  ) {
-    setExamQualifications((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
-    );
-  }
+  const [openSections, setOpenSections] = useState<string[]>(["personal"]);
 
   const courseDropdownRef = useRef<HTMLDivElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
   const photoIdFrontInputRef = useRef<HTMLInputElement>(null);
   const photoIdBackInputRef = useRef<HTMLInputElement>(null);
+
+  const isStudent = activeTab === "student";
+
+  function updateField(key: keyof SignupFormData, value: string) {
+    setForm((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+  }
+
+  function toggleSection(id: string) {
+    setOpenSections((previous) =>
+      previous.includes(id)
+        ? previous.filter((item) => item !== id)
+        : [...previous, id],
+    );
+  }
+
+  function openSection(id: string) {
+    setOpenSections((previous) =>
+      previous.includes(id) ? previous : [...previous, id],
+    );
+  }
+
+  function isSectionOpen(id: string) {
+    return openSections.includes(id);
+  }
+
+  function switchRole(role: Role) {
+    setActiveTab(role);
+    setError("");
+    setSuccess("");
+    setOpenSections(["personal"]);
+  }
+
+  function fail(message: string, section: string) {
+    setError(message);
+    openSection(section);
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -695,12 +600,8 @@ export function RegistrationForm() {
     };
   }, []);
 
-const filteredCourses = useMemo(() => {
-  return COURSE_SECTIONS;
-}, []);
-
   const groupedCourses = useMemo(() => {
-    return filteredCourses.reduce<Record<CourseGroup, CourseOption[]>>(
+    return COURSE_SECTIONS.reduce<Record<CourseGroup, CourseOption[]>>(
       (groups, course) => {
         groups[course.group].push(course);
         return groups;
@@ -712,14 +613,44 @@ const filteredCourses = useMemo(() => {
         "Skill Development": [],
       },
     );
-  }, [filteredCourses]);
+  }, []);
 
-  function updateField(key: keyof SignupFormData, value: string) {
+  function selectCourse(course: CourseOption) {
     setForm((previous) => ({
       ...previous,
-      [key]: value,
+      courseWanted: course.key,
+      courseWantedTitle: course.label,
+      latestQualification: "",
     }));
+
+    setShowCourseDropdown(false);
   }
+
+  function addExamQualification() {
+    setExamQualifications((previous) => [
+      ...previous,
+      { examName: "", score: "", year: "" },
+    ]);
+  }
+
+  function removeExamQualification(index: number) {
+    setExamQualifications((previous) =>
+      previous.filter((_, position) => position !== index),
+    );
+  }
+
+  function updateExamQualification(
+    index: number,
+    field: keyof ExamQualification,
+    value: string,
+  ) {
+    setExamQualifications((previous) =>
+      previous.map((item, position) =>
+        position === index ? { ...item, [field]: value } : item,
+      ),
+    );
+  }
+
   async function validateReferralCode(value: string) {
     const normalizedCode = value.trim().toUpperCase();
 
@@ -744,7 +675,6 @@ const filteredCourses = useMemo(() => {
 
       const payload = (await response.json()) as {
         valid?: boolean;
-        error?: string;
         referral?: {
           referralCode?: string;
           educatorName?: string;
@@ -753,7 +683,6 @@ const filteredCourses = useMemo(() => {
 
       if (!response.ok || !payload.valid) {
         setReferralStatus("invalid");
-        setReferralEducatorName("");
         return false;
       }
 
@@ -769,28 +698,27 @@ const filteredCourses = useMemo(() => {
       return true;
     } catch {
       setReferralStatus("invalid");
-      setReferralEducatorName("");
       return false;
     }
   }
-function selectCourse(course: CourseOption) {
-  setForm((previous) => ({
-    ...previous,
-    courseWanted: course.key,
-    courseWantedTitle: course.label,
-  }));
 
-  setShowCourseDropdown(false);
-}
-
-  async function handlePhotoUpload(file: File) {
-    setUploadingPhoto(true);
+  async function uploadSignupFile(
+    file: File,
+    field: "photo" | "cv" | "photoId",
+    destination:
+      | "profilePhotoUrl"
+      | "cvUrl"
+      | "photoIdFrontUrl"
+      | "photoIdBackUrl",
+    setUploading: (value: boolean) => void,
+  ) {
+    setUploading(true);
     setError("");
 
     try {
       const uploadData = new FormData();
       uploadData.append("file", file);
-      uploadData.append("field", "photo");
+      uploadData.append("field", field);
 
       const response = await fetch("/api/upload/signup", {
         method: "POST",
@@ -798,52 +726,21 @@ function selectCourse(course: CourseOption) {
       });
 
       const data = (await response.json()) as {
-        success: boolean;
+        success?: boolean;
         url?: string;
         message?: string;
       };
 
-      if (data.success && data.url) {
-        updateField("profilePhotoUrl", data.url);
-      } else {
-        setError(data.message || "Photo upload failed.");
+      if (!response.ok || !data.success || !data.url) {
+        setError(data.message || "File upload failed.");
+        return;
       }
+
+      updateField(destination, data.url);
     } catch {
-      setError("Photo upload failed.");
+      setError("File upload failed. Please try again.");
     } finally {
-      setUploadingPhoto(false);
-    }
-  }
-
-  async function handleCvUpload(file: File) {
-    setUploadingCv(true);
-    setError("");
-
-    try {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("field", "cv");
-
-      const response = await fetch("/api/upload/signup", {
-        method: "POST",
-        body: uploadData,
-      });
-
-      const data = (await response.json()) as {
-        success: boolean;
-        url?: string;
-        message?: string;
-      };
-
-      if (data.success && data.url) {
-        updateField("cvUrl", data.url);
-      } else {
-        setError(data.message || "CV upload failed.");
-      }
-    } catch {
-      setError("CV upload failed.");
-    } finally {
-      setUploadingCv(false);
+      setUploading(false);
     }
   }
 
@@ -851,7 +748,12 @@ function selectCourse(course: CourseOption) {
     const file = event.target.files?.[0];
 
     if (file) {
-      handlePhotoUpload(file);
+      void uploadSignupFile(
+        file,
+        "photo",
+        "profilePhotoUrl",
+        setUploadingPhoto,
+      );
     }
   }
 
@@ -859,199 +761,239 @@ function selectCourse(course: CourseOption) {
     const file = event.target.files?.[0];
 
     if (file) {
-      handleCvUpload(file);
-    }
-  }
-
-  async function handlePhotoIdUpload(file: File, side: "front" | "back") {
-    const setUploading =
-      side === "front" ? setUploadingPhotoIdFront : setUploadingPhotoIdBack;
-    setUploading(true);
-    setError("");
-
-    try {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("field", "photoId");
-
-      const response = await fetch("/api/upload/signup", {
-        method: "POST",
-        body: uploadData,
-      });
-
-      const data = (await response.json()) as {
-        success: boolean;
-        url?: string;
-        message?: string;
-      };
-
-      if (data.success && data.url) {
-        updateField(
-          side === "front" ? "photoIdFrontUrl" : "photoIdBackUrl",
-          data.url,
-        );
-      } else {
-        setError(data.message || `Photo ID ${side} upload failed.`);
-      }
-    } catch {
-      setError(`Photo ID ${side} upload failed.`);
-    } finally {
-      setUploading(false);
+      void uploadSignupFile(file, "cv", "cvUrl", setUploadingCv);
     }
   }
 
   function handlePhotoIdFrontChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+
     if (file) {
-      handlePhotoIdUpload(file, "front");
+      void uploadSignupFile(
+        file,
+        "photoId",
+        "photoIdFrontUrl",
+        setUploadingPhotoIdFront,
+      );
     }
   }
 
   function handlePhotoIdBackChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+
     if (file) {
-      handlePhotoIdUpload(file, "back");
+      void uploadSignupFile(
+        file,
+        "photoId",
+        "photoIdBackUrl",
+        setUploadingPhotoIdBack,
+      );
     }
   }
 
+  const latestQualifications = useMemo(() => {
+    const course = form.courseWanted;
+
+    if (course.startsWith("Class 6 |")) return ["Class 5"];
+    if (course.startsWith("Class 7 |")) return ["Class 6"];
+    if (course.startsWith("Class 8 |")) return ["Class 7"];
+    if (course.startsWith("Class 9 |")) return ["Class 8"];
+    if (course.startsWith("Class 10 |")) return ["Class 9"];
+
+    if (course.startsWith("Class 11")) {
+      return ["Class 10", "Appearing in Class 11"];
+    }
+
+    if (course.startsWith("Class 12")) {
+      return ["Class 10", "Class 11", "Appearing in Class 12"];
+    }
+
+    if (
+      course.startsWith("Govt Exams |") ||
+      course.startsWith("Competitive Exams |")
+    ) {
+      return [
+        "Class 10",
+        "Class 12",
+        "Diploma",
+        "Graduation",
+        "Post Graduation",
+        "Final Year Graduation",
+      ];
+    }
+
+    return [];
+  }, [form.courseWanted]);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isPending) return;
 
     setError("");
     setSuccess("");
     setIsPending(true);
 
     try {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (!form.name.trim()) {
+        fail("Full name is required.", "personal");
+        return;
+      }
+
+      if (!emailPattern.test(form.email.trim())) {
+        fail("A valid email address is required.", "personal");
+        return;
+      }
+
       if (form.password.length < 6) {
-        setError("Password must be at least 6 characters.");
+        fail("Password must be at least 6 characters.", "personal");
         return;
       }
 
-      if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        setError("A valid email address is required.");
+      if (activeTab === "educator" && form.password !== form.confirmPassword) {
+        fail("Passwords do not match.", "personal");
         return;
       }
 
-      if (!form.mobile || form.mobile.replace(/[^\d]/g, "").length < 10) {
-        setError("A valid 10-digit mobile number is required.");
+      if (form.mobile.replace(/\D/g, "").length !== 10) {
+        fail("A valid 10-digit mobile number is required.", "personal");
         return;
       }
 
       if (!form.profilePhotoUrl) {
-        setError("Profile photo is required. Please upload a photo.");
+        fail("Please upload a profile photo.", "personal");
         return;
       }
 
-      if (activeTab === "student") {
+      if (
+        uploadingPhoto ||
+        uploadingCv ||
+        uploadingPhotoIdFront ||
+        uploadingPhotoIdBack
+      ) {
+        fail(
+          "Please finish uploading your files before submitting.",
+          "personal",
+        );
+        return;
+      }
+
+      if (isStudent) {
+        if (!emailPattern.test(form.parentEmail.trim())) {
+          fail("A valid parent email address is required.", "parent");
+          return;
+        }
+
+        if (form.parentMobile.replace(/\D/g, "").length !== 10) {
+          fail("Parent mobile number must contain 10 digits.", "parent");
+          return;
+        }
+
+        if (form.parentPassword.length < 6) {
+          fail("Parent password must be at least 6 characters.", "parent");
+          return;
+        }
+
+        if (form.parentPassword !== form.parentConfirmPassword) {
+          fail("Parent passwords do not match.", "parent");
+          return;
+        }
+
         if (!form.courseWanted) {
-          setError(
-            "Please select a class, board, government exam, competitive exam, or skill program.",
+          fail(
+            "Please select a class, board, exam or skill programme.",
+            "academic",
           );
           return;
         }
 
         if (!form.studentType) {
-          setError("Please select the student type.");
+          fail("Please select a student type.", "academic");
           return;
         }
 
         if (form.studentType === "campus" && !form.campusLocation) {
-          setError("Please select a campus location.");
+          fail("Please select your campus.", "academic");
           return;
         }
-        if (form.referralCode.trim()) {
-          const referralIsValid = await validateReferralCode(form.referralCode);
 
-          if (!referralIsValid) {
-            setError(
-              "The referral code is invalid. Correct it or leave the field blank.",
+        if (!form.weakSubjects.trim()) {
+          fail("Please enter your weak subjects.", "academic");
+          return;
+        }
+
+        if (!form.strongSubjects.trim()) {
+          fail("Please enter your strong subjects.", "academic");
+          return;
+        }
+
+        if (form.referralCode.trim()) {
+          const valid = await validateReferralCode(form.referralCode);
+
+          if (!valid) {
+            fail(
+              "The referral code is invalid. Correct it or leave it blank.",
+              "academic",
             );
             return;
           }
         }
-        if (
-          !form.parentEmail ||
-          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.parentEmail)
-        ) {
-          setError("Parent email is required and must be valid.");
-          return;
-        }
-
-        if (
-          !form.parentMobile ||
-          form.parentMobile.replace(/[^\d]/g, "").length < 10
-        ) {
-          setError("Parent mobile number is required and must be 10 digits.");
-          return;
-        }
-
-        if (form.parentPassword.length < 6) {
-          setError("Parent password must be at least 6 characters.");
-          return;
-        }
-
-        if (form.parentPassword !== form.parentConfirmPassword) {
-          setError("Parent passwords do not match.");
-          return;
-        }
       }
 
       if (activeTab === "educator") {
-        if (form.password !== form.confirmPassword) {
-          setError("Passwords do not match.");
-          return;
-        }
-
         if (!form.cvUrl) {
-          setError("Resume / CV is required for employee accounts.");
+          fail("Resume / CV is required.", "professional");
           return;
         }
 
         if (!form.photoIdFrontUrl) {
-          setError("Photo ID front image is required for employee verification.");
+          fail("Please upload the front of your photo ID.", "professional");
           return;
         }
 
         if (!form.photoIdBackUrl) {
-          setError("Photo ID back image is required for employee verification.");
+          fail("Please upload the back of your photo ID.", "professional");
           return;
         }
 
         if (employeeType === "educator" && !form.qualification.trim()) {
-          setError("Qualification is required for faculty accounts.");
+          fail(
+            "Qualification is required for faculty accounts.",
+            "professional",
+          );
           return;
         }
 
         if (employeeType === "staff") {
           if (!form.designation.trim()) {
-            setError("Please select a designation.");
+            fail("Please select your designation.", "professional");
             return;
           }
 
           if (!form.department.trim()) {
-            setError("Department is required for staff accounts.");
+            fail("Department is required.", "professional");
             return;
           }
 
           if (!form.branch.trim()) {
-            setError("Branch is required for staff accounts.");
+            fail("Branch is required.", "professional");
             return;
           }
         }
       }
 
       if (!consentAccepted) {
-        setError(
-          "You must accept the Terms & Conditions, Privacy Policy, and consent to data collection to create an account.",
+        fail(
+          "You must accept the Terms & Conditions, Privacy Policy and data-collection consent.",
+          "personal",
         );
         return;
       }
 
       const body: Record<string, unknown> = {
-        role:
-          activeTab === "student"
-            ? "student"
-            : employeeType,
+        role: activeTab === "student" ? "student" : employeeType,
         name: form.name,
         email: form.email,
         password: form.password,
@@ -1065,7 +1007,7 @@ function selectCourse(course: CourseOption) {
         profilePhoto: form.profilePhotoUrl,
       };
 
-      if (activeTab === "student") {
+      if (isStudent) {
         body.parentName = form.parentName;
         body.parentEmail = form.parentEmail;
         body.parentMobile = form.parentMobile;
@@ -1083,20 +1025,17 @@ function selectCourse(course: CourseOption) {
         }
 
         body.weakSubjects = form.weakSubjects
-          ? form.weakSubjects
-              .split(",")
-              .map((subject) => subject.trim())
-              .filter(Boolean)
-          : [];
+          .split(",")
+          .map((subject) => subject.trim())
+          .filter(Boolean);
 
         body.strongSubjects = form.strongSubjects
-          ? form.strongSubjects
-              .split(",")
-              .map((subject) => subject.trim())
-              .filter(Boolean)
-          : [];
+          .split(",")
+          .map((subject) => subject.trim())
+          .filter(Boolean);
 
         body.latestQualification = form.latestQualification;
+
         body.latestAcademicScore = form.latestAcademicScore;
       }
 
@@ -1107,33 +1046,25 @@ function selectCourse(course: CourseOption) {
         body.photoIdBackUrl = form.photoIdBackUrl;
       }
 
-      if (
-        activeTab === "educator" &&
-        employeeType === "educator"
-      ) {
+      if (activeTab === "educator" && employeeType === "educator") {
         body.qualification = form.qualification;
         body.experience = form.experience;
 
         body.subjects = form.subjects
-          ? form.subjects
-              .split(",")
-              .map((subject) => subject.trim())
-              .filter(Boolean)
-          : [];
+          .split(",")
+          .map((subject) => subject.trim())
+          .filter(Boolean);
 
         body.examQualifications = examQualifications
-          .filter((eq) => eq.examName.trim())
-          .map((eq) => ({
-            examName: eq.examName.trim(),
-            score: eq.score.trim(),
-            year: eq.year.trim(),
+          .filter((item) => item.examName.trim())
+          .map((item) => ({
+            examName: item.examName.trim(),
+            score: item.score.trim(),
+            year: item.year.trim(),
           }));
       }
 
-      if (
-        activeTab === "educator" &&
-        employeeType === "staff"
-      ) {
+      if (activeTab === "educator" && employeeType === "staff") {
         body.designation = form.designation;
         body.department = form.department;
         body.branch = form.branch;
@@ -1177,91 +1108,173 @@ function selectCourse(course: CourseOption) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2 text-center sm:text-left">
-        <p className="section-label">Registration</p>
-
-        <h2 className="text-3xl font-black tracking-tight text-[var(--color-heading)] sm:text-4xl">
-          Create Account
-        </h2>
-
-        <p className="text-sm font-medium text-[var(--color-muted)]">
-          Choose your role and fill in the details to get started.
+      <header>
+        <p className="text-lg font-semibold text-[#174BC3]">
+          Account Registration
         </p>
-      </div>
 
-      <div className="grid grid-cols-2 gap-2">
+        <h2 className="mt-1 text-sm text-[#526481]">
+          Choose your role to get started.
+        </h2>
+      </header>
+
+      <div className="grid gap-3 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => {
-            setActiveTab("student");
-            setError("");
-            setSuccess("");
-          }}
-          className={`flex flex-col items-center justify-center rounded-2xl border p-4 transition-all duration-300 ${
-            activeTab === "student"
-              ? "scale-[1.02] border-blue-600 bg-blue-50 text-blue-600 shadow-lg shadow-blue-200/50"
-              : "border-slate-100 bg-slate-50/50 text-slate-400 hover:border-blue-200 hover:bg-blue-50/30"
+          aria-pressed={isStudent}
+          onClick={() => switchRole("student")}
+          className={`flex min-h-[78px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+            isStudent
+              ? "border-blue-600 bg-[#F2F6FF]"
+              : "border-[#DDE5F1] hover:bg-slate-50"
           }`}
         >
-          <span className="mb-1 text-2xl">🎓</span>
-
-          <span className="text-[10px] font-black uppercase tracking-wider">
-            Student
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FF] text-[#1956D8]">
+            <svg
+              viewBox="0 0 24 24"
+              width="23"
+              height="23"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <path d="m2 10 10-5 10 5-10 5-10-5Z" />
+              <path d="M6 12v5c3.6 2.7 8.4 2.7 12 0v-5" />
+              <path d="M22 10v6" />
+            </svg>
           </span>
+
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-[#102348]">
+              Student
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+              Access courses, learning resources and progress tracking.
+            </span>
+          </span>
+
+          <span
+            className={`h-5 w-5 shrink-0 rounded-full border-2 ${
+              isStudent
+                ? "border-blue-600 bg-blue-600 shadow-[inset_0_0_0_4px_white]"
+                : "border-slate-300"
+            }`}
+          />
         </button>
 
         <button
           type="button"
-          onClick={() => {
-            setActiveTab("educator");
-            setError("");
-            setSuccess("");
-          }}
-          className={`flex flex-col items-center justify-center rounded-2xl border p-4 transition-all duration-300 ${
-            activeTab === "educator"
-              ? "scale-[1.02] border-blue-600 bg-blue-50 text-blue-600 shadow-lg shadow-blue-200/50"
-              : "border-slate-100 bg-slate-50/50 text-slate-400 hover:border-blue-200 hover:bg-blue-50/30"
+          aria-pressed={!isStudent}
+          onClick={() => switchRole("educator")}
+          className={`flex min-h-[78px] items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+            !isStudent
+              ? "border-blue-600 bg-[#F2F6FF]"
+              : "border-[#DDE5F1] hover:bg-slate-50"
           }`}
         >
-          <span className="mb-1 text-2xl">👨‍🏫</span>
-
-          <span className="text-[10px] font-black uppercase tracking-wider">
-            Faculty
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#E8F0FF] text-[#1956D8]">
+            <svg
+              viewBox="0 0 24 24"
+              width="23"
+              height="23"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+            >
+              <circle cx="9" cy="8" r="3" />
+              <path d="M3 20v-2a6 6 0 0 1 12 0v2" />
+              <path d="M17 6a3 3 0 0 1 0 6" />
+              <path d="M18 15a5 5 0 0 1 3 5" />
+            </svg>
           </span>
+
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-[#102348]">
+              Faculty / Staff
+            </span>
+            <span className="mt-0.5 block text-xs leading-5 text-slate-500">
+              Manage teaching, academics and institutional activities.
+            </span>
+          </span>
+
+          <span
+            className={`h-5 w-5 shrink-0 rounded-full border-2 ${
+              !isStudent
+                ? "border-blue-600 bg-blue-600 shadow-[inset_0_0_0_4px_white]"
+                : "border-slate-300"
+            }`}
+          />
         </button>
       </div>
+
+      {!isStudent && (
+        <div className="rounded-xl border border-[#DDE5F1] bg-[#F8FAFD] p-4">
+          <p className="mb-3 text-sm font-semibold text-[#102348]">
+            Select employee type
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                ["educator", "Teaching Faculty"],
+                ["staff", "Non-teaching Staff"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={employeeType === value}
+                onClick={() => {
+                  setEmployeeType(value);
+                  setError("");
+                }}
+                className={`rounded-lg border px-3 py-3 text-sm font-semibold transition-colors ${
+                  employeeType === value
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "border-[#DDE5F1] bg-white text-slate-700 hover:border-blue-300"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {success && (
-        <div className="flex items-center gap-2 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-600">
-          <svg
-            className="h-4 w-4 shrink-0"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-
+        <div
+          role="status"
+          className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700"
+        >
           {success}
         </div>
       )}
 
-      <form className="space-y-6" onSubmit={handleSubmit}>
-        <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-          <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-            Personal Information
-          </h3>
+      {error && (
+        <div
+          role="alert"
+          className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+        >
+          {error}
+        </div>
+      )}
 
+      <form onSubmit={handleSubmit} noValidate className="space-y-3">
+        <RegistrationSection
+          id="personal"
+          number={1}
+          title="Personal Information"
+          description="Your account and contact details."
+          open={isSectionOpen("personal")}
+          onToggle={() => toggleSection("personal")}
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <InputField
               label="Full Name"
               value={form.name}
               onChange={(value) => updateField("name", value)}
               required
-              placeholder="e.g. Supriya"
+              placeholder="e.g. Supriya Sharma"
             />
 
             <InputField
@@ -1279,11 +1292,11 @@ function selectCourse(course: CourseOption) {
               value={form.password}
               onChange={(value) => updateField("password", value)}
               required
-              placeholder="Min 6 characters"
+              placeholder="Minimum 6 characters"
               hint="At least 6 characters"
             />
 
-            {activeTab === "educator" && (
+            {!isStudent ? (
               <InputField
                 label="Confirm Password"
                 type="password"
@@ -1292,16 +1305,27 @@ function selectCourse(course: CourseOption) {
                 required
                 placeholder="Re-enter password"
               />
+            ) : (
+              <InputField
+                label="Mobile Number"
+                type="tel"
+                value={form.mobile}
+                onChange={(value) => updateField("mobile", value)}
+                required
+                placeholder="10-digit mobile number"
+              />
             )}
 
-            <InputField
-              label="Mobile Number"
-              type="tel"
-              value={form.mobile}
-              onChange={(value) => updateField("mobile", value)}
-              required
-              placeholder="10-digit mobile number"
-            />
+            {!isStudent && (
+              <InputField
+                label="Mobile Number"
+                type="tel"
+                value={form.mobile}
+                onChange={(value) => updateField("mobile", value)}
+                required
+                placeholder="10-digit mobile number"
+              />
+            )}
 
             <InputField
               label="Date of Birth"
@@ -1309,53 +1333,37 @@ function selectCourse(course: CourseOption) {
               value={form.dob}
               onChange={(value) => updateField("dob", value)}
             />
+
+            <FileUpload
+              label="Profile Photo"
+              buttonText="Choose Photo"
+              uploading={uploadingPhoto}
+              uploaded={Boolean(form.profilePhotoUrl)}
+              onClick={() => photoInputRef.current?.click()}
+              inputRef={photoInputRef}
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handlePhotoChange}
+              hint="PNG, JPG, WEBP — max 5MB"
+            />
           </div>
+        </RegistrationSection>
 
-          <div className="mt-4">
-            <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-              Profile Photo <span className="text-red-500">*</span>
-            </label>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => photoInputRef.current?.click()}
-                disabled={uploadingPhoto}
-                className="rounded-xl border border-dashed border-blue-200 bg-blue-50/50 px-4 py-2.5 text-xs font-bold text-blue-600 transition-all hover:bg-blue-100 disabled:opacity-50"
-              >
-                {uploadingPhoto ? "Uploading..." : "Choose Photo"}
-              </button>
-
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
-
-              {form.profilePhotoUrl && (
-                <span className="text-xs text-emerald-600">Photo uploaded</span>
-              )}
-
-              <span className="text-[10px] text-slate-400">
-                PNG, JPG, WEBP (max 5MB)
-              </span>
-            </div>
-          </div>
-
-          {activeTab === "student" && (
-            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/30 p-4">
-              <h4 className="mb-3 text-xs font-black uppercase tracking-widest text-blue-700">
-                Parent / Guardian Information
-              </h4>
-
-              <div className="grid gap-3 sm:grid-cols-3">
+        {isStudent && (
+          <>
+            <RegistrationSection
+              id="parent"
+              number={2}
+              title="Parent / Guardian Information"
+              description="A separate parent account keeps guardians informed."
+              open={isSectionOpen("parent")}
+              onToggle={() => toggleSection("parent")}
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
                 <InputField
                   label="Parent Name"
                   value={form.parentName}
                   onChange={(value) => updateField("parentName", value)}
-                  placeholder="e.g. Ankit"
+                  placeholder="e.g. Ankit Sharma"
                 />
 
                 <InputField
@@ -1364,7 +1372,7 @@ function selectCourse(course: CourseOption) {
                   value={form.parentEmail}
                   onChange={(value) => updateField("parentEmail", value)}
                   required
-                  placeholder="parent@email.com"
+                  placeholder="parent@example.com"
                 />
 
                 <InputField
@@ -1373,18 +1381,16 @@ function selectCourse(course: CourseOption) {
                   value={form.parentMobile}
                   onChange={(value) => updateField("parentMobile", value)}
                   required
-                  placeholder="Parent's mobile number"
+                  placeholder="10-digit mobile number"
                 />
-              </div>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <InputField
                   label="Parent Login Password"
                   type="password"
                   value={form.parentPassword}
                   onChange={(value) => updateField("parentPassword", value)}
                   required
-                  placeholder="Min 6 characters"
+                  placeholder="Minimum 6 characters"
                 />
 
                 <InputField
@@ -1399,29 +1405,28 @@ function selectCourse(course: CourseOption) {
                 />
               </div>
 
-              <p className="mt-2 text-[10px] text-blue-500/70">
-                A separate parent login account will be created with these
-                credentials.
+              <p className="mt-5 rounded-lg bg-[#F0F5FF] px-4 py-3 text-xs leading-5 text-[#2352A5]">
+                A separate parent login account will be created using the
+                credentials above.
               </p>
-            </div>
-          )}
-        </div>
+            </RegistrationSection>
 
-        {activeTab === "student" && (
-          <>
-            <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-              <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-                Academic Information
-              </h3>
-
+            <RegistrationSection
+              id="academic"
+              number={3}
+              title="Academic Information"
+              description="Your programme and learning preferences."
+              open={isSectionOpen("academic")}
+              onToggle={() => toggleSection("academic")}
+            >
               <div className="space-y-4">
-                <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
+                <div>
                   <label
                     htmlFor="student-referral-code"
-                    className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-violet-700"
+                    className={LABEL_CLASS}
                   >
-                    Referral Code{" "}
-                    <span className="normal-case font-semibold text-slate-400">
+                    Educator Referral Code
+                    <span className="ml-1 font-normal text-slate-500">
                       (Optional)
                     </span>
                   </label>
@@ -1431,13 +1436,12 @@ function selectCourse(course: CourseOption) {
                     type="text"
                     value={form.referralCode}
                     onChange={(event) => {
-                      const normalizedValue = event.target.value
+                      const value = event.target.value
                         .toUpperCase()
                         .replace(/[^A-Z0-9-]/g, "")
                         .slice(0, 40);
 
-                      updateField("referralCode", normalizedValue);
-
+                      updateField("referralCode", value);
                       setReferralStatus("idle");
                       setReferralEducatorName("");
                     }}
@@ -1446,187 +1450,202 @@ function selectCourse(course: CourseOption) {
                         void validateReferralCode(form.referralCode);
                       }
                     }}
-                    placeholder="Enter educator referral code"
                     autoComplete="off"
                     autoCapitalize="characters"
                     spellCheck={false}
                     maxLength={40}
-                    className={`w-full rounded-2xl border bg-white px-5 py-3.5 text-sm font-bold uppercase tracking-wide text-slate-900 outline-none transition-all placeholder:normal-case placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300 focus:ring-4 ${
-                      referralStatus === "valid"
-                        ? "border-emerald-300 ring-emerald-500/10"
-                        : referralStatus === "invalid"
-                          ? "border-rose-300 ring-rose-500/10"
-                          : "border-violet-100 ring-violet-500/10"
-                    }`}
+                    placeholder="Enter educator referral code"
+                    className={`${FIELD_CLASS} uppercase`}
                   />
 
-                  {referralStatus === "checking" ? (
-                    <p className="ml-1 mt-2 text-[11px] font-semibold text-violet-600">
+                  {referralStatus === "checking" && (
+                    <p className="mt-2 text-xs text-blue-600">
                       Checking referral code...
                     </p>
-                  ) : null}
+                  )}
 
-                  {referralStatus === "valid" ? (
-                    <p className="ml-1 mt-2 text-[11px] font-bold text-emerald-600">
+                  {referralStatus === "valid" && (
+                    <p className="mt-2 text-xs font-medium text-emerald-700">
                       Valid referral code
                       {referralEducatorName
                         ? ` — Referred by ${referralEducatorName}`
                         : ""}
                     </p>
-                  ) : null}
+                  )}
 
-                  {referralStatus === "invalid" ? (
-                    <p className="ml-1 mt-2 text-[11px] font-bold text-rose-600">
+                  {referralStatus === "invalid" && (
+                    <p className="mt-2 text-xs text-rose-600">
                       This referral code is invalid or inactive.
                     </p>
-                  ) : null}
+                  )}
 
-                  {referralStatus === "idle" ? (
-                    <p className="ml-1 mt-2 text-[10px] leading-4 text-slate-400">
-                      Leave this blank when no educator referred you.
+                  {referralStatus === "idle" && (
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      Leave blank if no educator referred you.
                     </p>
-                  ) : null}
+                  )}
                 </div>
 
                 <div ref={courseDropdownRef} className="relative">
-                  <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                  <label className={LABEL_CLASS}>
                     Class / Board / Government / Competitive Exam / Skill
                     Program
-                    <span className="text-red-500">*</span>
+                    <span className="ml-1 text-red-500">*</span>
                   </label>
 
-<button
-  type="button"
-  onClick={() => setShowCourseDropdown((previous) => !previous)}
-  className="flex w-full items-center justify-between rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-left text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
->
-  <span
-    className={
-      form.courseWantedTitle ? "text-slate-900" : "text-slate-300"
-    }
-  >
-    {form.courseWantedTitle ||
-      "Select class, board, government exam, competitive exam, or skill"}
-  </span>
+                  <button
+                    type="button"
+                    aria-expanded={showCourseDropdown}
+                    onClick={() =>
+                      setShowCourseDropdown((previous) => !previous)
+                    }
+                    className={`${FIELD_CLASS} flex items-center justify-between gap-3 text-left`}
+                  >
+                    <span
+                      className={
+                        form.courseWantedTitle
+                          ? "text-[#14264A]"
+                          : "text-slate-400"
+                      }
+                    >
+                      {form.courseWantedTitle ||
+                        "Select class, board, exam or skill"}
+                    </span>
 
-  <span
-    className={`ml-3 text-slate-400 transition-transform ${
-      showCourseDropdown ? "rotate-180" : ""
-    }`}
-  >
-    ▼
-  </span>
-</button>
+                    <span
+                      aria-hidden="true"
+                      className="shrink-0 text-slate-500"
+                    >
+                      ▾
+                    </span>
+                  </button>
 
-                  {showCourseDropdown && filteredCourses.length > 0 && (
-                    <div className="absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+                  {showCourseDropdown && (
+                    <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-72 overflow-y-auto rounded-xl border border-[#DDE5F1] bg-white p-2 shadow-xl">
                       {(
                         Object.entries(groupedCourses) as [
                           CourseGroup,
                           CourseOption[],
                         ][]
-                      ).map(([group, courses]) => {
-                        if (courses.length === 0) {
-                          return null;
-                        }
+                      ).map(([group, courses]) => (
+                        <div key={group} className="mb-2 last:mb-0">
+                          <p className="px-3 py-2 text-xs font-bold text-slate-500">
+                            {group}
+                          </p>
 
-                        return (
-                          <div key={group} className="mb-2 last:mb-0">
-                            <p className="px-3 pb-1 pt-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                              {group}
-                            </p>
+                          {courses.map((course) => (
+                            <button
+                              type="button"
+                              key={course.key}
+                              onClick={() => selectCourse(course)}
+                              className={`block w-full rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
+                                form.courseWanted === course.key
+                                  ? "bg-blue-50 font-semibold text-blue-700"
+                                  : "text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="block">{course.label}</span>
 
-                            {courses.map((course) => (
-                              <button
-                                key={course.key}
-                                type="button"
-                                onClick={() => selectCourse(course)}
-                                className={`w-full rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
-                                  form.courseWanted === course.key
-                                    ? "bg-blue-50 font-bold text-blue-700"
-                                    : "text-slate-700 hover:bg-slate-50"
-                                }`}
-                              >
-                                <span className="block font-semibold">
-                                  {course.label}
-                                </span>
-
-                                <span className="mt-0.5 block text-[10px] text-slate-400">
-                                  {course.key}
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      })}
+                              <span className="mt-0.5 block text-[11px] text-slate-400">
+                                {course.key}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {form.courseWanted && (
-                    <p className="ml-1 mt-1 text-[10px] text-emerald-600">
-                      Selected: {form.courseWantedTitle}
-                    </p>
                   )}
                 </div>
 
-                <div className="space-y-4">
+                <div>
+                  <label className={LABEL_CLASS}>
+                    Student Type
+                    <span className="ml-1 text-red-500">*</span>
+                  </label>
+
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {[
+                      {
+                        value: "online",
+                        title: "Online",
+                        description: "Learn from anywhere",
+                      },
+                      {
+                        value: "campus",
+                        title: "Campus",
+                        description: "Attend in person",
+                      },
+                      {
+                        value: "home",
+                        title: "Home Tutor",
+                        description: "At your residence",
+                      },
+                    ].map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={form.studentType === option.value}
+                        onClick={() => {
+                          setForm((previous) => ({
+                            ...previous,
+                            studentType: option.value,
+                            campusLocation:
+                              option.value === "campus"
+                                ? previous.campusLocation
+                                : "",
+                          }));
+                        }}
+                        className={`flex items-center gap-3 rounded-lg border px-3 py-3 text-left transition-colors ${
+                          form.studentType === option.value
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-[#DDE5F1] hover:border-blue-300"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                            form.studentType === option.value
+                              ? "border-blue-600"
+                              : "border-slate-300"
+                          }`}
+                        >
+                          {form.studentType === option.value && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                          )}
+                        </span>
+
+                        <span>
+                          <span className="block text-xs font-semibold text-slate-900">
+                            {option.title}
+                          </span>
+                          <span className="mt-0.5 block text-[11px] text-slate-500">
+                            {option.description}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {form.studentType === "campus" && (
                   <div>
-                    <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                      Student Type <span className="text-red-500">*</span>
+                    <label className={LABEL_CLASS}>
+                      Campus Location
+                      <span className="ml-1 text-red-500">*</span>
                     </label>
 
                     <select
-                      required
-                      value={form.studentType}
-                      onChange={(event) => {
-                        const selectedType = event.target.value;
-
-                        setForm((previous) => ({
-                          ...previous,
-                          studentType: selectedType,
-                          campusLocation:
-                            selectedType === "campus"
-                              ? previous.campusLocation
-                              : "",
-                        }));
-                      }}
-                      className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
+                      value={form.campusLocation}
+                      onChange={(event) =>
+                        updateField("campusLocation", event.target.value)
+                      }
+                      className={FIELD_CLASS}
                     >
-                      <option value="">Select type</option>
-                      <option value="online">Online Learning</option>
-                      <option value="campus">Campus Learning</option>
-                      <option value="home">Home Tutor</option>
+                      <option value="">Select campus</option>
+                      <option value="vashi">Vashi Campus</option>
+                      <option value="panvel">Panvel Campus</option>
                     </select>
                   </div>
-
-                  {form.studentType === "campus" ? (
-                    <div className="rounded-2xl border border-blue-100 bg-blue-50/30 p-4">
-                      <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-blue-700">
-                        Campus Location <span className="text-red-500">*</span>
-                      </label>
-
-                      <select
-                        required
-                        value={form.campusLocation}
-                        onChange={(event) =>
-                          updateField("campusLocation", event.target.value)
-                        }
-                        className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
-                      >
-                        <option value="">Select campus</option>
-
-                        <option value="vashi">Vashi Campus</option>
-
-                        <option value="panvel">Panvel Campus</option>
-                      </select>
-
-                      <p className="ml-1 mt-2 text-[10px] text-slate-400">
-                        Select the campus where the student will attend physical
-                        classes.
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
+                )}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <InputField
@@ -1646,89 +1665,42 @@ function selectCourse(course: CourseOption) {
                   />
                 </div>
               </div>
-            </div>
+            </RegistrationSection>
+
             {!form.courseWanted.startsWith("Skills |") && (
-              <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-                <h3 className="mb-2 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-                  Academic Background
-                </h3>
-
-                <p className="mb-4 text-xs text-slate-400">
-                  Share your latest completed class or qualification to help us
-                  guide you better.
-                </p>
-
+              <RegistrationSection
+                id="background"
+                number={4}
+                title="Academic Background"
+                description="Your latest completed class or qualification."
+                open={isSectionOpen("background")}
+                onToggle={() => toggleSection("background")}
+              >
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
+                    <label className={LABEL_CLASS}>
                       Latest Completed Class / Qualification
                     </label>
 
-<select
-  value={form.latestQualification}
-  onChange={(event) =>
-    updateField("latestQualification", event.target.value)
-  }
-  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
->
+                    <select
+                      value={form.latestQualification}
+                      onChange={(event) =>
+                        updateField("latestQualification", event.target.value)
+                      }
+                      className={FIELD_CLASS}
+                    >
                       <option value="">Select qualification</option>
 
-                      {form.courseWanted.startsWith("Class 6 |") && (
-                        <option value="Class 5">Class 5</option>
-                      )}
-
-                      {form.courseWanted.startsWith("Class 7 |") && (
-                        <option value="Class 6">Class 6</option>
-                      )}
-
-                      {form.courseWanted.startsWith("Class 8 |") && (
-                        <option value="Class 7">Class 7</option>
-                      )}
-
-                      {form.courseWanted.startsWith("Class 9 |") && (
-                        <option value="Class 8">Class 8</option>
-                      )}
-
-                      {form.courseWanted.startsWith("Class 10 |") && (
-                        <option value="Class 9">Class 9</option>
-                      )}
-
-                      {form.courseWanted.startsWith("Class 11") && (
-                        <>
-                          <option value="Class 10">Class 10</option>
-                          <option value="Appearing in Class 11">
-                            Appearing in Class 11
-                          </option>
-                        </>
-                      )}
-
-                      {form.courseWanted.startsWith("Class 12") && (
-                        <>
-                          <option value="Class 10">Class 10</option>
-                          <option value="Class 11">Class 11</option>
-                          <option value="Appearing in Class 12">
-                            Appearing in Class 12
-                          </option>
-                        </>
-                      )}
-                      {(form.courseWanted.startsWith("Govt Exams |") ||
-                        form.courseWanted.startsWith(
-                          "Competitive Exams |",
-                        )) && (
-                        <>
-                          <option value="Class 10">Class 10</option>
-                          <option value="Class 12">Class 12</option>
-                          <option value="Diploma">Diploma</option>
-                          <option value="Graduation">Graduation</option>
-                          <option value="Post Graduation">
-                            Post Graduation
-                          </option>
-                          <option value="Final Year Graduation">
-                            Final Year Graduation
-                          </option>
-                        </>
-                      )}
+                      {latestQualifications.map((qualification) => (
+                        <option key={qualification} value={qualification}>
+                          {qualification}
+                        </option>
+                      ))}
                     </select>
+
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      Options depend on your selected programme.
+                    </p>
                   </div>
 
                   <InputField
@@ -1737,498 +1709,278 @@ function selectCourse(course: CourseOption) {
                     onChange={(value) =>
                       updateField("latestAcademicScore", value)
                     }
-                    placeholder="e.g. 85%, 8.5 CGPA, First Class"
+                    placeholder="e.g. 85%, 8.5 CGPA"
                   />
                 </div>
-              </div>
+              </RegistrationSection>
             )}
           </>
         )}
 
-        
-        {activeTab === "educator" && (
-          <div className="rounded-2xl border border-blue-100 bg-blue-50/30 p-5 sm:p-6">
-            <h3 className="mb-3 text-xs font-black uppercase tracking-widest text-blue-700">
-              Employee Type
-            </h3>
-
-            <p className="mb-4 text-xs text-slate-500">
-              Select whether you are applying as teaching faculty or non-teaching staff.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmployeeType("educator");
-                  setError("");
-                }}
-                className={`rounded-xl border px-4 py-3 text-sm font-bold transition ${
-                  employeeType === "educator"
-                    ? "border-blue-600 bg-blue-600 text-white shadow-sm"
-                    : "border-blue-100 bg-white text-slate-600 hover:bg-blue-50"
-                }`}
-              >
-                Faculty
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setEmployeeType("staff");
-                  setError("");
-                }}
-                className={`rounded-xl border px-4 py-3 text-sm font-bold transition ${
-                  employeeType === "staff"
-                    ? "border-blue-600 bg-blue-600 text-white shadow-sm"
-                    : "border-blue-100 bg-white text-slate-600 hover:bg-blue-50"
-                }`}
-              >
-                Staff
-              </button>
-            </div>
-          </div>
-        )}
-
-{activeTab === "educator" && employeeType === "educator" && (
-          <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-              Professional Information
-            </h3>
-
-            <div className="space-y-4">
-              <InputField
-                label="Qualification"
-                value={form.qualification}
-                onChange={(value) => updateField("qualification", value)}
-                required
-                placeholder="e.g. M.Sc. Mathematics, B.Ed"
-              />
-
-              <InputField
-                label="Experience"
-                value={form.experience}
-                onChange={(value) => updateField("experience", value)}
-                placeholder="e.g. 5 years of teaching experience"
-              />
-
-              <InputField
-                label="Subjects you can teach (comma separated)"
-                value={form.subjects}
-                onChange={(value) => updateField("subjects", value)}
-                placeholder="e.g. Mathematics, Physics, Chemistry"
-              />
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                    Exam Qualifications
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={addExamQualification}
-                    className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-[10px] font-bold text-blue-600 transition-all hover:bg-blue-100"
-                  >
-                    + Add Exam
-                  </button>
-                </div>
-
-                {examQualifications.length > 0 && (
-                  <div className="space-y-2">
-                    {examQualifications.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/50 p-3"
-                      >
-                        <div className="flex-1 space-y-2">
-                          <input
-                            type="text"
-                            value={item.examName}
-                            onChange={(e) =>
-                              updateExamQualification(
-                                index,
-                                "examName",
-                                e.target.value,
-                              )
-                            }
-                            placeholder="Exam name (e.g. NEET, JEE Mains)"
-                            className="w-full rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                          />
-
-                          <div className="grid grid-cols-2 gap-2">
-                            <input
-                              type="text"
-                              value={item.score}
-                              onChange={(e) =>
-                                updateExamQualification(
-                                  index,
-                                  "score",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Score / Rank"
-                              className="w-full rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                            />
-
-                            <input
-                              type="text"
-                              value={item.year}
-                              onChange={(e) =>
-                                updateExamQualification(
-                                  index,
-                                  "year",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Attempt year"
-                              className="w-full rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-                            />
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => removeExamQualification(index)}
-                          className="mt-1 shrink-0 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-bold text-rose-500 transition-all hover:bg-rose-100"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-[10px] text-slate-400">
-                  Add any competitive exam qualifications (NEET, JEE, MHTCET,
-                  GATE, etc.) to strengthen your profile.
-                </p>
-              </div>
-
-              <div>
-                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Upload CV / Resume <span className="text-red-500">*</span>
-                </label>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => cvInputRef.current?.click()}
-                    disabled={uploadingCv}
-                    className="rounded-xl border border-dashed border-blue-200 bg-blue-50/50 px-4 py-2.5 text-xs font-bold text-blue-600 transition-all hover:bg-blue-100 disabled:opacity-50"
-                  >
-                    {uploadingCv ? "Uploading..." : "Choose CV"}
-                  </button>
-
-                  <input
-                    ref={cvInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={handleCvChange}
+        {!isStudent && (
+          <RegistrationSection
+            id="professional"
+            number={2}
+            title={
+              employeeType === "staff"
+                ? "Employment Information"
+                : "Professional Information"
+            }
+            description="Your professional experience and verification documents."
+            open={isSectionOpen("professional")}
+            onToggle={() => toggleSection("professional")}
+          >
+            {employeeType === "educator" ? (
+              <div className="space-y-5">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <InputField
+                    label="Qualification"
+                    value={form.qualification}
+                    onChange={(value) => updateField("qualification", value)}
+                    required
+                    placeholder="e.g. M.Sc. Mathematics, B.Ed"
                   />
 
-                  {form.cvUrl && (
-                    <span className="text-xs text-emerald-600">
-                      CV uploaded
-                    </span>
-                  )}
-
-                  <span className="text-[10px] text-slate-400">
-                    PDF, DOC, DOCX (max 5MB)
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-amber-700">
-                  <i className="bi bi-shield-lock me-1" />
-                  Photo ID for Verification{" "}
-                  <span className="text-red-500">*</span>
-                </label>
-                <p className="mb-3 text-[11px] text-amber-600/80">
-                  Upload front and back images of a valid photo ID such as
-                  Aadhar Card, PAN Card, Passport, or Driver's License. This is
-                  required for account verification.
-                </p>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
-                      Photo ID — Front <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => photoIdFrontInputRef.current?.click()}
-                        disabled={uploadingPhotoIdFront}
-                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
-                      >
-                        {uploadingPhotoIdFront
-                          ? "Uploading..."
-                          : "Choose Front Image"}
-                      </button>
-                      <input
-                        ref={photoIdFrontInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={handlePhotoIdFrontChange}
-                      />
-                      {form.photoIdFrontUrl && (
-                        <span className="text-[11px] text-emerald-600">
-                          <i className="bi bi-check-circle me-1" />
-                          Uploaded
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
-                      Photo ID — Back <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => photoIdBackInputRef.current?.click()}
-                        disabled={uploadingPhotoIdBack}
-                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
-                      >
-                        {uploadingPhotoIdBack
-                          ? "Uploading..."
-                          : "Choose Back Image"}
-                      </button>
-                      <input
-                        ref={photoIdBackInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={handlePhotoIdBackChange}
-                      />
-                      {form.photoIdBackUrl && (
-                        <span className="text-[11px] text-emerald-600">
-                          <i className="bi bi-check-circle me-1" />
-                          Uploaded
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <InputField
+                    label="Experience"
+                    value={form.experience}
+                    onChange={(value) => updateField("experience", value)}
+                    placeholder="e.g. 5 years of teaching experience"
+                  />
                 </div>
 
-                <p className="mt-2 text-[10px] text-slate-400">
-                  Accepted IDs: Aadhar Card, PAN Card, Passport, Voter ID,
-                  Driver's License. Images must be clear and readable. (PNG,
-                  JPG, WEBP — max 5MB each)
-                </p>
+                <InputField
+                  label="Subjects You Can Teach (comma separated)"
+                  value={form.subjects}
+                  onChange={(value) => updateField("subjects", value)}
+                  placeholder="e.g. Mathematics, Physics"
+                />
+
+                <div>
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <label className={LABEL_CLASS}>Exam Qualifications</label>
+
+                    <button
+                      type="button"
+                      onClick={addExamQualification}
+                      className={BUTTON_CLASS}
+                    >
+                      + Add Exam
+                    </button>
+                  </div>
+
+                  {examQualifications.map((qualification, index) => (
+                    <div
+                      key={index}
+                      className="mb-3 rounded-lg border border-[#DDE5F1] bg-slate-50 p-3"
+                    >
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <input
+                          value={qualification.examName}
+                          onChange={(event) =>
+                            updateExamQualification(
+                              index,
+                              "examName",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Exam name"
+                          className={FIELD_CLASS}
+                        />
+
+                        <input
+                          value={qualification.score}
+                          onChange={(event) =>
+                            updateExamQualification(
+                              index,
+                              "score",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Score / Rank"
+                          className={FIELD_CLASS}
+                        />
+
+                        <input
+                          value={qualification.year}
+                          onChange={(event) =>
+                            updateExamQualification(
+                              index,
+                              "year",
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Attempt year"
+                          className={FIELD_CLASS}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => removeExamQualification(index)}
+                        className="mt-3 text-xs font-semibold text-rose-600 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+
+                  <p className="text-xs text-slate-500">
+                    Include NEET, JEE, MHT CET, GATE or other relevant
+                    examinations.
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={LABEL_CLASS}>
+                    Designation
+                    <span className="ml-1 text-red-500">*</span>
+                  </label>
 
-        {activeTab === "educator" && employeeType === "staff" && (
-          <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-            <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-              Employment Information
-            </h3>
+                  <select
+                    value={form.designation}
+                    onChange={(event) =>
+                      updateField("designation", event.target.value)
+                    }
+                    className={FIELD_CLASS}
+                  >
+                    <option value="">Select designation</option>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Designation <span className="text-red-500">*</span>
-                </label>
+                    {[
+                      "Receptionist",
+                      "Office Admin",
+                      "Branch Manager",
+                      "Accountant",
+                      "HR",
+                      "Counsellor",
+                      "Operations",
+                      "Support",
+                      "Marketing",
+                      "Sales",
+                      "IT Support",
+                      "Other",
+                    ].map((designation) => (
+                      <option key={designation} value={designation}>
+                        {designation}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <select
+                <InputField
+                  label="Department"
+                  value={form.department}
+                  onChange={(value) => updateField("department", value)}
                   required
-                  value={form.designation}
-                  onChange={(event) =>
-                    updateField("designation", event.target.value)
-                  }
-                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
-                >
-                  <option value="">Select designation</option>
-                  <option value="Receptionist">Receptionist</option>
-                  <option value="Office Admin">Office Admin</option>
-                  <option value="Branch Manager">Branch Manager</option>
-                  <option value="Accountant">Accountant</option>
-                  <option value="HR">HR</option>
-                  <option value="Counsellor">Counsellor</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Support">Support</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Sales">Sales</option>
-                  <option value="IT Support">IT Support</option>
-                  <option value="Other">Other</option>
-                </select>
+                  placeholder="e.g. Operations"
+                />
+
+                <InputField
+                  label="Branch"
+                  value={form.branch}
+                  onChange={(value) => updateField("branch", value)}
+                  required
+                  placeholder="e.g. Panvel"
+                />
+
+                <div>
+                  <label className={LABEL_CLASS}>Employment Type</label>
+
+                  <select
+                    value={form.employmentType}
+                    onChange={(event) =>
+                      updateField("employmentType", event.target.value)
+                    }
+                    className={FIELD_CLASS}
+                  >
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part Time</option>
+                    <option value="contract">Contract</option>
+                    <option value="intern">Intern</option>
+                  </select>
+                </div>
+
+                <InputField
+                  label="Joining Date"
+                  type="date"
+                  value={form.joiningDate}
+                  onChange={(value) => updateField("joiningDate", value)}
+                />
               </div>
+            )}
 
-              <InputField
-                label="Department"
-                value={form.department}
-                onChange={(value) => updateField("department", value)}
-                required
-                placeholder="e.g. Operations"
-              />
-
-              <InputField
-                label="Branch"
-                value={form.branch}
-                onChange={(value) => updateField("branch", value)}
-                required
-                placeholder="e.g. Panvel"
-              />
-
-              <div>
-                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Employment Type
-                </label>
-
-                <select
-                  value={form.employmentType}
-                  onChange={(event) =>
-                    updateField("employmentType", event.target.value)
-                  }
-                  className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all focus:ring-4"
-                >
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                  <option value="contract">Contract</option>
-                  <option value="intern">Intern</option>
-                </select>
-              </div>
-
-              <InputField
-                label="Joining Date"
-                type="date"
-                value={form.joiningDate}
-                onChange={(value) => updateField("joiningDate", value)}
-              />
-            </div>
-
-            <div className="mt-6 border-t border-slate-100 pt-5">
-              <h4 className="mb-4 text-xs font-black uppercase tracking-widest text-blue-700">
+            <div className="mt-6 space-y-5 border-t border-[#E8EDF5] pt-5">
+              <h4 className="text-sm font-semibold text-[#102348]">
                 Verification Documents
               </h4>
 
-              <div>
-                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-                  Upload CV / Resume <span className="text-red-500">*</span>
-                </label>
+              <FileUpload
+                label="Upload CV / Resume"
+                buttonText="Choose CV"
+                uploading={uploadingCv}
+                uploaded={Boolean(form.cvUrl)}
+                onClick={() => cvInputRef.current?.click()}
+                inputRef={cvInputRef}
+                accept=".pdf,.doc,.docx"
+                onChange={handleCvChange}
+                hint="PDF, DOC, DOCX — max 5MB"
+              />
 
-                <div className="flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => cvInputRef.current?.click()}
-                    disabled={uploadingCv}
-                    className="rounded-xl border border-dashed border-blue-200 bg-blue-50/50 px-4 py-2.5 text-xs font-bold text-blue-600 transition-all hover:bg-blue-100 disabled:opacity-50"
-                  >
-                    {uploadingCv ? "Uploading..." : "Choose CV"}
-                  </button>
+              <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                <h5 className="text-sm font-semibold text-amber-900">
+                  Photo ID for Verification
+                </h5>
 
-                  <input
-                    ref={cvInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    className="hidden"
-                    onChange={handleCvChange}
-                  />
-
-                  {form.cvUrl && (
-                    <span className="text-xs text-emerald-600">CV uploaded</span>
-                  )}
-
-                  <span className="text-[10px] text-slate-400">
-                    PDF, DOC, DOCX (max 5MB)
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                <label className="mb-1.5 ml-1 block text-xs font-black uppercase tracking-widest text-amber-700">
-                  Photo ID for Verification <span className="text-red-500">*</span>
-                </label>
-
-                <p className="mb-3 text-[11px] text-amber-600/80">
-                  Upload front and back images of a valid photo ID for admin verification.
+                <p className="mt-1 text-xs leading-5 text-amber-800">
+                  Upload clear images of the front and back of a valid
+                  government photo ID for administrator verification.
                 </p>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
-                      Photo ID — Front <span className="text-red-500">*</span>
-                    </label>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <FileUpload
+                    label="Photo ID — Front"
+                    buttonText="Choose Front Image"
+                    uploading={uploadingPhotoIdFront}
+                    uploaded={Boolean(form.photoIdFrontUrl)}
+                    onClick={() => photoIdFrontInputRef.current?.click()}
+                    inputRef={photoIdFrontInputRef}
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handlePhotoIdFrontChange}
+                    hint="PNG, JPG, WEBP"
+                  />
 
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => photoIdFrontInputRef.current?.click()}
-                        disabled={uploadingPhotoIdFront}
-                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
-                      >
-                        {uploadingPhotoIdFront
-                          ? "Uploading..."
-                          : "Choose Front Image"}
-                      </button>
-
-                      <input
-                        ref={photoIdFrontInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={handlePhotoIdFrontChange}
-                      />
-
-                      {form.photoIdFrontUrl && (
-                        <span className="text-[11px] text-emerald-600">
-                          Uploaded
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-[11px] font-bold text-[var(--color-heading)]">
-                      Photo ID — Back <span className="text-red-500">*</span>
-                    </label>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => photoIdBackInputRef.current?.click()}
-                        disabled={uploadingPhotoIdBack}
-                        className="rounded-xl border border-dashed border-amber-300 bg-white px-3 py-2 text-[11px] font-bold text-amber-700 transition-all hover:bg-amber-100 disabled:opacity-50"
-                      >
-                        {uploadingPhotoIdBack
-                          ? "Uploading..."
-                          : "Choose Back Image"}
-                      </button>
-
-                      <input
-                        ref={photoIdBackInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={handlePhotoIdBackChange}
-                      />
-
-                      {form.photoIdBackUrl && (
-                        <span className="text-[11px] text-emerald-600">
-                          Uploaded
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <FileUpload
+                    label="Photo ID — Back"
+                    buttonText="Choose Back Image"
+                    uploading={uploadingPhotoIdBack}
+                    uploaded={Boolean(form.photoIdBackUrl)}
+                    onClick={() => photoIdBackInputRef.current?.click()}
+                    inputRef={photoIdBackInputRef}
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handlePhotoIdBackChange}
+                    hint="PNG, JPG, WEBP"
+                  />
                 </div>
+
+                <p className="mt-3 text-xs text-slate-500">
+                  Accepted IDs: Aadhaar Card, PAN Card, Passport, Voter ID or
+                  Driving Licence. Maximum 5MB per image.
+                </p>
               </div>
             </div>
-          </div>
+          </RegistrationSection>
         )}
 
-        <div className="rounded-2xl border border-[var(--color-border)] p-5 sm:p-6">
-          <h3 className="mb-4 text-sm font-black uppercase tracking-widest text-[var(--color-primary)]">
-            Address
-          </h3>
-
+        <RegistrationSection
+          id="address"
+          number={isStudent ? 5 : 3}
+          title="Address"
+          description="Your residential and contact details."
+          open={isSectionOpen("address")}
+          onToggle={() => toggleSection("address")}
+        >
           <div className="space-y-4">
             <InputField
               label="Address Line 1"
@@ -2267,18 +2019,23 @@ function selectCourse(course: CourseOption) {
               />
             </div>
           </div>
-        </div>
+        </RegistrationSection>
 
-        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-4">
-          <label className="flex cursor-pointer items-start gap-3">
+        <div className="border-t border-[#E8EDF5] pt-6">
+          <div className="flex items-start gap-3">
             <input
+              id="signup-consent"
               type="checkbox"
               checked={consentAccepted}
-              onChange={(e) => setConsentAccepted(e.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              onChange={(event) => setConsentAccepted(event.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 accent-blue-600"
             />
-            <span className="text-xs leading-5 text-[var(--color-muted)]">
-              I acknowledge and consent to the collection, storage, and
+
+            <label
+              htmlFor="signup-consent"
+              className="text-xs leading-6 text-slate-600"
+            >
+              I acknowledge and consent to the collection, storage and
               processing of my personal data and uploaded documents (including
               resume/CV and photo ID images) by SmartIQ Institute as described
               in the{" "}
@@ -2286,7 +2043,7 @@ function selectCourse(course: CourseOption) {
                 href="/terms"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-blue-600 hover:text-blue-700 underline"
+                className="font-semibold text-blue-600 underline"
               >
                 Terms &amp; Conditions
               </a>
@@ -2295,7 +2052,7 @@ function selectCourse(course: CourseOption) {
                 href="/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-blue-600 hover:text-blue-700 underline"
+                className="font-semibold text-blue-600 underline"
               >
                 Privacy Policy
               </a>
@@ -2304,122 +2061,46 @@ function selectCourse(course: CourseOption) {
                 href="/eula"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-bold text-blue-600 hover:text-blue-700 underline"
+                className="font-semibold text-blue-600 underline"
               >
                 EULA
               </a>
               . I understand that SmartIQ Institute is not liable for any loss
               or misuse of the documents I submit.{" "}
-              <span className="text-red-500 font-bold">*</span>
-            </span>
-          </label>
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-600">
-            <svg
-              className="h-4 w-4 shrink-0"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-
-            {error}
+              <span className="font-semibold text-red-500">*</span>
+            </label>
           </div>
-        )}
+        </div>
 
         <button
           type="submit"
           disabled={isPending}
-          className="group relative flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-blue-600 font-black text-white shadow-xl shadow-blue-500/25 transition-all hover:bg-blue-700 active:scale-95 disabled:opacity-50"
+          className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-lg bg-[#1956E8] px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#1046CB] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span className="relative z-10 flex items-center gap-2">
-            {isPending
-              ? "Creating Account..."
-              : activeTab === "educator"
-                ? "Submit for Approval"
-                : "Create Account"}
+          {isPending
+            ? "Submitting..."
+            : isStudent
+              ? "Create Account"
+              : "Submit for Approval"}
 
-            {!isPending && (
-              <span className="transition-transform group-hover:translate-x-1">
-                →
-              </span>
-            )}
-          </span>
+          {!isPending && <span aria-hidden="true">→</span>}
         </button>
 
-        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
-          <p className="text-[11px] font-medium text-amber-800">
-            Password reset is only available after administrator verification.
-            Please remember your password or contact our team for assistance.
-          </p>
-        </div>
-
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-slate-500">
           Already have an account?{" "}
           <a
             href="/login"
-            className="font-bold text-blue-600 hover:text-blue-700"
+            className="font-semibold text-[#1956E8] hover:underline"
           >
             Sign In
           </a>
         </p>
+
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+          Password reset is only available after administrator verification.
+          Please remember your password or contact our team for assistance.
+        </p>
       </form>
-    </div>
-  );
-}
-
-function InputField({
-  label,
-  value,
-  onChange,
-  type = "text",
-  required = false,
-  placeholder = "",
-  hint,
-  isTextarea = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  required?: boolean;
-  placeholder?: string;
-  hint?: string;
-  isTextarea?: boolean;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="ml-1 block text-xs font-black uppercase tracking-widest text-[var(--color-heading)] opacity-60">
-        {label}
-        {required && <span className="ml-1 text-red-500">*</span>}
-      </label>
-
-      {isTextarea ? (
-        <textarea
-          value={value ?? ""}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          rows={3}
-          className="w-full resize-none rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-        />
-      ) : (
-        <input
-          type={type}
-          value={value ?? ""}
-          onChange={(event) => onChange(event.target.value)}
-          required={required}
-          placeholder={placeholder}
-          className="w-full rounded-2xl border border-blue-100 bg-white px-5 py-3.5 text-sm text-slate-900 outline-none ring-blue-500/10 transition-all placeholder:text-slate-300 focus:ring-4"
-        />
-      )}
-
-      {hint && <p className="ml-1 text-[10px] text-slate-400">{hint}</p>}
     </div>
   );
 }
