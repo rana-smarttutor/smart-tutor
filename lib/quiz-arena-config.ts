@@ -22,6 +22,8 @@
 // BASIC TYPES
 // ============================================================
 
+import supplementalTopics from "@/data/quiz-exam-syllabus-supplement-2026.json";
+
 export type EducationLevel =
   | "school-junior-college"
   | "competitive-exam"
@@ -364,6 +366,7 @@ export function getQuizSchoolClasses(
 
 export function requiresQuizBoard(exam: CompetitiveExam | null): boolean {
   return (
+    exam === "class-6-8" ||
     exam === "class-9-10" ||
     exam === "class-11-12-science" ||
     exam === "class-11-12-commerce" ||
@@ -877,6 +880,7 @@ export const competitiveExams: ExamOption[] = [
       "English Language",
       "General Awareness",
       "Computer Knowledge",
+      "Statistics",
     ],
     "Combined Graduate Level applicants.",
     "SSC CGL-specific preparation.",
@@ -1730,6 +1734,13 @@ for (const definition of examDefinitions) {
 }
 
 // ============================================================
+// Supplementary individual-exam subject menus: keep UI aligned with topic allowlists.
+for (const row of supplementalTopics.entries) {
+  const exam = competitiveExams.find((item) => item.id === row.exam);
+  if (exam) {
+    exam.subjects = row.subjects.map((item) => item.subject);
+  }
+}
 // GROUP HELPER FUNCTIONS
 // ============================================================
 
@@ -1740,6 +1751,11 @@ export function isQuizExamGroup(exam: CompetitiveExam): boolean {
 export function getQuizExamGroupChildren(
   group: CompetitiveExam,
 ): CompetitiveExam[] {
+  // Only UPSC Civil Services should appear in the UPSC menu.
+  if (group === "upsc") {
+    return ["upsc-cse"];
+  }
+
   return quizExamGroups[group] ?? [];
 }
 

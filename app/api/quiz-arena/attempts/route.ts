@@ -23,6 +23,7 @@ import {
 } from "@/lib/quiz-arena-config";
 
 import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
+import { getQuizArenaExamScope } from "@/lib/quiz-arena-exam-scope";
 import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
 import {
   consumeQuizArenaFreeTrial,
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = (await request.json()) as {
+    const body = (await request.json().catch(() => null)) as {
       draftId?: string;
 
       level?: EducationLevel;
@@ -212,7 +213,14 @@ export async function POST(request: NextRequest) {
       averageQuestionTimeMs?: number;
 
       questions?: unknown[];
-    };
+    } | null;
+
+    if (!body) {
+      return NextResponse.json(
+        { error: "Invalid attempt request." },
+        { status: 400 },
+      );
+    }
 
     if (!isEducationLevel(body.level)) {
       return NextResponse.json(
@@ -250,6 +258,21 @@ export async function POST(request: NextRequest) {
         {
           status: 400,
         },
+      );
+    }
+
+    // Derive paid access from a validated individual exam; never from a category.
+    const examScope = getQuizArenaExamScope({
+      exam: body.exam,
+      level: body.level,
+      schoolClass: schoolContext.schoolClass,
+      board: schoolContext.board,
+    });
+
+    if (!examScope) {
+      return NextResponse.json(
+        { error: "Invalid individual exam or school selection." },
+        { status: 400 },
       );
     }
 
@@ -365,7 +388,11 @@ export async function POST(request: NextRequest) {
     // be safely retried when a later progress/status request failed.
     let mustConsumeFreeTrial = false;
     if (session.role === "student") {
-      const access = await getQuizArenaAccess(session.id, session.role);
+      const access = await getQuizArenaAccess(
+        session.id,
+        session.role,
+        examScope.key,
+      );
       if (access.subscription.active !== true && !access.unlimitedAccess) {
         const trial = await getQuizArenaFreeTrialState(session.id);
         const expectedAttemptId = `quiz-attempt-${draft.id}`;
@@ -525,6 +552,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       attempt,
+      examScopeKey: examScope.key,
     });
   } catch (error) {
     console.error("Quiz Arena attempt POST error:", error);

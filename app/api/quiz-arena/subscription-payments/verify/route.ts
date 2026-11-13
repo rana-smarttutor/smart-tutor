@@ -1,18 +1,19 @@
-
 import { createHmac, timingSafeEqual } from "node:crypto";
+
 import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { getMongoDatabase } from "@/lib/mongodb";
 
 import {
+  QUIZ_ARENA_PLAN,
   getQuizArenaPlanById,
   type QuizArenaPayment,
 } from "@/lib/quiz-arena-subscriptions";
 
-import {
-  activateVerifiedQuizArenaPayment,
-} from "@/lib/quiz-arena-payment-activation";
+import { getQuizArenaExamScopeByKey } from "@/lib/quiz-arena-exam-scope";
+
+import { activateVerifiedQuizArenaPayment } from "@/lib/quiz-arena-payment-activation";
 
 import { getQuizArenaPaymentConfig } from "@/lib/quiz-arena-payment-config";
 
@@ -37,7 +38,10 @@ type RazorpayCapturedPayment = {
 
 function reject(message: string, status: number) {
   return NextResponse.json(
-    { success: false, message },
+    {
+      success: false,
+      message,
+    },
     {
       status,
       headers: {
@@ -47,6 +51,24 @@ function reject(message: string, status: number) {
   );
 }
 
+/**
+ * Verify and activate an individual
+ * Quiz Arena exam subscription.
+ *
+ * Security requirements:
+ *
+ * - Authenticated active student
+ * - Order belongs to that student
+ * - Razorpay signature is valid
+ * - Razorpay reports captured payment
+ * - Exact ₹49 amount and INR currency
+ * - Order belongs to a valid individual exam
+ * - Exam scope is read from MongoDB
+ * - Activation is handled transactionally
+ *
+ * Never accept an exam change during
+ * payment verification.
+ */
 export async function POST(request: Request) {
   try {
     const session = await getSessionUser();
@@ -59,45 +81,47 @@ export async function POST(request: Request) {
       session.role !== "student" ||
       (session.status && session.status !== "active")
     ) {
-      return reject("Student access only.", 403);
+      return reject(
+        "Only active students can verify Quiz Arena payments.",
+        403,
+      );
     }
 
+    const paymentConfig = getQuizArenaPaymentConfig();
 
-const paymentConfig = getQuizArenaPaymentConfig();
-
-if (!paymentConfig.enabled) {
-  return reject(paymentConfig.reason, 503);
-}
-
-const keyId = paymentConfig.keyId;
-const keySecret = paymentConfig.keySecret;
-
+    if (!paymentConfig.enabled) {
+      return reject(paymentConfig.reason, 503);
+    }
 
     const body = (await request
       .json()
       .catch(() => null)) as VerifyPaymentBody | null;
 
-    const orderId = String(body?.razorpay_order_id || "");
-    const paymentId = String(body?.razorpay_payment_id || "");
-    const signature = String(body?.razorpay_signature || "");
+    const orderId = String(body?.razorpay_order_id ?? "");
+
+    const paymentId = String(body?.razorpay_payment_id ?? "");
+
+    const signature = String(body?.razorpay_signature ?? "");
 
     if (
       !/^order_[a-zA-Z0-9]+$/.test(orderId) ||
       !/^pay_[a-zA-Z0-9]+$/.test(paymentId) ||
       !/^[a-fA-F0-9]{64}$/.test(signature)
     ) {
-      return reject(
-        "Invalid payment verification fields.",
-        400,
-      );
+      return reject("Invalid payment verification fields.", 400);
     }
 
     const db = await getMongoDatabase();
 
-    const payments = db.collection<QuizArenaPayment>(
-      "quiz_arena_payments",
-    );
+    const payments = db.collection<QuizArenaPayment>("quiz_arena_payments");
 
+    /**
+     * Find the ORIGINAL order belonging to
+     * the authenticated student.
+     *
+     * Never trust a userId supplied by
+     * the browser.
+     */
     const localOrder = await payments.findOne({
       razorpayOrderId: orderId,
       userId: session.id,
@@ -105,81 +129,109 @@ const keySecret = paymentConfig.keySecret;
     });
 
     if (!localOrder) {
+      return reject("Quiz Arena payment order not found.", 404);
+    }
+
+    /**
+     * Only the new ₹49 monthly plan may
+     * activate an exam-specific entitlement.
+     */
+    if (localOrder.planId !== QUIZ_ARENA_PLAN.id) {
       return reject(
-        "Quiz Arena payment order not found.",
-        404,
+        "This order belongs to a previous subscription plan and requires separate reconciliation.",
+        409,
       );
     }
 
-    // Resolve the exact trusted plan attached to this order.
     const plan = getQuizArenaPlanById(localOrder.planId);
 
     if (
       !plan ||
+      plan.amountPaise !== 4900 ||
+      plan.durationDays !== 30 ||
       localOrder.amountPaise !== plan.amountPaise ||
       localOrder.currency !== plan.currency
     ) {
       return reject(
-        "Payment order does not match a valid subscription plan.",
+        "Payment order does not match the monthly subscription plan.",
         409,
       );
     }
 
+    /**
+     * Validate the original selected exam.
+     *
+     * Legacy orders without examScopeKey
+     * cannot be converted into an arbitrary
+     * new exam subscription.
+     */
+    const examScope = getQuizArenaExamScopeByKey(localOrder.examScopeKey);
+
+    if (!examScope) {
+      return reject(
+        "The original payment order does not contain a valid individual exam.",
+        409,
+      );
+    }
+
+    if (localOrder.examTitle && localOrder.examTitle !== examScope.title) {
+      return reject(
+        "Payment exam details do not match the examination catalogue.",
+        409,
+      );
+    }
+
+    /**
+     * A paid order cannot be verified
+     * against a different payment ID.
+     */
     if (
       localOrder.status === "paid" &&
       localOrder.razorpayPaymentId !== paymentId
     ) {
+      return reject("This order was already paid using another payment.", 409);
+    }
+
+    if (localOrder.status !== "created" && localOrder.status !== "paid") {
       return reject(
-        "This order was already paid using another payment.",
+        "This payment order is not eligible for verification.",
         409,
       );
     }
 
-    if (
-      localOrder.status !== "created" &&
-      localOrder.status !== "paid"
-    ) {
-      return reject(
-        "Payment order is not eligible for verification.",
-        409,
-      );
-    }
-
-    const expectedSignature = createHmac(
-      "sha256",
-      keySecret,
-    )
-      .update(
-        `${localOrder.razorpayOrderId}|${paymentId}`,
-      )
+    /**
+     * Razorpay checkout signature:
+     *
+     * HMAC_SHA256(orderId|paymentId, keySecret)
+     *
+     * Use timing-safe comparison.
+     */
+    const expectedSignature = createHmac("sha256", paymentConfig.keySecret)
+      .update(`${localOrder.razorpayOrderId}|${paymentId}`)
       .digest();
 
-    const providedSignature = Buffer.from(
-      signature,
-      "hex",
-    );
+    const providedSignature = Buffer.from(signature, "hex");
 
     if (
       expectedSignature.length !== providedSignature.length ||
-      !timingSafeEqual(
-        expectedSignature,
-        providedSignature,
-      )
+      !timingSafeEqual(expectedSignature, providedSignature)
     ) {
-      return reject(
-        "Invalid Razorpay payment signature.",
-        400,
-      );
+      return reject("Invalid Razorpay payment signature.", 400);
     }
 
+    /**
+     * Verify captured payment directly
+     * with Razorpay's server API.
+     *
+     * A successful client callback alone
+     * is not sufficient proof of payment.
+     */
     const authorization = Buffer.from(
-      `${keyId}:${keySecret}`,
+      `${paymentConfig.keyId}:${paymentConfig.keySecret}`,
     ).toString("base64");
 
     const razorpayResponse = await fetch(
-      `https://api.razorpay.com/v1/payments/${encodeURIComponent(
-        paymentId,
-      )}`,
+      `https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}`,
       {
         method: "GET",
         headers: {
@@ -192,19 +244,19 @@ const keySecret = paymentConfig.keySecret;
 
     if (!razorpayResponse.ok) {
       console.error(
-        "Quiz Arena Razorpay payment lookup failed:",
+        "Quiz Arena payment lookup failed:",
         razorpayResponse.status,
       );
 
-      return reject(
-        "Payment confirmation is temporarily unavailable.",
-        502,
-      );
+      return reject("Payment confirmation is temporarily unavailable.", 502);
     }
 
-    const payment =
-      (await razorpayResponse.json()) as RazorpayCapturedPayment;
+    const payment = (await razorpayResponse.json()) as RazorpayCapturedPayment;
 
+    /**
+     * Confirm that the captured payment
+     * matches the original stored order.
+     */
     if (
       payment.id !== paymentId ||
       payment.order_id !== localOrder.razorpayOrderId ||
@@ -221,8 +273,15 @@ const keySecret = paymentConfig.keySecret;
       );
     }
 
-    // Keep the existing transactional activation helper.
-    // It must also validate the plan and its duration.
+    /**
+     * Transactional activation.
+     *
+     * The activation helper reads the
+     * examScopeKey from the original order.
+     *
+     * It does not use any exam ID supplied
+     * during payment verification.
+     */
     const result = await activateVerifiedQuizArenaPayment({
       paymentId: payment.id,
       orderId: localOrder.razorpayOrderId,
@@ -235,11 +294,18 @@ const keySecret = paymentConfig.keySecret;
     return NextResponse.json(
       {
         success: true,
+
         message: result.activated
-          ? "Quiz Arena subscription activated successfully."
+          ? `${examScope.title} subscription activated successfully.`
           : result.alreadyProcessed
-            ? "Payment already verified."
-            : "Payment verified. A newer subscription already exists.",
+            ? "Payment already verified. Your exam subscription remains active for its purchased validity period."
+            : "Payment verified. Please check your exam subscription status.",
+
+        examScopeKey: examScope.key,
+        examTitle: examScope.title,
+        planId: plan.id,
+        durationDays: plan.durationDays,
+
         ...result,
       },
       {
@@ -251,13 +317,11 @@ const keySecret = paymentConfig.keySecret;
   } catch (error) {
     console.error(
       "Quiz Arena payment verification failed:",
-      error instanceof Error
-        ? error.message
-        : "Unknown error",
+      error instanceof Error ? error.message : "Unknown error",
     );
 
     return reject(
-      "Unable to verify Quiz Arena payment.",
+      "Unable to verify the Quiz Arena exam subscription payment.",
       500,
     );
   }

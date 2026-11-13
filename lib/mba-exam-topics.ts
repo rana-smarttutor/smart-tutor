@@ -1,3 +1,4 @@
+import { getSupplementalMbaExamSyllabus } from "@/lib/quiz-supplemental-exams";
 import type { CompetitiveExam } from "@/lib/quiz-arena-config";
 
 export type MbaExamTopic = {
@@ -477,7 +478,7 @@ export function getMbaExamSyllabus(
     return null;
   }
 
-  return mbaExamSyllabuses[exam] ?? null;
+  return mbaExamSyllabuses[exam] ?? getSupplementalMbaExamSyllabus(exam);
 }
 
 export function getMbaExamTopics(

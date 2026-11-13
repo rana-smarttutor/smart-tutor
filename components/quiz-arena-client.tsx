@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, GraduationCap, X } from "lucide-react";
 import QuizArenaSubscriptionPlans from "@/components/quiz-arena-subscription-plans";
+import { getQuizArenaExamScope } from "@/lib/quiz-arena-exam-scope";
 
 import {
   getQuizExamGroupChildren,
@@ -41,6 +42,7 @@ import type {
   QuizQuestionVisual,
 } from "@/lib/quiz-arena-questions";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
+import { getQuizBoardTopics } from "@/lib/quiz-board-syllabus";
 import type { QuizArenaDraft } from "@/lib/quiz-arena-drafts";
 import {
   getGovernmentExamSyllabus,
@@ -158,6 +160,14 @@ export default function QuizArenaClient({
     null,
   );
 
+  const [blockedDraft, setBlockedDraft] = useState<{
+    id: string;
+    exam: CompetitiveExam;
+    subject: string;
+  } | null>(null);
+
+  const [showBlockedDraftChoice, setShowBlockedDraftChoice] = useState(false);
+
   const [activeDraft, setActiveDraft] = useState<QuizArenaDraft | null>(null);
 
   const [showResumeChoice, setShowResumeChoice] = useState(false);
@@ -178,6 +188,10 @@ export default function QuizArenaClient({
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const [showSubscriptionPlans, setShowSubscriptionPlans] = useState(false);
+  const [subscriptionPromptScope, setSubscriptionPromptScope] = useState<{
+    key: string;
+    title: string;
+  } | null>(null);
 
   /*
    * Used by the Mock Test browser-back integration.
@@ -194,6 +208,16 @@ export default function QuizArenaClient({
     },
     [],
   );
+
+  const selectedExamScope = useMemo(() => {
+    if (!selectedExam || !selectedLevel) return null;
+    return getQuizArenaExamScope({
+      exam: selectedExam,
+      level: selectedLevel,
+      schoolClass: selectedSchoolClass,
+      board: selectedBoard,
+    });
+  }, [selectedExam, selectedLevel, selectedSchoolClass, selectedBoard]);
 
   const selectedExamDetails = useMemo(() => {
     return getExamDetails(selectedExam);
@@ -218,39 +242,34 @@ export default function QuizArenaClient({
   const governmentSyllabus = useMemo(() => {
     if (
       selectedLevel !== "government-exam" ||
-      !selectedExam ||
-      !isMockTestPage
+      !selectedExam
     ) {
       return null;
     }
 
     return getGovernmentExamSyllabus(selectedExam);
-  }, [selectedLevel, selectedExam, isMockTestPage]);
+  }, [selectedLevel, selectedExam]);
 
   const competitiveSyllabus = useMemo(() => {
     if (
       selectedLevel !== "competitive-exam" ||
-      !selectedExam ||
-      !isMockTestPage
+      !selectedExam
     ) {
       return null;
     }
 
     return getCompetitiveExamSyllabus(selectedExam);
-  }, [selectedLevel, selectedExam, isMockTestPage]);
+  }, [selectedLevel, selectedExam]);
 
   const mbaSyllabus = useMemo(() => {
-    if (selectedLevel !== "mba-entrance" || !selectedExam || !isMockTestPage) {
+    if (selectedLevel !== "mba-entrance" || !selectedExam) {
       return null;
     }
 
     return getMbaExamSyllabus(selectedExam);
-  }, [selectedLevel, selectedExam, isMockTestPage]);
+  }, [selectedLevel, selectedExam]);
 
-  // The API requires topic-scoped progress for these Mock Tests.
-  // Keep the selection flow protected even if client syllabus metadata is absent.
   const isKnownTopicBasedCompetitiveExam =
-    isMockTestPage &&
     selectedLevel === "competitive-exam" &&
     (selectedExam === "jee" || selectedExam === "mht-cet");
 
@@ -287,21 +306,45 @@ export default function QuizArenaClient({
     return getMbaExamTopics(selectedExam, selectedSubject);
   }, [mbaSyllabus, selectedExam, selectedSubject]);
 
+  const schoolTopics = useMemo(() => {
+    if (
+      !selectedExam ||
+      !selectedSchoolClass ||
+      !selectedBoard ||
+      !selectedSubject ||
+      !requiresQuizBoard(selectedExam)
+    ) {
+      return [];
+    }
+
+    return getQuizBoardTopics(
+      selectedExam,
+      selectedSchoolClass,
+      selectedBoard,
+      selectedSubject,
+    );
+  }, [
+    selectedExam,
+    selectedSchoolClass,
+    selectedBoard,
+    selectedSubject,
+  ]);
+
   const topicSyllabus =
     governmentSyllabus ?? competitiveSyllabus ?? mbaSyllabus;
 
-  // Derive the navigation gate independently from the rendered syllabus.
-  // Otherwise a missing client catalogue could send a topic-less request
-  // which the server correctly rejects with HTTP 400.
   const requiresTopicSelection =
-    Boolean(topicSyllabus) || isKnownTopicBasedCompetitiveExam;
+    requiresQuizBoard(selectedExam) ||
+    Boolean(topicSyllabus) ||
+    isKnownTopicBasedCompetitiveExam;
 
-  const currentTopics = governmentSyllabus
-    ? governmentTopics
-    : competitiveSyllabus || isKnownTopicBasedCompetitiveExam
-      ? competitiveTopics
-      : mbaTopics;
-
+  const currentTopics = requiresQuizBoard(selectedExam)
+    ? schoolTopics
+    : governmentSyllabus
+      ? governmentTopics
+      : competitiveSyllabus || isKnownTopicBasedCompetitiveExam
+        ? competitiveTopics
+        : mbaTopics;
   const selectedTopicDetails = useMemo(() => {
     return currentTopics.find((topic) => topic.id === selectedTopic);
   }, [currentTopics, selectedTopic]);
@@ -400,21 +443,58 @@ export default function QuizArenaClient({
     };
   }, []);
 
-  function openSubscriptionPrompt() {
+  function openSubscriptionPrompt(
+    scopeOverride?: { key: string; title: string } | null,
+  ) {
+    const scope = scopeOverride ?? selectedExamScope;
+    if (!scope) {
+      setMessage(
+        "Select an individual exam, including its class and board, before subscribing.",
+      );
+      return;
+    }
+    setSubscriptionPromptScope({ key: scope.key, title: scope.title });
     setMessage("");
     setShowSubscriptionPlans(false);
     setShowSubscriptionPrompt(true);
+  }
+
+  function getExamAccessUrl(input: {
+    exam: CompetitiveExam;
+    level: EducationLevel;
+    schoolClass?: QuizSchoolClass | null;
+    board?: QuizBoard | null;
+  }): string {
+    const params = new URLSearchParams({
+      exam: input.exam,
+      level: input.level,
+    });
+    if (input.schoolClass) params.set("schoolClass", input.schoolClass);
+    if (input.board) params.set("board", input.board);
+    return `/api/quiz-arena/access?${params.toString()}`;
   }
 
   async function checkQuizSubscriptionAccess(
     progressionLevel: QuizJourneyLevel,
     round: QuizRound,
   ): Promise<boolean> {
-    const response = await fetch("/api/quiz-arena/access", {
-      method: "GET",
-      credentials: "same-origin",
-      cache: "no-store",
-    });
+    if (!selectedExamScope || !selectedExam || !selectedLevel) {
+      setMessage("Select an individual exam before starting a quiz.");
+      return false;
+    }
+    const response = await fetch(
+      getExamAccessUrl({
+        exam: selectedExam,
+        level: selectedLevel,
+        schoolClass: selectedSchoolClass,
+        board: selectedBoard,
+      }),
+      {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      },
+    );
 
     if (response.status === 401) {
       setShowLoginPrompt(true);
@@ -496,10 +576,28 @@ export default function QuizArenaClient({
     const draft = unfinishedDraft;
 
     try {
-      const response = await fetch("/api/quiz-arena/access", {
-        credentials: "same-origin",
-        cache: "no-store",
+      const draftScope = getQuizArenaExamScope({
+        exam: draft.exam,
+        level: draft.level,
+        schoolClass: draft.schoolClass,
+        board: draft.board,
       });
+      if (!draftScope) {
+        setMessage("The saved quiz has an invalid exam selection.");
+        return;
+      }
+      const response = await fetch(
+        getExamAccessUrl({
+          exam: draft.exam,
+          level: draft.level,
+          schoolClass: draft.schoolClass,
+          board: draft.board,
+        }),
+        {
+          credentials: "same-origin",
+          cache: "no-store",
+        },
+      );
       if (response.status === 401) {
         setShowLoginPrompt(true);
         return;
@@ -521,7 +619,10 @@ export default function QuizArenaClient({
         draft.progressionLevel === 1 &&
         draft.round === 1;
       if (!unlimited && !freeDraft) {
-        openSubscriptionPrompt();
+        openSubscriptionPrompt({
+          key: draftScope.key,
+          title: draftScope.title,
+        });
         return;
       }
     } catch {
@@ -568,53 +669,39 @@ export default function QuizArenaClient({
       return;
     }
 
-    const confirmed = window.confirm(
-      "Start a new quiz? Your previous unfinished quiz will be replaced when you successfully start the new one.",
-    );
-
-    if (!confirmed) {
-      return;
-    }
+    // The student has explicitly selected
+    // Start New Quiz in the resume popup.
+    // Preserve the old draft until the new quiz
+    // has been successfully created.
 
     setConfirmedReplacementDraftId(unfinishedDraft.id);
 
     setActiveDraft(null);
-
     setActiveQuestions([]);
-
     setResult(null);
 
-    // If the user is on Round Selection,
-    // close the popup and stay on the same screen.
+    setShowResumeChoice(false);
+    setShowSavedQuizBanner(false);
+
+    setMessage("");
+
+    // If the student is already selecting rounds,
+    // stay there and allow the selected round
+    // to be started again.
     if (step === "round") {
-      setShowResumeChoice(false);
-      setSelectedRound(null);
-      setMessage("");
       return;
     }
 
     setSelectedLevel(null);
-
     setSelectedExam(null);
-
     setSelectedExamGroup(null);
-
     setSelectedSchoolClass(null);
-
     setSelectedBoard(null);
-
     setSelectedSubject(null);
     setSelectedTopic(null);
-
     setSelectedJourneyLevel(null);
-
     setSelectedRound(null);
 
-    setMessage("");
-
-    setShowResumeChoice(false);
-
-    // Skip the Quiz Arena welcome screen.
     setStep("level");
   }
 
@@ -1005,7 +1092,7 @@ export default function QuizArenaClient({
       (!selectedTopic ||
         !currentTopics.some((topic) => topic.id === selectedTopic))
     ) {
-      setMessage("Select a valid topic before starting the mock test.");
+      setMessage("Select a valid topic before starting the quiz.");
       setStep("topic");
       return;
     }
@@ -1185,66 +1272,18 @@ export default function QuizArenaClient({
 
     if (!selectedJourneyLevel || !roundToStart) {
       setMessage("Please select a level and round first.");
+      return;
+    }
 
+    if (isCheckingDraft) {
+      setMessage("Please wait while we check your saved quiz.");
       return;
     }
 
     try {
-      /*
-       * Check a protected Quiz Arena endpoint.
-       *
-       * If there is no session, show OUR modal
-       * directly instead of depending on the
-       * global login helper.
-       */
-      const authCheck = await fetch("/api/quiz-arena/draft", {
-        method: "GET",
-        cache: "no-store",
-      });
+      setMessage("");
 
-      if (authCheck.status === 401) {
-        setShowLoginPrompt(true);
-        return;
-      }
-
-      if (authCheck.status === 403) {
-        const payload = (await authCheck.json().catch(() => null)) as {
-          code?: string;
-          requiresSubscription?: boolean;
-          error?: string;
-        } | null;
-
-        if (
-          payload?.requiresSubscription === true ||
-          payload?.code === "QUIZ_SUBSCRIPTION_REQUIRED" ||
-          payload?.code === "FREE_TRIAL_ROUND_RESTRICTED"
-        ) {
-          openSubscriptionPrompt();
-          return;
-        }
-
-        setMessage(payload?.error ?? "Your account cannot access this quiz.");
-        return;
-      }
-
-      if (authCheck.status === 403) {
-        const issue = (await authCheck.json().catch(() => null)) as {
-          requiresSubscription?: boolean;
-        } | null;
-        if (issue?.requiresSubscription) {
-          openSubscriptionPrompt();
-          return;
-        }
-        setMessage("Access to this quiz is restricted.");
-        return;
-      }
-
-      if (!authCheck.ok) {
-        setMessage("Unable to verify your login status. Please try again.");
-
-        return;
-      }
-
+      // Verify entitlement for the exact selected exam.
       const hasAccess = await checkQuizSubscriptionAccess(
         selectedJourneyLevel,
         roundToStart,
@@ -1252,14 +1291,70 @@ export default function QuizArenaClient({
 
       if (!hasAccess) return;
 
+      // Recheck MongoDB for an unfinished quiz.
+      const draftResponse = await fetch("/api/quiz-arena/draft", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
+
+      if (draftResponse.status === 401) {
+        setShowLoginPrompt(true);
+        return;
+      }
+
+      if (!draftResponse.ok) {
+        setMessage("Unable to check your previous quiz. Please try again.");
+        return;
+      }
+
+      const draftData = (await draftResponse.json()) as {
+        draft: QuizArenaDraft | null;
+        blockedDraft?: {
+          id: string;
+          exam: CompetitiveExam;
+          subject: string;
+        } | null;
+      };
+
+      if (draftData.blockedDraft) {
+        setBlockedDraft(draftData.blockedDraft);
+
+        if (confirmedReplacementDraftId !== draftData.blockedDraft.id) {
+          setShowBlockedDraftChoice(true);
+          return;
+        }
+      } else {
+        setBlockedDraft(null);
+      }
+
+      const existingDraft = draftData.draft;
+
+      if (existingDraft) {
+        setUnfinishedDraft(existingDraft);
+
+        // A new quiz can only replace the confirmed draft.
+        if (confirmedReplacementDraftId !== existingDraft.id) {
+          setConfirmedReplacementDraftId(null);
+          setShowResumeChoice(true);
+          setShowSavedQuizBanner(true);
+          return;
+        }
+      } else {
+        setUnfinishedDraft(null);
+        setConfirmedReplacementDraftId(null);
+      }
+
       setSelectedRound(roundToStart);
+
       await generateChallenge(selectedJourneyLevel, roundToStart);
     } catch (error) {
-      console.warn("Login verification failed:", error);
+      console.warn("Quiz launch verification failed:", error);
 
-      setMessage("Unable to verify your login status. Please try again.");
+      setMessage("Unable to verify your quiz. Please try again.");
     }
   }
+
   async function openJourney(subjectOverride?: string, topicOverride?: string) {
     const journeySubject = subjectOverride?.trim() || selectedSubject?.trim();
 
@@ -1731,12 +1826,14 @@ export default function QuizArenaClient({
           >
             {showSubscriptionPlans ? (
               <QuizArenaSubscriptionPlans
+                examScopeKey={subscriptionPromptScope?.key ?? null}
+                examTitle={subscriptionPromptScope?.title ?? null}
                 onClose={() => setShowSubscriptionPlans(false)}
                 onSubscribed={() => {
                   setShowSubscriptionPrompt(false);
                   setShowSubscriptionPlans(false);
                   setMessage(
-                    "Your Quiz Arena subscription is active. Select a round to continue.",
+                    `${subscriptionPromptScope?.title ?? "Your selected exam"} subscription is active. Select a round to continue.`,
                   );
                 }}
               />
@@ -1752,16 +1849,18 @@ export default function QuizArenaClient({
                   id="quiz-subscription-title"
                   className="mt-4 text-2xl font-black text-slate-900 sm:text-3xl"
                 >
-                  Unlock Quiz Arena Access
+                  Unlock {subscriptionPromptScope?.title ?? "Selected Exam"}
                 </h2>
                 <p className="mt-4 text-sm leading-6 text-slate-600">
-                  Your one-time free access covers Level 1, Round 1 only. Unlock
-                  practice across all categories, levels and rounds.
+                  Your one-time free trial covers Level 1, Round 1 only.
+                  Subscribe to practise all levels and rounds of this selected
+                  exam only.
                 </p>
                 <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5">
                   <p className="text-4xl font-black text-blue-800">₹49</p>
                   <p className="mt-1 text-sm font-semibold text-slate-600">
-                    Full access for 30 days
+                    30 days for {subscriptionPromptScope?.title ?? "this exam"}{" "}
+                    only
                   </p>
                 </div>
                 <button
@@ -1769,7 +1868,7 @@ export default function QuizArenaClient({
                   onClick={() => setShowSubscriptionPlans(true)}
                   className="mt-6 w-full rounded-xl bg-blue-700 px-5 py-3.5 font-bold text-white transition hover:bg-blue-800"
                 >
-                  View Subscription Plans
+                  Subscribe to This Exam
                 </button>
                 <button
                   type="button"
@@ -2051,6 +2150,62 @@ export default function QuizArenaClient({
                 Continue Browsing
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showBlockedDraftChoice && blockedDraft && (
+        <div className="fixed inset-0 z-[10001] flex items-center justify-center bg-slate-950/80 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="blocked-draft-title"
+            className="w-full max-w-md rounded-3xl bg-white p-7 text-center text-slate-900 shadow-2xl"
+          >
+            <h2 id="blocked-draft-title" className="text-2xl font-black">
+              Unfinished Quiz Found
+            </h2>
+
+            <p className="mt-4 text-sm text-slate-600">
+              You have a saved quiz in {getExamTitle(blockedDraft.exam)}
+              {" — "}
+              {blockedDraft.subject}.
+            </p>
+
+            <p className="mt-3 text-sm text-amber-700">
+              Your current subscription does not cover resuming this saved quiz.
+              You can start a new quiz in your subscribed examination.
+            </p>
+
+            <button
+              type="button"
+              disabled
+              className="mt-6 w-full rounded-xl bg-slate-200 px-5 py-3 font-bold text-slate-500"
+            >
+              Continue Previous Quiz — Unavailable
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmedReplacementDraftId(blockedDraft.id);
+                setShowBlockedDraftChoice(false);
+                setMessage(
+                  "Previous quiz replacement confirmed. Click Start Round again.",
+                );
+              }}
+              className="mt-3 w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white"
+            >
+              Start New Quiz
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowBlockedDraftChoice(false)}
+              className="mt-3 w-full rounded-xl border border-slate-200 px-5 py-3 font-semibold"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
@@ -2674,7 +2829,7 @@ export default function QuizArenaClient({
 
             <div className="mx-auto mb-8 max-w-4xl rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-6 text-center">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
-                Topic-Wise Mock Test
+                Topic-Wise Quiz Practice
               </p>
 
               <h2 className="mt-3 text-2xl font-black text-white">

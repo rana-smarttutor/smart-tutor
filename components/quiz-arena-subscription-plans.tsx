@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-type QuizArenaPlan = {
+type Plan = {
   id: string;
   name: string;
   price: number;
@@ -17,12 +17,21 @@ type Subscription = {
   planId: string;
   startsAt: string;
   expiresAt: string;
+  examScopeKey?: string | null;
 };
 
 type SubscriptionResponse = {
+  success?: boolean;
   active?: boolean;
   unlimitedAccess?: boolean;
   subscription?: Subscription | null;
+  selectedExam?: {
+    active: boolean;
+    examScopeKey: string;
+    examTitle: string;
+    expiresAt: string | null;
+    accessType: string;
+  } | null;
   error?: string;
 };
 
@@ -33,14 +42,13 @@ type OrderResponse = {
   keyId?: string;
   amount?: number;
   currency?: string;
+  examScopeKey?: string;
 };
 
 type VerifyResponse = {
   success?: boolean;
   message?: string;
-  activated?: boolean;
-  alreadyProcessed?: boolean;
-  superseded?: boolean;
+  examScopeKey?: string;
 };
 
 type RazorpayResponse = {
@@ -57,12 +65,8 @@ type RazorpayOptions = {
   description: string;
   order_id: string;
   handler: (response: RazorpayResponse) => void;
-  theme: {
-    color: string;
-  };
-  modal: {
-    ondismiss: () => void;
-  };
+  theme: { color: string };
+  modal: { ondismiss: () => void };
 };
 
 type RazorpayInstance = {
@@ -70,77 +74,50 @@ type RazorpayInstance = {
   on: (event: string, callback: (response: unknown) => void) => void;
 };
 
-type RazorpayConstructor = new (options: RazorpayOptions) => RazorpayInstance;
-
 type RazorpayWindow = Window & {
-  Razorpay?: RazorpayConstructor;
+  Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
 };
 
 type Props = {
+  examScopeKey?: string | null;
+  examTitle?: string | null;
   onSubscribed?: () => void;
   onClose?: () => void;
 };
 
 const CHECKOUT_SCRIPT = "https://checkout.razorpay.com/v1/checkout.js";
-
-const ALLOWED_PLANS = [
-  {
-    id: "quiz-arena-30-days",
-    price: 49,
-    amountPaise: 4900,
-    durationDays: 30,
-  },
-  {
-    id: "quiz-arena-90-days",
-    price: 120,
-    amountPaise: 12000,
-    durationDays: 90,
-  },
-  {
-    id: "quiz-arena-365-days",
-    price: 500,
-    amountPaise: 50000,
-    durationDays: 365,
-  },
-] as const;
+const MONTHLY_PLAN_ID = "quiz-arena-30-days";
 
 function loadRazorpay(): Promise<void> {
   return new Promise((resolve, reject) => {
-    const razorpayWindow = window as RazorpayWindow;
-
-    if (razorpayWindow.Razorpay) {
-      resolve();
+    const win = window as RazorpayWindow;
+    if (win.Razorpay) return resolve();
+    const existing = document.querySelector<HTMLScriptElement>(
+      `script[src="${CHECKOUT_SCRIPT}"]`,
+    );
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener(
+        "error",
+        () => reject(new Error("Razorpay checkout failed to load.")),
+        { once: true },
+      );
       return;
     }
-
-    const existing = document.querySelector(`script[src="${CHECKOUT_SCRIPT}"]`);
-
-    if (existing) {
-      existing.remove();
-    }
-
     const script = document.createElement("script");
-
     script.src = CHECKOUT_SCRIPT;
     script.async = true;
-
     script.onload = () => resolve();
-
-    script.onerror = () => {
-      reject(new Error("Unable to load Razorpay checkout."));
-    };
-
+    script.onerror = () =>
+      reject(new Error("Razorpay checkout failed to load."));
     document.body.appendChild(script);
   });
 }
 
-function formatDate(value: string): string {
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "Not available";
   const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Not available";
-  }
-
+  if (Number.isNaN(date.getTime())) return "Not available";
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",
     month: "long",
@@ -149,72 +126,57 @@ function formatDate(value: string): string {
   }).format(date);
 }
 
-function getPlanTitle(durationDays: number): string {
-  if (durationDays === 30) return "Monthly";
-  if (durationDays === 90) return "Quarterly";
-  if (durationDays === 365) return "Annual";
-
-  return "Subscription";
-}
-
-function getPlanDescription(durationDays: number): string {
-  if (durationDays === 30) {
-    return "Flexible access for your daily practice.";
-  }
-
-  if (durationDays === 90) {
-    return "Stay consistent with three months of preparation.";
-  }
-
-  if (durationDays === 365) {
-    return "One full year of uninterrupted preparation.";
-  }
-
-  return "Unlimited Quiz Arena practice.";
-}
-
 export default function QuizArenaSubscriptionPlans({
+  examScopeKey,
+  examTitle,
   onSubscribed,
   onClose,
 }: Props) {
-  const [plans, setPlans] = useState<QuizArenaPlan[]>([]);
-
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
-
-  const [unlimitedAccess, setUnlimitedAccess] = useState(false);
-
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [selectedExam, setSelectedExam] =
+    useState<SubscriptionResponse["selectedExam"]>(null);
+  const [adminAccess, setAdminAccess] = useState(false);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [reconciling, setReconciling] = useState(false);
-
-  const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
-
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  // The parent Quiz Arena selection screen must pass the EXACT canonical scope.
+  const validSelection =
+    typeof examScopeKey === "string" && examScopeKey.length > 0;
+
   const refreshSubscription = useCallback(async (): Promise<boolean> => {
-    const response = await fetch("/api/quiz-arena/subscriptions", {
-      method: "GET",
-      cache: "no-store",
-      credentials: "same-origin",
-    });
-
-    const data = (await response.json()) as SubscriptionResponse;
-
-    if (!response.ok) {
-      throw new Error(data.error || "Unable to load subscription status.");
+    if (!examScopeKey) {
+      setSelectedExam(null);
+      setAdminAccess(false);
+      return false;
     }
-
-    setSubscription(data.subscription ?? null);
-
-    setUnlimitedAccess(Boolean(data.unlimitedAccess));
-
-    return Boolean(data.active || data.unlimitedAccess);
-  }, []);
+    const response = await fetch(
+      `/api/quiz-arena/subscriptions?examScopeKey=${encodeURIComponent(examScopeKey)}`,
+      { method: "GET", cache: "no-store", credentials: "same-origin" },
+    );
+    const data = (await response.json()) as SubscriptionResponse;
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Unable to check this exam subscription.");
+    }
+    // Never interpret the overview 'active' flag as access to this exam.
+    const exactExam =
+      data.selectedExam?.examScopeKey === examScopeKey
+        ? data.selectedExam
+        : null;
+    setSelectedExam(exactExam);
+    setAdminAccess(Boolean(data.unlimitedAccess));
+    return Boolean(exactExam?.active || data.unlimitedAccess);
+  }, [examScopeKey]);
 
   useEffect(() => {
     let cancelled = false;
-
+    setLoading(true);
+    setError("");
+    setPlan(null);
+    setSelectedExam(null);
+    setAdminAccess(false);
     async function load() {
       try {
         const response = await fetch("/api/quiz-arena/subscription-plans", {
@@ -222,66 +184,45 @@ export default function QuizArenaSubscriptionPlans({
           cache: "no-store",
           credentials: "same-origin",
         });
-
-        if (!response.ok) {
-          throw new Error("Unable to load subscription plans.");
-        }
-
         const data = (await response.json()) as {
-          plans?: QuizArenaPlan[];
+          plans?: Plan[];
+          error?: string;
         };
-
+        if (!response.ok)
+          throw new Error(data.error || "Unable to load monthly plan.");
+        const valid =
+          data.plans?.find(
+            (item) =>
+              item.id === MONTHLY_PLAN_ID &&
+              item.active === true &&
+              item.price === 49 &&
+              item.amountPaise === 4900 &&
+              item.currency === "INR" &&
+              item.durationDays === 30,
+          ) ?? null;
         if (cancelled) return;
-
-        const validPlans = Array.isArray(data.plans)
-          ? data.plans
-              .filter((plan) => {
-                const expected = ALLOWED_PLANS.find(
-                  (item) => item.id === plan.id,
-                );
-
-                return (
-                  Boolean(expected) &&
-                  plan.active === true &&
-                  plan.currency === "INR" &&
-                  plan.price === expected?.price &&
-                  plan.amountPaise === expected?.amountPaise &&
-                  plan.durationDays === expected?.durationDays
-                );
-              })
-              .sort((a, b) => a.durationDays - b.durationDays)
-          : [];
-
-        setPlans(validPlans);
-
-        await refreshSubscription();
+        setPlan(valid);
+        if (examScopeKey) await refreshSubscription();
       } catch (caught) {
-        if (!cancelled) {
+        if (!cancelled)
           setError(
-            caught instanceof Error ? caught.message : "Something went wrong.",
+            caught instanceof Error ? caught.message : "Unable to load plans.",
           );
-        }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
-
     void load();
-
     return () => {
       cancelled = true;
     };
-  }, [refreshSubscription]);
+  }, [examScopeKey, refreshSubscription]);
 
   async function reconcilePayments() {
-    if (reconciling || processing) return;
-
+    if (processing || reconciling || !examScopeKey) return;
     setReconciling(true);
     setError("");
     setMessage("");
-
     try {
       const response = await fetch(
         "/api/quiz-arena/subscription-payments/reconcile",
@@ -290,384 +231,266 @@ export default function QuizArenaSubscriptionPlans({
           credentials: "same-origin",
         },
       );
-
       const data = (await response.json()) as {
         success?: boolean;
         message?: string;
-        recovered?: number;
       };
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "Unable to check payment status.");
-      }
-
+      if (!response.ok || !data.success)
+        throw new Error(data.message || "Payment check failed.");
       const active = await refreshSubscription();
-
-      if (active) {
-        setMessage("Your Quiz Arena subscription is active.");
-
-        onSubscribed?.();
-      } else {
-        setMessage(
-          data.message || "No confirmed subscription payment was found.",
-        );
-      }
+      setMessage(
+        active
+          ? "Subscription for the selected exam is active."
+          : data.message || "No confirmed payment found for this exam.",
+      );
+      if (active) onSubscribed?.();
     } catch (caught) {
       setError(
-        caught instanceof Error ? caught.message : "Payment recovery failed.",
+        caught instanceof Error ? caught.message : "Payment check failed.",
       );
     } finally {
       setReconciling(false);
     }
   }
 
-  async function purchase(plan: QuizArenaPlan) {
-    if (processing || reconciling) return;
-
+  async function purchase() {
+    if (
+      !validSelection ||
+      !plan ||
+      processing ||
+      reconciling ||
+      selectedExam?.active ||
+      adminAccess
+    )
+      return;
     setProcessing(true);
-    setProcessingPlanId(plan.id);
-
     setError("");
     setMessage("");
-
     try {
       await loadRazorpay();
-
       const response = await fetch(
         "/api/quiz-arena/subscription-payments/create-order",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "same-origin",
-          body: JSON.stringify({
-            planId: plan.id,
-          }),
+          body: JSON.stringify({ planId: plan.id, examScopeKey }),
         },
       );
-
       const order = (await response.json()) as OrderResponse;
-
       if (
         !response.ok ||
         !order.success ||
         !order.orderId ||
         !order.keyId ||
-        order.amount !== plan.amountPaise ||
-        order.currency !== "INR"
+        order.amount !== 4900 ||
+        order.currency !== "INR" ||
+        order.examScopeKey !== examScopeKey
       ) {
-        throw new Error(order.message || "Unable to create the payment order.");
+        throw new Error(
+          order.message || "Unable to create the selected exam payment order.",
+        );
       }
-
       const Razorpay = (window as RazorpayWindow).Razorpay;
-
-      if (!Razorpay) {
-        throw new Error("Razorpay checkout is unavailable.");
-      }
-
-      let checkoutCompleted = false;
-
+      if (!Razorpay) throw new Error("Razorpay checkout is unavailable.");
+      let completed = false;
       const checkout = new Razorpay({
         key: order.keyId,
         amount: order.amount,
         currency: order.currency,
         name: "SmartIQ Institute",
-        description: `Quiz Arena — ${getPlanTitle(
-          plan.durationDays,
-        )} subscription`,
+        description: `${examTitle || selectedExam?.examTitle || "Selected exam"} — 30 days`,
         order_id: order.orderId,
-        theme: {
-          color: "#1754EC",
-        },
+        theme: { color: "#1754EC" },
         modal: {
           ondismiss: () => {
-            if (!checkoutCompleted) {
-              setProcessing(false);
-              setProcessingPlanId(null);
-            }
+            if (!completed) setProcessing(false);
           },
         },
         handler: async (paymentResponse) => {
-          checkoutCompleted = true;
-
+          completed = true;
           try {
             setMessage("Verifying your payment...");
-
             const verifyResponse = await fetch(
               "/api/quiz-arena/subscription-payments/verify",
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 credentials: "same-origin",
                 body: JSON.stringify(paymentResponse),
               },
             );
-
             const verified = (await verifyResponse.json()) as VerifyResponse;
-
-            if (!verifyResponse.ok || !verified.success) {
+            if (
+              !verifyResponse.ok ||
+              !verified.success ||
+              verified.examScopeKey !== examScopeKey
+            ) {
               throw new Error(
-                verified.message || "Payment verification failed.",
+                verified.message || "Exam payment verification is pending.",
               );
             }
-
             const active = await refreshSubscription();
-
             if (active) {
               setMessage(
-                "Payment verified. Your Quiz Arena subscription is active!",
+                "Payment verified. Your selected exam is now unlocked!",
               );
-
               onSubscribed?.();
             } else {
               setMessage(
-                "Payment confirmed. Please check your subscription status.",
+                "Payment confirmed. Please check your exam subscription status.",
               );
             }
           } catch (caught) {
             setMessage("");
-
             setError(
               caught instanceof Error
                 ? caught.message
-                : "Payment confirmation is pending. Use Check Payment Status.",
+                : "Payment confirmation pending. Check payment status.",
             );
           } finally {
             setProcessing(false);
-            setProcessingPlanId(null);
           }
         },
       });
-
       checkout.on("payment.failed", () => {
         setError(
-          "Payment failed or was cancelled. Subscription access has not been granted.",
+          "Payment failed or was cancelled. No new exam access was granted.",
         );
-
         setProcessing(false);
-        setProcessingPlanId(null);
       });
-
       checkout.open();
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "Unable to start checkout.",
       );
-
       setProcessing(false);
-      setProcessingPlanId(null);
     }
   }
 
-  if (loading) {
-    return (
-      <div className="w-full rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-600">
-        Loading Quiz Arena subscription plans...
-      </div>
-    );
-  }
+  const active = Boolean(selectedExam?.active || adminAccess);
+  const displayTitle = selectedExam?.examTitle || examTitle || "Selected exam";
 
   return (
-    <section className="w-full text-left">
-      {/* Header */}
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div className="max-w-3xl">
-          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">
+    <section className="w-full rounded-2xl bg-white p-5 text-left sm:p-8">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-extrabold uppercase tracking-widest text-blue-600">
             SmartIQ Institute
           </p>
-
-          <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl lg:text-4xl">
-            Choose Your Quiz Arena Plan
+          <h2 className="mt-2 text-2xl font-black text-slate-950">
+            Quiz Arena — Monthly Exam Access
           </h2>
-
-          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-            One subscription unlocks unlimited practice across every category,
-            level and round. Choose the plan that suits your preparation.
+          <p className="mt-2 text-sm text-slate-600">
+            ₹49 for 30 days of practice in one selected exam. No automatic
+            renewal.
           </p>
         </div>
-
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="rounded-xl border border-slate-200 px-4 py-2 font-semibold text-slate-700"
           >
             Close
           </button>
         )}
       </div>
 
-      {/* Active Subscription */}
-      {(subscription || unlimitedAccess) && (
-        <div
-          role="status"
-          className="mb-7 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4"
+      {!validSelection && (
+        <p
+          role="alert"
+          className="mb-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"
         >
-          <p className="font-bold text-emerald-800">
-            Quiz Arena access is active
-          </p>
-
-          {subscription && (
-            <p className="mt-1 text-sm text-emerald-700">
-              Valid until {formatDate(subscription.expiresAt)}
-            </p>
-          )}
-
-          {unlimitedAccess && !subscription && (
-            <p className="mt-1 text-sm text-emerald-700">
-              Administrator access
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Pricing Cards */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-3 lg:gap-6">
-        {plans.map((plan) => {
-          const isQuarterly = plan.durationDays === 90;
-
-          const isAnnual = plan.durationDays === 365;
-
-          const title = getPlanTitle(plan.durationDays);
-
-          const isCurrentProcessing = processingPlanId === plan.id;
-
-          return (
-            <article
-              key={plan.id}
-              className={`relative flex h-full flex-col rounded-[26px] border-2 px-5 pb-6 pt-8 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl sm:px-7 ${
-                isQuarterly
-                  ? "border-blue-500 bg-gradient-to-b from-blue-50 to-white shadow-lg shadow-blue-100/70"
-                  : "border-slate-200 bg-white shadow-sm"
-              }`}
-            >
-              {/* Plan Badge */}
-              {isQuarterly && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-blue-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm">
-                  Most Popular
-                </span>
-              )}
-
-              {isAnnual && (
-                <span className="absolute -top-3 right-5 whitespace-nowrap rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-bold text-white shadow-sm">
-                  Annual Access
-                </span>
-              )}
-
-              {/* Title */}
-              <div className="mb-5">
-                <h3 className="text-xl font-extrabold text-slate-950">
-                  {title}
-                </h3>
-
-                <p className="mt-2 min-h-[42px] text-sm leading-5 text-slate-500">
-                  {getPlanDescription(plan.durationDays)}
-                </p>
-              </div>
-
-              {/* Price */}
-              <div className="mb-6">
-                <div className="flex flex-wrap items-baseline gap-2">
-                  <span className="text-5xl font-black tracking-tight text-slate-950">
-                    ₹{plan.price}
-                  </span>
-
-                  <span className="text-sm font-medium text-slate-500">
-                    / {plan.durationDays} days
-                  </span>
-                </div>
-
-                {isQuarterly && (
-                  <p className="mt-2 text-xs font-bold text-blue-700">
-                    Save ₹27 compared with monthly
-                  </p>
-                )}
-
-                {isAnnual && (
-                  <p className="mt-2 text-xs font-bold text-emerald-700">
-                    Save ₹88 compared with monthly
-                  </p>
-                )}
-              </div>
-
-              <div className="mb-6 h-px bg-slate-200" />
-
-              {/* Benefits */}
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                Everything included
-              </p>
-
-              <ul className="mb-8 space-y-4 text-sm leading-6 text-slate-700">
-                {[
-                  "All Quiz Arena categories",
-                  "All levels and rounds",
-                  "Unlimited quiz practice",
-                  "No automatic renewal",
-                ].map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-700">
-                      ✓
-                    </span>
-
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* Subscribe Button */}
-              <button
-                type="button"
-                disabled={
-                  processing ||
-                  reconciling ||
-                  unlimitedAccess ||
-                  Boolean(subscription)
-                }
-                onClick={() => void purchase(plan)}
-                className={`mt-auto w-full rounded-xl px-4 py-4 text-sm font-extrabold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
-                  isQuarterly
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : isAnnual
-                      ? "bg-emerald-600 hover:bg-emerald-700"
-                      : "bg-slate-900 hover:bg-slate-800"
-                }`}
-              >
-                {isCurrentProcessing
-                  ? "Processing..."
-                  : subscription || unlimitedAccess
-                    ? "Access Active"
-                    : `Subscribe for ₹${plan.price}`}
-              </button>
-            </article>
-          );
-        })}
-      </div>
-
-      {/* No Plans */}
-      {plans.length === 0 && !error && (
-        <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          No Quiz Arena subscription plans are available.
+          Select an individual exam and, for school programmes, its class and
+          board before purchasing.
         </p>
       )}
 
-      {/* Error */}
+      {validSelection && (
+        <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-blue-700">
+            Selected exam
+          </p>
+          <p className="mt-1 text-lg font-bold text-slate-950">
+            {displayTitle}
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            Only this exam is included in the subscription.
+          </p>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="py-8 text-center text-sm text-slate-600">
+          Loading subscription status...
+        </p>
+      ) : (
+        <div className="rounded-2xl border-2 border-slate-200 p-6 shadow-sm">
+          <h3 className="text-lg font-extrabold text-slate-950">
+            Monthly — Per Exam
+          </h3>
+          <p className="mt-3 text-4xl font-black text-slate-950">
+            ₹49{" "}
+            <span className="text-base font-medium text-slate-500">
+              / 30 days
+            </span>
+          </p>
+          <p className="mt-3 text-sm text-slate-600">
+            All quiz levels and rounds for the selected exam during its paid
+            validity.
+          </p>
+          {active && (
+            <p
+              role="status"
+              className="mt-5 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"
+            >
+              {adminAccess
+                ? "Administrator access"
+                : `This exam is active until ${formatDate(selectedExam?.expiresAt)}`}
+            </p>
+          )}
+          {!plan && (
+            <p className="mt-5 text-sm text-amber-800">
+              The monthly subscription plan is not currently available.
+            </p>
+          )}
+          <button
+            type="button"
+            disabled={
+              !plan || !validSelection || active || processing || reconciling
+            }
+            onClick={() => void purchase()}
+            className="mt-6 w-full rounded-xl bg-blue-600 px-5 py-3 font-extrabold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {active
+              ? "Exam access active"
+              : processing
+                ? "Processing..."
+                : "Subscribe for ₹49"}
+          </button>
+          <button
+            type="button"
+            disabled={!validSelection || processing || reconciling}
+            onClick={() => void reconcilePayments()}
+            className="mt-3 w-full rounded-xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 disabled:opacity-50"
+          >
+            {reconciling ? "Checking payments..." : "Check payment status"}
+          </button>
+        </div>
+      )}
       {error && (
         <p
           role="alert"
-          className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
+          className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700"
         >
           {error}
         </p>
       )}
-
-      {/* Message */}
       {message && (
         <p
           role="status"
-          className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm font-medium text-blue-800"
+          className="mt-5 rounded-xl bg-blue-50 p-4 text-sm text-blue-800"
         >
           {message}
         </p>

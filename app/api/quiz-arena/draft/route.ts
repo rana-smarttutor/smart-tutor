@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
+import { isValidQuizBoardTopic } from "@/lib/quiz-board-syllabus";
 
 import {
   getGovernmentExamSyllabus,
@@ -48,6 +49,7 @@ import {
 } from "@/lib/quiz-arena-drafts";
 
 import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import { getQuizArenaExamScope } from "@/lib/quiz-arena-exam-scope";
 import { isServerGeneratedQuizArenaSet } from "@/lib/quiz-arena-generated-question-sets";
 import {
   reserveQuizArenaFreeTrial,
@@ -123,6 +125,21 @@ function isValidQuestion(value: unknown): value is QuizQuestion {
   );
 }
 
+/** Resolve the exact exam from server-owned draft fields, never from the client. */
+function scopeForSavedDraft(draft: {
+  exam: CompetitiveExam;
+  level: EducationLevel;
+  schoolClass: QuizSchoolClass | null;
+  board: QuizBoard | null;
+}) {
+  return getQuizArenaExamScope({
+    exam: draft.exam,
+    level: draft.level,
+    schoolClass: draft.schoolClass,
+    board: draft.board,
+  });
+}
+
 /*
  * GET
  *
@@ -148,7 +165,23 @@ export async function GET() {
 
     const draft = await getActiveQuizArenaDraft(session.id);
     if (draft && session.role === "student") {
-      const access = await getQuizArenaAccess(session.id, session.role);
+      const draftScope = scopeForSavedDraft(draft);
+      if (!draftScope) {
+        return NextResponse.json({
+          draft: null,
+          blockedDraft: {
+            id: draft.id,
+            exam: draft.exam,
+            subject: draft.subject,
+          },
+          canResume: false,
+        });
+      }
+      const access = await getQuizArenaAccess(
+        session.id,
+        session.role,
+        draftScope.key,
+      );
       const freeDraft =
         !access.freeTrial.consumed &&
         access.freeTrial.draftId === draft.id &&
@@ -157,11 +190,19 @@ export async function GET() {
       if (!access.unlimitedAccess && !freeDraft) {
         return NextResponse.json(
           {
-            error: "Subscription required to resume this round.",
-            code: "QUIZ_SUBSCRIPTION_REQUIRED",
-            requiresSubscription: true,
+            draft: null,
+            blockedDraft: {
+              id: draft.id,
+              exam: draft.exam,
+              subject: draft.subject,
+            },
+            canResume: false,
           },
-          { status: 403 },
+          {
+            headers: {
+              "Cache-Control": "no-store",
+            },
+          },
         );
       }
     }
@@ -275,25 +316,39 @@ export async function POST(request: Request) {
     const topicId = typeof body.topicId === "string" ? body.topicId.trim() : "";
 
     const requiresGovernmentTopic =
-      body.source === "mock-test" &&
       body.level === "government-exam" &&
       Boolean(getGovernmentExamSyllabus(body.exam));
 
     const requiresCompetitiveTopic =
-      body.source === "mock-test" &&
       body.level === "competitive-exam" &&
       Boolean(getCompetitiveExamSyllabus(body.exam));
 
     const requiresMbaTopic =
-      body.source === "mock-test" &&
       body.level === "mba-entrance" &&
       Boolean(getMbaExamSyllabus(body.exam));
 
-    const requiresTopic =
-      requiresGovernmentTopic || requiresCompetitiveTopic || requiresMbaTopic;
+    const requiresSchoolTopic = requiresQuizBoard(body.exam);
 
-    const validTopic = requiresGovernmentTopic
-      ? isValidGovernmentExamTopic(body.exam, subject, topicId)
+    const requiresTopic =
+      requiresSchoolTopic ||
+      requiresGovernmentTopic ||
+      requiresCompetitiveTopic ||
+      requiresMbaTopic;
+
+    const validTopic = requiresSchoolTopic
+      ? Boolean(
+          schoolClass &&
+          board &&
+          isValidQuizBoardTopic(
+            body.exam,
+            schoolClass,
+            board,
+            subject,
+            topicId,
+          ),
+        )
+      : requiresGovernmentTopic
+        ? isValidGovernmentExamTopic(body.exam, subject, topicId)
       : requiresCompetitiveTopic
         ? isValidCompetitiveExamTopic(body.exam, subject, topicId)
         : requiresMbaTopic
@@ -301,7 +356,7 @@ export async function POST(request: Request) {
           : false;
 
     if (requiresTopic && (!topicId || !validTopic)) {
-      return errorResponse("Please select a valid Mock Test topic.", 400);
+      return errorResponse("Please select a valid topic for the selected examination.", 400);
     }
 
     if (!requiresTopic && topicId) {
@@ -319,10 +374,23 @@ export async function POST(request: Request) {
       return errorResponse("Invalid Quiz Arena round.", 400);
     }
 
+    // Resolve the exact selected exam and reject group/category purchases.
+    const examScope = getQuizArenaExamScope({
+      exam: body.exam,
+      level: body.level,
+      schoolClass,
+      board,
+    });
+
+    if (!examScope) {
+      return errorResponse("Invalid individual exam, class or board.", 400);
+    }
+
     // Both sources share the same student subscription and trial.
     const quizAccess = await getQuizArenaAccess(
       session.id,
       String(session.role),
+      examScope.key,
     );
 
     if (quizAccess && !quizAccess.allowed) {
@@ -609,7 +677,18 @@ export async function PATCH(request: Request) {
       return errorResponse("This unfinished quiz could not be found.", 404);
     }
     if (session.role === "student") {
-      const access = await getQuizArenaAccess(session.id, session.role);
+      const draftScope = scopeForSavedDraft(draft);
+      if (!draftScope) {
+        return errorResponse(
+          "Saved quiz has an invalid examination selection.",
+          409,
+        );
+      }
+      const access = await getQuizArenaAccess(
+        session.id,
+        session.role,
+        draftScope.key,
+      );
       const freeDraft =
         !access.freeTrial.consumed &&
         access.freeTrial.draftId === draft.id &&
@@ -802,7 +881,18 @@ export async function DELETE(request: Request) {
     }
 
     if (session.role === "student") {
-      const access = await getQuizArenaAccess(session.id, session.role);
+      const draftScope = scopeForSavedDraft(draft);
+      if (!draftScope) {
+        return errorResponse(
+          "Saved quiz has an invalid examination selection.",
+          409,
+        );
+      }
+      const access = await getQuizArenaAccess(
+        session.id,
+        session.role,
+        draftScope.key,
+      );
       // A free-trial draft cannot be abandoned or marked completed
       // without the matching attempt having consumed its trial.
       // A completed free trial is consumed by the attempts API.

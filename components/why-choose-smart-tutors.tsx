@@ -2,24 +2,23 @@ import {
   Award,
   ChartNoAxesCombined,
   ClipboardCheck,
-  Fingerprint,
   GraduationCap,
   Laptop,
   MessageCircleQuestion,
-  MonitorPlay,
   Target,
   UsersRound,
   Layers3,
-  Video,
   BadgeCheck,
   BookOpen,
+  FileText,
+  Dumbbell,
 } from "lucide-react";
 
 const benefits = [
   {
     title: "Parent Teacher Meeting",
     description:
-      "Parents can track their child’s progress at any time and attend regular parent-teacher meetings.",
+      "Parents can track their child's progress at any time and attend regular parent-teacher meetings.",
     icon: UsersRound,
     tone: "text-blue-600",
     iconBg: "bg-blue-50",
@@ -39,7 +38,7 @@ const benefits = [
   {
     title: "Student Performance Reports",
     description:
-      "Detailed reports show each student’s strengths, weak areas and progress over time.",
+      "Detailed reports show each student's strengths, weak areas and progress over time.",
     icon: ChartNoAxesCombined,
     tone: "text-orange-600",
     iconBg: "bg-orange-50",
@@ -59,7 +58,7 @@ const benefits = [
   {
     title: "Mock Tests & Quiz Series",
     description:
-      "More than 500 exam-pattern tests and quizzes for Boards, Competitive and Government exams.",
+      "More than 500 exam-pattern tests and quizzes for Boards, Competitive & Government exams.",
     icon: ClipboardCheck,
     tone: "text-sky-600",
     iconBg: "bg-sky-50",
@@ -79,7 +78,7 @@ const benefits = [
   {
     title: "Career Counselling & Personal Mentor",
     description:
-      "One-to-one guidance to help students choose the right course and career path and achieve their goals.",
+      "One-to-one guidance to help students choose the right course and career path, and to help them achieve their goals.",
     icon: Target,
     tone: "text-emerald-600",
     iconBg: "bg-emerald-50",
@@ -87,18 +86,19 @@ const benefits = [
     numberBg: "bg-emerald-100",
   },
   {
-    title: "Biometric Attendance",
-    description: "Attendance is recorded lecture by lecture for every student.",
-    icon: Fingerprint,
+    title: "Exam-Wise Handbooks",
+    description:
+      "Compact handbooks for each exam with key concepts, formulas and quick revision notes.",
+    icon: FileText,
     tone: "text-blue-600",
     iconBg: "bg-blue-50",
     border: "border-blue-100",
     numberBg: "bg-blue-100",
   },
   {
-    title: "Offline + Online Classes + Private Tutor",
+    title: "Offline + Online Classes + Private Tutor + Recorded Lectures",
     description:
-      "Attend at the institute, join live from home, or hire a personal tutor.",
+      "Attend at the institute, join live from home, hire a personal tutor or rewatch recorded lectures.",
     icon: Laptop,
     tone: "text-pink-600",
     iconBg: "bg-pink-50",
@@ -106,10 +106,10 @@ const benefits = [
     numberBg: "bg-pink-100",
   },
   {
-    title: "Recorded Lecture Hub",
+    title: "Ground Training & Mock Interview",
     description:
-      "Rewatch any class at any time, with easy search, filters and ratings.",
-    icon: MonitorPlay,
+      "Physical ground training plus one-to-one practice interviews with expert feedback.",
+    icon: Dumbbell,
     tone: "text-violet-600",
     iconBg: "bg-violet-50",
     border: "border-violet-100",

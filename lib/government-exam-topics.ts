@@ -1,3 +1,4 @@
+import { getSupplementalGovernmentExamSyllabus } from "@/lib/quiz-supplemental-exams";
 import type {
   CompetitiveExam,
 } from "@/lib/quiz-arena-config";
@@ -266,7 +267,7 @@ export function getGovernmentExamSyllabus(
     return null;
   }
 
-  return governmentExamSyllabuses[exam] ?? null;
+  return governmentExamSyllabuses[exam] ?? getSupplementalGovernmentExamSyllabus(exam);
 }
 
 /*

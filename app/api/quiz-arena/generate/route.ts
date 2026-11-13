@@ -50,7 +50,7 @@ import {
 } from "@/lib/government-question-bank";
 import { COLLECTIONS, getCollection } from "@/lib/data-store";
 import { getBoardSubjects } from "@/lib/quiz-board-subjects";
-import { getQuizBoardSyllabus } from "@/lib/quiz-board-syllabus";
+import { getQuizBoardSyllabus, getQuizBoardTopics, isValidQuizBoardTopic } from "@/lib/quiz-board-syllabus";
 import {
   auditSchoolBoardQuiz,
   findLikelyRepeatedQuizQuestion,
@@ -62,6 +62,7 @@ import {
 } from "@/lib/quiz-seen-questions";
 
 import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import { getQuizArenaExamScope } from "@/lib/quiz-arena-exam-scope";
 import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
 import { registerQuizArenaGeneratedSet } from "@/lib/quiz-arena-generated-question-sets";
 
@@ -642,9 +643,80 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!isCompetitiveExam(exam)) {
+      return NextResponse.json(
+        { error: "Please select a valid course or exam." },
+        { status: 400 },
+      );
+    }
+
+    const selectedExamDetails = getExamDetails(exam);
+
+    if (!selectedExamDetails || selectedExamDetails.category !== level) {
+      return NextResponse.json(
+        { error: "This course does not belong to the selected category." },
+        { status: 400 },
+      );
+    }
+    const allowedClasses = getQuizSchoolClasses(exam);
+
+    let normalizedSchoolClass: QuizSchoolClass | null = null;
+
+    let normalizedBoard: QuizBoard | null = null;
+
+    if (allowedClasses.length > 0) {
+      if (!schoolClass || !allowedClasses.includes(schoolClass)) {
+        return NextResponse.json(
+          {
+            error: "Please select a valid class for this course.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      normalizedSchoolClass = schoolClass;
+    }
+
+    if (requiresQuizBoard(exam)) {
+      if (!isQuizBoard(board)) {
+        return NextResponse.json(
+          {
+            error: "Please select HSC or CBSE.",
+          },
+          {
+            status: 400,
+          },
+        );
+      }
+
+      normalizedBoard = board;
+    }
+
+    // Validate the exact individual examination before any question is issued.
+    // Parents/categories are not purchasable and never grant global access.
+    const examScope = getQuizArenaExamScope({
+      exam,
+      level,
+      schoolClass: normalizedSchoolClass,
+      board: normalizedBoard,
+    });
+
+    if (!examScope) {
+      return NextResponse.json(
+        { error: "Please select a valid individual exam, class and board." },
+        { status: 400 },
+      );
+    }
+
     // Shared subscription/free-trial gate for both page sources.
     {
-      const access = await getQuizArenaAccess(session.id, String(session.role));
+      const access = await getQuizArenaAccess(
+        session.id,
+        String(session.role),
+        examScope.key,
+      );
 
       if (access.requiresSubscription) {
         return NextResponse.json(
@@ -704,57 +776,6 @@ export async function POST(request: Request) {
       }
     }
 
-    if (!isCompetitiveExam(exam)) {
-      return NextResponse.json(
-        { error: "Please select a valid course or exam." },
-        { status: 400 },
-      );
-    }
-
-    const selectedExamDetails = getExamDetails(exam);
-
-    if (!selectedExamDetails || selectedExamDetails.category !== level) {
-      return NextResponse.json(
-        { error: "This course does not belong to the selected category." },
-        { status: 400 },
-      );
-    }
-    const allowedClasses = getQuizSchoolClasses(exam);
-
-    let normalizedSchoolClass: QuizSchoolClass | null = null;
-
-    let normalizedBoard: QuizBoard | null = null;
-
-    if (allowedClasses.length > 0) {
-      if (!schoolClass || !allowedClasses.includes(schoolClass)) {
-        return NextResponse.json(
-          {
-            error: "Please select a valid class for this course.",
-          },
-          {
-            status: 400,
-          },
-        );
-      }
-
-      normalizedSchoolClass = schoolClass;
-    }
-
-    if (requiresQuizBoard(exam)) {
-      if (!isQuizBoard(board)) {
-        return NextResponse.json(
-          {
-            error: "Please select HSC or CBSE.",
-          },
-          {
-            status: 400,
-          },
-        );
-      }
-
-      normalizedBoard = board;
-    }
-
     if (!subject || typeof subject !== "string") {
       return NextResponse.json(
         { error: "Please select a subject." },
@@ -779,21 +800,40 @@ export async function POST(request: Request) {
     // questions on demand using the SAME Groq flow and an independent AI review.
     // All other categories retain the original subject-wise generation below.
     const requiresGovernmentTopic =
-      body.source === "mock-test" &&
       level === "government-exam" &&
       Boolean(getGovernmentExamSyllabus(exam));
 
     const requiresCompetitiveTopic =
-      body.source === "mock-test" &&
       level === "competitive-exam" &&
       Boolean(getCompetitiveExamSyllabus(exam));
 
     const requiresMbaTopic =
-      body.source === "mock-test" &&
       level === "mba-entrance" &&
       Boolean(getMbaExamSyllabus(exam));
 
     const topicId = typeof body.topicId === "string" ? body.topicId.trim() : "";
+
+    const requiresSchoolTopic = requiresQuizBoard(exam);
+
+    if (requiresSchoolTopic) {
+      if (
+        !normalizedSchoolClass ||
+        !normalizedBoard ||
+        !topicId ||
+        !isValidQuizBoardTopic(
+          exam,
+          normalizedSchoolClass,
+          normalizedBoard,
+          subject,
+          topicId,
+        )
+      ) {
+        return NextResponse.json(
+          { error: "Please select a valid topic for this class, board and subject." },
+          { status: 400 },
+        );
+      }
+    }
 
     if (
       requiresCompetitiveTopic &&
@@ -927,7 +967,7 @@ export async function POST(request: Request) {
       }
       await registerQuizArenaGeneratedSet({
         userId: session.id,
-        source: "mock-test",
+        source: body.source === "mock-test" ? "mock-test" : "quiz-arena",
         questions,
       });
       return NextResponse.json({
@@ -940,7 +980,7 @@ export async function POST(request: Request) {
       });
     }
 
-    if (topicId && !requiresCompetitiveTopic && !requiresMbaTopic) {
+    if (topicId && !requiresCompetitiveTopic && !requiresMbaTopic && !requiresSchoolTopic) {
       return NextResponse.json(
         {
           error: "Topic selection is not supported in this quiz.",
@@ -985,7 +1025,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const selectedPracticeTopic = competitiveTopic ?? mbaTopic;
+    const selectedSchoolTopic =
+      requiresSchoolTopic && normalizedSchoolClass && normalizedBoard
+        ? getQuizBoardTopics(
+            exam,
+            normalizedSchoolClass,
+            normalizedBoard,
+            subject,
+          ).find((topic) => topic.id === topicId) ?? null
+        : null;
+
+    const selectedPracticeTopic =
+      selectedSchoolTopic ?? competitiveTopic ?? mbaTopic;
 
     /*
      * Some entrance-exam topics make no sense without
@@ -1030,7 +1081,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const syllabusUnits = syllabus?.units ?? [];
+    const syllabusUnits = selectedSchoolTopic ? [selectedSchoolTopic.title] : syllabus?.units ?? [];
     const questionCount = QUIZ_QUESTIONS_PER_ROUND;
     const studentCategory = getStudentCategory(level, exam);
     const previouslySeen = await getPreviouslySeenQuizQuestions(session.id);
@@ -1082,7 +1133,7 @@ Board: ${syllabus.board}
 Class: ${syllabus.schoolClass}
 Subject: ${syllabus.subject}
 Permitted curriculum units ONLY (use their names verbatim):
-${syllabus.units.map((unit, index) => `${index + 1}. ${unit}`).join("\n")}
+${syllabusUnits.map((unit, index) => `${index + 1}. ${unit}`).join("\n")}
 Reference: ${syllabus.sourceUrl}
 These are editable topical outlines, not an exhaustive official chapter transcription. Do NOT invent textbook chapters or claim that the question was verified from a document you cannot access.
 Attach a syllabusUnit to EVERY question, and it MUST exactly equal a permitted unit above.

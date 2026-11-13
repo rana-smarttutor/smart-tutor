@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { getSessionUser } from "@/lib/auth";
-
+import { isValidQuizBoardTopic } from "@/lib/quiz-board-syllabus";
 import { getActiveQuizArenaDraft } from "@/lib/quiz-arena-drafts";
 import { getQuizArenaAccess } from "@/lib/quiz-arena-access-guard";
+import { getQuizArenaExamScope } from "@/lib/quiz-arena-exam-scope";
 import { getQuizArenaFreeTrialState } from "@/lib/quiz-arena-free-trial";
 
 import {
@@ -38,21 +39,52 @@ import {
   type QuizSchoolClass,
 } from "@/lib/quiz-arena-config";
 
-const validDifficulties: Difficulty[] = ["easy", "medium", "hard"];
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-function isEducationLevel(value: unknown): value is EducationLevel {
-  return levelOptions.some((option) => option.id === value);
+const difficulties: Difficulty[] = ["easy", "medium", "hard"];
+
+type QuizSource = "quiz-arena" | "mock-test";
+
+type ProgressBody = {
+  source?: QuizSource;
+  level?: EducationLevel;
+  exam?: CompetitiveExam;
+  schoolClass?: QuizSchoolClass | null;
+  board?: QuizBoard | null;
+  subject?: string;
+  topicId?: string | null;
+  difficulty?: Difficulty;
+  progressionLevel?: QuizJourneyLevel;
+  round?: QuizRound;
+  correctAnswers?: number;
+  incorrectAnswers?: number;
+  score?: number;
+};
+
+function fail(error: string, status = 400, code?: string) {
+  return NextResponse.json(
+    { error, ...(code ? { code } : {}) },
+    {
+      status,
+      headers: { "Cache-Control": "no-store" },
+    },
+  );
 }
 
-function isCompetitiveExam(value: unknown): value is CompetitiveExam {
-  return competitiveExams.some((exam) => exam.id === value);
+function validLevel(value: unknown): value is EducationLevel {
+  return levelOptions.some((x) => x.id === value);
 }
 
-function isDifficulty(value: unknown): value is Difficulty {
-  return validDifficulties.includes(value as Difficulty);
+function validExam(value: unknown): value is CompetitiveExam {
+  return competitiveExams.some((x) => x.id === value);
 }
 
-function isQuizJourneyLevel(value: unknown): value is QuizJourneyLevel {
+function validDifficulty(value: unknown): value is Difficulty {
+  return difficulties.includes(value as Difficulty);
+}
+
+function validProgressionLevel(value: unknown): value is QuizJourneyLevel {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -61,7 +93,7 @@ function isQuizJourneyLevel(value: unknown): value is QuizJourneyLevel {
   );
 }
 
-function isQuizRound(value: unknown): value is QuizRound {
+function validRound(value: unknown): value is QuizRound {
   return (
     typeof value === "number" &&
     Number.isInteger(value) &&
@@ -70,665 +102,431 @@ function isQuizRound(value: unknown): value is QuizRound {
   );
 }
 
-function isQuizBoard(value: unknown): value is QuizBoard {
-  return quizBoardOptions.some((board) => board.id === value);
+function validSource(value: unknown): value is QuizSource {
+  return value === "quiz-arena" || value === "mock-test";
 }
 
-type SchoolContext =
+function parseContext(
+  exam: CompetitiveExam,
+  classValue: unknown,
+  boardValue: unknown,
+):
   | {
       ok: true;
-
       schoolClass: QuizSchoolClass | null;
-
       board: QuizBoard | null;
     }
-  | {
-      ok: false;
-
-      error: string;
-    };
-
-function parseSchoolContext(
-  exam: CompetitiveExam,
-
-  schoolClassValue: unknown,
-
-  boardValue: unknown,
-): SchoolContext {
+  | { ok: false; error: string } {
   const allowedClasses = getQuizSchoolClasses(exam);
 
   let schoolClass: QuizSchoolClass | null = null;
-
   let board: QuizBoard | null = null;
 
   if (allowedClasses.length > 0) {
     if (
-      typeof schoolClassValue !== "string" ||
-      !allowedClasses.includes(schoolClassValue as QuizSchoolClass)
+      typeof classValue !== "string" ||
+      !allowedClasses.includes(classValue as QuizSchoolClass)
     ) {
-      return {
-        ok: false,
-
-        error: "Please select a valid class.",
-      };
+      return { ok: false, error: "Please select a valid class." };
     }
 
-    schoolClass = schoolClassValue as QuizSchoolClass;
+    schoolClass = classValue as QuizSchoolClass;
+  } else if (
+    classValue !== null &&
+    classValue !== undefined &&
+    classValue !== ""
+  ) {
+    return { ok: false, error: "Unexpected school class." };
   }
 
   if (requiresQuizBoard(exam)) {
-    if (!isQuizBoard(boardValue)) {
-      return {
-        ok: false,
-
-        error: "Please select HSC or CBSE.",
-      };
+    if (!quizBoardOptions.some((x) => x.id === boardValue)) {
+      return { ok: false, error: "Please select HSC or CBSE." };
     }
 
-    board = boardValue;
+    board = boardValue as QuizBoard;
+  } else if (
+    boardValue !== null &&
+    boardValue !== undefined &&
+    boardValue !== ""
+  ) {
+    return { ok: false, error: "Unexpected school board." };
   }
 
-  return {
-    ok: true,
-
-    schoolClass,
-
-    board,
-  };
+  return { ok: true, schoolClass, board };
 }
 
+function validateTopic(input: {
+  source: QuizSource;
+  level: EducationLevel;
+  exam: CompetitiveExam;
+  schoolClass: QuizSchoolClass | null;
+  board: QuizBoard | null;
+  subject: string;
+  topicId: string | null;
+}): string | null {
+  const {
+    level,
+    exam,
+    schoolClass,
+    board,
+    subject,
+    topicId,
+  } = input;
+
+  const school = requiresQuizBoard(exam);
+
+  const government =
+    level === "government-exam" &&
+    Boolean(getGovernmentExamSyllabus(exam));
+
+  const competitive =
+    level === "competitive-exam" &&
+    Boolean(getCompetitiveExamSyllabus(exam));
+
+  const mba =
+    level === "mba-entrance" &&
+    Boolean(getMbaExamSyllabus(exam));
+
+  const requiresTopic =
+    school || government || competitive || mba;
+
+  if (!requiresTopic) {
+    return topicId
+      ? "Topic selection is not available for this examination."
+      : null;
+  }
+
+  if (!topicId) {
+    return "Please select a topic before continuing.";
+  }
+
+  if (school) {
+    if (!schoolClass || !board) {
+      return "Please select a valid class and board.";
+    }
+
+    return isValidQuizBoardTopic(
+      exam,
+      schoolClass,
+      board,
+      subject,
+      topicId,
+    )
+      ? null
+      : "Invalid topic for the selected class, board and subject.";
+  }
+
+  const valid =
+    (government &&
+      isValidGovernmentExamTopic(exam, subject, topicId)) ||
+    (competitive &&
+      isValidCompetitiveExamTopic(exam, subject, topicId)) ||
+    (mba &&
+      isValidMbaExamTopic(exam, subject, topicId));
+
+  return valid
+    ? null
+    : "Invalid topic for the selected examination.";
+}
+/**
+ * Progress lookup:
+ *
+ * The selection must match a validated
+ * individual exam scope.
+ *
+ * Reading past progress does not unlock
+ * or generate new paid quiz questions.
+ */
 export async function GET(request: NextRequest) {
   try {
     const session = await getSessionUser();
 
     if (
       !session ||
-      (session.role !== "student" && session.role !== "admin") ||
+      !["student", "admin"].includes(session.role) ||
       (session.status && session.status !== "active")
     ) {
-      return NextResponse.json(
-        {
-          error: "Student login is required to load Quiz Arena progress.",
-        },
-
-        {
-          status: 401,
-        },
-      );
+      return fail("Student login is required.", 401);
     }
 
-    const searchParams = request.nextUrl.searchParams;
+    const p = request.nextUrl.searchParams;
 
-    const source = searchParams.get("source") ?? "quiz-arena";
-    if (source !== "quiz-arena" && source !== "mock-test") {
-      return NextResponse.json(
-        { error: "Invalid quiz source." },
-        { status: 400 },
-      );
+    const source = p.get("source") ?? "quiz-arena";
+    const level = p.get("level");
+    const exam = p.get("exam");
+    const subject = p.get("subject")?.trim() ?? "";
+    const difficulty = p.get("difficulty");
+    const topicId = p.get("topicId")?.trim() || null;
+
+    if (!validSource(source)) {
+      return fail("Invalid quiz source.");
     }
 
-    const learningCategory = searchParams.get("level");
-
-    const exam = searchParams.get("exam");
-
-    const schoolClass = searchParams.get("schoolClass");
-
-    const board = searchParams.get("board");
-
-    const subject = searchParams
-
-      .get("subject")
-
-      ?.trim();
-
-    const topicId = searchParams.get("topicId")?.trim() || null;
-
-    const difficulty = searchParams.get("difficulty");
-
-    if (!isEducationLevel(learningCategory)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena category.",
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (!validLevel(level) || !validExam(exam)) {
+      return fail("Invalid category or exam.");
     }
 
-    if (!isCompetitiveExam(exam)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena exam.",
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (!subject || !validDifficulty(difficulty)) {
+      return fail("Invalid subject or difficulty.");
     }
 
-    const schoolContext = parseSchoolContext(
+    const context = parseContext(exam, p.get("schoolClass"), p.get("board"));
+
+    if (!context.ok) {
+      return fail(context.error);
+    }
+
+    const scope = getQuizArenaExamScope({
       exam,
+      level,
+      schoolClass: context.schoolClass,
+      board: context.board,
+    });
 
-      schoolClass,
-
-      board,
-    );
-
-    if (!schoolContext.ok) {
-      return NextResponse.json(
-        {
-          error: schoolContext.error,
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (!scope) {
+      return fail("Invalid individual exam selection.");
     }
 
-    if (!subject) {
-      return NextResponse.json(
-        {
-          error: "Quiz Arena subject is required.",
-        },
+    const topicError = validateTopic({
+      source,
+      level,
+      exam,
+      schoolClass: context.schoolClass,
+      board: context.board,
+      subject,
+      topicId,
+    });
 
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!isDifficulty(difficulty)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena difficulty.",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    const requiresGovernmentTopic =
-      searchParams.get("source") === "mock-test" &&
-      learningCategory === "government-exam" &&
-      Boolean(getGovernmentExamSyllabus(exam));
-
-    const requiresCompetitiveTopic =
-      searchParams.get("source") === "mock-test" &&
-      learningCategory === "competitive-exam" &&
-      Boolean(getCompetitiveExamSyllabus(exam));
-
-    const requiresMbaTopic =
-      searchParams.get("source") === "mock-test" &&
-      learningCategory === "mba-entrance" &&
-      Boolean(getMbaExamSyllabus(exam));
-
-    const requiresTopic =
-      requiresGovernmentTopic || requiresCompetitiveTopic || requiresMbaTopic;
-
-    const validTopic =
-      topicId !== null &&
-      ((requiresGovernmentTopic &&
-        isValidGovernmentExamTopic(
-          exam,
-
-          subject,
-
-          topicId,
-        )) ||
-        (requiresCompetitiveTopic &&
-          isValidCompetitiveExamTopic(
-            exam,
-
-            subject,
-
-            topicId,
-          )) ||
-        (requiresMbaTopic &&
-          isValidMbaExamTopic(
-            exam,
-
-            subject,
-
-            topicId,
-          )));
-
-    if (requiresTopic && !validTopic) {
-      return NextResponse.json(
-        {
-          error:
-            topicId === null
-              ? "Please select a Mock Test topic before loading progress."
-              : "Please select a valid Mock Test topic.",
-
-          code:
-            topicId === null
-              ? "MOCK_TEST_TOPIC_REQUIRED"
-              : "MOCK_TEST_TOPIC_INVALID",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!requiresTopic && topicId) {
-      return NextResponse.json(
-        {
-          error: "Topic selection is not available for this examination.",
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (topicError) {
+      return fail(topicError);
     }
 
     const progress = await getQuizArenaProgress({
       userId: session.id,
-
-      learningCategory,
-
+      learningCategory: level,
       exam,
-
-      schoolClass: schoolContext.schoolClass,
-
-      board: schoolContext.board,
-
+      schoolClass: context.schoolClass,
+      board: context.board,
       subject,
-
       topicId,
-
       difficulty,
     });
 
-    return NextResponse.json({
-      progress,
-    });
-  } catch (error) {
-    console.error(
-      "Quiz Arena progress GET error:",
-
-      error,
-    );
-
     return NextResponse.json(
-      {
-        error: "Unable to load Quiz Arena progress.",
-      },
-
-      {
-        status: 500,
-      },
+      { progress, examScopeKey: scope.key },
+      { headers: { "Cache-Control": "no-store" } },
     );
+  } catch (error) {
+    console.error("Quiz Arena progress GET:", error);
+    return fail("Unable to load Quiz Arena progress.", 500);
   }
 }
 
+/**
+ * Progress update:
+ *
+ * A student must have:
+ *
+ * - A purchased entitlement for this exam; OR
+ * - A verified completed one-time free trial.
+ *
+ * Every result is recalculated using the
+ * server's saved questions and answers.
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await getSessionUser();
 
     if (
       !session ||
-      (session.role !== "student" && session.role !== "admin") ||
+      !["student", "admin"].includes(session.role) ||
       (session.status && session.status !== "active")
     ) {
-      return NextResponse.json(
-        {
-          error: "Student login is required to save Quiz Arena progress.",
-        },
-
-        {
-          status: 401,
-        },
-      );
+      return fail("Student login is required.", 401);
     }
 
-    const body = (await request.json()) as {
-      source?: "quiz-arena" | "mock-test";
+    const body = (await request
+      .json()
+      .catch(() => null)) as ProgressBody | null;
 
-      level?: EducationLevel;
-
-      exam?: CompetitiveExam;
-
-      schoolClass?: QuizSchoolClass | null;
-
-      board?: QuizBoard | null;
-
-      subject?: string;
-
-      topicId?: string | null;
-
-      difficulty?: Difficulty;
-
-      progressionLevel?: QuizJourneyLevel;
-
-      round?: QuizRound;
-
-      correctAnswers?: number;
-
-      incorrectAnswers?: number;
-
-      score?: number;
-    };
-
-    if (body.source !== "quiz-arena" && body.source !== "mock-test") {
-      return NextResponse.json(
-        { error: "Invalid quiz source." },
-        { status: 400 },
-      );
+    if (!body) {
+      return fail("Invalid progress request.");
     }
 
-    if (!isEducationLevel(body.level)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena category.",
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (!validSource(body.source)) {
+      return fail("Invalid quiz source.");
     }
 
-    if (!isCompetitiveExam(body.exam)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena exam.",
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (!validLevel(body.level) || !validExam(body.exam)) {
+      return fail("Invalid category or exam.");
     }
 
-    const schoolContext = parseSchoolContext(
-      body.exam,
-
-      body.schoolClass,
-
-      body.board,
-    );
-
-    if (!schoolContext.ok) {
-      return NextResponse.json(
-        {
-          error: schoolContext.error,
-        },
-
-        {
-          status: 400,
-        },
-      );
+    if (
+      !body.subject?.trim() ||
+      !validDifficulty(body.difficulty) ||
+      !validProgressionLevel(body.progressionLevel) ||
+      !validRound(body.round)
+    ) {
+      return fail("Invalid quiz progression details.");
     }
 
-    const subject = body.subject?.trim();
+    const context = parseContext(body.exam, body.schoolClass, body.board);
 
+    if (!context.ok) {
+      return fail(context.error);
+    }
+
+    const scope = getQuizArenaExamScope({
+      exam: body.exam,
+      level: body.level,
+      schoolClass: context.schoolClass,
+      board: context.board,
+    });
+
+    if (!scope) {
+      return fail("Invalid individual exam selection.");
+    }
+
+    const subject = body.subject.trim();
     const topicId = body.topicId?.trim() || null;
 
-    if (!subject) {
-      return NextResponse.json(
-        {
-          error: "Quiz Arena subject is required.",
-        },
+    const topicError = validateTopic({
+      source: body.source,
+      level: body.level,
+      exam: body.exam,
+      schoolClass: context.schoolClass,
+      board: context.board,
+      subject,
+      topicId,
+    });
 
-        {
-          status: 400,
-        },
-      );
+    if (topicError) {
+      return fail(topicError);
     }
 
-    if (!isDifficulty(body.difficulty)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena difficulty.",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!isQuizJourneyLevel(body.progressionLevel)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena progression level.",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!isQuizRound(body.round)) {
-      return NextResponse.json(
-        {
-          error: "Invalid Quiz Arena round.",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    const requiresGovernmentTopic =
-      body.source === "mock-test" &&
-      body.level === "government-exam" &&
-      Boolean(getGovernmentExamSyllabus(body.exam));
-
-    const requiresCompetitiveTopic =
-      body.source === "mock-test" &&
-      body.level === "competitive-exam" &&
-      Boolean(getCompetitiveExamSyllabus(body.exam));
-
-    const requiresMbaTopic =
-      body.source === "mock-test" &&
-      body.level === "mba-entrance" &&
-      Boolean(getMbaExamSyllabus(body.exam));
-
-    const requiresTopic =
-      requiresGovernmentTopic || requiresCompetitiveTopic || requiresMbaTopic;
-
-    const validTopic =
-      topicId !== null &&
-      ((requiresGovernmentTopic &&
-        isValidGovernmentExamTopic(
-          body.exam,
-
-          subject,
-
-          topicId,
-        )) ||
-        (requiresCompetitiveTopic &&
-          isValidCompetitiveExamTopic(
-            body.exam,
-
-            subject,
-
-            topicId,
-          )) ||
-        (requiresMbaTopic &&
-          isValidMbaExamTopic(
-            body.exam,
-
-            subject,
-
-            topicId,
-          )));
-
-    if (requiresTopic && !validTopic) {
-      return NextResponse.json(
-        {
-          error: "Please select a valid Mock Test topic.",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    if (!requiresTopic && topicId) {
-      return NextResponse.json(
-        {
-          error: "Topic selection is not available for this examination.",
-        },
-
-        {
-          status: 400,
-        },
-      );
-    }
-
-    // Progression must match an existing, saved quiz. Never allow a
-    // direct POST to unlock levels or rounds without a corresponding draft.
+    /**
+     * Find the actual saved quiz before
+     * checking its entitlement.
+     *
+     * Never authorise progress for an exam
+     * that does not match the saved draft.
+     */
     const draft = await getActiveQuizArenaDraft(session.id);
+
     if (
       !draft ||
       draft.source !== body.source ||
       draft.level !== body.level ||
       draft.exam !== body.exam ||
-      draft.schoolClass !== schoolContext.schoolClass ||
-      draft.board !== schoolContext.board ||
+      draft.schoolClass !== context.schoolClass ||
+      draft.board !== context.board ||
       draft.subject !== subject ||
       (draft.topicId ?? null) !== topicId ||
       draft.progressionLevel !== body.progressionLevel ||
       draft.round !== body.round
     ) {
-      return NextResponse.json(
-        { error: "Progress does not match the active saved quiz." },
-        { status: 409 },
-      );
+      return fail("Progress does not match the active saved quiz.", 409);
     }
 
     if (session.role === "student") {
-      const access = await getQuizArenaAccess(session.id, session.role);
-      if (!access.unlimitedAccess) {
+      const access = await getQuizArenaAccess(
+        session.id,
+        session.role,
+        scope.key,
+      );
+
+      /**
+       * Paid access is valid for this exact
+       * exam only.
+       *
+       * The free trial is handled separately.
+       */
+      if (!access.subscription.active) {
         const trial = await getQuizArenaFreeTrialState(session.id);
-        // The attempts endpoint consumes the free trial after writing
-        // the verified attempt. Only that same reserved draft may progress.
+
         if (
           trial?.consumed !== true ||
           trial.draftId !== draft.id ||
-          !trial.completedAttemptId
+          !trial.completedAttemptId ||
+          draft.progressionLevel !== 1 ||
+          draft.round !== 1
         ) {
-          return NextResponse.json(
-            {
-              error: "Your quiz attempt must be saved before progression.",
-              code: "VERIFIED_ATTEMPT_REQUIRED",
-            },
-            { status: 409 },
+          return fail(
+            "A verified quiz attempt or an active subscription is required.",
+            403,
+            "QUIZ_SUBSCRIPTION_REQUIRED",
           );
         }
       }
     }
 
-    // Recalculate results from the saved server-side question and answer
-    // state rather than trusting scores supplied by the browser.
-    const allQuestions = draft.questions;
+    const questions = draft.questions;
+    const answers = draft.answersByIndex;
+
     if (
-      allQuestions.length === 0 ||
-      Object.keys(draft.answersByIndex).some((key) => {
-        const index = Number(key);
-        return (
-          !Number.isInteger(index) || index < 0 || index >= allQuestions.length
-        );
+      questions.length === 0 ||
+      Object.keys(answers).some((key) => {
+        const i = Number(key);
+        return !Number.isInteger(i) || i < 0 || i >= questions.length;
       })
     ) {
-      return NextResponse.json(
-        { error: "Invalid saved quiz answers." },
-        { status: 409 },
-      );
+      return fail("Invalid saved quiz answers.", 409);
     }
 
-    let verifiedCorrect = 0;
-    let verifiedScore = 0;
+    let correct = 0;
+    let score = 0;
     let streak = 0;
-    for (let index = 0; index < allQuestions.length; index += 1) {
-      const question = allQuestions[index];
-      const selected = draft.answersByIndex[index] ?? "";
-      if (selected && !question.options.includes(selected)) {
-        return NextResponse.json(
-          { error: "Invalid saved quiz answer." },
-          { status: 409 },
-        );
+
+    for (let i = 0; i < questions.length; i += 1) {
+      const question = questions[i];
+      const answer = answers[i] ?? "";
+
+      if (answer && !question.options.includes(answer)) {
+        return fail("Invalid saved quiz answer.", 409);
       }
-      if (selected === question.correctAnswer) {
-        verifiedCorrect += 1;
-        streak += 1;
-        verifiedScore += 10 + (streak % 3 === 0 ? 5 : 0);
+
+      if (answer === question.correctAnswer) {
+        correct++;
+        streak++;
+        score += 10 + (streak % 3 === 0 ? 5 : 0);
       } else {
         streak = 0;
       }
     }
-    const verifiedIncorrect = allQuestions.length - verifiedCorrect;
+
+    const incorrect = questions.length - correct;
+
     if (
-      body.correctAnswers !== verifiedCorrect ||
-      body.incorrectAnswers !== verifiedIncorrect ||
-      body.score !== verifiedScore
+      body.correctAnswers !== correct ||
+      body.incorrectAnswers !== incorrect ||
+      body.score !== score
     ) {
-      return NextResponse.json(
-        { error: "Quiz scores do not match the saved answers." },
-        { status: 409 },
-      );
+      return fail("Quiz scores do not match the saved answers.", 409);
     }
 
     const progress = await saveQuizArenaRoundProgress({
       userId: session.id,
-
       learningCategory: body.level,
-
       exam: body.exam,
-
-      schoolClass: schoolContext.schoolClass,
-
-      board: schoolContext.board,
-
+      schoolClass: context.schoolClass,
+      board: context.board,
       subject,
-
       topicId,
-
       difficulty: body.difficulty,
-
       progressionLevel: body.progressionLevel,
-
       round: body.round,
-
-      correctAnswers: verifiedCorrect,
-
-      incorrectAnswers: verifiedIncorrect,
-
-      score: verifiedScore,
+      correctAnswers: correct,
+      incorrectAnswers: incorrect,
+      score,
     });
-
-    return NextResponse.json({
-      progress,
-    });
-  } catch (error) {
-    console.error(
-      "Quiz Arena progress POST error:",
-
-      error,
-    );
 
     return NextResponse.json(
-      {
-        error: "Unable to save Quiz Arena progress.",
-      },
-
-      {
-        status: 500,
-      },
+      { progress, examScopeKey: scope.key },
+      { headers: { "Cache-Control": "no-store" } },
     );
+  } catch (error) {
+    console.error("Quiz Arena progress POST:", error);
+    return fail("Unable to save Quiz Arena progress.", 500);
   }
 }

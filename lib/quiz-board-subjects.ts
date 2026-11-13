@@ -17,6 +17,9 @@ const subjects: Record<
   Partial<Record<QuizSchoolClass, Partial<Record<CompetitiveExam, readonly string[]>>>>
 > = {
   "Maharashtra State Board": {
+    "6": { "class-6-8": ["Mathematics", "General Science", "History and Civics", "Geography", "English", "Marathi", "Hindi"] },
+    "7": { "class-6-8": ["Mathematics", "General Science", "History and Civics", "Geography", "English", "Marathi", "Hindi"] },
+    "8": { "class-6-8": ["Mathematics", "General Science", "History and Civics", "Geography", "English", "Marathi", "Hindi"] },
     "9": {
       "class-9-10": [
         "Mathematics", "Science and Technology",
@@ -68,6 +71,9 @@ const subjects: Record<
     },
   },
   CBSE: {
+    "6": { "class-6-8": ["Mathematics", "Science", "Social Science", "English", "Hindi", "Sanskrit", "Computer Science"] },
+    "7": { "class-6-8": ["Mathematics", "Science", "Social Science", "English", "Hindi", "Sanskrit", "Computer Science"] },
+    "8": { "class-6-8": ["Mathematics", "Science", "Social Science", "English", "Hindi", "Sanskrit", "Computer Science"] },
     "9": {
       "class-9-10": [
         "Mathematics", "Science", "Social Science", "English",

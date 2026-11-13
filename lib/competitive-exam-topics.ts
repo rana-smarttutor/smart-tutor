@@ -1,3 +1,4 @@
+import { getSupplementalCompetitiveExamSyllabus } from "@/lib/quiz-supplemental-exams";
 import type { CompetitiveExam } from "@/lib/quiz-arena-config";
 
 export type CompetitiveExamTopic = {
@@ -707,7 +708,7 @@ export function getCompetitiveExamSyllabus(
     return null;
   }
 
-  return competitiveExamSyllabuses[exam] ?? null;
+  return competitiveExamSyllabuses[exam] ?? getSupplementalCompetitiveExamSyllabus(exam);
 }
 
 export function getCompetitiveExamTopics(

@@ -5,9 +5,12 @@ import { getSessionUser } from "@/lib/auth";
 import { getMongoDatabase } from "@/lib/mongodb";
 
 import {
+  QUIZ_ARENA_PLAN,
   getQuizArenaPlanById,
   type QuizArenaPayment,
 } from "@/lib/quiz-arena-subscriptions";
+
+import { getQuizArenaExamScopeByKey } from "@/lib/quiz-arena-exam-scope";
 
 import { getQuizArenaPaymentConfig } from "@/lib/quiz-arena-payment-config";
 
@@ -21,16 +24,38 @@ type RazorpayOrder = {
   status: string;
 };
 
+type CreateOrderBody = {
+  planId?: unknown;
+  examScopeKey?: unknown;
+};
+
 function reject(message: string, status: number) {
   return NextResponse.json(
-    { success: false, message },
+    {
+      success: false,
+      message,
+    },
     {
       status,
-      headers: { "Cache-Control": "no-store" },
+      headers: {
+        "Cache-Control": "no-store",
+      },
     },
   );
 }
 
+/**
+ * Create an exam-specific Quiz Arena payment order.
+ *
+ * Price: ₹49
+ * Duration: 30 days
+ *
+ * The selected exam must exist in the official
+ * Quiz Arena examination catalogue.
+ *
+ * Each Razorpay order is bound to exactly one
+ * validated exam scope.
+ */
 export async function POST(request: Request) {
   try {
     const session = await getSessionUser();
@@ -49,37 +74,66 @@ export async function POST(request: Request) {
       );
     }
 
+    const paymentConfig = getQuizArenaPaymentConfig();
 
-const paymentConfig = getQuizArenaPaymentConfig();
+    if (!paymentConfig.enabled) {
+      return reject(paymentConfig.reason, 503);
+    }
 
-if (!paymentConfig.enabled) {
-  return reject(paymentConfig.reason, 503);
-}
+    const body = (await request
+      .json()
+      .catch(() => null)) as CreateOrderBody | null;
 
-const keyId = paymentConfig.keyId;
-const keySecret = paymentConfig.keySecret;
+    if (!body) {
+      return reject("Invalid payment request.", 400);
+    }
 
-
-    const body = (await request.json().catch(() => null)) as {
-      planId?: unknown;
-    } | null;
-
-    if (!body || typeof body.planId !== "string") {
-      return reject("Invalid Quiz Arena subscription plan.", 400);
+    /**
+     * Only the ₹49 monthly subscription is
+     * permitted for new purchases.
+     */
+    if (typeof body.planId !== "string" || body.planId !== QUIZ_ARENA_PLAN.id) {
+      return reject("Only the ₹49 monthly Quiz Arena plan is available.", 400);
     }
 
     const plan = getQuizArenaPlanById(body.planId);
 
-    if (!plan || !plan.active) {
+    if (
+      !plan ||
+      !plan.active ||
+      plan.amountPaise !== 4900 ||
+      plan.durationDays !== 30
+    ) {
+      return reject("The selected monthly plan is unavailable.", 400);
+    }
+
+    /**
+     * Validate the EXACT exam.
+     *
+     * Examples:
+     *
+     * exam:ssc-cgl
+     * exam:cat
+     * school:class-11-12-science:12:mh
+     *
+     * A category or parent group is never
+     * accepted as a paid exam scope.
+     */
+    const scope = getQuizArenaExamScopeByKey(body.examScopeKey);
+
+    if (!scope) {
       return reject(
-        "The selected Quiz Arena subscription plan is unavailable.",
+        "Please select a valid individual exam before subscribing.",
         400,
       );
     }
 
     const db = await getMongoDatabase();
 
-    // Only accept plans enabled with matching prices in MongoDB.
+    /**
+     * The database plan must match the
+     * trusted server-side plan exactly.
+     */
     const storedPlan = await db
       .collection("quiz_arena_subscription_plans")
       .findOne({
@@ -92,16 +146,21 @@ const keySecret = paymentConfig.keySecret;
       });
 
     if (!storedPlan) {
-      return reject("This subscription plan is not yet enabled.", 503);
+      return reject("The monthly Quiz Arena plan is not yet enabled.", 503);
     }
 
-    const amountPaise = plan.amountPaise;
-
+    /**
+     * Store exam information in Razorpay
+     * notes for audit purposes.
+     *
+     * The MongoDB order remains the trusted
+     * source for subscription activation.
+     */
     const receipt = `quiz_${randomUUID().replace(/-/g, "").slice(0, 28)}`;
 
-    const authorization = Buffer.from(`${keyId}:${keySecret}`).toString(
-      "base64",
-    );
+    const authorization = Buffer.from(
+      `${paymentConfig.keyId}:${paymentConfig.keySecret}`,
+    ).toString("base64");
 
     const razorpayResponse = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",
@@ -110,13 +169,15 @@ const keySecret = paymentConfig.keySecret;
         Authorization: `Basic ${authorization}`,
       },
       body: JSON.stringify({
-        amount: amountPaise,
+        amount: plan.amountPaise,
         currency: plan.currency,
         receipt,
         notes: {
-          purpose: "quiz_arena_subscription",
+          purpose: "quiz_arena_exam_subscription",
           studentId: session.id,
           planId: plan.id,
+          examScopeKey: scope.key,
+          examId: scope.examId,
         },
       }),
       signal: AbortSignal.timeout(15000),
@@ -136,7 +197,7 @@ const keySecret = paymentConfig.keySecret;
 
     if (
       !/^order_[a-zA-Z0-9]+$/.test(order.id) ||
-      order.amount !== amountPaise ||
+      order.amount !== plan.amountPaise ||
       order.currency !== plan.currency ||
       order.status !== "created"
     ) {
@@ -145,16 +206,32 @@ const keySecret = paymentConfig.keySecret;
 
     const payments = db.collection<QuizArenaPayment>("quiz_arena_payments");
 
-    await payments.createIndex({ razorpayOrderId: 1 }, { unique: true });
+    await payments.createIndex(
+      {
+        razorpayOrderId: 1,
+      },
+      {
+        unique: true,
+      },
+    );
 
     const now = new Date().toISOString();
 
+    /**
+     * The original order records its exact
+     * exam before checkout begins.
+     *
+     * Verification, webhook and reconciliation
+     * must read this saved examScopeKey.
+     */
     await payments.insertOne({
       id: `quiz-payment-${randomUUID()}`,
       userId: session.id,
       planId: plan.id,
+      examScopeKey: scope.key,
+      examTitle: scope.title,
       razorpayOrderId: order.id,
-      amountPaise,
+      amountPaise: plan.amountPaise,
       currency: "INR",
       status: "created",
       createdAt: now,
@@ -164,23 +241,31 @@ const keySecret = paymentConfig.keySecret;
       {
         success: true,
         orderId: order.id,
-        keyId,
-        amount: amountPaise,
+        keyId: paymentConfig.keyId,
+        amount: plan.amountPaise,
         currency: plan.currency,
         planId: plan.id,
         planName: plan.name,
         durationDays: plan.durationDays,
+        examScopeKey: scope.key,
+        examTitle: scope.title,
+        examId: scope.examId,
       },
       {
-        headers: { "Cache-Control": "no-store" },
+        headers: {
+          "Cache-Control": "no-store",
+        },
       },
     );
   } catch (error) {
     console.error(
-      "Quiz Arena order creation error:",
+      "Quiz Arena create-order error:",
       error instanceof Error ? error.message : "Unknown error",
     );
 
-    return reject("Unable to prepare Quiz Arena subscription payment.", 500);
+    return reject(
+      "Unable to prepare the Quiz Arena exam subscription payment.",
+      500,
+    );
   }
 }
