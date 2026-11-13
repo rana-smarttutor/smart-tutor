@@ -203,7 +203,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
       {/* Reference page 3: compact navy hero, white enquiry card */}
       <section className="bg-gradient-to-r from-[#0A1C44] via-[#0B2861] to-[#0A56B7] text-white">
-        <div className="mx-auto grid max-w-7xl items-center gap-9 px-4 py-11 sm:px-6 sm:py-14 lg:grid-cols-[1.2fr_0.8fr] lg:px-8">
+        <div className="mx-auto grid max-w-7xl items-center gap-5 px-4 py-7 sm:px-6 sm:py-9 lg:grid-cols-[1.2fr_0.8fr] lg:px-8 lg:py-8">
           <div>
             <nav
               aria-label="Breadcrumb"
