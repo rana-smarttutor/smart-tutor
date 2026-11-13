@@ -7,6 +7,8 @@ import CourseBoardSyllabus from "@/components/course-board-syllabus";
 import GovernmentExamSelection from "@/components/government-exam-selection";
 import JeeExamSelection from "@/components/jee-exam-selection";
 import EntranceExamSelection from "@/components/entrance-exam-selection";
+import CourseEnrollButton from "@/components/course-enroll-button";
+import CourseHeroMotion from "@/components/course-hero-motion";
 import {
   COURSE_SITE_URL,
   coursePageRegistry,
@@ -82,7 +84,6 @@ export default async function CourseDetailPage({ params }: Props) {
   if (!course) notFound();
 
   const seoContent = getCourseSeoContent(slug);
-  const enquiryUrl = `/courses?enquire=${encodeURIComponent(slug)}`;
   const url = getCoursePageUrl(slug);
   const categoryHref = categoryUrls[course.category] ?? "/courses";
   const related = coursePageRegistry
@@ -231,12 +232,15 @@ export default async function CourseDetailPage({ params }: Props) {
               {course.introduction}
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link
-                href={enquiryUrl}
+              <CourseEnrollButton
+                course={{ ...course.source, id: slug }}
+                courseSlug={slug}
+                courseTitle={course.name}
                 className="inline-flex items-center justify-center rounded-lg bg-[#2769EB] px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500"
               >
-                Enquire About Admission
-              </Link>
+                Enroll Now
+              </CourseEnrollButton>
+
               <a
                 href="#course-syllabus"
                 className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#102143] hover:bg-blue-50"
@@ -245,22 +249,13 @@ export default async function CourseDetailPage({ params }: Props) {
               </a>
             </div>
           </div>
-          <aside className="hidden rounded-2xl bg-white p-7 text-[#102143] shadow-lg lg:block">
-            <p className="inline-flex rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              {course.category}
-            </p>
-            <h2 className="mt-4 text-xl font-bold">{course.name}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">
-              Contact SmartIQ for current learning options and admission
-              details.
-            </p>
-            <Link
-              href={enquiryUrl}
-              className="mt-6 inline-flex rounded-lg bg-[#2769EB] px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Request Course Details
-            </Link>
-          </aside>
+
+          <div className="hidden bg-transparent lg:block">
+            <CourseHeroMotion
+              courseName={course.name}
+              category={course.category}
+            />
+          </div>
         </div>
       </section>
 
@@ -345,13 +340,10 @@ export default async function CourseDetailPage({ params }: Props) {
           />
         )}
 
-
-{/* MBA AND LAW ENTRANCE EXAM SELECTION */}
-{(slug === "mba-entrance-exams" ||
-  slug === "law-entrance-exams") && (
-  <EntranceExamSelection group={slug} />
-)}
-
+        {/* MBA AND LAW ENTRANCE EXAM SELECTION */}
+        {(slug === "mba-entrance-exams" || slug === "law-entrance-exams") && (
+          <EntranceExamSelection group={slug} />
+        )}
 
         {/* JEE MAIN / JEE ADVANCED SELECTION */}
         {slug === "jee-coaching" && <JeeExamSelection />}
@@ -511,12 +503,14 @@ export default async function CourseDetailPage({ params }: Props) {
             information.
           </p>
           <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              href={enquiryUrl}
+            <CourseEnrollButton
+              course={{ ...course.source, id: slug }}
+              courseSlug={slug}
+              courseTitle={course.name}
               className="rounded-lg bg-[#2769EB] px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500"
             >
-              Enquire About Admission
-            </Link>
+              Enroll Now
+            </CourseEnrollButton>
             <Link
               href="/courses"
               className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-[#102143] hover:bg-blue-50"
