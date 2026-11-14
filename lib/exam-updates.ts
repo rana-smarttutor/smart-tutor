@@ -73,6 +73,113 @@ type ExamSource = {
 };
 
 const SOURCES: ExamSource[] = [
+  // Additional verified examination authorities
+  {
+    key: "ctet",
+    name: "CTET",
+    category: "Government Exams",
+    url: "https://ctet.nic.in/documents/",
+    allowedHosts: ["ctet.nic.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "ctet",
+      "teacher eligibility",
+      "public notice",
+      "exam date",
+      "admit card",
+      "answer key",
+      "result",
+      "information bulletin",
+    ],
+  },
+  {
+    key: "ugc-net",
+    name: "UGC NET",
+    category: "Government Exams",
+    url: "https://ugcnet.nta.nic.in/",
+    allowedHosts: ["ugcnet.nta.nic.in", "nta.ac.in", "cdnbbsr.s3waas.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "ugc-net",
+      "ugc net",
+      "public notice",
+      "application",
+      "admit card",
+      "answer key",
+      "result",
+    ],
+  },
+  {
+    key: "csir-net",
+    name: "CSIR UGC NET",
+    category: "Government Exams",
+    url: "https://csirnet.nta.nic.in/documents/",
+    allowedHosts: ["csirnet.nta.nic.in", "nta.ac.in", "cdnbbsr.s3waas.gov.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "csir",
+      "joint csir",
+      "ugc-net",
+      "public notice",
+      "application",
+      "admit card",
+      "answer key",
+      "result",
+    ],
+  },
+  {
+    key: "india-post-gds",
+    name: "India Post GDS",
+    category: "Government Exams",
+    url: "https://www.indiapost.gov.in/gdsonlineengagement",
+    allowedHosts: ["indiapost.gov.in", "indiapostgdsonline.gov.in"],
+    maxItems: 35,
+    includeKeywords: [
+      "gds",
+      "gramin dak sevak",
+      "shortlisted",
+      "engagement",
+      "recruitment",
+      "notification",
+    ],
+    sourceKeywordOnly: true,
+  },
+  {
+    key: "gate-2027",
+    name: "GATE 2027",
+    category: "Competitive Exams",
+    url: "https://gate2027.iitm.ac.in/notifications",
+    allowedHosts: ["gate2027.iitm.ac.in"],
+    maxItems: 40,
+    includeKeywords: [
+      "gate",
+      "registration",
+      "application",
+      "admit card",
+      "answer key",
+      "result",
+      "notification",
+      "brochure",
+    ],
+  },
+  {
+    key: "ceed-2027",
+    name: "CEED 2027",
+    category: "Competitive Exams",
+    url: "https://www.ceed.iitb.ac.in/2027/",
+    allowedHosts: ["ceed.iitb.ac.in"],
+    maxItems: 35,
+    includeKeywords: [
+      "ceed",
+      "registration",
+      "admit card",
+      "answer key",
+      "result",
+      "score card",
+      "application",
+    ],
+  },
+
   // =====================================================
 
   // BOARD EXAMS
@@ -2541,6 +2648,28 @@ const BLOCKED_KEYWORDS = [
   "annual report",
 
   "sitemap",
+
+  "home loan",
+  "personal loan",
+  "agriculture loan",
+  "business loan",
+  "debit card",
+  "credit card",
+  "insurance policy",
+  "internet banking",
+  "mobile banking",
+  "interest rate",
+  "fixed deposit",
+  "savings account",
+  "financial results",
+  "investor relations",
+  "corporate governance",
+  "board of directors",
+  "annual general meeting",
+  "e-auction",
+  "vendor registration",
+  "property auction",
+  "press tender",
 ];
 
 const GENERIC_LINK_TEXT =
@@ -3019,7 +3148,7 @@ async function fetchSource(source: ExamSource): Promise<ExamUpdate[]> {
   }
 }
 
-function interleaveUpdates(groups: ExamUpdate[][], limit = 400) {
+function interleaveUpdates(groups: ExamUpdate[][], limit = 1200) {
   const output: ExamUpdate[] = [];
 
   const seen = new Set<string>();
@@ -3170,7 +3299,7 @@ const getCachedExamUpdates = unstable_cache(
 
    */
 
-  ["smartiq-exam-updates-v7"],
+  ["smartiq-exam-updates-v8"],
 
   {
     revalidate: 900,

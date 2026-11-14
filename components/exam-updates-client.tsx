@@ -75,7 +75,7 @@ const CATEGORY_CARDS: Array<{
   {
     name: "Government Exams",
     title: "Government Exams",
-    examples: "UPSC, SSC, IBPS, MPSC",
+    examples: "UPSC, SSC, Banking, MPSC, Railways, and Others",
     description:
       "Civil services, banking, state exams and government recruitment updates.",
     icon: Landmark,
@@ -83,14 +83,12 @@ const CATEGORY_CARDS: Array<{
   {
     name: "Competitive Exams",
     title: "Competitive Exams",
-    examples: "JEE, NEET, CUET, MHT-CET",
+    examples: "JEE, NEET, CUET, MHT-CET, MBA, and Others",
     description:
       "Entrance exam registrations, schedules, answer keys and results.",
     icon: Target,
   },
 ];
-
-
 
 function scrollToSection(id: string) {
   window.setTimeout(() => {
@@ -221,22 +219,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
     });
   }, [updates, query, activeCategory, activeSource, activeType]);
 
-  const counts = useMemo(
-    () => ({
-      "Board Exams": updates.filter((item) => item.category === "Board Exams")
-        .length,
-
-      "Government Exams": updates.filter(
-        (item) => item.category === "Government Exams",
-      ).length,
-
-      "Competitive Exams": updates.filter(
-        (item) => item.category === "Competitive Exams",
-      ).length,
-    }),
-    [updates],
-  );
-
   const tickerUpdates = updates.slice(0, 4);
 
   const featuredUpdate = filteredUpdates[0] ?? updates[0];
@@ -254,7 +236,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
     scrollToSection("latest-exam-updates");
   }
 
-
   function clearFilters() {
     setQuery("");
     setActiveCategory("All");
@@ -265,6 +246,61 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
   return (
     <main className="min-h-screen bg-[#f6f8fc]">
       <style>{`
+
+@keyframes exam-hero-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes exam-hero-glow {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes exam-hero-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.exam-hero-float {
+  animation: exam-hero-float 5s ease-in-out infinite;
+}
+
+.exam-hero-float-delay {
+  animation: exam-hero-float 6s ease-in-out 1s infinite;
+}
+
+.exam-hero-glow {
+  animation: exam-hero-glow 7s ease-in-out infinite;
+}
+
+.exam-hero-pulse {
+  animation: exam-hero-pulse 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exam-hero-float,
+  .exam-hero-float-delay,
+  .exam-hero-glow,
+  .exam-hero-pulse {
+    animation: none;
+  }
+}
+
       @keyframes exam-news-scroll {
         from {
           transform: translateX(0);
@@ -298,97 +334,166 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
         <div className="w-full">
           <div className="min-w-0">
             {/* HERO */}
-            <section className="relative min-h-[260px] overflow-hidden rounded-[22px] border border-blue-100 bg-gradient-to-br from-[#edf4ff] via-[#f8fbff] to-[#e6f0ff] p-6 shadow-sm sm:p-7">
-              <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-300/20 blur-3xl" />
 
-              <div className="relative grid h-full items-center gap-6 lg:grid-cols-[1.05fr_.75fr]">
-                <div>
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
-                    <Sparkles className="h-3.5 w-3.5" />
+            <section className="relative isolate overflow-hidden rounded-[28px] bg-gradient-to-br from-[#091b42] via-[#103b82] to-[#075fc5] text-white shadow-[0_18px_50px_rgba(9,31,77,0.15)]">
+              <div
+                aria-hidden="true"
+                className="exam-hero-glow pointer-events-none absolute -right-20 -top-32 h-[420px] w-[420px] rounded-full bg-blue-400/25 blur-[90px]"
+              />
+
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -bottom-48 left-1/4 h-[350px] w-[450px] rounded-full bg-sky-400/10 blur-[90px]"
+              />
+
+              <div className="relative z-10 grid min-h-[420px] items-center gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.12fr_0.88fr] lg:gap-4 lg:px-12 lg:py-12 xl:px-16">
+                {/* LEFT SIDE */}
+                <div className="relative z-20">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-blue-100 backdrop-blur-sm sm:text-xs">
+                    <Sparkles className="h-4 w-4 text-yellow-300" />
                     SmartIQ Exam Centre
                   </div>
 
-                  <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-[#102447] sm:text-4xl">
+                  <h1 className="mt-7 text-4xl font-black leading-[1.08] tracking-[-0.045em] text-white sm:text-5xl xl:text-[68px]">
                     Exam Updates
                   </h1>
 
-                  <p className="mt-1.5 text-sm font-black text-blue-600">
-                    Stay Ahead. Stay Updated.
+                  <p className="mt-5 max-w-[610px] text-sm font-medium leading-7 text-blue-100 sm:text-base">
+                    Get the latest exam dates, notifications, admit cards,
+                    answer keys and results — all in one place.
                   </p>
 
-                  <p className="mt-3 max-w-[520px] text-xs font-medium leading-5 text-slate-600 sm:text-sm">
-                    Get the latest official exam dates, applications, admit
-                    cards, results, answer keys and notifications — all
-                    organised in one place.
-                  </p>
-
-                  <div className="mt-5 flex flex-wrap gap-2.5">
+                  <div className="mt-8 flex flex-wrap items-center gap-3">
                     <button
                       type="button"
                       onClick={() => scrollToSection("latest-exam-updates")}
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700"
+                      className="group inline-flex min-h-[48px] items-center justify-center gap-3 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-[#103775] shadow-lg transition-all duration-300 hover:-translate-y-0.5 hover:bg-blue-50"
                     >
+                      <BellRing className="h-[18px] w-[18px] text-blue-600" />
                       Explore Updates
-                      <ArrowRight className="h-3.5 w-3.5" />
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </button>
 
                     <button
                       type="button"
                       onClick={() => scrollToSection("exam-categories")}
-                      className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2.5 text-xs font-black text-blue-700 transition hover:bg-blue-50"
+                      className="group inline-flex min-h-[48px] items-center justify-center gap-3 rounded-xl border border-white/60 bg-white/10 px-6 py-3 text-sm font-extrabold text-white backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/20"
                     >
+                      <GraduationCap className="h-[18px] w-[18px]" />
                       Browse Exams
-                      <ListFilter className="h-3.5 w-3.5" />
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </button>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-4 text-[10px] font-bold text-slate-500">
-                    <span className="inline-flex items-center gap-1">
-                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                      Official sources only
+                  <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-3 text-[11px] font-semibold text-blue-100 sm:text-xs">
+                    <span className="inline-flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-300" />
+                      Official Sources Only
                     </span>
 
-                    <span className="inline-flex items-center gap-1">
-                      <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
+                    <span className="hidden h-5 w-px bg-white/25 sm:block" />
+
+                    <span className="inline-flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 text-blue-200" />
                       Checked {checkedAt}
+                    </span>
+
+                    <span className="hidden h-5 w-px bg-white/25 sm:block" />
+
+                    <span className="inline-flex items-center gap-2">
+                      <Target className="h-4 w-4 text-yellow-300" />
+                      All Major Exams
                     </span>
                   </div>
                 </div>
 
-                {/* COMPACT CALENDAR VISUAL */}
-                <div className="hidden items-center justify-center lg:flex">
-                  <div className="relative h-[190px] w-[240px]">
-                    <div className="absolute bottom-5 left-1/2 h-24 w-52 -translate-x-1/2 rounded-full bg-blue-400/20 blur-2xl" />
+                {/* RIGHT SIDE - ANIMATED ILLUSTRATION */}
+                <div
+                  aria-hidden="true"
+                  className="relative mx-auto hidden h-[340px] w-full max-w-[510px] select-none lg:block"
+                >
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
 
-                    <div className="absolute left-6 top-4 rotate-[-5deg] rounded-[20px] border-[5px] border-blue-700 bg-white p-4 shadow-xl">
-                      <div className="mb-3 flex items-center justify-between">
-                        <div className="h-3 w-20 rounded-full bg-blue-600" />
-                        <CalendarDays className="h-5 w-5 text-blue-500" />
-                      </div>
+                  <div className="pointer-events-none absolute left-1/2 top-1/2 h-[255px] w-[255px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
 
-                      <div className="grid grid-cols-4 gap-2">
-                        {Array.from({
-                          length: 12,
-                        }).map((_, index) => (
-                          <span
-                            key={index}
-                            className={`h-6 w-7 rounded-md ${
-                              index === 5 || index === 10
-                                ? "bg-blue-500"
-                                : "bg-blue-100"
-                            }`}
-                          />
-                        ))}
-                      </div>
+                  {/* Centre */}
+                  <div className="absolute left-1/2 top-1/2 flex h-[265px] w-[275px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[38px] border border-white/25 bg-white/10 shadow-[0_18px_55px_rgba(0,25,80,0.22)] backdrop-blur-md">
+                    <div className="absolute inset-3 rounded-[29px] border border-white/15" />
+
+                    <div className="exam-hero-pulse relative flex h-[112px] w-[112px] items-center justify-center rounded-[30px] border border-white/70 bg-gradient-to-br from-white via-[#e4f1ff] to-[#9cc5ff] shadow-xl">
+                      <GraduationCap
+                        className="h-[58px] w-[58px] text-[#1461cc]"
+                        strokeWidth={1.8}
+                      />
                     </div>
 
-                    <div className="absolute bottom-3 left-0 flex h-14 w-14 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg">
-                      <BellRing className="h-6 w-6" />
-                    </div>
+                    <h3 className="relative mt-5 text-xl font-black tracking-tight text-white">
+                      Exam Updates
+                    </h3>
 
-                    <div className="absolute bottom-6 right-0 flex h-14 w-20 items-center justify-center rounded-xl bg-[#173a78] text-white shadow-lg">
-                      <BookOpen className="h-7 w-7" />
+                    <p className="relative mt-1 text-xs font-semibold text-blue-100">
+                      Stay Ahead. Stay Informed.
+                    </p>
+                  </div>
+
+                  {/* Notifications */}
+                  <div className="exam-hero-float absolute left-[11%] top-[4%]">
+                    <div className="flex h-[75px] w-[75px] rotate-[-12deg] items-center justify-center rounded-[20px] bg-gradient-to-br from-[#f5e8ff] to-[#b49cff] shadow-xl">
+                      <BellRing className="h-9 w-9 text-violet-700" />
                     </div>
+                    <span className="absolute -bottom-3 -left-11 rounded-full border border-white/20 bg-[#3967aa]/90 px-3 py-1 text-[10px] font-bold text-white shadow-md">
+                      Notifications
+                    </span>
+                  </div>
+
+                  {/* Exam dates */}
+                  <div className="exam-hero-float-delay absolute right-[7%] top-[3%]">
+                    <div className="flex h-[75px] w-[75px] rotate-[12deg] items-center justify-center rounded-[20px] bg-gradient-to-br from-[#d9faff] to-[#84dfff] shadow-xl">
+                      <CalendarDays className="h-9 w-9 text-cyan-700" />
+                    </div>
+                    <span className="absolute -bottom-3 -right-9 rounded-full border border-white/20 bg-[#3967aa]/90 px-3 py-1 text-[10px] font-bold text-white shadow-md">
+                      Exam Dates
+                    </span>
+                  </div>
+
+                  {/* Admit cards */}
+                  <div className="exam-hero-float-delay absolute left-[2%] top-[42%]">
+                    <div className="flex h-[76px] w-[76px] rotate-[-10deg] items-center justify-center rounded-[20px] bg-gradient-to-br from-white to-[#a8c2ff] shadow-xl">
+                      <FileCheck2 className="h-9 w-9 text-blue-700" />
+                    </div>
+                    <span className="absolute -bottom-3 -left-5 rounded-full border border-white/20 bg-[#3967aa]/90 px-3 py-1 text-[10px] font-bold text-white shadow-md">
+                      Admit Cards
+                    </span>
+                  </div>
+
+                  {/* Answer keys */}
+                  <div className="exam-hero-float absolute right-0 top-[43%]">
+                    <div className="flex h-[76px] w-[76px] rotate-[10deg] items-center justify-center rounded-[20px] bg-gradient-to-br from-[#fff4e5] to-[#ffd3a0] shadow-xl">
+                      <FileText className="h-9 w-9 text-orange-700" />
+                    </div>
+                    <span className="absolute -bottom-3 -right-4 rounded-full border border-white/20 bg-[#3967aa]/90 px-3 py-1 text-[10px] font-bold text-white shadow-md">
+                      Answer Keys
+                    </span>
+                  </div>
+
+                  {/* Results */}
+                  <div className="exam-hero-float absolute bottom-[2%] left-[15%]">
+                    <div className="flex h-[75px] w-[75px] rotate-[-10deg] items-center justify-center rounded-[20px] bg-gradient-to-br from-[#dcfff0] to-[#8de9bf] shadow-xl">
+                      <CheckCircle2 className="h-9 w-9 text-emerald-700" />
+                    </div>
+                    <span className="absolute -bottom-3 -left-4 rounded-full border border-white/20 bg-[#3967aa]/90 px-3 py-1 text-[10px] font-bold text-white shadow-md">
+                      Results
+                    </span>
+                  </div>
+
+                  {/* Recruitment */}
+                  <div className="exam-hero-float-delay absolute bottom-[2%] right-[11%]">
+                    <div className="flex h-[75px] w-[75px] rotate-[10deg] items-center justify-center rounded-[20px] bg-gradient-to-br from-[#ffe4f8] to-[#f9a6e2] shadow-xl">
+                      <Landmark className="h-9 w-9 text-pink-700" />
+                    </div>
+                    <span className="absolute -bottom-3 -right-7 rounded-full border border-white/20 bg-[#3967aa]/90 px-3 py-1 text-[10px] font-bold text-white shadow-md">
+                      Recruitment
+                    </span>
                   </div>
                 </div>
               </div>
@@ -415,10 +520,10 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         <a
                           key={`${update.id}-${index}`}
                           href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            void openOfficialExamLink(update.officialUrl);
+                          }}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex shrink-0 items-center gap-4 whitespace-nowrap px-5 py-3 text-[10px] font-bold text-slate-600 transition hover:text-blue-700"
@@ -477,10 +582,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         >
                           <Icon className="h-5 w-5" />
                         </div>
-
-                        <span className="rounded-full bg-slate-50 px-3 py-1.5 text-[11px] font-black text-slate-600">
-                          {counts[category.name]}
-                        </span>
                       </div>
 
                       <h3 className="mt-5 text-lg font-black text-slate-950">
@@ -505,8 +606,6 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
               </div>
             </section>
           </div>
-
-
         </div>
 
         {/* ==================================================
@@ -687,10 +786,10 @@ export function ExamUpdatesClient({ updates, sources, checkedAt }: Props) {
                         <td className="px-6 py-5 text-right">
                           <a
                             href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
+                            onClick={(event) => {
+                              event.preventDefault();
+                              void openOfficialExamLink(update.officialUrl);
+                            }}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 text-[11px] font-black text-blue-600 hover:text-blue-800"
@@ -812,10 +911,10 @@ function FeaturedUpdate({ update }: { update?: ExamUpdate }) {
 
       <a
         href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
+        onClick={(event) => {
+          event.preventDefault();
+          void openOfficialExamLink(update.officialUrl);
+        }}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-xs font-black text-white transition hover:bg-blue-700"
@@ -844,10 +943,10 @@ function ImportantDates({ updates }: { updates: ExamUpdate[] }) {
             <a
               key={update.id}
               href={update.officialUrl}
-                              onClick={(event) => {
-                                event.preventDefault();
-                                void openOfficialExamLink(update.officialUrl);
-                              }}
+              onClick={(event) => {
+                event.preventDefault();
+                void openOfficialExamLink(update.officialUrl);
+              }}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-start gap-3"
