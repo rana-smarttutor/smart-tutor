@@ -47,5 +47,11 @@ export default function EntranceExamSelection({ group }: Props) {
     return null;
   }
 
-  return <GovernmentExamSelection title={config.title} exams={exams} />;
+  return (
+    <GovernmentExamSelection
+      title={config.title}
+      exams={exams}
+      category="Entrance Exams"
+    />
+  );
 }

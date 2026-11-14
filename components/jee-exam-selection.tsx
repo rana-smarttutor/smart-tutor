@@ -1,6 +1,6 @@
-
 "use client";
 
+import CourseExamGuide from "@/components/course-exam-guide";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -251,10 +251,19 @@ export default function JeeExamSelection() {
             <ArrowRight size={17} />
           </Link>
         </div>
+      </div>      <div className="mt-8">
+        <CourseExamGuide
+          key={selectedId}
+          slug={selectedId === "main" ? "jee-main" : "jee-advanced"}
+          courseName={selectedExam.name}
+          category="Entrance Exams"
+          subjects={selectedExam.subjects.map((subject) => ({
+            subject: subject.name,
+            topics: [...subject.topics],
+          }))}
+        />
       </div>
-
-      <p className="mt-3 text-xs leading-6 text-slate-500">
-        These are indicative preparation areas. Refer to the
+      <p className="mt-3 text-xs leading-6 text-slate-500">These are indicative preparation areas. Refer to the
         current official examination syllabus for the complete
         chapter list and examination requirements.
       </p>

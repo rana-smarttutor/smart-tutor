@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import CourseCategoryHub from "@/components/course-category-hub";
 import CourseBoardSyllabus from "@/components/course-board-syllabus";
 import GovernmentExamSelection from "@/components/government-exam-selection";
@@ -9,6 +9,7 @@ import JeeExamSelection from "@/components/jee-exam-selection";
 import EntranceExamSelection from "@/components/entrance-exam-selection";
 import CourseEnrollButton from "@/components/course-enroll-button";
 import CourseHeroMotion from "@/components/course-hero-motion";
+import CourseExamGuide from "@/components/course-exam-guide";
 import {
   COURSE_SITE_URL,
   coursePageRegistry,
@@ -126,8 +127,11 @@ export default async function CourseDetailPage({ params }: Props) {
             ]
           : [];
       })
-    : [];
-
+    : [];  const hasExamSelection =
+    slug === "jee-coaching" ||
+    (Boolean(selectionConfig) && selectableExams.length > 0) ||
+    slug === "mba-entrance-exams" ||
+    slug === "law-entrance-exams";
   const subjects =
     seoContent?.syllabus ??
     (course.programme
@@ -348,76 +352,18 @@ export default async function CourseDetailPage({ params }: Props) {
         {/* JEE MAIN / JEE ADVANCED SELECTION */}
         {slug === "jee-coaching" && <JeeExamSelection />}
 
-        {/* BOARD-SPECIFIC SCHOOL SYLLABUS / STANDARD COURSE SYLLABUS */}
+        {/* BOARD-SPECIFIC SCHOOL SYLLABUS / DETAILED EXAMINATION GUIDE */}
         {/^class-(6|7|8|9|10|11|12)-tuition$/.test(slug) ? (
           <CourseBoardSyllabus
             grade={Number(slug.match(/^class-(\d+)-tuition$/)?.[1])}
           />
         ) : (
-          <section id="course-syllabus" className="scroll-mt-20">
-            <h2 className="text-2xl font-bold tracking-tight">Syllabus</h2>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Key topics for the programme; confirm the current official
-              syllabus where applicable.
-            </p>
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {subjects.map((subject) => (
-                <article
-                  key={subject.subject}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="hidden md:block">
-                    <h3 className="text-base font-bold">{subject.subject}</h3>
-
-                    <p className="mt-3 text-sm leading-6 text-slate-500">
-                      {subject.topics.slice(0, 4).join(" · ") ||
-                        "Explore subject information"}
-                    </p>
-                  </div>
-
-                  <details className="group md:hidden">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-base font-bold">
-                      {subject.subject}
-
-                      <span className="text-xl font-normal text-slate-800 group-open:hidden">
-                        +
-                      </span>
-
-                      <span className="hidden text-xl font-normal group-open:inline">
-                        −
-                      </span>
-                    </summary>
-
-                    <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-600">
-                      {subject.topics.map((topic) => (
-                        <li key={topic}>{topic}</li>
-                      ))}
-                    </ul>
-                  </details>
-
-                  {subject.topics.length > 0 && (
-                    <details className="group mt-4 hidden md:block">
-                      <summary className="inline-flex cursor-pointer list-none items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-                        Expand all topics
-                        <ChevronDown
-                          size={13}
-                          className="group-open:rotate-180"
-                        />
-                      </summary>
-
-                      <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-600">
-                        {subject.topics.map((topic) => (
-                          <li key={topic}>{topic}</li>
-                        ))}
-                      </ul>
-                    </details>
-                  )}
-                </article>
-              ))}
-            </div>
-          </section>
+          !hasExamSelection ? (<CourseExamGuide
+            slug={slug}
+            courseName={course.name}
+            category={course.category}
+            subjects={subjects}
+          />) : null
         )}
 
         <section id="course-preparation" className="scroll-mt-20">

@@ -1,5 +1,6 @@
 "use client";
 
+import CourseExamGuide from "@/components/course-exam-guide";
 import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Check, ArrowRight } from "lucide-react";
@@ -11,11 +12,16 @@ type ExamOption = {
 };
 
 type Props = {
+  category?: "Entrance Exams" | "Government Exams";
   title: string;
   exams: ExamOption[];
 };
 
-export default function GovernmentExamSelection({ title, exams }: Props) {
+export default function GovernmentExamSelection({
+  title,
+  exams,
+  category = "Government Exams",
+}: Props) {
   const [selectedSlug, setSelectedSlug] = useState(exams[0]?.slug ?? "");
 
   const selectedExam = exams.find((exam) => exam.slug === selectedSlug);
@@ -107,6 +113,17 @@ export default function GovernmentExamSelection({ title, exams }: Props) {
               Enroll Now <ArrowRight size={16} />
             </Link>
           </div>
+        </div>
+      )}
+          {selectedExam && (
+        <div className="mt-8">
+          <CourseExamGuide
+            key={selectedExam.slug}
+            slug={selectedExam.slug}
+            courseName={selectedExam.name}
+            category={category}
+            subjects={[]}
+          />
         </div>
       )}
     </section>

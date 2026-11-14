@@ -1,0 +1,730 @@
+﻿[
+    {
+        "sourceKey":  "upsc",
+        "title":  "Examination",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "JOIN SBI Current Openings Recruitment Results Recruitment Results \u0026 Archive What are we looking for",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/web/careers"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Home Current Vacancies Vacancies Call Letters Results Recruitment Calendar Summer Placements Research Internship Scholarships Post based Rosters Rosters at CO Recruitment Promotion Rosters at ROs",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/index.aspx"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Application Form",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/download-forms"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Timeline for Disposal of MSME Loan Application",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/downloadprocess.aspx?fid=Sfyinl059Ok0U7A9BVt2Bg=="
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Information Handout-English of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/union-bank-of-india-generalist-specialist-officers-dp-ih-eng-oct-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Current Vacancies",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://centralbank.bank.in/en/recruitments"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "RECRUITMENT OF IT SPECIALIST OFFICERS IN MMGS-II ON REGULAR BASIS 2026-27\u003eAdvertisement No. HO/HRM/RECR/2026-27/COM-01",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/388920/Recruitment+Advertisement.zip/e23108a4-6c1e-a214-730d-d7d87744ae31?t=1787941726066"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Active Examinations",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/examinations/active-exams"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "JOIN SBI Current Openings Recruitment Results Recruitment Results \u0026 Archive What are we looking for",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/web/careers/current-openings"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Vacancies",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/Vacancies.aspx"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Personal Loan With Bank Of Baroda personal loan, you get lowest interest rates, instant approval with minimal documentation. Checkout Bank of Baroda personal loan interest rates \u0026 eligibility. Apply now! Apply Now Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://dil2.bankofbaroda.co.in/pl/"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Important Links Salient Features- Easy Renewal Timeline for Disposal of MSME Loan Application OTS Policy For MSE Borrowers Explore now",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/SMEBanking.html"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Information Handout â Hindi of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/union-bank-of-india-generalist-specialist-officers-dp-ih-hindi-oct-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Apply Online",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://centralbank.bank.in/en/Apply-online-in-retail"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "Candidate Provisionally Selected as Customer Service Associate under IBPS-CRP-CSA-XV for Chandigarh UT, along with schedule of Document, Biometric Verification and Language Proficiency Test",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/670460/Candidate+Provisionally+Selected+as+Customer+Service+Associate+under+IBPS-CRP-CSA-XV+for+Chandigarh+UT.pdf/478eeafd-b4f9-e421-8c09-f3c7aa92f7cc?t=1784722645299"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Forthcoming Examinations",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/examinations/forthcoming-exams"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "Recruitment Results",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/web/careers/recruitment-results"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Vacancies Call Letters Results Recruitment Calendar",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/resultsnew.aspx"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Personal Loan With Bank Of Baroda personal loan, you get lowest interest rates, instant approval with minimal documentation. Checkout Bank of Baroda personal loan interest rates \u0026 eligibility. Apply now! Apply Now Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/loans/personal-loan/baroda-personal-loan"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Loan application Form Stand Up India.",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/downloadprocess.aspx?fid=63oKi5AOnGLGdLMxbuDjfg=="
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Scribe Guidelines of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/scribe-guidelines-23-oct-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Recruitment -Forms whatsapp Facebook X Instagram LinkedIn YouTube Android-App iOS-App EMI \u0026 Deposit Calculator",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://centralbank.bank.in/en/cbi-ios-apps"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Candidates Provisionally Selected as Customer Service Associate under IBPS-CRP-CSA-XV Reserve List 1, along with schedule of Document, Biometric Verification and Language Proficiency Test",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/670460/List+of+Candidates+Provisionally+selected+for+the+post+of+Customer+Service+Associate+under+IBPS+CRP+CSA+XV+Reserve+List+1.pdf/110bc92c-3892-8eff-4014-295690870cff?t=1782408520150"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Cut-off Marks",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/examinations/cutoff-marks--"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "Recruitment Results \u0026 Archive",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/web/careers/recruitment-results-archive"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Recruitment Calendar",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/downloads/Class_I_(Officers)_Annual_Recruitment_Calendar_2027.pdf"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Home Loan Apply for Bank of Baroda Home Loan online at the lowest interest rates. Checkout our home loan eligibility, interest rates, documentation. Get instant home loan approval. Apply now! Apply Now Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://dil.bankofbaroda.in/homeloan?ct=d2Vic2l0ZQ=="
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Loan Application Form Pradhan Mantri Mudra Yojana",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/document/SMEBanking/HO_MSME_Bilingual_Common_Loan_Application_form_PMMY.pdf"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Notice for Online Assessment on Professional Knowledge (Descriptive Based)",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/notice-for-online-assessment-on-professional-knowledge.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "NOTIFICATION REGARDING CANDIDATES OF CRP CSA XV RESERVE LIST PHASE-I \u0026 CHANDIGARH STATE OF CRP CSA XV (2026-27)Click Here for more info",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/NOTIFICATIONR.zip"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Group Discussion for the Post of Software Developer in JMGS-I",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/SWD-I+GD.pdf/6423e855-f9c9-b6bf-c219-68113b0217ca?t=1779810456948"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Answer Keys",
+        "type":  "Answer Key",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/examinations/answer-key"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "JOIN SBI Current Openings Recruitment Results Recruitment Results \u0026 Archive What are we looking for",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/web/careers/what-are-we-looking-for"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Recruitment",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=2802"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Home Loan Apply for Bank of Baroda Home Loan online at the lowest interest rates. Checkout our home loan eligibility, interest rates, documentation. Get instant home loan approval. Apply now! Apply Now Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/loans/home-loan"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Agricultural Loan Agriculture Loan Schemes Central Sector Schemes Krishi Tatkal Rin Online Agriculture Loan Application Watch This Video on \"How to Apply for Agriculture Loan\" Faqs for Agriculture Loan Explore now",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/agricultural-banking.html"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click Here to the call letter for online written examination (For 32 posts under phase II mentioned in the notice below)",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://ibpsreg.ibps.in/ubijul26/oecla_aug26/login.php?appid=e86e69203d8c7f71a2897baeeb2fcd5c"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "List of Shortlisted candidates for the contractual post of Counsellor at FLCC Gwalior, Morena and BhindClick here for more info",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/CamScanner%2011-04-2026%2018.21.57_0.pdf"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Interview for the Post of Software Developer in JMGS-I",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/0/List+of+Candidates+Shortlisted+for+Interview+for+the+Position+of+Software+Developer+in+JMGS-I.pdf/26405e6e-05e9-ce99-e28e-38303bfcd8e9?t=1781189883258"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Marks of Recommended Candidates",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/examinations/marks-recommended-candidates"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "CORRIGENDUM",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/documents/77530/57941334/Corrigendum_Digital+Banking.pdf/47f8c040-884a-2f0d-5df8-df5c6da648ce?t=1793777875383"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "How do You Apply?",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/apply.aspx"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Car Loan Car Loan: Apply for auto loan online by Bank of Baroda at an attractive interest rates \u0026 easy EMI option. Upto 90% financing on on-road price. Buy your dream car today! Apply Now Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://dil.bankofbaroda.in/autoloan?ct=d2Vic2l0ZQ=="
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Online collection of various fees/dues from students/dealers of educational institutes / recruitment boards / companies / Govt entities.",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/pnbsaraswatiloan.html"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Information Handout-English of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Handout-English-oct-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "List of Shortlisted Candidatcs for the lnten iew the nost of FLC Counsellor at Gwalior. Morena and BhindClick here for more info Interview date:04-11-2026",
+        "type":  "Notification",
+        "publishedLabel":  "04-11-2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/Image_010%20(9).pdf"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Data Engineer in MMGS-II",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Data+Engineer+in+MMGS-II.pdf/ad424d26-5101-deb3-9654-d086e260e00e?t=1779810458672"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Marks of Recommended Candidates (Reserve List)",
+        "type":  "Result",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/examinations/marks-recommended-candidates-reserve-list"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "LIST OF CANDIDATES PROVISIONALLY SELECTED",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/documents/77530/57941334/04112026_SCO_21_Select+list.pdf/d64cfa33-3078-f7ce-ce18-5ff0e82fe85a?t=1793777688437"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Extension of last date for submission of Application - Engagement of Part-time Bankâs Medical Consultant on Contract Basis with Fixed Hourly Remuneration at Reserve Bank of India, Itanagar",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5194"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Car Loan Car Loan: Apply for auto loan online by Bank of Baroda at an attractive interest rates \u0026 easy EMI option. Upto 90% financing on on-road price. Buy your dream car today! Apply Now Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/loans/vehicle-loan/baroda-car-loan"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Integrated Fee Portal Online collection of various fees/dues from students/dealers of educational institutes / recruitment boards / companies / Govt entities. Explore now",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/cash-management-services.html"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Information Handout â Hindi of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Handout-Hindi-oct-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "List of Shortlisted candidates and waitlist for the contractual post of Faculty, Office Assistant, Attendant and Watchman/Gardner at R-SETI at Gwalior, Morena and Bhind after interview held on 02/09/2026Click here for details",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/2026-10/Image_010%20(5).pdf"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Data Analyst in MMGS-II",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Data+Analyst+in+MMGS-II.pdf/31cc566d-eefc-6f3b-8ed7-625f0e76fc39?t=1779810458447"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Status of Lateral Recruitment Cases (Advertisement-wise)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/recruitment/lateral-recruitments"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "ZONAL HEAD (RETAIL) â INTERVIEW SCHEDULE",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/documents/77530/57941334/06112026_SCO_23_INT_SCH_ZH.pdf/8f9a4e60-78d3-597f-7c20-6c2b09db2142?t=1793962103821"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Extension of last date for submission of Application - Engagement of Medical Consultant (MC) in the Bank on Contract Basis with Fixed Hourly Remuneration, Patna",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5188"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Current Accounts Open Current Account online at Bank of Baroda to meet all your banking needs. Go to our website to learn more about the different types of current accounts we offer and apply now! Know More",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/accounts/current-accounts"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Notices published in Newspapers",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/Notices-published-in-Newspapers.html"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Scribe Guidelines of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Scribe-Guidelines-oct-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Recruitment of Company Secretary in Senior Management Grade Scale V in Specialist Category on Regular Basis- Extension of Last Date for receipt of Offline ApplicationClick here for more info Last Date for Receipt of Offline Application: 31.10.2026",
+        "type":  "Application",
+        "publishedLabel":  "31.10.2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/2026-10/Notification%20of%20Date%20Extension%20for%20Recruitment%20of%20Company%20Secretary%20SC%20V.zip"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Cloud Engineer in JMGS-I",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Cloud+Engineer+in+JMGS-I.pdf/fcdadba9-7c41-cbf0-af4a-4467582ff94b?t=1779810457720"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Online Recruitment Application (ORA)",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://upsconline.nic.in/ora/"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "INTERVIEW SCHEDULE",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/documents/77530/57941334/04112026_SCO_15_INT_SCH.pdf/ed29cb0e-85af-6515-6863-5572fb030080?t=1793776587824"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Extension of last date for submission of Application - Engagement of Medical Consultant (MC) in the Bank on Contract Basis with Fixed Hourly Remuneration, Patna",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5184"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Apply Online",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/apply-online-links"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Important Announcement to Physical Shareholders",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/Important-Announcement-to-Physical-Shareholders.html"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Notice for Examination date for posts under Phase II",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/exam-notice-32-posts.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Application for the post of FLC Jhalawad \u0026 FLC Baran on contractual basis, Kota RegionClick Here For Details Last date: 16/11/2026",
+        "type":  "Application",
+        "publishedLabel":  "16/11/2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/flc%20kota%20and%20JHALAWAD%20vacancy%20.zip"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Cyber Security Officer in JMGS-I",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Cyber+Security+Officer+in+JMGS-I.pdf/1072a433-7e07-4045-18ce-1ae41a33f4a8?t=1779810458011"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Status of Recruitment Cases (Advertisement-wise)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/recruitment/status-recruitment-cases-advertisementwise"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "INTERVIEW SCHEDULE",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/documents/77530/57941334/03112026_SCO_13_INT_SCH.pdf/306bfd7a-a611-b353-632a-513ef59347e8?t=1793700988660"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Application for Engagement of Medical consultant On contract basis with fixed hourly remuneration at RBI, Jammu",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5173"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Home Loan Eligibility Calculator",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/calculators/home-loan-eligibility-calculator"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Comprehensive Notice Board",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/downloadprocess.aspx?fid=nBFNxDyqfonDhrrevUgt6Q=="
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Notice for Examination date for posts under Phase 1",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Notice-for-Examination-date-for-posts-under-Phase-1.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Recruitment of Company Secretary in Senior Management Grade Scale V in Specialist Category on Regular BasisClick here for details Last Date for Receipt of Offline Application: 10.10.2026",
+        "type":  "Application",
+        "publishedLabel":  "10.10.2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/Notification%20of%20Company%20Secretary.zip"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Chartered Accountant in MMGS-II",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Chartered+Accountant+in+MMGS-II.pdf/e941648f-b3b8-0d36-91c4-c53caeff16da?t=1779810456538"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Recruitment Tests",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/recruitment/recruitment-test"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "LIST OF CANDIDATES PROVISIONALLY SELECTED",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/webfiles/uploads/files_2627/10/SCO_12_Select_list.pdf"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Application for Engagement of Medical consultant On contract basis with fixed hourly remuneration at RBI, Srinagar",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5172"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Stock Exchanges Notifications under SEBI (LODR) Regulations, 2015",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/shareholders-corner/disclosures-under-sebi-listing-regulations"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Public Notices",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/Public-Notices.aspx"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Information Handout - English of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Information-Handout-English-aug-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "RECRUITMENT OF CREDIT OFFICER JMGS-I (MST) PGDBF- ONBOARDING OF 1ST BATCH ON 05.10.2026ONBOARDING OF CREDIT OFFICER PGDBF Annexure A Date of Reporting: 05/10/2026",
+        "type":  "Recruitment",
+        "publishedLabel":  "05/10/2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/notification_1.zip"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Database Administrator in JMGS-I",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Database+Administrator+in+JMGS-I.pdf/50bf9117-cb57-0de5-797d-cd383c181534?t=1779810458922"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Recruitment Requisition",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/recruitment/recruitment-requisition"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "INTERVIEW SCHEDULE",
+        "type":  "Exam Date",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/documents/77530/57941334/SCO_11_INT_SCH_30102026.pdf/9acf4f12-5d7d-fe65-b621-b18438ebaff3?t=1793341187288"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Inviting Applications for the Post of Director, IIBM, Guwahati",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5171"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Press Releases",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/media/press-releases"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Home \u003e Recruitments/Careers",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/home.aspx"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Information Handout - Hindi of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Information-Handout-Hindi-aug-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "RECRUITMENT OF CREDIT OFFICER JMGS-I (MST) PGDBF- ONBOARDING OF 1ST BATCH ON 05.10.2026ONBOARDING OF CREDIT OFFICER PGDBF Annexure A Date of Reporting: 05/10/2026",
+        "type":  "Recruitment",
+        "publishedLabel":  "05/10/2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/ANNEXURE%20A_1.pdf"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of Network Administrator in JMGS-I",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+Network+Administrator+in+JMGS-I.pdf/5e8a9251-41d3-a62b-a1cd-4f2801d28522?t=1779810459117"
+    },
+    {
+        "sourceKey":  "upsc",
+        "title":  "Recruitment cases kept on hold on account of Pending Litigations",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.upsc.gov.in/recruitment/recruitment-cases-kept-hold-account-pending-litigations"
+    },
+    {
+        "sourceKey":  "sbi-recruitment",
+        "title":  "ASSISTANT MANAGER (LAW)-JMGS-I : LIST OF CANDIDATES PROVISIONALLY SELECTED FOR INTERVIEW",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://sbi.co.in/webfiles/uploads/files_2627/10/SCO_02_AM_RESULT_10_FORMAT.pdf"
+    },
+    {
+        "sourceKey":  "rbi-recruitment",
+        "title":  "Extension of last date for submission of Application and Amendment in Terms \u0026 Conditions â Engagement of Bankâs Medical Consultant (BMC) on Contract Basis with Fixed Hourly Remuneration at Reserve Bank of India, Bhopal",
+        "type":  "Application",
+        "publishedLabel":  null,
+        "officialUrl":  "https://opportunities.rbi.org.in/Scripts/bs_viewcontent.aspx?Id=5167"
+    },
+    {
+        "sourceKey":  "bank-of-baroda",
+        "title":  "Announcements",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.bankofbaroda.in/media/announcements"
+    },
+    {
+        "sourceKey":  "pnb",
+        "title":  "Recruitments",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.pnbindia.in/Recruitments.aspx"
+    },
+    {
+        "sourceKey":  "union-bank",
+        "title":  "Click here for Scribe Guidelines of Union Bank Recruitment Project 2026-27 (Officers with Domain expertise, General Banking Officers \u0026 Specialist Officers)",
+        "type":  "Recruitment",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.unionbankofindia.bank.in/pdf/Scribe-Guidelines-aug-26.pdf"
+    },
+    {
+        "sourceKey":  "central-bank-india",
+        "title":  "Notification for Appointment of Director in Indian Institute of Bank Management (IIBM), GuwahatiClick Here For Details Last date: 05/10/2026",
+        "type":  "Notification",
+        "publishedLabel":  "05/10/2026",
+        "officialUrl":  "https://centralbank.bank.in/sites/default/files/doc.zip"
+    },
+    {
+        "sourceKey":  "uco-bank",
+        "title":  "List of Provisionally Shortlisted Candidates for Final Round Interview for the position of System Administrator JMGS-I",
+        "type":  "Notification",
+        "publishedLabel":  null,
+        "officialUrl":  "https://www.uco.bank.in/documents/20120/458985/List+of+Provisionally+Shortlisted+Candidates+for%C2%A0+Final+Round+Interview%C2%A0for+the%C2%A0position+of+System+Administrator+in+JMGS-I.pdf/7d5624c8-efda-a1f8-34c6-bb340b6ecc32?t=1779810459337"
+    }
+]

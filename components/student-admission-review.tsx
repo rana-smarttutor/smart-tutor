@@ -66,7 +66,7 @@ const CARD_CLASS =
   "rounded-[28px] border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]";
 
 function formatDate(value?: string | null) {
-  if (!value) return "Ã¢â‚¬â€";
+  if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString("en-GB", {
@@ -124,7 +124,7 @@ function InfoBlock({
         <span>{label}</span>
       </div>
       <div className="text-base font-semibold text-slate-900">
-        {value && String(value).trim() ? value : "Ã¢â‚¬â€"}
+        {value && String(value).trim() ? value : "—"}
       </div>
     </div>
   );
@@ -252,7 +252,7 @@ export default function StudentAdmissionReview() {
               <div className="mt-2 text-base text-slate-600">
                 {[application.course, application.exam]
                   .filter(Boolean)
-                  .join(" Ã‚Â· ") || "Admission Application"}
+                  .join(" · ") || "Admission Application"}
               </div>
               <div className="mt-2 text-sm text-slate-400">
                 {application.applicationId}

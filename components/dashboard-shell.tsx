@@ -1478,7 +1478,7 @@ export function DashboardShell({
   const profileHighlights = [
     { label: "Role", value: dashboard.roleLabel },
     ...(role === "student" || role === "parent"
-      ? [{ label: "Student ID", value: session?.id ?? "Ã¢â‚¬â€" }]
+      ? [{ label: "Student ID", value: session?.id ?? "—" }]
       : []),
     ...(role === "student" || role === "parent"
       ? [
@@ -1495,7 +1495,7 @@ export function DashboardShell({
       ? [
           {
             label: "Faculty ID",
-            value: session?.employeeCode ?? session?.facultyCode ?? "Ã¢â‚¬â€",
+            value: session?.employeeCode ?? session?.facultyCode ?? "—",
           },
           {
             label: "Assigned Students",
@@ -1915,7 +1915,7 @@ export function DashboardShell({
           })}
         </nav>
 
-        {/* Footer Ã¢â‚¬â€ Logout only */}
+        {/* Footer — Logout only */}
         {!sidebarCollapsed && (
           <div className="border-t border-white/5 px-4 py-4">
             <div className="flex w-full justify-center">
@@ -2017,7 +2017,7 @@ export function DashboardShell({
                 </span>
 
                 <span className="relative whitespace-nowrap">
-                  Earn Ã¢â€šÂ¹2,000
+                  Earn ₹2,000
                 </span>
               </button>
             ) : null}
@@ -2272,7 +2272,7 @@ export function DashboardShell({
                 <div>
                   <p className="section-label">Course / Program Master</p>
                   <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[var(--color-heading)]">
-                    Top-level hierarchy: Course Ã¢â€ â€™ Subject Ã¢â€ â€™ Topic
+                    Top-level hierarchy: Course → Subject → Topic
                   </h2>
                 </div>
                 <span className="pill">{dashboard.courses.length} courses</span>

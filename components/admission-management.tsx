@@ -65,11 +65,11 @@ const EMPTY_STATS: Stats = {
 };
 
 function formatDate(value?: string) {
-  if (!value) return "Ã¢â‚¬â€";
+  if (!value) return "—";
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "Ã¢â‚¬â€";
+  if (Number.isNaN(date.getTime())) return "—";
 
   return date.toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -488,7 +488,7 @@ export function AdmissionManagement() {
   ];
   return (
     <div className="space-y-7 pb-8">
-      {/* HERO Ã¢â‚¬â€ MATCHES CAREER COUNSELLING */}
+      {/* HERO — MATCHES CAREER COUNSELLING */}
 
       <section className="overflow-hidden rounded-[22px] bg-gradient-to-r from-[#07173B] via-[#1546A8] to-[#2863EB] px-7 py-9 text-white shadow-lg sm:px-10">
         <div className="flex flex-col justify-between gap-7 lg:flex-row lg:items-center">
@@ -675,7 +675,7 @@ export function AdmissionManagement() {
                           </h3>
 
                           <p className="mt-1 text-xs text-slate-500">
-                            {application.course} Ã‚Â·{" "}
+                            {application.course} ·{" "}
                             {application.exam}
                           </p>
 
@@ -748,7 +748,7 @@ export function AdmissionManagement() {
                               </p>
 
                               <p className="mt-1 break-words font-semibold text-slate-900">
-                                {value || "Ã¢â‚¬â€"}
+                                {value || "—"}
                               </p>
                             </div>
                           ))}
@@ -760,7 +760,7 @@ export function AdmissionManagement() {
                              <p className="mt-2 text-sm font-bold text-emerald-700">Linked to student account</p>
                            ) : (
                              <>
-                               <p className="mt-2 text-sm text-amber-700">Not linked Ã¢â‚¬â€ student cannot view this admission yet.</p>
+                               <p className="mt-2 text-sm text-amber-700">Not linked — student cannot view this admission yet.</p>
                                {canLink && (
                                  <button type="button" disabled={linkBusy} onClick={() => void findLinkCandidate(application.applicationId)}
                                    className="mt-3 rounded-lg bg-[#0B40A1] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
@@ -776,7 +776,7 @@ export function AdmissionManagement() {
                                {linkCandidate && (
                                  <div className="space-y-2">
                                    <p className="text-sm font-semibold">Confirm this is the correct account:</p>
-                                   <p className="break-words text-sm">{linkCandidate.name} Ã‚Â· {linkCandidate.email}</p>
+                                   <p className="break-words text-sm">{linkCandidate.name} · {linkCandidate.email}</p>
                                    <button type="button" disabled={linkBusy}
                                      onClick={() => void confirmStudentLink(application.applicationId, linkCandidate.id)}
                                      className="rounded-lg bg-[#0B40A1] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">
@@ -937,14 +937,14 @@ export function AdmissionManagement() {
                                     className="rounded-lg bg-white p-3 text-xs text-slate-700"
                                   >
                                     <strong>{record.level}</strong>
-                                    {" Ã‚Â· "}
+                                    {" · "}
                                     {record.institution}
-                                    {" Ã‚Â· "}
+                                    {" · "}
                                     {record.board}
-                                    {" Ã‚Â· "}
+                                    {" · "}
                                     {record.year}
                                     {record.marks
-                                      ? ` Ã‚Â· ${record.marks}`
+                                      ? ` · ${record.marks}`
                                       : ""}
                                   </div>
                                 ),

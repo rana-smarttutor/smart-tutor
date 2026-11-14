@@ -1588,7 +1588,7 @@ export function DashboardAccountDirectory({
                       <option value="">Select student to link...</option>
                       {studentOptions.map((s) => (
                         <option key={s.id} value={s.id}>
-                          {s.name} â€” {s.email}
+                          {s.name} — {s.email}
                         </option>
                       ))}
                     </select>
@@ -1862,7 +1862,7 @@ export function DashboardAccountDirectory({
                   <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                   <input
                     type="text"
-                    placeholder="Search name, email, programâ€¦"
+                    placeholder="Search name, email, program…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2068,7 +2068,7 @@ export function DashboardAccountDirectory({
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID â€” Front
+                                Photo ID — Front
                               </a>
                             )}
                             {req.profile.photoIdBackUrl && (
@@ -2079,7 +2079,7 @@ export function DashboardAccountDirectory({
                                 className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-700 hover:bg-amber-100 transition-colors dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-400"
                               >
                                 <i className="bi bi-card-image" />
-                                Photo ID â€” Back
+                                Photo ID — Back
                               </a>
                             )}
                           </div>
@@ -2129,7 +2129,7 @@ export function DashboardAccountDirectory({
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search students by name, email, programâ€¦"
+                  placeholder="Search students by name, email, program…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2201,8 +2201,8 @@ export function DashboardAccountDirectory({
                   type="text"
                   placeholder={
                     employeeSubTab === "faculty"
-                      ? "Search faculty by name, email, Employee IDâ€¦"
-                      : "Search staff by name, email, Employee ID, designationâ€¦"
+                      ? "Search faculty by name, email, Employee ID…"
+                      : "Search staff by name, email, Employee ID, designation…"
                   }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -2254,7 +2254,7 @@ export function DashboardAccountDirectory({
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search parents by name, emailâ€¦"
+                  placeholder="Search parents by name, email…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
@@ -2289,7 +2289,7 @@ export function DashboardAccountDirectory({
                 <i className="bi bi-search absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[var(--color-muted)]" />
                 <input
                   type="text"
-                  placeholder="Search by name, email, roleâ€¦"
+                  placeholder="Search by name, email, role…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] py-2 pl-9 pr-3 text-sm text-[var(--color-heading)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"

@@ -92,7 +92,7 @@ export async function PATCH(request: Request) {
 
     const entries = Object.entries(body.changes);
     if (entries.length === 0 || entries.length > 16) {
-      return fail("Provide 1â€“16 corrected fields.");
+      return fail("Provide 1–16 corrected fields.");
     }
 
     const changes: Record<string, string> = {};
